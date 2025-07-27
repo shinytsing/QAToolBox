@@ -37,10 +37,16 @@ class GenerateTestCasesAPI(APIView):
             # 1. 获取并验证请求参数
             requirement = request.data.get('requirement', '').strip()
             user_prompt = request.data.get('prompt', '').strip()
+            # 新增：获取批量生成参数
+            is_batch = request.data.get('is_batch', False)
+            batch_id = request.data.get('batch_id', 0)
+            total_batches = request.data.get('total_batches', 1)
+
             print(f"用户 {request.user.username} 请求生成测试用例，需求: {requirement}, 提示: {user_prompt}")
             logger.info(
                 f"用户 {request.user.username} 发起测试用例生成请求，"
-                f"需求长度: {len(requirement)}，"
+                f"需求长度: {len(requirement)}，批量模式: {is_batch}，"
+                f"批次: {batch_id + 1}/{total_batches}，"
                 f"时间: {start_time.strftime('%Y-%m-%d %H:%M:%S')}"
             )
 
@@ -53,26 +59,35 @@ class GenerateTestCasesAPI(APIView):
                 )
 
             # 处理文件名（使用用户需求和时间）
-            # 1. 截取需求前20个字符作为标识（更长更具辨识度）
+            # 1. 截取需求前20个字符作为标识
             truncated_req = requirement[:20].strip() if requirement else "default"
 
             # 2. 清理文件名中的特殊字符（替换为下划线）
             invalid_chars = r'[\\:*?"<>|]'
             cleaned_req = re.sub(invalid_chars, '', truncated_req)
 
-            # 3. 生成时间戳（使用下划线连接，不含空格）
-            current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S")  # 格式：20250726_153045
+            # 3. 生成时间戳
+            current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S")
 
-            # 4. 组合文件名并添加.mm扩展名
-            outfile_name = f"{current_time}.mm"
+            # 4. 组合文件名（批量模式添加批次标识）
+            if is_batch:
+                outfile_name = f"{cleaned_req}_{current_time}_batch_{batch_id + 1}_{total_batches}.mm"
+            else:
+                outfile_name = f"{cleaned_req}_{current_time}.mm"
 
             # 如果用户未提供prompt，使用默认模板
             final_prompt = user_prompt if user_prompt else self.DEFAULT_PROMPT.format(requirement=requirement)
 
-            # 2. 调用DeepSeek API生成测试用例
+            # 2. 调用DeepSeek API生成测试用例（传递批量参数）
             try:
                 deepseek = DeepSeekClient()
-                raw_response = deepseek.generate_test_cases(requirement, final_prompt)
+                raw_response = deepseek.generate_test_cases(
+                    requirement,
+                    final_prompt,
+                    is_batch=is_batch,
+                    batch_id=batch_id,
+                    total_batches=total_batches
+                )
                 if not raw_response:
                     raise ValueError("未从API获取到有效响应")
             except Exception as e:
@@ -83,6 +98,7 @@ class GenerateTestCasesAPI(APIView):
                 )
             print('==============deepseek response=========')
             print(raw_response)
+
             # 3. 解析API响应为结构化数据
             test_cases = self._parse_test_cases(raw_response)
 
@@ -97,13 +113,16 @@ class GenerateTestCasesAPI(APIView):
                 tmp.write(mindmap_xml)
                 tmp.flush()  # 确保内容写入磁盘
 
-                # 6. 保存到模型（使用自定义文件名）
+                # 6. 保存到模型（记录批量信息）
                 log = ToolUsageLog.objects.create(
                     user=request.user,
                     tool_type='TEST_CASE',
                     input_data=json.dumps({
                         'requirement': requirement,
-                        'prompt': final_prompt
+                        'prompt': final_prompt,
+                        'is_batch': is_batch,
+                        'batch_id': batch_id,
+                        'total_batches': total_batches
                     })
                 )
 
@@ -121,11 +140,23 @@ class GenerateTestCasesAPI(APIView):
             else:
                 logger.warning(f"用户 {request.user.username} 测试用例生成成功，但文件未找到: {saved_file_path}")
 
-            return Response({
+            response_data = {
                 'download_url': f'/tools/download/{outfile_name}',
                 'log_id': log.id,
-                'raw_response': raw_response
-            })
+                'raw_response': raw_response,
+                'is_batch': is_batch,
+                'batch_id': batch_id,
+                'total_batches': total_batches
+            }
+
+            # 如果是最后一批，添加打包下载标识
+            if is_batch and (batch_id + 1) == total_batches:
+                response_data['is_final_batch'] = True
+                # 生成批次相关文件的标识前缀，用于前端后续打包下载
+                batch_prefix = f"{cleaned_req}_{current_time}_batch_"
+                response_data['batch_prefix'] = batch_prefix
+
+            return Response(response_data)
 
         except Exception as e:
             logger.error(

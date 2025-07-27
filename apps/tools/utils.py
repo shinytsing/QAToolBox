@@ -19,7 +19,7 @@ except (ValueError, KeyError):
 
 class DeepSeekClient:
     API_BASE_URL = "https://api.deepseek.com/v1/chat/completions"
-    TIMEOUT = 600  # 延长超时时间（秒），因为生成更多内容需要更长时间
+    TIMEOUT = 600  # 延长超时时间（秒），适应    MAX_RETRY_ATTEMPTS = 3  # 最大续生成次数
 
     def __init__(self):
         self.api_key = DEEPSEEK_API_KEY
@@ -33,33 +33,44 @@ class DeepSeekClient:
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((requests.exceptions.Timeout, requests.exceptions.ConnectionError))
     )
-    def generate_test_cases(self, requirement: str, user_prompt: str) -> str:
+    def generate_test_cases(self, requirement: str, user_prompt: str, is_batch: bool = False,
+                            batch_id: int = 0, total_batches: int = 1) -> str:
+        """
+        生成测试用例，支持批量生成标识
+
+        :param is_batch: 是否为批量生成模式
+        :param batch_id: 当前批次ID（从0开始）
+        :param total_batches: 总批次数
+        """
         if not requirement or not user_prompt:
             raise ValueError("需求内容和提示词模板不能为空")
 
-        # 构建完整提示词，增加详细度要求
+        # 构建完整提示词，增加批量生成标识
         full_prompt = user_prompt.format(
             requirement=requirement,
             format="请使用Markdown格式输出：# 场景名称 作为一级标题，- 测试用例 作为列表项"
         )
 
-        # 追加详细度要求
-        full_prompt += """
+        # 追加详细度要求，批量模式下增加批次说明
+        batch_note = f"\n注意：这是批量生成的第 {batch_id + 1}/{total_batches} 部分，请专注当前片段生成完整内容。" if is_batch else ""
+
+        full_prompt += f"""
         请尽可能详细地生成测试用例，每个功能模块至少包含10个测试用例，
         覆盖正常场景、边界场景和异常场景。对于复杂功能，应提供更全面的测试覆盖。
         确保每个测试用例的步骤清晰完整，预期结果具体明确。
         不要担心输出内容过长，请提供完整全面的测试覆盖。
+        {batch_note}
         """
 
         payload = {
-            "model": "deepseek-reasoner",  # 如果有更大的模型可以替换，如"deepseek-vl"
+            "model": "deepseek-reasoner",  # 可替换为更大容量模型
             "messages": [
                 {"role": "system",
                  "content": "你是专业测试工程师，生成测试用例时需包含场景和具体用例，用Markdown格式输出。请提供详尽的测试覆盖，不要遗漏重要场景。"},
                 {"role": "user", "content": full_prompt}
             ],
             "temperature": 0.4,
-            "max_tokens": 65536,  # 大幅增加最大令牌数（根据模型支持的最大值调整）
+            "max_tokens": 65536,  # 根据模型支持的最大值调整
             "stream": False
         }
 
@@ -80,26 +91,38 @@ class DeepSeekClient:
 
             # 检查是否达到令牌限制，如果是则请求继续生成
             if result.get('choices', [{}])[0].get('finish_reason') == 'length':
-                # 调用续生成方法
-                return self._continue_generation(result, full_prompt)
+                # 传递批量参数进行续生成
+                return self._continue_generation(
+                    result,
+                    full_prompt,
+                    is_batch=is_batch,
+                    batch_id=batch_id,
+                    total_batches=total_batches,
+                    retry_count=0
+                )
 
             return result['choices'][0]['message']['content']
         except requests.exceptions.RequestException as e:
             error_detail = f"状态码: {response.status_code}" if 'response' in locals() else "无状态码"
             raise Exception(f"API请求失败: {str(e)} ({error_detail})")
 
-    def _continue_generation(self, initial_result, prompt):
-        """处理内容被截断的情况，继续生成剩余内容"""
+    def _continue_generation(self, initial_result, prompt, is_batch: bool, batch_id: int,
+                             total_batches: int, retry_count: int) -> str:
+        """处理内容被截断的情况，增加重试次数限制"""
+        # 超过最大重试次数则返回已生成内容
+        if retry_count >= self.MAX_RETRY_ATTEMPTS:
+            return initial_result['choices'][0]['message']['content']
+
         # 获取已生成的内容
         current_content = initial_result['choices'][0]['message']['content']
-        # 获取对话历史
+        # 构建对话历史
         message_history = [
             {"role": "system", "content": "你是专业测试工程师，生成测试用例时需包含场景和具体用例，用Markdown格式输出"},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": current_content}
         ]
 
-        # 继续生成
+        # 继续生成 payload
         payload = {
             "model": "deepseek-reasoner",
             "messages": message_history,
@@ -124,13 +147,20 @@ class DeepSeekClient:
             result = response.json()
             additional_content = result['choices'][0]['message']['content']
 
-            # 递归检查是否还需要继续生成
+            # 递归检查是否还需要继续生成（增加重试计数）
             if result.get('choices', [{}])[0].get('finish_reason') == 'length':
-                return self._continue_generation(result, prompt)
+                return self._continue_generation(
+                    result,
+                    prompt,
+                    is_batch=is_batch,
+                    batch_id=batch_id,
+                    total_batches=total_batches,
+                    retry_count=retry_count + 1
+                )
 
             return current_content + additional_content
         except Exception as e:
-            # 如果续生成失败，至少返回已生成的内容
+            # 续生成失败时返回已生成内容
             return current_content
 
 
