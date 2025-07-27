@@ -1,3 +1,4 @@
+from django.utils.dateparse import postgres_interval_re
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -46,7 +47,7 @@ class GenerateTestCasesAPI(APIView):
             is_batch = request.data.get('is_batch', False)
             batch_id = int(request.data.get('batch_id', 0))
             total_batches = int(request.data.get('total_batches', 1))
-
+            print("请求在此:"+requirement,user_prompt)
             logger.info(
                 f"用户 {request.user.username} 发起测试用例生成请求，"
                 f"需求长度: {len(requirement)}，批量模式: {is_batch}，"
@@ -116,7 +117,7 @@ class GenerateTestCasesAPI(APIView):
                     {'error': f'AI接口调用失败: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-
+            print("deepseek返回"+raw_response)
             # 3. 解析API响应为结构化数据
             test_cases = self._parse_test_cases(raw_response)
 

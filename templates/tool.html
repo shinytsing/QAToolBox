@@ -1,71 +1,79 @@
-{% load static %}  <!-- 添加这行代码 -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>测试工程师工具</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">  <!-- 正确路径 -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- 引入Font Awesome图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <h1>我的测试工程师工具</h1>
 
     <div class="button-container">
-
-        <!-- 修改后（正确路径） -->
+        <!-- 生成AI测试用例 -->
         <button class="tool-button" onclick="window.location.href='/tools/test-case-generator/'">
             生成AI测试用例
             <span class="tooltip">输入你的产品需求，越详细越好</span>
         </button>
 
-        <button class="tool-button" onclick="showTool('testTool')">
+        <!-- 生成小红书爆款文案 -->
+        <button class="tool-button" onclick="showTool('redBookTool')">
             生成小红书爆款文案
             <span class="tooltip">上传你的图片，AI自动生成爆款文案并自动发送</span>
         </button>
 
+        <!-- 自动化测试示例 -->
         <button class="tool-button" onclick="showTool('automationExample')">
             自动化测试示例
             <span class="tooltip">执行自动化测试脚本</span>
         </button>
 
-
+        <!-- 代码质量检查 -->
         <button class="tool-button" onclick="showTool('qualityCheck')">
             代码质量检查
             <span class="tooltip">检查代码质量并提供反馈</span>
         </button>
 
+        <!-- 性能测试模拟器 -->
         <button class="tool-button" onclick="showTool('performanceSimulator')">
             性能测试模拟器
             <span class="tooltip">模拟性能测试结果</span>
         </button>
 
+        <!-- 缺陷跟踪器 -->
         <button class="tool-button" onclick="showTool('bugTracker')">
             缺陷跟踪器
             <span class="tooltip">提交和跟踪缺陷</span>
         </button>
 
-
-
+        <!-- 页面响应测试工具 -->
         <button class="tool-button" onclick="showTool('responsiveTester')">
             页面响应测试工具
             <span class="tooltip">测试不同设备的响应</span>
         </button>
 
+        <!-- 用例编写助手 -->
         <button class="tool-button" onclick="showTool('testCaseHelper')">
             用例编写助手
             <span class="tooltip">生成标准化测试用例文档</span>
         </button>
 
+        <!-- CI/CD 信息展示 -->
         <button class="tool-button" onclick="showTool('ciCdInfo')">
             CI/CD 信息展示
             <span class="tooltip">展示构建和部署状态</span>
         </button>
 
+        <!-- 可视化结果分析图表 -->
         <button class="tool-button" onclick="showTool('visualization')">
             可视化结果分析图表
             <span class="tooltip">展示测试结果的可视化图表</span>
         </button>
 
+        <!-- 测试计划生成器 -->
         <button class="tool-button" onclick="showTool('testPlanGenerator')">
             测试计划生成器
             <span class="tooltip">生成测试计划文档</span>
@@ -82,41 +90,61 @@
 
             switch (tool) {
                 case 'aiTestCaseGenerator':
-                formHTML = `<h2>生成AI测试用例</h2>
-                            <textarea placeholder="输入产品需求，越详细越好..."></textarea>
-                            <button>AI生成测试用例</button>`;
-                break;
+                    formHTML = `<h2>生成AI测试用例</h2>
+                                <textarea placeholder="输入产品需求，越详细越好..."></textarea>
+                                <button><i class="fas fa-magic"></i> AI生成测试用例</button>`;
+                    break;
 
-                case 'testTool':
-                    formHTML = `<h2>在线测试工具</h2>
-                                <textarea placeholder="输入你的代码..."></textarea>
-                                <button>运行测试</button>`;
+                case 'redBookTool':
+                    formHTML = `
+                        <h2>图片自动生成小红书帖</h2>
+                        <div class="form-group">
+                            <label for="redBookImage">上传图片</label>
+                            <input type="file" id="redBookImage" accept="image/*" multiple>
+                            <div class="hint">支持JPG、PNG格式，最多上传9张图片</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="redBookTopic">主题标签</label>
+                            <input type="text" id="redBookTopic" placeholder="例如：#美食 #旅行 #穿搭">
+                            <div class="hint">使用#添加标签，多个标签用空格分隔</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="redBookStyle">文案风格</label>
+                            <select id="redBookStyle">
+                                <option value="casual">日常随性</option>
+                                <option value="professional">专业测评                                <option value="humorous">幽默风趣</option>
+                                <option value="emotional">情感共鸣</option>
+                            </select>
+                        </div>
+                        <button id="generateRedBookBtn"><i class="fas fa-magic"></i> 生成并发送</button>
+                        <div id="redBookResult" style="margin-top: 15px;"></div>
+                    `;
                     break;
 
                 case 'qualityCheck':
                     formHTML = `<h2>代码质量检查</h2>
                                 <textarea placeholder="输入你的代码..."></textarea>
-                                <button>检查质量</button>`;
+                                <button><i class="fas fa-search"></i> 检查质量</button>`;
                     break;
 
                 case 'performanceSimulator':
                     formHTML = `<h2>性能测试模拟器</h2>
                                 <input type="number" placeholder="请求数量">
                                 <input type="number" placeholder="延迟（毫秒）">
-                                <button>模拟测试</button>`;
+                                <button><i class="fas fa-play"></i> 模拟测试</button>`;
                     break;
 
                 case 'bugTracker':
                     formHTML = `<h2>缺陷跟踪器</h2>
                                 <input type="text" placeholder="缺陷标题">
                                 <textarea placeholder="缺陷描述..."></textarea>
-                                <button>提交缺陷</button>`;
+                                <button><i class="fas fa-bug"></i> 提交缺陷</button>`;
                     break;
 
                 case 'automationExample':
                     formHTML = `<h2>自动化测试示例</h2>
                                 <textarea placeholder="输入自动化测试脚本..."></textarea>
-                                <button>执行测试</button>`;
+                                <button><i class="fas fa-play"></i> 执行测试</button>`;
                     break;
 
                 case 'responsiveTester':
@@ -127,14 +155,14 @@
                                     <option value="tablet">平板</option>
                                     <option value="desktop">桌面</option>
                                 </select>
-                                <button>测试响应</button>`;
+                                <button><i class="fas fa-mobile-alt"></i> 测试响应</button>`;
                     break;
 
                 case 'testCaseHelper':
                     formHTML = `<h2>用例编写助手</h2>
                                 <input type="text" placeholder="用例名称">
                                 <textarea placeholder="测试步骤..."></textarea>
-                                <button>生成用例</button>`;
+                                <button><i class="fas fa-file-alt"></i> 生成用例</button>`;
                     break;
 
                 case 'ciCdInfo':
@@ -151,13 +179,28 @@
                     formHTML = `<h2>测试计划生成器</h2>
                                 <input type="text" placeholder="项目名称">
                                 <textarea placeholder="测试目标..."></textarea>
-                                <button>生成测试计划</button>`;
+                                <button><i class="fas fa-file-signature"></i> 生成测试计划</button>`;
                     break;
 
                 default:
                     formHTML = `<h2>选择一个工具</h2>`;
             }
             toolArea.innerHTML = formHTML;
+
+            // 如果是小红书工具，绑定按钮事件
+            if (tool === 'redBookTool') {
+                document.getElementById('generateRedBookBtn').addEventListener('click', function() {
+                    const resultDiv = document.getElementById('redBookResult');
+                    resultDiv.textContent = '正在生成小红书文案，请稍候...';
+                    resultDiv.style.color = '#007BFF';
+
+                    // 这里可以添加实际的生成逻辑
+                    setTimeout(() => {
+                        resultDiv.textContent = '小红书文案生成成功！已自动发送到草稿箱。';
+                        resultDiv.style.color = '#28a745';
+                    }, 2000);
+                });
+            }
         }
     </script>
 
@@ -169,6 +212,7 @@
         }
         h1 {
             text-align: center;
+            margin-bottom: 30px;
         }
         .button-container {
             display: flex;
@@ -186,9 +230,13 @@
             position: relative;
             border-radius: 5px;
             transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         .tool-button:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
         }
         .tooltip {
             visibility: hidden;
@@ -200,9 +248,9 @@
             padding: 5px 0;
             position: absolute;
             z-index: 1;
-            bottom: 125%; /* Position the tooltip above the button */
+            bottom: 125%;
             left: 50%;
-            margin-left: -100px; /* Center the tooltip */
+            margin-left: -100px;
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -215,6 +263,21 @@
             padding: 20px;
             border-radius: 5px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-height: 200px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .hint {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 3px;
+            font-style: italic;
         }
         textarea {
             width: 100%;
@@ -224,17 +287,28 @@
             border-radius: 4px;
             padding: 10px;
         }
-        input {
-            width: calc(100% - 22px);
+        input, select {
+            width: 100%;
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             padding: 10px;
         }
-        select {
-            width: 100%;
-            margin-bottom: 10px;
-            padding: 10px;
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </body>

@@ -23,3 +23,5 @@ class PerformanceSimulatorAPI(APIView):
     def post(self, request):
         # 实现性能模拟逻辑
         pass
+
+

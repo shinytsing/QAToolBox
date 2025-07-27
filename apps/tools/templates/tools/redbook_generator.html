@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书爆款文案生成器</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* 页面样式保持与测试用例生成器一致的设计风格 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .hint {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        #imagePreview {
+            margin: 15px 0;
+            max-width: 300px;
+            display: none;
+        }
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/tools/" class="back-link">
+            <i class="fas fa-arrow-left"></i> 返回工具首页
+        </a>
+
+        <h1>小红书爆款文案生成器</h1>
+
+        <div class="form-group">
+            <label for="imageUpload">上传图片</label>
+            <input type="file" id="imageUpload" accept="image/*" />
+            <div class="hint">支持JPG、PNG格式，建议图片清晰明亮</div>
+            <img id="imagePreview" src="" alt="图片预览">
+        </div>
+
+        <div class="form-group">
+            <label for="additionalInfo">补充信息（可选）</label>
+            <textarea id="additionalInfo" placeholder="例如：图片主题、风格偏好、重点突出内容等..."
+                      style="width: 100%; height: 120px; padding: 10px;"></textarea>
+        </div>
+
+        <button class="btn" onclick="generateXiaohongshuContent()">
+            <i class="fas fa-magic"></i> 生成并发送
+        </button>
+
+        <div id="xiaohongshuResult" class="result-area"></div>
+    </div>
+
+    <script>
+        // 图片预览功能
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const preview = document.getElementById('imagePreview');
+            const file = e.target.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+                preview.src = '';
+            }
+        });
+
+        // 生成小红书文案
+        function generateXiaohongshuContent() {
+            const fileInput = document.getElementById('imageUpload');
+            const additionalInfo = document.getElementById('additionalInfo').value;
+            const resultDiv = document.getElementById('xiaohongshuResult');
+
+            // 验证图片是否上传
+            if (!fileInput.files || fileInput.files.length === 0) {
+                resultDiv.innerHTML = '<p style="color: red;">请先上传图片</p>';
+                return;
+            }
+
+            // 显示加载状态
+            resultDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> 正在处理图片并生成文案...</p>';
+
+            // 创建FormData对象
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('additional_info', additionalInfo);
+
+            // 发送请求到后端
+            fetch('/tools/api/redbook-generate/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h3>生成结果</h3>
+                        <p><strong>标题：</strong>${data.title}</p>
+                        <p><strong>文案：</strong>${data.content}</p>
+                        <p><strong>标签：</strong>${data.tags.join(' ')}</p>
+                        <p><strong>发送状态：</strong>${data.published ? '已成功发送到小红书' : '发送失败'}</p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<p style="color: red;">处理失败：${error.message}</p>`;
+            });
+        }
+
+        // 获取CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

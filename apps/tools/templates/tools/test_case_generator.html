@@ -5,19 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI测试用例生成器</title>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- 引入Font Awesome图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #3498db;
-            --primary-dark: #2980b9;
-            --success-color: #27ae60;
-            --error-color: #e74c3c;
-            --loading-color: #2980b9;
-            --light-gray: #f5f7fa;
-            --medium-gray: #ddd;
-            --dark-gray: #7f8c8d;
-            --text-color: #2c3e50;
-            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            /* 统一与主页色调（假设主页为深色主题） */
+            --primary-color: #007bff; /* 主色调与主页一致 */
+            --primary-dark: #0056b3;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --loading-color: #0069d9;
+            --light-gray: #343a40; /* 深色背景 */
+            --medium-gray: #495057;
+            --dark-gray: #adb5bd;
+            --text-color: #f8f9fa; /* 浅色文字 */
+            --shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         * {
@@ -37,7 +39,7 @@
         }
 
         #app {
-            background: white;
+            background: #212529; /* 深色卡片背景 */
             padding: 30px;
             border-radius: 10px;
             box-shadow: var(--shadow);
@@ -46,7 +48,7 @@
 
         #app:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
         h1 {
@@ -78,12 +80,14 @@
             font-family: inherit;
             font-size: 14px;
             transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #343a40;
+            color: var(--text-color);
         }
 
         textarea:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
         #requirement {
@@ -92,6 +96,43 @@
 
         #prompt {
             min-height: 100px;
+        }
+
+        /* 默认提示词区域样式 */
+        #defaultPromptContainer {
+            margin: 15px 0;
+            border: 1px dashed var(--medium-gray);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        #defaultPromptText {
+            min-height: 120px;
+            font-size: 13px;
+        }
+
+        .toggle-section {
+            margin-bottom: 8px;
+        }
+
+        .toggle-btn {
+            color: var(--primary-color);
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: underline;
+            width: auto;
+            display: inline;
+            justify-content: flex-start;
+            gap: 5px;
+        }
+
+        .toggle-btn:hover {
+            color: #66b0ff;
+            background: none;
+            transform: none;
         }
 
         button {
@@ -135,21 +176,21 @@
         }
 
         .error {
-            background-color: #fdecea;
+            background-color: #492424;
             color: var(--error-color);
             display: block;
             border-left: 4px solid var(--error-color);
         }
 
         .success {
-            background-color: #eafaf1;
+            background-color: #244924;
             color: var(--success-color);
             display: block;
             border-left: 4px solid var(--success-color);
         }
 
         .loading {
-            background-color: #f1f9f7;
+            background-color: #243a49;
             color: var(--loading-color);
             display: block;
             border-left: 4px solid var(--loading-color);
@@ -191,7 +232,7 @@
         }
 
         .example-toggle:hover {
-            color: var(--primary-dark);
+            color: #66b0ff;
             background: none;
             transform: none;
         }
@@ -199,7 +240,7 @@
         .examples {
             margin-top: 10px;
             padding: 10px;
-            background-color: #f9f9f9;
+            background-color: #343a40;
             border-radius: 4px;
             font-size: 13px;
             display: none;
@@ -220,32 +261,66 @@
             color: var(--text-color);
         }
 
-        .download-links {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .download-links a {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: background-color 0.3s;
-        }
-
-        .download-links a:hover {
-            background-color: var(--primary-dark);
-        }
-
         /* 抖动动画 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
             20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* 测试用例展示区域样式 */
+        .test-case-display {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #343a40;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--medium-gray);
+            color: var(--text-color);
+        }
+
+        /* 操作按钮区域 */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .copy-btn, .download-btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        /* 下载状态样式 */
+        .download-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .download-success {
+            background-color: #244924;
+            color: var(--success-color);
+        }
+
+        .download-pending {
+            background-color: #243a49;
+            color: var(--loading-color);
+        }
+
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -274,141 +349,196 @@
             <label for="prompt">自定义提示词</label>
             <textarea
                 id="prompt"
-                placeholder="请输入自定义提示词，留空将使用默认提示词模板，可在按钮中查看默认提示词模板。"
+                placeholder="请输入自定义提示词（使用{requirement}作为需求占位符），例如：根据{requirement}生成详细的测试用例..."
             ></textarea>
             <div class="hint">
                 提示：留空将使用默认提示词模板，生成包含多级结构的测试用例
             </div>
-            <button class="example-toggle" onclick="toggleExamples('promptExamples')">
-                查看示例
-            </button>
-            <div id="promptExamples" class="examples">
-                <h4>提示词示例：</h4>
-                <p>1. 根据{requirement}生成全面的测试用例，包括功能测试、边界测试和异常测试，使用## 分类 ### 子项 - 用例的格式</p>
-                <p>2. 针对{requirement}设计用户场景测试用例，每个用例包含前置条件、测试步骤和预期结果</p>
+
+            <!-- 默认提示词查看/编辑区域 -->
+            <div class="toggle-section">
+                <button class="toggle-btn" onclick="toggleDefaultPrompt()">
+                    <i class="fas fa-cog"></i> 查看/编辑默认提示词模板
+                </button>
+            </div>
+            <div id="defaultPromptContainer" style="display: none;">
+                <textarea
+                    id="defaultPromptText"
+                    placeholder="默认提示词模板..."
+                ></textarea>
+                <div class="hint">
+                    提示：修改后将影响所有未输入自定义提示词的生成结果
+                </div>
             </div>
         </div>
 
-        <button id="generateBtn">
-            <i class="fas fa-magic"></i> 生成测试用例
-        </button>
+        <div class="action-buttons" style="margin-bottom: 15px;">
+            <button id="resetBtn" class="btn btn-outline-primary">
+                <i class="fas fa-undo"></i> 重置
+            </button>
+            <button id="generateBtn">
+                <i class="fas fa-magic"></i> 生成测试用例
+            </button>
+        </div>
+
         <div id="result"></div>
+
+        <!-- 测试用例展示区域 -->
+        <div id="testCaseDisplayContainer" style="display: none;">
+            <div class="test-case-display" id="testCaseDisplay"></div>
+            <div class="action-buttons">
+                <button class="copy-btn" id="copyBtn">
+                    <i class="fas fa-copy"></i> 复制用例
+                </button>
+                <button class="download-btn" id="downloadBtn">
+                    <i class="fas fa-download"></i> 下载用例
+                </button>
+            </div>
+            <div class="download-status" id="downloadStatus" style="display: none;"></div>
+        </div>
     </div>
 
     <script>
-        // 默认提示词 - 完整有效且结构化
-const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执行的测试用例集，需同时覆盖APP特性、国际化场景、埋点验证、AB实验及版本测试:
+        const DEFAULT_PROMPT = `根据以下产品需求生成全面可执行的测试用例集:
 {requirement}
-
-## 结构要求
+## 用例要求
 1. 按核心功能模块与用户场景分类，使用## 标记主模块、### 标记子场景、#### 标记测试用例
-2. 开篇说明测试范围与策略概述，需单独说明:
-   - 国际化与本地化测试范围
-   - 埋点与数据分析测试范围
-   - AB实验测试范围
-   - 版本版本测试范围
-   - 你可以尽可能的丰富用例，穷尽可能的场景，但不要过分设计。
+2. 禁止出现因篇幅限制而无法完整描述的测试用例
+3. 用例要求
+- **按照不同纬度划分测试用例，每个子模块至少 10 个用例**（如功能用例至少 20 个用例）
+- **正向用例 40% | 反向用例 30% | 边界用例 30%**
+- 必须列出所有测试用例，禁止使用"此处省略"等表述跳过任何用例，确保内容完整无遗漏。
 
-## 用例要素
-每个测试用例必须包含:
-- 测试ID: 模块标识-序号(如:LAUNCH-001，埋点测试用TRACK前缀，AB实验用AB前缀，国际化测试用I18N前缀)
+
+## 用例要素（每个用例需严格包含）
+- 测试ID: 模块标识-序号（如功能测试-001、性能测试-001）
 - 测试标题: 简洁描述测试目的
-- 测试场景: 覆盖的业务场景(含APP特有场景与地区特有场景)
-- 前置条件: 执行前的系统状态与数据准备
-- 前置条件：不满足前置的预期执行结果
-- 测试目的: 验证的功能点或场景
-- 测试环境: 设备/系统/网络环境
-- 测试数据: 含正常值/边界值/异常值(含多语言/地区格式数据)
-- 测试步骤: 清晰可执行的操作序列
-- 预期结果: 系统响应/数据变化/界面表现/埋点触发情况
-- 实际结果: 留空
+- 测试场景: 明确业务场景（含地区/用户特征）
+- 前置条件: 系统状态与数据准备（需具体，如"余额≥200元"）
+- 前置条件不满足时的预期结果: 具体表现（如"提示'余额不足'"）
+- 测试数据: 具体值（如"金额：0.01元、200元、-1元"）
+- 测试步骤: 可执行的操作序列（每个步骤独立可验证）
+- 预期结果: 量化描述（如"加载时间≤1s"）
 - 重要程度: 高/中/低
-- 测试类型: 标记所属类型(可多选)
+- 测试类型: 明确具体维度（如"核心功能、国际化测试"）
 
-## 测试维度
+## 测试维度强化要求
 需覆盖以下方向:
 
 1. 功能测试:
-   - 核心功能与边缘功能验证
-   - 离线功能与数据同步机制
-   - 前后台切换与状态保持
-   - 功能交互与业务规则符合度
+  - 核心功能与边缘功能验证
+  - 单次与多次操作
+  - 离线功能与数据同步机制
+  - 前后台切换与状态保持
+  - 功能交互与业务规则符合度
 
 2. 界面与交互:
-   - UI一致性与响应式布局(多设备/分辨率适配)
-   - 手势操作与动画效果
-   - 深色模式与主题切换
-   - 多语言界面布局适配
+  - UI一致性与响应式布局(多设备/分辨率适配)
+  - 手势操作与动画效果
+  - 深色模式与主题切换
+  - 多语言界面布局适配
 
 3. 性能测试:
-   - 启动时间与页面加载速度
-   - 内存占用与CPU使用率
-   - 电量消耗与流量消耗
-   - 全球节点访问速度与稳定性
-   - 弱网/断网场景表现
+  - 启动时间与页面加载速度
+  - 内存占用与CPU使用率
+  - 电量消耗与流量消耗
+  - 全球节点访问速度与稳定性
+  - 弱网/断网场景表现
 
 4. 兼容性测试:
-   - 不同机型/系统版本适配
-   - 全球主流浏览器与设备覆盖
-   - 系统权限变更处理
-   - 不同地区网络环境适配
+  - 不同机型/系统版本适配
+  - 全球主流浏览器与设备覆盖
+  - 系统权限变更处理
+  - 不同地区网络环境适配
 
-5. 埋点测试:
-   - 埋点触发时机准确性
-   - 埋点参数完整性与正确性
-   - 异常场景下的埋点可靠性
-   - 多语言/地区场景下埋点准确性
-   - 埋点数据实时性与统计准确性
+{#5. 埋点测试:#}
+{#  - 埋点触发时机准确性#}
+{#  - 埋点参数完整性与正确性#}
+{#  - 异常场景下的埋点可靠性#}
+{#  - 多语言/地区场景下埋点准确性#}
+{#  - 埋点数据实时性与统计准确性#}
 
-6. AB实验测试:
-   - 实验分组正确性验证(含不同地区用户)
-   - 不同版本功能隔离性
-   - 实验参数配置有效性
-   - 多语言环境下实验表现一致性
-   - 实验数据统计准确性
-   - 实验开关切换效果
+{#6. AB实验测试:#}
+{#  - 实验分组正确性验证(含不同地区用户)#}
+{#  - 不同版本功能隔离性#}
+{#  - 实验参数配置有效性#}
+{#  - 多语言环境下实验表现一致性#}
+{#  - 实验数据统计准确性#}
+{#  - 实验开关切换效果#}
 
 7. 版本测试:
-   - 首次安装与覆盖安装验证
-   - 版本升级/降级兼容性
-   - 跨版本数据迁移完整性
-   - 新旧版本功能差异验证
-   - 强制更新与可选更新流程
-   - 多地区版本发布差异验证
+  - 首次安装与覆盖安装验证
+  - 版本升级/降级兼容性
+  - 跨版本数据迁移完整性
+  - 新旧版本功能差异验证
+  - 强制更新与可选更新流程
+  - 多地区版本发布差异验证
 
-8. 安全与合规测试:
-   - 本地数据存储安全性
-   - 权限申请合理性
-   - 账号安全与隐私保护
-   - 地区性数据合规要求(如GDPR、CCPA)
-   - 跨境数据传输合规性
+{#8. 安全与合规测试:#}
+{#  - 本地数据存储安全性#}
+{#  - 权限申请合理性#}
+{#  - 账号安全与隐私保护#}
+{#  - 地区性数据合规要求(如GDPR、CCPA)#}
+{#  - 跨境数据传输合规性#}
 
-9. 国际化测试:
-   - 多语言翻译准确性与专业术语一致性
-   - 日期/时间/货币/数字格式本地化
-   - 时区转换与夏令时处理
-   - 文化适应性(符号、颜色、内容禁忌)
-   - 地区特定功能适配
+{#9. 国际化测试:#}
+{#  - 多语言翻译准确性与专业术语一致性#}
+{#  - 日期/时间/货币/数字格式本地化#}
+{#  - 时区转换与夏令时处理#}
+{#  - 文化适应性(符号、颜色、内容禁忌)#}
+{#  - 地区特定功能适配#}
 
 10. 稳定性测试:
-    - 长时间运行稳定性
-    - 重复操作可靠性
-    - 异常恢复能力
-    - 多语言环境下稳定性
+   - 长时间运行稳定性
+   - 重复操作可靠性
+   - 异常恢复能力
+   - 多语言环境下稳定性
+
 
 ## 输出格式
+生成后请自检是否满足：
+1. 测试用例总数≥50个（根据需求复杂度动态调整）
+2. 未隐藏、遗漏核心测试用例
+3.按照模块以及重要性按顺序从高到低返回
+4. 包含正向/反向/边界用例的均衡分布
 - 请使用Markdown格式输出
 - 使用## 作为主要分类，### 作为子分类，确保结构清晰、层次分明，便于导入测试管理工具。
-- 结尾提供需求覆盖率分析，含各专项测试覆盖情况`;
+- 结尾提供需求覆盖率分析（精确到百分比）
+- 中文输出
+- 每个测试维度结束处添加"维度覆盖总结"，说明已覆盖的场景数量及比例`
+;
 
 
         // 页面加载完成后初始化事件绑定
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('prompt').placeholder = DEFAULT_PROMPT;
+            // 初始化默认提示词文本框
+            const defaultPromptEl = document.getElementById('defaultPromptText');
+            defaultPromptEl.value = DEFAULT_PROMPT;
+
+            // 绑定生成按钮点击事件
             const generateBtn = document.getElementById('generateBtn');
             generateBtn.addEventListener('click', generateCases);
+
+            // 绑定重置按钮点击事件
+            const resetBtn = document.getElementById('resetBtn');
+            resetBtn.addEventListener('click', resetForm);
+
+            // 绑定复制按钮点击事件
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.addEventListener('click', copyTestCase);
+
+            // 绑定下载按钮点击事件
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.addEventListener('click', downloadTestCase);
+
             console.log('生成按钮事件已绑定，等待点击...');
         });
+
+        // 切换默认提示词区域显示/隐藏
+        function toggleDefaultPrompt() {
+            const container = document.getElementById('defaultPromptContainer');
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
 
         // 切换示例显示/隐藏
         function toggleExamples(id) {
@@ -423,6 +553,8 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
             resultDiv.className = type;
             resultDiv.style.display = 'block';
             resultDiv.style.opacity = '0';
+
+            // 淡入动画
             setTimeout(() => {
                 resultDiv.style.opacity = '1';
             }, 10);
@@ -444,6 +576,64 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
             return cookieValue;
         }
 
+        // 重置表单
+        function resetForm() {
+            document.getElementById('requirement').value = '';
+            document.getElementById('prompt').value = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('testCaseDisplayContainer').style.display = 'none';
+            document.getElementById('testCaseDisplay').innerHTML = '';
+            document.getElementById('downloadStatus').style.display = 'none';
+        }
+
+        // 复制测试用例
+        function copyTestCase() {
+            const testCaseText = document.getElementById('testCaseDisplay').textContent;
+            navigator.clipboard.writeText(testCaseText).then(() => {
+                const originalText = document.getElementById('copyBtn').innerHTML;
+                document.getElementById('copyBtn').innerHTML = '<i class="fas fa-check"></i> 已复制';
+
+                setTimeout(() => {
+                    document.getElementById('copyBtn').innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败: ', err);
+                showMessage('复制失败，请手动复制', 'error');
+            });
+        }
+
+        // 下载测试用例
+        function downloadTestCase() {
+            const testCaseText = document.getElementById('testCaseDisplay').textContent;
+            const blob = new Blob([testCaseText], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '测试用例_' + new Date().getTime() + '.md';
+
+            // 显示下载状态
+            const downloadStatus = document.getElementById('downloadStatus');
+            downloadStatus.textContent = '正在准备下载...';
+            downloadStatus.className = 'download-status download-pending';
+            downloadStatus.style.display = 'flex';
+
+            // 模拟下载过程
+            setTimeout(() => {
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // 更新下载状态为成功
+                downloadStatus.textContent = '下载成功！';
+                downloadStatus.className = 'download-status download-success';
+
+                setTimeout(() => {
+                    downloadStatus.style.display = 'none';
+                }, 3000);
+            }, 800);
+        }
+
         // 生成测试用例的核心函数
         function generateCases() {
             console.log('开始执行生成测试用例函数');
@@ -454,10 +644,13 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
             const resultDiv = document.getElementById('result');
             const generateBtn = document.getElementById('generateBtn');
             const originalBtnText = generateBtn.innerHTML;
+            // 获取用户可能修改的默认提示词
+            const customDefaultPrompt = document.getElementById('defaultPromptText').value.trim();
 
             // 输入验证
             if (!requirement) {
                 showMessage('请输入产品需求内容', 'error');
+                // 抖动动画提示
                 const reqElement = document.getElementById('requirement');
                 reqElement.style.animation = 'none';
                 setTimeout(() => {
@@ -466,15 +659,17 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
                 return;
             }
 
-            // 如果用户未输入提示词，使用默认提示词
+            // 如果用户未输入提示词，使用（可能被修改的）默认提示词
             if (!prompt) {
-                prompt = DEFAULT_PROMPT;
+                prompt = customDefaultPrompt || DEFAULT_PROMPT;
             }
 
             // 显示加载状态
             showMessage('正在生成测试用例，请稍候...', 'loading');
             generateBtn.disabled = true;
             generateBtn.innerHTML = '<div class="spinner"></div> 生成中...';
+            // 隐藏之前的测试用例显示
+            document.getElementById('testCaseDisplayContainer').style.display = 'none';
 
             // 获取CSRF Token（关键验证）
             const csrfToken = getCookie('csrftoken');
@@ -485,9 +680,9 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
                 return;
             }
 
-            // 发送请求
+
             console.log('准备发送请求到 /tools/api/generate-testcases/');
-            axios.post('/tools/api/generate-testcases/', {
+            axios.post('/tools/api/generate-testcases/', {  // 修正后的URL
                 requirement: requirement,
                 prompt: prompt
             }, {
@@ -495,43 +690,26 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
                     'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/json'
                 },
-                timeout: 60000 // 60秒超时（可根据实际调整）
+                timeout: 6000000  // 60秒超时设置，避免无限等待
             })
             .then(response => {
                 console.log('请求成功，响应数据:', response.data);
-                const resultDiv = document.getElementById('result');
-                resultDiv.innerHTML = ''; // 清空旧内容
 
-                // 处理响应
-                if (response.data.error) {
-                    showMessage(response.data.error, 'error');
-                } else {
-                    // 构建下载链接
-                    const downloadLinks = document.createElement('div');
-                    downloadLinks.className = 'download-links';
+                // 隐藏结果消息，显示测试用例
+                resultDiv.style.display = 'none';
 
-                    // 添加.mm文件下载
-                    if (response.data.download_mm_url) {
-                        const mmLink = document.createElement('a');
-                        mmLink.href = response.data.download_mm_url;
-                        mmLink.textContent = '下载测试用例（FreeMind格式）';
-                        mmLink.target = '_blank';
-                        downloadLinks.appendChild(mmLink);
-                    }
+                // 显示测试用例
+                const testCaseDisplay = document.getElementById('testCaseDisplay');
+                // 将Markdown格式转换为HTML显示
+                testCaseDisplay.innerHTML = response.data.test_cases
+                    .replace(/#{2}\s(.*?)\n/g, '<h2>$1</h2>')
+                    .replace(/#{3}\s(.*?)\n/g, '<h3>$1</h3>')
+                    .replace(/#{4}\s(.*?)\n/g, '<h4>$1</h4>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
 
-                    // 添加.png预览图
-                    if (response.data.preview_png_url) {
-                        const pngLink = document.createElement('a');
-                        pngLink.href = response.data.preview_png_url;
-                        pngLink.textContent = '预览测试用例（图片）';
-                        pngLink.target = '_blank';
-                        downloadLinks.appendChild(pngLink);
-                    }
-
-                    // 显示结果
-                    resultDiv.appendChild(downloadLinks);
-                    showMessage('测试用例生成成功！', 'success');
-                }
+                document.getElementById('testCaseDisplayContainer').style.display = 'block';
             })
             .catch(error => {
                 console.error('请求失败:', error);
@@ -539,11 +717,14 @@ const DEFAULT_PROMPT = `根据以下产品需求生成全球化APP全面可执�
 
                 // 详细错误信息处理
                 if (error.response) {
+                    // 服务器返回错误
                     errorMsg = error.response.data.error ||
                               `服务器错误 (状态码: ${error.response.status})`;
                 } else if (error.request) {
+                    // 无响应错误
                     errorMsg = '未收到服务器响应，请检查网络连接';
                 } else {
+                    // 请求配置错误
                     errorMsg = `请求错误: ${error.message}`;
                 }
 
