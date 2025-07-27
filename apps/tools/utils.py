@@ -19,7 +19,8 @@ except (ValueError, KeyError):
 
 class DeepSeekClient:
     API_BASE_URL = "https://api.deepseek.com/v1/chat/completions"
-    TIMEOUT = 600  # 延长超时时间（秒），适应    MAX_RETRY_ATTEMPTS = 3  # 最大续生成次数
+    TIMEOUT = 600  # 延长超时时间（秒），适应长内容生成
+    MAX_RETRY_ATTEMPTS = 3  # 最大续生成次数 - 修复类属性定义位置
 
     def __init__(self):
         self.api_key = DEEPSEEK_API_KEY
@@ -55,10 +56,11 @@ class DeepSeekClient:
         batch_note = f"\n注意：这是批量生成的第 {batch_id + 1}/{total_batches} 部分，请专注当前片段生成完整内容。" if is_batch else ""
 
         full_prompt += f"""
-        请尽可能详细地生成测试用例，每个功能模块至少包含10个测试用例，
-        覆盖正常场景、边界场景和异常场景。对于复杂功能，应提供更全面的测试覆盖。
-        确保每个测试用例的步骤清晰完整，预期结果具体明确。
-        不要担心输出内容过长，请提供完整全面的测试覆盖。
+        请严格按照以下要求生成测试用例：
+        1. 每个功能模块至少包含10个测试用例，禁止使用"此处省略"等任何形式的省略表述
+        2. 必须覆盖正常场景、边界场景和异常场景，复杂功能需提供更全面覆盖
+        3. 每个用例需包含清晰的步骤和具体的预期结果，确保可执行性
+        4. 输出内容需完整无遗漏，不要担心内容长度
         {batch_note}
         """
 
@@ -66,7 +68,7 @@ class DeepSeekClient:
             "model": "deepseek-reasoner",  # 可替换为更大容量模型
             "messages": [
                 {"role": "system",
-                 "content": "你是专业测试工程师，生成测试用例时需包含场景和具体用例，用Markdown格式输出。请提供详尽的测试覆盖，不要遗漏重要场景。"},
+                 "content": "你是专业测试工程师，必须生成完整测试用例集，禁止省略任何内容。每个用例需详细描述测试场景、前置条件、操作步骤和预期结果，使用Markdown格式输出。"},
                 {"role": "user", "content": full_prompt}
             ],
             "temperature": 0.4,
@@ -117,7 +119,7 @@ class DeepSeekClient:
         current_content = initial_result['choices'][0]['message']['content']
         # 构建对话历史
         message_history = [
-            {"role": "system", "content": "你是专业测试工程师，生成测试用例时需包含场景和具体用例，用Markdown格式输出"},
+            {"role": "system", "content": "你是专业测试工程师，生成测试用例时需包含场景和具体用例，用Markdown格式输出，禁止省略任何内容"},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": current_content}
         ]
