@@ -37,7 +37,7 @@ class GenerateTestCasesAPI(APIView):
             # 1. 获取并验证请求参数
             requirement = request.data.get('requirement', '').strip()
             user_prompt = request.data.get('prompt', '').strip()
-
+            print(f"用户 {request.user.username} 请求生成测试用例，需求: {requirement}, 提示: {user_prompt}")
             logger.info(
                 f"用户 {request.user.username} 发起测试用例生成请求，"
                 f"需求长度: {len(requirement)}，"
@@ -81,7 +81,8 @@ class GenerateTestCasesAPI(APIView):
                     {'error': f'AI接口调用失败: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-
+            print('==============deepseek response=========')
+            print(raw_response)
             # 3. 解析API响应为结构化数据
             test_cases = self._parse_test_cases(raw_response)
 

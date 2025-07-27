@@ -52,14 +52,14 @@ class DeepSeekClient:
         """
 
         payload = {
-            "model": "deepseek-chat",  # 如果有更大的模型可以替换，如"deepseek-vl"
+            "model": "deepseek-reasoner",  # 如果有更大的模型可以替换，如"deepseek-vl"
             "messages": [
                 {"role": "system",
                  "content": "你是专业测试工程师，生成测试用例时需包含场景和具体用例，用Markdown格式输出。请提供详尽的测试覆盖，不要遗漏重要场景。"},
                 {"role": "user", "content": full_prompt}
             ],
             "temperature": 0.7,
-            "max_tokens": 8192,  # 大幅增加最大令牌数（根据模型支持的最大值调整）
+            "max_tokens": 64192,  # 大幅增加最大令牌数（根据模型支持的最大值调整）
             "stream": False
         }
 
@@ -101,10 +101,10 @@ class DeepSeekClient:
 
         # 继续生成
         payload = {
-            "model": "deepseek-chat",
+            "model": "deepseek-reasoner",
             "messages": message_history,
             "temperature": 0.7,
-            "max_tokens": 8192,
+            "max_tokens": 64192,
             "stream": False
         }
 
