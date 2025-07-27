@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>测试工程师工具</title>
+    <title>AIGC工具</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <!-- 引入Font Awesome图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <h1>我的测试工程师工具</h1>
+    <h1>我的AIGC工具</h1>
 
     <div class="button-container">
         <!-- 生成AI测试用例 -->
@@ -20,7 +20,7 @@
         </button>
 
         <!-- 生成小红书爆款文案 -->
-        <button class="tool-button" onclick="showTool('redBookTool')">
+        <button class="tool-button" onclick="window.location.href='/tools/redbook-generator/'">
             生成小红书爆款文案
             <span class="tooltip">上传你的图片，AI自动生成爆款文案并自动发送</span>
         </button>
@@ -38,9 +38,9 @@
         </button>
 
         <!-- 性能测试模拟器 -->
-        <button class="tool-button" onclick="showTool('performanceSimulator')">
-            性能测试模拟器
-            <span class="tooltip">模拟性能测试结果</span>
+        <button class="tool-button" onclick="showTool('loveSimulator')">
+            姻缘模拟器
+            <span class="tooltip">姻缘模拟结果</span>
         </button>
 
         <!-- 缺陷跟踪器 -->
@@ -96,29 +96,9 @@
                     break;
 
                 case 'redBookTool':
-                    formHTML = `
-                        <h2>图片自动生成小红书帖</h2>
-                        <div class="form-group">
-                            <label for="redBookImage">上传图片</label>
-                            <input type="file" id="redBookImage" accept="image/*" multiple>
-                            <div class="hint">支持JPG、PNG格式，最多上传9张图片</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="redBookTopic">主题标签</label>
-                            <input type="text" id="redBookTopic" placeholder="例如：#美食 #旅行 #穿搭">
-                            <div class="hint">使用#添加标签，多个标签用空格分隔</div>
-                        </div>
-                        <div class="form-group">
-                            <label for="redBookStyle">文案风格</label>
-                            <select id="redBookStyle">
-                                <option value="casual">日常随性</option>
-                                <option value="professional">专业测评                                <option value="humorous">幽默风趣</option>
-                                <option value="emotional">情感共鸣</option>
-                            </select>
-                        </div>
-                        <button id="generateRedBookBtn"><i class="fas fa-magic"></i> 生成并发送</button>
-                        <div id="redBookResult" style="margin-top: 15px;"></div>
-                    `;
+                    formHTML = `<h2>一键生成发送小红书爆款文案</h2>
+                                <textarea placeholder="ai帮你生成小红书爆款文案..."></textarea>
+                                <button><i class="fas fa-magic"></i> AI生成测试用例</button>`;
                     break;
 
                 case 'qualityCheck':
@@ -127,8 +107,8 @@
                                 <button><i class="fas fa-search"></i> 检查质量</button>`;
                     break;
 
-                case 'performanceSimulator':
-                    formHTML = `<h2>性能测试模拟器</h2>
+                case 'loveSimulator':
+                    formHTML = `<h2>姻缘模拟器</h2>
                                 <input type="number" placeholder="请求数量">
                                 <input type="number" placeholder="延迟（毫秒）">
                                 <button><i class="fas fa-play"></i> 模拟测试</button>`;
@@ -185,23 +165,9 @@
                 default:
                     formHTML = `<h2>选择一个工具</h2>`;
             }
-            toolArea.innerHTML = formHTML;
+            toolArea.innerHTML = formHTML;}
 
-            // 如果是小红书工具，绑定按钮事件
-            if (tool === 'redBookTool') {
-                document.getElementById('generateRedBookBtn').addEventListener('click', function() {
-                    const resultDiv = document.getElementById('redBookResult');
-                    resultDiv.textContent = '正在生成小红书文案，请稍候...';
-                    resultDiv.style.color = '#007BFF';
 
-                    // 这里可以添加实际的生成逻辑
-                    setTimeout(() => {
-                        resultDiv.textContent = '小红书文案生成成功！已自动发送到草稿箱。';
-                        resultDiv.style.color = '#28a745';
-                    }, 2000);
-                });
-            }
-        }
     </script>
 
     <style>
@@ -229,7 +195,7 @@
             cursor: pointer;
             position: relative;
             border-radius: 5px;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.3s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
