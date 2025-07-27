@@ -57,14 +57,14 @@ class GenerateTestCasesAPI(APIView):
             truncated_req = requirement[:20].strip() if requirement else "default"
 
             # 2. 清理文件名中的特殊字符（替换为下划线）
-            invalid_chars = r'[\\/*?:"<>| ]'  # 包含空格，统一替换
-            cleaned_req = re.sub(invalid_chars, '_', truncated_req)
+            invalid_chars = r'[\\:*?"<>|]'
+            cleaned_req = re.sub(invalid_chars, '', truncated_req)
 
             # 3. 生成时间戳（使用下划线连接，不含空格）
-            current_time = datetime.now().strftime("%Y%m%d_%H%M%S")  # 格式：20250726_153045
+            current_time = datetime.now().strftime("%Y%m%d_%H_%M_%S")  # 格式：20250726_153045
 
             # 4. 组合文件名并添加.mm扩展名
-            outfile_name = f"{cleaned_req}_{current_time}.mm"
+            outfile_name = f"{current_time}.mm"
 
             # 如果用户未提供prompt，使用默认模板
             final_prompt = user_prompt if user_prompt else self.DEFAULT_PROMPT.format(requirement=requirement)
