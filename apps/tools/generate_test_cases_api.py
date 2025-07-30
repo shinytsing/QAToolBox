@@ -177,6 +177,7 @@ class GenerateTestCasesAPI(APIView):
                 'download_url': f'/tools/download/{outfile_name}',
                 'log_id': log.id,
                 'raw_response': raw_response,
+                'test_cases': raw_response,  # 添加前端期望的字段
                 'is_batch': is_batch,
                 'batch_id': batch_id,
                 'total_batches': total_batches,

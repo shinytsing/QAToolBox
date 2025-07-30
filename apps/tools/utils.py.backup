@@ -37,7 +37,7 @@ except (ValueError, KeyError):
 class DeepSeekClient:
     API_BASE_URL = "https://api.deepseek.com/v1/chat/completions"
     TIMEOUT = 600  # 延长超时时间（秒），适应长内容生成
-    MAX_RETRY_ATTEMPTS = 3  # 最大续生成次数
+    MAX_RETRY_ATTEMPTS = 3  # 最大续生成次数 - 修复类属性定义位置
 
     def __init__(self):
         self.api_key = DEEPSEEK_API_KEY
@@ -145,7 +145,7 @@ API_RATE_LIMIT=10/minute
         """智能续生成，确保内容完整性"""
         # 超过最大重试次数则返回已生成内容
         if retry_count >= self.MAX_RETRY_ATTEMPTS:
-            return initial_result['choices'][0]['message']['content']
+            return initial_result['choices'][0']['message']['content']
 
         # 获取已生成的内容
         current_content = initial_result['choices'][0]['message']['content']
@@ -200,6 +200,67 @@ API_RATE_LIMIT=10/minute
             # 续生成失败时返回已生成内容
             return current_content
 
+    def generate_redbook_content(self, prompt: str) -> str:
+        """调用DeepSeek接口生成小红书文案（支持图像描述）"""
+        payload = {
+            "model": "deepseek-vl",  # 假设使用支持图像的模型
+            "messages": [
+                {"role": "system", "content": "你是小红书内容专家，擅长根据图片生成吸引人的标题和文案。"},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.8,
+            "max_tokens": 2048,
+            "stream": False
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        try:
+            response = requests.post(
+                self.API_BASE_URL,
+                json=payload,
+                headers=headers,
+                timeout=self.TIMEOUT
+            )
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content']
+        except Exception as e:
+            raise Exception(f"图像识别/文案生成失败: {str(e)}")
+
+
+    def _is_content_complete(self, content: str) -> bool:
+        """检查生成的内容是否完整"""
+        if not content:
+            return False
+        
+        # 检查是否以完整的测试用例结尾
+        lines = content.strip().split('\n')
+        if not lines:
+            return False
+        
+        # 检查最后几行是否包含完整的测试用例结构
+        last_lines = lines[-3:] if len(lines) >= 3 else lines
+        
+        # 如果最后一行是空行或者以不完整的句子结尾，认为不完整
+        if not last_lines[-1].strip():
+            return False
+        
+        # 检查是否包含预期的结束标记
+        content_lower = content.lower()
+        incomplete_indicators = [
+            '未完待续', '待续', '...', '等等', '省略', '此处省略',
+            'to be continued', '未完', '待补充'
+        ]
+        
+        for indicator in incomplete_indicators:
+            if indicator in content_lower:
+                return False
+        
+        return True
+
     def _generate_continuation_prompt(self, current_content: str, original_prompt: str) -> str:
         """生成智能续生成提示词"""
         # 提取当前内容的最后部分作为上下文
@@ -235,36 +296,6 @@ API_RATE_LIMIT=10/minute
         
         return continuation_prompt.strip()
 
-    def generate_redbook_content(self, prompt: str) -> str:
-        """调用DeepSeek接口生成小红书文案（支持图像描述）"""
-        payload = {
-            "model": "deepseek-vl",  # 假设使用支持图像的模型
-            "messages": [
-                {"role": "system", "content": "你是小红书内容专家，擅长根据图片生成吸引人的标题和文案。"},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.8,
-            "max_tokens": 2048,
-            "stream": False
-        }
-
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-
-        try:
-            response = requests.post(
-                self.API_BASE_URL,
-                json=payload,
-                headers=headers,
-                timeout=self.TIMEOUT
-            )
-            response.raise_for_status()
-            return response.json()['choices'][0]['message']['content']
-        except Exception as e:
-            raise Exception(f"图像识别/文案生成失败: {str(e)}")
-
 
 # 针对视图的用户级限频装饰器（1分钟最多3次请求）
 def user_ratelimit(view_func):
@@ -272,4 +303,4 @@ def user_ratelimit(view_func):
     def wrapper(request, *args, **kwargs):
         return view_func(request, *args, **kwargs)
 
-    return wrapper 
+    return wrapper

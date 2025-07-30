@@ -687,8 +687,11 @@
 
                 // 显示测试用例
                 const testCaseDisplay = document.getElementById('testCaseDisplay');
+                // 安全检查并获取测试用例内容
+                const testCasesContent = response.data.test_cases || response.data.raw_response || '未获取到测试用例内容';
+                
                 // 将Markdown格式转换为HTML显示
-                testCaseDisplay.innerHTML = response.data.test_cases
+                testCaseDisplay.innerHTML = testCasesContent
                     .replace(/#{2}\s(.*?)\n/g, '<h2>$1</h2>')
                     .replace(/#{3}\s(.*?)\n/g, '<h3>$1</h3>')
                     .replace(/#{4}\s(.*?)\n/g, '<h4>$1</h4>')
