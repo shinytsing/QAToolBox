@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}留言墙{% endblock %}
+
+{% block content %}
+<div class="geek-card" style="max-width:900px;margin:2rem auto;">
+  <div class="geek-title">文章列表</div>
+  <ul style="padding-left:0;list-style:none;">
+    {% for article in articles %}
+      <li style="margin-bottom:1.2rem;">
+        <a href="{% url 'article_detail' article.id %}" style="font-size:1.1rem;color:var(--primary);text-decoration:underline;">{{ article.title }}</a>
+        <span style="color:#aaa;font-size:0.95rem;"> - {{ article.created_at|date:"Y-m-d H:i" }}</span>
+      </li>
+    {% empty %}
+      <li>暂无文章</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+
+
+

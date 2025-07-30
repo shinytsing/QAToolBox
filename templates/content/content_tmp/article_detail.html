@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+<div class="geek-card" style="max-width:900px;margin:2rem auto;">
+  <div class="geek-title">{{ article.title }}</div>
+  <div class="geek-terminal" style="margin-bottom:1.2rem;">作者：{{ article.author }} | 创建于：{{ article.created_at|date:"Y-m-d H:i" }}</div>
+  <div style="margin-bottom:2rem;">{{ article.content|linebreaks }}</div>
+  <a href="{% url 'article_list' %}" class="geek-auth-link">返回列表</a>
+</div>
+{% endblock %}

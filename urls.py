@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from apps.QAToolBox.views import home_view, tool_view
+from views import home_view, tool_view
 from django.http import HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
@@ -26,7 +26,6 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('admin/', admin.site.urls),
     # 工具主页面路由
-    path('tools/', tool_view, name='tools'),
     # 工具子路由（包含测试用例生成器等）
     path('tools/', include('apps.tools.urls')),
     path('users/', include('apps.users.urls')),

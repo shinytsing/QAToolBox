@@ -5,7 +5,24 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from django_ratelimit.decorators import ratelimit
 
 # 从环境变量获取配置
+# 确保在模块导入时加载环境变量
+from dotenv import load_dotenv
+import os
+
+# 尝试加载 .env 文件
+env_paths = [
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'),
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'),
+    os.path.join(os.path.dirname(__file__), '.env'),
+]
+
+for env_path in env_paths:
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+        break
+
 DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
+
 API_RATE_LIMIT = os.getenv('API_RATE_LIMIT', '10/minute')
 
 # 解析速率限制配置
@@ -25,7 +42,18 @@ class DeepSeekClient:
     def __init__(self):
         self.api_key = DEEPSEEK_API_KEY
         if not self.api_key:
-            raise ValueError("DEEPSEEK_API_KEY 未在环境变量中设置，请检查 .env.py 文件")
+            raise ValueError("""
+DEEPSEEK_API_KEY 未在环境变量中设置！
+
+解决方案：
+1. 在项目根目录创建 .env 文件
+2. 在 .env 文件中添加：DEEPSEEK_API_KEY=your_actual_api_key_here
+3. 或者直接在系统环境变量中设置 DEEPSEEK_API_KEY
+
+示例 .env 文件内容：
+DEEPSEEK_API_KEY=sk-your-actual-api-key-here
+API_RATE_LIMIT=10/minute
+            """.strip())
 
     @sleep_and_retry
     @limits(calls=int(RATE_LIMIT_CALLS), period=int(RATE_LIMIT_PERIOD))

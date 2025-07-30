@@ -1,317 +1,202 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小红书爆款文案生成器</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <style>
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .upload-section {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            padding: 40px 20px;
-            text-align: center;
-            margin: 30px 0;
-            cursor: pointer;
-            transition: border-color 0.3s;
-        }
-        .upload-section:hover {
-            border-color: #007BFF;
-        }
-        .upload-section i {
-            font-size: 48px;
-            color: #007BFF;
-            margin-bottom: 15px;
-        }
-        #imageUpload {
-            display: none;
-        }
-        #previewContainer {
-            margin: 20px 0;
-            display: none;
-        }
-        #imagePreview {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .button-group {
-            text-align: center;
-            margin: 20px 0;
-        }
-        button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        .result-section {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            display: none;
-        }
-        .result-section h3 {
-            margin-top: 0;
-            color: #28a745;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #007BFF;
-            display: none;
-        }
-        .error {
-            color: #dc3545;
-            padding: 15px;
-            background-color: #fff5f5;
-            border-radius: 5px;
-            margin: 20px 0;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>小红书爆款文案生成器</h1>
-
-        <!-- 上传区域 -->
-        <div class="upload-section" id="uploadArea" onclick="document.getElementById('imageUpload').click()">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>点击或拖拽图片到此处上传</p>
-            <p class="hint">支持JPG、PNG格式，最大20MB</p>
-            <input type="file" id="imageUpload" accept="image/*">
-        </div>
-
-        <!-- 预览区域 -->
-        <div id="previewContainer">
-            <p>预览图：</p>
-            <img id="imagePreview" alt="图片预览">
-        </div>
-
-        <!-- 错误提示 -->
-        <div class="error" id="errorMsg"></div>
-
-        <!-- 加载提示 -->
-        <div class="loading" id="loadingMsg">
-            <i class="fas fa-spinner fa-spin"></i> 正在处理图片并生成文案...
-        </div>
-
-        <!-- 按钮区域 -->
-        <div class="button-group">
-            <button id="generateBtn">
-                <i class="fas fa-magic"></i> 生成文案并发布
-            </button>
-        </div>
-
-        <!-- 结果展示区域 -->
-        <div class="result-section" id="resultSection">
-            <h3>生成结果</h3>
-            <div class="result-content">
-                <h4 id="generatedTitle"></h4>
-                <div id="generatedContent"></div>
-                <div class="tags" id="generatedTags"></div>
-            </div>
-            <div class="status" id="publishStatus"></div>
-        </div>
+{% block content %}
+<div class="geek-card" style="max-width: 800px; margin: 2rem auto;">
+  <div class="geek-title" style="text-align:center;">小红书爆款文案生成器</div>
+  <div class="geek-terminal" style="margin-bottom:2rem;">上传图片，AI自动识别并生成爆款文案</div>
+  <div class="upload-section" id="uploadArea" onclick="document.getElementById('imageUpload').click()">
+    <i class="fas fa-cloud-upload-alt"></i>
+    <p>点击或拖拽图片到此处上传</p>
+    <p class="hint">支持JPG、PNG格式，最大20MB</p>
+    <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+  </div>
+  <div id="previewContainer" style="display:none;">
+    <p>预览图：</p>
+    <img id="imagePreview" alt="图片预览" style="max-width:100%;max-height:400px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+  </div>
+  <div class="error" id="errorMsg" style="display:none;"></div>
+  <div class="loading" id="loadingMsg" style="display:none;"><i class="fas fa-spinner fa-spin"></i> 正在处理图片并生成文案...</div>
+  <div class="button-group" style="text-align:center;margin:20px 0;">
+    <button id="generateBtn" class="geek-auth-btn" style="max-width:220px;"><i class="fas fa-magic"></i> 生成文案并发布</button>
+  </div>
+  <div class="result-section" id="resultSection" style="display:none;">
+    <h3 style="color:var(--primary);margin-top:0;">生成结果</h3>
+    <div class="result-content">
+      <h4 id="generatedTitle"></h4>
+      <div id="generatedContent"></div>
+      <div class="tags" id="generatedTags"></div>
     </div>
+    <div class="status" id="publishStatus"></div>
+  </div>
+</div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+// 获取DOM元素
+const imageUpload = document.getElementById('imageUpload');
+const imagePreview = document.getElementById('imagePreview');
+const previewContainer = document.getElementById('previewContainer');
+const generateBtn = document.getElementById('generateBtn');
+const resultSection = document.getElementById('resultSection');
+const generatedTitle = document.getElementById('generatedTitle');
+const generatedContent = document.getElementById('generatedContent');
+const generatedTags = document.getElementById('generatedTags');
+const publishStatus = document.getElementById('publishStatus');
+const loadingMsg = document.getElementById('loadingMsg');
+const errorMsg = document.getElementById('errorMsg');
 
-    <script>
-        // 获取DOM元素
-        const imageUpload = document.getElementById('imageUpload');
-        const imagePreview = document.getElementById('imagePreview');
-        const previewContainer = document.getElementById('previewContainer');
-        const generateBtn = document.getElementById('generateBtn');
-        const resultSection = document.getElementById('resultSection');
-        const generatedTitle = document.getElementById('generatedTitle');
-        const generatedContent = document.getElementById('generatedContent');
-        const generatedTags = document.getElementById('generatedTags');
-        const publishStatus = document.getElementById('publishStatus');
-        const loadingMsg = document.getElementById('loadingMsg');
-        const errorMsg = document.getElementById('errorMsg');
+// 预览上传的图片
+imageUpload.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // 验证文件类型
+        const validTypes = ['image/jpeg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            showError('请上传JPG或PNG格式的图片');
+            return;
+        }
 
-        // 预览上传的图片
-        imageUpload.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // 验证文件类型
-                const validTypes = ['image/jpeg', 'image/png'];
-                if (!validTypes.includes(file.type)) {
-                    showError('请上传JPG或PNG格式的图片');
-                    return;
-                }
+        // 验证文件大小
+        if (file.size > 20 * 1024 * 1024) { // 20MB
+            showError('图片大小不能超过20MB');
+            return;
+        }
 
-                // 验证文件大小
-                if (file.size > 20 * 1024 * 1024) { // 20MB
-                    showError('图片大小不能超过20MB');
-                    return;
-                }
+        // 显示预览
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            previewContainer.style.display = 'block';
+            errorMsg.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+});
 
-                // 显示预览
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    previewContainer.style.display = 'block';
-                    errorMsg.style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+// 生成按钮点击事件
+generateBtn.addEventListener('click', function() {
+    const file = imageUpload.files[0];
+    if (!file) {
+        showError('请先上传图片');
+        return;
+    }
 
-        // 生成按钮点击事件
-        generateBtn.addEventListener('click', function() {
-            const file = imageUpload.files[0];
-            if (!file) {
-                showError('请先上传图片');
-                return;
-            }
+    // 准备FormData
+    const formData = new FormData();
+    formData.append('image', file);
 
-            // 准备FormData
-            const formData = new FormData();
-            formData.append('image', file);
+    // 显示加载状态
+    showLoading();
+    generateBtn.disabled = true;
 
-            // 显示加载状态
-            showLoading();
-            generateBtn.disabled = true;
+    // 发送请求到后端
+    axios.post('/tools/api/redbook-generate/', formData, {
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'multipart/form-data'
+        },
+        timeout: 60000 // 超时时间60秒
+    })
+    .then(response => {
+        // 处理成功响应
+        const data = response.data;
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
 
-            // 发送请求到后端
-            axios.post('/tools/api/redbook-generate/', formData, {
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'multipart/form-data'
-                },
-                timeout: 60000 // 超时时间60秒
-            })
-            .then(response => {
-                // 处理成功响应
-                const data = response.data;
-                if (data.error) {
-                    showError(data.error);
-                    return;
-                }
+        // 显示结果
+        generatedTitle.textContent = data.title;
+        generatedContent.innerHTML = data.content.replace(/\n/g, '<br>');
 
-                // 显示结果
-                generatedTitle.textContent = data.title;
-                generatedContent.innerHTML = data.content.replace(/\n/g, '<br>');
-
-                // 处理标签
-                generatedTags.innerHTML = '';
-                if (data.tags && data.tags.length > 0) {
-                    data.tags.forEach(tag => {
-                        const tagElement = document.createElement('span');
-                        tagElement.className = 'tag';
-                        tagElement.textContent = `#${tag}`;
-                        generatedTags.appendChild(tagElement);
-                    });
-                }
-
-                // 显示发布状态
-                publishStatus.textContent = data.publish_result || '发布状态：已生成文案';
-
-                // 显示结果区域
-                showResult();
-            })
-            .catch(error => {
-                // 处理错误
-                const errorMessage = error.response?.data?.error || '生成失败，请稍后重试';
-                showError(errorMessage);
-                console.error('Error:', error);
-            })
-            .finally(() => {
-                // 恢复按钮状态
-                generateBtn.disabled = false;
-                loadingMsg.style.display = 'none';
+        // 处理标签
+        generatedTags.innerHTML = '';
+        if (data.tags && data.tags.length > 0) {
+            data.tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'tag';
+                tagElement.textContent = `#${tag}`;
+                generatedTags.appendChild(tagElement);
             });
-        });
-
-        // 辅助函数：显示加载状态
-        function showLoading() {
-            loadingMsg.style.display = 'block';
-            resultSection.style.display = 'none';
-            errorMsg.style.display = 'none';
         }
 
-        // 辅助函数：显示结果
-        function showResult() {
-            resultSection.style.display = 'block';
-            loadingMsg.style.display = 'none';
-            errorMsg.style.display = 'none';
-        }
+        // 显示发布状态
+        publishStatus.textContent = data.publish_result || '发布状态：已生成文案';
 
-        // 辅助函数：显示错误信息
-        function showError(message) {
-            errorMsg.textContent = message;
-            errorMsg.style.display = 'block';
-            resultSection.style.display = 'none';
-            loadingMsg.style.display = 'none';
-        }
+        // 显示结果区域
+        showResult();
+    })
+    .catch(error => {
+        // 处理错误
+        const errorMessage = error.response?.data?.error || '生成失败，请稍后重试';
+        showError(errorMessage);
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        generateBtn.disabled = false;
+        loadingMsg.style.display = 'none';
+    });
+});
 
-        // 辅助函数：获取CSRF Token
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
+// 辅助函数：显示加载状态
+function showLoading() {
+    loadingMsg.style.display = 'block';
+    resultSection.style.display = 'none';
+    errorMsg.style.display = 'none';
+}
+
+// 辅助函数：显示结果
+function showResult() {
+    resultSection.style.display = 'block';
+    loadingMsg.style.display = 'none';
+    errorMsg.style.display = 'none';
+}
+
+// 辅助函数：显示错误信息
+function showError(message) {
+    errorMsg.textContent = message;
+    errorMsg.style.display = 'block';
+    resultSection.style.display = 'none';
+    loadingMsg.style.display = 'none';
+}
+
+// 辅助函数：获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
-            return cookieValue;
         }
+    }
+    return cookieValue;
+}
 
-        // 支持拖拽上传（可选增强功能）
-        const uploadArea = document.getElementById('uploadArea');
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadArea.style.borderColor = '#007BFF';
-        });
+// 支持拖拽上传（可选增强功能）
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#007BFF';
+});
 
-        uploadArea.addEventListener('dragleave', function() {
-            uploadArea.style.borderColor = '#ccc';
-        });
+uploadArea.addEventListener('dragleave', function() {
+    uploadArea.style.borderColor = '#ccc';
+});
 
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadArea.style.borderColor = '#ccc';
-            if (e.dataTransfer.files.length) {
-                imageUpload.files = e.dataTransfer.files;
-                // 触发change事件以显示预览
-                const event = new Event('change');
-                imageUpload.dispatchEvent(event);
-            }
-        });
-    </script>
-</body>
-</html>
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#ccc';
+    if (e.dataTransfer.files.length) {
+        imageUpload.files = e.dataTransfer.files;
+        // 触发change事件以显示预览
+        const event = new Event('change');
+        imageUpload.dispatchEvent(event);
+    }
+});
+</script>
+{% endblock %}

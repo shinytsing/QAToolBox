@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form.instance.pk|yesno:"编辑,新建" }}{% endblock %}
+
+{% block content %}
+<div class="geek-card" style="max-width:600px;margin:2rem auto;">
+  <div class="geek-title">{{ form_title|default:'编辑/新建文章' }}</div>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="geek-auth-btn" style="margin-top:1rem;">保存</button>
+  </form>
+  <a href="{% url 'article_list' %}" class="geek-auth-link">返回列表</a>
+</div>
+{% endblock %}

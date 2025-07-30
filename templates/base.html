@@ -5,12 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}热爱可抵岁月漫长{% endblock %}</title>
+    <title>{% block title %}QATOOLBOX{% endblock %}</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'geek.css' %}">
 
     <style>
         * {
@@ -95,29 +97,41 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(24, 28, 32, 0.85);
+            backdrop-filter: blur(10px) saturate(1.2);
+            z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
             opacity: 0;
             transition: opacity 1s ease-in-out;
-            pointer-events: none; /* 允许点击透过 */
+            pointer-events: none;
         }
         .welcome-overlay.active {
             opacity: 1;
-            pointer-events: auto; /* 允许点击 */
+            pointer-events: auto;
         }
         .welcome-content {
             text-align: center;
-            color: #fff;
+            color: var(--primary);
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(35, 39, 46, 0.92);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,255,231,0.10), 0 2px 8px rgba(0,0,0,0.25);
+            padding: 3rem 2.5rem;
+            max-width: 420px;
+            border: 1.5px solid rgba(0,255,231,0.08);
         }
         .welcome-content h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
+            font-size: 2.5rem;
+            margin-bottom: 1.2rem;
+            color: var(--primary);
+            letter-spacing: 2px;
         }
         .welcome-content p {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+            color: #b0eaff;
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -139,14 +153,14 @@
     <div class="welcome-overlay" id="welcome-overlay">
         <div class="welcome-content">
             <h1>欢迎来到</h1>
-            <p>热爱可抵岁月漫长</p>
+            <p>QATOOLBOX</p>
         </div>
     </div>
     {% endif %}
 
     <header>
         <nav class="navbar navbar-expand-lg navbar-light">
-            <a class="navbar-brand" href="{% url 'home' %}">热爱可抵岁月漫长</a>
+            <a class="navbar-brand" href="{% url 'home' %}">QATOOLBOX</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -179,14 +193,7 @@
         </div>
     </div>
 
-    <footer>
-        <p>版权所有 &copy; {{ current_year }} 热爱可抵岁月漫长.cn</p>
-        <p>社交媒体链接:
-            <a href="#" class="text-white"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="text-white"><i class="fab fa-twitter"></i></a>
-            <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
-        </p>
-    </footer>
+    <!-- 页脚已移除版权和社交链接 -->
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
@@ -196,7 +203,6 @@
         window.onload = function () {
             var today = new Date();
             var day = today.getDay();
-
             var videoSources = [
                 '{% static "video/sunday.mp4" %}',
                 '{% static "video/monday.mp4" %}',
@@ -206,7 +212,6 @@
                 '{% static "video/friday.mp4" %}',
                 '{% static "video/saturday.mp4" %}'
             ];
-
             var audioSources = [
                 '{% static "audio/sunday.mp3" %}',
                 '{% static "audio/monday.mp3" %}',
@@ -216,26 +221,35 @@
                 '{% static "audio/friday.mp3" %}',
                 '{% static "audio/saturday.mp3" %}'
             ];
-
             document.getElementById('video-source').src = videoSources[day];
             document.getElementById('audio-source').src = audioSources[day];
-
             document.getElementById('background-video').load();
             document.getElementById('background-audio').load();
-
             // 仅在 home 页显示欢迎界面
             {% if request.path == '/' %}
             setTimeout(function () {
                 var welcomeOverlay = document.getElementById('welcome-overlay');
                 welcomeOverlay.classList.add('active');
-
                 setTimeout(function () {
                     welcomeOverlay.classList.remove('active');
                 }, 2000);
             }, 5000);
             {% endif %}
+            // 监听视频加载失败，自动切换到爬取音乐
+            document.getElementById('background-video').addEventListener('error', function() {
+                fetch('/tools/api/get-music/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.music_url) {
+                            var audio = document.getElementById('background-audio');
+                            var audioSource = document.getElementById('audio-source');
+                            audioSource.src = data.music_url;
+                            audio.load();
+                            audio.play();
+                        }
+                    });
+            });
         };
-
         function stopMedia() {
             document.getElementById('background-video').pause();
             document.getElementById('background-audio').pause();

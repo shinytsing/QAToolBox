@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}删除确认{% endblock %}
+
+{% block content %}
+<div class="geek-card" style="max-width:500px;margin:2rem auto;">
+  <div class="geek-title">确认删除</div>
+  <div class="geek-terminal" style="margin-bottom:1.2rem;">你确定要删除这篇文章吗？</div>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="geek-auth-btn" style="margin-right:1rem;">确认删除</button>
+    <a href="{% url 'article_list' %}" class="geek-auth-link">取消</a>
+  </form>
+</div>
+{% endblock %}

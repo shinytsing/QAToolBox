@@ -335,14 +335,7 @@
                 placeholder="请详细描述产品需求，例如：用户登录功能，支持手机号和邮箱登录，包含记住密码选项..."
                 required
             ></textarea>
-            <button class="example-toggle" onclick="toggleExamples('requirementExamples')">
-                查看示例
-            </button>
-            <div id="requirementExamples" class="examples">
-                <h4>需求示例：</h4>
-                <p>1. 用户注册功能：支持手机号注册，需输入验证码，密码长度至少8位，包含字母和数字</p>
-                <p>2. 购物车功能：可添加商品、修改数量、删除商品，支持勾选商品结算</p>
-            </div>
+            <!-- 删除查看示例按钮及示例内容 -->
         </div>
 
         <div class="form-group">
@@ -538,12 +531,6 @@
         function toggleDefaultPrompt() {
             const container = document.getElementById('defaultPromptContainer');
             container.style.display = container.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // 切换示例显示/隐藏
-        function toggleExamples(id) {
-            const examples = document.getElementById(id);
-            examples.classList.toggle('active');
         }
 
         // 显示消息提示

@@ -18,12 +18,22 @@ from dotenv import load_dotenv
 from apps.tools.utils import API_RATE_LIMIT
 
 # 加载.env文件
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env.py'))
+# 尝试从多个位置加载环境变量文件
+env_paths = [
+    os.path.join(os.path.dirname(__file__), '.env'),
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'),
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'),
+]
+
+for env_path in env_paths:
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+        break
 
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # 项目根目录
+BASE_DIR = Path(__file__).resolve().parent  # 项目根目录
 
 # 将apps目录添加到Python路径
 sys.path.append(str(BASE_DIR / 'apps'))
@@ -53,9 +63,9 @@ INSTALLED_APPS = [
     'django.contrib.sites',  # 用于CAPTCHA
     'rest_framework',  # DRF框架
     # 自定义应用
-    'users',
-    'content',
-    'tools',
+    'apps.users',
+    'apps.content',
+    'apps.tools',
 ]
 
 MIDDLEWARE = [
@@ -68,7 +78,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'apps.QAToolBox.urls'  # 修正为项目实际的URL配置路径
+ROOT_URLCONF = 'urls'  # 修正为项目实际的URL配置路径
 
 TEMPLATES = [
     {
@@ -86,7 +96,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'apps.QAToolBox.wsgi.application'
+WSGI_APPLICATION = 'wsgi.application'
 
 
 # Database
@@ -138,7 +148,7 @@ STATIC_URL = '/static/'
 
 # 静态文件源目录（开发环境）
 STATICFILES_DIRS = [
-    BASE_DIR / 'src/static',  # 与实际静态文件目录对应
+    BASE_DIR / 'src/static',
 ]
 
 # 收集静态文件的目录（生产环境）
