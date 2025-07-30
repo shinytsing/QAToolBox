@@ -165,6 +165,36 @@ class DeepSeekClient:
             # 续生成失败时返回已生成内容
             return current_content
 
+    def generate_redbook_content(self, prompt: str) -> str:
+        """调用DeepSeek接口生成小红书文案（支持图像描述）"""
+        payload = {
+            "model": "deepseek-vl",  # 假设使用支持图像的模型
+            "messages": [
+                {"role": "system", "content": "你是小红书内容专家，擅长根据图片生成吸引人的标题和文案。"},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.8,
+            "max_tokens": 2048,
+            "stream": False
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+
+        try:
+            response = requests.post(
+                self.API_BASE_URL,
+                json=payload,
+                headers=headers,
+                timeout=self.TIMEOUT
+            )
+            response.raise_for_status()
+            return response.json()['choices'][0]['message']['content']
+        except Exception as e:
+            raise Exception(f"图像识别/文案生成失败: {str(e)}")
+
 
 # 针对视图的用户级限频装饰器（1分钟最多3次请求）
 def user_ratelimit(view_func):
