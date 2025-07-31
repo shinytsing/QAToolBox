@@ -1,18 +1,35 @@
 # forms.py
-from captcha.fields import CaptchaField
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from .models import Profile
 
+class UserRegistrationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    phone = forms.CharField(max_length=20, required=False, help_text='手机号码（可选）')
+    
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'phone', 'password1', 'password2')
+
+class UserLoginForm(forms.Form):
+    username = forms.CharField(label='用户名')
+    password = forms.CharField(label='密码', widget=forms.PasswordInput)
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['bio', 'phone']
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4}),
+            'phone': forms.TextInput(attrs={'placeholder': '请输入手机号码'})
+        }
 
 class UserEditForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email']  # 根据需要设置字段
-
-
+        fields = ('username', 'email')
 
 class LoginForm(forms.Form):
-    username = forms.CharField(max_length=150)
-    password = forms.CharField(widget=forms.PasswordInput)
-    captcha = forms.CharField(max_length=6)  # 添加长度限制，以适应验证码要求
+    username = forms.CharField(label='用户名')
+    password = forms.CharField(label='密码', widget=forms.PasswordInput)

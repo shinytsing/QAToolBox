@@ -1,24 +1,160 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
+{% csrf_token %}
+<style>
+/* 主要上传区域样式 */
+.main-upload-area {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 20px 40px;
+  border: 3px dashed #007bff;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.upload-button:hover {
+  border-color: #0056b3;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.upload-button:active {
+  transform: translateY(0);
+}
+
+/* 图片列表样式 */
+.image-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.image-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.image-item:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-right: 15px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-info {
+  flex: 1;
+}
+
+.image-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.image-size {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.image-index {
+  color: #007bff;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.image-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.remove-image-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.remove-image-btn:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+</style>
+
 <div class="geek-card" style="max-width: 800px; margin: 2rem auto;">
   <div class="geek-title" style="text-align:center;">小红书爆款文案生成器</div>
   <div class="geek-terminal" style="margin-bottom:2rem;">上传图片，AI自动识别并生成爆款文案</div>
-  <div class="upload-section" id="uploadArea" onclick="document.getElementById('imageUpload').click()">
-    <i class="fas fa-cloud-upload-alt"></i>
-    <p>点击或拖拽图片到此处上传</p>
-    <p class="hint">支持JPG、PNG格式，最大20MB</p>
-    <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+  
+  <div class="image-upload-container">
+    <div class="image-counter" id="imageCounter" style="text-align: center; margin-bottom: 10px; color: #666; font-size: 14px;">
+      已选择 0/9 张图片
+    </div>
+    
+    <div class="upload-status" id="uploadStatus" style="text-align: center; margin-bottom: 10px; color: #007bff; font-size: 12px; display: none;">
+      <i class="fas fa-spinner fa-spin"></i> 正在处理图片...
+    </div>
+    
+    <!-- 主要上传入口 -->
+    <div class="main-upload-area" id="mainUploadArea">
+      <div class="upload-button" onclick="document.getElementById('imageUpload').click()">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #007bff; margin-bottom: 10px; display: block;"></i>
+        <div style="font-size: 18px; font-weight: 600; color: #007bff; margin-bottom: 5px;">点击上传图片</div>
+        <div style="font-size: 14px; color: #666;">或拖拽图片到此处</div>
+      </div>
+      <div class="upload-tip" style="font-size: 12px; color: #999; margin-top: 10px;">
+        支持 JPG、PNG、WebP、HEIC 格式，最大 100MB，最多9张图片
+      </div>
+    </div>
+    
+    <!-- 图片列表 -->
+    <div class="image-list" id="imageList">
+      <!-- 图片将在这里显示 -->
+    </div>
+    
+    <input type="file" id="imageUpload" accept="image/*,.heic,.heif" multiple style="display:none;">
   </div>
-  <div id="previewContainer" style="display:none;">
-    <p>预览图：</p>
-    <img id="imagePreview" alt="图片预览" style="max-width:100%;max-height:400px;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-  </div>
+  
   <div class="error" id="errorMsg" style="display:none;"></div>
   <div class="loading" id="loadingMsg" style="display:none;"><i class="fas fa-spinner fa-spin"></i> 正在处理图片并生成文案...</div>
+  
   <div class="button-group" style="text-align:center;margin:20px 0;">
-    <button id="generateBtn" class="geek-auth-btn" style="max-width:220px;"><i class="fas fa-magic"></i> 生成文案并发布</button>
+    <button id="clearBtn" class="geek-auth-btn" style="background-color: #6c757d; margin-right: 10px; max-width:120px;">
+      <i class="fas fa-trash"></i> 清除图片
+    </button>
+    <button id="generateBtn" class="geek-auth-btn" style="max-width:220px;">
+      <i class="fas fa-magic"></i> 生成文案并发布
+    </button>
   </div>
+  
   <div class="result-section" id="resultSection" style="display:none;">
     <h3 style="color:var(--primary);margin-top:0;">生成结果</h3>
     <div class="result-content">
@@ -26,118 +162,524 @@
       <div id="generatedContent"></div>
       <div class="tags" id="generatedTags"></div>
     </div>
+    
+    <!-- 小红书登录和发布区域 -->
+    <div class="redbook-section" style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #fff5f5 0%, #f8f9fa 100%); border-radius: 12px; border: 2px solid #ff2442;">
+      <h4 style="color: #ff2442; margin-top: 0; text-align: center; font-size: 20px;">
+        📱 发布到小红书
+      </h4>
+      
+      <div class="login-section" style="text-align: center; margin-bottom: 20px;">
+        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+          使用小红书App扫描二维码快速登录
+        </p>
+        <a id="redbookLoginBtn" href="#" target="_blank" class="geek-auth-btn" style="display: inline-block; margin: 10px 0; background-color: #ff2442; font-size: 16px; padding: 12px 24px;">
+          <i class="fas fa-qrcode"></i> 电脑端扫码登录
+        </a>
+      </div>
+      
+      <div class="publish-guide" id="publishGuide" style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ff2442;">
+        <h5 style="color: #ff2442; margin-top: 0;">🚀 快速发布步骤：</h5>
+        <ol style="text-align: left; padding-left: 20px; color: #333;">
+          <li>点击上方按钮，打开小红书电脑端登录页面</li>
+          <li>使用小红书App扫描页面上的二维码</li>
+          <li>登录成功后，点击"直接发布到小红书"</li>
+          <li>文案和标签会自动填充到编辑器中</li>
+          <li>上传您的图片，点击发布即可</li>
+        </ol>
+      </div>
+      
+      <div class="copy-section" style="margin-top: 15px; text-align: center;">
+        <button id="copyAllBtn" class="geek-auth-btn" style="background-color: #28a745; margin: 0 10px;">
+          <i class="fas fa-copy"></i> 一键复制文案
+        </button>
+        <div id="copyStatus" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+      </div>
+    </div>
+    
     <div class="status" id="publishStatus"></div>
   </div>
 </div>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
 <script>
-// 获取DOM元素
-const imageUpload = document.getElementById('imageUpload');
-const imagePreview = document.getElementById('imagePreview');
-const previewContainer = document.getElementById('previewContainer');
-const generateBtn = document.getElementById('generateBtn');
-const resultSection = document.getElementById('resultSection');
-const generatedTitle = document.getElementById('generatedTitle');
-const generatedContent = document.getElementById('generatedContent');
-const generatedTags = document.getElementById('generatedTags');
-const publishStatus = document.getElementById('publishStatus');
-const loadingMsg = document.getElementById('loadingMsg');
-const errorMsg = document.getElementById('errorMsg');
+// 全局变量
+let uploadedImages = [];
+let generatedData = null;
 
-// 预览上传的图片
-imageUpload.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        // 验证文件类型
-        const validTypes = ['image/jpeg', 'image/png'];
-        if (!validTypes.includes(file.type)) {
-            showError('请上传JPG或PNG格式的图片');
-            return;
-        }
+// DOM元素
+let imageUpload, imageList, imageCounter, uploadStatus, mainUploadArea, generateBtn, resultSection, generatedTitle, generatedContent, generatedTags, publishStatus, loadingMsg, errorMsg, redbookLoginBtn, copyAllBtn, copyStatus, clearBtn;
 
-        // 验证文件大小
-        if (file.size > 20 * 1024 * 1024) { // 20MB
-            showError('图片大小不能超过20MB');
-            return;
-        }
-
-        // 显示预览
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            imagePreview.src = e.target.result;
-            previewContainer.style.display = 'block';
-            errorMsg.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-    }
+// 等待DOM加载完成
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取DOM元素
+    imageUpload = document.getElementById('imageUpload');
+    imageList = document.getElementById('imageList');
+    imageCounter = document.getElementById('imageCounter');
+    uploadStatus = document.getElementById('uploadStatus');
+    mainUploadArea = document.getElementById('mainUploadArea');
+    generateBtn = document.getElementById('generateBtn');
+    resultSection = document.getElementById('resultSection');
+    generatedTitle = document.getElementById('generatedTitle');
+    generatedContent = document.getElementById('generatedContent');
+    generatedTags = document.getElementById('generatedTags');
+    publishStatus = document.getElementById('publishStatus');
+    loadingMsg = document.getElementById('loadingMsg');
+    errorMsg = document.getElementById('errorMsg');
+    redbookLoginBtn = document.getElementById('redbookLoginBtn');
+    copyAllBtn = document.getElementById('copyAllBtn');
+    copyStatus = document.getElementById('copyStatus');
+    clearBtn = document.getElementById('clearBtn');
+    
+    // 初始化图片列表
+    updateImageList();
+    
+    // 绑定事件监听器
+    bindEventListeners();
 });
 
-// 生成按钮点击事件
-generateBtn.addEventListener('click', function() {
-    const file = imageUpload.files[0];
-    if (!file) {
-        showError('请先上传图片');
+// 文件大小格式化函数
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// 更新图片计数
+function updateImageCounter() {
+    imageCounter.textContent = `已选择 ${uploadedImages.length}/9 张图片`;
+    if (uploadedImages.length >= 9) {
+        imageCounter.style.color = '#dc3545';
+        imageCounter.textContent += ' (已达上限)';
+    } else {
+        imageCounter.style.color = '#666';
+    }
+}
+
+// 更新图片列表显示
+function updateImageList() {
+    console.log('更新图片列表，当前图片数量:', uploadedImages.length);
+    imageList.innerHTML = '';
+    
+    if (uploadedImages.length === 0) {
+        // 不显示任何内容，保持空白
+        updateImageCounter();
         return;
     }
+    
+    // 显示每张图片
+    uploadedImages.forEach((imageData, index) => {
+        console.log(`创建图片项 ${index}:`, imageData.file.name);
+        const imageItem = document.createElement('div');
+        imageItem.className = 'image-item';
+        imageItem.innerHTML = `
+            <img src="${imageData.preview}" alt="图片 ${index + 1}" class="image-preview">
+            <div class="image-info">
+                <div class="image-name">${imageData.file.name}</div>
+                <div class="image-size">${formatFileSize(imageData.size)}</div>
+                <div class="image-index">第 ${index + 1} 张图片</div>
+            </div>
+            <div class="image-actions">
+                <button class="remove-image-btn" onclick="removeImage(${index})">
+                    <i class="fas fa-trash"></i> 删除
+                </button>
+            </div>
+        `;
+        imageList.appendChild(imageItem);
+    });
+    
+    updateImageCounter();
+}
 
-    // 准备FormData
-    const formData = new FormData();
-    formData.append('image', file);
+// 移除图片
+function removeImage(index) {
+    console.log(`删除图片 ${index}:`, uploadedImages[index].file.name);
+    uploadedImages.splice(index, 1);
+    updateImageList();
+    errorMsg.style.display = 'none';
+    resultSection.style.display = 'none'; // 清除结果，因为图片已改变
+}
 
-    // 显示加载状态
-    showLoading();
-    generateBtn.disabled = true;
+// 按顺序处理文件
+function processFilesSequentially(files) {
+    console.log(`开始处理 ${files.length} 个文件`);
+    
+    // 显示上传状态
+    uploadStatus.style.display = 'block';
+    uploadStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在处理 ${files.length} 张图片...`;
+    
+    let processedCount = 0;
+    
+    files.forEach((file, index) => {
+        console.log(`开始处理文件 ${index + 1}/${files.length}:`, file.name);
+        
+        // 如果是HEIC文件，需要特殊处理
+        if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+            console.log('检测到HEIC文件，进行转换处理:', file.name);
+            processHeicFile(file, index, processedCount, files.length);
+        } else {
+            // 普通图片文件处理
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                console.log('文件读取完成:', file.name);
+                uploadedImages.push({
+                    file: file,
+                    preview: e.target.result,
+                    size: file.size
+                });
+                
+                processedCount++;
+                console.log(`已处理 ${processedCount}/${files.length} 张图片`);
+                
+                // 更新状态
+                uploadStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在处理图片 (${processedCount}/${files.length})`;
+                
+                // 立即更新图片列表显示
+                updateImageList();
+                
+                // 如果所有文件都处理完成
+                if (processedCount === files.length) {
+                    console.log('所有文件处理完成');
+                    uploadStatus.style.display = 'none';
+                    console.log('最终图片数组:', uploadedImages.map(img => img.file.name));
+                    
+                    // 确保input被清空，以便下次选择
+                    setTimeout(() => {
+                        imageUpload.value = '';
+                    }, 100);
+                }
+            };
+            
+            reader.onerror = function() {
+                console.error('文件读取失败:', file.name);
+                showError(`文件 ${file.name} 读取失败`);
+                processedCount++;
+                
+                if (processedCount === files.length) {
+                    uploadStatus.style.display = 'none';
+                    // 确保input被清空
+                    setTimeout(() => {
+                        imageUpload.value = '';
+                    }, 100);
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+}
 
-    // 发送请求到后端
-    axios.post('/tools/api/redbook-generate/', formData, {
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'multipart/form-data'
-        },
-        timeout: 60000 // 超时时间60秒
-    })
-    .then(response => {
-        // 处理成功响应
-        const data = response.data;
-        if (data.error) {
-            showError(data.error);
+// 处理HEIC文件的函数
+function processHeicFile(file, index, processedCount, totalFiles) {
+    console.log('开始处理HEIC文件:', file.name, '文件类型:', file.type);
+    
+    // 对于HEIC文件，直接添加到列表中，不尝试预览
+    // 因为浏览器可能无法直接预览HEIC文件
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 200;
+    canvas.height = 200;
+    
+    // 绘制HEIC文件占位符
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, 200, 200);
+    ctx.fillStyle = '#007bff';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('HEIC文件', 100, 90);
+    ctx.fillText('已上传', 100, 110);
+    
+    const preview = canvas.toDataURL('image/png');
+    
+    uploadedImages.push({
+        file: file,
+        preview: preview,
+        size: file.size,
+        isHeic: true
+    });
+    
+    processedCount++;
+    console.log(`已处理 ${processedCount}/${totalFiles} 张图片`);
+    
+    // 更新状态
+    uploadStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在处理图片 (${processedCount}/${totalFiles})`;
+    
+    // 立即更新图片列表显示
+    updateImageList();
+    
+    // 如果所有文件都处理完成
+    if (processedCount === totalFiles) {
+        console.log('所有文件处理完成');
+        uploadStatus.style.display = 'none';
+        console.log('最终图片数组:', uploadedImages.map(img => img.file.name));
+        
+        // 确保input被清空，以便下次选择
+        setTimeout(() => {
+            imageUpload.value = '';
+        }, 100);
+    }
+}
+
+// 绑定事件监听器
+function bindEventListeners() {
+    // 文件上传事件
+    imageUpload.addEventListener('change', function(e) {
+        console.log('文件上传事件触发');
+        const files = Array.from(e.target.files);
+        console.log('选择的文件数量:', files.length);
+        
+        if (files.length === 0) return;
+        
+        // 验证文件类型和大小
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+        for (let file of files) {
+            if (!validTypes.includes(file.type)) {
+                showError('请上传JPG、PNG、WebP或HEIC格式的图片');
+                return;
+            }
+            if (file.size > 100 * 1024 * 1024) { // 100MB
+                showError(`图片 ${file.name} 大小不能超过100MB`);
+                return;
+            }
+        }
+
+        // 检查是否超过9张图片限制
+        if (uploadedImages.length + files.length > 9) {
+            showError('最多只能上传9张图片');
             return;
         }
 
-        // 显示结果
-        generatedTitle.textContent = data.title;
-        generatedContent.innerHTML = data.content.replace(/\n/g, '<br>');
+        // 按顺序处理每个文件
+        processFilesSequentially(files);
+        
+        errorMsg.style.display = 'none';
+        // 清空input，让用户可以继续选择文件
+        imageUpload.value = '';
+    });
 
-        // 处理标签
-        generatedTags.innerHTML = '';
-        if (data.tags && data.tags.length > 0) {
-            data.tags.forEach(tag => {
-                const tagElement = document.createElement('span');
-                tagElement.className = 'tag';
-                tagElement.textContent = `#${tag}`;
-                generatedTags.appendChild(tagElement);
-            });
+    // 生成按钮点击事件
+    generateBtn.addEventListener('click', function() {
+        if (uploadedImages.length === 0) {
+            showError('请先上传图片，然后点击生成文案');
+            return;
         }
 
-        // 显示发布状态
-        publishStatus.textContent = data.publish_result || '发布状态：已生成文案';
+        // 准备FormData
+        const formData = new FormData();
+        uploadedImages.forEach(imageData => {
+            formData.append('images', imageData.file);
+        });
 
-        // 显示结果区域
-        showResult();
-    })
-    .catch(error => {
-        // 处理错误
-        const errorMessage = error.response?.data?.error || '生成失败，请稍后重试';
-        showError(errorMessage);
-        console.error('Error:', error);
-    })
-    .finally(() => {
-        // 恢复按钮状态
-        generateBtn.disabled = false;
-        loadingMsg.style.display = 'none';
+        // 显示加载状态
+        showLoading();
+        generateBtn.disabled = true;
+
+        // 发送请求到后端
+        axios.post('/tools/api/redbook-generate/', formData, {
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'multipart/form-data'
+            },
+            timeout: 60000 // 超时时间60秒
+        })
+        .then(response => {
+            // 处理成功响应
+            const data = response.data;
+            if (data.error) {
+                showError(data.error);
+                return;
+            }
+
+            // 保存生成的数据
+            generatedData = data;
+            
+            // 显示结果
+            generatedTitle.textContent = data.title;
+            generatedContent.innerHTML = data.content.replace(/\n/g, '<br>');
+
+            // 处理标签
+            generatedTags.innerHTML = '';
+            if (data.tags && data.tags.length > 0) {
+                data.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'tag';
+                    tagElement.textContent = tag;
+                    generatedTags.appendChild(tagElement);
+                });
+            }
+
+            // 设置小红书登录和发布链接
+            if (data.redbook_login_url) {
+                redbookLoginBtn.href = data.redbook_login_url;
+                
+                // 根据设备类型设置不同的按钮文本和行为
+                if (data.is_mobile) {
+                    redbookLoginBtn.innerHTML = '<i class="fas fa-mobile-alt"></i> 打开小红书App';
+                    redbookLoginBtn.title = '直接打开小红书App并填充文案';
+                    redbookLoginBtn.style.backgroundColor = '#ff2442';
+                    
+                    // 添加下载App按钮
+                    const downloadBtn = document.createElement('a');
+                    downloadBtn.href = 'https://www.xiaohongshu.com/download';
+                    downloadBtn.target = '_blank';
+                    downloadBtn.className = 'geek-auth-btn';
+                    downloadBtn.style.cssText = 'background-color: #28a745; margin-left: 10px; display: inline-block; text-decoration: none;';
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> 下载小红书App';
+                    downloadBtn.title = '下载小红书App';
+                    
+                    const loginSection = redbookLoginBtn.parentNode;
+                    loginSection.appendChild(downloadBtn);
+                } else {
+                    redbookLoginBtn.innerHTML = '<i class="fas fa-qrcode"></i> 电脑端扫码登录';
+                    redbookLoginBtn.title = '扫码登录后自动跳转到发布页面';
+                }
+            }
+            
+            // 添加智能发布按钮
+            if (data.redbook_publish_url) {
+                const publishBtn = document.createElement('a');
+                publishBtn.href = data.redbook_publish_url;
+                publishBtn.target = '_blank';
+                publishBtn.className = 'geek-auth-btn';
+                publishBtn.style.cssText = 'background-color: #ff2442; margin-left: 10px; display: inline-block; text-decoration: none;';
+                
+                if (data.is_mobile) {
+                    publishBtn.innerHTML = '<i class="fas fa-rocket"></i> 一键发布到App';
+                    publishBtn.title = '直接跳转到小红书App发布页面';
+                } else {
+                    publishBtn.innerHTML = '<i class="fas fa-rocket"></i> 一键发布到小红书';
+                    publishBtn.title = '直接跳转到小红书发布页面，文案自动填充';
+                }
+                
+                // 添加点击事件，显示发布提示
+                publishBtn.addEventListener('click', function(e) {
+                    showPublishGuide(data.is_mobile);
+                });
+                
+                // 将发布按钮添加到登录按钮的父容器中
+                const loginSection = redbookLoginBtn.parentNode;
+                loginSection.appendChild(publishBtn);
+                
+                // 添加说明文字
+                const publishNote = document.createElement('div');
+                publishNote.style.cssText = 'font-size: 12px; color: #666; margin-top: 5px;';
+                if (data.is_mobile) {
+                    publishNote.innerHTML = '💡 点击按钮直接打开小红书App，文案将自动填充';
+                } else {
+                    publishNote.innerHTML = '💡 扫码登录后会自动跳转到发布页面，文案将自动填充';
+                }
+                loginSection.appendChild(publishNote);
+            }
+
+            // 显示发布状态
+            const imageCount = data.image_count || 0;
+            publishStatus.textContent = `${data.message || '文案生成成功！'} (共${imageCount}张图片)`;
+
+            // 显示结果区域
+            showResult();
+        })
+        .catch(error => {
+            // 处理错误
+            const errorMessage = error.response?.data?.error || '生成失败，请稍后重试';
+            showError(errorMessage);
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            // 恢复按钮状态
+            generateBtn.disabled = false;
+            loadingMsg.style.display = 'none';
+        });
     });
-});
+
+    // 清除图片功能
+    clearBtn.addEventListener('click', function() {
+        if (uploadedImages.length === 0) {
+            showError('当前没有图片需要清除，请先上传图片');
+            return;
+        }
+        
+        imageUpload.value = '';
+        uploadedImages = [];
+        updateImageList();
+        resultSection.style.display = 'none';
+        errorMsg.style.display = 'none';
+        generatedData = null;
+        
+        // 显示清除成功提示
+        showSuccess('图片已清除，可以重新上传');
+    });
+
+    // 一键复制文案功能
+    copyAllBtn.addEventListener('click', function() {
+        if (!generatedData) {
+            copyStatus.textContent = '没有可复制的文案';
+            return;
+        }
+        
+        // 构建完整的文案
+        const fullContent = `${generatedData.title}\n\n${generatedData.content}\n\n${generatedData.tags.join(' ')}`;
+        
+        // 复制到剪贴板
+        navigator.clipboard.writeText(fullContent).then(() => {
+            copyStatus.textContent = '✅ 文案已复制到剪贴板！';
+            copyStatus.style.color = '#28a745';
+            
+            // 3秒后清除状态
+            setTimeout(() => {
+                copyStatus.textContent = '';
+            }, 3000);
+        }).catch(err => {
+            copyStatus.textContent = '❌ 复制失败，请手动复制';
+            copyStatus.style.color = '#dc3545';
+            console.error('复制失败:', err);
+        });
+    });
+
+    // 主上传区域拖拽功能
+    mainUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        mainUploadArea.style.opacity = '0.7';
+        mainUploadArea.style.transform = 'scale(1.02)';
+    });
+
+    mainUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        mainUploadArea.style.opacity = '1';
+        mainUploadArea.style.transform = 'scale(1)';
+    });
+
+    mainUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        mainUploadArea.style.opacity = '1';
+        mainUploadArea.style.transform = 'scale(1)';
+        
+        if (e.dataTransfer.files.length) {
+            const imageFiles = Array.from(e.dataTransfer.files).filter(file => 
+                file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+            );
+            
+            if (imageFiles.length === 0) {
+                showError('请拖拽图片文件（支持JPG、PNG、WebP、HEIC格式）');
+                return;
+            }
+            
+            // 检查是否超过9张图片限制
+            if (uploadedImages.length + imageFiles.length > 9) {
+                showError('最多只能上传9张图片');
+                return;
+            }
+            
+            // 按顺序处理拖拽的文件
+            processFilesSequentially(imageFiles);
+            
+            errorMsg.style.display = 'none';
+        }
+    });
+}
 
 // 辅助函数：显示加载状态
 function showLoading() {
@@ -161,7 +703,33 @@ function showError(message) {
     loadingMsg.style.display = 'none';
 }
 
-// 辅助函数：获取CSRF Token
+// 辅助函数：显示成功信息
+function showSuccess(message) {
+    const successMsg = document.createElement('div');
+    successMsg.style.cssText = 'color: #28a745; text-align: center; margin: 10px 0; font-size: 14px; background: #d4edda; padding: 10px; border-radius: 4px; border: 1px solid #c3e6cb;';
+    successMsg.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+    imageList.parentNode.insertBefore(successMsg, imageList);
+    
+    // 3秒后移除提示
+    setTimeout(() => {
+        if (successMsg.parentNode) {
+            successMsg.parentNode.removeChild(successMsg);
+        }
+    }, 3000);
+}
+
+// 获取CSRF Token
+function getCSRFToken() {
+    // 首先尝试从meta标签获取
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    
+    // 然后尝试从cookie获取
+    return getCookie('csrftoken');
+}
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -177,26 +745,91 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// 支持拖拽上传（可选增强功能）
-const uploadArea = document.getElementById('uploadArea');
-uploadArea.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    uploadArea.style.borderColor = '#007BFF';
-});
+// 显示发布指南
+function showPublishGuide(isMobile) {
+    const mobileGuide = `
+        <h3 style="color: #ff2442; margin-bottom: 20px;">
+            <i class="fas fa-mobile-alt"></i> 手机端发布指南
+        </h3>
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #333;">🚀 一键发布流程：</h4>
+            <ol style="color: #666; line-height: 1.6;">
+                <li>点击"打开小红书App"按钮</li>
+                <li>如果已安装小红书App，会自动打开并填充文案</li>
+                <li>如果未安装，会引导您下载小红书App</li>
+                <li>文案和标签会自动填充到编辑器</li>
+                <li>上传您的图片，点击发布即可</li>
+            </ol>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #333;">💡 智能功能：</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>✅ 自动检测设备类型，提供最佳体验</li>
+                <li>✅ 深度链接直接打开小红书App</li>
+                <li>✅ 文案和标签自动填充，无需手动复制</li>
+                <li>✅ 支持多图上传，最多9张图片</li>
+            </ul>
+        </div>
+    `;
+    
+    const desktopGuide = `
+        <h3 style="color: #ff2442; margin-bottom: 20px;">
+            <i class="fas fa-desktop"></i> 电脑端发布指南
+        </h3>
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #333;">🚀 一键发布流程：</h4>
+            <ol style="color: #666; line-height: 1.6;">
+                <li>点击"电脑端扫码登录"按钮</li>
+                <li>使用小红书App扫描二维码</li>
+                <li>登录成功后自动跳转到发布页面</li>
+                <li>文案和标签会自动填充到编辑器</li>
+                <li>上传您的图片，点击发布即可</li>
+            </ol>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <h4 style="color: #333;">💡 智能功能：</h4>
+            <ul style="color: #666; line-height: 1.6;">
+                <li>✅ 扫码登录后自动跳转到发布页面</li>
+                <li>✅ 文案和标签自动填充，无需手动复制</li>
+                <li>✅ 支持多图上传，最多9张图片</li>
+                <li>✅ 支持HEIC格式图片上传</li>
+            </ul>
+        </div>
+    `;
+    
+    const guideHtml = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+                ${isMobile ? mobileGuide : desktopGuide}
+                <div style="text-align: center;">
+                    <button onclick="closePublishGuide()" style="background: #ff2442; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                        知道了
+                    </button>
+                    <button onclick="openRedbookPublish()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                        立即发布
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', guideHtml);
+}
 
-uploadArea.addEventListener('dragleave', function() {
-    uploadArea.style.borderColor = '#ccc';
-});
-
-uploadArea.addEventListener('drop', function(e) {
-    e.preventDefault();
-    uploadArea.style.borderColor = '#ccc';
-    if (e.dataTransfer.files.length) {
-        imageUpload.files = e.dataTransfer.files;
-        // 触发change事件以显示预览
-        const event = new Event('change');
-        imageUpload.dispatchEvent(event);
+// 关闭发布指南
+function closePublishGuide() {
+    const guide = document.querySelector('div[style*="z-index: 10000"]');
+    if (guide) {
+        guide.remove();
     }
-});
+}
+
+// 打开小红书发布页面
+function openRedbookPublish() {
+    if (generatedData && generatedData.redbook_publish_url) {
+        window.open(generatedData.redbook_publish_url, '_blank');
+    }
+    closePublishGuide();
+}
 </script>
 {% endblock %}

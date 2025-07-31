@@ -1,0 +1,771 @@
+{% extends 'base.html' %}
+
+{% block title %}用户管理 - 管理员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users-cog text-primary"></i> 用户管理
+                    </h4>
+                    <div>
+                        <a href="{% url 'admin_suggestions' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-lightbulb"></i> 建议管理
+                        </a>
+                        <a href="{% url 'admin_feedback' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-comments"></i> 反馈管理
+                        </a>
+                        <a href="{% url 'admin_user_logs' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-history"></i> 操作日志
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 统计信息 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">总用户数</h5>
+                                    <h3 class="mb-0">{{ total_users }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">活跃用户</h5>
+                                    <h3 class="mb-0">{{ active_users }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">VIP用户</h5>
+                                    <h3 class="mb-0">{{ vip_users }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">今日新增</h5>
+                                    <h3 class="mb-0">{{ today_users }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 搜索和筛选 -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" id="searchUser" class="form-control" placeholder="搜索用户名或邮箱...">
+                        </div>
+                        <div class="col-md-2">
+                            <select id="statusFilter" class="form-control">
+                                <option value="">所有状态</option>
+                                <option value="active">正常</option>
+                                <option value="suspended">已暂停</option>
+                                <option value="banned">已封禁</option>
+                                <option value="deleted">已删除</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="roleFilter" class="form-control">
+                                <option value="">所有角色</option>
+                                <option value="user">普通用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="membershipFilter" class="form-control">
+                                <option value="">所有会员</option>
+                                <option value="free">免费</option>
+                                <option value="basic">基础</option>
+                                <option value="premium">高级</option>
+                                <option value="vip">VIP</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary" onclick="exportUserData()">
+                                <i class="fas fa-download"></i> 导出
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 批量操作 -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary" onclick="selectAllUsers()">
+                                    <i class="fas fa-check-square"></i> 全选
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="batchSuspendUsers()">
+                                    <i class="fas fa-ban"></i> 批量暂停
+                                </button>
+                                <button class="btn btn-outline-success" onclick="batchActivateUsers()">
+                                    <i class="fas fa-check"></i> 批量激活
+                                </button>
+                                <button class="btn btn-outline-info" onclick="batchUpgradeMembership()">
+                                    <i class="fas fa-crown"></i> 批量升级
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th>ID</th>
+                                        <th>用户名</th>
+                                        <th>邮箱</th>
+                                        <th>角色</th>
+                                        <th>状态</th>
+                                        <th>会员</th>
+                                        <th>注册时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user_role in page_obj %}
+                                    <tr data-user-id="{{ user_role.user.id }}">
+                                        <td>
+                                            <input type="checkbox" name="userSelect" value="{{ user_role.user.id }}" onchange="toggleUserSelection({{ user_role.user.id }})">
+                                        </td>
+                                        <td>{{ user_role.user.id }}</td>
+                                        <td>
+                                            <strong>{{ user_role.user.username }}</strong>
+                                            {% if user_role.user.profile.phone %}
+                                                <br><small class="text-muted">{{ user_role.user.profile.phone }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user_role.user.email }}</td>
+                                        <td>
+                                            {% if user_role.role == 'admin' %}
+                                                <span class="badge badge-warning">管理员</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">普通用户</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_role.user.status %}
+                                                {% if user_role.user.status.status == 'active' %}
+                                                    <span class="badge badge-success">正常</span>
+                                                {% elif user_role.user.status.status == 'suspended' %}
+                                                    <span class="badge badge-warning">已暂停</span>
+                                                {% elif user_role.user.status.status == 'banned' %}
+                                                    <span class="badge badge-danger">已封禁</span>
+                                                {% elif user_role.user.status.status == 'deleted' %}
+                                                    <span class="badge badge-dark">已删除</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge badge-success">正常</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user_role.user.membership %}
+                                                {% if user_role.user.membership.membership_type == 'free' %}
+                                                    <span class="badge badge-secondary">免费</span>
+                                                {% elif user_role.user.membership.membership_type == 'basic' %}
+                                                    <span class="badge badge-info">基础</span>
+                                                {% elif user_role.user.membership.membership_type == 'premium' %}
+                                                    <span class="badge badge-primary">高级</span>
+                                                {% elif user_role.user.membership.membership_type == 'vip' %}
+                                                    <span class="badge badge-warning">VIP</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge badge-secondary">免费</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user_role.user.date_joined|date:"Y-m-d H:i" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="showUserDetail({{ user_role.user.id }})">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning" onclick="showStatusModal({{ user_role.user.id }})">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-info" onclick="showMembershipModal({{ user_role.user.id }})">
+                                                    <i class="fas fa-crown"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="showDeleteModal({{ user_role.user.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="用户列表分页">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无用户</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 用户详情模态框 -->
+<div class="modal fade" id="userDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">用户详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="userDetailContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 状态管理模态框 -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">用户状态管理</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <input type="hidden" id="statusUserId">
+                    <div class="form-group">
+                        <label>用户状态</label>
+                        <select class="form-control" id="userStatus">
+                            <option value="active">正常</option>
+                            <option value="suspended">暂停</option>
+                            <option value="banned">封禁</option>
+                            <option value="deleted">删除</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="suspendedDaysGroup" style="display: none;">
+                        <label>暂停天数</label>
+                        <input type="number" class="form-control" id="suspendedDays" min="1" max="365">
+                    </div>
+                    <div class="form-group">
+                        <label>原因</label>
+                        <textarea class="form-control" id="statusReason" rows="3" placeholder="请输入状态变更原因..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateUserStatus()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 会员管理模态框 -->
+<div class="modal fade" id="membershipModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">会员管理</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="membershipForm">
+                    <input type="hidden" id="membershipUserId">
+                    <div class="form-group">
+                        <label>会员类型</label>
+                        <select class="form-control" id="membershipType">
+                            <option value="free">免费用户</option>
+                            <option value="basic">基础会员</option>
+                            <option value="premium">高级会员</option>
+                            <option value="vip">VIP会员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>有效期（天）</label>
+                        <input type="number" class="form-control" id="membershipDuration" min="0" value="0">
+                        <small class="form-text text-muted">0表示永久有效</small>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="membershipActive" checked>
+                            <label class="custom-control-label" for="membershipActive">激活会员</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateMembership()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">删除用户</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除这个用户吗？此操作不可逆。</p>
+                <input type="hidden" id="deleteUserId">
+                <div class="form-group">
+                    <label>删除原因</label>
+                    <textarea class="form-control" id="deleteReason" rows="3" placeholder="请输入删除原因..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="deleteUser()">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 搜索和筛选功能
+document.getElementById('searchUser').addEventListener('input', function() {
+    filterUsers();
+});
+
+document.getElementById('statusFilter').addEventListener('change', function() {
+    filterUsers();
+});
+
+document.getElementById('roleFilter').addEventListener('change', function() {
+    filterUsers();
+});
+
+document.getElementById('membershipFilter').addEventListener('change', function() {
+    filterUsers();
+});
+
+function filterUsers() {
+    const searchTerm = document.getElementById('searchUser').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const roleFilter = document.getElementById('roleFilter').value;
+    const membershipFilter = document.getElementById('membershipFilter').value;
+    
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const username = row.cells[1].textContent.toLowerCase();
+        const email = row.cells[2].textContent.toLowerCase();
+        const role = row.cells[3].textContent;
+        const status = row.cells[4].textContent;
+        const membership = row.cells[5].textContent;
+        
+        let show = true;
+        
+        // 搜索过滤
+        if (searchTerm && !username.includes(searchTerm) && !email.includes(searchTerm)) {
+            show = false;
+        }
+        
+        // 状态过滤
+        if (statusFilter && !status.includes(statusFilter)) {
+            show = false;
+        }
+        
+        // 角色过滤
+        if (roleFilter && !role.includes(roleFilter)) {
+            show = false;
+        }
+        
+        // 会员过滤
+        if (membershipFilter && !membership.includes(membershipFilter)) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+// 状态管理
+document.getElementById('userStatus').addEventListener('change', function() {
+    const suspendedGroup = document.getElementById('suspendedDaysGroup');
+    if (this.value === 'suspended') {
+        suspendedGroup.style.display = 'block';
+    } else {
+        suspendedGroup.style.display = 'none';
+    }
+});
+
+function showStatusModal(userId) {
+    document.getElementById('statusUserId').value = userId;
+    $('#statusModal').modal('show');
+}
+
+function updateUserStatus() {
+    const userId = document.getElementById('statusUserId').value;
+    const status = document.getElementById('userStatus').value;
+    const reason = document.getElementById('statusReason').value;
+    const suspendedDays = document.getElementById('suspendedDays').value || 0;
+    
+    const data = {
+        status: status,
+        reason: reason
+    };
+    
+    fetch(`/users/api/admin/change-status/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('状态更新成功');
+            // 强制关闭模态框
+            $('#statusModal').modal('hide');
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+            location.reload();
+        } else {
+            alert('更新失败：' + (data.message || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('更新失败:', error);
+        alert('更新失败');
+    });
+}
+
+// 会员管理
+function showMembershipModal(userId) {
+    document.getElementById('membershipUserId').value = userId;
+    $('#membershipModal').modal('show');
+}
+
+function updateMembership() {
+    const userId = document.getElementById('membershipUserId').value;
+    const membershipType = document.getElementById('membershipType').value;
+    const duration = document.getElementById('membershipDuration').value;
+    const isActive = document.getElementById('membershipActive').checked;
+    
+    const data = {
+        membership_type: membershipType,
+        days: parseInt(duration),
+        note: ''
+    };
+    
+    fetch(`/users/api/admin/change-membership/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('会员信息更新成功');
+            // 强制关闭模态框
+            $('#membershipModal').modal('hide');
+            $('body').removeClass('modal-open');
+            $('.modal-backdrop').remove();
+            location.reload();
+        } else {
+            alert('更新失败：' + (data.message || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('更新失败:', error);
+        alert('更新失败');
+    });
+}
+
+// 删除用户
+function showDeleteModal(userId) {
+    document.getElementById('deleteUserId').value = userId;
+    $('#deleteModal').modal('show');
+}
+
+function deleteUser() {
+    const userId = document.getElementById('deleteUserId').value;
+    const reason = document.getElementById('deleteReason').value;
+    
+    if (!reason.trim()) {
+        alert('请输入删除原因');
+        return;
+    }
+    
+    fetch(`/users/api/admin/delete-user/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('用户已删除');
+            $('#deleteModal').modal('hide');
+            location.reload();
+        } else {
+            alert('删除失败：' + (data.message || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('删除失败:', error);
+        alert('删除失败');
+    });
+}
+
+// 批量操作功能
+let selectedUsers = [];
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('input[name="userSelect"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+        if (selectAllCheckbox.checked) {
+            if (!selectedUsers.includes(parseInt(checkbox.value))) {
+                selectedUsers.push(parseInt(checkbox.value));
+            }
+        } else {
+            const index = selectedUsers.indexOf(parseInt(checkbox.value));
+            if (index > -1) {
+                selectedUsers.splice(index, 1);
+            }
+        }
+    });
+}
+
+function selectAllUsers() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    selectAllCheckbox.checked = !selectAllCheckbox.checked;
+    toggleSelectAll();
+}
+
+function toggleUserSelection(userId) {
+    const index = selectedUsers.indexOf(userId);
+    if (index > -1) {
+        selectedUsers.splice(index, 1);
+    } else {
+        selectedUsers.push(userId);
+    }
+}
+
+function batchSuspendUsers() {
+    if (selectedUsers.length === 0) {
+        alert('请先选择要操作的用户');
+        return;
+    }
+    
+    const note = prompt('请输入暂停原因（可选）：');
+    
+    fetch('/users/api/admin/batch-operation/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            user_ids: selectedUsers,
+            operation: 'suspend',
+            note: note || ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('操作失败：' + (data.message || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('批量操作失败:', error);
+        alert('批量操作失败');
+    });
+}
+
+function batchActivateUsers() {
+    if (selectedUsers.length === 0) {
+        alert('请先选择要操作的用户');
+        return;
+    }
+    
+    const note = prompt('请输入激活备注（可选）：');
+    
+    fetch('/users/api/admin/batch-operation/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            user_ids: selectedUsers,
+            operation: 'activate',
+            note: note || ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('操作失败：' + (data.message || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('批量操作失败:', error);
+        alert('批量操作失败');
+    });
+}
+
+function batchUpgradeMembership() {
+    if (selectedUsers.length === 0) {
+        alert('请先选择要操作的用户');
+        return;
+    }
+    
+    const note = prompt('请输入升级备注（可选）：');
+    
+    fetch('/users/api/admin/batch-operation/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            user_ids: selectedUsers,
+            operation: 'upgrade_membership',
+            note: note || ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('操作失败：' + (data.message || '未知错误'));
+        }
+    })
+    .catch(error => {
+        console.error('批量操作失败:', error);
+        alert('批量操作失败');
+    });
+}
+
+function exportUserData() {
+    // 简单的导出功能，可以后续扩展
+    const table = document.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    let csv = '用户名,邮箱,角色,状态,会员,注册时间\n';
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const username = cells[1].textContent.trim();
+        const email = cells[2].textContent.trim();
+        const role = cells[3].textContent.trim();
+        const status = cells[4].textContent.trim();
+        const membership = cells[5].textContent.trim();
+        const date = cells[6].textContent.trim();
+        
+        csv += `"${username}","${email}","${role}","${status}","${membership}","${date}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', '用户数据.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// 用户详情
+function showUserDetail(userId) {
+    // 这里可以添加获取用户详细信息的API调用
+    alert('用户详情功能开发中...');
+}
+
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

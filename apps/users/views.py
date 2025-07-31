@@ -10,10 +10,24 @@ import numpy as np
 from django.contrib import messages
 from django.contrib.auth import authenticate, login,logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from .forms import UserEditForm
 from .forms import LoginForm
+from django.contrib import messages
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.core.paginator import Paginator
+from django.utils import timezone
+from datetime import timedelta
+import json
+from .forms import UserRegistrationForm, UserLoginForm, ProfileEditForm
+from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile
+from apps.content.views import admin_required
 
 
 def has_repeated_characters(password):
@@ -153,3 +167,377 @@ def profile_edit(request):
         form = UserEditForm(instance=request.user)
 
     return render(request, 'users/profile_edit.html', {'form': form})
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # 创建用户角色、状态和会员信息
+            UserRole.objects.create(user=user, role='user')
+            UserStatus.objects.create(user=user, status='active')
+            UserMembership.objects.create(user=user, membership_type='free')
+            Profile.objects.create(user=user)
+            
+            messages.success(request, '注册成功！请登录。')
+            return redirect('login')
+    else:
+        form = UserRegistrationForm()
+    
+    return render(request, 'users/register.html', {'form': form})
+
+def user_login(request):
+    if request.method == 'POST':
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(username=username, password=password)
+            
+            if user is not None:
+                # 检查用户状态
+                try:
+                    user_status = user.status
+                    if not user_status.is_active:
+                        if user_status.status == 'suspended':
+                            messages.error(request, f'账户已被暂停，原因：{user_status.reason}')
+                        elif user_status.status == 'banned':
+                            messages.error(request, f'账户已被封禁，原因：{user_status.reason}')
+                        elif user_status.status == 'deleted':
+                            messages.error(request, '账户已被删除')
+                        return redirect('login')
+                except UserStatus.DoesNotExist:
+                    # 如果没有状态记录，创建默认状态
+                    UserStatus.objects.create(user=user, status='active')
+                
+                login(request, user)
+                messages.success(request, f'欢迎回来，{user.username}！')
+                return redirect('home')
+            else:
+                messages.error(request, '用户名或密码错误')
+    else:
+        form = UserLoginForm()
+    
+    return render(request, 'users/login.html', {'form': form})
+
+@login_required
+def user_logout(request):
+    logout(request)
+    messages.success(request, '您已成功退出登录')
+    return redirect('home')
+
+@login_required
+def profile_view(request):
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=request.user)
+    
+    return render(request, 'users/profile.html', {'profile': profile})
+
+@login_required
+def profile_edit(request):
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=request.user)
+    
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '个人资料已更新')
+            return redirect('profile_view')
+    else:
+        form = ProfileEditForm(instance=profile)
+    
+    return render(request, 'users/profile_edit.html', {'form': form})
+
+# 管理员用户管理视图
+@login_required
+@admin_required
+def admin_user_management(request):
+    # 获取所有用户角色信息，按创建时间倒序排列
+    user_roles = UserRole.objects.select_related('user', 'user__profile').prefetch_related('user__status', 'user__membership').order_by('-user__date_joined')
+    
+    # 统计信息
+    from django.utils import timezone
+    from datetime import datetime, timedelta
+    
+    total_users = User.objects.count()
+    active_users = User.objects.filter(is_active=True).count()
+    
+    # VIP用户统计
+    vip_users = UserMembership.objects.filter(
+        membership_type='vip',
+        is_active=True,
+        end_date__gt=timezone.now()
+    ).count()
+    
+    # 今日新增用户
+    today = timezone.now().date()
+    today_users = User.objects.filter(date_joined__date=today).count()
+    
+    # 分页
+    paginator = Paginator(user_roles, 20)  # 每页显示20个用户
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'users/admin_user_management.html', {
+        'page_obj': page_obj,
+        'total_users': total_users,
+        'active_users': active_users,
+        'vip_users': vip_users,
+        'today_users': today_users
+    })
+
+@login_required
+@admin_required
+def admin_user_detail(request, user_id):
+    user_detail = get_object_or_404(User, id=user_id)
+    user_logs = UserActionLog.objects.filter(target_user=user_detail).select_related('admin_user').order_by('-created_at')[:10]
+    
+    return render(request, 'users/admin_user_detail.html', {
+        'user_detail': user_detail,
+        'user_logs': user_logs
+    })
+
+# 管理员用户管理API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_change_user_status_api(request, user_id):
+    try:
+        data = json.loads(request.body)
+        status = data.get('status')
+        reason = data.get('reason', '')
+        
+        target_user = get_object_or_404(User, id=user_id)
+        user_status, created = UserStatus.objects.get_or_create(user=target_user)
+        
+        old_status = user_status.status
+        user_status.status = status
+        user_status.reason = reason
+        
+        if status == 'suspended':
+            user_status.suspended_until = timezone.now() + timedelta(days=7)  # 默认暂停7天
+        else:
+            user_status.suspended_until = None
+        
+        user_status.save()
+        
+        # 记录操作日志
+        UserActionLog.objects.create(
+            admin_user=request.user,
+            target_user=target_user,
+            action='status_change',
+            details=f'状态从 {old_status} 变更为 {status}，原因：{reason}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'用户状态已更新为 {status}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_change_membership_api(request, user_id):
+    try:
+        data = json.loads(request.body)
+        membership_type = data.get('membership_type')
+        days = data.get('days', 30)
+        note = data.get('note', '')
+        
+        target_user = get_object_or_404(User, id=user_id)
+        membership, created = UserMembership.objects.get_or_create(user=target_user)
+        
+        old_type = membership.membership_type
+        membership.membership_type = membership_type
+        membership.is_active = True
+        
+        if days > 0:
+            membership.end_date = timezone.now() + timedelta(days=days)
+        else:
+            membership.end_date = None
+        
+        membership.save()
+        
+        # 记录操作日志
+        UserActionLog.objects.create(
+            admin_user=request.user,
+            target_user=target_user,
+            action='membership_change',
+            details=f'会员类型从 {old_type} 变更为 {membership_type}，有效期：{days}天，备注：{note}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'用户会员已更新为 {membership_type}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_change_role_api(request, user_id):
+    try:
+        data = json.loads(request.body)
+        role = data.get('role')
+        note = data.get('note', '')
+        
+        target_user = get_object_or_404(User, id=user_id)
+        user_role, created = UserRole.objects.get_or_create(user=target_user)
+        
+        old_role = user_role.role
+        user_role.role = role
+        user_role.save()
+        
+        # 记录操作日志
+        UserActionLog.objects.create(
+            admin_user=request.user,
+            target_user=target_user,
+            action='role_change',
+            details=f'角色从 {old_role} 变更为 {role}，备注：{note}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'用户角色已更新为 {role}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_delete_user_api(request, user_id):
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason', '')
+        
+        target_user = get_object_or_404(User, id=user_id)
+        
+        # 软删除：将状态设置为deleted
+        user_status, created = UserStatus.objects.get_or_create(user=target_user)
+        user_status.status = 'deleted'
+        user_status.reason = reason
+        user_status.save()
+        
+        # 记录操作日志
+        UserActionLog.objects.create(
+            admin_user=request.user,
+            target_user=target_user,
+            action='account_delete',
+            details=f'删除账号，原因：{reason}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '用户账号已删除'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+# 获取用户操作日志API
+@login_required
+@admin_required
+def admin_user_logs(request):
+    logs = UserActionLog.objects.select_related('admin_user', 'target_user').order_by('-created_at')
+    paginator = Paginator(logs, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'users/admin_user_logs.html', {
+        'page_obj': page_obj
+    })
+
+# 批量操作API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_batch_operation_api(request):
+    try:
+        data = json.loads(request.body)
+        user_ids = data.get('user_ids', [])
+        operation = data.get('operation')
+        note = data.get('note', '')
+        
+        if not user_ids:
+            return JsonResponse({'success': False, 'message': '请选择要操作的用户'}, status=400)
+        
+        success_count = 0
+        failed_count = 0
+        
+        for user_id in user_ids:
+            try:
+                target_user = User.objects.get(id=user_id)
+                
+                if operation == 'suspend':
+                    # 批量暂停
+                    user_status, created = UserStatus.objects.get_or_create(user=target_user)
+                    user_status.status = 'suspended'
+                    user_status.suspended_until = timezone.now() + timedelta(days=7)
+                    user_status.save()
+                    
+                    UserActionLog.objects.create(
+                        admin_user=request.user,
+                        target_user=target_user,
+                        action='batch_suspended',
+                        details=f'批量暂停，备注：{note}'
+                    )
+                    
+                elif operation == 'activate':
+                    # 批量激活
+                    user_status, created = UserStatus.objects.get_or_create(user=target_user)
+                    user_status.status = 'active'
+                    user_status.suspended_until = None
+                    user_status.save()
+                    
+                    UserActionLog.objects.create(
+                        admin_user=request.user,
+                        target_user=target_user,
+                        action='batch_activated',
+                        details=f'批量激活，备注：{note}'
+                    )
+                    
+                elif operation == 'upgrade_membership':
+                    # 批量升级会员
+                    membership, created = UserMembership.objects.get_or_create(user=target_user)
+                    membership.membership_type = 'premium'
+                    membership.is_active = True
+                    membership.end_date = timezone.now() + timedelta(days=30)
+                    membership.save()
+                    
+                    UserActionLog.objects.create(
+                        admin_user=request.user,
+                        target_user=target_user,
+                        action='batch_upgraded',
+                        details=f'批量升级会员，备注：{note}'
+                    )
+                
+                success_count += 1
+                
+            except User.DoesNotExist:
+                failed_count += 1
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'批量操作完成，成功：{success_count}，失败：{failed_count}'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

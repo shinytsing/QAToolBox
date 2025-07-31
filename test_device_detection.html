@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备检测和发布流程测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #ff2442; }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        .mobile { background: #fff3cd; border-left-color: #ffc107; }
+        .desktop { background: #d1ecf1; border-left-color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>🧪 设备检测和发布流程测试</h1>
+    
+    <div class="test-section">
+        <h2>📱 设备检测结果</h2>
+        <div id="deviceInfo" class="result">
+            <p><strong>用户代理：</strong><span id="userAgent"></span></p>
+            <p><strong>设备类型：</strong><span id="deviceType"></span></p>
+            <p><strong>推荐流程：</strong><span id="recommendedFlow"></span></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>💻 电脑端发布流程</h2>
+        <div class="desktop result">
+            <h3>电脑端特点：</h3>
+            <ul>
+                <li>使用网页版小红书</li>
+                <li>扫码登录</li>
+                <li>自动跳转到发布页面</li>
+                <li>文案自动填充</li>
+            </ul>
+            <div>
+                <a href="https://www.xiaohongshu.com/login?callback=https%3A//www.xiaohongshu.com/mobile/publish" 
+                   target="_blank" class="btn btn-primary">
+                    🔐 电脑端扫码登录
+                </a>
+                <a href="https://www.xiaohongshu.com/mobile/publish?title=%E6%B5%8B%E8%AF%95%E6%A0%87%E9%A2%98&content=%E6%B5%8B%E8%AF%95%E5%86%85%E5%AE%B9&auto_fill=true&source=web_tool" 
+                   target="_blank" class="btn btn-danger">
+                    🚀 一键发布到小红书
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📱 手机端发布流程</h2>
+        <div class="mobile result">
+            <h3>手机端特点：</h3>
+            <ul>
+                <li>使用小红书App</li>
+                <li>深度链接直接打开</li>
+                <li>文案自动填充</li>
+                <li>支持图片上传</li>
+            </ul>
+            <div>
+                <a href="xiaohongshu://publish?title=%E6%B5%8B%E8%AF%95%E6%A0%87%E9%A2%98&content=%E6%B5%8B%E8%AF%95%E5%86%85%E5%AE%B9&auto_fill=true&source=web_tool" 
+                   class="btn btn-danger">
+                    📱 打开小红书App
+                </a>
+                <a href="https://www.xiaohongshu.com/download" 
+                   target="_blank" class="btn btn-success">
+                    📥 下载小红书App
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔧 技术实现说明</h2>
+        <div class="result">
+            <h3>后端改进：</h3>
+            <ul>
+                <li>✅ 自动检测设备类型（User-Agent分析）</li>
+                <li>✅ 电脑端：网页版发布流程</li>
+                <li>✅ 手机端：App深度链接</li>
+                <li>✅ 支持文案和标签的URL编码传递</li>
+                <li>✅ 添加来源标识，便于小红书识别</li>
+            </ul>
+            
+            <h3>前端改进：</h3>
+            <ul>
+                <li>✅ 根据设备类型显示不同按钮</li>
+                <li>✅ 手机端显示下载App按钮</li>
+                <li>✅ 智能发布指南，区分设备类型</li>
+                <li>✅ 用户体验优化</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 设备检测函数
+        function detectDevice() {
+            const userAgent = navigator.userAgent;
+            const isMobile = /mobile|android|iphone|ipad/i.test(userAgent);
+            
+            document.getElementById('userAgent').textContent = userAgent;
+            document.getElementById('deviceType').textContent = isMobile ? '移动设备' : '桌面设备';
+            document.getElementById('recommendedFlow').textContent = isMobile ? '手机端App流程' : '电脑端网页流程';
+            
+            // 根据设备类型高亮显示对应的流程
+            const mobileSection = document.querySelector('.mobile');
+            const desktopSection = document.querySelector('.desktop');
+            
+            if (isMobile) {
+                mobileSection.style.opacity = '1';
+                desktopSection.style.opacity = '0.5';
+            } else {
+                desktopSection.style.opacity = '1';
+                mobileSection.style.opacity = '0.5';
+            }
+        }
+        
+        // 页面加载时检测设备
+        document.addEventListener('DOMContentLoaded', function() {
+            detectDevice();
+            
+            // 添加按钮点击事件监听
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    console.log('点击按钮:', this.textContent, 'URL:', this.href);
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

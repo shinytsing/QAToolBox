@@ -47,7 +47,12 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-1^6^nfbpnl$vpi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['shenyiqing.xin', '47.103.143.152', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['shenyiqing.xin', '47.103.143.152', 'localhost', '127.0.0.1', 'testserver']
+
+# 文件上传设置
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+MAX_UPLOAD_SIZE = 100 * 1024 * 1024  # 100MB
 
 
 # Application definition

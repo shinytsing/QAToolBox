@@ -1,0 +1,558 @@
+{% extends 'base.html' %}
+
+{% block title %}建议管理 - 管理员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-lightbulb text-warning"></i> 建议管理
+                    </h4>
+                    <div>
+                        <a href="{% url 'admin_feedback' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-comments"></i> 查看反馈
+                        </a>
+                        <a href="{% url 'admin_user_management' %}" class="btn btn-outline-success">
+                            <i class="fas fa-users-cog"></i> 用户管理
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if suggestions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>标题</th>
+                                        <th>类型</th>
+                                        <th>状态</th>
+                                        <th>提交者</th>
+                                        <th>提交时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for suggestion in suggestions %}
+                                    <tr>
+                                        <td>{{ suggestion.id }}</td>
+                                        <td>
+                                            <strong>{{ suggestion.title }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ suggestion.content|truncatechars:100 }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ suggestion.get_suggestion_type_display }}</span>
+                                        </td>
+                                        <td>
+                                            {% if suggestion.status == 'pending' %}
+                                                <span class="badge badge-warning">待处理</span>
+                                            {% elif suggestion.status == 'reviewing' %}
+                                                <span class="badge badge-info">审核中</span>
+                                            {% elif suggestion.status == 'implemented' %}
+                                                <span class="badge badge-success">已实现</span>
+                                            {% elif suggestion.status == 'rejected' %}
+                                                <span class="badge badge-danger">已拒绝</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if suggestion.user %}{{ suggestion.user.username }}{% else %}{{ suggestion.user_name|default:"匿名用户" }}{% endif %}</td>
+                                        <td>{{ suggestion.created_at|date:"Y-m-d H:i" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-primary" onclick="showSuggestionDetail({{ suggestion.id }})">
+                                                    <i class="fas fa-eye"></i> 查看
+                                                </button>
+                                                <button class="btn btn-sm btn-success" onclick="quickReply({{ suggestion.id }})">
+                                                    <i class="fas fa-reply"></i> 回复
+                                                </button>
+                                                {% if suggestion.user %}
+                                                <button class="btn btn-sm btn-info" onclick="manageUser({{ suggestion.user.id }})">
+                                                    <i class="fas fa-user-cog"></i> 用户
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无建议</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 建议详情模态框 -->
+<div class="modal fade" id="suggestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">建议详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="suggestionDetail"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速回复模态框 -->
+<div class="modal fade" id="quickReplyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">快速回复建议</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="quickReplyContent"></div>
+                <div class="form-group">
+                    <label for="quickStatus">处理状态</label>
+                    <select id="quickStatus" class="form-control">
+                        <option value="pending">待处理</option>
+                        <option value="reviewing">审核中</option>
+                        <option value="implemented">已实现</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quickResponse">回复内容</label>
+                    <textarea id="quickResponse" class="form-control" rows="4" placeholder="请输入回复内容..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quickNote">处理备注（可选）</label>
+                    <input type="text" id="quickNote" class="form-control" placeholder="处理备注">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-success" onclick="saveQuickReply()">
+                    <i class="fas fa-check"></i> 保存回复
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 用户管理模态框 -->
+<div class="modal fade" id="userManageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">用户管理</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="userManageContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全局变量
+let currentSuggestionId = null;
+let currentUserId = null;
+
+function showSuggestionDetail(suggestionId) {
+    currentSuggestionId = suggestionId;
+    
+    // 获取建议详情
+    fetch(`/content/api/suggestions/`)
+        .then(response => response.json())
+        .then(data => {
+            const suggestion = data.suggestions.find(s => s.id === suggestionId);
+            if (suggestion) {
+                const detailHtml = `
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>建议标题</h6>
+                            <p class="border-bottom pb-2">${suggestion.title}</p>
+                            
+                            <h6>建议内容</h6>
+                            <p class="border-bottom pb-2">${suggestion.content}</p>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>类型</h6>
+                                    <p>${suggestion.suggestion_type}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>状态</h6>
+                                    <p>${suggestion.status}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>提交者</h6>
+                                    <p>${suggestion.user_name}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>提交时间</h6>
+                                    <p>${suggestion.created_at}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>最后更新</h6>
+                                    <p>${suggestion.updated_at || suggestion.created_at}</p>
+                                </div>
+                            </div>
+                            
+                            ${suggestion.admin_response ? `
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6>管理员回复</h6>
+                                    <div class="alert alert-info">
+                                        ${suggestion.admin_response}
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <hr>
+                            <h6>回复用户</h6>
+                            <div class="form-group">
+                                <label for="detailStatus">处理状态</label>
+                                <select id="detailStatus" class="form-control">
+                                    <option value="pending" ${suggestion.status_code === 'pending' ? 'selected' : ''}>待处理</option>
+                                    <option value="reviewing" ${suggestion.status_code === 'reviewing' ? 'selected' : ''}>审核中</option>
+                                    <option value="implemented" ${suggestion.status_code === 'implemented' ? 'selected' : ''}>已实现</option>
+                                    <option value="rejected" ${suggestion.status_code === 'rejected' ? 'selected' : ''}>已拒绝</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="detailResponse">回复内容</label>
+                                <textarea id="detailResponse" class="form-control" rows="4" placeholder="请输入回复内容...">${suggestion.admin_response || ''}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="detailNote">处理备注（可选）</label>
+                                <input type="text" id="detailNote" class="form-control" placeholder="处理备注">
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button class="btn btn-success btn-block" onclick="saveDetailReply()">
+                                        <i class="fas fa-check"></i> 保存回复
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    ${suggestion.user ? `
+                                    <button class="btn btn-info btn-block" onclick="manageUserFromDetail(${suggestion.user})">
+                                        <i class="fas fa-user-cog"></i> 管理用户
+                                    </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('suggestionDetail').innerHTML = detailHtml;
+                $('#suggestionModal').modal('show');
+            }
+        })
+        .catch(error => {
+            console.error('获取建议详情失败:', error);
+            alert('获取建议详情失败');
+        });
+}
+
+function quickReply(suggestionId) {
+    currentSuggestionId = suggestionId;
+    
+    // 获取建议信息
+    fetch(`/content/api/suggestions/`)
+        .then(response => response.json())
+        .then(data => {
+            const suggestion = data.suggestions.find(s => s.id === suggestionId);
+            if (suggestion) {
+                const contentHtml = `
+                    <div class="alert alert-info">
+                        <strong>建议标题：</strong>${suggestion.title}<br>
+                        <strong>提交者：</strong>${suggestion.user_name}<br>
+                        <strong>当前状态：</strong>${suggestion.status}
+                    </div>
+                `;
+                document.getElementById('quickReplyContent').innerHTML = contentHtml;
+                
+                // 设置当前状态
+                document.getElementById('quickStatus').value = suggestion.status_code || 'pending';
+                document.getElementById('quickResponse').value = suggestion.admin_response || '';
+                
+                $('#quickReplyModal').modal('show');
+            }
+        })
+        .catch(error => {
+            console.error('获取建议信息失败:', error);
+            alert('获取建议信息失败');
+        });
+}
+
+function saveQuickReply() {
+    const response = document.getElementById('quickResponse').value;
+    const status = document.getElementById('quickStatus').value;
+    const note = document.getElementById('quickNote').value;
+    
+    if (!response.trim()) {
+        alert('请输入回复内容');
+        return;
+    }
+    
+    fetch('/content/api/admin/reply-suggestion/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            suggestion_id: currentSuggestionId,
+            response: response,
+            status: status,
+            action_note: note
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('回复保存成功');
+            $('#quickReplyModal').modal('hide');
+            location.reload();
+        } else {
+            alert(data.error || '保存失败');
+        }
+    })
+    .catch(error => {
+        console.error('保存回复失败:', error);
+        alert('保存失败');
+    });
+}
+
+function saveDetailReply() {
+    const response = document.getElementById('detailResponse').value;
+    const status = document.getElementById('detailStatus').value;
+    const note = document.getElementById('detailNote').value;
+    
+    if (!response.trim()) {
+        alert('请输入回复内容');
+        return;
+    }
+    
+    fetch('/content/api/admin/reply-suggestion/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            suggestion_id: currentSuggestionId,
+            response: response,
+            status: status,
+            action_note: note
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('回复保存成功');
+            $('#suggestionModal').modal('hide');
+            location.reload();
+        } else {
+            alert(data.error || '保存失败');
+        }
+    })
+    .catch(error => {
+        console.error('保存回复失败:', error);
+        alert('保存失败');
+    });
+}
+
+function manageUserFromDetail(userId) {
+    // 关闭建议详情模态框
+    $('#suggestionModal').modal('hide');
+    // 打开用户管理模态框
+    manageUser(userId);
+}
+
+function manageUser(userId) {
+    currentUserId = userId;
+    
+    // 获取用户信息
+    fetch(`/users/api/admin/user-detail/${userId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const user = data.user;
+                const contentHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>基本信息</h6>
+                            <p><strong>用户名：</strong>${user.username}</p>
+                            <p><strong>邮箱：</strong>${user.email || '未设置'}</p>
+                            <p><strong>注册时间：</strong>${user.date_joined}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>当前状态</h6>
+                            <p><strong>角色：</strong>${user.role}</p>
+                            <p><strong>状态：</strong>${user.status}</p>
+                            <p><strong>会员：</strong>${user.membership}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-warning btn-block" onclick="changeUserStatus(${userId})">
+                                <i class="fas fa-user-slash"></i> 更改状态
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-info btn-block" onclick="changeUserMembership(${userId})">
+                                <i class="fas fa-crown"></i> 更改会员
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary btn-block" onclick="changeUserRole(${userId})">
+                                <i class="fas fa-user-shield"></i> 更改角色
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <a href="/users/admin/users/${userId}/" class="btn btn-success btn-block">
+                                <i class="fas fa-external-link-alt"></i> 查看详细管理页面
+                            </a>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('userManageContent').innerHTML = contentHtml;
+                $('#userManageModal').modal('show');
+            } else {
+                alert('获取用户信息失败');
+            }
+        })
+        .catch(error => {
+            console.error('获取用户信息失败:', error);
+            alert('获取用户信息失败');
+        });
+}
+
+function changeUserStatus(userId) {
+    const status = prompt('请输入新状态 (active/suspended/banned/deleted):');
+    if (status) {
+        fetch(`/users/api/admin/change-status/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                status: status,
+                reason: '从建议管理页面更改'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('用户状态更改成功');
+                $('#userManageModal').modal('hide');
+            } else {
+                alert(data.error || '更改失败');
+            }
+        })
+        .catch(error => {
+            console.error('更改用户状态失败:', error);
+            alert('更改失败');
+        });
+    }
+}
+
+function changeUserMembership(userId) {
+    const membership = prompt('请输入新会员等级 (free/basic/premium/vip):');
+    if (membership) {
+        fetch(`/users/api/admin/change-membership/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                membership_type: membership
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('用户会员等级更改成功');
+                $('#userManageModal').modal('hide');
+            } else {
+                alert(data.error || '更改失败');
+            }
+        })
+        .catch(error => {
+            console.error('更改用户会员失败:', error);
+            alert('更改失败');
+        });
+    }
+}
+
+function changeUserRole(userId) {
+    const role = prompt('请输入新角色 (user/admin):');
+    if (role) {
+        fetch(`/users/api/admin/change-role/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                role: role
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('用户角色更改成功');
+                $('#userManageModal').modal('hide');
+            } else {
+                alert(data.error || '更改失败');
+            }
+        })
+        .catch(error => {
+            console.error('更改用户角色失败:', error);
+            alert('更改失败');
+        });
+    }
+}
+
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

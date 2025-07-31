@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}操作日志 - 管理员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-history text-info"></i> 操作日志
+                    </h4>
+                    <div>
+                        <a href="{% url 'admin_user_management' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-users"></i> 用户管理
+                        </a>
+                        <a href="{% url 'admin_suggestions' %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-lightbulb"></i> 建议管理
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 筛选器 -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" id="searchLog" class="form-control" placeholder="搜索管理员或目标用户...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="actionFilter" class="form-control">
+                                <option value="">所有操作</option>
+                                <option value="status_change">状态变更</option>
+                                <option value="phone_ban">手机号封禁</option>
+                                <option value="account_delete">账号删除</option>
+                                <option value="membership_change">会员变更</option>
+                                <option value="role_change">角色变更</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" id="dateFilter" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary btn-block" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> 清除
+                            </button>
+                        </div>
+                    </div>
+
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>管理员</th>
+                                        <th>目标用户</th>
+                                        <th>操作类型</th>
+                                        <th>操作详情</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in page_obj %}
+                                    <tr data-action="{{ log.action }}" data-date="{{ log.created_at|date:'Y-m-d' }}">
+                                        <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                                        <td>
+                                            <span class="badge badge-primary">{{ log.admin_user.username }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">{{ log.target_user.username }}</span>
+                                        </td>
+                                        <td>
+                                            {% if log.action == 'status_change' %}
+                                                <span class="badge badge-warning">状态变更</span>
+                                            {% elif log.action == 'phone_ban' %}
+                                                <span class="badge badge-danger">手机号封禁</span>
+                                            {% elif log.action == 'account_delete' %}
+                                                <span class="badge badge-dark">账号删除</span>
+                                            {% elif log.action == 'membership_change' %}
+                                                <span class="badge badge-info">会员变更</span>
+                                            {% elif log.action == 'role_change' %}
+                                                <span class="badge badge-primary">角色变更</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 300px;" title="{{ log.details }}">
+                                                {{ log.details }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }})">
+                                                <i class="fas fa-eye"></i> 详情
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 分页 -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="日志分页">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无操作日志</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 日志详情模态框 -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">操作详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="logDetailContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 筛选功能
+document.getElementById('searchLog').addEventListener('input', filterLogs);
+document.getElementById('actionFilter').addEventListener('change', filterLogs);
+document.getElementById('dateFilter').addEventListener('change', filterLogs);
+
+function filterLogs() {
+    const searchTerm = document.getElementById('searchLog').value.toLowerCase();
+    const actionFilter = document.getElementById('actionFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const adminUser = row.cells[1].textContent.toLowerCase();
+        const targetUser = row.cells[2].textContent.toLowerCase();
+        const action = row.dataset.action;
+        const date = row.dataset.date;
+        
+        const matchesSearch = adminUser.includes(searchTerm) || targetUser.includes(searchTerm);
+        const matchesAction = !actionFilter || action === actionFilter;
+        const matchesDate = !dateFilter || date === dateFilter;
+        
+        row.style.display = matchesSearch && matchesAction && matchesDate ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchLog').value = '';
+    document.getElementById('actionFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    filterLogs();
+}
+
+function showLogDetail(logId) {
+    // 这里可以添加获取日志详细信息的API调用
+    const detailContent = `
+        <div class="row">
+            <div class="col-12">
+                <h6>操作详情</h6>
+                <p>日志ID: ${logId}</p>
+                <p>详细内容: 这是操作日志的详细信息...</p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('logDetailContent').innerHTML = detailContent;
+    $('#logDetailModal').modal('show');
+}
+</script>
+{% endblock %} 

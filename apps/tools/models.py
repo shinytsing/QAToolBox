@@ -7,9 +7,11 @@ class ToolUsageLog(models.Model):
         ('TEST_CASE', 'Test Case Generator'),
         ('QUALITY_CHECK', 'Code Quality Check'),
         ('PERF_TEST', 'Performance Simulator'),
+        ('REDBOOK', 'RedBook Generator'),  # 添加小红书生成器
     ]
     # 在 models.py 中添加
     preview_image = models.ImageField(upload_to='tool_previews/', null=True, blank=True)
+    raw_response = models.TextField(null=True, blank=True)  # 添加原始响应字段
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tool_type = models.CharField(max_length=20, choices=TOOL_CHOICES)
     input_data = models.TextField()

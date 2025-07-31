@@ -3,14 +3,38 @@
 {% block title %}{{ user.username }} 的用户资料{% endblock %}
 
 {% block content %}
-<div class="container vh-100 d-flex flex-column align-items-center justify-content-center text-center">
-    <h1>{{ user.username }} 的用户资料</h1>
-    <div class="profile-info border p-4 rounded" style="width: 300px;">
-        <p><strong>用户名:</strong> {{ user.username }}</p>
-        <p><strong>电子邮件:</strong> {{ user.email }}</p>
-        <p><strong>注册时间:</strong> {{ user.date_joined }}</p>
+<div class="geek-card">
+    <div class="geek-title">
+        <i class="fas fa-user-circle"></i> {{ user.username }} 的用户资料
     </div>
-    <a href="{% url 'profile_edit' %}" class="btn btn-primary mt-2">编辑资料</a>
-    <a href="{% url 'logout' %}" class="btn btn-danger mt-2">登出</a>
+    <div class="geek-terminal">
+        <div class="profile-info" style="text-align: left; margin: 20px 0;">
+            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+                <span style="color: #00ff00; font-weight: bold;">用户名:</span>
+                <span style="color: #fff; margin-left: 10px;">{{ user.username }}</span>
+            </div>
+            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+                <span style="color: #00ff00; font-weight: bold;">电子邮件:</span>
+                <span style="color: #fff; margin-left: 10px;">{{ user.email|default:"未设置" }}</span>
+            </div>
+            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+                <span style="color: #00ff00; font-weight: bold;">注册时间:</span>
+                <span style="color: #fff; margin-left: 10px;">{{ user.date_joined|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+                <span style="color: #00ff00; font-weight: bold;">最后登录:</span>
+                <span style="color: #fff; margin-left: 10px;">{{ user.last_login|date:"Y-m-d H:i"|default:"从未登录" }}</span>
+            </div>
+        </div>
+        
+        <div class="action-buttons" style="margin-top: 30px;">
+            <a href="{% url 'profile_edit' %}" class="geek-btn" style="margin-right: 15px;">
+                <i class="fas fa-edit"></i> 编辑资料
+            </a>
+            <a href="{% url 'logout' %}" class="geek-btn geek-btn-danger" onclick="stopMedia()">
+                <i class="fas fa-sign-out-alt"></i> 登出
+            </a>
+        </div>
+    </div>
 </div>
 {% endblock %}

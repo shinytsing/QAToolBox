@@ -17,6 +17,7 @@ import logging
 import re
 from datetime import datetime
 from django.utils.text import slugify
+import xmind
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -27,14 +28,46 @@ class GenerateTestCasesAPI(APIView):
     # 增加批量生成的最大批次限制
     MAX_BATCH_COUNT = 5
 
-    # 默认提示词模板（当用户未提供时使用）
-    DEFAULT_PROMPT = """作为资深作为资深资深测试工程师，请根据以下产品需求生成全面的测试用例：
-1. 涵盖功能测试、边界测试、异常测试场景
-2. 每个测试用例需包含：测试场景、前置条件、操作步骤、预期结果
-3. 按模块或功能点分类组织（使用# 标题作为分类）
-4. 需考虑用户可能的误操作和极端情况
-5. 对于复杂功能，应提供更全面的测试覆盖
+    # 优化后的默认提示词模板 - 确保完整性和数量
+    DEFAULT_PROMPT = """作为资深测试工程师，请根据以下产品需求生成完整的测试用例：
+
+## 重要要求
+⚠️ **绝对禁止使用"此处省略"、"等等"、"..."等任何形式的省略表述**
+⚠️ **必须生成完整的测试用例，每个用例都要详细描述**
+⚠️ **宁可生成速度慢，也不能缺少任何用例**
+
+## 测试用例要求
+1. **功能测试**：核心功能、业务流程、数据流转
+2. **界面测试**：UI交互、响应式布局、用户体验
+3. **性能测试**：响应时间、并发处理、资源消耗
+4. **兼容性测试**：多设备、多浏览器、多系统版本
+5. **安全测试**：数据安全、权限控制、输入验证
+6. **异常测试**：错误处理、边界条件、异常场景
+
+## 用例结构（每个用例必须包含）
+- **用例ID**：TC-模块-序号（如：TC-登录-001）
+- **用例标题**：简洁明确的功能描述
+- **测试场景**：具体的业务场景
+- **前置条件**：系统状态、数据准备
+- **测试步骤**：详细的操作步骤（1.2.3...）
+- **预期结果**：具体的验证点
+- **优先级**：P0/P1/P2（P0最高）
+- **测试类型**：功能/性能/安全/兼容性
+
+## 数量要求
+- **每个功能模块至少15个用例**
+- **总用例数量不少于50个**
+- **用例分布：正向40% + 异常30% + 边界30%**
+- **必须覆盖所有可能的场景和边界条件**
+
+## 输出格式
+- 使用Markdown格式
+- 按功能模块分类（## 模块名称）
+- 每个用例都要完整描述，不能有任何省略
+
 产品需求：{requirement}
+
+请生成完整、详细的测试用例，确保数量充足且内容完整。
 """
 
     def post(self, request):
@@ -125,8 +158,9 @@ class GenerateTestCasesAPI(APIView):
             output_dir = os.path.join(settings.MEDIA_ROOT, 'tool_outputs')
             os.makedirs(output_dir, exist_ok=True)
 
-            # 5. 创建FreeMind格式文件（增加错误处理）
+            # 5. 创建多种格式文件（FreeMind和XMind）
             try:
+                # 生成FreeMind格式文件
                 with tempfile.NamedTemporaryFile(
                         suffix='.mm',
                         delete=False,
@@ -138,6 +172,13 @@ class GenerateTestCasesAPI(APIView):
                     tmp.write(mindmap_xml)
                     tmp.flush()
                     os.fsync(tmp.fileno())  # 确保数据写入磁盘
+
+                # 生成XMind格式文件
+                xmind_test_cases = {"content": raw_response, "title": "AI生成测试用例"}
+                xmind_workbook = self._generate_xmind(xmind_test_cases)
+                xmind_filename = outfile_name.replace('.mm', '.xmind')
+                xmind_path = os.path.join(output_dir, xmind_filename)
+                xmind.save(xmind_workbook, xmind_path)
 
                 # 6. 保存到模型（记录批量信息）
                 log = ToolUsageLog.objects.create(
@@ -175,13 +216,15 @@ class GenerateTestCasesAPI(APIView):
 
             response_data = {
                 'download_url': f'/tools/download/{outfile_name}',
+                'xmind_download_url': f'/tools/download/{xmind_filename}',
                 'log_id': log.id,
                 'raw_response': raw_response,
                 'test_cases': raw_response,  # 添加前端期望的字段
                 'is_batch': is_batch,
                 'batch_id': batch_id,
                 'total_batches': total_batches,
-                'file_name': outfile_name
+                'file_name': outfile_name,
+                'xmind_file_name': xmind_filename
             }
 
             # 如果是最后一批，添加打包下载标识
@@ -292,7 +335,7 @@ class GenerateTestCasesAPI(APIView):
 
             # 根主题（对应测试用例标题）
             root_topic = ET.SubElement(map_root, "node")
-            root_topic.set("TEXT", self._escape_xml(test_cases["title"]))
+            root_topic.set("TEXT", self._escape_xml(test_cases.get("title", "AI生成测试用例")))
             root_topic.set("STYLE", "bubble")
             root_topic.set("COLOR", "#000000")  # 黑色根节点
 
@@ -341,3 +384,59 @@ class GenerateTestCasesAPI(APIView):
             .replace(">", "&gt;") \
             .replace("\"", "&quot;") \
             .replace("'", "&apos;")
+
+    def _generate_xmind(self, test_cases):
+        """生成XMind格式文件，支持飞书导入"""
+        try:
+            # 创建XMind工作簿
+            workbook = xmind.load("test_cases.xmind")
+            sheet = workbook.getPrimarySheet()
+            root_topic = sheet.getRootTopic()
+            
+            # 设置根主题
+            root_topic.setTitle("AI生成测试用例")
+            
+            # 解析测试用例内容，构建层级结构
+            content = test_cases.get("content", "")
+            lines = content.split('\n')
+            
+            current_section = None
+            current_section_topic = None
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # 检测二级标题（## 模块名称）
+                if line.startswith('## '):
+                    current_section = line[3:].strip()
+                    current_section_topic = root_topic.addSubTopic()
+                    current_section_topic.setTitle(current_section)
+                    
+                # 检测用例（以 - 开头）
+                elif line.startswith('- ') and current_section_topic:
+                    case_content = line[2:].strip()
+                    case_topic = current_section_topic.addSubTopic()
+                    case_topic.setTitle(case_content)
+                    
+                # 检测用例详情（以 * 开头）
+                elif line.startswith('* ') and current_section_topic:
+                    detail_content = line[2:].strip()
+                    if current_section_topic.getSubTopics():
+                        last_case = current_section_topic.getSubTopics()[-1]
+                        detail_topic = last_case.addSubTopic()
+                        detail_topic.setTitle(detail_content)
+            
+            return workbook
+            
+        except Exception as e:
+            logger.error(f"生成XMind文件失败: {str(e)}", exc_info=True)
+            # 生成失败时返回基础XMind结构
+            workbook = xmind.load("test_cases")
+            sheet = workbook.getPrimarySheet()
+            root_topic = sheet.getRootTopic()
+            root_topic.setTitle("测试用例")
+            error_topic = root_topic.addSubTopic()
+            error_topic.setTitle("测试用例内容")
+            return workbook

@@ -1,0 +1,265 @@
+:root {
+  --bg: #181c20;
+  --card-bg: #23272e;
+  --primary: #00ffe7;
+  --accent: #00bfff;
+  --text: #e6e6e6;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --radius: 12px;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-sans: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  margin: 0;
+  min-height: 100vh;
+}
+
+a, button {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover, button:hover {
+  color: var(--accent);
+}
+
+.geek-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 600px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.geek-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 32px rgba(0,255,231,0.15);
+}
+
+.geek-title {
+  font-size: 2.2rem;
+  color: var(--primary);
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.geek-terminal {
+  background: #111417;
+  color: #00ffe7;
+  font-family: var(--font-mono);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.geek-terminal::before {
+  content: '$ ';
+  color: var(--accent);
+  font-weight: bold;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.5; }
+}
+
+.geek-tool-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.geek-tool-card {
+  background: linear-gradient(135deg, #23272e 60%, #00ffe7 100%);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem 2.5rem;
+  min-width: 220px;
+  max-width: 260px;
+  text-align: center;
+  color: var(--text);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.geek-tool-card:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 8px 32px rgba(0,255,231,0.25);
+  background: linear-gradient(135deg, #00ffe7 40%, #23272e 100%);
+}
+
+.geek-tool-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  transition: color 0.2s;
+}
+
+.geek-tool-card:hover .geek-tool-icon {
+  color: var(--accent);
+}
+
+.geek-tool-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.geek-tool-desc {
+  font-size: 0.98rem;
+  color: #b0eaff;
+  margin-bottom: 0.5rem;
+}
+
+.geek-auth-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2.5rem 2rem 2rem 2rem;
+  max-width: 400px;
+  margin: 3rem auto;
+  color: var(--text);
+}
+
+.geek-auth-title {
+  font-size: 1.7rem;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 1.2rem;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.geek-auth-divider {
+  border: none;
+  border-top: 1.5px solid #333c44;
+  margin: 0 0 1.5rem 0;
+}
+
+.geek-auth-input-group {
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+
+.geek-auth-input-group i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.geek-auth-input {
+  width: 100%;
+  padding: 0.7rem 0.7rem 0.7rem 2.2rem;
+  border-radius: 6px;
+  border: 1px solid #333c44;
+  background: #23272e;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  margin-bottom: 0;
+}
+
+.geek-auth-input:focus {
+  border-color: var(--primary);
+  background: #23272e;
+}
+
+.geek-auth-btn {
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  color: #181c20;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: none;
+  margin-top: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.geek-auth-btn:hover {
+  background: linear-gradient(90deg, var(--accent), var(--primary));
+  color: #23272e;
+}
+
+.geek-auth-link {
+  display: block;
+  text-align: right;
+  margin-top: 1rem;
+  color: var(--primary);
+  font-size: 0.98rem;
+  text-decoration: underline;
+}
+
+.geek-auth-link:hover {
+  color: var(--accent);
+}
+
+.geek-captcha-img {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #333c44;
+  height: 38px;
+}
+
+/* 通用蒙层（遮罩） */
+.geek-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(24, 28, 32, 0.75);
+  backdrop-filter: blur(8px) saturate(1.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s, backdrop-filter 0.3s;
+}
+
+/* 卡片玻璃拟态效果 */
+.geek-auth-card,
+.geek-card {
+  background: rgba(35, 39, 46, 0.85);
+  box-shadow: 0 8px 32px rgba(0,255,231,0.10), 0 2px 8px rgba(0,0,0,0.25);
+  backdrop-filter: blur(12px) saturate(1.2);
+  border: 1.5px solid rgba(0,255,231,0.08);
+}
+
+.geek-title, .geek-auth-title, .geek-tool-title {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.geek-terminal, .geek-auth-input, .geek-auth-btn, .geek-tool-card, .geek-tool-icon {
+  font-family: var(--font-mono);
+}
+
+.geek-card, .geek-auth-card {
+  font-family: var(--font-sans);
+}
+
+.geek-tool-desc, .geek-auth-link, .geek-tool-grid, .geek-tool-card {
+  font-family: var(--font-sans);
+}
+
+/* 保证表单、正文、列表等都用 Inter/Roboto，标题/按钮/终端用 JetBrains Mono */

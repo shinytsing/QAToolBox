@@ -30,8 +30,6 @@ urlpatterns = [
     path('tools/', include('apps.tools.urls')),
     path('users/', include('apps.users.urls')),
     path('content/', include('apps.content.urls')),
-    path('about/', lambda request: HttpResponse('关于页面'), name='about'),
-    path('contact/', lambda request: HttpResponse('联系页面'), name='contact'),
 ]
 
 # 开发环境下提供媒体文件访问

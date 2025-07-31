@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import article_list, article_detail, article_create, article_edit, article_delete,add_comment
+from .views import (
+    article_list, article_detail, article_create, article_edit, article_delete,
+    suggestions_api, feedback_api, admin_suggestions, admin_feedback,
+    admin_reply_suggestion, admin_reply_feedback
+)
 
 urlpatterns = [
     path('', article_list, name='article_list'),  # 文章列表
@@ -7,6 +11,14 @@ urlpatterns = [
     path('create/', article_create, name='article_create'),  # 创建文章
     path('edit/<int:pk>/', article_edit, name='article_edit'),  # 编辑文章
     path('delete/<int:pk>/', article_delete, name='article_delete'),  # 删除文章
-    path('articles/<int:article_id>/comment/', add_comment, name='add_comment'),
-
+    
+    # 建议和反馈API
+    path('api/suggestions/', suggestions_api, name='suggestions_api'),
+    path('api/feedback/', feedback_api, name='feedback_api'),
+    
+    # 管理员管理页面
+    path('admin/suggestions/', admin_suggestions, name='admin_suggestions'),
+    path('admin/feedback/', admin_feedback, name='admin_feedback'),
+    path('api/admin/reply-suggestion/', admin_reply_suggestion, name='admin_reply_suggestion'),
+    path('api/admin/reply-feedback/', admin_reply_feedback, name='admin_reply_feedback'),
 ]

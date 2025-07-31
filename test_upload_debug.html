@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .nine-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 300px;
+            aspect-ratio: 1;
+            margin: 20px 0;
+        }
+        .grid-item {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .grid-item:hover {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+        .grid-item.has-image {
+            border: none;
+            padding: 0;
+        }
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .upload-icon {
+            font-size: 24px;
+            color: #007bff;
+        }
+        .upload-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>上传功能测试页面</h1>
+    
+    <div class="test-section">
+        <h2>测试1: 基本文件选择</h2>
+        <input type="file" id="basicUpload" accept="image/*" multiple>
+        <div id="basicResult" class="debug-info"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试2: 九宫格上传</h2>
+        <div class="nine-grid" id="testNineGrid">
+            <!-- 九宫格将在这里生成 -->
+        </div>
+        <input type="file" id="nineGridUpload" accept="image/*" multiple style="display:none;">
+        <div id="nineGridResult" class="debug-info"></div>
+        <button onclick="clearImages()">清除图片</button>
+        <button onclick="showDebugInfo()">显示调试信息</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试3: 拖拽上传</h2>
+        <div id="dropZone" style="border: 2px dashed #ccc; padding: 40px; text-align: center; margin: 20px 0;">
+            拖拽图片到这里
+        </div>
+        <div id="dropResult" class="debug-info"></div>
+    </div>
+
+    <script>
+        // 测试数据
+        let uploadedImages = [];
+        
+        // 初始化九宫格
+        function initNineGrid() {
+            const nineGrid = document.getElementById('testNineGrid');
+            nineGrid.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                const gridItem = document.createElement('div');
+                gridItem.className = 'grid-item';
+                gridItem.dataset.index = i;
+                
+                if (i === 0) {
+                    gridItem.innerHTML = `
+                        <div>
+                            <div class="upload-icon">+</div>
+                            <div class="upload-text">添加图片</div>
+                        </div>
+                    `;
+                    gridItem.onclick = () => document.getElementById('nineGridUpload').click();
+                }
+                
+                nineGrid.appendChild(gridItem);
+            }
+        }
+        
+        // 更新九宫格显示
+        function updateNineGrid() {
+            const nineGrid = document.getElementById('testNineGrid');
+            nineGrid.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                const gridItem = document.createElement('div');
+                gridItem.className = 'grid-item';
+                gridItem.dataset.index = i;
+                
+                if (i < uploadedImages.length) {
+                    gridItem.className = 'grid-item has-image';
+                    gridItem.innerHTML = `
+                        <img src="${uploadedImages[i].preview}" alt="图片 ${i + 1}">
+                    `;
+                } else if (i === uploadedImages.length && uploadedImages.length < 9) {
+                    gridItem.innerHTML = `
+                        <div>
+                            <div class="upload-icon">+</div>
+                            <div class="upload-text">添加图片</div>
+                        </div>
+                    `;
+                    gridItem.onclick = () => document.getElementById('nineGridUpload').click();
+                } else {
+                    gridItem.style.display = 'none';
+                }
+                
+                nineGrid.appendChild(gridItem);
+            }
+        }
+        
+        // 测试1: 基本文件选择
+        document.getElementById('basicUpload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const result = document.getElementById('basicResult');
+            result.textContent = `选择了 ${files.length} 个文件:\n` + 
+                files.map(f => `${f.name} (${f.type}, ${f.size} bytes)`).join('\n');
+        });
+        
+        // 测试2: 九宫格上传
+        document.getElementById('nineGridUpload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const result = document.getElementById('nineGridResult');
+            
+            if (files.length === 0) return;
+            
+            result.textContent = `处理 ${files.length} 个文件...`;
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImages.push({
+                        file: file,
+                        preview: e.target.result,
+                        size: file.size
+                    });
+                    
+                    updateNineGrid();
+                    result.textContent = `已上传 ${uploadedImages.length} 张图片`;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        // 测试3: 拖拽上传
+        const dropZone = document.getElementById('dropZone');
+        const dropResult = document.getElementById('dropResult');
+        
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = '#007bff';
+            dropZone.style.background = '#f0f8ff';
+        });
+        
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = '#ccc';
+            dropZone.style.background = 'white';
+        });
+        
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.style.borderColor = '#ccc';
+            dropZone.style.background = 'white';
+            
+            const files = Array.from(e.dataTransfer.files).filter(file => 
+                file.type.startsWith('image/')
+            );
+            
+            dropResult.textContent = `拖拽了 ${files.length} 个图片文件:\n` + 
+                files.map(f => `${f.name} (${f.type}, ${f.size} bytes)`).join('\n');
+        });
+        
+        // 辅助函数
+        function clearImages() {
+            uploadedImages = [];
+            updateNineGrid();
+            document.getElementById('nineGridResult').textContent = '已清除所有图片';
+        }
+        
+        function showDebugInfo() {
+            const info = document.getElementById('nineGridResult');
+            info.textContent = `调试信息:\n` +
+                `uploadedImages.length: ${uploadedImages.length}\n` +
+                `uploadedImages: ${JSON.stringify(uploadedImages.map(img => ({name: img.file.name, size: img.size})), null, 2)}`;
+        }
+        
+        // 初始化
+        initNineGrid();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+
+{% block title %}用户详情 - 管理员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user text-primary"></i> 用户详情
+                    </h4>
+                    <div>
+                        <a href="{% url 'admin_user_management' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-arrow-left"></i> 返回用户列表
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if user_detail %}
+                        <div class="row">
+                            <!-- 基本信息 -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-info-circle"></i> 基本信息
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-borderless">
+                                            <tr>
+                                                <td><strong>用户名:</strong></td>
+                                                <td>{{ user_detail.username }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>邮箱:</strong></td>
+                                                <td>{{ user_detail.email|default:"未设置" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>手机号:</strong></td>
+                                                <td>{{ user_detail.profile.phone|default:"未设置" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>注册时间:</strong></td>
+                                                <td>{{ user_detail.date_joined|date:"Y-m-d H:i:s" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>最后登录:</strong></td>
+                                                <td>{{ user_detail.last_login|date:"Y-m-d H:i:s"|default:"从未登录" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>是否激活:</strong></td>
+                                                <td>
+                                                    {% if user_detail.is_active %}
+                                                        <span class="badge badge-success">激活</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">未激活</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 角色和状态 -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-shield-alt"></i> 角色和状态
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-borderless">
+                                            <tr>
+                                                <td><strong>用户角色:</strong></td>
+                                                <td>
+                                                    {% if user_detail.role.role == 'admin' %}
+                                                        <span class="badge badge-danger">管理员</span>
+                                                    {% else %}
+                                                        <span class="badge badge-secondary">普通用户</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>账户状态:</strong></td>
+                                                <td>
+                                                    {% if user_detail.userstatus.status == 'active' %}
+                                                        <span class="badge badge-success">正常</span>
+                                                    {% elif user_detail.userstatus.status == 'suspended' %}
+                                                        <span class="badge badge-warning">暂停</span>
+                                                    {% elif user_detail.userstatus.status == 'banned' %}
+                                                        <span class="badge badge-danger">封禁</span>
+                                                    {% elif user_detail.userstatus.status == 'deleted' %}
+                                                        <span class="badge badge-dark">已删除</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>会员类型:</strong></td>
+                                                <td>
+                                                    {% if user_detail.usermembership.membership_type == 'free' %}
+                                                        <span class="badge badge-secondary">免费用户</span>
+                                                    {% elif user_detail.usermembership.membership_type == 'basic' %}
+                                                        <span class="badge badge-info">基础会员</span>
+                                                    {% elif user_detail.usermembership.membership_type == 'premium' %}
+                                                        <span class="badge badge-warning">高级会员</span>
+                                                    {% elif user_detail.usermembership.membership_type == 'vip' %}
+                                                        <span class="badge badge-danger">VIP会员</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>会员到期:</strong></td>
+                                                <td>
+                                                    {% if user_detail.usermembership.end_date %}
+                                                        {{ user_detail.usermembership.end_date|date:"Y-m-d" }}
+                                                    {% else %}
+                                                        永久
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-cogs"></i> 管理操作
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3 mb-2">
+                                                <button class="btn btn-outline-warning btn-block" onclick="showStatusModal()">
+                                                    <i class="fas fa-user-edit"></i> 修改状态
+                                                </button>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <button class="btn btn-outline-info btn-block" onclick="showMembershipModal()">
+                                                    <i class="fas fa-crown"></i> 修改会员
+                                                </button>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <button class="btn btn-outline-primary btn-block" onclick="showRoleModal()">
+                                                    <i class="fas fa-user-shield"></i> 修改角色
+                                                </button>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <button class="btn btn-outline-danger btn-block" onclick="showDeleteModal()">
+                                                    <i class="fas fa-trash"></i> 删除账户
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作历史 -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-history"></i> 操作历史
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if user_logs %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>时间</th>
+                                                            <th>管理员</th>
+                                                            <th>操作</th>
+                                                            <th>详情</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for log in user_logs %}
+                                                        <tr>
+                                                            <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+                                                            <td>{{ log.admin_user.username }}</td>
+                                                            <td>
+                                                                {% if log.action == 'status_change' %}
+                                                                    <span class="badge badge-warning">状态变更</span>
+                                                                {% elif log.action == 'phone_ban' %}
+                                                                    <span class="badge badge-danger">手机号封禁</span>
+                                                                {% elif log.action == 'account_delete' %}
+                                                                    <span class="badge badge-dark">账号删除</span>
+                                                                {% elif log.action == 'membership_change' %}
+                                                                    <span class="badge badge-info">会员变更</span>
+                                                                {% elif log.action == 'role_change' %}
+                                                                    <span class="badge badge-primary">角色变更</span>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td>{{ log.details }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% else %}
+                                            <p class="text-muted text-center">暂无操作历史</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">用户不存在或已被删除</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改状态模态框 -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修改用户状态</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <div class="form-group">
+                        <label>选择状态:</label>
+                        <select class="form-control" id="newStatus" required>
+                            <option value="active">正常</option>
+                            <option value="suspended">暂停</option>
+                            <option value="banned">封禁</option>
+                            <option value="deleted">删除</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>原因:</label>
+                        <textarea class="form-control" id="statusReason" rows="3" placeholder="请输入修改状态的原因..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="changeUserStatus()">确认修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改会员模态框 -->
+<div class="modal fade" id="membershipModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修改会员类型</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="membershipForm">
+                    <div class="form-group">
+                        <label>会员类型:</label>
+                        <select class="form-control" id="newMembership" required>
+                            <option value="free">免费用户</option>
+                            <option value="basic">基础会员</option>
+                            <option value="premium">高级会员</option>
+                            <option value="vip">VIP会员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>有效期(天):</label>
+                        <input type="number" class="form-control" id="membershipDays" min="1" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label>备注:</label>
+                        <textarea class="form-control" id="membershipNote" rows="3" placeholder="请输入备注信息..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-info" onclick="changeMembership()">确认修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改角色模态框 -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修改用户角色</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <div class="form-group">
+                        <label>选择角色:</label>
+                        <select class="form-control" id="newRole" required>
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>备注:</label>
+                        <textarea class="form-control" id="roleNote" rows="3" placeholder="请输入修改角色的原因..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="changeUserRole()">确认修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除用户</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>警告:</strong> 此操作将永久删除用户账户，无法恢复！
+                </div>
+                <form id="deleteForm">
+                    <div class="form-group">
+                        <label>删除原因:</label>
+                        <textarea class="form-control" id="deleteReason" rows="3" placeholder="请输入删除用户的原因..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="deleteUser()">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const userId = {{ user_detail.id|default:"null" }};
+
+function showStatusModal() {
+    $('#statusModal').modal('show');
+}
+
+function showMembershipModal() {
+    $('#membershipModal').modal('show');
+}
+
+function showRoleModal() {
+    $('#roleModal').modal('show');
+}
+
+function showDeleteModal() {
+    $('#deleteModal').modal('show');
+}
+
+function changeUserStatus() {
+    const status = document.getElementById('newStatus').value;
+    const reason = document.getElementById('statusReason').value;
+    
+    fetch(`/users/api/admin/change-status/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            status: status,
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('状态修改成功', 'success');
+            $('#statusModal').modal('hide');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || '状态修改失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('操作失败，请重试', 'error');
+    });
+}
+
+function changeMembership() {
+    const membership = document.getElementById('newMembership').value;
+    const days = document.getElementById('membershipDays').value;
+    const note = document.getElementById('membershipNote').value;
+    
+    fetch(`/users/api/admin/change-membership/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            membership_type: membership,
+            days: days,
+            note: note
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('会员修改成功', 'success');
+            $('#membershipModal').modal('hide');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || '会员修改失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('操作失败，请重试', 'error');
+    });
+}
+
+function changeUserRole() {
+    const role = document.getElementById('newRole').value;
+    const note = document.getElementById('roleNote').value;
+    
+    fetch(`/users/api/admin/change-role/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            role: role,
+            note: note
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('角色修改成功', 'success');
+            $('#roleModal').modal('hide');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || '角色修改失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('操作失败，请重试', 'error');
+    });
+}
+
+function deleteUser() {
+    const reason = document.getElementById('deleteReason').value;
+    
+    if (!reason.trim()) {
+        showNotification('请输入删除原因', 'error');
+        return;
+    }
+    
+    fetch(`/users/api/admin/delete-user/${userId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('用户删除成功', 'success');
+            $('#deleteModal').modal('hide');
+            setTimeout(() => window.location.href = "{% url 'admin_user_management' %}", 1000);
+        } else {
+            showNotification(data.message || '用户删除失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('操作失败，请重试', 'error');
+    });
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色系统测试 - QA工具箱</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.95);
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        .role-badge {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header text-center bg-primary text-white">
+                        <h2><i class="fas fa-users-cog"></i> 角色系统测试</h2>
+                        <p class="mb-0">测试普通用户和管理员的不同权限</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="text-center mb-4">
+                                    <i class="fas fa-user feature-icon"></i>
+                                    <h4>普通用户</h4>
+                                    <span class="badge bg-secondary role-badge">user</span>
+                                    <div class="mt-3">
+                                        <ul class="list-unstyled text-start">
+                                            <li><i class="fas fa-check text-success"></i> 提交建议和反馈</li>
+                                            <li><i class="fas fa-check text-success"></i> 查看自己的建议</li>
+                                            <li><i class="fas fa-check text-success"></i> 使用所有工具功能</li>
+                                            <li><i class="fas fa-times text-danger"></i> 无法查看所有建议</li>
+                                            <li><i class="fas fa-times text-danger"></i> 无法管理用户反馈</li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-custom mt-3" onclick="testUserRole()">
+                                        <i class="fas fa-user"></i> 测试普通用户功能
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="text-center mb-4">
+                                    <i class="fas fa-user-shield feature-icon"></i>
+                                    <h4>管理员</h4>
+                                    <span class="badge bg-warning role-badge">admin</span>
+                                    <div class="mt-3">
+                                        <ul class="list-unstyled text-start">
+                                            <li><i class="fas fa-check text-success"></i> 所有普通用户权限</li>
+                                            <li><i class="fas fa-check text-success"></i> 查看所有建议和反馈</li>
+                                            <li><i class="fas fa-check text-success"></i> 回复用户建议</li>
+                                            <li><i class="fas fa-check text-success"></i> 更新建议状态</li>
+                                            <li><i class="fas fa-check text-success"></i> 管理用户反馈</li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn btn-warning btn-custom mt-3" onclick="testAdminRole()">
+                                        <i class="fas fa-user-shield"></i> 测试管理员功能
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h4 class="text-center mb-4">
+                                    <i class="fas fa-lightbulb text-warning"></i> 功能演示
+                                </h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-plus-circle text-primary" style="font-size: 2rem;"></i>
+                                                <h6 class="mt-2">提交建议</h6>
+                                                <p class="small text-muted">用户可以提交功能建议、Bug报告等</p>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="showSuggestionForm()">
+                                                    演示提交
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-list text-info" style="font-size: 2rem;"></i>
+                                                <h6 class="mt-2">查看建议</h6>
+                                                <p class="small text-muted">管理员可以查看所有用户的建议</p>
+                                                <button class="btn btn-sm btn-outline-info" onclick="showSuggestionList()">
+                                                    演示查看
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-reply text-success" style="font-size: 2rem;"></i>
+                                                <h6 class="mt-2">管理员回复</h6>
+                                                <p class="small text-muted">管理员可以回复建议并更新状态</p>
+                                                <button class="btn btn-sm btn-outline-success" onclick="showAdminReply()">
+                                                    演示回复
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h4 class="text-center mb-4">
+                                    <i class="fas fa-code text-primary"></i> API 测试
+                                </h4>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6><i class="fas fa-lightbulb"></i> 建议 API</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <button class="btn btn-sm btn-primary mb-2" onclick="testGetSuggestions()">
+                                                    GET /content/api/suggestions/
+                                                </button>
+                                                <button class="btn btn-sm btn-success mb-2" onclick="testPostSuggestion()">
+                                                    POST /content/api/suggestions/
+                                                </button>
+                                                <div id="suggestionApiResult" class="mt-3">
+                                                    <small class="text-muted">API 测试结果将显示在这里</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6><i class="fas fa-comments"></i> 反馈 API</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <button class="btn btn-sm btn-primary mb-2" onclick="testGetFeedback()">
+                                                    GET /content/api/feedback/
+                                                </button>
+                                                <button class="btn btn-sm btn-success mb-2" onclick="testPostFeedback()">
+                                                    POST /content/api/feedback/
+                                                </button>
+                                                <div id="feedbackApiResult" class="mt-3">
+                                                    <small class="text-muted">API 测试结果将显示在这里</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 建议提交模态框 -->
+    <div class="modal fade" id="suggestionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">提交建议</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="suggestionForm">
+                        <div class="mb-3">
+                            <label class="form-label">建议标题</label>
+                            <input type="text" class="form-control" id="suggestionTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">建议类型</label>
+                            <select class="form-control" id="suggestionType">
+                                <option value="feature">功能建议</option>
+                                <option value="ui">界面改进</option>
+                                <option value="bug">Bug报告</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">建议内容</label>
+                            <textarea class="form-control" id="suggestionContent" rows="4" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitSuggestion()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function testUserRole() {
+            alert('普通用户功能测试：\n1. 可以提交建议和反馈\n2. 可以查看自己的建议\n3. 无法访问管理功能');
+        }
+        
+        function testAdminRole() {
+            alert('管理员功能测试：\n1. 拥有所有普通用户权限\n2. 可以查看所有建议和反馈\n3. 可以回复和更新状态\n4. 可以访问管理页面');
+        }
+        
+        function showSuggestionForm() {
+            const modal = new bootstrap.Modal(document.getElementById('suggestionModal'));
+            modal.show();
+        }
+        
+        function showSuggestionList() {
+            alert('管理员建议列表功能：\n- 查看所有用户提交的建议\n- 按状态筛选\n- 查看详细信息\n- 回复和更新状态');
+        }
+        
+        function showAdminReply() {
+            alert('管理员回复功能：\n- 查看建议详情\n- 添加回复内容\n- 更新建议状态\n- 保存更改');
+        }
+        
+        function submitSuggestion() {
+            const title = document.getElementById('suggestionTitle').value;
+            const type = document.getElementById('suggestionType').value;
+            const content = document.getElementById('suggestionContent').value;
+            
+            if (!title || !content) {
+                alert('请填写标题和内容');
+                return;
+            }
+            
+            const suggestionData = {
+                title: title,
+                content: content,
+                suggestion_type: type,
+                user_name: '测试用户',
+                user_email: 'test@example.com'
+            };
+            
+            fetch('/content/api/suggestions/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(suggestionData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('建议提交成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('suggestionModal')).hide();
+                    document.getElementById('suggestionForm').reset();
+                } else {
+                    alert('提交失败：' + (data.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('提交失败:', error);
+                alert('提交失败，请检查网络连接');
+            });
+        }
+        
+        function testGetSuggestions() {
+            fetch('/content/api/suggestions/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('suggestionApiResult').innerHTML = 
+                        `<pre class="small">${JSON.stringify(data, null, 2)}</pre>`;
+                })
+                .catch(error => {
+                    document.getElementById('suggestionApiResult').innerHTML = 
+                        `<div class="text-danger">错误: ${error.message}</div>`;
+                });
+        }
+        
+        function testPostSuggestion() {
+            const testData = {
+                title: '测试建议',
+                content: '这是一个测试建议',
+                suggestion_type: 'feature',
+                user_name: '测试用户',
+                user_email: 'test@example.com'
+            };
+            
+            fetch('/content/api/suggestions/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('suggestionApiResult').innerHTML = 
+                    `<pre class="small">${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(error => {
+                document.getElementById('suggestionApiResult').innerHTML = 
+                    `<div class="text-danger">错误: ${error.message}</div>`;
+            });
+        }
+        
+        function testGetFeedback() {
+            fetch('/content/api/feedback/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('feedbackApiResult').innerHTML = 
+                        `<pre class="small">${JSON.stringify(data, null, 2)}</pre>`;
+                })
+                .catch(error => {
+                    document.getElementById('feedbackApiResult').innerHTML = 
+                        `<div class="text-danger">错误: ${error.message}</div>`;
+                });
+        }
+        
+        function testPostFeedback() {
+            const testData = {
+                feedback_type: 'bug',
+                content: '这是一个测试反馈',
+                user_name: '测试用户',
+                user_email: 'test@example.com'
+            };
+            
+            fetch('/content/api/feedback/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('feedbackApiResult').innerHTML = 
+                    `<pre class="small">${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(error => {
+                document.getElementById('feedbackApiResult').innerHTML = 
+                    `<div class="text-danger">错误: ${error.message}</div>`;
+            });
+        }
+    </script>
+</body>
+</html> 

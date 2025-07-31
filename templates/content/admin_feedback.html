@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}反馈管理 - 管理员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-comments text-info"></i> 反馈管理
+                    </h4>
+                    <a href="{% url 'admin_suggestions' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-lightbulb"></i> 查看建议
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if feedbacks %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>类型</th>
+                                        <th>内容</th>
+                                        <th>状态</th>
+                                        <th>提交者</th>
+                                        <th>提交时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for feedback in feedbacks %}
+                                    <tr>
+                                        <td>{{ feedback.id }}</td>
+                                        <td>
+                                            <span class="badge badge-info">{{ feedback.get_feedback_type_display }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ feedback.content|truncatechars:100 }}</small>
+                                        </td>
+                                        <td>
+                                            {% if feedback.status == 'pending' %}
+                                                <span class="badge badge-warning">待处理</span>
+                                            {% elif feedback.status == 'processing' %}
+                                                <span class="badge badge-info">处理中</span>
+                                            {% elif feedback.status == 'resolved' %}
+                                                <span class="badge badge-success">已解决</span>
+                                            {% elif feedback.status == 'closed' %}
+                                                <span class="badge badge-secondary">已关闭</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ feedback.user_name|default:feedback.user.username|default:"匿名用户" }}</td>
+                                        <td>{{ feedback.created_at|date:"Y-m-d H:i" }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" onclick="showFeedbackDetail({{ feedback.id }})">
+                                                <i class="fas fa-eye"></i> 查看
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无反馈</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 反馈详情模态框 -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">反馈详情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="feedbackDetail"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showFeedbackDetail(feedbackId) {
+    // 获取反馈详情
+    fetch(`/content/api/feedback/`)
+        .then(response => response.json())
+        .then(data => {
+            const feedback = data.feedbacks.find(f => f.id === feedbackId);
+            if (feedback) {
+                const detailHtml = `
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>反馈类型</h6>
+                            <p class="border-bottom pb-2">${feedback.feedback_type}</p>
+                            
+                            <h6>反馈内容</h6>
+                            <p class="border-bottom pb-2">${feedback.content}</p>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>类型</h6>
+                                    <p>${feedback.feedback_type}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>状态</h6>
+                                    <p>${feedback.status}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>提交者</h6>
+                                    <p>${feedback.user_name}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>提交时间</h6>
+                                    <p>${feedback.created_at}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>当前状态</h6>
+                                    <select id="statusSelect" class="form-control">
+                                        <option value="pending" ${feedback.status === '待处理' ? 'selected' : ''}>待处理</option>
+                                        <option value="processing" ${feedback.status === '处理中' ? 'selected' : ''}>处理中</option>
+                                        <option value="resolved" ${feedback.status === '已解决' ? 'selected' : ''}>已解决</option>
+                                        <option value="closed" ${feedback.status === '已关闭' ? 'selected' : ''}>已关闭</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <h6>管理员回复</h6>
+                            <textarea id="adminResponse" class="form-control" rows="4" placeholder="请输入回复内容...">${feedback.admin_response || ''}</textarea>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-primary" onclick="saveReply(${feedbackId})">
+                                    <i class="fas fa-save"></i> 保存回复
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('feedbackDetail').innerHTML = detailHtml;
+                $('#feedbackModal').modal('show');
+            }
+        })
+        .catch(error => {
+            console.error('获取反馈详情失败:', error);
+            alert('获取反馈详情失败');
+        });
+}
+
+function saveReply(feedbackId) {
+    const response = document.getElementById('adminResponse').value;
+    const status = document.getElementById('statusSelect').value;
+    
+    fetch('/content/api/admin/reply-feedback/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            feedback_id: feedbackId,
+            response: response,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('回复已保存');
+            $('#feedbackModal').modal('hide');
+            location.reload(); // 刷新页面
+        } else {
+            alert(data.error || '保存失败');
+        }
+    })
+    .catch(error => {
+        console.error('保存回复失败:', error);
+        alert('保存失败');
+    });
+}
+
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

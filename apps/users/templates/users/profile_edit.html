@@ -3,20 +3,33 @@
 {% block title %}编辑用户资料{% endblock %}
 
 {% block content %}
-<div class="container vh-100 d-flex flex-column align-items-center justify-content-center text-center">
-    <h1>编辑资料</h1>
-    <form method="POST" class="border p-4 rounded" style="width: 300px;">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="username">用户名:</label>
-            <input type="text" id="username" name="username" value="{{ user.username }}" required class="form-control">
-        </div>
-        <div class="form-group">
-            <label for="email">电子邮件:</label>
-            <input type="email" id="email" name="email" value="{{ user.email }}" required class="form-control">
-        </div>
-        <button type="submit" class="btn btn-primary">保存更改</button>
-    </form>
-    <a href="{% url 'profile_view' %}" class="btn btn-secondary mt-3">返回资料</a>
+<div class="geek-card">
+    <div class="geek-title">
+        <i class="fas fa-edit"></i> 编辑资料
+    </div>
+    <div class="geek-terminal">
+        <form method="POST" style="text-align: left; margin: 20px 0;">
+            {% csrf_token %}
+            <div class="form-group" style="margin: 20px 0;">
+                <label for="username" style="color: #00ff00; font-weight: bold; display: block; margin-bottom: 5px;">用户名:</label>
+                <input type="text" id="username" name="username" value="{{ user.username }}" required 
+                       style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #00ff00; border-radius: 5px; color: #fff; font-family: 'Courier New', monospace;">
+            </div>
+            <div class="form-group" style="margin: 20px 0;">
+                <label for="email" style="color: #00ff00; font-weight: bold; display: block; margin-bottom: 5px;">电子邮件:</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required 
+                       style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #00ff00; border-radius: 5px; color: #fff; font-family: 'Courier New', monospace;">
+            </div>
+            
+            <div class="action-buttons" style="margin-top: 30px;">
+                <button type="submit" class="geek-btn" style="margin-right: 15px;">
+                    <i class="fas fa-save"></i> 保存更改
+                </button>
+                <a href="{% url 'profile_view' %}" class="geek-btn geek-btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回资料
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

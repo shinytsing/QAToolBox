@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新功能展示</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #1A1A1A;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .feature-section {
+            background: rgba(255,255,255,0.1);
+            margin: 20px 0;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            margin: 5px;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-demo {
+            background: #1A1A1A;
+            color: #fff;
+            padding: 40px 0 20px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-toolbox"></i> QAToolBox 新功能展示
+        </h1>
+        
+        <div class="feature-section">
+            <h2>🎨 设计改进</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h4><i class="fas fa-palette"></i> 底部设计</h4>
+                        <ul>
+                            <li>使用黑色背景 (#1A1A1A)</li>
+                            <li>关于我、联系我、关注我三栏布局</li>
+                            <li>社交媒体图标和悬停效果</li>
+                            <li>版权信息和链接</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h4><i class="fas fa-users"></i> 账户设置</h4>
+                        <ul>
+                            <li>用户名下拉菜单</li>
+                            <li>个人资料和登出选项</li>
+                            <li>设置按钮移到右上角</li>
+                            <li>媒体控制和系统设置</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feature-section">
+            <h2>🔧 新功能</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h4><i class="fas fa-lightbulb"></i> 我的建议</h4>
+                        <p>所有人都可以查看和提交建议</p>
+                        <button class="btn btn-warning btn-custom" onclick="showSuggestions()">
+                            <i class="fas fa-lightbulb"></i> 查看建议
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h4><i class="fas fa-comment"></i> 意见反馈</h4>
+                        <p>提交Bug报告和功能建议</p>
+                        <button class="btn btn-info btn-custom" onclick="showFeedback()">
+                            <i class="fas fa-comment"></i> 提交反馈
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feature-section">
+            <h2>🔒 权限控制</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h4><i class="fas fa-tools"></i> 工具访问</h4>
+                        <ul>
+                            <li>只有登录用户才能看到工具</li>
+                            <li>未登录用户显示登录提示</li>
+                            <li>工具集链接需要认证</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h4><i class="fas fa-eye"></i> 公开功能</h4>
+                        <ul>
+                            <li>我的建议 - 所有人可见</li>
+                            <li>意见反馈 - 所有人可见</li>
+                            <li>首页和关于信息 - 所有人可见</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部演示 -->
+    <div class="footer-demo">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 style="color: #fff; margin-bottom: 15px;">
+                        <i class="fas fa-user"></i> 关于我
+                    </h5>
+                    <p style="color: #f0f0f0; font-size: 14px; line-height: 1.6;">
+                        QA工具箱开发者<br>
+                        专注于自动化测试和工具开发<br>
+                        致力于提升开发效率
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h5 style="color: #fff; margin-bottom: 15px;">
+                        <i class="fas fa-envelope"></i> 联系我
+                    </h5>
+                    <p style="color: #f0f0f0; font-size: 14px; line-height: 1.6;">
+                        Email: gaojie@example.com<br>
+                        WeChat: gaojie_dev<br>
+                        欢迎技术交流
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h5 style="color: #fff; margin-bottom: 15px;">
+                        <i class="fas fa-share-alt"></i> 关注我
+                    </h5>
+                    <div class="social-icons" style="display: flex; justify-content: center; gap: 15px;">
+                        <a href="#" style="color: #fff; font-size: 24px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-github" title="GitHub"></i>
+                        </a>
+                        <a href="#" style="color: #fff; font-size: 24px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-weibo" title="微博"></i>
+                        </a>
+                        <a href="#" style="color: #fff; font-size: 24px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-zhihu" title="知乎"></i>
+                        </a>
+                        <a href="#" style="color: #fff; font-size: 24px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fab fa-bilibili" title="B站"></i>
+                        </a>
+                        <a href="#" style="color: #fff; font-size: 24px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fas fa-heart" title="小红书"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <hr style="border-color: rgba(255,255,255,0.3); margin: 20px 0;">
+                    <p style="color: #f0f0f0; font-size: 12px; margin: 0; text-align: center;">
+                        © 2025 QAToolBox. 专注于提升开发效率的工具箱 | 
+                        <a href="#" style="color: #fff; text-decoration: none;">隐私政策</a> | 
+                        <a href="#" style="color: #fff; text-decoration: none;">使用条款</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 显示建议界面
+        function showSuggestions() {
+            const suggestionsHtml = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 600px; max-height: 80vh; overflow-y: auto; width: 90%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: #333; margin: 0;">
+                                <i class="fas fa-lightbulb" style="color: #ffc107;"></i> 我的建议
+                            </h3>
+                            <button onclick="closeSuggestions()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333;">💡 功能建议</h5>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <p style="margin: 0; color: #666;"><strong>小红书生成器：</strong>支持更多平台的内容生成</p>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <p style="margin: 0; color: #666;"><strong>测试用例生成：</strong>支持更多编程语言和框架</p>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <p style="margin: 0; color: #666;"><strong>UI改进：</strong>深色模式支持</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #333;">📝 添加新建议</h5>
+                            <textarea id="newSuggestion" placeholder="请输入您的建议..." style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="submitSuggestion()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                                <i class="fas fa-paper-plane"></i> 提交建议
+                            </button>
+                            <button onclick="closeSuggestions()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                关闭
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', suggestionsHtml);
+        }
+        
+        // 关闭建议界面
+        function closeSuggestions() {
+            const suggestions = document.querySelector('div[style*="z-index: 10000"]');
+            if (suggestions) {
+                suggestions.remove();
+            }
+        }
+        
+        // 提交建议
+        function submitSuggestion() {
+            const suggestion = document.getElementById('newSuggestion').value;
+            if (suggestion.trim()) {
+                alert('建议提交成功！感谢您的反馈');
+                closeSuggestions();
+            } else {
+                alert('请输入建议内容');
+            }
+        }
+        
+        // 显示反馈界面
+        function showFeedback() {
+            const feedbackHtml = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; max-height: 80vh; overflow-y: auto; width: 90%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: #333; margin: 0;">
+                                <i class="fas fa-comment" style="color: #17a2b8;"></i> 意见反馈
+                            </h3>
+                            <button onclick="closeFeedback()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: #333;">反馈类型：</label>
+                            <select id="feedbackType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
+                                <option value="bug">Bug报告</option>
+                                <option value="feature">功能建议</option>
+                                <option value="ui">界面改进</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: #333;">反馈内容：</label>
+                            <textarea id="feedbackContent" placeholder="请详细描述您的反馈..." style="width: 100%; height: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="submitFeedback()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                                <i class="fas fa-paper-plane"></i> 提交反馈
+                            </button>
+                            <button onclick="closeFeedback()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                                关闭
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', feedbackHtml);
+        }
+        
+        // 关闭反馈界面
+        function closeFeedback() {
+            const feedback = document.querySelector('div[style*="z-index: 10000"]');
+            if (feedback) {
+                feedback.remove();
+            }
+        }
+        
+        // 提交反馈
+        function submitFeedback() {
+            const type = document.getElementById('feedbackType').value;
+            const content = document.getElementById('feedbackContent').value;
+            if (content.trim()) {
+                alert('反馈提交成功！我们会认真处理您的意见');
+                closeFeedback();
+            } else {
+                alert('请输入反馈内容');
+            }
+        }
+    </script>
+</body>
+</html> 
