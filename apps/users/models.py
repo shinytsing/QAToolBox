@@ -112,6 +112,86 @@ class UserActionLog(models.Model):
     def __str__(self):
         return f"{self.admin_user.username} -> {self.target_user.username} - {self.get_action_display()}"
 
+# 用户活动监控模型
+class UserActivityLog(models.Model):
+    ACTIVITY_TYPES = [
+        ('login', '登录'),
+        ('logout', '登出'),
+        ('api_access', '接口访问'),
+        ('page_view', '页面访问'),
+        ('tool_usage', '工具使用'),
+        ('suggestion_submit', '提交建议'),
+        ('feedback_submit', '提交反馈'),
+        ('profile_update', '资料更新'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='activity_logs')
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES, verbose_name='活动类型')
+    ip_address = models.GenericIPAddressField(verbose_name='IP地址', null=True, blank=True)
+    user_agent = models.TextField(verbose_name='用户代理', null=True, blank=True)
+    endpoint = models.CharField(max_length=255, verbose_name='访问端点', null=True, blank=True)
+    method = models.CharField(max_length=10, verbose_name='请求方法', null=True, blank=True)
+    status_code = models.IntegerField(verbose_name='状态码', null=True, blank=True)
+    response_time = models.FloatField(verbose_name='响应时间(秒)', null=True, blank=True)
+    details = models.JSONField(verbose_name='详细信息', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '用户活动日志'
+        verbose_name_plural = '用户活动日志'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'activity_type', 'created_at']),
+            models.Index(fields=['activity_type', 'created_at']),
+            models.Index(fields=['ip_address', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username if self.user else '匿名用户'} - {self.get_activity_type_display()} - {self.created_at}"
+
+# 用户会话统计模型
+class UserSessionStats(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='session_stats')
+    session_start = models.DateTimeField(verbose_name='会话开始时间')
+    session_end = models.DateTimeField(verbose_name='会话结束时间', null=True, blank=True)
+    duration = models.IntegerField(verbose_name='会话时长(秒)', null=True, blank=True)
+    ip_address = models.GenericIPAddressField(verbose_name='IP地址')
+    user_agent = models.TextField(verbose_name='用户代理')
+    is_active = models.BooleanField(default=True, verbose_name='是否活跃')
+    
+    class Meta:
+        verbose_name = '用户会话统计'
+        verbose_name_plural = '用户会话统计'
+        ordering = ['-session_start']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.session_start}"
+
+# API访问统计模型
+class APIUsageStats(models.Model):
+    endpoint = models.CharField(max_length=255, verbose_name='API端点')
+    method = models.CharField(max_length=10, verbose_name='请求方法')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='api_usage')
+    ip_address = models.GenericIPAddressField(verbose_name='IP地址')
+    status_code = models.IntegerField(verbose_name='状态码')
+    response_time = models.FloatField(verbose_name='响应时间(秒)')
+    request_size = models.IntegerField(verbose_name='请求大小(字节)', null=True, blank=True)
+    response_size = models.IntegerField(verbose_name='响应大小(字节)', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='访问时间')
+    
+    class Meta:
+        verbose_name = 'API使用统计'
+        verbose_name_plural = 'API使用统计'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['endpoint', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['status_code', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.endpoint} - {self.method} - {self.user.username if self.user else '匿名'}"
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)

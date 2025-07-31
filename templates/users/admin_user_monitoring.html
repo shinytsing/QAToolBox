@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+
+{% block title %}用户监控 - 管理员{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 监控统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">今日活跃用户</h5>
+                            <h3 class="mb-0" id="todayActiveUsers">{{ today_active_users }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">今日登录次数</h5>
+                            <h3 class="mb-0" id="todayLogins">{{ today_logins }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-sign-in-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">今日API调用</h5>
+                            <h3 class="mb-0" id="todayApiCalls">{{ today_api_calls }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-code fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">当前在线用户</h5>
+                            <h3 class="mb-0" id="onlineUsers">{{ online_users }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-circle text-success fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 实时监控面板 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-primary"></i> 实时活动监控
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>用户</th>
+                                    <th>活动类型</th>
+                                    <th>IP地址</th>
+                                    <th>端点</th>
+                                    <th>时间</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityTable">
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ activity.user.username|default:"匿名用户" }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ activity.activity_type|activity_color }}">
+                                            {{ activity.get_activity_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ activity.ip_address|default:"-" }}</td>
+                                    <td>
+                                        <small class="text-muted">{{ activity.endpoint|truncatechars:30 }}</small>
+                                    </td>
+                                    <td>{{ activity.created_at|date:"H:i:s" }}</td>
+                                    <td>
+                                        {% if activity.status_code %}
+                                            <span class="badge badge-{{ activity.status_code|status_color }}">
+                                                {{ activity.status_code }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        暂无活动记录
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-success"></i> API使用统计
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="apiStats">
+                        {% for stat in api_stats %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <small class="text-muted">{{ stat.endpoint|truncatechars:20 }}</small>
+                                <br>
+                                <span class="badge badge-info">{{ stat.method }}</span>
+                            </div>
+                            <div class="text-right">
+                                <strong>{{ stat.count }}</strong>
+                                <br>
+                                <small class="text-muted">{{ stat.avg_response_time|floatformat:2 }}s</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">暂无API统计</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户会话监控 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock text-warning"></i> 用户会话监控
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshMonitoring()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>用户</th>
+                                    <th>会话开始</th>
+                                    <th>IP地址</th>
+                                    <th>用户代理</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessionTable">
+                                {% for session in active_sessions %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ session.user.username }}</strong>
+                                    </td>
+                                    <td>{{ session.session_start|date:"H:i:s" }}</td>
+                                    <td>{{ session.ip_address }}</td>
+                                    <td>
+                                        <small class="text-muted">{{ session.user_agent|truncatechars:50 }}</small>
+                                    </td>
+                                    <td>
+                                        {% if session.is_active %}
+                                            <span class="badge badge-success">活跃</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">非活跃</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="forceLogout({{ session.user.id }})">
+                                            <i class="fas fa-user-slash"></i> 强制登出
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        暂无活跃会话
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 实时通知 -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="notificationToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-bell text-primary"></i>
+            <strong class="me-auto ms-2">监控通知</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="notificationMessage">
+        </div>
+    </div>
+</div>
+
+<script>
+// 页面加载完成后启动实时监控
+document.addEventListener('DOMContentLoaded', function() {
+    startRealTimeMonitoring();
+});
+
+// 启动实时监控
+function startRealTimeMonitoring() {
+    // 每10秒刷新一次监控数据
+    setInterval(refreshMonitoring, 10000);
+}
+
+// 刷新监控数据
+function refreshMonitoring() {
+    fetch('/users/api/admin/monitoring-stats/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMonitoringStats(data.stats);
+                updateActivityTable(data.recent_activities);
+                updateApiStats(data.api_stats);
+                updateSessionTable(data.active_sessions);
+            }
+        })
+        .catch(error => {
+            console.error('刷新监控数据失败:', error);
+        });
+}
+
+// 更新监控统计
+function updateMonitoringStats(stats) {
+    document.getElementById('todayActiveUsers').textContent = stats.today_active_users;
+    document.getElementById('todayLogins').textContent = stats.today_logins;
+    document.getElementById('todayApiCalls').textContent = stats.today_api_calls;
+    document.getElementById('onlineUsers').textContent = stats.online_users;
+}
+
+// 更新活动表格
+function updateActivityTable(activities) {
+    const tbody = document.getElementById('activityTable');
+    tbody.innerHTML = '';
+    
+    activities.forEach(activity => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${activity.user_name || '匿名用户'}</strong></td>
+            <td><span class="badge badge-${getActivityColor(activity.activity_type)}">${activity.activity_type_display}</span></td>
+            <td>${activity.ip_address || '-'}</td>
+            <td><small class="text-muted">${activity.endpoint ? activity.endpoint.substring(0, 30) : '-'}</small></td>
+            <td>${formatTime(activity.created_at)}</td>
+            <td><span class="badge badge-${getStatusColor(activity.status_code)}">${activity.status_code || '-'}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 更新API统计
+function updateApiStats(apiStats) {
+    const container = document.getElementById('apiStats');
+    container.innerHTML = '';
+    
+    apiStats.forEach(stat => {
+        const div = document.createElement('div');
+        div.className = 'd-flex justify-content-between align-items-center mb-2';
+        div.innerHTML = `
+            <div>
+                <small class="text-muted">${stat.endpoint.substring(0, 20)}</small>
+                <br>
+                <span class="badge badge-info">${stat.method}</span>
+            </div>
+            <div class="text-right">
+                <strong>${stat.count}</strong>
+                <br>
+                <small class="text-muted">${stat.avg_response_time.toFixed(2)}s</small>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 更新会话表格
+function updateSessionTable(sessions) {
+    const tbody = document.getElementById('sessionTable');
+    tbody.innerHTML = '';
+    
+    sessions.forEach(session => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${session.user_name}</strong></td>
+            <td>${formatTime(session.session_start)}</td>
+            <td>${session.ip_address}</td>
+            <td><small class="text-muted">${session.user_agent.substring(0, 50)}</small></td>
+            <td><span class="badge badge-${session.is_active ? 'success' : 'secondary'}">${session.is_active ? '活跃' : '非活跃'}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="forceLogout(${session.user_id})">
+                    <i class="fas fa-user-slash"></i> 强制登出
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// 强制登出用户
+function forceLogout(userId) {
+    if (confirm('确定要强制登出该用户吗？')) {
+        fetch(`/users/api/admin/force-logout/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('用户已强制登出', 'success');
+                refreshMonitoring();
+            } else {
+                showNotification(data.error || '强制登出失败', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('强制登出失败:', error);
+            showNotification('强制登出失败', 'error');
+        });
+    }
+}
+
+// 工具函数
+function getActivityColor(activityType) {
+    const colors = {
+        'login': 'success',
+        'logout': 'secondary',
+        'api_access': 'info',
+        'page_view': 'primary',
+        'tool_usage': 'warning',
+        'suggestion_submit': 'info',
+        'feedback_submit': 'info',
+        'profile_update': 'warning'
+    };
+    return colors[activityType] || 'secondary';
+}
+
+function getStatusColor(statusCode) {
+    if (statusCode >= 200 && statusCode < 300) return 'success';
+    if (statusCode >= 300 && statusCode < 400) return 'info';
+    if (statusCode >= 400 && statusCode < 500) return 'warning';
+    if (statusCode >= 500) return 'danger';
+    return 'secondary';
+}
+
+function formatTime(timeString) {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+}
+
+function showNotification(message, type = 'info') {
+    const toast = document.getElementById('notificationToast');
+    const messageElement = document.getElementById('notificationMessage');
+    
+    messageElement.textContent = message;
+    
+    toast.className = `toast ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}`;
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

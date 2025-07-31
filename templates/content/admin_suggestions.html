@@ -4,28 +4,96 @@
 
 {% block content %}
 <div class="container mt-4">
+    <!-- 管理入口横幅 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-primary" role="alert">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="alert-heading mb-0">
+                            <i class="fas fa-shield-alt text-primary"></i> 管理员控制台
+                        </h5>
+                        <p class="mb-0 mt-1">快速管理用户建议和系统反馈</p>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'admin_user_management' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-users-cog"></i> 用户管理
+                        </a>
+                        <a href="{% url 'admin_feedback' %}" class="btn btn-outline-info">
+                            <i class="fas fa-comments"></i> 反馈管理
+                        </a>
+                        <a href="{% url 'admin_user_logs' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-history"></i> 操作日志
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">
                         <i class="fas fa-lightbulb text-warning"></i> 建议管理
+                        <span class="badge badge-primary ml-2" id="suggestionCount">{{ suggestions|length }}</span>
                     </h4>
                     <div>
-                        <a href="{% url 'admin_feedback' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-comments"></i> 查看反馈
-                        </a>
-                        <a href="{% url 'admin_user_management' %}" class="btn btn-outline-success">
-                            <i class="fas fa-users-cog"></i> 用户管理
-                        </a>
+                        <button class="btn btn-outline-success" onclick="refreshSuggestions()">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                        <div class="btn-group ml-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+                                <i class="fas fa-filter"></i> 筛选
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" onclick="filterByStatus('all')">全部</a>
+                                <a class="dropdown-item" href="#" onclick="filterByStatus('pending')">待处理</a>
+                                <a class="dropdown-item" href="#" onclick="filterByStatus('reviewing')">审核中</a>
+                                <a class="dropdown-item" href="#" onclick="filterByStatus('implemented')">已实现</a>
+                                <a class="dropdown-item" href="#" onclick="filterByStatus('rejected')">已拒绝</a>
+                            </div>
+                        </div>
+                        <div class="btn-group ml-2">
+                            <button class="btn btn-outline-warning dropdown-toggle" data-toggle="dropdown">
+                                <i class="fas fa-tasks"></i> 批量操作
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" onclick="batchChangeStatus('reviewing')">
+                                    <i class="fas fa-eye"></i> 批量设为审核中
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="batchChangeStatus('implemented')">
+                                    <i class="fas fa-check"></i> 批量设为已实现
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="batchChangeStatus('rejected')">
+                                    <i class="fas fa-times"></i> 批量设为已拒绝
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" onclick="selectAll()">
+                                    <i class="fas fa-check-square"></i> 全选
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="deselectAll()">
+                                    <i class="fas fa-square"></i> 取消全选
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
+                    <!-- 实时状态指示器 -->
+                    <div class="alert alert-info d-none" id="statusIndicator">
+                        <i class="fas fa-spinner fa-spin"></i> 正在实时更新状态...
+                    </div>
+
                     {% if suggestions %}
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="suggestionsTable">
                                 <thead class="thead-light">
                                     <tr>
+                                        <th>
+                                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                        </th>
                                         <th>ID</th>
                                         <th>标题</th>
                                         <th>类型</th>
@@ -37,7 +105,10 @@
                                 </thead>
                                 <tbody>
                                     {% for suggestion in suggestions %}
-                                    <tr>
+                                    <tr data-suggestion-id="{{ suggestion.id }}" data-status="{{ suggestion.status }}">
+                                        <td>
+                                            <input type="checkbox" class="suggestion-checkbox" value="{{ suggestion.id }}">
+                                        </td>
                                         <td>{{ suggestion.id }}</td>
                                         <td>
                                             <strong>{{ suggestion.title }}</strong>
@@ -48,17 +119,19 @@
                                             <span class="badge badge-info">{{ suggestion.get_suggestion_type_display }}</span>
                                         </td>
                                         <td>
-                                            {% if suggestion.status == 'pending' %}
-                                                <span class="badge badge-warning">待处理</span>
-                                            {% elif suggestion.status == 'reviewing' %}
-                                                <span class="badge badge-info">审核中</span>
-                                            {% elif suggestion.status == 'implemented' %}
-                                                <span class="badge badge-success">已实现</span>
-                                            {% elif suggestion.status == 'rejected' %}
-                                                <span class="badge badge-danger">已拒绝</span>
+                                            <span class="status-badge badge badge-{{ suggestion.status|status_color }}">
+                                                {{ suggestion.status|status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if suggestion.user %}
+                                                <a href="#" onclick="manageUser({{ suggestion.user.id }})" class="text-primary">
+                                                    {{ suggestion.user.username }}
+                                                </a>
+                                            {% else %}
+                                                {{ suggestion.user_name|default:"匿名用户" }}
                                             {% endif %}
                                         </td>
-                                        <td>{% if suggestion.user %}{{ suggestion.user.username }}{% else %}{{ suggestion.user_name|default:"匿名用户" }}{% endif %}</td>
                                         <td>{{ suggestion.created_at|date:"Y-m-d H:i" }}</td>
                                         <td>
                                             <div class="btn-group" role="group">
@@ -66,7 +139,10 @@
                                                     <i class="fas fa-eye"></i> 查看
                                                 </button>
                                                 <button class="btn btn-sm btn-success" onclick="quickReply({{ suggestion.id }})">
-                                                    <i class="fas fa-reply"></i> 回复
+                                                    <i class="fas fa-reply"></i> 快速回复
+                                                </button>
+                                                <button class="btn btn-sm btn-warning" onclick="quickStatusChange({{ suggestion.id }})">
+                                                    <i class="fas fa-edit"></i> 改状态
                                                 </button>
                                                 {% if suggestion.user %}
                                                 <button class="btn btn-sm btn-info" onclick="manageUser({{ suggestion.user.id }})">
@@ -149,6 +225,42 @@
     </div>
 </div>
 
+<!-- 快速状态更改模态框 -->
+<div class="modal fade" id="quickStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">快速更改状态</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="quickStatusContent"></div>
+                <div class="form-group">
+                    <label for="newStatus">新状态</label>
+                    <select id="newStatus" class="form-control">
+                        <option value="pending">待处理</option>
+                        <option value="reviewing">审核中</option>
+                        <option value="implemented">已实现</option>
+                        <option value="rejected">已拒绝</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statusNote">状态更改备注（可选）</label>
+                    <input type="text" id="statusNote" class="form-control" placeholder="状态更改原因">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="saveQuickStatus()">
+                    <i class="fas fa-check"></i> 更改状态
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 用户管理模态框 -->
 <div class="modal fade" id="userManageModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -166,10 +278,345 @@
     </div>
 </div>
 
+<!-- 实时通知 -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="notificationToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-bell text-primary"></i>
+            <strong class="me-auto ms-2">系统通知</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="notificationMessage">
+        </div>
+    </div>
+</div>
+
 <script>
 // 全局变量
 let currentSuggestionId = null;
 let currentUserId = null;
+let refreshInterval = null;
+let currentFilter = 'all';
+
+// 页面加载完成后启动实时更新
+document.addEventListener('DOMContentLoaded', function() {
+    startRealTimeUpdates();
+    setupKeyboardShortcuts();
+});
+
+// 启动实时更新
+function startRealTimeUpdates() {
+    // 每30秒自动刷新一次
+    refreshInterval = setInterval(refreshSuggestions, 30000);
+    
+    // 显示状态指示器
+    document.getElementById('statusIndicator').classList.remove('d-none');
+}
+
+// 停止实时更新
+function stopRealTimeUpdates() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+    document.getElementById('statusIndicator').classList.add('d-none');
+}
+
+// 刷新建议列表
+function refreshSuggestions() {
+    fetch(`/content/api/suggestions/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateSuggestionsTable(data.suggestions);
+                updateSuggestionCount(data.suggestions.length);
+                showNotification('建议列表已更新', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('刷新建议列表失败:', error);
+            showNotification('刷新失败，请检查网络连接', 'error');
+        });
+}
+
+// 更新建议表格
+function updateSuggestionsTable(suggestions) {
+    const tbody = document.querySelector('#suggestionsTable tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    suggestions.forEach(suggestion => {
+        if (currentFilter === 'all' || suggestion.status === currentFilter) {
+            const row = createSuggestionRow(suggestion);
+            tbody.appendChild(row);
+        }
+    });
+}
+
+// 创建建议行
+function createSuggestionRow(suggestion) {
+    const row = document.createElement('tr');
+    row.setAttribute('data-suggestion-id', suggestion.id);
+    row.setAttribute('data-status', suggestion.status);
+    
+    const statusColor = getStatusColor(suggestion.status);
+    const statusDisplay = getStatusDisplay(suggestion.status);
+    
+    row.innerHTML = `
+        <td>${suggestion.id}</td>
+        <td>
+            <strong>${suggestion.title}</strong>
+            <br>
+            <small class="text-muted">${suggestion.content.substring(0, 100)}${suggestion.content.length > 100 ? '...' : ''}</small>
+        </td>
+        <td>
+            <span class="badge badge-info">${suggestion.suggestion_type}</span>
+        </td>
+        <td>
+            <span class="status-badge badge badge-${statusColor}">
+                ${statusDisplay}
+            </span>
+        </td>
+        <td>
+            ${suggestion.user ? 
+                `<a href="#" onclick="manageUser(${suggestion.user.id})" class="text-primary">${suggestion.user.username}</a>` :
+                suggestion.user_name || '匿名用户'
+            }
+        </td>
+        <td>${formatDate(suggestion.created_at)}</td>
+        <td>
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-primary" onclick="showSuggestionDetail(${suggestion.id})">
+                    <i class="fas fa-eye"></i> 查看
+                </button>
+                <button class="btn btn-sm btn-success" onclick="quickReply(${suggestion.id})">
+                    <i class="fas fa-reply"></i> 快速回复
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="quickStatusChange(${suggestion.id})">
+                    <i class="fas fa-edit"></i> 改状态
+                </button>
+                ${suggestion.user ? 
+                    `<button class="btn btn-sm btn-info" onclick="manageUser(${suggestion.user.id})">
+                        <i class="fas fa-user-cog"></i> 用户
+                    </button>` : ''
+                }
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+// 更新建议数量
+function updateSuggestionCount(count) {
+    const countElement = document.getElementById('suggestionCount');
+    if (countElement) {
+        countElement.textContent = count;
+    }
+}
+
+// 筛选建议
+function filterByStatus(status) {
+    currentFilter = status;
+    const rows = document.querySelectorAll('#suggestionsTable tbody tr');
+    
+    rows.forEach(row => {
+        const rowStatus = row.getAttribute('data-status');
+        if (status === 'all' || rowStatus === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    showNotification(`已筛选显示 ${status === 'all' ? '全部' : getStatusDisplay(status)} 建议`, 'info');
+}
+
+// 批量更改状态
+function batchChangeStatus(newStatus) {
+    const selectedCheckboxes = document.querySelectorAll('#suggestionsTable tbody tr input[type="checkbox"]:checked');
+    if (selectedCheckboxes.length === 0) {
+        showNotification('请选择要批量操作的建议', 'warning');
+        return;
+    }
+
+    const confirmation = confirm(`确定要将选中的 ${selectedCheckboxes.length} 条建议批量设为 "${getStatusDisplay(newStatus)}" 吗？`);
+    if (!confirmation) {
+        return;
+    }
+
+    const suggestionIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+
+    fetch('/content/api/admin/batch-change-status/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            suggestion_ids: suggestionIds,
+            new_status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`已批量将 ${selectedCheckboxes.length} 条建议设为 "${getStatusDisplay(newStatus)}"`, 'success');
+            refreshSuggestions();
+        } else {
+            showNotification(data.error || '批量状态更改失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('批量状态更改失败:', error);
+        showNotification('批量状态更改失败', 'error');
+    });
+}
+
+// 全选
+function selectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    selectAllCheckbox.checked = true;
+    toggleSelectAll();
+}
+
+// 取消全选
+function deselectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    selectAllCheckbox.checked = false;
+    toggleSelectAll();
+}
+
+// 切换全选
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('#suggestionsTable tbody tr input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+// 快速状态更改
+function quickStatusChange(suggestionId) {
+    currentSuggestionId = suggestionId;
+    
+    fetch(`/content/api/suggestions/`)
+        .then(response => response.json())
+        .then(data => {
+            const suggestion = data.suggestions.find(s => s.id === suggestionId);
+            if (suggestion) {
+                const contentHtml = `
+                    <div class="alert alert-info">
+                        <strong>建议标题：</strong>${suggestion.title}<br>
+                        <strong>当前状态：</strong>${suggestion.status}<br>
+                        <strong>提交者：</strong>${suggestion.user_name}
+                    </div>
+                `;
+                document.getElementById('quickStatusContent').innerHTML = contentHtml;
+                document.getElementById('newStatus').value = suggestion.status;
+                
+                $('#quickStatusModal').modal('show');
+            }
+        })
+        .catch(error => {
+            console.error('获取建议信息失败:', error);
+            showNotification('获取建议信息失败', 'error');
+        });
+}
+
+// 保存快速状态更改
+function saveQuickStatus() {
+    const newStatus = document.getElementById('newStatus').value;
+    const note = document.getElementById('statusNote').value;
+    
+    fetch('/content/api/admin/reply-suggestion/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            suggestion_id: currentSuggestionId,
+            response: `状态已更改为：${getStatusDisplay(newStatus)}${note ? '，备注：' + note : ''}`,
+            status: newStatus,
+            action_note: note
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('状态更改成功', 'success');
+            $('#quickStatusModal').modal('hide');
+            refreshSuggestions();
+        } else {
+            showNotification(data.error || '状态更改失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('状态更改失败:', error);
+        showNotification('状态更改失败', 'error');
+    });
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const toast = document.getElementById('notificationToast');
+    const messageElement = document.getElementById('notificationMessage');
+    
+    messageElement.textContent = message;
+    
+    // 设置通知类型样式
+    toast.className = `toast ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}`;
+    
+    // 显示通知
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// 设置键盘快捷键
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+R 刷新
+        if (e.ctrlKey && e.key === 'r') {
+            e.preventDefault();
+            refreshSuggestions();
+        }
+        
+        // Ctrl+F 筛选
+        if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            document.querySelector('[data-toggle="dropdown"]').click();
+        }
+    });
+}
+
+// 工具函数
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'warning',
+        'reviewing': 'info',
+        'implemented': 'success',
+        'rejected': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getStatusDisplay(status) {
+    const displays = {
+        'pending': '待处理',
+        'reviewing': '审核中',
+        'implemented': '已实现',
+        'rejected': '已拒绝'
+    };
+    return displays[status] || status;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+}
 
 function showSuggestionDetail(suggestionId) {
     currentSuggestionId = suggestionId;

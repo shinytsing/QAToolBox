@@ -28,6 +28,38 @@ import json
 from .forms import UserRegistrationForm, UserLoginForm, ProfileEditForm
 from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile
 from apps.content.views import admin_required
+from django.template.defaulttags import register
+
+# 注册模板过滤器
+@register.filter
+def activity_color(activity_type):
+    """返回活动类型对应的Bootstrap颜色类"""
+    colors = {
+        'login': 'success',
+        'logout': 'secondary',
+        'api_access': 'info',
+        'page_view': 'primary',
+        'tool_usage': 'warning',
+        'suggestion_submit': 'info',
+        'feedback_submit': 'info',
+        'profile_update': 'warning'
+    }
+    return colors.get(activity_type, 'secondary')
+
+@register.filter
+def status_color(status_code):
+    """返回状态码对应的Bootstrap颜色类"""
+    if not status_code:
+        return 'secondary'
+    if status_code >= 200 and status_code < 300:
+        return 'success'
+    elif status_code >= 300 and status_code < 400:
+        return 'info'
+    elif status_code >= 400 and status_code < 500:
+        return 'warning'
+    elif status_code >= 500:
+        return 'danger'
+    return 'secondary'
 
 
 def has_repeated_characters(password):
@@ -188,42 +220,85 @@ def register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        form = UserLoginForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(username=username, password=password)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        captcha = request.POST.get('captcha')
+        stored_captcha = request.session.get('captcha', '')
+        
+        if captcha.lower() != stored_captcha.lower():
+            messages.error(request, '验证码错误')
+            return render(request, 'users/login.html')
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
             
-            if user is not None:
-                # 检查用户状态
-                try:
-                    user_status = user.status
-                    if not user_status.is_active:
-                        if user_status.status == 'suspended':
-                            messages.error(request, f'账户已被暂停，原因：{user_status.reason}')
-                        elif user_status.status == 'banned':
-                            messages.error(request, f'账户已被封禁，原因：{user_status.reason}')
-                        elif user_status.status == 'deleted':
-                            messages.error(request, '账户已被删除')
-                        return redirect('login')
-                except UserStatus.DoesNotExist:
-                    # 如果没有状态记录，创建默认状态
-                    UserStatus.objects.create(user=user, status='active')
+            # 记录登录活动
+            try:
+                from .models import UserActivityLog
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    ip = x_forwarded_for.split(',')[0]
+                else:
+                    ip = request.META.get('REMOTE_ADDR')
                 
-                login(request, user)
-                messages.success(request, f'欢迎回来，{user.username}！')
-                return redirect('home')
-            else:
-                messages.error(request, '用户名或密码错误')
-    else:
-        form = UserLoginForm()
+                UserActivityLog.objects.create(
+                    user=user,
+                    activity_type='login',
+                    ip_address=ip,
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    details={
+                        'login_method': 'password',
+                        'success': True
+                    }
+                )
+            except Exception as e:
+                print(f"记录登录活动失败: {e}")
+            
+            messages.success(request, f'欢迎回来，{user.username}！')
+            next_url = request.GET.get('next', 'home')
+            return redirect(next_url)
+        else:
+            messages.error(request, '用户名或密码错误')
     
-    return render(request, 'users/login.html', {'form': form})
+    return render(request, 'users/login.html')
 
-@login_required
 def user_logout(request):
+    if request.user.is_authenticated:
+        # 记录登出活动
+        try:
+            from .models import UserActivityLog, UserSessionStats
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+            
+            UserActivityLog.objects.create(
+                user=request.user,
+                activity_type='logout',
+                ip_address=ip,
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                details={
+                    'logout_method': 'manual'
+                }
+            )
+            
+            # 结束活跃会话
+            active_session = UserSessionStats.objects.filter(
+                user=request.user,
+                is_active=True
+            ).first()
+            if active_session:
+                active_session.is_active = False
+                active_session.session_end = timezone.now()
+                active_session.duration = int((active_session.session_end - active_session.session_start).total_seconds())
+                active_session.save()
+        except Exception as e:
+            print(f"记录登出活动失败: {e}")
+    
     logout(request)
-    messages.success(request, '您已成功退出登录')
+    messages.success(request, '您已成功登出')
     return redirect('home')
 
 @login_required
@@ -541,3 +616,223 @@ def admin_batch_operation_api(request):
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+# 用户监控管理页面
+@login_required
+@admin_required
+def admin_user_monitoring(request):
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.db.models import Count, Avg
+    from .models import UserActivityLog, APIUsageStats, UserSessionStats
+    
+    # 获取今日数据
+    today = timezone.now().date()
+    
+    # 今日活跃用户
+    today_active_users = UserActivityLog.objects.filter(
+        created_at__date=today
+    ).values('user').distinct().count()
+    
+    # 今日登录次数
+    today_logins = UserActivityLog.objects.filter(
+        activity_type='login',
+        created_at__date=today
+    ).count()
+    
+    # 今日API调用次数
+    today_api_calls = APIUsageStats.objects.filter(
+        created_at__date=today
+    ).count()
+    
+    # 当前在线用户
+    online_users = UserSessionStats.objects.filter(
+        is_active=True,
+        session_start__gte=timezone.now() - timedelta(minutes=30)
+    ).count()
+    
+    # 最近活动
+    recent_activities = UserActivityLog.objects.select_related('user').order_by('-created_at')[:20]
+    
+    # API使用统计
+    api_stats = APIUsageStats.objects.filter(
+        created_at__date=today
+    ).values('endpoint', 'method').annotate(
+        count=Count('id'),
+        avg_response_time=Avg('response_time')
+    ).order_by('-count')[:10]
+    
+    # 活跃会话
+    active_sessions = UserSessionStats.objects.select_related('user').filter(
+        is_active=True
+    ).order_by('-session_start')
+    
+    return render(request, 'users/admin_user_monitoring.html', {
+        'today_active_users': today_active_users,
+        'today_logins': today_logins,
+        'today_api_calls': today_api_calls,
+        'online_users': online_users,
+        'recent_activities': recent_activities,
+        'api_stats': api_stats,
+        'active_sessions': active_sessions,
+    })
+
+# 用户监控统计API
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+@admin_required
+def admin_monitoring_stats_api(request):
+    from django.utils import timezone
+    from datetime import timedelta
+    from django.db.models import Count, Avg
+    from .models import UserActivityLog, APIUsageStats, UserSessionStats
+    
+    try:
+        # 获取今日数据
+        today = timezone.now().date()
+        
+        # 今日活跃用户
+        today_active_users = UserActivityLog.objects.filter(
+            created_at__date=today
+        ).values('user').distinct().count()
+        
+        # 今日登录次数
+        today_logins = UserActivityLog.objects.filter(
+            activity_type='login',
+            created_at__date=today
+        ).count()
+        
+        # 今日API调用次数
+        today_api_calls = APIUsageStats.objects.filter(
+            created_at__date=today
+        ).count()
+        
+        # 当前在线用户
+        online_users = UserSessionStats.objects.filter(
+            is_active=True,
+            session_start__gte=timezone.now() - timedelta(minutes=30)
+        ).count()
+        
+        # 最近活动
+        recent_activities = UserActivityLog.objects.select_related('user').order_by('-created_at')[:20]
+        activities_data = []
+        for activity in recent_activities:
+            activities_data.append({
+                'user_name': activity.user.username if activity.user else '匿名用户',
+                'activity_type': activity.activity_type,
+                'activity_type_display': activity.get_activity_type_display(),
+                'ip_address': activity.ip_address,
+                'endpoint': activity.endpoint,
+                'created_at': activity.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'status_code': activity.status_code,
+            })
+        
+        # API使用统计
+        api_stats = APIUsageStats.objects.filter(
+            created_at__date=today
+        ).values('endpoint', 'method').annotate(
+            count=Count('id'),
+            avg_response_time=Avg('response_time')
+        ).order_by('-count')[:10]
+        
+        api_stats_data = []
+        for stat in api_stats:
+            api_stats_data.append({
+                'endpoint': stat['endpoint'],
+                'method': stat['method'],
+                'count': stat['count'],
+                'avg_response_time': float(stat['avg_response_time'] or 0),
+            })
+        
+        # 活跃会话
+        active_sessions = UserSessionStats.objects.select_related('user').filter(
+            is_active=True
+        ).order_by('-session_start')
+        
+        sessions_data = []
+        for session in active_sessions:
+            sessions_data.append({
+                'user_id': session.user.id,
+                'user_name': session.user.username,
+                'session_start': session.session_start.strftime('%Y-%m-%d %H:%M:%S'),
+                'ip_address': session.ip_address,
+                'user_agent': session.user_agent,
+                'is_active': session.is_active,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'today_active_users': today_active_users,
+                'today_logins': today_logins,
+                'today_api_calls': today_api_calls,
+                'online_users': online_users,
+            },
+            'recent_activities': activities_data,
+            'api_stats': api_stats_data,
+            'active_sessions': sessions_data,
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# 强制登出用户API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_force_logout_api(request, user_id):
+    import json
+    from django.contrib.auth import logout
+    from django.contrib.sessions.models import Session
+    
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason', '管理员强制登出')
+        
+        # 获取用户
+        user = get_object_or_404(User, id=user_id)
+        
+        # 结束用户的所有活跃会话
+        active_sessions = UserSessionStats.objects.filter(
+            user=user,
+            is_active=True
+        )
+        
+        for session in active_sessions:
+            session.is_active = False
+            session.session_end = timezone.now()
+            session.duration = int((session.session_end - session.session_start).total_seconds())
+            session.save()
+        
+        # 记录强制登出活动
+        UserActivityLog.objects.create(
+            user=user,
+            activity_type='logout',
+            ip_address=request.client_ip if hasattr(request, 'client_ip') else None,
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            details={
+                'logout_method': 'force',
+                'reason': reason,
+                'admin_user': request.user.username
+            }
+        )
+        
+        # 记录管理员操作
+        UserActionLog.objects.create(
+            admin_user=request.user,
+            target_user=user,
+            action='force_logout',
+            details=f'强制登出用户 {user.username}，原因：{reason}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'用户 {user.username} 已被强制登出'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

@@ -81,6 +81,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 用户活动监控中间件
+    'apps.users.middleware.UserActivityMiddleware',
+    'apps.users.middleware.UserSessionMiddleware',
 ]
 
 ROOT_URLCONF = 'urls'  # 修正为项目实际的URL配置路径

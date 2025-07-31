@@ -13,6 +13,7 @@ urlpatterns = [
     path('admin/users/', views.admin_user_management, name='admin_user_management'),
     path('admin/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     path('admin/logs/', views.admin_user_logs, name='admin_user_logs'),
+    path('admin/monitoring/', views.admin_user_monitoring, name='admin_user_monitoring'),
     
     # 管理员用户管理API
     path('api/admin/change-status/<int:user_id>/', views.admin_change_user_status_api, name='admin_change_user_status_api'),
@@ -20,4 +21,6 @@ urlpatterns = [
     path('api/admin/change-role/<int:user_id>/', views.admin_change_role_api, name='admin_change_role_api'),
     path('api/admin/delete-user/<int:user_id>/', views.admin_delete_user_api, name='admin_delete_user_api'),
     path('api/admin/batch-operation/', views.admin_batch_operation_api, name='admin_batch_operation_api'),
+    path('api/admin/monitoring-stats/', views.admin_monitoring_stats_api, name='admin_monitoring_stats_api'),
+    path('api/admin/force-logout/<int:user_id>/', views.admin_force_logout_api, name='admin_force_logout_api'),
 ]

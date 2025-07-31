@@ -5,10 +5,34 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
+from django.template.defaulttags import register
 import json
 from .models import Article, Comment, Suggestion, Feedback
 from .forms import ArticleForm, CommentForm
 from apps.users.models import UserRole
+
+# 注册模板过滤器
+@register.filter
+def status_color(status):
+    """返回状态对应的Bootstrap颜色类"""
+    colors = {
+        'pending': 'warning',
+        'reviewing': 'info',
+        'implemented': 'success',
+        'rejected': 'danger'
+    }
+    return colors.get(status, 'secondary')
+
+@register.filter
+def status_display(status):
+    """返回状态的中文显示名称"""
+    displays = {
+        'pending': '待处理',
+        'reviewing': '审核中',
+        'implemented': '已实现',
+        'rejected': '已拒绝'
+    }
+    return displays.get(status, status)
 
 def article_list(request):
     articles = Article.objects.all().order_by('-created_at')
@@ -114,6 +138,36 @@ def admin_suggestions(request):
         'suggestions': suggestions
     })
 
+# 管理员仪表板
+@login_required
+@admin_required
+def admin_dashboard(request):
+    from django.utils import timezone
+    from datetime import timedelta
+    from apps.users.models import User, UserActionLog
+    
+    # 获取统计数据
+    total_users = User.objects.count()
+    pending_suggestions = Suggestion.objects.filter(status='pending').count()
+    pending_feedbacks = Feedback.objects.filter(status='pending').count()
+    
+    # 今日活跃用户（有操作记录的用户）
+    today = timezone.now().date()
+    active_users = UserActionLog.objects.filter(
+        created_at__date=today
+    ).values('admin_user').distinct().count()
+    
+    # 最近操作日志
+    recent_logs = UserActionLog.objects.select_related('admin_user').order_by('-created_at')[:10]
+    
+    return render(request, 'content/admin_dashboard.html', {
+        'total_users': total_users,
+        'pending_suggestions': pending_suggestions,
+        'pending_feedbacks': pending_feedbacks,
+        'active_users': active_users,
+        'recent_logs': recent_logs
+    })
+
 # 管理员反馈管理页面
 @login_required
 @admin_required
@@ -156,12 +210,13 @@ def suggestions_api(request):
                 'status': suggestion.get_status_display(),
                 'status_code': suggestion.status,
                 'user_name': suggestion.user_name or (suggestion.user.username if suggestion.user else '匿名用户'),
+                'user': suggestion.user.id if suggestion.user else None,
                 'created_at': suggestion.created_at.strftime('%Y-%m-%d %H:%M'),
                 'updated_at': suggestion.updated_at.strftime('%Y-%m-%d %H:%M'),
                 'admin_response': suggestion.admin_response,
                 'has_response': bool(suggestion.admin_response)
             })
-        return JsonResponse({'suggestions': suggestions_data})
+        return JsonResponse({'success': True, 'suggestions': suggestions_data})
     
     elif request.method == 'POST':
         # 提交新建议
@@ -353,6 +408,154 @@ def admin_reply_feedback(request):
         return JsonResponse({
             'success': True,
             'message': '回复已保存'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# 管理员仪表板统计API
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+@admin_required
+def admin_dashboard_stats_api(request):
+    from django.utils import timezone
+    from apps.users.models import User, UserActionLog
+    
+    try:
+        # 获取统计数据
+        total_users = User.objects.count()
+        pending_suggestions = Suggestion.objects.filter(status='pending').count()
+        pending_feedbacks = Feedback.objects.filter(status='pending').count()
+        
+        # 今日活跃用户
+        today = timezone.now().date()
+        active_users = UserActionLog.objects.filter(
+            created_at__date=today
+        ).values('admin_user').distinct().count()
+        
+        # 最近操作日志
+        recent_logs = UserActionLog.objects.select_related('admin_user').order_by('-created_at')[:5]
+        logs_data = []
+        for log in recent_logs:
+            logs_data.append({
+                'admin_user': log.admin_user.username,
+                'action': log.action,
+                'created_at': log.created_at.strftime('%m-%d %H:%M')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_users': total_users,
+                'pending_suggestions': pending_suggestions,
+                'pending_feedbacks': pending_feedbacks,
+                'active_users': active_users,
+                'recent_logs': logs_data
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# 批量更改建议状态API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_batch_change_status_api(request):
+    try:
+        data = json.loads(request.body)
+        suggestion_ids = data.get('suggestion_ids', [])
+        new_status = data.get('new_status', 'reviewing')
+        
+        if not suggestion_ids:
+            return JsonResponse({'error': '请选择要操作的建议'}, status=400)
+        
+        # 批量更新建议状态
+        updated_count = 0
+        for suggestion_id in suggestion_ids:
+            try:
+                suggestion = Suggestion.objects.get(id=suggestion_id)
+                old_status = suggestion.status
+                suggestion.status = new_status
+                suggestion.save()
+                
+                # 记录操作日志
+                from apps.users.models import UserActionLog
+                UserActionLog.objects.create(
+                    admin_user=request.user,
+                    target_user=suggestion.user if suggestion.user else None,
+                    action='batch_status_change',
+                    details=f'建议ID: {suggestion_id}, 状态从 {old_status} 批量变更为 {new_status}'
+                )
+                
+                updated_count += 1
+            except Suggestion.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'成功更新 {updated_count} 条建议状态',
+            'updated_count': updated_count
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# 批量处理建议API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def admin_batch_process_suggestions(request):
+    try:
+        data = json.loads(request.body)
+        suggestion_ids = data.get('suggestion_ids', [])
+        action = data.get('action', '')  # 'approve', 'reject', 'implement'
+        response = data.get('response', '')
+        
+        if not suggestion_ids:
+            return JsonResponse({'error': '请选择要处理的建议'}, status=400)
+        
+        processed_count = 0
+        for suggestion_id in suggestion_ids:
+            try:
+                suggestion = Suggestion.objects.get(id=suggestion_id)
+                
+                if action == 'approve':
+                    suggestion.status = 'reviewing'
+                elif action == 'reject':
+                    suggestion.status = 'rejected'
+                elif action == 'implement':
+                    suggestion.status = 'implemented'
+                
+                if response:
+                    suggestion.admin_response = response
+                
+                suggestion.save()
+                processed_count += 1
+                
+                # 记录操作日志
+                from apps.users.models import UserActionLog
+                UserActionLog.objects.create(
+                    admin_user=request.user,
+                    target_user=suggestion.user if suggestion.user else None,
+                    action=f'batch_{action}_suggestion',
+                    details=f'批量处理建议ID: {suggestion_id}, 操作: {action}'
+                )
+                
+            except Suggestion.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'成功处理 {processed_count} 条建议',
+            'processed_count': processed_count
         })
         
     except json.JSONDecodeError:

@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+
+{% block title %}管理员仪表板 - QAToolBox{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 欢迎横幅 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-primary" role="alert">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="alert-heading mb-0">
+                            <i class="fas fa-shield-alt text-primary"></i> 欢迎，{{ user.username }}！
+                        </h4>
+                        <p class="mb-0 mt-2">管理员控制台 - 快速管理系统和用户</p>
+                    </div>
+                    <div class="text-right">
+                        <small class="text-muted">最后登录：{{ user.last_login|date:"Y-m-d H:i"|default:"首次登录" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">总用户数</h5>
+                            <h3 class="mb-0" id="totalUsers">{{ total_users }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'admin_user_management' %}" class="text-white">
+                        <i class="fas fa-arrow-right"></i> 管理用户
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">待处理建议</h5>
+                            <h3 class="mb-0" id="pendingSuggestions">{{ pending_suggestions }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-lightbulb fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'admin_suggestions' %}" class="text-white">
+                        <i class="fas fa-arrow-right"></i> 查看建议
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">待处理反馈</h5>
+                            <h3 class="mb-0" id="pendingFeedbacks">{{ pending_feedbacks }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-comments fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'admin_feedback' %}" class="text-white">
+                        <i class="fas fa-arrow-right"></i> 查看反馈
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">今日活跃</h5>
+                            <h3 class="mb-0" id="activeUsers">{{ active_users }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                                    <div class="card-footer bg-transparent border-0">
+                        <a href="{% url 'admin_user_monitoring' %}" class="text-white">
+                            <i class="fas fa-arrow-right"></i> 实时监控
+                        </a>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt text-warning"></i> 快速操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_suggestions' %}" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-lightbulb"></i><br>
+                                <strong>建议管理</strong><br>
+                                <small>处理用户建议</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_feedback' %}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-comments"></i><br>
+                                <strong>反馈管理</strong><br>
+                                <small>处理用户反馈</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_user_management' %}" class="btn btn-outline-success btn-block">
+                                <i class="fas fa-users-cog"></i><br>
+                                <strong>用户管理</strong><br>
+                                <small>管理用户账户</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_user_monitoring' %}" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-chart-line"></i><br>
+                                <strong>用户监控</strong><br>
+                                <small>实时监控用户活动</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin_user_logs' %}" class="btn btn-outline-warning btn-block">
+                                <i class="fas fa-history"></i><br>
+                                <strong>操作日志</strong><br>
+                                <small>查看系统日志</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近活动和系统状态 -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock text-info"></i> 最近活动
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush" id="recentActivities">
+                        {% for log in recent_logs %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ log.admin_user.username }}</strong>
+                                <small class="text-muted">{{ log.action }}</small>
+                            </div>
+                            <small class="text-muted">{{ log.created_at|date:"m-d H:i" }}</small>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>暂无最近活动</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-success"></i> 系统状态
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center mb-3">
+                                <h4 class="text-primary">{{ total_users }}</h4>
+                                <small class="text-muted">注册用户</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center mb-3">
+                                <h4 class="text-success">{{ active_users }}</h4>
+                                <small class="text-muted">活跃用户</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center mb-3">
+                                <h4 class="text-warning">{{ pending_suggestions }}</h4>
+                                <small class="text-muted">待处理建议</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center mb-3">
+                                <h4 class="text-info">{{ pending_feedbacks }}</h4>
+                                <small class="text-muted">待处理反馈</small>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
+                            <i class="fas fa-sync-alt"></i> 刷新数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 实时通知 -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="notificationToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-bell text-primary"></i>
+            <strong class="me-auto ms-2">系统通知</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="notificationMessage">
+        </div>
+    </div>
+</div>
+
+<script>
+// 页面加载完成后启动实时更新
+document.addEventListener('DOMContentLoaded', function() {
+    startDashboardUpdates();
+});
+
+// 启动仪表板更新
+function startDashboardUpdates() {
+    // 每60秒自动刷新一次数据
+    setInterval(refreshDashboard, 60000);
+}
+
+// 刷新仪表板数据
+function refreshDashboard() {
+    fetch('/content/api/admin/dashboard-stats/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateDashboardStats(data.stats);
+                showNotification('数据已更新', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('刷新数据失败:', error);
+            showNotification('数据刷新失败', 'error');
+        });
+}
+
+// 更新仪表板统计
+function updateDashboardStats(stats) {
+    document.getElementById('totalUsers').textContent = stats.total_users;
+    document.getElementById('pendingSuggestions').textContent = stats.pending_suggestions;
+    document.getElementById('pendingFeedbacks').textContent = stats.pending_feedbacks;
+    document.getElementById('activeUsers').textContent = stats.active_users;
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const toast = document.getElementById('notificationToast');
+    const messageElement = document.getElementById('notificationMessage');
+    
+    messageElement.textContent = message;
+    
+    // 设置通知类型样式
+    toast.className = `toast ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}`;
+    
+    // 显示通知
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+</script>
+{% endblock %} 
