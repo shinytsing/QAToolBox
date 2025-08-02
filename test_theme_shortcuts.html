@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主题切换快捷键测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .shortcut-info {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .shortcut-key {
+            background: #333;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 0 5px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
+        }
+        .status.info {
+            background: rgba(33, 150, 243, 0.3);
+            border: 1px solid #2196F3;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid #F44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 主题切换快捷键测试</h1>
+        
+        <div class="shortcut-info">
+            <h2>📋 快捷键说明</h2>
+            <p>使用以下快捷键切换主题模式：</p>
+            <ul>
+                <li><span class="shortcut-key">Ctrl/Cmd + 1</span> - 切换到生活模式</li>
+                <li><span class="shortcut-key">Ctrl/Cmd + 2</span> - 切换到极客模式</li>
+                <li><span class="shortcut-key">Ctrl/Cmd + 3</span> - 切换到狂暴模式</li>
+                <li><span class="shortcut-key">Ctrl/Cmd + 4</span> - 切换到Emo模式</li>
+            </ul>
+        </div>
+        
+        <div class="shortcut-info">
+            <h2>🧪 测试说明</h2>
+            <p>1. 确保您已登录系统</p>
+            <p>2. 在非输入框区域按下快捷键</p>
+            <p>3. 系统会显示切换提示并刷新页面</p>
+            <p>4. 刷新后页面会应用新的主题样式</p>
+        </div>
+        
+        <div id="status-container">
+            <div class="status info">
+                <strong>💡 提示：</strong> 请尝试使用快捷键切换主题，观察页面是否正常刷新并应用新主题。
+            </div>
+        </div>
+        
+        <div class="shortcut-info">
+            <h2>🔗 相关链接</h2>
+            <p><a href="/" style="color: #fff;">🏠 返回首页</a></p>
+            <p><a href="/tools/" style="color: #fff;">🛠️ 工具中心</a></p>
+        </div>
+    </div>
+
+    <script>
+        // 模拟主题切换函数（用于测试）
+        function showStatus(message, type) {
+            const container = document.getElementById('status-container');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = `<strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong> ${message}`;
+            container.appendChild(statusDiv);
+            
+            // 5秒后移除状态消息
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+        }
+        
+        // 监听快捷键
+        document.addEventListener('keydown', function(e) {
+            // 只在非输入框中响应快捷键
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            // Ctrl/Cmd + 数字键切换主题
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+                const themes = {
+                    '1': '生活',
+                    '2': '极客', 
+                    '3': '狂暴',
+                    '4': 'Emo'
+                };
+                
+                if (themes[e.key]) {
+                    e.preventDefault();
+                    showStatus(`正在切换到${themes[e.key]}模式并刷新页面...`, 'info');
+                    
+                    // 模拟API调用和页面刷新
+                    setTimeout(() => {
+                        showStatus(`已成功切换到${themes[e.key]}模式，页面即将刷新`, 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }, 500);
+                }
+            }
+        });
+        
+        // 页面加载完成提示
+        window.addEventListener('load', function() {
+            showStatus('页面加载完成，可以开始测试快捷键功能', 'info');
+        });
+    </script>
+</body>
+</html> 
