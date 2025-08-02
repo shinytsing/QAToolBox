@@ -26,7 +26,7 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 from .forms import UserRegistrationForm, UserLoginForm, ProfileEditForm
-from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile
+from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile, UserTheme
 from apps.content.views import admin_required
 from django.template.defaulttags import register
 
@@ -836,3 +836,171 @@ def admin_force_logout_api(request, user_id):
         return JsonResponse({'error': '无效的JSON数据'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+# 主题API
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+@login_required
+def theme_api(request):
+    """用户主题设置API"""
+    try:
+        if request.method == 'GET':
+            # 获取用户当前主题
+            user_theme, created = UserTheme.objects.get_or_create(
+                user=request.user,
+                defaults={'mode': 'work', 'theme_style': 'default'}
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'mode': user_theme.mode,
+                    'theme_style': user_theme.theme_style,
+                    'subtitle': user_theme.subtitle,
+                    'switch_count': user_theme.switch_count,
+                    'last_switch_time': user_theme.last_switch_time.isoformat() if user_theme.last_switch_time else None
+                }
+            })
+            
+        elif request.method == 'POST':
+            # 更新用户主题
+            data = json.loads(request.body)
+            mode = data.get('mode', 'work')
+            
+            # 验证模式是否有效
+            valid_modes = ['work', 'life', 'training', 'emo']
+            if mode not in valid_modes:
+                return JsonResponse({
+                    'success': False,
+                    'error': '无效的主题模式'
+                }, status=400)
+            
+            # 更新或创建用户主题
+            user_theme, created = UserTheme.objects.get_or_create(
+                user=request.user,
+                defaults={'mode': mode, 'theme_style': 'default'}
+            )
+            
+            if not created:
+                # 记录切换统计
+                if user_theme.mode != mode:
+                    user_theme.switch_count += 1
+                    user_theme.last_switch_time = timezone.now()
+                user_theme.mode = mode
+                user_theme.save()
+            
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'mode': user_theme.mode,
+                    'theme_style': user_theme.theme_style,
+                    'subtitle': user_theme.subtitle,
+                    'switch_count': user_theme.switch_count,
+                    'last_switch_time': user_theme.last_switch_time.isoformat() if user_theme.last_switch_time else None
+                }
+            })
+            
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': '无效的JSON数据'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+# 头像上传API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def upload_avatar(request):
+    """用户头像上传API"""
+    try:
+        # 检查是否有文件上传
+        if 'avatar' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'message': '请选择要上传的头像文件'
+            }, status=400)
+        
+        avatar_file = request.FILES['avatar']
+        
+        # 验证文件类型
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if avatar_file.content_type not in allowed_types:
+            return JsonResponse({
+                'success': False,
+                'message': '只支持 JPG、PNG、GIF、WebP 格式的图片'
+            }, status=400)
+        
+        # 验证文件大小（限制为5MB）
+        if avatar_file.size > 5 * 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'message': '头像文件大小不能超过5MB'
+            }, status=400)
+        
+        # 获取或创建用户资料
+        try:
+            profile, created = Profile.objects.get_or_create(
+                user=request.user,
+                defaults={'user': request.user}
+            )
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'获取用户资料失败: {str(e)}'
+            }, status=500)
+        
+        # 直接使用Django的文件上传机制
+        import os
+        from django.conf import settings
+        
+        # 生成文件名
+        file_extension = os.path.splitext(avatar_file.name)[1]
+        if not file_extension:
+            file_extension = '.jpg'
+        
+        filename = f'avatar_{request.user.id}_{int(timezone.now().timestamp())}{file_extension}'
+        
+        # 使用Django的FileField保存
+        try:
+            profile.avatar.save(filename, avatar_file, save=True)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'头像保存失败: {str(e)}'
+            }, status=500)
+        
+        # 记录用户操作
+        try:
+            UserActionLog.objects.create(
+                user=request.user,
+                action='avatar_upload',
+                details=f'上传新头像: {filename}'
+            )
+        except Exception as e:
+            print(f"Failed to log avatar upload: {e}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': '头像上传成功',
+            'avatar_url': profile.avatar.url if profile.avatar else None
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Avatar upload error: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'message': f'头像上传失败: {str(e)}'
+        }, status=500)
+
+# 头像上传测试页面
+@login_required
+def avatar_test_view(request):
+    """头像上传测试页面"""
+    return render(request, 'avatar_test.html')

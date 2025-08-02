@@ -1,0 +1,339 @@
+/* 狂暴模式 - 深色动感风格 */
+
+:root {
+  /* 狂暴模式色彩系统 */
+  --rage-bg: #0a0a0a;
+  --rage-card-bg: #1a1a1a;
+  --rage-primary: #ff4444;
+  --rage-accent: #ff6b35;
+  --rage-secondary: #ffd700;
+  --rage-text: #ffffff;
+  --rage-text-muted: #cccccc;
+  --rage-border: rgba(255, 68, 68, 0.3);
+  --rage-shadow: 0 8px 32px rgba(255, 68, 68, 0.2);
+  --rage-shadow-hover: 0 12px 48px rgba(255, 68, 68, 0.4);
+  --rage-radius: 8px;
+  --rage-radius-lg: 12px;
+  --rage-font: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --rage-gradient: linear-gradient(135deg, #ff4444 0%, #ff6b35 50%, #ffd700 100%);
+  --rage-gradient-card: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(255, 68, 68, 0.1) 100%);
+}
+
+body.rage-theme {
+  background: var(--rage-bg);
+  color: var(--rage-text);
+  font-family: var(--rage-font);
+  transition: all 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* 狂暴模式背景动画 */
+body.rage-theme::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 68, 68, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+  z-index: -1;
+  animation: ragePulse 3s ease-in-out infinite;
+}
+
+@keyframes ragePulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.05) rotate(1deg);
+    opacity: 1;
+  }
+}
+
+/* 狂暴模式卡片样式 */
+.rage-card {
+  background: var(--rage-gradient-card);
+  border: 2px solid var(--rage-border);
+  border-radius: var(--rage-radius);
+  box-shadow: var(--rage-shadow);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rage-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--rage-gradient);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.rage-card:hover::after {
+  transform: scaleX(1);
+}
+
+.rage-card:hover {
+  box-shadow: var(--rage-shadow-hover);
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--rage-primary);
+}
+
+/* 狂暴模式标题样式 */
+.rage-title {
+  color: var(--rage-primary);
+  font-size: 3rem;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+  animation: rageGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes rageGlow {
+  from { text-shadow: 0 0 20px rgba(255, 68, 68, 0.5); }
+  to { text-shadow: 0 0 30px rgba(255, 68, 68, 0.8), 0 0 40px rgba(255, 68, 68, 0.3); }
+}
+
+.rage-subtitle {
+  color: var(--rage-text-muted);
+  font-size: 1.3rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* 狂暴模式工具网格 */
+.rage-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 2rem;
+}
+
+.rage-tool-card {
+  background: var(--rage-card-bg);
+  border: 2px solid var(--rage-border);
+  border-radius: var(--rage-radius-lg);
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.rage-tool-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, var(--rage-primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: rageRotate 3s linear infinite;
+}
+
+.rage-tool-card:hover::before {
+  opacity: 0.1;
+}
+
+@keyframes rageRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rage-tool-card:hover {
+  border-color: var(--rage-primary);
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 16px 60px rgba(255, 68, 68, 0.3);
+}
+
+.rage-tool-icon {
+  font-size: 3.5rem;
+  color: var(--rage-primary);
+  margin-bottom: 1rem;
+  animation: rageBounce 2s ease-in-out infinite;
+}
+
+@keyframes rageBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.rage-tool-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--rage-text);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rage-tool-description {
+  color: var(--rage-text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* 狂暴模式按钮样式 */
+.rage-btn {
+  background: var(--rage-gradient);
+  color: var(--rage-text);
+  border: none;
+  border-radius: var(--rage-radius);
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.2);
+}
+
+.rage-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.rage-btn:hover::before {
+  left: 100%;
+}
+
+.rage-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(255, 68, 68, 0.4);
+  color: var(--rage-text);
+  text-decoration: none;
+}
+
+.rage-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.rage-btn-secondary {
+  background: transparent;
+  color: var(--rage-primary);
+  border: 2px solid var(--rage-primary);
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.1);
+}
+
+.rage-btn-secondary:hover {
+  background: var(--rage-primary);
+  color: var(--rage-text);
+  box-shadow: 0 8px 25px rgba(255, 68, 68, 0.3);
+}
+
+/* 狂暴模式导航栏 */
+.rage-navbar {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--rage-border);
+}
+
+.rage-navbar .nav-link {
+  color: var(--rage-text);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rage-navbar .nav-link:hover {
+  color: var(--rage-primary);
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+/* 狂暴模式用户菜单 */
+.rage-user-menu {
+  background: var(--rage-card-bg);
+  border: 2px solid var(--rage-border);
+  border-radius: var(--rage-radius);
+  box-shadow: var(--rage-shadow);
+}
+
+.rage-mode-indicator {
+  background: var(--rage-gradient);
+  color: var(--rage-text);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  animation: ragePulse 2s ease-in-out infinite;
+}
+
+/* 狂暴模式响应式设计 */
+@media (max-width: 768px) {
+  .rage-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .rage-title {
+    font-size: 2.2rem;
+  }
+  
+  .rage-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .rage-tool-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* 狂暴模式切换按钮 */
+.rage-mode-btn {
+  background: var(--rage-card-bg);
+  border: 1px solid var(--rage-primary);
+  color: var(--rage-primary);
+  transition: all 0.3s ease;
+}
+
+.rage-mode-btn:hover {
+  border-color: var(--rage-accent);
+  background: var(--rage-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+}
+
+.rage-mode-btn.active {
+  border-color: var(--rage-accent);
+  background: var(--rage-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.5);
+  animation: ragePulse 1s ease-in-out infinite;
+} 

@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'modern-ui.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="modern-theme">
+  <!-- 现代化导航栏 -->
+  <nav class="modern-navbar navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="#" style="color: var(--modern-primary); font-weight: 700; font-size: 1.5rem;">
+        QAToolBox
+      </a>
+      
+      <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="#features">功能</a>
+        <a class="nav-link" href="#tools">工具</a>
+        <a class="nav-link" href="#about">关于</a>
+        <a class="nav-link" href="{% url 'home' %}">返回首页</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主要内容区域 -->
+  <div class="container mt-5">
+    <!-- 标题区域 -->
+    <div class="text-center mb-5">
+      <h1 class="modern-title">现代化设计体验</h1>
+      <p class="modern-subtitle">
+        受ctrl.xyz启发的玻璃态设计，融合了现代美学与实用功能
+      </p>
+    </div>
+
+    <!-- 功能展示卡片 -->
+    <div class="modern-card mb-5">
+      <div class="row">
+        <div class="col-md-6">
+          <h3 style="color: var(--modern-primary); margin-bottom: 1rem;">设计特色</h3>
+          <ul style="color: var(--modern-text-muted); line-height: 2;">
+            <li>✨ 玻璃态毛玻璃效果</li>
+            <li>🎨 渐变色彩系统</li>
+            <li>⚡ 流畅动画过渡</li>
+            <li>📱 响应式设计</li>
+            <li>🌙 深色主题优化</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <h3 style="color: var(--modern-primary); margin-bottom: 1rem;">技术亮点</h3>
+          <ul style="color: var(--modern-text-muted); line-height: 2;">
+            <li>🔧 CSS变量系统</li>
+            <li>🎯 现代化布局</li>
+            <li>💫 微交互动画</li>
+            <li>🖼️ 背景模糊效果</li>
+            <li>🎪 悬浮状态反馈</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 工具网格 -->
+    <div class="modern-tools-grid" id="tools">
+      <!-- 测试用例生成器 -->
+      <div class="modern-tool-card">
+        <div class="modern-tool-icon">🧪</div>
+        <h3 class="modern-tool-title">测试用例生成器</h3>
+        <p class="modern-tool-description">
+          基于AI智能生成完整的测试用例，支持多种测试类型和格式
+        </p>
+        <a href="{% url 'test_case_generator' %}" class="modern-btn">
+          开始使用
+          <span>→</span>
+        </a>
+      </div>
+
+      <!-- 小红书生成器 -->
+      <div class="modern-tool-card">
+        <div class="modern-tool-icon">📱</div>
+        <h3 class="modern-tool-title">小红书生成器</h3>
+        <p class="modern-tool-description">
+          AI驱动的文案创作工具，生成吸引人的小红书内容
+        </p>
+        <a href="{% url 'redbook_generator' %}" class="modern-btn">
+          开始创作
+          <span>→</span>
+        </a>
+      </div>
+
+      <!-- 自我分析 -->
+      <div class="modern-tool-card">
+        <div class="modern-tool-icon">🧠</div>
+        <h3 class="modern-tool-title">自我分析</h3>
+        <p class="modern-tool-description">
+          通过AI对话进行深度自我认知和性格分析
+        </p>
+        <a href="{% url 'self_analysis' %}" class="modern-btn">
+          开始分析
+          <span>→</span>
+        </a>
+      </div>
+
+      <!-- 故事板 -->
+      <div class="modern-tool-card">
+        <div class="modern-tool-icon">📖</div>
+        <h3 class="modern-tool-title">故事板</h3>
+        <p class="modern-tool-description">
+          创作温暖治愈的故事，传递正能量和人生感悟
+        </p>
+        <a href="{% url 'storyboard' %}" class="modern-btn">
+          开始创作
+          <span>→</span>
+        </a>
+      </div>
+
+      <!-- 创意写作 -->
+      <div class="modern-tool-card">
+        <div class="modern-tool-icon">✍️</div>
+        <h3 class="modern-tool-title">创意写作</h3>
+        <p class="modern-tool-description">
+          AI辅助的创意写作工具，激发灵感，提升写作效率
+        </p>
+        <a href="{% url 'creative_writer' %}" class="modern-btn">
+          开始写作
+          <span>→</span>
+        </a>
+      </div>
+
+      <!-- 音乐疗愈 -->
+      <div class="modern-tool-card">
+        <div class="modern-tool-icon">🎵</div>
+        <h3 class="modern-tool-title">音乐疗愈</h3>
+        <p class="modern-tool-description">
+          精选疗愈音乐，帮助放松心情，提升专注力
+        </p>
+        <a href="{% url 'music_healing' %}" class="modern-btn">
+          开始聆听
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- 表单演示 -->
+    <div class="modern-card mt-5">
+      <h3 style="color: var(--modern-primary); margin-bottom: 2rem;">表单交互演示</h3>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label style="color: var(--modern-text); margin-bottom: 0.5rem; display: block;">用户名</label>
+            <input type="text" class="modern-input" placeholder="请输入用户名" style="width: 100%;">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label style="color: var(--modern-text); margin-bottom: 0.5rem; display: block;">邮箱</label>
+            <input type="email" class="modern-input" placeholder="请输入邮箱地址" style="width: 100%;">
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label style="color: var(--modern-text); margin-bottom: 0.5rem; display: block;">反馈信息</label>
+        <textarea class="modern-input" rows="4" placeholder="请输入您的反馈信息" style="width: 100%; resize: vertical;"></textarea>
+      </div>
+      <button class="modern-btn">提交反馈</button>
+    </div>
+
+    <!-- 主题切换演示 -->
+    <div class="modern-card mt-5">
+      <h3 style="color: var(--modern-primary); margin-bottom: 2rem;">主题切换</h3>
+      <div class="d-flex gap-3 flex-wrap">
+        <button class="modern-btn" onclick="switchTheme('geek')">极客模式</button>
+        <button class="modern-btn" onclick="switchTheme('life')">生活模式</button>
+        <button class="modern-btn" onclick="switchTheme('rage')">愤怒模式</button>
+        <button class="modern-btn" onclick="switchTheme('emo')">情感模式</button>
+        <button class="modern-btn" onclick="switchTheme('modern')">现代模式</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 主题切换功能
+function switchTheme(theme) {
+  // 移除所有主题类
+  document.body.classList.remove('geek-theme', 'life-theme', 'rage-theme', 'emo-theme', 'modern-theme');
+  
+  // 添加新主题类
+  document.body.classList.add(theme + '-theme');
+  
+  // 保存到本地存储
+  localStorage.setItem('selectedTheme', theme);
+  
+  // 显示切换提示
+  showNotification(`已切换到${getThemeName(theme)}`);
+}
+
+// 获取主题名称
+function getThemeName(theme) {
+  const names = {
+    'geek': '极客模式',
+    'life': '生活模式', 
+    'rage': '愤怒模式',
+    'emo': '情感模式',
+    'modern': '现代模式'
+  };
+  return names[theme] || theme;
+}
+
+// 显示通知
+function showNotification(message) {
+  const notification = document.createElement('div');
+  notification.className = 'modern-notification success';
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--modern-gradient-card);
+    border: 1px solid var(--modern-border);
+    border-radius: var(--modern-radius);
+    padding: 16px 20px;
+    color: var(--modern-text);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+  `;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 2000);
+}
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+
+// 页面加载时恢复主题
+document.addEventListener('DOMContentLoaded', function() {
+  const savedTheme = localStorage.getItem('selectedTheme');
+  if (savedTheme) {
+    switchTheme(savedTheme);
+  }
+});
+</script>
+{% endblock %} 

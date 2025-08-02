@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}用户监控 - 管理员{% endblock %}
 
@@ -97,7 +98,14 @@
                                 {% for activity in recent_activities %}
                                 <tr>
                                     <td>
-                                        <strong>{{ activity.user.username|default:"匿名用户" }}</strong>
+                                        {% if activity.user %}
+                                            <div class="d-flex align-items-center">
+                                                <img src="{% if activity.user.profile.avatar %}{{ activity.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
+                                                <strong>{{ activity.user.username }}</strong>
+                                            </div>
+                                        {% else %}
+                                            <strong>匿名用户</strong>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <span class="badge badge-{{ activity.activity_type|activity_color }}">
@@ -193,7 +201,10 @@
                                 {% for session in active_sessions %}
                                 <tr>
                                     <td>
-                                        <strong>{{ session.user.username }}</strong>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{% if session.user.profile.avatar %}{{ session.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
+                                            <strong>{{ session.user.username }}</strong>
+                                        </div>
                                     </td>
                                     <td>{{ session.session_start|date:"H:i:s" }}</td>
                                     <td>{{ session.ip_address }}</td>

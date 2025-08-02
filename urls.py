@@ -17,13 +17,42 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from views import home_view, tool_view
+from views import home_view, tool_view, welcome_view, theme_demo_view, custom_static_serve
+from django.shortcuts import render
+
+def music_test_view(request):
+    """音乐功能测试页面"""
+    return render(request, 'music_test.html')
+
+def audio_test_view(request):
+    """音频播放测试页面"""
+    return render(request, 'audio_test.html')
+
+def next_song_test_view(request):
+    """切换歌曲功能测试页面"""
+    return render(request, 'test_next_song.html')
+
+def modern_demo_view(request):
+    """现代化UI演示页面"""
+    return render(request, 'modern_demo.html')
+
+def feedback_restriction_test_view(request):
+    """反馈功能登录限制测试页面"""
+    return render(request, 'test_feedback_restriction.html')
+
 from django.http import HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('', home_view, name='home'),
+    path('welcome/', welcome_view, name='welcome'),
+    path('theme-demo/', theme_demo_view, name='theme_demo'),
+    path('modern-demo/', modern_demo_view, name='modern_demo'),
+    path('music-test/', music_test_view, name='music_test'),
+    path('audio-test/', audio_test_view, name='audio_test'),
+    path('next-song-test/', next_song_test_view, name='next_song_test'),
+    path('feedback-restriction-test/', feedback_restriction_test_view, name='feedback_restriction_test'),
     path('admin/', admin.site.urls),
     # 工具主页面路由
     # 工具子路由（包含测试用例生成器等）
@@ -35,3 +64,7 @@ urlpatterns = [
 # 开发环境下提供媒体文件访问
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # 自定义静态文件服务，禁用缓存
+    urlpatterns += [
+        path('static/<path:path>', custom_static_serve, name='custom_static'),
+    ]

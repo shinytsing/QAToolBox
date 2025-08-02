@@ -96,10 +96,12 @@ class UserActionLog(models.Model):
         ('account_delete', '账号删除'),
         ('membership_change', '会员变更'),
         ('role_change', '角色变更'),
+        ('avatar_upload', '头像上传'),
     ]
     
-    admin_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_actions', verbose_name='管理员')
-    target_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_actions', verbose_name='目标用户', null=True, blank=True)
+    admin_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_actions', verbose_name='管理员', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_actions', verbose_name='操作用户', null=True, blank=True)
+    target_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='target_actions', verbose_name='目标用户', null=True, blank=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES, verbose_name='操作类型')
     details = models.TextField(verbose_name='操作详情')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='操作时间')
@@ -196,4 +198,47 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
     phone = models.CharField(max_length=20, blank=True, verbose_name='手机号')
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name='头像')
     # 添加其他与你的用户相关的字段
+
+class UserTheme(models.Model):
+    """用户主题设置模型"""
+    THEME_MODE_CHOICES = [
+        ('life', '生活模式'),
+        ('work', '极客模式'),
+        ('training', '狂暴模式'),
+        ('emo', 'Emo模式'),
+    ]
+    
+    THEME_STYLE_CHOICES = [
+        ('default', '默认样式'),
+        ('dark', '深色样式'),
+        ('light', '浅色样式'),
+        ('custom', '自定义样式'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='theme')
+    mode = models.CharField(max_length=20, choices=THEME_MODE_CHOICES, default='work', verbose_name='主题模式')
+    theme_style = models.CharField(max_length=20, choices=THEME_STYLE_CHOICES, default='default', verbose_name='主题样式')
+    switch_count = models.IntegerField(default=0, verbose_name='切换次数')
+    last_switch_time = models.DateTimeField(null=True, blank=True, verbose_name='最后切换时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        verbose_name = '用户主题'
+        verbose_name_plural = '用户主题'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_mode_display()}"
+    
+    @property
+    def subtitle(self):
+        """根据主题模式返回对应的副标题"""
+        subtitles = {
+            'life': '享受生活的美好时光',
+            'work': '专注技术，追求卓越',
+            'training': '突破极限，挑战自我',
+            'emo': '感受内心的情感波动',
+        }
+        return subtitles.get(self.mode, '探索无限可能')

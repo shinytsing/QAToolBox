@@ -6,9 +6,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
 from django.template.defaulttags import register
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 import json
-from .models import Article, Comment, Suggestion, Feedback
+import os
+import uuid
+from datetime import datetime
+from .models import Article, Comment, Suggestion, Feedback, Announcement, AILink
 from .forms import ArticleForm, CommentForm
+from .utils import extract_favicon_url, download_and_save_icon, get_domain_from_url
 from apps.users.models import UserRole
 
 # 注册模板过滤器
@@ -177,7 +183,59 @@ def admin_feedback(request):
         'feedbacks': feedbacks
     })
 
+@login_required
+@admin_required
+def admin_announcements(request):
+    """管理员公告管理页面"""
+    return render(request, 'content/admin_announcements.html')
+
 # 建议和反馈API
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_media_api(request):
+    """处理图片和视频文件上传"""
+    if request.method == 'POST':
+        try:
+            uploaded_files = []
+            
+            # 处理多个文件上传
+            for field_name in request.FILES:
+                files = request.FILES.getlist(field_name)
+                for file in files:
+                    # 验证文件类型
+                    file_ext = os.path.splitext(file.name)[1].lower()
+                    allowed_image_exts = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                    allowed_video_exts = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm']
+                    
+                    if file_ext in allowed_image_exts:
+                        file_type = 'image'
+                        upload_path = f'suggestions/images/{datetime.now().strftime("%Y/%m/%d")}/{uuid.uuid4()}{file_ext}'
+                    elif file_ext in allowed_video_exts:
+                        file_type = 'video'
+                        upload_path = f'suggestions/videos/{datetime.now().strftime("%Y/%m/%d")}/{uuid.uuid4()}{file_ext}'
+                    else:
+                        continue  # 跳过不支持的文件类型
+                    
+                    # 保存文件
+                    saved_path = default_storage.save(upload_path, ContentFile(file.read()))
+                    file_url = default_storage.url(saved_path)
+                    
+                    uploaded_files.append({
+                        'type': file_type,
+                        'name': file.name,
+                        'url': file_url,
+                        'size': file.size
+                    })
+            
+            return JsonResponse({
+                'success': True,
+                'files': uploaded_files,
+                'message': f'成功上传 {len(uploaded_files)} 个文件'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def suggestions_api(request):
@@ -214,43 +272,40 @@ def suggestions_api(request):
                 'created_at': suggestion.created_at.strftime('%Y-%m-%d %H:%M'),
                 'updated_at': suggestion.updated_at.strftime('%Y-%m-%d %H:%M'),
                 'admin_response': suggestion.admin_response,
-                'has_response': bool(suggestion.admin_response)
+                'has_response': bool(suggestion.admin_response),
+                'images': suggestion.images or [],
+                'videos': suggestion.videos or []
             })
         return JsonResponse({'success': True, 'suggestions': suggestions_data})
     
     elif request.method == 'POST':
+        # 检查用户是否已登录
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': '请先登录后再提交建议'}, status=401)
+        
         # 提交新建议
         try:
             data = json.loads(request.body)
             title = data.get('title', '')
             content = data.get('content', '')
             suggestion_type = data.get('suggestion_type', 'feature')
-            user_name = data.get('user_name', '')
-            user_email = data.get('user_email', '')
+            images = data.get('images', [])
+            videos = data.get('videos', [])
             
             if not title or not content:
                 return JsonResponse({'error': '标题和内容不能为空'}, status=400)
             
-            # 如果用户已登录，使用登录用户信息
-            if request.user.is_authenticated:
-                suggestion = Suggestion.objects.create(
-                    title=title,
-                    content=content,
-                    suggestion_type=suggestion_type,
-                    user=request.user,
-                    user_name=request.user.username,
-                    user_email=request.user.email or user_email
-                )
-            else:
-                # 匿名用户提交建议
-                suggestion = Suggestion.objects.create(
-                    title=title,
-                    content=content,
-                    suggestion_type=suggestion_type,
-                    user=None,
-                    user_name=user_name,
-                    user_email=user_email
-                )
+            # 创建建议（用户已登录）
+            suggestion = Suggestion.objects.create(
+                title=title,
+                content=content,
+                suggestion_type=suggestion_type,
+                user=request.user,
+                user_name=request.user.username,
+                user_email=request.user.email or '',
+                images=images,
+                videos=videos
+            )
             
             return JsonResponse({
                 'success': True,
@@ -298,35 +353,27 @@ def feedback_api(request):
         return JsonResponse({'feedbacks': feedbacks_data})
     
     elif request.method == 'POST':
+        # 检查用户是否已登录
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': '请先登录后再提交反馈'}, status=401)
+        
         # 提交新反馈
         try:
             data = json.loads(request.body)
             feedback_type = data.get('feedback_type', 'bug')
             content = data.get('content', '')
-            user_name = data.get('user_name', '')
-            user_email = data.get('user_email', '')
             
             if not content:
                 return JsonResponse({'error': '反馈内容不能为空'}, status=400)
             
-            # 如果用户已登录，使用登录用户信息
-            if request.user.is_authenticated:
-                feedback = Feedback.objects.create(
-                    feedback_type=feedback_type,
-                    content=content,
-                    user=request.user,
-                    user_name=request.user.username,
-                    user_email=request.user.email or user_email
-                )
-            else:
-                # 匿名用户提交反馈
-                feedback = Feedback.objects.create(
-                    feedback_type=feedback_type,
-                    content=content,
-                    user=None,
-                    user_name=user_name,
-                    user_email=user_email
-                )
+            # 创建反馈（用户已登录）
+            feedback = Feedback.objects.create(
+                feedback_type=feedback_type,
+                content=content,
+                user=request.user,
+                user_name=request.user.username,
+                user_email=request.user.email or ''
+            )
             
             return JsonResponse({
                 'success': True,
@@ -562,3 +609,302 @@ def admin_batch_process_suggestions(request):
         return JsonResponse({'error': '无效的JSON数据'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# 公告相关API
+@csrf_exempt
+@require_http_methods(["GET"])
+def announcement_list_api(request):
+    """获取有效的公告列表"""
+    try:
+        # 检查用户是否已登录
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': True,
+                'announcements': []
+            })
+        
+        # 检查用户是否已经看过公告（使用session跟踪）
+        session_key = f'announcements_seen_{request.user.id}'
+        announcements_seen = request.session.get(session_key, [])
+        
+        # 获取已发布且在有效期内的公告
+        announcements = Announcement.objects.filter(
+            status='published'
+        ).order_by('-priority', '-created_at')
+        
+        # 过滤出有效的公告，并且用户还没有看过的
+        active_announcements = []
+        new_announcements = []
+        
+        for announcement in announcements:
+            if announcement.is_active():
+                announcement_data = {
+                    'id': announcement.id,
+                    'title': announcement.title,
+                    'content': announcement.content,
+                    'priority': announcement.priority,
+                    'priority_display': announcement.get_priority_display(),
+                    'is_popup': announcement.is_popup,
+                    'created_at': announcement.created_at.strftime('%Y-%m-%d %H:%M'),
+                }
+                
+                # 如果用户还没有看过这个公告，且需要弹窗显示
+                if announcement.id not in announcements_seen and announcement.is_popup:
+                    new_announcements.append(announcement_data)
+                    # 记录用户已经看过这个公告
+                    announcements_seen.append(announcement.id)
+                
+                active_announcements.append(announcement_data)
+        
+        # 更新session
+        request.session[session_key] = announcements_seen
+        request.session.modified = True
+        
+        return JsonResponse({
+            'success': True,
+            'announcements': new_announcements  # 只返回用户没看过的新公告
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt 
+@require_http_methods(["GET", "POST"])
+def announcement_admin_api(request):
+    """管理员公告管理API"""
+    # 检查管理员权限
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '需要登录'}, status=401)
+    
+    try:
+        user_role = UserRole.objects.get(user=request.user)
+        if user_role.role not in ['admin', 'super_admin']:
+            return JsonResponse({'error': '权限不足'}, status=403)
+    except UserRole.DoesNotExist:
+        return JsonResponse({'error': '权限不足'}, status=403)
+    
+    if request.method == 'GET':
+        # 获取所有公告（管理员视图）
+        try:
+            announcements = Announcement.objects.all().order_by('-created_at')
+            announcements_data = []
+            
+            for announcement in announcements:
+                announcements_data.append({
+                    'id': announcement.id,
+                    'title': announcement.title,
+                    'content': announcement.content,
+                    'priority': announcement.priority,
+                    'priority_display': announcement.get_priority_display(),
+                    'status': announcement.status,
+                    'status_display': announcement.get_status_display(),
+                    'is_popup': announcement.is_popup,
+                    'is_active': announcement.is_active(),
+                    'start_time': announcement.start_time.strftime('%Y-%m-%d %H:%M'),
+                    'end_time': announcement.end_time.strftime('%Y-%m-%d %H:%M') if announcement.end_time else None,
+                    'created_by': announcement.created_by.username,
+                    'created_at': announcement.created_at.strftime('%Y-%m-%d %H:%M'),
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'announcements': announcements_data
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    elif request.method == 'POST':
+        # 创建或更新公告
+        try:
+            data = json.loads(request.body)
+            
+            # 获取公告ID（如果是更新）
+            announcement_id = data.get('id')
+            
+            if announcement_id:
+                # 更新公告
+                announcement = get_object_or_404(Announcement, id=announcement_id)
+            else:
+                # 创建新公告
+                announcement = Announcement(created_by=request.user)
+            
+            # 更新字段
+            announcement.title = data.get('title', '')
+            announcement.content = data.get('content', '')
+            announcement.priority = data.get('priority', 'medium')
+            announcement.status = data.get('status', 'draft')
+            announcement.is_popup = data.get('is_popup', True)
+            
+            # 处理时间字段
+            if data.get('start_time'):
+                from django.utils.dateparse import parse_datetime
+                announcement.start_time = parse_datetime(data['start_time'])
+            
+            if data.get('end_time'):
+                from django.utils.dateparse import parse_datetime
+                announcement.end_time = parse_datetime(data['end_time'])
+            
+            announcement.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': '公告保存成功',
+                'announcement_id': announcement.id
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def announcement_delete_api(request, announcement_id):
+    """删除公告"""
+    # 检查管理员权限
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '需要登录'}, status=401)
+    
+    try:
+        user_role = UserRole.objects.get(user=request.user)
+        if user_role.role not in ['admin', 'super_admin']:
+            return JsonResponse({'error': '权限不足'}, status=403)
+    except UserRole.DoesNotExist:
+        return JsonResponse({'error': '权限不足'}, status=403)
+    
+    try:
+        announcement = get_object_or_404(Announcement, id=announcement_id)
+        announcement.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '公告删除成功'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def ai_links_view(request):
+    """AI友情链接页面"""
+    links = AILink.objects.filter(is_active=True).order_by('sort_order', 'name')
+    
+    # 按分类分组
+    links_by_category = {}
+    for link in links:
+        category = link.get_category_display()
+        if category not in links_by_category:
+            links_by_category[category] = []
+        links_by_category[category].append(link)
+    
+    return render(request, 'content/ai_links.html', {
+        'links_by_category': links_by_category
+    })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def fetch_ai_link_icon(request):
+    """获取AI链接的图标"""
+    try:
+        data = json.loads(request.body)
+        link_id = data.get('link_id')
+        
+        if not link_id:
+            return JsonResponse({'success': False, 'message': '缺少链接ID'})
+        
+        link = get_object_or_404(AILink, id=link_id)
+        
+        # 提取favicon URL
+        favicon_url = extract_favicon_url(link.url)
+        
+        if not favicon_url:
+            return JsonResponse({'success': False, 'message': '无法获取网站图标'})
+        
+        # 下载并保存图标
+        domain = get_domain_from_url(link.url)
+        filename = f"{domain}_icon"
+        saved_path = download_and_save_icon(favicon_url, filename)
+        
+        if saved_path:
+            # 更新链接的图标字段
+            link.icon = saved_path
+            link.icon_url = favicon_url
+            link.save()
+            
+            return JsonResponse({
+                'success': True, 
+                'message': '图标获取成功',
+                'icon_url': link.icon.url
+            })
+        else:
+            return JsonResponse({'success': False, 'message': '图标下载失败'})
+            
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'操作失败: {str(e)}'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+@admin_required
+def create_ai_links_from_list(request):
+    """从预定义列表创建AI链接"""
+    try:
+        # 预定义的AI链接列表
+        ai_links_data = [
+            {
+                'name': 'Midjourney',
+                'url': 'https://www.midjourney.com/account',
+                'category': 'visual',
+                'description': 'AI图像生成工具，创建高质量的艺术作品'
+            },
+            {
+                'name': 'Suno',
+                'url': 'https://suno.com/',
+                'category': 'music',
+                'description': 'AI音乐创作平台，生成原创音乐'
+            },
+            {
+                'name': 'Cursor',
+                'url': 'https://cursor.com/cn/agents',
+                'category': 'programming',
+                'description': 'AI编程助手，智能代码生成和编辑'
+            },
+            {
+                'name': 'Pollo AI',
+                'url': 'https://pollo.ai/image-to-video',
+                'category': 'image',
+                'description': 'AI图片转视频工具，将静态图片转换为动态视频'
+            }
+        ]
+        
+        created_count = 0
+        for link_data in ai_links_data:
+            # 检查是否已存在
+            if not AILink.objects.filter(url=link_data['url']).exists():
+                link = AILink.objects.create(**link_data)
+                
+                # 尝试获取图标
+                favicon_url = extract_favicon_url(link.url)
+                if favicon_url:
+                    domain = get_domain_from_url(link.url)
+                    filename = f"{domain}_icon"
+                    saved_path = download_and_save_icon(favicon_url, filename)
+                    if saved_path:
+                        link.icon = saved_path
+                        link.icon_url = favicon_url
+                        link.save()
+                
+                created_count += 1
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'成功创建 {created_count} 个AI友情链接'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'创建失败: {str(e)}'})

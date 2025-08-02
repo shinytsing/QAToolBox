@@ -1,9 +1,11 @@
 from django.urls import path
 from .views import (
     article_list, article_detail, article_create, article_edit, article_delete,
-    suggestions_api, feedback_api, admin_suggestions, admin_feedback,
+    suggestions_api, feedback_api, upload_media_api, admin_suggestions, admin_feedback,
     admin_reply_suggestion, admin_reply_feedback, admin_dashboard,
-    admin_dashboard_stats_api, admin_batch_change_status_api
+    admin_dashboard_stats_api, admin_batch_change_status_api,
+    announcement_list_api, announcement_admin_api, announcement_delete_api,
+    admin_announcements, ai_links_view, fetch_ai_link_icon, create_ai_links_from_list
 )
 
 urlpatterns = [
@@ -13,14 +15,26 @@ urlpatterns = [
     path('edit/<int:pk>/', article_edit, name='article_edit'),  # 编辑文章
     path('delete/<int:pk>/', article_delete, name='article_delete'),  # 删除文章
     
+    # AI友情链接
+    path('ai-links/', ai_links_view, name='ai_links'),
+    path('api/ai-links/fetch-icon/', fetch_ai_link_icon, name='fetch_ai_link_icon'),
+    path('api/ai-links/create-from-list/', create_ai_links_from_list, name='create_ai_links_from_list'),
+    
     # 建议和反馈API
     path('api/suggestions/', suggestions_api, name='suggestions_api'),
     path('api/feedback/', feedback_api, name='feedback_api'),
+    path('api/upload-media/', upload_media_api, name='upload_media_api'),
+    
+    # 公告API
+    path('api/announcements/', announcement_list_api, name='announcement_list_api'),
+    path('api/admin/announcements/', announcement_admin_api, name='announcement_admin_api'),
+    path('api/admin/announcements/<int:announcement_id>/', announcement_delete_api, name='announcement_delete_api'),
     
     # 管理员管理页面
     path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
     path('admin/suggestions/', admin_suggestions, name='admin_suggestions'),
     path('admin/feedback/', admin_feedback, name='admin_feedback'),
+    path('admin/announcements/', admin_announcements, name='admin_announcements'),
     path('api/admin/reply-suggestion/', admin_reply_suggestion, name='admin_reply_suggestion'),
     path('api/admin/reply-feedback/', admin_reply_feedback, name='admin_reply_feedback'),
     path('api/admin/dashboard-stats/', admin_dashboard_stats_api, name='admin_dashboard_stats_api'),

@@ -1,8 +1,1028 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="geek-card">
-  <div class="geek-title">QATOOLBOX 工具箱</div>
-  <div class="geek-terminal">{{ quote|default:"君子生非异也，善假于物也。" }}</div>
-  <a href="{% url 'tools' %}" class="btn geek-auth-btn" style="margin-top:1.5rem;">进入工具集 &rarr;</a>
+<div class="home-container">
+  <!-- 动态背景 -->
+  <div class="home-background">
+    <div class="matrix-rain"></div>
+    <div class="geometric-shapes">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="shape shape-4"></div>
+      <div class="shape shape-5"></div>
+    </div>
+  </div>
+
+  <!-- 主要内容 -->
+  <div class="home-content">
+    <div class="theme-card">
+      <div class="theme-title">
+        <span class="title-glitch" data-text="QATOOLBOX">QATOOLBOX</span>
+        <span class="title-subtitle" data-translate="工具箱">工具箱</span>
+      </div>
+      
+      <div class="theme-subtitle-text">
+        <div class="quote-container">
+          <div class="quote-text" id="quoteText">君子生非异也，善假于物也。</div>
+          <div class="quote-decoration">
+            <span class="quote-mark">"</span>
+            <span class="quote-mark">"</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <a href="{% url 'tools' %}" class="btn theme-auth-btn">
+          <span class="btn-text">进入工具集</span>
+          <span class="btn-icon">→</span>
+        </a>
+        
+        <div class="theme-preview">
+          <div class="theme-dots">
+            <div class="theme-dot active" data-theme="geek"></div>
+            <div class="theme-dot" data-theme="life"></div>
+            <div class="theme-dot" data-theme="rage"></div>
+            <div class="theme-dot" data-theme="emo"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 浮动元素 -->
+  <div class="floating-elements">
+    <div class="floating-icon" style="--delay: 0s">⚡</div>
+    <div class="floating-icon" style="--delay: 2s">💻</div>
+    <div class="floating-icon" style="--delay: 4s">🔧</div>
+    <div class="floating-icon" style="--delay: 6s">🚀</div>
+  </div>
 </div>
+
+<style>
+/* 首页容器 */
+.home-container {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: var(--geek-bg, #0a0e17);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 动态背景 */
+.home-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 矩阵雨效果 */
+.matrix-rain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(0, 255, 231, 0.1) 50%, 
+    transparent 100%);
+  animation: matrixRain 20s linear infinite;
+}
+
+@keyframes matrixRain {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* 几何形状 */
+.geometric-shapes {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.shape {
+  position: absolute;
+  border: 2px solid rgba(0, 255, 231, 0.3);
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-1 {
+  top: 20%;
+  left: 10%;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  top: 60%;
+  right: 15%;
+  width: 40px;
+  height: 40px;
+  transform: rotate(45deg);
+  animation-delay: 1s;
+}
+
+.shape-3 {
+  bottom: 30%;
+  left: 20%;
+  width: 80px;
+  height: 40px;
+  border-radius: 20px;
+  animation-delay: 2s;
+}
+
+.shape-4 {
+  top: 40%;
+  left: 60%;
+  width: 50px;
+  height: 50px;
+  transform: rotate(45deg);
+  animation-delay: 3s;
+}
+
+.shape-5 {
+  bottom: 20%;
+  right: 30%;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+  50% { transform: translateY(-15px) rotate(90deg); opacity: 0.6; }
+}
+
+/* 主要内容 */
+.home-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 40px;
+  width: 100%;
+}
+
+/* 主题卡片 */
+.theme-card {
+  background: rgba(10, 14, 23, 0.9);
+  border: 2px solid var(--geek-primary, #00ffe7);
+  border-radius: 20px;
+  box-shadow: 
+    0 0 30px rgba(0, 255, 231, 0.3),
+    inset 0 0 30px rgba(0, 255, 231, 0.1);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  /* 性能优化 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.theme-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.theme-card:hover::before {
+  left: 100%;
+}
+
+.theme-card:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 
+    0 15px 40px rgba(0, 255, 231, 0.3),
+    inset 0 0 30px rgba(0, 255, 231, 0.1);
+  border-color: #00ffe7;
+  will-change: transform;
+}
+
+/* 标题样式 */
+.theme-title {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.title-glitch {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--geek-primary, #00ffe7);
+  text-shadow: 
+    0 0 10px #00ffe7,
+    0 0 20px #00ffe7,
+    0 0 30px #00ffe7;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 4px;
+  position: relative;
+  display: inline-block;
+  animation: glitch 5s infinite;
+  will-change: transform;
+}
+
+.title-glitch::before,
+.title-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.title-glitch::before {
+  animation: glitch-1 2s infinite;
+  color: #ff00ff;
+  z-index: -1;
+}
+
+.title-glitch::after {
+  animation: glitch-2 2s infinite;
+  color: #00ffff;
+  z-index: -2;
+}
+
+@keyframes glitch {
+  0%, 90%, 100% { transform: translate(0); }
+  5% { transform: translate(-1px, 1px); }
+  10% { transform: translate(-1px, -1px); }
+  15% { transform: translate(1px, 1px); }
+  20% { transform: translate(1px, -1px); }
+}
+
+@keyframes glitch-1 {
+  0%, 90%, 100% { transform: translate(0); }
+  5% { transform: translate(1px, -1px); }
+  10% { transform: translate(1px, 1px); }
+  15% { transform: translate(-1px, -1px); }
+  20% { transform: translate(-1px, 1px); }
+}
+
+@keyframes glitch-2 {
+  0%, 90%, 100% { transform: translate(0); }
+  5% { transform: translate(-1px, 1px); }
+  10% { transform: translate(1px, -1px); }
+  15% { transform: translate(-1px, -1px); }
+  20% { transform: translate(1px, 1px); }
+}
+
+.title-subtitle {
+  display: block;
+  font-size: 1.5rem;
+  color: rgba(0, 255, 231, 0.8);
+  font-weight: 400;
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 2px;
+}
+
+/* 引用文字样式 */
+.quote-container {
+  position: relative;
+  margin: 2rem 0;
+  padding: 20px;
+}
+
+.quote-text {
+  font-size: 1.4rem;
+  color: #ffffff;
+  font-weight: 500;
+  line-height: 1.6;
+  font-family: 'KaiTi', '楷体', serif;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 2;
+  animation: quoteGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes quoteGlow {
+  0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+  100% { text-shadow: 0 0 20px rgba(0, 255, 231, 0.8), 0 0 30px rgba(0, 255, 231, 0.4); }
+}
+
+.quote-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.quote-mark {
+  position: absolute;
+  font-size: 3rem;
+  color: rgba(0, 255, 231, 0.3);
+  font-family: 'KaiTi', '楷体', serif;
+}
+
+.quote-mark:first-child {
+  top: -10px;
+  left: -20px;
+  animation: markFloat 4s ease-in-out infinite;
+}
+
+.quote-mark:last-child {
+  bottom: -20px;
+  right: -10px;
+  animation: markFloat 4s ease-in-out infinite reverse;
+}
+
+@keyframes markFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(10deg); }
+}
+
+/* 按钮样式 */
+.action-buttons {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.theme-auth-btn {
+  background: linear-gradient(45deg, #00ffe7, #0099ff);
+  border: none;
+  color: #000;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 5px 20px rgba(0, 255, 231, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-auth-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.theme-auth-btn:hover::before {
+  left: 100%;
+}
+
+.theme-auth-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 10px 30px rgba(0, 255, 231, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: #000;
+  text-decoration: none;
+}
+
+.btn-text {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 1.2rem;
+  animation: arrowPulse 2s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+
+/* 主题预览 */
+.theme-preview {
+  margin-top: 20px;
+}
+
+.theme-dots {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.theme-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.theme-dot[data-theme="geek"] {
+  background: #00ffe7;
+  box-shadow: 0 0 10px #00ffe7;
+}
+
+.theme-dot[data-theme="life"] {
+  background: #667eea;
+  box-shadow: 0 0 10px #667eea;
+}
+
+.theme-dot[data-theme="rage"] {
+  background: #ff6b35;
+  box-shadow: 0 0 10px #ff6b35;
+}
+
+.theme-dot[data-theme="emo"] {
+  background: #764ba2;
+  box-shadow: 0 0 10px #764ba2;
+}
+
+.theme-dot:hover {
+  transform: scale(1.3);
+}
+
+.theme-dot.active {
+  transform: scale(1.5);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1.5); }
+  50% { transform: scale(1.8); }
+}
+
+/* 浮动图标 */
+.floating-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.floating-icon {
+  position: absolute;
+  font-size: 2rem;
+  color: rgba(0, 255, 231, 0.6);
+  animation: floatIcon 8s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.floating-icon:nth-child(1) { top: 20%; left: 10%; }
+.floating-icon:nth-child(2) { top: 60%; right: 15%; }
+.floating-icon:nth-child(3) { bottom: 30%; left: 20%; }
+.floating-icon:nth-child(4) { top: 40%; left: 60%; }
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+  25% { transform: translateY(-15px) rotate(45deg); opacity: 0.8; }
+  50% { transform: translateY(-25px) rotate(90deg); opacity: 0.7; }
+  75% { transform: translateY(-15px) rotate(135deg); opacity: 0.8; }
+}
+
+/* 响应式设计 - 全面优化 */
+
+/* 大屏幕 (1200px+) */
+@media (min-width: 1200px) {
+  .home-container {
+    padding: 40px;
+  }
+  
+  .theme-card {
+    max-width: 100%;
+    padding: 60px;
+  }
+  
+  .title-glitch {
+    font-size: 4.5rem;
+    letter-spacing: 6px;
+  }
+  
+  .title-subtitle {
+    font-size: 2rem;
+    letter-spacing: 3px;
+  }
+  
+  .quote-text {
+    font-size: 1.8rem;
+    line-height: 1.8;
+  }
+  
+  .theme-auth-btn {
+    padding: 20px 40px;
+    font-size: 1.3rem;
+  }
+  
+  .floating-icon {
+    font-size: 3rem;
+  }
+  
+  .shape {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* 中等屏幕 (768px - 1199px) */
+@media (max-width: 1199px) and (min-width: 768px) {
+  .home-content {
+    padding: 30px;
+  }
+  
+  .theme-card {
+    max-width: 100%;
+    padding: 40px;
+  }
+  
+  .title-glitch {
+    font-size: 3.5rem;
+    letter-spacing: 4px;
+  }
+  
+  .title-subtitle {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+  }
+  
+  .quote-text {
+    font-size: 1.4rem;
+    line-height: 1.6;
+  }
+  
+  .theme-auth-btn {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+  }
+  
+  .floating-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* 平板端 (768px以下) */
+@media (max-width: 767px) {
+  .home-container {
+    padding: 15px;
+  }
+  
+  .home-content {
+    padding: 20px;
+  }
+  
+  .theme-card {
+    padding: 30px 20px;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .title-glitch {
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+  }
+  
+  .title-subtitle {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+  
+  .quote-text {
+    font-size: 1.2rem;
+    line-height: 1.5;
+  }
+  
+  .quote-container {
+    padding: 15px;
+  }
+  
+  .theme-auth-btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .floating-icon {
+    font-size: 1.5rem;
+  }
+  
+  .shape {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* 移动端优化3D效果 */
+  .theme-card:hover {
+    transform: translateY(-5px) scale(1.01);
+  }
+  
+  /* 禁用移动端的3D鼠标效果 */
+  .theme-card {
+    transform: none !important;
+  }
+}
+
+/* 手机端 (480px以下) */
+@media (max-width: 480px) {
+  .home-container {
+    padding: 10px;
+  }
+  
+  .home-content {
+    padding: 15px;
+  }
+  
+  .theme-card {
+    padding: 25px 15px;
+    border-radius: 15px;
+    max-width: 100%;
+  }
+  
+  .title-glitch {
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+  
+  .title-subtitle {
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .quote-text {
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+  
+  .quote-container {
+    padding: 10px;
+    margin: 1.5rem 0;
+  }
+  
+  .quote-mark {
+    font-size: 2rem;
+  }
+  
+  .quote-mark:first-child {
+    top: -5px;
+    left: -10px;
+  }
+  
+  .quote-mark:last-child {
+    bottom: -10px;
+    right: -5px;
+  }
+  
+  .theme-auth-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    border-radius: 25px;
+  }
+  
+  .btn-icon {
+    font-size: 1rem;
+  }
+  
+  .theme-dots {
+    gap: 8px;
+  }
+  
+  .theme-dot {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .floating-icon {
+    font-size: 1.2rem;
+  }
+  
+  .shape {
+    width: 30px;
+    height: 30px;
+  }
+  
+  /* 小屏幕隐藏部分浮动元素 */
+  .floating-icon:nth-child(3),
+  .floating-icon:nth-child(4) {
+    display: none;
+  }
+  
+  .shape:nth-child(4),
+  .shape:nth-child(5) {
+    display: none;
+  }
+}
+
+/* 超小屏幕 (320px以下) */
+@media (max-width: 320px) {
+  .home-container {
+    padding: 5px;
+  }
+  
+  .home-content {
+    padding: 10px;
+  }
+  
+  .theme-card {
+    padding: 20px 10px;
+  }
+  
+  .title-glitch {
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .title-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .quote-text {
+    font-size: 1rem;
+  }
+  
+  .theme-auth-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+  
+  .floating-icon {
+    font-size: 1rem;
+  }
+  
+  .shape {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* 横屏模式优化 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .home-container {
+    padding: 10px;
+  }
+  
+  .home-content {
+    padding: 15px;
+  }
+  
+  .theme-card {
+    padding: 20px;
+    max-width: 100%;
+  }
+  
+  .title-glitch {
+    font-size: 2rem;
+  }
+  
+  .title-subtitle {
+    font-size: 1rem;
+  }
+  
+  .quote-text {
+    font-size: 1rem;
+  }
+  
+  .quote-container {
+    margin: 1rem 0;
+  }
+  
+  .action-buttons {
+    margin-top: 1rem;
+  }
+  
+  .floating-icon {
+    font-size: 1.2rem;
+  }
+  
+  .shape {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+/* 高分辨率屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .theme-card {
+    border-width: 1px;
+  }
+  
+  .shape {
+    border-width: 1px;
+  }
+  
+  .theme-dot {
+    box-shadow: 0 0 5px currentColor;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .theme-card:hover {
+    transform: translateY(-3px) scale(1.01);
+  }
+  
+  .theme-dot:hover {
+    transform: scale(1.2);
+  }
+  
+  .theme-auth-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+  
+  /* 增加触摸目标大小 */
+  .theme-dot {
+    width: 16px;
+    height: 16px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .theme-auth-btn {
+    min-height: 44px;
+  }
+}
+
+/* 减少动画的设备 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .floating-icon,
+  .shape,
+  .particle {
+    animation: none !important;
+  }
+}
+
+/* 移动设备性能优化 */
+@media (max-width: 768px) {
+  .title-glitch {
+    animation: none !important;
+  }
+  
+  .title-glitch::before,
+  .title-glitch::after {
+    display: none !important;
+  }
+  
+  .floating-icon {
+    animation-duration: 8s !important;
+  }
+  
+  .shape {
+    animation-duration: 10s !important;
+  }
+  
+  .theme-card {
+    transition: all 0.2s ease !important;
+  }
+  
+  .theme-card:hover {
+    transform: translateY(-2px) scale(1.005) !important;
+  }
+}
+</style>
+
+<script>
+// 主题切换功能
+document.querySelectorAll('.theme-dot').forEach(dot => {
+  dot.addEventListener('click', function() {
+    const theme = this.getAttribute('data-theme');
+    
+    // 更新活跃状态
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    this.classList.add('active');
+    
+    // 切换主题
+    switchGlobalTheme(theme);
+  });
+});
+
+// 引用文字动画
+const quoteText = document.getElementById('quoteText');
+const quotes = [
+  "君子生非异也，善假于物也。",
+  "工欲善其事，必先利其器。",
+  "学而时习之，不亦说乎。",
+  "知之者不如好之者，好之者不如乐之者。"
+];
+
+let currentQuoteIndex = 0;
+
+function changeQuote() {
+  quoteText.style.opacity = '0';
+  setTimeout(() => {
+    currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+    quoteText.textContent = quotes[currentQuoteIndex];
+    quoteText.style.opacity = '1';
+  }, 500);
+}
+
+// 每10秒切换一次引用
+setInterval(changeQuote, 10000);
+
+// 检测设备类型
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+         window.innerWidth <= 768;
+}
+
+// 检测触摸设备
+function isTouchDevice() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+// 鼠标悬停效果 (仅桌面端) - 优化版本
+if (!isMobileDevice() && !isTouchDevice()) {
+  const themeCard = document.querySelector('.theme-card');
+  let animationFrameId = null;
+  
+  themeCard.addEventListener('mousemove', function(e) {
+    // 使用 requestAnimationFrame 优化性能
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+    
+    animationFrameId = requestAnimationFrame(() => {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      const rotateX = (y - centerY) / 15; // 减少旋转角度
+      const rotateY = (centerX - x) / 15;
+      
+      // 使用 will-change 优化
+      this.style.willChange = 'transform';
+      this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px) scale(1.01)`;
+    });
+  });
+
+  themeCard.addEventListener('mouseleave', function() {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+    this.style.willChange = 'auto';
+    this.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px) scale(1)';
+  });
+}
+
+// 移动端触摸效果
+if (isTouchDevice()) {
+  const themeCard = document.querySelector('.theme-card');
+  
+  themeCard.addEventListener('touchstart', function() {
+    this.style.transform = 'translateY(-3px) scale(1.01)';
+  });
+  
+  themeCard.addEventListener('touchend', function() {
+    this.style.transform = 'translateY(0) scale(1)';
+  });
+}
+
+// 初始化极客主题
+document.addEventListener('DOMContentLoaded', function() {
+  // 设置默认主题为极客模式
+  document.body.className = 'work-theme';
+  
+  // 激活极客主题点
+  document.querySelector('.theme-dot[data-theme="geek"]').classList.add('active');
+});
+</script>
 {% endblock %}

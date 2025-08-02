@@ -15,7 +15,6 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-from apps.tools.utils import API_RATE_LIMIT
 
 # 加载.env文件
 # 尝试从多个位置加载环境变量文件
@@ -162,6 +161,13 @@ STATICFILES_DIRS = [
 # 收集静态文件的目录（生产环境）
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# 静态文件缓存控制
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+# 开发环境禁用静态文件缓存
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
 # 媒体文件配置
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -187,8 +193,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': API_RATE_LIMIT,
-        'user': API_RATE_LIMIT
+        'anon': '1000/minute',
+        'user': '1000/minute'
     }
 }
 
@@ -197,3 +203,21 @@ DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
 
 # 站点配置（用于captcha）
 SITE_ID = 1
+
+# Celery配置 - 使用数据库作为后端，避免Redis依赖
+CELERY_BROKER_URL = 'django-db://'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_TASK_ALWAYS_EAGER = True  # 开发环境同步执行任务
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# Redis配置（可选）
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+# 确保媒体目录存在
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+os.makedirs(os.path.join(MEDIA_ROOT, 'pdf_inputs'), exist_ok=True)
+os.makedirs(os.path.join(MEDIA_ROOT, 'word_outputs'), exist_ok=True)

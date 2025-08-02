@@ -1,44 +1,449 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<div class="geek-auth-card">
-  <div class="geek-auth-title">登录 QATOOLBOX</div>
-  <hr class="geek-auth-divider">
-  {% if messages %}
-    <div class="alert alert-warning mb-3">
-      <ul class="list-unstyled mb-0">
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
+<div class="geek-auth-container">
+  <div class="geek-auth-card">
+    <div class="geek-auth-header">
+      <div class="geek-auth-title">
+        <i class="fas fa-terminal"></i>
+        <span>QATOOLBOX 登录</span>
+      </div>
+      <div class="geek-auth-subtitle">进入数字世界</div>
+      <div class="geek-language-switch">
+        <button class="geek-lang-btn active" data-lang="zh">中文</button>
+        <button class="geek-lang-btn" data-lang="en">English</button>
+      </div>
     </div>
-  {% endif %}
-  <form method="POST" autocomplete="off">
-    {% csrf_token %}
-    <div class="geek-auth-input-group">
-      <i class="fas fa-user"></i>
-      <input type="text" name="username" required class="geek-auth-input" placeholder="用户名">
-    </div>
-    <div class="geek-auth-input-group">
-      <i class="fas fa-lock"></i>
-      <input type="password" name="password" required class="geek-auth-input" placeholder="密码">
-    </div>
-    <div class="geek-auth-input-group" style="display:flex;align-items:center;">
-      <i class="fas fa-shield-alt"></i>
-      <input type="text" name="captcha" required class="geek-auth-input" style="flex:1;" placeholder="验证码">
-      <img src="{% url 'generate_captcha' %}" alt="点击刷新验证码" title="点击刷新" id="captcha-image" class="geek-captcha-img">
-    </div>
-    <div class="form-check mb-2">
-      <input type="checkbox" name="remember_me" class="form-check-input" id="rememberMe">
-      <label class="form-check-label" for="rememberMe">记住我</label>
-    </div>
-    <button type="submit" class="geek-auth-btn">登录</button>
-    <a href="{% url 'register' %}" class="geek-auth-link">没有账号？去注册</a>
-  </form>
+    
+    {% if messages %}
+      <div class="geek-alert geek-alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <ul class="geek-alert-list">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    
+    <form method="POST" autocomplete="off" class="geek-auth-form">
+      {% csrf_token %}
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <input type="text" name="username" required class="geek-input" placeholder="请输入用户名" data-zh="请输入用户名" data-en="Enter username">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <input type="password" name="password" required class="geek-input" placeholder="请输入密码" data-zh="请输入密码" data-en="Enter password">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group geek-captcha-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <input type="text" name="captcha" required class="geek-input" placeholder="请输入验证码" data-zh="请输入验证码" data-en="Enter captcha">
+        <div class="geek-input-line"></div>
+        <img src="{% url 'generate_captcha' %}" alt="点击刷新验证码" title="点击刷新" id="captcha-image" class="geek-captcha-img">
+      </div>
+      
+      <div class="geek-checkbox-group">
+        <label class="geek-checkbox">
+          <input type="checkbox" name="remember_me" class="geek-checkbox-input">
+          <span class="geek-checkbox-mark"></span>
+          <span class="geek-checkbox-label" data-zh="记住我" data-en="Remember me">记住我</span>
+        </label>
+      </div>
+      
+      <button type="submit" class="geek-btn geek-btn-primary">
+        <i class="fas fa-sign-in-alt"></i>
+        <span data-zh="登录" data-en="LOGIN">登录</span>
+      </button>
+      
+      <div class="geek-auth-links">
+        <a href="{% url 'register' %}" class="geek-link">
+          <i class="fas fa-user-plus"></i>
+          <span data-zh="创建新账号" data-en="Create new account">创建新账号</span>
+        </a>
+      </div>
+    </form>
+  </div>
 </div>
+
+<style>
+.geek-auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--geek-bg, #0a0e17);
+}
+
+.geek-auth-card {
+  background: var(--geek-gradient-card, linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%));
+  border: 1px solid var(--geek-border, rgba(0, 255, 231, 0.1));
+  border-radius: var(--geek-radius, 16px);
+  box-shadow: var(--geek-shadow, 0 8px 32px rgba(0,0,0,0.6));
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  overflow: hidden;
+}
+
+.geek-auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.geek-auth-card:hover::before {
+  transform: scaleX(1);
+}
+
+.geek-auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.geek-auth-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--geek-primary, #00ffe7);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.geek-auth-title i {
+  font-size: 1.5rem;
+}
+
+.geek-auth-subtitle {
+  color: var(--geek-text-muted, #8a9ba8);
+  font-size: 0.9rem;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  margin-bottom: 15px;
+}
+
+.geek-language-switch {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.geek-lang-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 255, 231, 0.3);
+  background: rgba(0, 255, 231, 0.1);
+  color: var(--geek-text-muted, #8a9ba8);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+}
+
+.geek-lang-btn:hover {
+  border-color: var(--geek-primary, #00ffe7);
+  color: var(--geek-primary, #00ffe7);
+}
+
+.geek-lang-btn.active {
+  background: var(--geek-primary, #00ffe7);
+  color: #000;
+  border-color: var(--geek-primary, #00ffe7);
+}
+
+.geek-alert {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.geek-alert-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.geek-alert i {
+  margin-top: 2px;
+}
+
+.geek-alert-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.geek-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.geek-input-group {
+  position: relative;
+}
+
+.geek-input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--geek-primary, #00ffe7);
+  z-index: 2;
+}
+
+.geek-input {
+  width: 100%;
+  padding: 15px 15px 15px 45px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 231, 0.2);
+  border-radius: 8px;
+  color: var(--geek-text, #e6e6e6);
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  transition: all 0.3s ease;
+}
+
+.geek-input::placeholder {
+  color: var(--geek-text-muted, #8a9ba8);
+}
+
+.geek-input:focus {
+  outline: none;
+  border-color: var(--geek-primary, #00ffe7);
+  box-shadow: 0 0 0 2px rgba(0, 255, 231, 0.2);
+}
+
+.geek-input-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  transition: width 0.3s ease;
+}
+
+.geek-input:focus + .geek-input-line {
+  width: 100%;
+}
+
+.geek-captcha-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.geek-captcha-group .geek-input {
+  flex: 1;
+}
+
+.geek-captcha-img {
+  height: 45px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 255, 231, 0.2);
+  transition: all 0.3s ease;
+}
+
+.geek-captcha-img:hover {
+  border-color: var(--geek-primary, #00ffe7);
+  transform: scale(1.05);
+}
+
+.geek-checkbox-group {
+  display: flex;
+  align-items: center;
+}
+
+.geek-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--geek-text, #e6e6e6);
+}
+
+.geek-checkbox-input {
+  display: none;
+}
+
+.geek-checkbox-mark {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 255, 231, 0.3);
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.geek-checkbox-input:checked + .geek-checkbox-mark {
+  background: var(--geek-primary, #00ffe7);
+  border-color: var(--geek-primary, #00ffe7);
+}
+
+.geek-checkbox-input:checked + .geek-checkbox-mark::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.geek-btn {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.geek-btn-primary {
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  color: #000;
+}
+
+.geek-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 231, 0.3);
+}
+
+.geek-auth-links {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.geek-link {
+  color: var(--geek-primary, #00ffe7);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+}
+
+.geek-link:hover {
+  color: var(--geek-accent, #00bfff);
+  text-decoration: none;
+  transform: translateX(5px);
+}
+
+@media (max-width: 480px) {
+  .geek-auth-card {
+    padding: 30px 20px;
+  }
+  
+  .geek-auth-title {
+    font-size: 1.5rem;
+  }
+}
+</style>
+
 <script>
-  document.getElementById('captcha-image').onclick = function() {
-    this.src = '{% url "generate_captcha" %}?t=' + Math.random();
-  };
+document.getElementById('captcha-image').onclick = function() {
+  this.src = '{% url "generate_captcha" %}?t=' + Math.random();
+};
+
+// 添加输入框焦点效果
+document.querySelectorAll('.geek-input').forEach(input => {
+  input.addEventListener('focus', function() {
+    this.parentElement.classList.add('focused');
+  });
+  
+  input.addEventListener('blur', function() {
+    this.parentElement.classList.remove('focused');
+  });
+});
+
+// 语言切换功能
+document.querySelectorAll('.geek-lang-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const lang = this.getAttribute('data-lang');
+    switchLanguage(lang);
+    
+    // 更新按钮状态
+    document.querySelectorAll('.geek-lang-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+function switchLanguage(lang) {
+  // 更新标题和副标题
+  const title = document.querySelector('.geek-auth-title span');
+  const subtitle = document.querySelector('.geek-auth-subtitle');
+  
+  if (lang === 'en') {
+    title.textContent = 'QATOOLBOX LOGIN';
+    subtitle.textContent = 'Access the digital realm';
+  } else {
+    title.textContent = 'QATOOLBOX 登录';
+    subtitle.textContent = '进入数字世界';
+  }
+  
+  // 更新输入框占位符
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.placeholder = element.getAttribute('data-en');
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.placeholder = element.getAttribute('data-zh');
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+  
+  // 更新按钮文本
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+  
+  // 更新验证码图片的alt和title
+  const captchaImg = document.getElementById('captcha-image');
+  if (lang === 'en') {
+    captchaImg.alt = 'Click to refresh';
+    captchaImg.title = 'Click to refresh';
+  } else {
+    captchaImg.alt = '点击刷新验证码';
+    captchaImg.title = '点击刷新';
+  }
+}
 </script>
 {% endblock %}

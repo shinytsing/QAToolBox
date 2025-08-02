@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="theme-demo-container">
+    <div class="demo-header">
+        <h1 class="demo-title">主题切换演示</h1>
+        <p class="demo-subtitle">体验不同的界面风格，选择最适合您的主题</p>
+    </div>
+    
+    <div class="theme-grid">
+        <!-- 生活模式 -->
+        <div class="theme-demo-card life-demo">
+            <div class="theme-demo-header">
+                <h3>🌱 生活模式</h3>
+                <p>享受生活的美好时光</p>
+            </div>
+            <div class="theme-demo-content">
+                <div class="demo-features">
+                    <span class="feature-tag">温暖舒适</span>
+                    <span class="feature-tag">自然色调</span>
+                    <span class="feature-tag">轻松愉悦</span>
+                </div>
+                <button class="demo-btn" onclick="previewTheme('life')">预览生活模式</button>
+            </div>
+        </div>
+        
+        <!-- 极客模式 -->
+        <div class="theme-demo-card geek-demo">
+            <div class="theme-demo-header">
+                <h3>💻 极客模式</h3>
+                <p>专注技术，追求卓越</p>
+            </div>
+            <div class="theme-demo-content">
+                <div class="demo-features">
+                    <span class="feature-tag">科技感</span>
+                    <span class="feature-tag">未来风格</span>
+                    <span class="feature-tag">专业高效</span>
+                </div>
+                <button class="demo-btn" onclick="previewTheme('work')">预览极客模式</button>
+            </div>
+        </div>
+        
+        <!-- 狂暴模式 -->
+        <div class="theme-demo-card rage-demo">
+            <div class="theme-demo-header">
+                <h3>🔥 狂暴模式</h3>
+                <p>突破极限，挑战自我</p>
+            </div>
+            <div class="theme-demo-content">
+                <div class="demo-features">
+                    <span class="feature-tag">动感十足</span>
+                    <span class="feature-tag">激情四射</span>
+                    <span class="feature-tag">力量感</span>
+                </div>
+                <button class="demo-btn" onclick="previewTheme('training')">预览狂暴模式</button>
+            </div>
+        </div>
+        
+        <!-- Emo模式 -->
+        <div class="theme-demo-card emo-demo">
+            <div class="theme-demo-header">
+                <h3>💜 Emo模式</h3>
+                <p>感受内心的情感波动</p>
+            </div>
+            <div class="theme-demo-content">
+                <div class="demo-features">
+                    <span class="feature-tag">柔和情感</span>
+                    <span class="feature-tag">梦幻风格</span>
+                    <span class="feature-tag">心灵治愈</span>
+                </div>
+                <button class="demo-btn" onclick="previewTheme('emo')">预览Emo模式</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="demo-info">
+        <h3>主题特色</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <h4>🎨 视觉风格</h4>
+                <p>每种主题都有独特的色彩搭配和视觉设计，为您提供不同的使用体验。</p>
+            </div>
+            <div class="info-item">
+                <h4>🎵 主题音乐</h4>
+                <p>切换主题时会自动播放对应的背景音乐，营造沉浸式的使用氛围。</p>
+            </div>
+            <div class="info-item">
+                <h4>💾 自动保存</h4>
+                <p>您的主题偏好会自动保存，下次访问时会自动应用您选择的主题。</p>
+            </div>
+            <div class="info-item">
+                <h4>📱 响应式设计</h4>
+                <p>所有主题都支持移动设备，在不同屏幕尺寸下都能完美显示。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.theme-demo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.demo-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.demo-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.demo-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.theme-demo-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.theme-demo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.theme-demo-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.theme-demo-header h3 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.theme-demo-header p {
+    color: #666;
+    font-style: italic;
+    margin: 0;
+}
+
+.demo-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.feature-tag {
+    background: #f0f0f0;
+    color: #333;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.demo-btn {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+/* 生活模式样式 */
+.life-demo {
+    border-color: #28a745;
+}
+
+.life-demo .theme-demo-header h3 {
+    color: #28a745;
+}
+
+.life-demo .demo-btn {
+    background: linear-gradient(135deg, #28a745, #17a2b8);
+}
+
+.life-demo .demo-btn:hover {
+    background: linear-gradient(135deg, #218838, #138496);
+    transform: translateY(-2px);
+}
+
+/* 极客模式样式 */
+.geek-demo {
+    border-color: #00ffe7;
+}
+
+.geek-demo .theme-demo-header h3 {
+    color: #00ffe7;
+}
+
+.geek-demo .demo-btn {
+    background: linear-gradient(135deg, #00ffe7, #00bfff);
+}
+
+.geek-demo .demo-btn:hover {
+    background: linear-gradient(135deg, #00e6d1, #0099cc);
+    transform: translateY(-2px);
+}
+
+/* 狂暴模式样式 */
+.rage-demo {
+    border-color: #ff4444;
+}
+
+.rage-demo .theme-demo-header h3 {
+    color: #ff4444;
+}
+
+.rage-demo .demo-btn {
+    background: linear-gradient(135deg, #ff4444, #ff6b35);
+}
+
+.rage-demo .demo-btn:hover {
+    background: linear-gradient(135deg, #e63939, #e55a2b);
+    transform: translateY(-2px);
+}
+
+/* Emo模式样式 */
+.emo-demo {
+    border-color: #9c27b0;
+}
+
+.emo-demo .theme-demo-header h3 {
+    color: #9c27b0;
+}
+
+.emo-demo .demo-btn {
+    background: linear-gradient(135deg, #9c27b0, #e91e63);
+}
+
+.emo-demo .demo-btn:hover {
+    background: linear-gradient(135deg, #8e24aa, #d81b60);
+    transform: translateY(-2px);
+}
+
+.demo-info {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 40px;
+    margin-top: 40px;
+}
+
+.demo-info h3 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.info-item {
+    text-align: center;
+}
+
+.info-item h4 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.info-item p {
+    color: #666;
+    line-height: 1.6;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .theme-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .demo-title {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+// 主题预览功能
+function previewTheme(theme) {
+    const config = themeConfig[theme];
+    
+    // 临时应用主题样式
+    const themeCSS = document.getElementById('dynamic-theme-css');
+    if (themeCSS) {
+        themeCSS.href = '/static/' + config.css;
+    }
+    
+    // 更新body类名
+    document.body.className = theme + '-theme';
+    
+    // 更新副标题
+    const subtitle = document.getElementById('theme-subtitle');
+    if (subtitle) {
+        subtitle.textContent = config.subtitle;
+    }
+    
+    // 显示预览提示
+    showNotification(`预览${config.name}模式 - 点击"应用主题"保存设置`, 'info');
+    
+    // 显示应用按钮
+    showApplyButton(theme);
+}
+
+// 显示应用主题按钮
+function showApplyButton(theme) {
+    // 移除现有的应用按钮
+    const existingBtn = document.querySelector('.apply-theme-btn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
+    
+    // 创建应用按钮
+    const applyBtn = document.createElement('button');
+    applyBtn.className = 'apply-theme-btn';
+    applyBtn.innerHTML = `<i class="fas fa-check"></i> 应用${themeConfig[theme].name}主题`;
+    applyBtn.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 10000;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+    `;
+    
+    applyBtn.onclick = () => {
+        switchTheme(theme);
+        applyBtn.remove();
+    };
+    
+    applyBtn.onmouseover = () => {
+        applyBtn.style.transform = 'translateY(-2px)';
+        applyBtn.style.boxShadow = '0 6px 20px rgba(40, 167, 69, 0.4)';
+    };
+    
+    applyBtn.onmouseout = () => {
+        applyBtn.style.transform = 'translateY(0)';
+        applyBtn.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.3)';
+    };
+    
+    document.body.appendChild(applyBtn);
+}
+
+function switchTheme(theme) {
+    // 调用主题切换函数
+    switchGlobalTheme(theme);
+    
+    // 移除应用按钮
+    const applyBtn = document.querySelector('.apply-theme-btn');
+    if (applyBtn) {
+        applyBtn.remove();
+    }
+}
+</script>
+{% endblock %}

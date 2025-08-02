@@ -1,0 +1,170 @@
+/* 现代化UI设计 - 受ctrl.xyz启发 */
+
+:root {
+  --modern-bg: #0a0a0a;
+  --modern-card-bg: rgba(255, 255, 255, 0.05);
+  --modern-primary: #00d4ff;
+  --modern-accent: #ff6b6b;
+  --modern-secondary: #4ecdc4;
+  --modern-text: #ffffff;
+  --modern-text-muted: rgba(255, 255, 255, 0.7);
+  --modern-border: rgba(255, 255, 255, 0.1);
+  --modern-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --modern-radius: 16px;
+  --modern-font: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  --modern-gradient-primary: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  --modern-gradient-card: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+body.modern-theme {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  color: var(--modern-text);
+  font-family: var(--modern-font);
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+.modern-card {
+  background: var(--modern-gradient-card);
+  border: 1px solid var(--modern-border);
+  border-radius: var(--modern-radius);
+  box-shadow: var(--modern-shadow);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.modern-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.modern-title {
+  background: var(--modern-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 3.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.modern-subtitle {
+  color: var(--modern-text-muted);
+  font-size: 1.3rem;
+  text-align: center;
+  margin-bottom: 3rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.modern-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 32px;
+  margin-top: 3rem;
+}
+
+.modern-tool-card {
+  background: var(--modern-gradient-card);
+  border: 1px solid var(--modern-border);
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+}
+
+.modern-tool-card:hover {
+  border-color: var(--modern-primary);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 212, 255, 0.2);
+}
+
+.modern-tool-icon {
+  font-size: 4rem;
+  background: var(--modern-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+}
+
+.modern-tool-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--modern-text);
+  margin-bottom: 1rem;
+}
+
+.modern-tool-description {
+  color: var(--modern-text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.7;
+}
+
+.modern-btn {
+  background: var(--modern-gradient-primary);
+  color: white;
+  border: none;
+  border-radius: var(--modern-radius);
+  padding: 16px 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+}
+
+.modern-btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 16px 40px rgba(0, 212, 255, 0.5);
+  color: white;
+  text-decoration: none;
+}
+
+.modern-navbar {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--modern-border);
+}
+
+.modern-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--modern-border);
+  border-radius: var(--modern-radius);
+  color: var(--modern-text);
+  padding: 16px 20px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: var(--modern-primary);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .modern-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .modern-title {
+    font-size: 2.5rem;
+  }
+  
+  .modern-card {
+    padding: 24px;
+  }
+} 

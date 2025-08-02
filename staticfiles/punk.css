@@ -1,0 +1,532 @@
+/* 朋克主题样式 - 生活模式 */
+:root {
+  --punk-primary: #ff0080;
+  --punk-secondary: #00ff80;
+  --punk-accent: #8000ff;
+  --punk-dark: #000000;
+  --punk-light: #ffffff;
+  --punk-glow: 0 0 30px var(--punk-primary);
+  --punk-shadow: 0 8px 32px rgba(255, 0, 128, 0.4);
+  --punk-radius: 0;
+  --punk-font: 'Impact', 'Arial Black', sans-serif;
+}
+
+body {
+    font-family: var(--punk-font) !important;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, 
+        var(--punk-primary) 0%, 
+        var(--punk-accent) 25%, 
+        var(--punk-secondary) 50%, 
+        var(--punk-dark) 75%, 
+        var(--punk-primary) 100%) !important;
+    background-size: 400% 400% !important;
+    animation: punkGradient 12s ease infinite !important;
+    color: var(--punk-light) !important;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* 背景粒子效果 - 优化滚动性能 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 255, 128, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(128, 0, 255, 0.1) 0%, transparent 50%);
+    animation: punkParticles 30s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: opacity;
+}
+
+@keyframes punkParticles {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.4; }
+}
+
+@keyframes punkGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 朋克风格容器 */
+.punk-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.85) !important;
+    border: 4px solid var(--punk-primary) !important;
+    border-radius: var(--punk-radius) !important;
+    box-shadow: var(--punk-glow), inset 0 0 50px rgba(255, 0, 128, 0.4) !important;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(15px);
+}
+
+.punk-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 20px,
+        rgba(255, 0, 128, 0.08) 20px,
+        rgba(255, 0, 128, 0.08) 40px
+    );
+    animation: punkLines 40s linear infinite;
+    pointer-events: none;
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+@keyframes punkLines {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 朋克标题 */
+.punk-title {
+    font-size: 4.5em !important;
+    font-weight: 900 !important;
+    text-align: center;
+    background: linear-gradient(45deg, var(--punk-primary), var(--punk-secondary), var(--punk-accent), var(--punk-primary)) !important;
+    background-size: 300% 300% !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    animation: punkTitle 4s ease-in-out infinite !important;
+    text-shadow: 0 0 30px var(--punk-primary) !important;
+    letter-spacing: 4px !important;
+    margin: 40px 0 !important;
+    text-transform: uppercase !important;
+    filter: drop-shadow(0 0 25px var(--punk-primary));
+    position: relative;
+}
+
+.punk-title::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--punk-primary), var(--punk-secondary), var(--punk-accent));
+    animation: punkScan 3s ease-in-out infinite;
+}
+
+@keyframes punkScan {
+    0% { transform: translateX(-50%) scaleX(0); }
+    50% { transform: translateX(-50%) scaleX(1); }
+    100% { transform: translateX(-50%) scaleX(0); }
+}
+
+@keyframes punkTitle {
+    0%, 100% { 
+        background-position: 0% 50%; 
+        transform: scale(1) rotateZ(0deg); 
+        filter: drop-shadow(0 0 25px var(--punk-primary));
+    }
+    50% { 
+        background-position: 100% 50%; 
+        transform: scale(1.08) rotateZ(1deg); 
+        filter: drop-shadow(0 0 40px var(--punk-secondary));
+    }
+}
+
+/* 朋克工具卡片 */
+.punk-tool-card {
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 128, 0.4), 
+        rgba(0, 255, 128, 0.4), 
+        rgba(128, 0, 255, 0.4)) !important;
+    border: 4px solid var(--punk-primary) !important;
+    border-radius: 20px !important;
+    padding: 40px 30px !important;
+    margin: 20px !important;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
+    color: var(--punk-light) !important;
+    display: block !important;
+    backdrop-filter: blur(15px) !important;
+    box-shadow: var(--punk-shadow) !important;
+    min-height: 320px;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.punk-tool-card::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: linear-gradient(45deg, var(--punk-primary), var(--punk-secondary), var(--punk-accent), var(--punk-primary));
+    background-size: 300% 300%;
+    animation: punkBorder 2.5s linear infinite;
+    z-index: -1;
+    border-radius: 20px;
+}
+
+@keyframes punkBorder {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+}
+
+.punk-tool-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.punk-tool-card:hover::after {
+    left: 100%;
+}
+
+.punk-tool-card:hover {
+    transform: translateY(-20px) scale(1.1) rotateY(5deg) !important;
+    border-color: var(--punk-secondary) !important;
+    box-shadow: 0 30px 70px rgba(255, 0, 128, 0.7), 0 0 100px rgba(0, 255, 128, 0.5) !important;
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 128, 0.6), 
+        rgba(0, 255, 128, 0.6), 
+        rgba(128, 0, 255, 0.6)) !important;
+}
+
+.punk-tool-icon {
+    font-size: 5em !important;
+    text-align: center !important;
+    margin-bottom: 25px !important;
+    color: var(--punk-secondary) !important;
+    text-shadow: 0 0 30px var(--punk-secondary) !important;
+    animation: punkIcon 2.5s ease-in-out infinite alternate !important;
+    filter: drop-shadow(0 0 20px var(--punk-secondary));
+    transition: all 0.4s ease;
+}
+
+.punk-tool-card:hover .punk-tool-icon {
+    animation: punkIconHover 1s ease-in-out infinite alternate !important;
+    filter: drop-shadow(0 0 40px var(--punk-primary));
+}
+
+@keyframes punkIcon {
+    0% { 
+        transform: rotate(-3deg) scale(1); 
+        color: var(--punk-secondary); 
+        filter: drop-shadow(0 0 12px var(--punk-secondary));
+    }
+    100% { 
+        transform: rotate(3deg) scale(1.08); 
+        color: var(--punk-primary); 
+        filter: drop-shadow(0 0 18px var(--punk-primary));
+    }
+}
+
+@keyframes punkIconHover {
+    0% { 
+        transform: rotate(-6deg) scale(1.1); 
+        color: var(--punk-primary); 
+        filter: drop-shadow(0 0 20px var(--punk-primary));
+    }
+    100% { 
+        transform: rotate(6deg) scale(1.15); 
+        color: var(--punk-secondary); 
+        filter: drop-shadow(0 0 25px var(--punk-secondary));
+    }
+}
+
+.punk-tool-title {
+    font-size: 1.8em !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    margin-bottom: 20px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 3px !important;
+    color: var(--punk-light) !important;
+    text-shadow: 0 0 15px var(--punk-primary) !important;
+    transition: all 0.3s ease;
+}
+
+.punk-tool-card:hover .punk-tool-title {
+    text-shadow: 0 0 25px var(--punk-secondary) !important;
+    transform: scale(1.05);
+}
+
+.punk-tool-desc {
+    text-align: center !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: bold !important;
+    font-size: 1.2em !important;
+    line-height: 1.6;
+    text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+}
+
+/* 朋克按钮 */
+.punk-btn {
+    background: linear-gradient(45deg, var(--punk-primary), var(--punk-accent)) !important;
+    border: 3px solid var(--punk-secondary) !important;
+    color: var(--punk-light) !important;
+    padding: 18px 35px !important;
+    font-size: 1.3em !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    border-radius: var(--punk-radius) !important;
+    cursor: pointer !important;
+    transition: all 0.4s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-shadow: 0 0 10px var(--punk-dark) !important;
+    box-shadow: 0 5px 20px rgba(255, 0, 128, 0.4);
+}
+
+.punk-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: translateY(-50%);
+    transition: all 0.6s ease;
+}
+
+.punk-btn:hover::before {
+    left: 100%;
+}
+
+.punk-btn:hover {
+    background: linear-gradient(45deg, var(--punk-accent), var(--punk-primary)) !important;
+    transform: scale(1.15) !important;
+    box-shadow: 0 0 40px var(--punk-primary) !important;
+    border-color: var(--punk-primary) !important;
+}
+
+/* 朋克模式选择器 */
+.punk-mode-selector {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.9);
+    border: 3px solid var(--punk-primary);
+    padding: 15px;
+    border-radius: var(--punk-radius);
+    box-shadow: var(--punk-glow);
+    backdrop-filter: blur(10px);
+}
+
+.punk-mode-btn {
+    background: transparent;
+    border: 2px solid var(--punk-primary);
+    color: var(--punk-primary);
+    padding: 10px 18px;
+    margin: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    font-family: var(--punk-font);
+    letter-spacing: 1px;
+}
+
+.punk-mode-btn:hover,
+.punk-mode-btn.active {
+    background: var(--punk-primary);
+    color: var(--punk-dark);
+    box-shadow: 0 0 20px var(--punk-primary);
+    transform: scale(1.1);
+}
+
+/* 朋克网格 */
+.punk-tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 40px;
+    padding: 50px;
+}
+
+/* 朋克导航 */
+.navbar.punk-nav {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border-bottom: 4px solid var(--punk-primary) !important;
+    box-shadow: 0 8px 30px rgba(255, 0, 128, 0.6) !important;
+    backdrop-filter: blur(15px);
+}
+
+.navbar.punk-nav .navbar-brand {
+    color: var(--punk-primary) !important;
+    font-weight: 900 !important;
+    font-size: 2em !important;
+    text-transform: uppercase !important;
+    letter-spacing: 3px !important;
+    text-shadow: 0 0 15px var(--punk-primary);
+}
+
+.navbar.punk-nav .nav-link {
+    color: var(--punk-secondary) !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    transition: all 0.3s ease !important;
+    letter-spacing: 1px;
+}
+
+.navbar.punk-nav .nav-link:hover {
+    color: var(--punk-primary) !important;
+    text-shadow: 0 0 15px var(--punk-primary) !important;
+    transform: scale(1.1) !important;
+}
+
+/* 朋克滚动条 */
+::-webkit-scrollbar {
+    width: 15px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--punk-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, var(--punk-primary), var(--punk-secondary));
+    border-radius: var(--punk-radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, var(--punk-secondary), var(--punk-primary));
+}
+
+/* 瀑布流布局专用样式 */
+.punk-masonry-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-auto-rows: 200px !important;
+    gap: 3rem !important;
+    margin-top: 3rem !important;
+    perspective: 1200px !important;
+    padding: 2rem !important;
+}
+
+.masonry-large {
+    grid-row: span 2 !important;
+    grid-column: span 1 !important;
+}
+
+.masonry-medium {
+    grid-row: span 1 !important;
+    grid-column: span 1 !important;
+}
+
+.masonry-small {
+    grid-row: span 1 !important;
+    grid-column: span 1 !important;
+}
+
+.masonry-large .punk-tool-card {
+    background: linear-gradient(135deg, #ff1744 0%, #f50057 50%, #e91e63 100%) !important;
+    transform: rotateY(-20deg) rotateX(8deg) !important;
+    font-size: 1.3em !important;
+    min-height: 400px !important;
+}
+
+.masonry-medium .punk-tool-card {
+    background: linear-gradient(135deg, #ff6ec7 0%, #ff1744 100%) !important;
+    transform: rotateY(15deg) rotateX(-5deg) !important;
+    min-height: 200px !important;
+}
+
+.masonry-small .punk-tool-card {
+    background: linear-gradient(135deg, #00bcd4 0%, #ff6ec7 100%) !important;
+    transform: rotateZ(3deg) !important;
+    min-height: 200px !important;
+}
+
+.masonry-large .punk-tool-card:hover {
+    transform: rotateY(-5deg) rotateX(0deg) scale(1.08) !important;
+}
+
+.masonry-medium .punk-tool-card:hover {
+    transform: rotateY(0deg) rotateX(0deg) scale(1.08) !important;
+}
+
+.masonry-small .punk-tool-card:hover {
+    transform: rotateZ(0deg) scale(1.15) !important;
+}
+
+/* 朋克模式响应式 */
+@media (max-width: 768px) {
+    .punk-masonry-grid {
+        grid-template-columns: 1fr !important;
+        grid-auto-rows: 180px !important;
+        gap: 2rem !important;
+        padding: 1rem !important;
+    }
+    
+    .masonry-large {
+        grid-row: span 1 !important;
+        grid-column: span 1 !important;
+        min-height: 180px !important;
+    }
+    
+    .masonry-medium, .masonry-small {
+        grid-row: span 1 !important;
+        grid-column: span 1 !important;
+    }
+    
+    .punk-title {
+        font-size: 3em !important;
+    }
+    
+    .punk-tool-card {
+        padding: 30px 20px !important;
+        min-height: 280px !important;
+    }
+    
+    .punk-tool-icon {
+        font-size: 4em !important;
+    }
+}
+
+/* 特殊效果 */
+.punk-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 20%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(0, 255, 128, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    animation: punkGlow 8s ease-in-out infinite;
+}
+
+@keyframes punkGlow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+}

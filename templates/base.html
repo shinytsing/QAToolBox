@@ -7,15 +7,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}QATOOLBOX{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="shortcut icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'geek.css' %}">
+    <link id="dynamic-theme-css" rel="stylesheet" href="{% static 'geek.css' %}">
+    {% block extra_css %}{% endblock %}
 
     <style>
+        /* 全局动画和特效 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* 主题徽章样式 */
+        .theme-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 3px 8px;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: #fff;
+            letter-spacing: 0.5px;
+            animation: themePulse 2s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .theme-badge:hover::before {
+            left: 100%;
+        }
+        
+        @keyframes themePulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        
+        .theme-badge.punk {
+            background: linear-gradient(45deg, #ff0080, #00ff80);
+            animation: punkFlash 1s ease-in-out infinite;
+        }
+        
+        .theme-badge.rage {
+            background: linear-gradient(45deg, #ff0000, #ff4500);
+            animation: rageShake 0.5s ease-in-out infinite;
+        }
+        
+        .theme-badge.emo {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            animation: emoGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes punkFlash {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; text-shadow: 0 0 10px #ff0080; }
+        }
+        
+        @keyframes rageShake {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(1deg); }
+            75% { transform: scale(1.05) rotate(-1deg); }
+        }
+        
+        @keyframes emoGlow {
+            0%, 100% { opacity: 0.8; box-shadow: 0 0 10px rgba(102, 126, 234, 0.5); }
+            50% { opacity: 1; box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+        }
+        
+        /* 主题切换悬停效果 */
+        .theme-switch:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            transform: translateX(5px);
+        }
+        
+        .theme-switch.active {
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) !important;
+            border-left: 3px solid #667eea;
+        }
         * {
             box-sizing: border-box;
         }
@@ -28,16 +157,36 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-        .video-background {
+        /* 主题背景样式 */
+        .theme-background {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
             z-index: -1;
+            overflow: hidden;
         }
-        video {
+        
+        .background-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.5s ease;
+        }
+        
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .bg-video {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -47,6 +196,644 @@
             width: auto;
             height: auto;
             object-fit: cover;
+        }
+        
+        /* 浮动元素动画 */
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .floating-element {
+            position: absolute;
+            font-size: 2rem;
+            animation: float 6s ease-in-out infinite;
+            animation-delay: var(--delay);
+            opacity: 0.6;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+        
+        /* 生活模式背景 */
+        .life-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .life-bg .floating-element:nth-child(1) { top: 10%; left: 10%; }
+        .life-bg .floating-element:nth-child(2) { top: 20%; right: 15%; }
+        .life-bg .floating-element:nth-child(3) { bottom: 30%; left: 20%; }
+        .life-bg .floating-element:nth-child(4) { bottom: 15%; right: 10%; }
+        
+        /* 极客模式背景 */
+        .geek-bg {
+            background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+        }
+        
+        .geek-bg .floating-element:nth-child(1) { top: 15%; left: 15%; }
+        .geek-bg .floating-element:nth-child(2) { top: 25%; right: 20%; }
+        .geek-bg .floating-element:nth-child(3) { bottom: 25%; left: 25%; }
+        .geek-bg .floating-element:nth-child(4) { bottom: 20%; right: 15%; }
+        
+        /* 狂暴模式背景 */
+        .rage-bg {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+        }
+        
+        .rage-bg .floating-element:nth-child(1) { top: 10%; left: 20%; }
+        .rage-bg .floating-element:nth-child(2) { top: 30%; right: 10%; }
+        .rage-bg .floating-element:nth-child(3) { bottom: 20%; left: 15%; }
+        .rage-bg .floating-element:nth-child(4) { bottom: 10%; right: 25%; }
+        
+        /* Emo模式背景 */
+        .emo-bg {
+            background: linear-gradient(135deg, #f5f0ff 0%, #e8d5ff 100%);
+        }
+        
+        .emo-bg .floating-element:nth-child(1) { top: 20%; left: 10%; }
+        .emo-bg .floating-element:nth-child(2) { top: 15%; right: 20%; }
+        .emo-bg .floating-element:nth-child(3) { bottom: 25%; left: 25%; }
+        .emo-bg .floating-element:nth-child(4) { bottom: 15%; right: 10%; }
+
+        /* 粒子效果 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 255, 231, 0.6);
+            border-radius: 50%;
+            animation: particleFloat 8s linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* 动态鼠标光标效果 */
+        .custom-cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(45deg, #00ffe7, #ff0080);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: cursorPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(0, 255, 231, 0.5);
+        }
+
+        .cursor-trail {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 255, 231, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: cursorTrail 1.5s ease-in-out infinite;
+        }
+
+        .custom-cursor.active .cursor-dot {
+            transform: translate(-50%, -50%) scale(1.5);
+            background: linear-gradient(45deg, #ff0080, #00ffe7);
+            box-shadow: 0 0 20px rgba(255, 0, 128, 0.8);
+        }
+
+        .custom-cursor.active .cursor-trail {
+            transform: translate(-50%, -50%) scale(2);
+            border-color: rgba(255, 0, 128, 0.6);
+        }
+
+        .custom-cursor.hover .cursor-dot {
+            transform: translate(-50%, -50%) scale(1.3);
+            background: linear-gradient(45deg, #ff0080, #00ffe7);
+            box-shadow: 0 0 15px rgba(255, 0, 128, 0.8);
+        }
+
+        .custom-cursor.hover .cursor-trail {
+            transform: translate(-50%, -50%) scale(1.5);
+            border-color: rgba(255, 0, 128, 0.6);
+        }
+
+        @keyframes cursorPulse {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes cursorTrail {
+            0%, 100% { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.3;
+            }
+            50% { 
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 0.6;
+            }
+        }
+
+        /* 主题相关的鼠标光标样式 */
+        body.life-theme .cursor-dot {
+            background: linear-gradient(45deg, #ff0080, #00ff80);
+            box-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+        }
+
+        body.life-theme .cursor-trail {
+            border-color: rgba(255, 0, 128, 0.3);
+        }
+
+        body.work-theme .cursor-dot {
+            background: linear-gradient(45deg, #00ffe7, #0099ff);
+            box-shadow: 0 0 10px rgba(0, 255, 231, 0.5);
+        }
+
+        body.work-theme .cursor-trail {
+            border-color: rgba(0, 255, 231, 0.3);
+        }
+
+        body.training-theme .cursor-dot {
+            background: linear-gradient(45deg, #ff4444, #ff8844);
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+
+        body.training-theme .cursor-trail {
+            border-color: rgba(255, 68, 68, 0.3);
+        }
+
+        body.emo-theme .cursor-dot {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        body.emo-theme .cursor-trail {
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        /* 响应式设计 - 移动设备上隐藏自定义光标 */
+        @media (max-width: 768px) {
+            .custom-cursor {
+                display: none !important;
+            }
+        }
+
+        /* 触摸设备上隐藏自定义光标 */
+        @media (hover: none) and (pointer: coarse) {
+            .custom-cursor {
+                display: none !important;
+            }
+        }
+
+        /* 减少动画 - 为偏好减少动画的用户 */
+        @media (prefers-reduced-motion: reduce) {
+            .custom-cursor {
+                display: none !important;
+            }
+        }
+
+        /* 链接和按钮悬停时的光标效果 */
+        a:hover ~ .custom-cursor .cursor-dot,
+        button:hover ~ .custom-cursor .cursor-dot,
+        .nav-link:hover ~ .custom-cursor .cursor-dot {
+            transform: translate(-50%, -50%) scale(1.3);
+            background: linear-gradient(45deg, #ff0080, #00ffe7);
+            box-shadow: 0 0 15px rgba(255, 0, 128, 0.8);
+        }
+
+        a:hover ~ .custom-cursor .cursor-trail,
+        button:hover ~ .custom-cursor .cursor-trail,
+        .nav-link:hover ~ .custom-cursor .cursor-trail {
+            transform: translate(-50%, -50%) scale(1.5);
+            border-color: rgba(255, 0, 128, 0.6);
+        }
+
+        /* 页面加载动画 */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--geek-bg, #0a0e17);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-content {
+            text-align: center;
+            color: var(--geek-primary, #00ffe7);
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 255, 231, 0.3);
+            border-top: 3px solid #00ffe7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 10px rgba(0, 255, 231, 0.5); }
+            100% { text-shadow: 0 0 20px rgba(0, 255, 231, 0.8); }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #00ffe7, #0099ff);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #00ccb8, #0077cc);
+        }
+
+        /* 选择文本样式 */
+        ::selection {
+            background: rgba(0, 255, 231, 0.3);
+            color: #fff;
+        }
+
+        ::-moz-selection {
+            background: rgba(0, 255, 231, 0.3);
+            color: #fff;
+        }
+
+        /* 响应式设计 - 全面优化 */
+
+        /* 大屏幕 (1200px+) */
+        @media (min-width: 1200px) {
+            .navbar-brand {
+                font-size: 1.8rem;
+            }
+            
+            .theme-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .nav-link {
+                font-size: 1.1rem;
+                padding: 0.8rem 1.2rem !important;
+            }
+            
+            .floating-element {
+                font-size: 2.5rem;
+            }
+            
+            .particle {
+                width: 6px;
+                height: 6px;
+            }
+            
+            .cursor-follower {
+                width: 25px;
+                height: 25px;
+            }
+        }
+
+        /* 中等屏幕 (768px - 1199px) */
+        @media (max-width: 1199px) and (min-width: 768px) {
+            .navbar-brand {
+                font-size: 1.5rem;
+            }
+            
+            .theme-subtitle {
+                font-size: 1rem;
+            }
+            
+            .nav-link {
+                font-size: 1rem;
+                padding: 0.6rem 1rem !important;
+            }
+            
+            .floating-element {
+                font-size: 2rem;
+            }
+            
+            .particle {
+                width: 4px;
+                height: 4px;
+            }
+        }
+
+        /* 平板端 (768px以下) */
+        @media (max-width: 767px) {
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            
+            .theme-subtitle {
+                font-size: 0.9rem;
+                display: none;
+            }
+            
+            .navbar-nav {
+                margin-top: 1rem;
+            }
+            
+            .nav-link {
+                font-size: 0.95rem;
+                padding: 0.5rem 0.8rem !important;
+                text-align: center;
+            }
+            
+            .dropdown-menu {
+                background: rgba(0,0,0,0.95) !important;
+                border: 1px solid rgba(255,255,255,0.2) !important;
+                margin-top: 0.5rem;
+            }
+            
+            .dropdown-item {
+                color: #fff !important;
+                padding: 0.5rem 1rem !important;
+                font-size: 0.9rem;
+            }
+            
+            .floating-element {
+                font-size: 1.5rem;
+            }
+            
+            .particle {
+                width: 3px;
+                height: 3px;
+            }
+            
+            .cursor-follower {
+                width: 15px;
+                height: 15px;
+            }
+            
+            /* 移动端隐藏部分浮动元素 */
+            .floating-element:nth-child(3),
+            .floating-element:nth-child(4) {
+                display: none;
+            }
+        }
+
+        /* 手机端 (480px以下) */
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .navbar-toggler {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .nav-link {
+                font-size: 0.9rem;
+                padding: 0.4rem 0.6rem !important;
+            }
+            
+            .dropdown-menu {
+                min-width: 200px;
+            }
+            
+            .dropdown-item {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.8rem !important;
+            }
+            
+            .floating-element {
+                font-size: 1.2rem;
+            }
+            
+            .particle {
+                width: 2px;
+                height: 2px;
+            }
+            
+            .cursor-follower {
+                width: 12px;
+                height: 12px;
+            }
+            
+            /* 小屏幕隐藏更多浮动元素 */
+            .floating-element:nth-child(2) {
+                display: none;
+            }
+        }
+
+        /* 超小屏幕 (320px以下) */
+        @media (max-width: 320px) {
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .nav-link {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.5rem !important;
+            }
+            
+            .dropdown-item {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.6rem !important;
+            }
+            
+            .floating-element {
+                font-size: 1rem;
+            }
+            
+            .particle {
+                width: 1px;
+                height: 1px;
+            }
+            
+            .cursor-follower {
+                width: 10px;
+                height: 10px;
+            }
+        }
+
+        /* 横屏模式优化 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .navbar {
+                padding: 0.5rem 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .nav-link {
+                font-size: 0.9rem;
+                padding: 0.3rem 0.6rem !important;
+            }
+            
+            .floating-element {
+                font-size: 1rem;
+            }
+            
+            .particle {
+                width: 2px;
+                height: 2px;
+            }
+        }
+
+        /* 高分辨率屏幕优化 */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .navbar-brand {
+                font-weight: 600;
+            }
+            
+            .nav-link {
+                font-weight: 500;
+            }
+            
+            .particle {
+                box-shadow: 0 0 2px rgba(0, 255, 231, 0.8);
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-link {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .dropdown-item {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .navbar-toggler {
+                min-width: 44px;
+                min-height: 44px;
+            }
+            
+            /* 增加触摸反馈 */
+            .nav-link:active {
+                background-color: rgba(255, 255, 255, 0.1) !important;
+            }
+            
+            .dropdown-item:active {
+                background-color: rgba(255, 255, 255, 0.1) !important;
+            }
+        }
+
+        /* 深色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            .navbar {
+                background-color: rgba(10, 14, 23, 0.95) !important;
+            }
+            
+            .dropdown-menu {
+                background-color: rgba(10, 14, 23, 0.95) !important;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            .navbar,
+            .floating-elements,
+            .particles,
+            .cursor-follower,
+            .page-loader {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                color: black !important;
+            }
+        }
+        
+        /* 矩阵雨效果 */
+        #matrix-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        /* Emo粒子效果 */
+        #emo-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        @keyframes emoParticleFloat {
+            0%, 100% { 
+                transform: translateY(0px) translateX(0px); 
+                opacity: 0.6; 
+            }
+            50% { 
+                transform: translateY(-30px) translateX(20px); 
+                opacity: 1; 
+            }
         }
         header {
             background: rgba(0, 0, 0, 0.8);
@@ -74,6 +861,8 @@
             position: relative;
             z-index: 1;
             min-height: calc(100vh - 120px);
+            width: 100%;
+            max-width: 100%;
         }
         footer {
             background: rgba(0, 0, 0, 0.8);
@@ -92,47 +881,123 @@
             position: relative;
             z-index: 1;
         }
-        .welcome-overlay {
+        .announcement-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(24, 28, 32, 0.85);
-            backdrop-filter: blur(10px) saturate(1.2);
-            z-index: 9999;
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 9999;
             opacity: 0;
-            transition: opacity 1s ease-in-out;
-            pointer-events: none;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
-        .welcome-overlay.active {
+        
+        .announcement-overlay.active {
             opacity: 1;
-            pointer-events: auto;
+            visibility: visible;
         }
-        .welcome-content {
-            text-align: center;
-            color: var(--primary);
-            font-family: 'JetBrains Mono', monospace;
-            background: rgba(35, 39, 46, 0.92);
-            border-radius: 18px;
-            box-shadow: 0 8px 32px rgba(0,255,231,0.10), 0 2px 8px rgba(0,0,0,0.25);
-            padding: 3rem 2.5rem;
-            max-width: 420px;
-            border: 1.5px solid rgba(0,255,231,0.08);
+        
+        .announcement-content {
+            background: #fff;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideInDown 0.4s ease;
         }
-        .welcome-content h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1.2rem;
-            color: var(--primary);
-            letter-spacing: 2px;
+        
+        .announcement-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .welcome-content p {
-            font-size: 1.3rem;
-            color: #b0eaff;
-            margin-bottom: 0;
+        
+        .announcement-header h5 {
+            margin: 0;
+            font-size: 16px;
+        }
+        
+        .announcement-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+        
+        .announcement-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .announcement-body {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .announcement-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .announcement-item.priority-high {
+            border-left-color: #dc3545;
+        }
+        
+        .announcement-item.priority-medium {
+            border-left-color: #ffc107;
+        }
+        
+        .announcement-item.priority-low {
+            border-left-color: #6c757d;
+        }
+        
+        .announcement-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .announcement-text {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .announcement-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .btn-custom {
             border-radius: 25px;
@@ -178,10 +1043,26 @@
             font-size: 1.5rem;
             color: #FFD700 !important;
             text-shadow: 0 0 10px rgba(255,215,0,0.5);
+            position: relative;
         }
         .navbar-brand:hover {
             color: #FFA500 !important;
             text-shadow: 0 0 15px rgba(255,165,0,0.7);
+        }
+        
+        .theme-subtitle {
+            font-size: 0.7rem;
+            font-weight: normal;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: -5px;
+            text-shadow: none;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+        
+        .theme-subtitle:hover {
+            opacity: 1;
+            transform: scale(1.05);
         }
         .nav-link {
             position: relative;
@@ -212,27 +1093,178 @@
         .social-icons a:hover {
             color: #FFD700 !important;
         }
+        
+        /* 音乐信息样式 */
+        .music-info {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 280px;
+            max-width: 320px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .music-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .music-info-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .music-cover {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .music-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .music-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .music-title {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .music-artist {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .music-controls {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .music-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .music-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .music-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .music-info {
+                top: 70px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                min-width: auto;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <div class="video-background">
-        <video id="background-video" autoplay muted loop preload="metadata">
-            <source id="video-source" src="" type="video/mp4">
-            您的浏览器不支持视频标签。
-        </video>
-        <audio id="background-audio" autoplay loop>
-            <source id="audio-source" src="" type="audio/mpeg">
-            您的浏览器不支持音频标签。
-        </audio>
+    <!-- 页面加载动画 -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">QATOOLBOX</div>
+        </div>
     </div>
 
-    <!-- 仅在 home 页显示欢迎界面 -->
+    <!-- 动态鼠标光标效果 -->
+    <div class="custom-cursor" id="customCursor">
+        <div class="cursor-dot"></div>
+        <div class="cursor-trail"></div>
+    </div>
+
+    <!-- 粒子效果 -->
+    <div class="particles" id="particles"></div>
+
+    <!-- 网易云音乐播放器 -->
+    <audio id="theme-music" loop volume="0.3">
+        <source id="music-source" src="" type="audio/mpeg">
+        您的浏览器不支持音频标签。
+    </audio>
+    
+    <!-- 音乐信息显示 -->
+    <div id="music-info" class="music-info" style="display: none;">
+        <div class="music-info-content">
+            <div class="music-cover">
+                <img id="music-cover-img" src="" alt="封面">
+            </div>
+            <div class="music-details">
+                <div class="music-title" id="music-title">加载中...</div>
+                <div class="music-artist" id="music-artist">未知歌手</div>
+            </div>
+            <div class="music-controls">
+                <button class="music-btn" onclick="nextSong()" title="下一首">
+                    <i class="fas fa-forward"></i>
+                </button>
+                <button class="music-btn" onclick="toggleMusic()" title="播放/暂停">
+                    <i class="fas fa-play" id="music-play-icon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 仅在 home 页显示公告弹窗 -->
     {% if request.path == '/' %}
-    <div class="welcome-overlay" id="welcome-overlay">
-        <div class="welcome-content">
-            <h1>欢迎来到</h1>
-            <p>QATOOLBOX</p>
+    <div class="announcement-overlay" id="announcement-overlay">
+        <div class="announcement-content">
+            <div class="announcement-header">
+                <h5><i class="fas fa-bullhorn"></i> 系统公告</h5>
+                <button class="announcement-close" onclick="closeAnnouncement()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="announcement-body" id="announcement-body">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}
@@ -241,6 +1273,7 @@
         <nav class="navbar navbar-expand-lg navbar-light">
             <a class="navbar-brand" href="{% url 'home' %}">
                 <i class="fas fa-toolbox"></i> QATOOLBOX
+                <div id="theme-subtitle" class="theme-subtitle" data-translate="专注技术，追求卓越">专注技术，追求卓越</div>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -251,13 +1284,23 @@
                     {% if user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'tools' %}">
-                            <i class="fas fa-tools"></i> 工具集
+                            <i class="fas fa-tools"></i> <span data-translate="工具集">工具集</span>
                         </a>
                     </li>
                     {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showSuggestions(); return false;">
-                            <i class="fas fa-lightbulb"></i> 我的建议
+                            <i class="fas fa-lightbulb"></i> <span data-translate="我的建议">我的建议</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'ai_links' %}">
+                            <i class="fas fa-link"></i> <span data-translate="AI友情链接">AI友情链接</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息">
+                            <i class="fas fa-info-circle"></i> <span data-translate="关于">关于</span>
                         </a>
                     </li>
                     {% if user.is_authenticated and user.role.is_admin %}
@@ -272,6 +1315,9 @@
                             </a>
                             <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
                             <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">系统管理</h6>
+                            <a class="dropdown-item" href="{% url 'admin_announcements' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                <i class="fas fa-bullhorn text-primary"></i> 公告管理
+                            </a>
                             <a class="dropdown-item" href="{% url 'admin_suggestions' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
                                 <i class="fas fa-lightbulb text-warning"></i> 建议管理
                             </a>
@@ -297,13 +1343,35 @@
                 <div class="nav-buttons">
                     {% if user.is_authenticated %}
                         <div class="dropdown" style="margin-right: 15px;">
-                            <span class="nav-link text-white" style="cursor: pointer;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                {{ user.username }}
+                            <span class="nav-link text-white" style="cursor: pointer; display: flex; align-items: center; gap: 8px;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img id="user-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);">
+                                <span id="username-display">{{ user.username }}</span>
+                                <span id="theme-badge" class="theme-badge">极客</span>
                             </span>
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown" style="background: rgba(0,0,0,0.95); border: 1px solid #333; min-width: 200px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
                                 <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">账户设置</h6>
-                                <a class="dropdown-item" href="{% url 'profile_view' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                <a class="dropdown-item" href="#" id="edit-avatar-btn" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                    <i class="fas fa-user-circle"></i> 编辑头像
+                                </a>
+                                <a class="dropdown-item" href="{% url 'profile' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
                                     <i class="fas fa-user-edit"></i> 个人资料
+                                </a>
+                                <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
+                                <h6 class="dropdown-header" style="color: #667eea; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">界面模式</h6>
+                            <div class="dropdown-item" style="color: #999; font-size: 11px; padding: 5px 16px; text-align: center; border-bottom: 1px solid #333;">
+                                <i class="fas fa-keyboard"></i> 快捷键: Ctrl+1/2/3/4
+                            </div>
+                                <a class="dropdown-item theme-switch" href="#" data-mode="life" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                    <i class="fas fa-palette" style="color: #ff0080;"></i> 生活模式
+                                </a>
+                                <a class="dropdown-item theme-switch" href="#" data-mode="work" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                    <i class="fas fa-laptop-code" style="color: #667eea;"></i> 极客模式
+                                </a>
+                                <a class="dropdown-item theme-switch" href="#" data-mode="training" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                    <i class="fas fa-dumbbell" style="color: #ff0000;"></i> 狂暴模式
+                                </a>
+                                <a class="dropdown-item theme-switch" href="#" data-mode="emo" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                    <i class="fas fa-heart-broken" style="color: #667eea;"></i> Emo模式
                                 </a>
                                 {% if user.role.is_admin %}
                                     <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
@@ -311,21 +1379,24 @@
                                     <a class="dropdown-item" href="{% url 'admin_dashboard' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
                                         <i class="fas fa-tachometer-alt text-success"></i> 仪表板
                                     </a>
+                                    <a class="dropdown-item" href="{% url 'admin_announcements' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
+                                        <i class="fas fa-bullhorn text-primary"></i> 公告管理
+                                    </a>
                                     <a class="dropdown-item" href="{% url 'admin_suggestions' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
                                         <i class="fas fa-lightbulb text-warning"></i> 建议管理
                                     </a>
                                 {% endif %}
                                 <a class="dropdown-item" href="{% url 'logout' %}" onclick="stopMedia()" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-sign-out-alt"></i> 登出
+                                    <i class="fas fa-sign-out-alt"></i> <span data-translate="登出">登出</span>
                                 </a>
                             </div>
                         </div>
                     {% else %}
                         <a href="{% url 'login' %}" class="btn btn-primary btn-custom" onclick="stopMedia()">
-                            <i class="fas fa-sign-in-alt"></i> 登录
+                            <i class="fas fa-sign-in-alt"></i> <span data-translate="登录">登录</span>
                         </a>
                         <a href="{% url 'register' %}" class="btn btn-secondary btn-custom" onclick="stopMedia()">
-                            <i class="fas fa-user-plus"></i> 注册
+                            <i class="fas fa-user-plus"></i> <span data-translate="注册">注册</span>
                         </a>
                     {% endif %}
                     
@@ -335,23 +1406,39 @@
                             <i class="fas fa-cog"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="settingsDropdown" style="background: rgba(0,0,0,0.9); border: 1px solid #333; min-width: 200px;">
-                            <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333;">媒体控制</h6>
-                            <a class="dropdown-item" href="#" onclick="toggleVideo(); return false;" style="color: white;">
-                                <i class="fas fa-video"></i> 视频控制
+                            <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333;" data-translate="音乐控制">音乐控制</h6>
+                            <a class="dropdown-item" href="#" onclick="toggleMusic(); return false;" style="color: white;">
+                                <i class="fas fa-music"></i> <span data-translate="播放/暂停音乐">播放/暂停音乐</span>
                             </a>
-                            <a class="dropdown-item" href="#" onclick="toggleAudio(); return false;" style="color: white;">
-                                <i class="fas fa-music"></i> 音乐控制
+                            <a class="dropdown-item" href="#" onclick="nextSong(); return false;" style="color: white;">
+                                <i class="fas fa-forward"></i> <span data-translate="下一首歌曲">下一首歌曲</span>
                             </a>
-                            <a class="dropdown-item" href="#" onclick="stopAllMedia(); return false;" style="color: white;">
-                                <i class="fas fa-stop"></i> 停止所有
+                            <a class="dropdown-item" href="#" onclick="toggleMusicInfo(); return false;" style="color: white;">
+                                <i class="fas fa-info-circle"></i> <span data-translate="显示/隐藏音乐信息">显示/隐藏音乐信息</span>
                             </a>
                             <div class="dropdown-divider" style="border-color: #333;"></div>
-                            <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333;">系统设置</h6>
+                            <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333;" data-translate="系统设置">系统设置</h6>
+                            {% if user.is_authenticated %}
                             <a class="dropdown-item" href="#" onclick="showSuggestions(); return false;" style="color: white;">
-                                <i class="fas fa-lightbulb"></i> 我的建议
+                                <i class="fas fa-lightbulb"></i> <span data-translate="我的建议">我的建议</span>
                             </a>
                             <a class="dropdown-item" href="#" onclick="showFeedback(); return false;" style="color: white;">
-                                <i class="fas fa-comment"></i> 意见反馈
+                                <i class="fas fa-comment"></i> <span data-translate="意见反馈">意见反馈</span>
+                            </a>
+                            {% else %}
+                            <a class="dropdown-item" href="{% url 'login' %}" style="color: white;">
+                                <i class="fas fa-sign-in-alt"></i> <span data-translate="登录后反馈">登录后反馈</span>
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider" style="border-color: #333;"></div>
+                            <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333;" data-translate="语言设置">语言设置</h6>
+                            <a class="dropdown-item language-switch" href="#" data-lang="zh" style="color: white;">
+                                <i class="fas fa-language" style="color: #4CAF50;"></i> <span data-translate="中文">中文</span>
+                                <span class="language-indicator" id="zh-indicator" style="float: right; color: #4CAF50; display: inline;">✓</span>
+                            </a>
+                            <a class="dropdown-item language-switch" href="#" data-lang="en" style="color: white;">
+                                <i class="fas fa-language" style="color: #2196F3;"></i> <span data-translate="English">English</span>
+                                <span class="language-indicator" id="en-indicator" style="float: right; color: #2196F3; display: none;">✓</span>
                             </a>
                         </div>
                     </div>
@@ -359,6 +1446,58 @@
             </div>
         </nav>
     </header>
+
+    <!-- 主题背景 -->
+    <div class="theme-background" id="theme-background">
+        <!-- 生活模式背景 -->
+        <div class="background-layer life-bg" style="display: none;">
+            <div class="bg-overlay"></div>
+            <div class="floating-elements">
+                <div class="floating-element" style="--delay: 0s;">🌱</div>
+                <div class="floating-element" style="--delay: 2s;">🌸</div>
+                <div class="floating-element" style="--delay: 4s;">🌿</div>
+                <div class="floating-element" style="--delay: 6s;">🍃</div>
+            </div>
+        </div>
+        
+        <!-- 极客模式背景 -->
+        <div class="background-layer geek-bg" style="display: none;">
+            <div class="bg-overlay"></div>
+            <div class="matrix-rain" id="matrix-rain"></div>
+            <div class="floating-elements">
+                <div class="floating-element" style="--delay: 0s;">💻</div>
+                <div class="floating-element" style="--delay: 1s;">⚡</div>
+                <div class="floating-element" style="--delay: 2s;">🔧</div>
+                <div class="floating-element" style="--delay: 3s;">🚀</div>
+            </div>
+        </div>
+        
+        <!-- 狂暴模式背景 -->
+        <div class="background-layer rage-bg" style="display: none;">
+            <div class="bg-overlay"></div>
+            <video autoplay muted loop class="bg-video">
+                <source src="/static/video/sunday.mp4" type="video/mp4">
+            </video>
+            <div class="floating-elements">
+                <div class="floating-element" style="--delay: 0s;">🔥</div>
+                <div class="floating-element" style="--delay: 1s;">⚡</div>
+                <div class="floating-element" style="--delay: 2s;">💪</div>
+                <div class="floating-element" style="--delay: 3s;">🏃</div>
+            </div>
+        </div>
+        
+        <!-- Emo模式背景 -->
+        <div class="background-layer emo-bg" style="display: none;">
+            <div class="bg-overlay"></div>
+            <div class="emo-particles" id="emo-particles"></div>
+            <div class="floating-elements">
+                <div class="floating-element" style="--delay: 0s;">💜</div>
+                <div class="floating-element" style="--delay: 2s;">💔</div>
+                <div class="floating-element" style="--delay: 4s;">💕</div>
+                <div class="floating-element" style="--delay: 6s;">💖</div>
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         <div class="content-block">
@@ -368,155 +1507,391 @@
         </div>
     </div>
 
-    <!-- 底部导航 -->
-    <footer style="background: #1A1A1A; color: #fff; padding: 20px 0 10px; text-align: center; width: 100%; margin-top: auto;">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h6 style="color: #fff; margin-bottom: 8px; font-size: 14px;">
-                        <i class="fas fa-user"></i> 关于我
-                    </h6>
-                    <p style="color: #f0f0f0; font-size: 12px; line-height: 1.4; margin: 0;">
-                        QA工具箱开发者 | 自动化测试 | 工具开发
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <h6 style="color: #fff; margin-bottom: 8px; font-size: 14px;">
-                        <i class="fas fa-envelope"></i> 联系我
-                    </h6>
-                    <p style="color: #f0f0f0; font-size: 12px; line-height: 1.4; margin: 0;">
-                        Email: gaojie@example.com | WeChat: gaojie_dev
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <h6 style="color: #fff; margin-bottom: 8px; font-size: 14px;">
-                        <i class="fas fa-share-alt"></i> 关注我
-                    </h6>
-                    <div class="social-icons" style="display: flex; justify-content: center; gap: 10px;">
-                        <a href="https://github.com/gaojie" target="_blank" style="color: #fff; font-size: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fab fa-github" title="GitHub"></i>
-                        </a>
-                        <a href="https://weibo.com/gaojie" target="_blank" style="color: #fff; font-size: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fab fa-weibo" title="微博"></i>
-                        </a>
-                        <a href="https://www.zhihu.com/people/gaojie" target="_blank" style="color: #fff; font-size: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fab fa-zhihu" title="知乎"></i>
-                        </a>
-                        <a href="https://space.bilibili.com/gaojie" target="_blank" style="color: #fff; font-size: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fab fa-bilibili" title="B站"></i>
-                        </a>
-                        <a href="https://www.xiaohongshu.com/user/gaojie" target="_blank" style="color: #fff; font-size: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fas fa-heart" title="小红书"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
-                    <p style="color: #f0f0f0; font-size: 11px; margin: 0;">
-                        © 2025 QAToolBox. 专注于提升开发效率的工具箱 | 
-                        <a href="#" style="color: #fff; text-decoration: none;">隐私政策</a> | 
-                        <a href="#" style="color: #fff; text-decoration: none;">使用条款</a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </footer>
+
+    
+
+
+    <style>
+        /* 微信二维码弹窗样式 */
+        .wechat-modal {
+            position: fixed;
+            z-index: 10001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .wechat-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            max-width: 300px;
+            width: 90%;
+        }
+        
+        .wechat-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .wechat-close:hover {
+            color: #333;
+        }
+        
+        .qr-code-placeholder {
+            margin-top: 20px;
+        }
+        
+        .qr-code-placeholder p {
+            margin-top: 10px;
+            color: #666;
+        }
+        
+        /* 动画效果 */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+
+    </style>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
 
     <script>
-        window.onload = function () {
-            var today = new Date();
-            var day = today.getDay();
-            var videoSources = [
-                '{% static "video/sunday.mp4" %}',
-                '{% static "video/monday.mp4" %}',
-                '{% static "video/tuesday.mp4" %}',
-                '{% static "video/wednesday.mp4" %}',
-                '{% static "video/thursday.mp4" %}',
-                '{% static "video/friday.mp4" %}',
-                '{% static "video/saturday.mp4" %}'
-            ];
-            var audioSources = [
-                '{% static "audio/sunday.mp3" %}',
-                '{% static "audio/monday.mp3" %}',
-                '{% static "audio/tuesday.mp3" %}',
-                '{% static "audio/wednesday.mp3" %}',
-                '{% static "audio/thursday.mp3" %}',
-                '{% static "audio/friday.mp3" %}',
-                '{% static "audio/saturday.mp3" %}'
-            ];
-            document.getElementById('video-source').src = videoSources[day];
-            document.getElementById('audio-source').src = audioSources[day];
-            document.getElementById('background-video').load();
-            document.getElementById('background-audio').load();
-            // 仅在 home 页显示欢迎界面
-            {% if request.path == '/' %}
-            setTimeout(function () {
-                var welcomeOverlay = document.getElementById('welcome-overlay');
-                welcomeOverlay.classList.add('active');
-                setTimeout(function () {
-                    welcomeOverlay.classList.remove('active');
-                }, 2000);
-            }, 5000);
-            {% endif %}
-            // 监听视频加载失败，自动切换到爬取音乐
-            document.getElementById('background-video').addEventListener('error', function() {
-                fetch('/tools/api/get-music/')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.music_url) {
-                            var audio = document.getElementById('background-audio');
-                            var audioSource = document.getElementById('audio-source');
-                            audioSource.src = data.music_url;
-                            audio.load();
-                            audio.play();
-                        }
-                    });
-            });
+        // 网易云音乐配置
+        let currentSong = null;
+        let isMusicPlaying = false;
+        let musicInfoVisible = false;
+        
+        // 不同模式对应的歌单
+        const modePlaylists = {
+            'life': '14069178141',      // 生活模式歌单
+            'work': '13437758534',      // Geek模式歌单
+            'training': '9357916462',   // 狂暴模式歌单
+            'emo': '12632193394'        // Emo模式歌单
         };
-        function stopMedia() {
-            document.getElementById('background-video').pause();
-            document.getElementById('background-audio').pause();
+
+        window.onload = function () {
+            // 仅在用户登录且是 home 页时显示公告弹窗
+            {% if request.path == '/' %}
+                {% if user.is_authenticated %}
+                loadAnnouncements();
+                {% endif %}
+            {% endif %}
+            
+            // 初始化主题音乐
+            loadUserTheme();
+            
+            // 滚动性能优化
+            initScrollOptimization();
+        };
+    
+
+    
+    // 隐藏信息计数器
+    let hiddenInfoClickCount = 0;
+    let hiddenInfoTimeout;
+    
+    // 显示隐藏信息
+    function showHiddenInfo() {
+        hiddenInfoClickCount++;
+        
+        // 清除之前的定时器
+        if (hiddenInfoTimeout) {
+            clearTimeout(hiddenInfoTimeout);
         }
         
-        // 视频控制函数
-        function toggleVideo() {
-            var video = document.getElementById('background-video');
+        // 设置定时器，3秒后重置计数器
+        hiddenInfoTimeout = setTimeout(() => {
+            hiddenInfoClickCount = 0;
+        }, 3000);
+        
+        // 如果点击了两次，显示隐藏信息
+        if (hiddenInfoClickCount >= 2) {
+            hiddenInfoClickCount = 0;
+            showHiddenInfoModal();
+        }
+    }
+    
+    // 显示隐藏信息弹窗
+    function showHiddenInfoModal() {
+        const modalHtml = `
+            <div id="hiddenInfoModal" class="wechat-modal" style="display: flex;">
+                <div class="wechat-modal-content" style="max-width: 600px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                    <span class="wechat-close" onclick="closeHiddenInfoModal()" style="color: white; font-size: 28px;">&times;</span>
+                    
+                    <!-- 动态标题 -->
+                    <div style="text-align: center; margin-bottom: 25px; position: relative;">
+                        <h2 style="margin: 0; font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                            <i class="fas fa-rocket" style="margin-right: 10px; animation: bounce 2s infinite;"></i>
+                            关于我
+                            <i class="fas fa-rocket" style="margin-left: 10px; animation: bounce 2s infinite 1s;"></i>
+                        </h2>
+                        <div style="position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1); border-radius: 2px;"></div>
+                    </div>
+                    
+                    <!-- 个人信息卡片 -->
+                    <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; margin-bottom: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                        <h3 style="margin: 0 0 8px 0; font-size: 22px; font-weight: bold;">高杰</h3>
+                        <p style="margin: 0; opacity: 0.9; font-size: 16px;">AI使用者</p>
+                    </div>
+                    
+                    <!-- 联系信息网格 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                        <!-- 微信二维码 -->
+                        <div style="text-align: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <h4 style="color: #00C800; margin-bottom: 15px; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                                <i class="fab fa-weixin" style="margin-right: 8px;"></i> 微信联系
+                            </h4>
+                            <div style="width: 130px; height: 130px; border: 3px solid #00C800; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.2); overflow: hidden;">
+                                <img src="/media/vx.jpg" alt="微信二维码" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+                            </div>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 10px;">扫一扫加我为朋友</p>
+                        </div>
+                        
+                        <!-- 简历下载 -->
+                        <div style="text-align: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <h4 style="color: #4ecdc4; margin-bottom: 15px; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                                <i class="fas fa-file-pdf" style="margin-right: 8px;"></i> 个人简历
+                            </h4>
+                            <div style="width: 130px; height: 130px; border: 3px solid #4ecdc4; border-radius: 12px; background: linear-gradient(135deg, #4ecdc4, #44a08d); display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+                                <i class="fas fa-download" style="color: white; font-size: 40px; z-index: 2;"></i>
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%); animation: shine 2s infinite;"></div>
+                            </div>
+                            <a href="/media/高杰-测试工程师.pdf" target="_blank" 
+                               style="display: inline-block; margin-top: 12px; padding: 10px 20px; background: linear-gradient(135deg, #4ecdc4, #44a08d); color: white; text-decoration: none; border-radius: 25px; font-size: 14px; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fas fa-download" style="margin-right: 8px;"></i> 下载简历
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 更多链接 -->
+                    <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.2);">
+                        <h4 style="color: white; margin-bottom: 20px; font-size: 18px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                            <i class="fas fa-link" style="margin-right: 8px;"></i> 更多链接
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <a href="https://github.com/shinytsing/QAToolbox" target="_blank" 
+                               style="display: flex; align-items: center; padding: 15px; background: linear-gradient(135deg, #333, #555); color: white; text-decoration: none; border-radius: 12px; transition: all 0.3s ease; font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fab fa-github" style="margin-right: 10px; font-size: 20px;"></i>
+                                GitHub 源码
+                            </a>
+                            <a href="https://music.163.com/#/user/home?id=555356040" target="_blank" 
+                               style="display: flex; align-items: center; padding: 15px; background: linear-gradient(135deg, #ff2442, #ff6b6b); color: white; text-decoration: none; border-radius: 12px; transition: all 0.3s ease; font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3);" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fab fa-music" style="margin-right: 10px; font-size: 20px;"></i>
+                                网易云音乐
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 技能标签 -->
+                    <div style="text-align: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
+                        <h4 style="color: white; margin-bottom: 15px; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                            <i class="fas fa-code" style="margin-right: 8px;"></i> 技术栈
+                        </h4>
+                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+                            <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">Python</span>
+                            <span style="background: linear-gradient(135deg, #764ba2, #667eea); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(118, 75, 162, 0.3);">Django</span>
+                            <span style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(240, 147, 251, 0.3);">JavaScript</span>
+                            <span style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);">CSS3</span>
+                            <span style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(67, 233, 123, 0.3);">测试</span>
+                            <span style="background: linear-gradient(135deg, #fa709a, #fee140); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(250, 112, 154, 0.3);">自动化</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 趣味统计 -->
+                    <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
+                        <h4 style="color: white; margin-bottom: 15px; font-size: 16px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                            <i class="fas fa-chart-line" style="margin-right: 8px;"></i> 趣味统计
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: #ff6b6b; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">1000+</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">代码行数</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: #4ecdc4; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">50+</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">Bug修复</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: bold; color: #45b7d1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">∞</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">创意无限</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // 点击外部关闭
+        const modal = document.getElementById('hiddenInfoModal');
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeHiddenInfoModal();
+            }
+        });
+    }
+    
+    // 关闭隐藏信息弹窗
+    function closeHiddenInfoModal() {
+        const modal = document.getElementById('hiddenInfoModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    // 滚动性能优化函数
+    function initScrollOptimization() {
+        let isScrolling = false;
+        let scrollTimeout;
+        
+        // 监听滚动事件
+        window.addEventListener('scroll', function() {
+            if (!isScrolling) {
+                // 开始滚动时暂停动画
+                pauseAnimations();
+                isScrolling = true;
+            }
             
-            if (video.paused) {
-                video.play();
-                showNotification('视频已播放', 'success');
-            } else {
-                video.pause();
-                showNotification('视频已暂停', 'info');
+            // 清除之前的定时器
+            clearTimeout(scrollTimeout);
+            
+            // 滚动停止后恢复动画
+            scrollTimeout = setTimeout(function() {
+                resumeAnimations();
+                isScrolling = false;
+            }, 150); // 150ms后恢复
+        }, { passive: true }); // 使用passive监听器提高性能
+    }
+    
+    // 暂停所有动画
+    function pauseAnimations() {
+        const animatedElements = document.querySelectorAll('*');
+        animatedElements.forEach(element => {
+            const style = window.getComputedStyle(element);
+            if (style.animationName !== 'none') {
+                element.style.animationPlayState = 'paused';
+            }
+        });
+    }
+    
+    // 恢复所有动画
+    function resumeAnimations() {
+        const animatedElements = document.querySelectorAll('*');
+        animatedElements.forEach(element => {
+            const style = window.getComputedStyle(element);
+            if (style.animationName !== 'none') {
+                element.style.animationPlayState = 'running';
+            }
+        });
+    }
+        
+        // 公告相关函数
+        function loadAnnouncements() {
+            fetch('/content/api/announcements/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.announcements.length > 0) {
+                        // 过滤出需要弹窗显示的公告
+                        const popupAnnouncements = data.announcements.filter(a => a.is_popup);
+                        if (popupAnnouncements.length > 0) {
+                            showAnnouncementPopup(popupAnnouncements);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading announcements:', error);
+                });
+        }
+        
+        function showAnnouncementPopup(announcements) {
+            const overlay = document.getElementById('announcement-overlay');
+            const body = document.getElementById('announcement-body');
+            
+            if (!overlay || !body) return;
+            
+            // 渲染公告内容
+            let html = '';
+            announcements.forEach(announcement => {
+                html += `
+                    <div class="announcement-item priority-${announcement.priority}">
+                        <div class="announcement-title">${announcement.title}</div>
+                        <div class="announcement-text">${announcement.content}</div>
+                        <div class="announcement-time">${announcement.created_at}</div>
+                    </div>
+                `;
+            });
+            
+            body.innerHTML = html;
+            
+            // 显示弹窗
+            overlay.classList.add('active');
+            
+            // 5秒后自动消失
+            setTimeout(function() {
+                closeAnnouncement();
+            }, 5000);
+        }
+        
+        function closeAnnouncement() {
+            const overlay = document.getElementById('announcement-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
             }
         }
-        
-        // 音频控制函数
-        function toggleAudio() {
-            var audio = document.getElementById('background-audio');
+        // 简化的音乐控制函数
+        function toggleMusic() {
+            var audio = document.getElementById('theme-music');
             
             if (audio.paused) {
                 audio.play();
-                showNotification('音乐已播放', 'success');
+                showNotification('音乐已开启', 'success');
             } else {
                 audio.pause();
                 showNotification('音乐已暂停', 'info');
             }
         }
         
-        // 停止所有媒体
-        function stopAllMedia() {
-            var video = document.getElementById('background-video');
-            var audio = document.getElementById('background-audio');
-            video.pause();
-            audio.pause();
-            showNotification('所有媒体已停止', 'warning');
+        // 优化的主题音乐设置函数
+        function setThemeMusic(theme) {
+            var audio = document.getElementById('theme-music');
+            var source = document.getElementById('music-source');
+            
+            if (themeMusic[theme] && source.src !== themeMusic[theme]) {
+                // 只有在音乐文件不同时才切换，避免重复加载
+                source.src = themeMusic[theme];
+                audio.load();
+                // 异步播放，不阻塞UI
+                setTimeout(() => {
+                    audio.play().catch(function(error) {
+                        console.log('音乐自动播放被阻止:', error);
+                    });
+                }, 0);
+            }
         }
         
         // 显示通知
@@ -547,56 +1922,40 @@
             }, 3000);
         }
         
-        // 初始化媒体状态
+        // 音乐初始化
         window.addEventListener('load', function() {
-            // 默认播放视频，暂停音频
-            var video = document.getElementById('background-video');
-            var audio = document.getElementById('background-audio');
+            var audio = document.getElementById('theme-music');
             
-            // 确保视频播放
-            video.play().catch(function(error) {
-                console.log('视频播放失败:', error);
-            });
-            
-            // 默认暂停音频
-            audio.pause();
-            
-            // 添加媒体状态监听
-            video.addEventListener('play', function() {
-                console.log('视频开始播放');
-            });
-            
-            video.addEventListener('pause', function() {
-                console.log('视频已暂停');
-            });
-            
+            // 添加音乐状态监听
             audio.addEventListener('play', function() {
-                console.log('音频开始播放');
+                console.log('主题音乐开始播放');
             });
             
             audio.addEventListener('pause', function() {
-                console.log('音频已暂停');
+                console.log('主题音乐已暂停');
             });
         });
 
-        // 显示建议界面
+        // 显示建议界面 - 极客风格
         function showSuggestions() {
             // 先获取现有建议
             fetch('/content/api/suggestions/')
                 .then(response => response.json())
                 .then(data => {
                     let suggestionsHtml = `
-                        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
-                            <div style="background: white; padding: 30px; border-radius: 15px; max-width: 800px; max-height: 80vh; overflow-y: auto; width: 90%;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                    <h3 style="color: #333; margin: 0;">
-                                        <i class="fas fa-lightbulb" style="color: #ffc107;"></i> 我的建议
+                        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 14, 23, 0.95); z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+                            <div style="background: linear-gradient(135deg, rgba(26,31,46,0.95) 0%, rgba(0,255,231,0.1) 100%); border: 1px solid rgba(0, 255, 231, 0.2); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(10px); padding: 30px; max-width: 900px; max-height: 85vh; overflow-y: auto; width: 95%; position: relative;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid rgba(0, 255, 231, 0.2); padding-bottom: 15px;">
+                                    <h3 style="color: #00ffe7; margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-shadow: 0 0 10px rgba(0, 255, 231, 0.5);">
+                                        <i class="fas fa-lightbulb" style="color: #00ffe7; margin-right: 10px;"></i> 我的建议
                                     </h3>
-                                    <button onclick="closeSuggestions()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                                    <button onclick="closeSuggestions()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #00ffe7; transition: all 0.3s ease; padding: 5px; border-radius: 5px;">&times;</button>
                                 </div>
                                 
-                                <div style="margin-bottom: 20px;">
-                                    <h5 style="color: #333;">💡 现有建议</h5>
+                                <div style="margin-bottom: 25px;">
+                                    <h5 style="color: #00ffe7; font-family: 'JetBrains Mono', monospace; font-weight: 600; margin-bottom: 15px; text-shadow: 0 0 5px rgba(0, 255, 231, 0.3);">
+                                        <i class="fas fa-code" style="margin-right: 8px;"></i> 现有建议
+                                    </h5>
                                     <div id="existingSuggestions">`;
                     
                     if (data.suggestions && data.suggestions.length > 0) {
@@ -630,55 +1989,109 @@
                             }
                             
                             suggestionsHtml += `
-                                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid ${borderColor};">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <h6 style="margin: 0; color: #333;">${suggestion.title}</h6>
+                                <div style="background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(0,255,231,0.05) 100%); border: 1px solid rgba(0, 255, 231, 0.2); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h6 style="margin: 0; color: #00ffe7; font-family: 'JetBrains Mono', monospace; font-weight: 600; text-shadow: 0 0 5px rgba(0, 255, 231, 0.3);">${suggestion.title}</h6>
                                         <div style="text-align: right;">
-                                            <span style="font-size: 12px; color: #666;">${suggestion.created_at}</span>
+                                            <span style="font-size: 12px; color: #667eea; font-family: 'JetBrains Mono', monospace;">${suggestion.created_at}</span>
                                             <br>
-                                            <span style="font-size: 11px; color: #999;">更新: ${suggestion.updated_at}</span>
+                                            <span style="font-size: 11px; color: #764ba2; font-family: 'JetBrains Mono', monospace;">更新: ${suggestion.updated_at}</span>
                                         </div>
                                     </div>
-                                    <p style="margin: 0; color: #666; margin-bottom: 8px;">${suggestion.content}</p>
-                                    <div style="display: flex; gap: 10px; font-size: 12px; margin-bottom: 8px;">
-                                        <span style="color: #007bff;">📝 类型: ${suggestion.suggestion_type}</span>
-                                        <span style="color: ${statusColor}; font-weight: bold;">${statusIcon} 状态: ${suggestion.status}</span>
-                                        <span style="color: #666;">👤 提交者: ${suggestion.user_name}</span>
+                                    <p style="margin: 0; color: #e6e6e6; margin-bottom: 12px; line-height: 1.6; font-family: 'JetBrains Mono', monospace;">${suggestion.content}</p>
+                                    
+                                    ${(suggestion.images && suggestion.images.length > 0) || (suggestion.videos && suggestion.videos.length > 0) ? `
+                                    <div style="margin-bottom: 10px;">
+                                        <small style="color: #00ffe7; font-family: 'JetBrains Mono', monospace;">
+                                            <i class="fas fa-paperclip" style="margin-right: 5px;"></i>
+                                            ${suggestion.images ? suggestion.images.length : 0} 图片, 
+                                            ${suggestion.videos ? suggestion.videos.length : 0} 视频
+                                        </small>
+                                    </div>
+                                    ` : ''}
+                                    <div style="display: flex; gap: 12px; font-size: 12px; margin-bottom: 10px; flex-wrap: wrap;">
+                                        <span style="color: #667eea; font-family: 'JetBrains Mono', monospace; background: rgba(102, 126, 234, 0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(102, 126, 234, 0.3);">
+                                            <i class="fas fa-code" style="margin-right: 4px;"></i> 类型: ${suggestion.suggestion_type}
+                                        </span>
+                                        <span style="color: ${statusColor}; font-weight: bold; font-family: 'JetBrains Mono', monospace; background: rgba(0, 255, 231, 0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(0, 255, 231, 0.3);">
+                                            ${statusIcon} 状态: ${suggestion.status}
+                                        </span>
+                                        <span style="color: #764ba2; font-family: 'JetBrains Mono', monospace; background: rgba(118, 75, 162, 0.1); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(118, 75, 162, 0.3);">
+                                            <i class="fas fa-user" style="margin-right: 4px;"></i> 提交者: ${suggestion.user_name}
+                                        </span>
                                     </div>
                                     ${suggestion.has_response ? 
-                                        '<div style="margin-top: 8px; padding: 12px; background: #e3f2fd; border-radius: 6px; border-left: 3px solid #2196f3;"><strong style="color: #1976d2;">管理员回复:</strong><br>' + suggestion.admin_response + '</div>' : 
-                                        '<div style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px; color: #666; text-align: center;">等待管理员处理中...</div>'
+                                        '<div style="margin-top: 12px; padding: 15px; background: linear-gradient(135deg, rgba(0, 255, 231, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%); border-radius: 8px; border-left: 4px solid #00ffe7; border: 1px solid rgba(0, 255, 231, 0.3);"><strong style="color: #00ffe7; font-family: \'JetBrains Mono\', monospace;">管理员回复:</strong><br><span style="color: #e6e6e6; font-family: \'JetBrains Mono\', monospace; line-height: 1.5;">' + suggestion.admin_response + '</span></div>' : 
+                                        '<div style="margin-top: 12px; padding: 12px; background: linear-gradient(135deg, rgba(118, 75, 162, 0.1) 0%, rgba(0, 255, 231, 0.05) 100%); border-radius: 8px; border: 1px solid rgba(118, 75, 162, 0.3); font-size: 12px; color: #764ba2; text-align: center; font-family: \'JetBrains Mono\', monospace;"><i class="fas fa-clock" style="margin-right: 5px;"></i>等待管理员处理中...</div>'
                                     }
                                 </div>`;
                         });
                     } else {
-                        suggestionsHtml += `<p style="color: #666; text-align: center;">暂无建议</p>`;
+                        suggestionsHtml += `<p style="color: #764ba2; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 20px; background: linear-gradient(135deg, rgba(118, 75, 162, 0.1) 0%, rgba(0, 255, 231, 0.05) 100%); border-radius: 8px; border: 1px solid rgba(118, 75, 162, 0.3);"><i class="fas fa-inbox" style="margin-right: 8px;"></i>暂无建议</p>`;
                     }
                     
                     suggestionsHtml += `
                                     </div>
                                 </div>
                                 
-                                <div style="margin-bottom: 20px;">
-                                    <h5 style="color: #333;">📝 添加新建议</h5>
-                                    <div style="margin-bottom: 10px;">
-                                        <input type="text" id="suggestionTitle" placeholder="建议标题..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
-                                        <select id="suggestionType" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+                                <div style="margin-bottom: 25px;">
+                                    <h5 style="color: #00ffe7; font-family: 'JetBrains Mono', monospace; font-weight: 600; margin-bottom: 15px; text-shadow: 0 0 5px rgba(0, 255, 231, 0.3);">
+                                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> 添加新建议
+                                    </h5>
+                                    <div style="margin-bottom: 15px;">
+                                        <input type="text" id="suggestionTitle" placeholder="建议标题..." style="width: 100%; padding: 12px; background: rgba(26,31,46,0.8); border: 1px solid rgba(0, 255, 231, 0.3); border-radius: 8px; margin-bottom: 12px; color: #e6e6e6; font-family: 'JetBrains Mono', monospace; transition: all 0.3s ease;">
+                                        <select id="suggestionType" style="width: 100%; padding: 12px; background: rgba(26,31,46,0.8); border: 1px solid rgba(0, 255, 231, 0.3); border-radius: 8px; margin-bottom: 12px; color: #e6e6e6; font-family: 'JetBrains Mono', monospace; transition: all 0.3s ease;">
                                             <option value="feature">功能建议</option>
                                             <option value="ui">界面改进</option>
                                             <option value="bug">Bug报告</option>
                                             <option value="other">其他</option>
                                         </select>
-                                        <textarea id="newSuggestion" placeholder="请输入您的建议内容..." style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                                        <textarea id="newSuggestion" placeholder="请输入您的建议内容..." style="width: 100%; height: 120px; padding: 12px; background: rgba(26,31,46,0.8); border: 1px solid rgba(0, 255, 231, 0.3); border-radius: 8px; resize: vertical; color: #e6e6e6; font-family: 'JetBrains Mono', monospace; transition: all 0.3s ease;"></textarea>
+                                        
+                                        <!-- 文件上传区域 -->
+                                        <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, rgba(26,31,46,0.6) 0%, rgba(0,255,231,0.05) 100%); border: 1px solid rgba(0, 255, 231, 0.2); border-radius: 10px;">
+                                            <h6 style="color: #00ffe7; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+                                                <i class="fas fa-paperclip" style="margin-right: 8px;"></i> 添加附件（可选）
+                                            </h6>
+                                            <div style="margin-bottom: 12px;">
+                                                <label style="display: block; margin-bottom: 6px; color: #667eea; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                                                    <i class="fas fa-image" style="margin-right: 5px;"></i> 图片文件 (JPG, PNG, GIF, WebP)
+                                                </label>
+                                                <div class="geek-file-upload" onclick="document.getElementById('suggestionImages').click()">
+                                                    <i class="fas fa-image upload-icon"></i>
+                                                    <div class="upload-text">点击选择图片文件</div>
+                                                    <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式</div>
+                                                    <input type="file" id="suggestionImages" multiple accept=".jpg,.jpeg,.png,.gif,.webp" style="display: none;">
+                                                </div>
+                                            </div>
+                                            <div style="margin-bottom: 12px;">
+                                                <label style="display: block; margin-bottom: 6px; color: #764ba2; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                                                    <i class="fas fa-video" style="margin-right: 5px;"></i> 视频文件 (MP4, AVI, MOV, WMV, FLV, WebM)
+                                                </label>
+                                                <div class="geek-file-upload" onclick="document.getElementById('suggestionVideos').click()">
+                                                    <i class="fas fa-video upload-icon"></i>
+                                                    <div class="upload-text">点击选择视频文件</div>
+                                                    <div class="upload-hint">支持 MP4、AVI、MOV、WMV、FLV、WebM 格式</div>
+                                                    <input type="file" id="suggestionVideos" multiple accept=".mp4,.avi,.mov,.wmv,.flv,.webm" style="display: none;">
+                                                </div>
+                                            </div>
+                                            <div id="uploadProgress" style="display: none; margin-top: 12px;">
+                                                <div style="background: rgba(26,31,46,0.8); border-radius: 8px; height: 24px; overflow: hidden; border: 1px solid rgba(0, 255, 231, 0.3);">
+                                                    <div id="progressBar" style="background: linear-gradient(90deg, #00ffe7 0%, #667eea 100%); height: 100%; width: 0%; transition: width 0.3s; box-shadow: 0 0 10px rgba(0, 255, 231, 0.5);"></div>
+                                                </div>
+                                                <small style="color: #00ffe7; font-family: 'JetBrains Mono', monospace; margin-top: 5px; display: block;">上传中... <span id="progressText">0%</span></small>
+                                            </div>
+                                            <div id="uploadedFiles" style="margin-top: 12px;"></div>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <div style="text-align: center;">
-                                    <button onclick="submitSuggestion()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
-                                        <i class="fas fa-paper-plane"></i> 提交建议
+                                <div style="text-align: center; margin-top: 20px;">
+                                    <button onclick="submitSuggestion()" style="background: linear-gradient(135deg, #00ffe7 0%, #667eea 100%); color: #000; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-right: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);">
+                                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> 提交建议
                                     </button>
-                                    <button onclick="closeSuggestions()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
-                                        关闭
+                                    <button onclick="closeSuggestions()" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);">
+                                        <i class="fas fa-times" style="margin-right: 8px;"></i> 关闭
                                     </button>
                                 </div>
                             </div>
@@ -701,35 +2114,200 @@
             }
         }
         
+        // 添加极客风格的输入框焦点效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为建议界面的输入框添加焦点效果
+            document.addEventListener('focusin', function(e) {
+                if (e.target.matches('#suggestionTitle, #suggestionType, #newSuggestion, #suggestionImages, #suggestionVideos')) {
+                    e.target.style.borderColor = '#00ffe7';
+                    e.target.style.boxShadow = '0 0 10px rgba(0, 255, 231, 0.3)';
+                }
+            });
+            
+            document.addEventListener('focusout', function(e) {
+                if (e.target.matches('#suggestionTitle, #suggestionType, #newSuggestion, #suggestionImages, #suggestionVideos')) {
+                    if (e.target.id === 'suggestionImages') {
+                        e.target.style.borderColor = 'rgba(102, 126, 234, 0.3)';
+                    } else if (e.target.id === 'suggestionVideos') {
+                        e.target.style.borderColor = 'rgba(118, 75, 162, 0.3)';
+                    } else {
+                        e.target.style.borderColor = 'rgba(0, 255, 231, 0.3)';
+                    }
+                    e.target.style.boxShadow = 'none';
+                }
+            });
+            
+            // 极客风格文件上传增强功能
+            const uploadAreas = document.querySelectorAll('.geek-upload-area, .geek-file-upload');
+            
+            uploadAreas.forEach(area => {
+                const fileInput = area.querySelector('input[type="file"]');
+                if (!fileInput) return;
+                
+                // 拖拽事件
+                area.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                });
+                
+                area.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        fileInput.dispatchEvent(new Event('change'));
+                    }
+                });
+                
+                // 文件选择事件
+                fileInput.addEventListener('change', function() {
+                    const area = this.closest('.geek-upload-area, .geek-file-upload');
+                    if (this.files.length > 0) {
+                        area.classList.add('has-file');
+                        
+                        // 更新上传区域的文本
+                        const uploadText = area.querySelector('.upload-text');
+                        if (uploadText) {
+                            if (this.files.length === 1) {
+                                uploadText.textContent = `已选择: ${this.files[0].name}`;
+                            } else {
+                                uploadText.textContent = `已选择 ${this.files.length} 个文件`;
+                            }
+                        }
+                    } else {
+                        area.classList.remove('has-file');
+                        const uploadText = area.querySelector('.upload-text');
+                        if (uploadText) {
+                            uploadText.textContent = uploadText.getAttribute('data-original-text') || '点击选择文件';
+                        }
+                    }
+                });
+                
+                // 保存原始文本
+                const uploadText = area.querySelector('.upload-text');
+                if (uploadText) {
+                    uploadText.setAttribute('data-original-text', uploadText.textContent);
+                }
+            });
+            
+            // 为文件列表添加删除功能
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('file-remove')) {
+                    const fileItem = e.target.closest('.geek-file-item');
+                    if (fileItem) {
+                        fileItem.style.animation = 'fadeOut 0.3s ease';
+                        setTimeout(() => {
+                            fileItem.remove();
+                        }, 300);
+                    }
+                }
+            });
+        });
+        
         // 提交建议
-        function submitSuggestion() {
+        async function submitSuggestion() {
+            // 检查用户是否已登录
+            {% if not user.is_authenticated %}
+            showNotification('请先登录后再提交建议', 'warning');
+            closeSuggestions();
+            // 跳转到登录页面
+            setTimeout(() => {
+                window.location.href = '{% url "login" %}';
+            }, 1500);
+            return;
+            {% endif %}
+            
             const title = document.getElementById('suggestionTitle').value;
             const content = document.getElementById('newSuggestion').value;
             const suggestionType = document.getElementById('suggestionType').value;
+            const imageFiles = document.getElementById('suggestionImages').files;
+            const videoFiles = document.getElementById('suggestionVideos').files;
             
             if (!title.trim() || !content.trim()) {
                 showNotification('请填写建议标题和内容', 'warning');
                 return;
             }
             
-            const suggestionData = {
-                title: title,
-                content: content,
-                suggestion_type: suggestionType,
-                user_name: '{{ user.username }}' || '匿名用户',
-                user_email: '{{ user.email }}' || ''
-            };
-            
-            fetch('/content/api/suggestions/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify(suggestionData)
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                // 先上传文件
+                let uploadedImages = [];
+                let uploadedVideos = [];
+                
+                if (imageFiles.length > 0 || videoFiles.length > 0) {
+                    const formData = new FormData();
+                    
+                    // 添加图片文件
+                    for (let i = 0; i < imageFiles.length; i++) {
+                        formData.append('images', imageFiles[i]);
+                    }
+                    
+                    // 添加视频文件
+                    for (let i = 0; i < videoFiles.length; i++) {
+                        formData.append('videos', videoFiles[i]);
+                    }
+                    
+                    // 显示上传进度
+                    document.getElementById('uploadProgress').style.display = 'block';
+                    document.getElementById('progressBar').style.width = '0%';
+                    document.getElementById('progressText').textContent = '0%';
+                    
+                    const uploadResponse = await fetch('/content/api/upload-media/', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const uploadData = await uploadResponse.json();
+                    
+                    if (uploadData.success) {
+                        uploadedImages = uploadData.files.filter(f => f.type === 'image');
+                        uploadedVideos = uploadData.files.filter(f => f.type === 'video');
+                        showNotification(uploadData.message, 'success');
+                    } else {
+                        showNotification('文件上传失败: ' + uploadData.error, 'error');
+                        return;
+                    }
+                    
+                    // 隐藏上传进度
+                    document.getElementById('uploadProgress').style.display = 'none';
+                }
+                
+                // 提交建议
+                const suggestionData = {
+                    title: title,
+                    content: content,
+                    suggestion_type: suggestionType,
+                    images: uploadedImages,
+                    videos: uploadedVideos
+                };
+                
+                const response = await fetch('/content/api/suggestions/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(suggestionData)
+                });
+                
+                if (response.status === 401) {
+                    // 未登录状态
+                    showNotification('请先登录后再提交建议', 'warning');
+                    closeSuggestions();
+                    setTimeout(() => {
+                        window.location.href = '{% url "login" %}';
+                    }, 1500);
+                    return;
+                }
+                
+                const data = await response.json();
+                
                 if (data.success) {
                     showNotification(data.message, 'success');
                     closeSuggestions();
@@ -740,11 +2318,11 @@
                 } else {
                     showNotification(data.error || '提交失败，请重试', 'error');
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('提交建议失败:', error);
                 showNotification('提交失败，请重试', 'error');
-            });
+                document.getElementById('uploadProgress').style.display = 'none';
+            }
         }
         
         // 显示反馈界面
@@ -799,6 +2377,17 @@
         
         // 提交反馈
         function submitFeedback() {
+            // 检查用户是否已登录
+            {% if not user.is_authenticated %}
+            showNotification('请先登录后再提交反馈', 'warning');
+            closeFeedback();
+            // 跳转到登录页面
+            setTimeout(() => {
+                window.location.href = '{% url "login" %}';
+            }, 1500);
+            return;
+            {% endif %}
+            
             const type = document.getElementById('feedbackType').value;
             const content = document.getElementById('feedbackContent').value;
             
@@ -809,9 +2398,7 @@
             
             const feedbackData = {
                 feedback_type: type,
-                content: content,
-                user_name: '{{ user.username }}' || '匿名用户',
-                user_email: '{{ user.email }}' || ''
+                content: content
             };
             
             fetch('/content/api/feedback/', {
@@ -822,7 +2409,18 @@
                 },
                 body: JSON.stringify(feedbackData)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (response.status === 401) {
+                    // 未登录状态
+                    showNotification('请先登录后再提交反馈', 'warning');
+                    closeFeedback();
+                    setTimeout(() => {
+                        window.location.href = '{% url "login" %}';
+                    }, 1500);
+                    return response.json();
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showNotification(data.message, 'success');
@@ -849,6 +2447,1168 @@
             return getCookie('csrftoken');
         }
         
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // 主题管理系统
+        let currentTheme = 'work';
+        
+        // 主题配置
+        const themeConfig = {
+            'life': {
+                name: '生活',
+                css: 'life.css',
+                badgeClass: 'punk',
+                subtitle: '享受生活的美好时光'
+            },
+            'work': {
+                name: '极客',
+                css: 'geek.css',
+                badgeClass: '',
+                subtitle: '专注技术，追求卓越'
+            },
+            'training': {
+                name: '狂暴',
+                css: 'rage.css',
+                badgeClass: 'rage',
+                subtitle: '突破极限，挑战自我'
+            },
+            'emo': {
+                name: 'Emo',
+                css: 'emo.css',
+                badgeClass: 'emo',
+                subtitle: '感受内心的情感波动'
+            }
+        };
+        
+        // 页面加载时初始化主题
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadUserTheme();
+        });
+        
+        // 加载用户主题
+        async function loadUserTheme() {
+            try {
+                const response = await fetch('/users/theme/', {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        currentTheme = data.data.mode || 'work';
+                        applyGlobalTheme(currentTheme);
+                        updateThemeBadge(currentTheme);
+                        updateActiveThemeItem(currentTheme);
+                        
+                        // 更新副标题
+                        const subtitle = document.getElementById('theme-subtitle');
+                        if (subtitle && data.data.subtitle) {
+                            subtitle.textContent = data.data.subtitle;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Failed to load theme:', error);
+            }
+        }
+        
+        // 应用全局主题
+        function applyGlobalTheme(theme) {
+            const themeCSS = document.getElementById('dynamic-theme-css');
+            if (themeCSS) {
+                themeCSS.href = '/static/' + themeConfig[theme].css;
+            }
+            
+            // 更新body类名
+            document.body.className = theme + '-theme';
+            
+            // 更新副标题
+            updateThemeSubtitle(theme);
+            
+            // 更新背景
+            updateThemeBackground(theme);
+            
+            // 更新页面模板内容
+            updatePageTemplate(theme);
+        }
+        
+        // 更新页面模板内容
+        function updatePageTemplate(theme) {
+            // 获取当前页面路径
+            const currentPath = window.location.pathname;
+            
+            // 根据当前页面和主题更新模板内容
+            if (currentPath.includes('/tools/')) {
+                updateToolPageTemplate(theme);
+            } else if (currentPath === '/' || currentPath === '/home/') {
+                updateHomePageTemplate(theme);
+            } else {
+                updateGenericPageTemplate(theme);
+            }
+        }
+        
+        // 更新工具页面模板
+        function updateToolPageTemplate(theme) {
+            const toolContainer = document.getElementById('tool-container');
+            if (!toolContainer) return;
+            
+            // 移除所有主题相关的类名
+            toolContainer.className = toolContainer.className.replace(/(geek|life|training|emo)-card/g, '');
+            
+            // 添加新主题的类名
+            const themeClassMap = {
+                'work': 'geek-card',
+                'life': 'life-card', 
+                'training': 'training-card',
+                'emo': 'emo-card'
+            };
+            
+            if (themeClassMap[theme]) {
+                toolContainer.classList.add(themeClassMap[theme]);
+            }
+            
+            // 更新标题
+            const toolTitle = document.getElementById('tool-title');
+            if (toolTitle) {
+                toolTitle.className = toolTitle.className.replace(/(geek|life|training|emo)-title/g, '');
+                if (themeClassMap[theme]) {
+                    toolTitle.classList.add(themeClassMap[theme].replace('-card', '-title'));
+                }
+            }
+            
+            // 更新终端样式
+            const terminals = ['tool-terminal', 'life-terminal', 'training-terminal', 'emo-terminal'];
+            terminals.forEach(terminalId => {
+                const terminal = document.getElementById(terminalId);
+                if (terminal) {
+                    terminal.className = terminal.className.replace(/(geek|life|training|emo)-terminal/g, '');
+                }
+            });
+            
+            // 根据主题显示对应的终端
+            const themeTerminalMap = {
+                'work': 'tool-terminal',
+                'life': 'life-terminal',
+                'training': 'training-terminal', 
+                'emo': 'emo-terminal'
+            };
+            
+            // 隐藏所有终端
+            terminals.forEach(terminalId => {
+                const terminal = document.getElementById(terminalId);
+                if (terminal) {
+                    terminal.style.display = 'none';
+                }
+            });
+            
+            // 显示当前主题的终端
+            const currentTerminal = document.getElementById(themeTerminalMap[theme]);
+            if (currentTerminal) {
+                currentTerminal.style.display = 'block';
+                currentTerminal.className = currentTerminal.className.replace(/(geek|life|training|emo)-terminal/g, '');
+                currentTerminal.classList.add(themeClassMap[theme].replace('-card', '-terminal'));
+            }
+            
+            // 更新工具网格
+            const toolGrid = document.getElementById('tool-grid');
+            if (toolGrid) {
+                toolGrid.className = toolGrid.className.replace(/(geek|life|training|emo)-tool-grid/g, '');
+                if (themeClassMap[theme]) {
+                    toolGrid.classList.add(themeClassMap[theme].replace('-card', '-tool-grid'));
+                }
+            }
+            
+            // 更新页面标题
+            updatePageTitle(theme);
+        }
+        
+        // 更新主页模板
+        function updateHomePageTemplate(theme) {
+            const mainContainer = document.querySelector('.main-container');
+            if (!mainContainer) return;
+            
+            // 更新容器类名
+            mainContainer.className = mainContainer.className.replace(/(geek|life|training|emo)-container/g, '');
+            const themeClassMap = {
+                'work': 'geek-container',
+                'life': 'life-container',
+                'training': 'training-container',
+                'emo': 'emo-container'
+            };
+            
+            if (themeClassMap[theme]) {
+                mainContainer.classList.add(themeClassMap[theme]);
+            }
+            
+            // 更新卡片样式
+            const cards = document.querySelectorAll('.geek-card, .life-card, .training-card, .emo-card');
+            cards.forEach(card => {
+                card.className = card.className.replace(/(geek|life|training|emo)-card/g, '');
+                if (themeClassMap[theme]) {
+                    card.classList.add(themeClassMap[theme].replace('-container', '-card'));
+                }
+            });
+            
+            // 更新页面标题
+            updatePageTitle(theme);
+        }
+        
+        // 更新通用页面模板
+        function updateGenericPageTemplate(theme) {
+            // 更新页面标题
+            updatePageTitle(theme);
+            
+            // 更新通用容器样式
+            const containers = document.querySelectorAll('.geek-container, .life-container, .training-container, .emo-container');
+            containers.forEach(container => {
+                container.className = container.className.replace(/(geek|life|training|emo)-container/g, '');
+                const themeClassMap = {
+                    'work': 'geek-container',
+                    'life': 'life-container',
+                    'training': 'training-container',
+                    'emo': 'emo-container'
+                };
+                
+                if (themeClassMap[theme]) {
+                    container.classList.add(themeClassMap[theme]);
+                }
+            });
+        }
+        
+        // 更新页面标题
+        function updatePageTitle(theme) {
+            const themeNames = {
+                'work': '极客模式',
+                'life': '生活模式', 
+                'training': '狂暴模式',
+                'emo': 'Emo模式'
+            };
+            
+            const currentTitle = document.title;
+            const baseTitle = currentTitle.replace(/ - (极客|生活|狂暴|Emo)模式$/, '');
+            document.title = `${baseTitle} - ${themeNames[theme]}`;
+        }
+        
+        // 更新主题背景
+        function updateThemeBackground(theme) {
+            const backgroundLayers = document.querySelectorAll('.background-layer');
+            
+            // 隐藏所有背景层
+            backgroundLayers.forEach(layer => {
+                layer.style.display = 'none';
+            });
+            
+            // 显示对应主题的背景
+            const targetLayer = document.querySelector(`.${theme}-bg`);
+            if (targetLayer) {
+                targetLayer.style.display = 'block';
+                
+                // 初始化特殊背景效果
+                if (theme === 'geek') {
+                    initMatrixRain();
+                } else if (theme === 'emo') {
+                    initEmoParticles();
+                }
+            }
+        }
+        
+        // 矩阵雨效果（极客模式）
+        function initMatrixRain() {
+            const canvas = document.getElementById('matrix-rain');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+            const matrixArray = matrix.split("");
+            
+            const fontSize = 10;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+            
+            for (let x = 0; x < columns; x++) {
+                drops[x] = 1;
+            }
+            
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#0F0';
+                ctx.font = fontSize + 'px monospace';
+                
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            
+            setInterval(draw, 35);
+        }
+        
+        // Emo粒子效果
+        function initEmoParticles() {
+            const container = document.getElementById('emo-particles');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'emo-particle';
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 4px;
+                    height: 4px;
+                    background: rgba(156, 39, 176, 0.6);
+                    border-radius: 50%;
+                    animation: emoParticleFloat ${3 + Math.random() * 4}s ease-in-out infinite;
+                    animation-delay: ${Math.random() * 2}s;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                `;
+                container.appendChild(particle);
+            }
+        }
+        
+        // 更新主题徽章
+        function updateThemeBadge(theme) {
+            const badge = document.getElementById('theme-badge');
+            if (badge) {
+                const config = themeConfig[theme];
+                badge.textContent = config.name;
+                badge.className = 'theme-badge ' + config.badgeClass;
+            }
+        }
+        
+        // 更新副标题
+        function updateThemeSubtitle(theme) {
+            const subtitle = document.getElementById('theme-subtitle');
+            if (subtitle) {
+                const config = themeConfig[theme];
+                subtitle.textContent = config.subtitle;
+                subtitle.style.opacity = '0';
+                setTimeout(() => {
+                    subtitle.style.opacity = '0.8';
+                }, 200);
+            }
+        }
+        
+        // 更新激活的主题项
+        function updateActiveThemeItem(theme) {
+            document.querySelectorAll('.theme-switch').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const activeItem = document.querySelector(`[data-mode="${theme}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+        }
+        
+        // 主题与页面对应关系
+        const themePageMapping = {
+            'life': '/tools/creative_writer/',
+            'work': '/tools/pdf_converter_modern/',
+            'training': '/tools/fitness/',
+            'emo': '/tools/emo-diary/'
+        };
+        
+        // 获取当前页面路径
+        function getCurrentPagePath() {
+            return window.location.pathname;
+        }
+        
+        // 检查当前页面是否匹配主题
+        function isCurrentPageMatchingTheme(theme) {
+            const currentPath = getCurrentPagePath();
+            const expectedPath = themePageMapping[theme];
+            return currentPath === expectedPath;
+        }
+        
+        // 主题切换事件
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.theme-switch')) {
+                e.preventDefault();
+                const element = e.target.closest('.theme-switch');
+                const newTheme = element.dataset.mode;
+                
+                // 检查当前页面是否已经匹配该主题
+                if (isCurrentPageMatchingTheme(newTheme)) {
+                    // 如果当前页面已经匹配该主题，只切换主题样式，不跳转页面
+                    if (newTheme !== currentTheme) {
+                        switchGlobalTheme(newTheme);
+                    } else {
+                        showNotification('当前页面已经是该主题模式', 'info');
+                    }
+                } else {
+                    // 如果当前页面不匹配该主题，先切换主题，然后跳转到对应页面
+                    switchGlobalThemeAndNavigate(newTheme);
+                }
+            }
+        });
+        
+        // 切换主题并跳转到对应页面
+        async function switchGlobalThemeAndNavigate(theme) {
+            try {
+                // 显示加载状态
+                const themeName = themeConfig[theme].name;
+                showNotification(`正在切换到${themeName}模式并跳转页面...`, 'info');
+                
+                // 添加加载动画
+                const badge = document.getElementById('theme-badge');
+                if (badge) {
+                    badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+                
+                // 更新后端
+                const response = await fetch('/users/theme/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ mode: theme })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('主题切换请求失败');
+                }
+                
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || '主题切换失败');
+                }
+                
+                currentTheme = theme;
+                
+                // 应用主题
+                applyGlobalTheme(theme);
+                updateThemeBadge(theme);
+                updateActiveThemeItem(theme);
+                
+                // 切换对应的主题音乐
+                loadThemeMusic(theme);
+                
+                // 显示成功通知
+                showNotification(`已成功切换到${themeName}模式`, 'success');
+                
+                // 延迟跳转到对应页面
+                setTimeout(() => {
+                    const targetPage = themePageMapping[theme];
+                    if (targetPage) {
+                        window.location.href = targetPage;
+                    }
+                }, 1000); // 1秒后跳转，让用户看到切换效果
+                
+            } catch (error) {
+                console.error('Failed to switch theme and navigate:', error);
+                showNotification('主题切换失败: ' + error.message, 'error');
+                
+                // 恢复徽章显示
+                updateThemeBadge(currentTheme);
+            }
+        }
+        
+        // 切换全局主题
+        async function switchGlobalTheme(theme) {
+            try {
+                // 显示加载状态
+                const themeName = themeConfig[theme].name;
+                showNotification(`正在切换到${themeName}模式...`, 'info');
+                
+                // 添加加载动画
+                const badge = document.getElementById('theme-badge');
+                if (badge) {
+                    badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+                
+                // 更新后端
+                const response = await fetch('/users/theme/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ mode: theme })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('主题切换请求失败');
+                }
+                
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || '主题切换失败');
+                }
+                
+                currentTheme = theme;
+                
+                // 应用主题
+                applyGlobalTheme(theme);
+                updateThemeBadge(theme);
+                updateActiveThemeItem(theme);
+                
+                // 切换对应的主题音乐
+                loadThemeMusic(theme);
+                
+                // 显示成功通知
+                showNotification(`已成功切换到${themeName}模式`, 'success');
+                
+                // 添加切换动画效果
+                document.body.style.transition = 'all 0.5s ease';
+                document.body.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    document.body.style.transform = 'scale(1)';
+                }, 200);
+                
+                // 主题切换完成，无需刷新页面
+                
+            } catch (error) {
+                console.error('Failed to switch theme:', error);
+                showNotification('主题切换失败: ' + error.message, 'error');
+                
+                // 恢复徽章显示
+                updateThemeBadge(currentTheme);
+            }
+        }
+        
+        // 带页面刷新的主题切换函数
+        async function switchGlobalThemeWithRefresh(theme) {
+            try {
+                // 显示加载状态
+                const themeName = themeConfig[theme].name;
+                showNotification(`正在切换到${themeName}模式并刷新页面...`, 'info');
+                
+                // 添加加载动画
+                const badge = document.getElementById('theme-badge');
+                if (badge) {
+                    badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                }
+                
+                // 更新后端
+                const response = await fetch('/users/theme/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ mode: theme })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('主题切换请求失败');
+                }
+                
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || '主题切换失败');
+                }
+                
+                // 主题切换成功，刷新页面
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500); // 延迟500ms让用户看到成功提示
+                
+            } catch (error) {
+                console.error('Failed to switch theme:', error);
+                showNotification('主题切换失败: ' + error.message, 'error');
+                
+                // 恢复徽章显示
+                updateThemeBadge(currentTheme);
+            }
+        }
+        
+        // 音乐相关函数
+        async function loadThemeMusic(theme) {
+            try {
+                const response = await fetch(`/tools/api/music/?mode=${theme}&action=random`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSong = data.data;
+                    const audio = document.getElementById('theme-music');
+                    const source = document.getElementById('music-source');
+                    
+                    source.src = currentSong.play_url;
+                    audio.load();
+                    
+                    // 更新音乐信息显示
+                    updateMusicInfo();
+                    
+                    // 如果之前正在播放，继续播放
+                    if (isMusicPlaying) {
+                        audio.play();
+                    }
+                }
+            } catch (error) {
+                console.error('加载主题音乐失败:', error);
+            }
+        }
+        
+        function toggleMusic() {
+            const audio = document.getElementById('theme-music');
+            
+            if (audio.paused) {
+                audio.play();
+                isMusicPlaying = true;
+                document.getElementById('music-play-icon').className = 'fas fa-pause';
+            } else {
+                audio.pause();
+                isMusicPlaying = false;
+                document.getElementById('music-play-icon').className = 'fas fa-play';
+            }
+        }
+        
+        async function nextSong() {
+            try {
+                const response = await fetch('/tools/api/next-song/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ mode: currentTheme })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentSong = data.next_song;
+                    const audio = document.getElementById('theme-music');
+                    const source = document.getElementById('music-source');
+                    
+                    source.src = currentSong.url;
+                    audio.load();
+                    
+                    // 更新音乐信息显示
+                    updateMusicInfo();
+                    
+                    // 如果之前正在播放，继续播放
+                    if (isMusicPlaying) {
+                        audio.play();
+                    }
+                    
+                    showNotification('已切换到下一首歌曲', 'success');
+                }
+            } catch (error) {
+                console.error('切换歌曲失败:', error);
+                showNotification('切换歌曲失败', 'error');
+            }
+        }
+        
+        function updateMusicInfo() {
+            if (currentSong) {
+                document.getElementById('music-title').textContent = currentSong.title || currentSong.name;
+                document.getElementById('music-artist').textContent = currentSong.artist;
+                
+                const coverImg = document.getElementById('music-cover-img');
+                if (currentSong.pic_url) {
+                    coverImg.src = currentSong.pic_url;
+                    coverImg.style.display = 'block';
+                } else {
+                    coverImg.style.display = 'none';
+                }
+            }
+        }
+        
+        function toggleMusicInfo() {
+            const musicInfo = document.getElementById('music-info');
+            musicInfoVisible = !musicInfoVisible;
+            
+            if (musicInfoVisible) {
+                musicInfo.style.display = 'block';
+                updateMusicInfo();
+            } else {
+                musicInfo.style.display = 'none';
+            }
+        }
+        
+        // 页面加载时初始化音乐
+        document.addEventListener('DOMContentLoaded', function() {
+            // 隐藏页面加载动画
+            setTimeout(() => {
+                const loader = document.getElementById('pageLoader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                    }, 500);
+                }
+            }, 1000);
+
+            // 初始化粒子效果
+            initParticles();
+
+            // 初始化鼠标跟随效果
+            initCursorFollower();
+
+            // 初始化音乐播放器
+            const audio = document.getElementById('theme-music');
+            
+            audio.addEventListener('play', function() {
+                isMusicPlaying = true;
+                document.getElementById('music-play-icon').className = 'fas fa-pause';
+            });
+            
+            audio.addEventListener('pause', function() {
+                isMusicPlaying = false;
+                document.getElementById('music-play-icon').className = 'fas fa-play';
+            });
+            
+            audio.addEventListener('ended', function() {
+                // 歌曲播放结束后自动下一首
+                nextSong();
+            });
+            
+            // 加载当前主题的音乐
+            loadThemeMusic(currentTheme);
+            
+                    // 初始化主题切换快捷键
+        initThemeShortcuts();
+        
+        // 初始化头像编辑功能
+        initAvatarEdit();
+        
+        // 初始化语言切换功能
+        initLanguageSwitch();
+    });
+
+        // 初始化粒子效果
+        function initParticles() {
+            const particlesContainer = document.getElementById('particles');
+            if (!particlesContainer) return;
+
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 初始化动态鼠标光标效果
+        function initCursorFollower() {
+            const cursor = document.getElementById('customCursor');
+            if (!cursor) return;
+
+            let mouseX = 0;
+            let mouseY = 0;
+            let cursorX = 0;
+            let cursorY = 0;
+            let isVisible = false;
+
+            // 鼠标进入页面时显示光标
+            document.addEventListener('mouseenter', () => {
+                isVisible = true;
+                cursor.style.opacity = '1';
+            });
+
+            // 鼠标离开页面时隐藏光标
+            document.addEventListener('mouseleave', () => {
+                isVisible = false;
+                cursor.style.opacity = '0';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                
+                if (!isVisible) {
+                    isVisible = true;
+                    cursor.style.opacity = '1';
+                }
+            });
+
+            document.addEventListener('mousedown', () => {
+                cursor.classList.add('active');
+            });
+
+            document.addEventListener('mouseup', () => {
+                cursor.classList.remove('active');
+            });
+
+            // 为链接和按钮添加悬停效果
+            const interactiveElements = document.querySelectorAll('a, button, .nav-link, .btn, .dropdown-item');
+            interactiveElements.forEach(element => {
+                element.addEventListener('mouseenter', () => {
+                    cursor.classList.add('hover');
+                });
+                
+                element.addEventListener('mouseleave', () => {
+                    cursor.classList.remove('hover');
+                });
+            });
+
+            // 平滑跟随动画
+            function animateCursor() {
+                if (isVisible) {
+                    cursorX += (mouseX - cursorX) * 0.15;
+                    cursorY += (mouseY - cursorY) * 0.15;
+                    
+                    cursor.style.left = cursorX + 'px';
+                    cursor.style.top = cursorY + 'px';
+                }
+                
+                requestAnimationFrame(animateCursor);
+            }
+            
+            animateCursor();
+        }
+        
+        // 主题切换快捷键
+        function initThemeShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // 只在非输入框中响应快捷键
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                // Ctrl/Cmd + 数字键切换主题
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+                    switch(e.key) {
+                        case '1':
+                            e.preventDefault();
+                            switchGlobalThemeWithRefresh('life');
+                            break;
+                        case '2':
+                            e.preventDefault();
+                            switchGlobalThemeWithRefresh('work');
+                            break;
+                        case '3':
+                            e.preventDefault();
+                            switchGlobalThemeWithRefresh('training');
+                            break;
+                        case '4':
+                            e.preventDefault();
+                            switchGlobalThemeWithRefresh('emo');
+                            break;
+                    }
+                }
+            });
+        }
+        
+        // 头像编辑功能
+        function editAvatar() {
+            // 创建文件输入元素
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadAvatar(file);
+                }
+            });
+            
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            document.body.removeChild(fileInput);
+        }
+        
+        // 上传头像
+        function uploadAvatar(file) {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+            
+            // 显示上传进度
+            showUploadProgress();
+            
+            fetch('/users/upload_avatar/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideUploadProgress();
+                if (data.success) {
+                    // 更新页面上的头像显示
+                    updateAvatarDisplay(data.avatar_url);
+                    showMessage('头像上传成功！', 'success');
+                } else {
+                    showMessage(data.message || '头像上传失败', 'error');
+                }
+            })
+            .catch(error => {
+                hideUploadProgress();
+                console.error('Upload error:', error);
+                showMessage('头像上传失败，请重试', 'error');
+            });
+        }
+        
+        // 显示上传进度
+        function showUploadProgress() {
+            const progress = document.createElement('div');
+            progress.id = 'upload-progress';
+            progress.innerHTML = `
+                <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                     background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 10px; 
+                     z-index: 9999; text-align: center;">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <div style="margin-top: 10px;">正在上传头像...</div>
+                </div>
+            `;
+            document.body.appendChild(progress);
+        }
+        
+        // 隐藏上传进度
+        function hideUploadProgress() {
+            const progress = document.getElementById('upload-progress');
+            if (progress) {
+                document.body.removeChild(progress);
+            }
+        }
+        
+        // 更新头像显示
+        function updateAvatarDisplay(avatarUrl) {
+            // 更新导航栏中的头像
+            const navAvatar = document.getElementById('user-avatar');
+            if (navAvatar) {
+                navAvatar.src = avatarUrl;
+            }
+            
+            // 更新所有带有user-avatar类的头像
+            const avatarElements = document.querySelectorAll('.user-avatar');
+            avatarElements.forEach(element => {
+                element.src = avatarUrl;
+            });
+            
+            // 更新个人资料页面的头像（如果存在）
+            const profileAvatar = document.getElementById('profile-avatar');
+            if (profileAvatar) {
+                profileAvatar.src = avatarUrl;
+            }
+        }
+        
+        // 显示消息提示
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed; top: 20px; right: 20px; 
+                background: ${type === 'success' ? '#28a745' : '#dc3545'}; 
+                color: white; padding: 15px 20px; border-radius: 5px; 
+                z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    document.body.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+        
+        // 初始化头像编辑功能
+        function initAvatarEdit() {
+            const editAvatarBtn = document.getElementById('edit-avatar-btn');
+            if (editAvatarBtn) {
+                editAvatarBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    editAvatar();
+                });
+            }
+        }
+        
+        // 初始化语言切换功能
+        function initLanguageSwitch() {
+            const languageSwitches = document.querySelectorAll('.language-switch');
+            
+            languageSwitches.forEach(switch_ => {
+                switch_.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const lang = this.getAttribute('data-lang');
+                    switchLanguage(lang);
+                });
+            });
+            
+            // 从localStorage加载保存的语言设置
+            const savedLang = localStorage.getItem('preferred-language') || 'zh';
+            switchLanguage(savedLang, false); // false表示不保存到localStorage
+        }
+        
+        // 语言切换函数
+        function switchLanguage(lang, saveToStorage = true) {
+            // 更新指示器显示
+            document.querySelectorAll('.language-indicator').forEach(indicator => {
+                indicator.style.display = 'none';
+            });
+            
+            if (lang === 'zh') {
+                document.getElementById('zh-indicator').style.display = 'inline';
+                translateToChinese();
+            } else if (lang === 'en') {
+                document.getElementById('en-indicator').style.display = 'inline';
+                translateToEnglish();
+            }
+            
+            // 保存语言设置到localStorage
+            if (saveToStorage) {
+                localStorage.setItem('preferred-language', lang);
+            }
+        }
+        
+        // 翻译为中文
+        function translateToChinese() {
+            const translations = {
+                // 导航栏
+                'QATOOLBOX': 'QATOOLBOX',
+                '专注技术，追求卓越': '专注技术，追求卓越',
+                '工具集': '工具集',
+                '我的建议': '我的建议',
+                '关于': '关于',
+                '管理控制台': '管理控制台',
+                '仪表板': '仪表板',
+                '公告管理': '公告管理',
+                '建议管理': '建议管理',
+                '反馈管理': '反馈管理',
+                '用户管理': '用户管理',
+                '用户监控': '用户监控',
+                '操作日志': '操作日志',
+                '编辑头像': '编辑头像',
+                '个人资料': '个人资料',
+                '界面模式': '界面模式',
+                '快捷键: Ctrl+1/2/3/4': '快捷键: Ctrl+1/2/3/4',
+                '生活模式': '生活模式',
+                '极客模式': '极客模式',
+                '狂暴模式': '狂暴模式',
+                'Emo模式': 'Emo模式',
+                '快速管理': '快速管理',
+                '登出': '登出',
+                '登录': '登录',
+                '注册': '注册',
+                
+                // 设置菜单
+                '音乐控制': '音乐控制',
+                '播放/暂停音乐': '播放/暂停音乐',
+                '下一首歌曲': '下一首歌曲',
+                '显示/隐藏音乐信息': '显示/隐藏音乐信息',
+                '系统设置': '系统设置',
+                '意见反馈': '意见反馈',
+                '语言设置': '语言设置',
+                
+                // 主页内容
+                '工具箱': '工具箱',
+                '君子生非异也，善假于物也。': '君子生非异也，善假于物也。',
+                '工欲善其事，必先利其器。': '工欲善其事，必先利其器。',
+                '学而时习之，不亦说乎。': '学而时习之，不亦说乎。',
+                '知之者不如好之者，好之者不如乐之者。': '知之者不如好之者，好之者不如乐之者。',
+                '进入工具集': '进入工具集'
+            };
+            
+            applyTranslations(translations);
+        }
+        
+        // 翻译为英文
+        function translateToEnglish() {
+            const translations = {
+                // 导航栏
+                'QATOOLBOX': 'QATOOLBOX',
+                '专注技术，追求卓越': 'Focus on Technology, Pursue Excellence',
+                '工具集': 'Tools',
+                '我的建议': 'My Suggestions',
+                '关于': 'About',
+                '管理控制台': 'Admin Console',
+                '仪表板': 'Dashboard',
+                '公告管理': 'Announcements',
+                '建议管理': 'Suggestions',
+                '反馈管理': 'Feedback',
+                '用户管理': 'User Management',
+                '用户监控': 'User Monitoring',
+                '操作日志': 'Operation Logs',
+                '编辑头像': 'Edit Avatar',
+                '个人资料': 'Profile',
+                '界面模式': 'Interface Mode',
+                '快捷键: Ctrl+1/2/3/4': 'Shortcuts: Ctrl+1/2/3/4',
+                '生活模式': 'Life Mode',
+                '极客模式': 'Geek Mode',
+                '狂暴模式': 'Rage Mode',
+                'Emo模式': 'Emo Mode',
+                '快速管理': 'Quick Admin',
+                '登出': 'Logout',
+                '登录': 'Login',
+                '注册': 'Register',
+                
+                // 设置菜单
+                '音乐控制': 'Music Control',
+                '播放/暂停音乐': 'Play/Pause Music',
+                '下一首歌曲': 'Next Song',
+                '显示/隐藏音乐信息': 'Show/Hide Music Info',
+                '系统设置': 'System Settings',
+                '意见反馈': 'Feedback',
+                '语言设置': 'Language Settings',
+                
+                // 主页内容
+                '工具箱': 'Toolbox',
+                '君子生非异也，善假于物也。': 'A gentleman is not different by nature, but good at using tools.',
+                '工欲善其事，必先利其器。': 'To do a good job, one must first sharpen one\'s tools.',
+                '学而时习之，不亦说乎。': 'Is it not pleasant to learn and practice what you have learned?',
+                '知之者不如好之者，好之者不如乐之者。': 'Those who know are not as good as those who love, and those who love are not as good as those who enjoy.',
+                '进入工具集': 'Enter Tools'
+            };
+            
+            applyTranslations(translations);
+        }
+        
+        // 应用翻译
+        function applyTranslations(translations) {
+            // 遍历所有文本节点
+            function walkTextNodes(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent.trim();
+                    if (translations[text]) {
+                        node.textContent = translations[text];
+                    }
+                } else {
+                    for (let child of node.childNodes) {
+                        walkTextNodes(child);
+                    }
+                }
+            }
+            
+            // 从body开始遍历
+            walkTextNodes(document.body);
+            
+            // 特殊处理一些元素
+            const elements = document.querySelectorAll('[data-translate]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[key]) {
+                    element.textContent = translations[key];
+                }
+            });
+        }
+        
+        // 获取CSRF Token
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {

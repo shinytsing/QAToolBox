@@ -1,0 +1,1321 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}健身中心 - 狂暴模式{% endblock %}
+
+{% block content %}
+<div class="fitness-container">
+  <!-- 语言切换按钮 -->
+  <div class="geek-language-switch-fixed">
+    <button class="geek-lang-btn-fixed active" data-lang="zh">中文</button>
+    <button class="geek-lang-btn-fixed" data-lang="en">English</button>
+  </div>
+
+  <!-- 快捷键提示 -->
+  <div class="theme-switch-hint">
+    <div class="hint-content">
+      <i class="fas fa-keyboard"></i>
+      <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
+      <button class="help-btn" id="showShortcutsHelp">
+        <i class="fas fa-question-circle"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 快捷键帮助面板 -->
+  <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
+    <div class="help-panel-header">
+      <h3><i class="fas fa-keyboard"></i> 快捷键帮助</h3>
+      <button class="close-help-btn" id="closeShortcutsHelp">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="help-panel-content">
+      <div class="shortcuts-section">
+        <h4><i class="fas fa-palette"></i> 主题切换</h4>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 1</span>
+          <span class="shortcut-desc">生活模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 2</span>
+          <span class="shortcut-desc">极客模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 3</span>
+          <span class="shortcut-desc">狂暴模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 4</span>
+          <span class="shortcut-desc">Emo模式</span>
+        </div>
+      </div>
+      <div class="shortcuts-section">
+        <h4><i class="fas fa-tools"></i> 工具跳转</h4>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + E</span>
+          <span class="shortcut-desc">情感日记</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + L</span>
+          <span class="shortcut-desc">生活日记</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + F</span>
+          <span class="shortcut-desc">健身中心</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + C</span>
+          <span class="shortcut-desc">创意写作</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + P</span>
+          <span class="shortcut-desc">PDF转换器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + R</span>
+          <span class="shortcut-desc">小红书生成器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + T</span>
+          <span class="shortcut-desc">测试用例生成器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + W</span>
+          <span class="shortcut-desc">网页爬虫</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + S</span>
+          <span class="shortcut-desc">自我分析</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + B</span>
+          <span class="shortcut-desc">故事板</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + M</span>
+          <span class="shortcut-desc">音乐疗愈</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + D</span>
+          <span class="shortcut-desc">冥想指南</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + A</span>
+          <span class="shortcut-desc">运势分析</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遮罩层 -->
+  <div class="help-overlay" id="helpOverlay"></div>
+
+  <!-- 头部区域 -->
+  <div class="fitness-header">
+    <div class="fitness-title">
+      <i class="fas fa-dumbbell"></i>
+      <span data-zh="健身中心" data-en="Fitness Center">健身中心</span>
+    </div>
+    <div class="fitness-subtitle" data-zh="突破极限，挑战自我" data-en="Break limits, challenge yourself">突破极限，挑战自我</div>
+  </div>
+
+  <!-- 主要功能区域 -->
+  <div class="fitness-main">
+    <div class="fitness-grid">
+      <!-- 训练计划 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-calendar-alt"></i>
+          <h3 data-zh="训练计划" data-en="Training Plan">训练计划</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="workout-plan">
+            <div class="plan-day active" data-day="1">
+              <span data-zh="周一" data-en="Mon">周一</span>
+              <span class="plan-type" data-zh="力量训练" data-en="Strength">力量训练</span>
+            </div>
+            <div class="plan-day" data-day="2">
+              <span data-zh="周二" data-en="Tue">周二</span>
+              <span class="plan-type" data-zh="有氧训练" data-en="Cardio">有氧训练</span>
+            </div>
+            <div class="plan-day" data-day="3">
+              <span data-zh="周三" data-en="Wed">周三</span>
+              <span class="plan-type" data-zh="休息日" data-en="Rest">休息日</span>
+            </div>
+            <div class="plan-day" data-day="4">
+              <span data-zh="周四" data-en="Thu">周四</span>
+              <span class="plan-type" data-zh="力量训练" data-en="Strength">力量训练</span>
+            </div>
+            <div class="plan-day" data-day="5">
+              <span data-zh="周五" data-en="Fri">周五</span>
+              <span class="plan-type" data-zh="有氧训练" data-en="Cardio">有氧训练</span>
+            </div>
+            <div class="plan-day" data-day="6">
+              <span data-zh="周六" data-en="Sat">周六</span>
+              <span class="plan-type" data-zh="高强度训练" data-en="HIIT">高强度训练</span>
+            </div>
+            <div class="plan-day" data-day="7">
+              <span data-zh="周日" data-en="Sun">周日</span>
+              <span class="plan-type" data-zh="休息日" data-en="Rest">休息日</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 训练计时器 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-stopwatch"></i>
+          <h3 data-zh="训练计时器" data-en="Workout Timer">训练计时器</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="timer-display">
+            <div class="timer-time" id="timerDisplay">00:00</div>
+            <div class="timer-controls">
+              <button class="timer-btn" id="startTimer" data-zh="开始" data-en="Start">开始</button>
+              <button class="timer-btn" id="pauseTimer" data-zh="暂停" data-en="Pause">暂停</button>
+              <button class="timer-btn" id="resetTimer" data-zh="重置" data-en="Reset">重置</button>
+            </div>
+            <div class="timer-presets">
+              <button class="preset-btn" data-time="300" data-zh="5分钟" data-en="5min">5分钟</button>
+              <button class="preset-btn" data-time="600" data-zh="10分钟" data-en="10min">10分钟</button>
+              <button class="preset-btn" data-time="1800" data-zh="30分钟" data-en="30min">30分钟</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 运动记录 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-chart-line"></i>
+          <h3 data-zh="运动记录" data-en="Workout Log">运动记录</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="workout-log">
+            <div class="log-entry">
+              <div class="log-date">2024-01-15</div>
+              <div class="log-workout" data-zh="力量训练" data-en="Strength Training">力量训练</div>
+              <div class="log-duration">45分钟</div>
+            </div>
+            <div class="log-entry">
+              <div class="log-date">2024-01-14</div>
+              <div class="log-workout" data-zh="有氧训练" data-en="Cardio">有氧训练</div>
+              <div class="log-duration">30分钟</div>
+            </div>
+            <div class="log-entry">
+              <div class="log-date">2024-01-13</div>
+              <div class="log-workout" data-zh="高强度训练" data-en="HIIT">高强度训练</div>
+              <div class="log-duration">20分钟</div>
+            </div>
+          </div>
+          <button class="add-log-btn" data-zh="添加记录" data-en="Add Log">添加记录</button>
+        </div>
+      </div>
+
+      <!-- 营养计算器 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-calculator"></i>
+          <h3 data-zh="营养计算器" data-en="Nutrition Calculator">营养计算器</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="nutrition-calc">
+            <div class="calc-input">
+              <label data-zh="体重 (kg)" data-en="Weight (kg)">体重 (kg)</label>
+              <input type="number" id="weight" placeholder="70">
+            </div>
+            <div class="calc-input">
+              <label data-zh="身高 (cm)" data-en="Height (cm)">身高 (cm)</label>
+              <input type="number" id="height" placeholder="175">
+            </div>
+            <div class="calc-input">
+              <label data-zh="年龄" data-en="Age">年龄</label>
+              <input type="number" id="age" placeholder="25">
+            </div>
+            <div class="calc-input">
+              <label data-zh="活动水平" data-en="Activity Level">活动水平</label>
+              <select id="activity">
+                <option value="1.2" data-zh="久坐不动" data-en="Sedentary">久坐不动</option>
+                <option value="1.375" data-zh="轻度活动" data-en="Lightly Active">轻度活动</option>
+                <option value="1.55" data-zh="中度活动" data-en="Moderately Active">中度活动</option>
+                <option value="1.725" data-zh="高度活动" data-en="Very Active">高度活动</option>
+                <option value="1.9" data-zh="极高活动" data-en="Extremely Active">极高活动</option>
+              </select>
+            </div>
+            <button class="calc-btn" id="calculateBMR" data-zh="计算基础代谢率" data-en="Calculate BMR">计算基础代谢率</button>
+            <div class="calc-result" id="bmrResult"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 运动视频 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-play-circle"></i>
+          <h3 data-zh="运动视频" data-en="Workout Videos">运动视频</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="video-grid">
+            <div class="video-item">
+              <div class="video-thumbnail">
+                <i class="fas fa-play"></i>
+              </div>
+              <div class="video-title" data-zh="高强度间歇训练" data-en="HIIT Workout">高强度间歇训练</div>
+              <div class="video-duration">15分钟</div>
+            </div>
+            <div class="video-item">
+              <div class="video-thumbnail">
+                <i class="fas fa-play"></i>
+              </div>
+              <div class="video-title" data-zh="力量训练基础" data-en="Strength Basics">力量训练基础</div>
+              <div class="video-duration">30分钟</div>
+            </div>
+            <div class="video-item">
+              <div class="video-thumbnail">
+                <i class="fas fa-play"></i>
+              </div>
+              <div class="video-title" data-zh="有氧运动" data-en="Cardio">有氧运动</div>
+              <div class="video-duration">20分钟</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 成就系统 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-trophy"></i>
+          <h3 data-zh="成就系统" data-en="Achievements">成就系统</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="achievements">
+            <div class="achievement unlocked">
+              <i class="fas fa-fire"></i>
+              <div class="achievement-info">
+                <div class="achievement-title" data-zh="初出茅庐" data-en="Beginner">初出茅庐</div>
+                <div class="achievement-desc" data-zh="完成第一次训练" data-en="Complete first workout">完成第一次训练</div>
+              </div>
+            </div>
+            <div class="achievement unlocked">
+              <i class="fas fa-dumbbell"></i>
+              <div class="achievement-info">
+                <div class="achievement-title" data-zh="力量觉醒" data-en="Power Awakened">力量觉醒</div>
+                <div class="achievement-desc" data-zh="完成10次力量训练" data-en="Complete 10 strength workouts">完成10次力量训练</div>
+              </div>
+            </div>
+            <div class="achievement locked">
+              <i class="fas fa-running"></i>
+              <div class="achievement-info">
+                <div class="achievement-title" data-zh="马拉松选手" data-en="Marathon Runner">马拉松选手</div>
+                <div class="achievement-desc" data-zh="累计跑步100公里" data-en="Run 100km total">累计跑步100公里</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.fitness-container {
+  min-height: 100vh;
+  background: var(--rage-bg, linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%));
+  padding: 20px;
+  position: relative;
+}
+
+.fitness-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 40px 0;
+}
+
+.fitness-title {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+}
+
+.fitness-title i {
+  font-size: 2.5rem;
+  animation: pulse 2s infinite;
+}
+
+.fitness-subtitle {
+  font-size: 1.2rem;
+  color: var(--rage-text-muted, #a8a8a8);
+  font-family: var(--rage-font-mono, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.fitness-main {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.fitness-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 30px;
+}
+
+.fitness-card {
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.9) 0%, rgba(22,33,62,0.9) 100%));
+  border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.fitness-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(255, 107, 53, 0.3);
+  border-color: var(--rage-primary, #ff6b35);
+}
+
+.fitness-card-header {
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  color: #000;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.fitness-card-header i {
+  font-size: 1.5rem;
+}
+
+.fitness-card-header h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.fitness-card-content {
+  padding: 25px;
+}
+
+/* 训练计划样式 */
+.workout-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-day {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.plan-day:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--rage-primary, #ff6b35);
+}
+
+.plan-day.active {
+  background: var(--rage-primary, #ff6b35);
+  color: #000;
+  font-weight: 600;
+}
+
+.plan-type {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* 计时器样式 */
+.timer-display {
+  text-align: center;
+}
+
+.timer-time {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--rage-primary, #ff6b35);
+  font-family: var(--rage-font-mono, 'JetBrains Mono', monospace);
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+.timer-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.timer-btn {
+  padding: 12px 24px;
+  border: 2px solid var(--rage-primary, #ff6b35);
+  background: transparent;
+  color: var(--rage-primary, #ff6b35);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: var(--rage-font-mono, 'JetBrains Mono', monospace);
+}
+
+.timer-btn:hover {
+  background: var(--rage-primary, #ff6b35);
+  color: #000;
+  transform: translateY(-2px);
+}
+
+.timer-presets {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--rage-text, #e6e6e6);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.preset-btn:hover {
+  background: var(--rage-primary, #ff6b35);
+  color: #000;
+}
+
+/* 运动记录样式 */
+.workout-log {
+  margin-bottom: 20px;
+}
+
+.log-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-date {
+  color: var(--rage-text-muted, #a8a8a8);
+  font-size: 0.9rem;
+}
+
+.log-workout {
+  color: var(--rage-primary, #ff6b35);
+  font-weight: 600;
+}
+
+.log-duration {
+  color: var(--rage-text, #e6e6e6);
+  font-size: 0.9rem;
+}
+
+.add-log-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--rage-primary, #ff6b35);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.add-log-btn:hover {
+  background: #e55a2b;
+  transform: translateY(-2px);
+}
+
+/* 营养计算器样式 */
+.nutrition-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.calc-input {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.calc-input label {
+  color: var(--rage-text, #e6e6e6);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.calc-input input,
+.calc-input select {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 6px;
+  color: var(--rage-text, #e6e6e6);
+  font-family: var(--rage-font-mono, 'JetBrains Mono', monospace);
+}
+
+.calc-input input:focus,
+.calc-input select:focus {
+  outline: none;
+  border-color: var(--rage-primary, #ff6b35);
+}
+
+.calc-btn {
+  padding: 12px;
+  background: var(--rage-primary, #ff6b35);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.calc-btn:hover {
+  background: #e55a2b;
+  transform: translateY(-2px);
+}
+
+.calc-result {
+  padding: 15px;
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  color: var(--rage-primary, #ff6b35);
+  font-weight: 600;
+  text-align: center;
+  display: none;
+}
+
+/* 视频网格样式 */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.video-item {
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.video-item:hover {
+  transform: translateY(-3px);
+}
+
+.video-thumbnail {
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.video-thumbnail i {
+  font-size: 2rem;
+  color: #000;
+  z-index: 2;
+}
+
+.video-thumbnail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.video-item:hover .video-thumbnail::before {
+  opacity: 1;
+}
+
+.video-title {
+  color: var(--rage-text, #e6e6e6);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.video-duration {
+  color: var(--rage-text-muted, #a8a8a8);
+  font-size: 0.8rem;
+}
+
+/* 成就系统样式 */
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.achievement {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.achievement.unlocked {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.achievement.locked {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0.5;
+}
+
+.achievement i {
+  font-size: 1.5rem;
+  color: var(--rage-primary, #ff6b35);
+}
+
+.achievement.locked i {
+  color: var(--rage-text-muted, #a8a8a8);
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-title {
+  color: var(--rage-text, #e6e6e6);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.achievement-desc {
+  color: var(--rage-text-muted, #a8a8a8);
+  font-size: 0.9rem;
+}
+
+/* 语言切换按钮样式 */
+.geek-language-switch-fixed {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 10px;
+  background: rgba(26,26,46,0.9);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.geek-lang-btn-fixed {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  background: rgba(255, 107, 53, 0.1);
+  color: #a8a8a8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+
+.geek-lang-btn-fixed:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
+
+.geek-lang-btn-fixed.active {
+  background: #ff6b35;
+  color: #000;
+  border-color: #ff6b35;
+}
+
+/* 动画 */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* 响应式设计 - 优化按钮显示 */
+@media (max-width: 768px) {
+  .fitness-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .fitness-title {
+    font-size: 2rem;
+  }
+  
+  .timer-time {
+    font-size: 2rem;
+  }
+  
+  .timer-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .timer-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .timer-presets {
+    gap: 6px;
+  }
+  
+  .preset-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .video-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .timer-controls {
+    gap: 6px;
+  }
+  
+  .timer-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .timer-presets {
+    gap: 4px;
+  }
+  
+  .preset-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .fitness-container {
+    padding: 10px;
+  }
+  
+  .fitness-card-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 360px) {
+  .timer-controls {
+    gap: 4px;
+  }
+  
+  .timer-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .timer-presets {
+    gap: 3px;
+  }
+  
+  .preset-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+  
+  .fitness-container {
+    padding: 5px;
+  }
+  
+  .fitness-card-content {
+    padding: 10px;
+  }
+}
+
+/* 快捷键提示样式 */
+.theme-switch-hint {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.theme-switch-hint:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.hint-content i {
+  font-size: 1rem;
+  color: #764ba2;
+}
+
+.hint-content span {
+  white-space: nowrap;
+}
+
+.help-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.help-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.1);
+}
+
+/* 快捷键帮助面板样式 */
+.shortcuts-help-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(255,255,255,0.98);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  z-index: 10000;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.shortcuts-help-panel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.help-panel-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.help-panel-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-help-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-help-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.help-panel-content {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shortcuts-section {
+  margin-bottom: 25px;
+}
+
+.shortcuts-section h4 {
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  padding-bottom: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.shortcut-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+  padding-left: 10px;
+  border-radius: 6px;
+}
+
+.shortcut-key {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 80px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.shortcut-desc {
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-left: 15px;
+}
+
+/* 遮罩层 */
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.help-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+</style>
+
+<script>
+// 快捷键支持
+document.addEventListener('keydown', function(e) {
+  // 只在非输入框中响应快捷键
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
+  // Ctrl/Cmd + 数字键切换主题
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+    switch(e.key) {
+      case '1':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case '2':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case '3':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case '4':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+    }
+  }
+  
+  // Alt + 字母键跳转到工具页面
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    switch(e.key.toLowerCase()) {
+      case 'e':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+      case 'l':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case 'f':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case 'c':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case 'p':
+        e.preventDefault();
+        window.location.href = '/tools/pdf-converter/';
+        break;
+      case 'r':
+        e.preventDefault();
+        window.location.href = '/tools/redbook-generator/';
+        break;
+      case 't':
+        e.preventDefault();
+        window.location.href = '/tools/test-case-generator/';
+        break;
+      case 'w':
+        e.preventDefault();
+        window.location.href = '/tools/web-crawler/';
+        break;
+      case 's':
+        e.preventDefault();
+        window.location.href = '/tools/self-analysis/';
+        break;
+      case 'b':
+        e.preventDefault();
+        window.location.href = '/tools/storyboard/';
+        break;
+      case 'm':
+        e.preventDefault();
+        window.location.href = '/tools/music-healing/';
+        break;
+      case 'd':
+        e.preventDefault();
+        window.location.href = '/tools/meditation-guide/';
+        break;
+      case 'a':
+        e.preventDefault();
+        window.location.href = '/tools/fortune-analyzer/';
+        break;
+    }
+  }
+});
+
+// 初始化快捷键帮助面板
+function initShortcutsHelp() {
+  const helpBtn = document.getElementById('showShortcutsHelp');
+  const helpPanel = document.getElementById('shortcutsHelpPanel');
+  const closeBtn = document.getElementById('closeShortcutsHelp');
+  const overlay = document.getElementById('helpOverlay');
+  
+  // 显示帮助面板
+  helpBtn.addEventListener('click', function() {
+    helpPanel.classList.add('show');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden'; // 防止背景滚动
+  });
+  
+  // 关闭帮助面板
+  function closeHelpPanel() {
+    helpPanel.classList.remove('show');
+    overlay.classList.remove('show');
+    document.body.style.overflow = ''; // 恢复滚动
+  }
+  
+  closeBtn.addEventListener('click', closeHelpPanel);
+  overlay.addEventListener('click', closeHelpPanel);
+  
+  // ESC键关闭帮助面板
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && helpPanel.classList.contains('show')) {
+      closeHelpPanel();
+    }
+  });
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+  initShortcutsHelp();
+});
+
+// 语言切换功能
+document.querySelectorAll('.geek-lang-btn-fixed').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const lang = this.getAttribute('data-lang');
+    switchLanguage(lang);
+    
+    // 更新按钮状态
+    document.querySelectorAll('.geek-lang-btn-fixed').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+function switchLanguage(lang) {
+  // 更新所有带有data-zh和data-en属性的元素
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+}
+
+// 训练计划交互
+document.querySelectorAll('.plan-day').forEach(day => {
+  day.addEventListener('click', function() {
+    document.querySelectorAll('.plan-day').forEach(d => d.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// 计时器功能
+let timerInterval;
+let timeLeft = 0;
+let isRunning = false;
+
+document.getElementById('startTimer').addEventListener('click', function() {
+  if (!isRunning && timeLeft > 0) {
+    isRunning = true;
+    timerInterval = setInterval(updateTimer, 1000);
+    this.textContent = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Pause' : '暂停';
+  }
+});
+
+document.getElementById('pauseTimer').addEventListener('click', function() {
+  if (isRunning) {
+    isRunning = false;
+    clearInterval(timerInterval);
+    document.getElementById('startTimer').textContent = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Resume' : '继续';
+  }
+});
+
+document.getElementById('resetTimer').addEventListener('click', function() {
+  isRunning = false;
+  clearInterval(timerInterval);
+  timeLeft = 0;
+  updateTimerDisplay();
+  document.getElementById('startTimer').textContent = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Start' : '开始';
+});
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    timeLeft = parseInt(this.getAttribute('data-time'));
+    updateTimerDisplay();
+  });
+});
+
+function updateTimer() {
+  if (timeLeft > 0) {
+    timeLeft--;
+    updateTimerDisplay();
+  } else {
+    isRunning = false;
+    clearInterval(timerInterval);
+    alert(document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Workout completed!' : '训练完成！');
+  }
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  document.getElementById('timerDisplay').textContent = 
+    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// 营养计算器功能
+document.getElementById('calculateBMR').addEventListener('click', function() {
+  const weight = parseFloat(document.getElementById('weight').value);
+  const height = parseFloat(document.getElementById('height').value);
+  const age = parseFloat(document.getElementById('age').value);
+  const activity = parseFloat(document.getElementById('activity').value);
+  
+  if (weight && height && age) {
+    // 使用Mifflin-St Jeor公式计算BMR
+    const bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+    const tdee = bmr * activity;
+    
+    const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
+    const resultText = currentLang === 'en' 
+      ? `BMR: ${Math.round(bmr)} kcal/day\nTDEE: ${Math.round(tdee)} kcal/day`
+      : `基础代谢率: ${Math.round(bmr)} 千卡/天\n每日总消耗: ${Math.round(tdee)} 千卡/天`;
+    
+    document.getElementById('bmrResult').textContent = resultText;
+    document.getElementById('bmrResult').style.display = 'block';
+  }
+});
+
+// 视频点击事件
+document.querySelectorAll('.video-item').forEach(item => {
+  item.addEventListener('click', function() {
+    const title = this.querySelector('.video-title').textContent;
+    const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
+    const message = currentLang === 'en' 
+      ? `Starting video: ${title}` 
+      : `开始播放视频: ${title}`;
+    alert(message);
+  });
+});
+
+// 添加记录按钮
+document.querySelector('.add-log-btn').addEventListener('click', function() {
+  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
+  const message = currentLang === 'en' 
+    ? 'Add new workout log feature coming soon!' 
+    : '添加运动记录功能即将推出！';
+  alert(message);
+});
+</script>
+{% endblock %} 

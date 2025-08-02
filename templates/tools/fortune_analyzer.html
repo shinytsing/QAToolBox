@@ -1,0 +1,953 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}命运解析器 - QATOOLBOX{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-item">
+    <a href="{% url 'tools' %}" class="breadcrumb-link geek-breadcrumb-link">
+        <i class="fas fa-wrench"></i>
+        工具集
+    </a>
+</div>
+<div class="breadcrumb-item">
+    <a href="{% url 'fortune_analyzer' %}" class="breadcrumb-link geek-breadcrumb-link">
+        <i class="fas fa-crystal-ball"></i>
+        命运解析器
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="fortune-container">
+    <!-- 头部区域 -->
+    <div class="fortune-header">
+        <div class="fortune-title-section">
+            <div class="fortune-icon">
+                <i class="fas fa-crystal-ball"></i>
+            </div>
+            <div class="fortune-title-content">
+                <h1 class="fortune-main-title">命运解析器</h1>
+                <p class="fortune-subtitle">探索命运的奥秘，解读人生的密码</p>
+            </div>
+        </div>
+        <div class="fortune-decoration">
+            <div class="floating-stars">
+                <span class="star">⭐</span>
+                <span class="star">✨</span>
+                <span class="star">🌟</span>
+                <span class="star">💫</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="fortune-main-content">
+        <!-- 输入表单区域 -->
+        <div class="fortune-form-section" id="formSection">
+            <div class="form-card">
+                <div class="form-header">
+                    <h3><i class="fas fa-user-edit"></i> 个人信息</h3>
+                    <p>请输入您的基本信息，让我们为您解析命运</p>
+                </div>
+                
+                <div class="form-content">
+                    <div class="input-group">
+                        <div class="input-field">
+                            <label for="userName">
+                                <i class="fas fa-user"></i>
+                                姓名
+                            </label>
+                            <input type="text" id="userName" class="modern-input" placeholder="请输入您的姓名">
+                            <div class="input-border"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-field">
+                            <label for="birthDate">
+                                <i class="fas fa-calendar-alt"></i>
+                                出生日期
+                            </label>
+                            <input type="date" id="birthDate" class="modern-input">
+                            <div class="input-border"></div>
+                        </div>
+                        
+                        <div class="input-field">
+                            <label for="birthTime">
+                                <i class="fas fa-clock"></i>
+                                出生时间
+                            </label>
+                            <input type="time" id="birthTime" class="modern-input">
+                            <div class="input-border"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-field">
+                            <label for="userQuestion">
+                                <i class="fas fa-question-circle"></i>
+                                想问的问题（可选）
+                            </label>
+                            <textarea id="userQuestion" class="modern-textarea" placeholder="比如：我的事业发展方向、感情运势等..."></textarea>
+                            <div class="input-border"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="analyze-btn" onclick="analyzeFortune()">
+                            <i class="fas fa-magic"></i>
+                            <span>开始解析命运</span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="fortune-result-section" id="resultSection" style="display: none;">
+            <div class="result-card">
+                <div class="result-header">
+                    <h3><i class="fas fa-star"></i> 命运解析结果</h3>
+                    <p>基于您的信息，我们为您解析了以下内容</p>
+                </div>
+                
+                <div class="result-content" id="resultContent">
+                    <!-- 结果内容将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="result-actions">
+                    <button class="secondary-btn" onclick="resetForm()">
+                        <i class="fas fa-redo"></i>
+                        重新解析
+                    </button>
+                    <button class="primary-btn" onclick="shareResult()">
+                        <i class="fas fa-share-alt"></i>
+                        分享结果
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="crystal-ball">
+                <div class="ball-inner"></div>
+            </div>
+            <p>正在解析您的命运...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isAnalyzing = false;
+
+function analyzeFortune() {
+    if (isAnalyzing) return;
+    
+    const name = document.getElementById('userName').value.trim();
+    const birthDate = document.getElementById('birthDate').value;
+    const birthTime = document.getElementById('birthTime').value;
+    const question = document.getElementById('userQuestion').value.trim();
+    
+    if (!name || !birthDate) {
+        showNotification('请填写姓名和出生日期', 'warning');
+        return;
+    }
+    
+    isAnalyzing = true;
+    showLoading();
+    
+    // 模拟解析过程
+    setTimeout(() => {
+        hideLoading();
+        generateFortuneResult(name, birthDate, birthTime, question);
+        isAnalyzing = false;
+    }, 3000);
+}
+
+function generateFortuneResult(name, birthDate, birthTime, question) {
+    const fortunes = {
+        overall: [
+            '您是一个充满智慧的人，未来将会有重大突破',
+            '您的性格温和，人际关系良好，事业有成',
+            '您具有创新精神，适合从事技术或创意工作',
+            '您的财运亨通，但需要谨慎投资',
+            '您的人生充满机遇，要善于把握机会',
+            '您的学习能力很强，适合继续深造',
+            '您具有领导才能，未来可能成为团队核心',
+            '您的直觉敏锐，相信自己的判断很重要'
+        ],
+        career: [
+            '您的事业运势强劲，适合在技术领域发展',
+            '您的沟通能力出色，适合销售或管理岗位',
+            '您的创意丰富，建议从事设计或艺术工作',
+            '您的分析能力强，适合金融或数据分析',
+            '您的执行力强，适合项目管理或运营',
+            '您的学习能力强，建议继续深造提升',
+            '您的人际关系好，适合团队协作工作',
+            '您的抗压能力强，适合高压工作环境'
+        ],
+        love: [
+            '您的感情生活丰富多彩，但需要耐心等待真爱',
+            '您的桃花运旺盛，今年可能遇到心仪对象',
+            '您的感情稳定，与伴侣关系和谐',
+            '您需要多关注伴侣的感受，增进沟通',
+            '您的魅力值很高，容易吸引异性注意',
+            '您的感情经历丰富，有助于找到真爱',
+            '您的专一程度高，是理想的伴侣人选',
+            '您的感情运势上升，单身者有望脱单'
+        ],
+        health: [
+            '您的健康状况良好，建议多运动保持活力',
+            '您需要注意作息规律，保证充足睡眠',
+            '您的体质不错，但需要加强锻炼',
+            '您的心态积极，有助于身心健康',
+            '您的工作压力较大，需要适当放松',
+            '您的饮食习惯良好，继续保持',
+            '您的精神状态佳，适合挑战新事物',
+            '您需要多关注心理健康，保持乐观'
+        ],
+        wealth: [
+            '您的财运亨通，但需要谨慎投资',
+            '您的理财能力不错，建议学习投资知识',
+            '您的收入稳定，适合稳健理财',
+            '您的偏财运好，可能有意外收获',
+            '您需要控制消费，合理规划支出',
+            '您的投资眼光独到，适合长期投资',
+            '您的财富积累能力强，未来可期',
+            '您需要避免冲动消费，理性理财'
+        ]
+    };
+    
+    const getRandomFortune = (category) => {
+        const items = fortunes[category];
+        return items[Math.floor(Math.random() * items.length)];
+    };
+    
+    const resultContent = document.getElementById('resultContent');
+    resultContent.innerHTML = `
+        <div class="fortune-grid">
+            <div class="fortune-card overall">
+                <div class="card-header">
+                    <i class="fas fa-star"></i>
+                    <h4>总体运势</h4>
+                </div>
+                <div class="card-content">
+                    <p>${getRandomFortune('overall')}</p>
+                </div>
+                <div class="card-footer">
+                    <span class="fortune-score">运势指数: ${Math.floor(Math.random() * 30) + 70}%</span>
+                </div>
+            </div>
+            
+            <div class="fortune-card career">
+                <div class="card-header">
+                    <i class="fas fa-briefcase"></i>
+                    <h4>事业运势</h4>
+                </div>
+                <div class="card-content">
+                    <p>${getRandomFortune('career')}</p>
+                </div>
+                <div class="card-footer">
+                    <span class="fortune-score">运势指数: ${Math.floor(Math.random() * 30) + 70}%</span>
+                </div>
+            </div>
+            
+            <div class="fortune-card love">
+                <div class="card-header">
+                    <i class="fas fa-heart"></i>
+                    <h4>感情运势</h4>
+                </div>
+                <div class="card-content">
+                    <p>${getRandomFortune('love')}</p>
+                </div>
+                <div class="card-footer">
+                    <span class="fortune-score">运势指数: ${Math.floor(Math.random() * 30) + 70}%</span>
+                </div>
+            </div>
+            
+            <div class="fortune-card health">
+                <div class="card-header">
+                    <i class="fas fa-heartbeat"></i>
+                    <h4>健康运势</h4>
+                </div>
+                <div class="card-content">
+                    <p>${getRandomFortune('health')}</p>
+                </div>
+                <div class="card-footer">
+                    <span class="fortune-score">运势指数: ${Math.floor(Math.random() * 30) + 70}%</span>
+                </div>
+            </div>
+            
+            <div class="fortune-card wealth">
+                <div class="card-header">
+                    <i class="fas fa-coins"></i>
+                    <h4>财运分析</h4>
+                </div>
+                <div class="card-content">
+                    <p>${getRandomFortune('wealth')}</p>
+                </div>
+                <div class="card-footer">
+                    <span class="fortune-score">运势指数: ${Math.floor(Math.random() * 30) + 70}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="fortune-summary">
+            <div class="summary-header">
+                <i class="fas fa-lightbulb"></i>
+                <h4>命运建议</h4>
+            </div>
+            <div class="summary-content">
+                <p>亲爱的 <strong>${name}</strong>，根据您的出生信息分析，建议您：</p>
+                <ul>
+                    <li>保持积极乐观的心态，相信自己的能力</li>
+                    <li>多关注身边的人际关系，珍惜友情和亲情</li>
+                    <li>在事业上勇于尝试新事物，发挥自己的优势</li>
+                    <li>注意身体健康，保持规律的生活作息</li>
+                    <li>合理规划财务，避免不必要的支出</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    // 显示结果区域
+    document.getElementById('resultSection').style.display = 'block';
+    
+    // 滚动到结果区域
+    setTimeout(() => {
+        document.getElementById('resultSection').scrollIntoView({ 
+            behavior: 'smooth' 
+        });
+    }, 100);
+    
+    showNotification('命运解析完成！', 'success');
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function resetForm() {
+    document.getElementById('userName').value = '';
+    document.getElementById('birthDate').value = '';
+    document.getElementById('birthTime').value = '';
+    document.getElementById('userQuestion').value = '';
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('formSection').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+}
+
+function shareResult() {
+    if (navigator.share) {
+        navigator.share({
+            title: '我的命运解析结果',
+            text: '来看看我的命运解析结果吧！',
+            url: window.location.href
+        });
+    } else {
+        // 复制链接到剪贴板
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('链接已复制到剪贴板', 'success');
+        });
+    }
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加输入框焦点效果
+    const inputs = document.querySelectorAll('.modern-input, .modern-textarea');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+/* 主容器样式 */
+.fortune-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+/* 头部区域样式 */
+.fortune-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.fortune-title-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.fortune-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    animation: float 3s ease-in-out infinite;
+}
+
+.fortune-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.fortune-main-title {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.fortune-subtitle {
+    font-size: 1.2rem;
+    color: var(--geek-text-muted);
+    margin: 0.5rem 0 0 0;
+}
+
+.fortune-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.floating-stars {
+    position: relative;
+    height: 100%;
+}
+
+.star {
+    position: absolute;
+    font-size: 1.5rem;
+    animation: twinkle 2s ease-in-out infinite;
+    opacity: 0.6;
+}
+
+.star:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+.star:nth-child(2) { top: 40%; right: 15%; animation-delay: 0.5s; }
+.star:nth-child(3) { top: 60%; left: 20%; animation-delay: 1s; }
+.star:nth-child(4) { top: 80%; right: 10%; animation-delay: 1.5s; }
+
+/* 主要内容区域 */
+.fortune-main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* 表单区域样式 */
+.fortune-form-section {
+    width: 100%;
+}
+
+.form-card {
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.form-header h3 {
+    font-size: 1.8rem;
+    color: var(--geek-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.form-header p {
+    color: var(--geek-text-muted);
+    font-size: 1rem;
+}
+
+.form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.input-group {
+    width: 100%;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.input-field {
+    position: relative;
+    width: 100%;
+}
+
+.input-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--geek-text);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.modern-input,
+.modern-textarea {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    border: 2px solid var(--geek-border);
+    border-radius: 12px;
+    background: var(--geek-bg);
+    color: var(--geek-text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.modern-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.modern-input:focus,
+.modern-textarea:focus {
+    border-color: var(--geek-primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.input-border {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.input-field.focused .input-border {
+    width: 100%;
+}
+
+/* 按钮样式 */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.analyze-btn {
+    position: relative;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.analyze-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.analyze-btn:active {
+    transform: translateY(-1px);
+}
+
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.analyze-btn:hover .btn-shine {
+    left: 100%;
+}
+
+/* 结果区域样式 */
+.fortune-result-section {
+    width: 100%;
+}
+
+.result-card {
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.result-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.result-header h3 {
+    font-size: 1.8rem;
+    color: var(--geek-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.result-header p {
+    color: var(--geek-text-muted);
+    font-size: 1rem;
+}
+
+/* 命运卡片网格 */
+.fortune-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.fortune-card {
+    background: var(--geek-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.fortune-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+.fortune-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.card-header i {
+    font-size: 1.2rem;
+    color: var(--geek-primary);
+}
+
+.card-header h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--geek-text);
+    margin: 0;
+}
+
+.card-content p {
+    color: var(--geek-text-muted);
+    line-height: 1.6;
+    margin: 0 0 1rem 0;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.fortune-score {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* 命运总结 */
+.fortune-summary {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid var(--geek-border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.summary-header i {
+    font-size: 1.2rem;
+    color: var(--geek-primary);
+}
+
+.summary-header h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--geek-text);
+    margin: 0;
+}
+
+.summary-content p {
+    color: var(--geek-text-muted);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.summary-content ul {
+    color: var(--geek-text-muted);
+    line-height: 1.8;
+    padding-left: 1.5rem;
+}
+
+.summary-content li {
+    margin-bottom: 0.5rem;
+}
+
+/* 结果操作按钮 */
+.result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.primary-btn,
+.secondary-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.secondary-btn {
+    background: var(--geek-bg);
+    color: var(--geek-text);
+    border: 2px solid var(--geek-border);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover {
+    transform: translateY(-2px);
+}
+
+.primary-btn:hover {
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* 加载动画 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.crystal-ball {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    position: relative;
+}
+
+.ball-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+    position: relative;
+}
+
+.ball-inner::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    animation: float 3s ease-in-out infinite;
+}
+
+.loading-content p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* 动画定义 */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .fortune-container {
+        padding: 1rem;
+    }
+    
+    .fortune-main-title {
+        font-size: 2rem;
+    }
+    
+    .fortune-title-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .fortune-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .fortune-icon i {
+        font-size: 2rem;
+    }
+    
+    .input-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .fortune-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .form-card,
+    .result-card {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .fortune-main-title {
+        font-size: 1.5rem;
+    }
+    
+    .fortune-subtitle {
+        font-size: 1rem;
+    }
+    
+    .form-card,
+    .result-card {
+        padding: 1rem;
+    }
+    
+    .analyze-btn {
+        padding: 0.8rem 2rem;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %} 

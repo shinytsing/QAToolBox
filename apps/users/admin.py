@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, UserRole, UserStatus, UserMembership, UserActionLog
+from .models import Profile, UserRole, UserStatus, UserMembership, UserActionLog, UserTheme
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
@@ -66,6 +66,26 @@ class UserActionLogAdmin(admin.ModelAdmin):
         }),
         ('时间信息', {
             'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+
+@admin.register(UserTheme)
+class UserThemeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'mode', 'theme_style', 'switch_count', 'last_switch_time', 'created_at', 'updated_at')
+    list_filter = ('mode', 'theme_style', 'created_at', 'updated_at')
+    search_fields = ('user__username', 'user__email')
+    readonly_fields = ('created_at', 'updated_at', 'switch_count', 'last_switch_time')
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'mode', 'theme_style')
+        }),
+        ('使用统计', {
+            'fields': ('switch_count', 'last_switch_time'),
+            'classes': ('collapse',)
+        }),
+        ('时间信息', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

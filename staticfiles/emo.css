@@ -1,0 +1,372 @@
+/* EMO模式 - 柔和情感风格 */
+
+:root {
+  /* EMO模式色彩系统 */
+  --emo-bg: #f5f0ff;
+  --emo-card-bg: #ffffff;
+  --emo-primary: #9c27b0;
+  --emo-accent: #e91e63;
+  --emo-secondary: #ff9800;
+  --emo-text: #2c1810;
+  --emo-text-muted: #8e6c88;
+  --emo-border: rgba(156, 39, 176, 0.15);
+  --emo-shadow: 0 6px 24px rgba(156, 39, 176, 0.1);
+  --emo-shadow-hover: 0 10px 40px rgba(156, 39, 176, 0.2);
+  --emo-radius: 16px;
+  --emo-radius-lg: 24px;
+  --emo-font: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  --emo-gradient: linear-gradient(135deg, #9c27b0 0%, #e91e63 50%, #ff9800 100%);
+  --emo-gradient-card: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 240, 255, 0.95) 100%);
+}
+
+body.emo-theme {
+  background: var(--emo-bg);
+  color: var(--emo-text);
+  font-family: var(--emo-font);
+  transition: all 0.4s ease;
+}
+
+/* EMO模式背景动画 */
+body.emo-theme::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 30% 70%, rgba(156, 39, 176, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 70% 30%, rgba(233, 30, 99, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 152, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: emoFloat 15s ease-in-out infinite;
+}
+
+@keyframes emoFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+    opacity: 0.8;
+  }
+  33% { 
+    transform: translateY(-15px) scale(1.02);
+    opacity: 1;
+  }
+  66% { 
+    transform: translateY(10px) scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+/* EMO模式卡片样式 */
+.emo-card {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+  transition: all 0.4s ease;
+  padding: 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.emo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--emo-gradient);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.emo-card:hover::before {
+  transform: scaleX(1);
+}
+
+.emo-card:hover {
+  box-shadow: var(--emo-shadow-hover);
+  transform: translateY(-6px);
+  border-color: var(--emo-primary);
+}
+
+/* EMO模式标题样式 */
+.emo-title {
+  color: var(--emo-primary);
+  font-size: 2.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  background: var(--emo-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: emoGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes emoGlow {
+  from { 
+    filter: drop-shadow(0 0 10px rgba(156, 39, 176, 0.3));
+  }
+  to { 
+    filter: drop-shadow(0 0 20px rgba(156, 39, 176, 0.6));
+  }
+}
+
+.emo-subtitle {
+  color: var(--emo-text-muted);
+  font-size: 1.3rem;
+  text-align: center;
+  margin-bottom: 2.5rem;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* EMO模式工具网格 */
+.emo-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 28px;
+  margin-top: 2.5rem;
+}
+
+.emo-tool-card {
+  background: var(--emo-card-bg);
+  border: 2px solid var(--emo-border);
+  border-radius: var(--emo-radius-lg);
+  padding: 28px;
+  text-align: center;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.emo-tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(156, 39, 176, 0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.emo-tool-card:hover::before {
+  left: 100%;
+}
+
+.emo-tool-card:hover {
+  border-color: var(--emo-primary);
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 20px 60px rgba(156, 39, 176, 0.15);
+}
+
+.emo-tool-icon {
+  font-size: 3.5rem;
+  color: var(--emo-primary);
+  margin-bottom: 1.5rem;
+  animation: emoHeartbeat 2s ease-in-out infinite;
+}
+
+@keyframes emoHeartbeat {
+  0%, 100% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.1);
+  }
+}
+
+.emo-tool-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--emo-text);
+  margin-bottom: 0.8rem;
+  font-style: italic;
+}
+
+.emo-tool-description {
+  color: var(--emo-text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.7;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* EMO模式按钮样式 */
+.emo-btn {
+  background: var(--emo-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--emo-radius);
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-style: italic;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(138, 43, 226, 0.2);
+}
+
+.emo-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.emo-btn:hover::before {
+  left: 100%;
+}
+
+.emo-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(138, 43, 226, 0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.emo-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.emo-btn-secondary {
+  background: transparent;
+  color: var(--emo-primary);
+  border: 2px solid var(--emo-primary);
+  box-shadow: 0 4px 15px rgba(138, 43, 226, 0.1);
+}
+
+.emo-btn-secondary:hover {
+  background: var(--emo-primary);
+  color: white;
+  box-shadow: 0 8px 25px rgba(138, 43, 226, 0.3);
+}
+
+/* EMO模式导航栏 */
+.emo-navbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--emo-border);
+}
+
+.emo-navbar .nav-link {
+  color: var(--emo-text);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-style: italic;
+}
+
+.emo-navbar .nav-link:hover {
+  color: var(--emo-primary);
+  transform: translateY(-2px);
+}
+
+/* EMO模式用户菜单 */
+.emo-user-menu {
+  background: var(--emo-card-bg);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  box-shadow: var(--emo-shadow);
+}
+
+.emo-mode-indicator {
+  background: var(--emo-gradient);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 8px;
+  font-style: italic;
+  animation: emoHeartbeat 2s ease-in-out infinite;
+}
+
+/* EMO模式特殊效果 */
+.emo-sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--emo-primary);
+  border-radius: 50%;
+  animation: emoSparkle 3s ease-in-out infinite;
+}
+
+@keyframes emoSparkle {
+  0%, 100% { 
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+/* EMO模式响应式设计 */
+@media (max-width: 768px) {
+  .emo-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .emo-title {
+    font-size: 2.2rem;
+  }
+  
+  .emo-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .emo-tool-icon {
+    font-size: 2.8rem;
+  }
+  
+  .emo-card {
+    padding: 20px;
+  }
+  
+  .emo-tool-card {
+    padding: 24px;
+  }
+}
+
+/* EMO模式切换按钮 */
+.emo-mode-btn {
+  background: var(--emo-card-bg);
+  border: 1px solid var(--emo-primary);
+  color: var(--emo-primary);
+  transition: all 0.3s ease;
+}
+
+.emo-mode-btn:hover {
+  border-color: var(--emo-accent);
+  background: var(--emo-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+}
+
+.emo-mode-btn.active {
+  border-color: var(--emo-accent);
+  background: var(--emo-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(138, 43, 226, 0.5);
+  animation: emoGlow 1s ease-in-out infinite;
+} 

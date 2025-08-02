@@ -1,0 +1,1142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}生活日记 - 生活模式{% endblock %}
+
+{% block content %}
+<div class="life-diary-container">
+  <!-- 语言切换按钮 -->
+  <div class="geek-language-switch-fixed">
+    <button class="geek-lang-btn-fixed active" data-lang="zh">中文</button>
+    <button class="geek-lang-btn-fixed" data-lang="en">English</button>
+  </div>
+
+  <!-- 快捷键提示 -->
+  <div class="theme-switch-hint">
+    <div class="hint-content">
+      <i class="fas fa-keyboard"></i>
+      <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
+      <button class="help-btn" id="showShortcutsHelp">
+        <i class="fas fa-question-circle"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 快捷键帮助面板 -->
+  <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
+    <div class="help-panel-header">
+      <h3><i class="fas fa-keyboard"></i> 快捷键帮助</h3>
+      <button class="close-help-btn" id="closeShortcutsHelp">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="help-panel-content">
+      <div class="shortcuts-section">
+        <h4><i class="fas fa-palette"></i> 主题切换</h4>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 1</span>
+          <span class="shortcut-desc">生活模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 2</span>
+          <span class="shortcut-desc">极客模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 3</span>
+          <span class="shortcut-desc">狂暴模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 4</span>
+          <span class="shortcut-desc">Emo模式</span>
+        </div>
+      </div>
+      <div class="shortcuts-section">
+        <h4><i class="fas fa-tools"></i> 工具跳转</h4>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + E</span>
+          <span class="shortcut-desc">情感日记</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + L</span>
+          <span class="shortcut-desc">生活日记</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + F</span>
+          <span class="shortcut-desc">健身中心</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + C</span>
+          <span class="shortcut-desc">创意写作</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + P</span>
+          <span class="shortcut-desc">PDF转换器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + R</span>
+          <span class="shortcut-desc">小红书生成器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + T</span>
+          <span class="shortcut-desc">测试用例生成器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + W</span>
+          <span class="shortcut-desc">网页爬虫</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + S</span>
+          <span class="shortcut-desc">自我分析</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + B</span>
+          <span class="shortcut-desc">故事板</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + M</span>
+          <span class="shortcut-desc">音乐疗愈</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + D</span>
+          <span class="shortcut-desc">冥想指南</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + A</span>
+          <span class="shortcut-desc">运势分析</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遮罩层 -->
+  <div class="help-overlay" id="helpOverlay"></div>
+
+  <!-- 头部区域 -->
+  <div class="life-diary-header">
+    <div class="life-diary-title">
+      <i class="fas fa-book-open"></i>
+      <span data-zh="生活日记" data-en="Life Diary">生活日记</span>
+    </div>
+    <div class="life-diary-subtitle" data-zh="记录生活的美好时光" data-en="Record the beautiful moments of life">记录生活的美好时光</div>
+  </div>
+
+  <!-- 主要功能区域 -->
+  <div class="life-diary-main">
+    <div class="life-diary-grid">
+      <!-- 今日心情 -->
+      <div class="life-diary-card">
+        <div class="life-diary-card-header">
+          <i class="fas fa-heart"></i>
+          <h3 data-zh="今日心情" data-en="Today's Mood">今日心情</h3>
+        </div>
+        <div class="life-diary-card-content">
+          <div class="mood-selector">
+            <div class="mood-option" data-mood="happy">
+              <i class="fas fa-laugh"></i>
+              <span data-zh="开心" data-en="Happy">开心</span>
+            </div>
+            <div class="mood-option" data-mood="calm">
+              <i class="fas fa-smile"></i>
+              <span data-zh="平静" data-en="Calm">平静</span>
+            </div>
+            <div class="mood-option" data-mood="excited">
+              <i class="fas fa-star"></i>
+              <span data-zh="兴奋" data-en="Excited">兴奋</span>
+            </div>
+            <div class="mood-option" data-mood="sad">
+              <i class="fas fa-frown"></i>
+              <span data-zh="难过" data-en="Sad">难过</span>
+            </div>
+            <div class="mood-option" data-mood="angry">
+              <i class="fas fa-angry"></i>
+              <span data-zh="生气" data-en="Angry">生气</span>
+            </div>
+          </div>
+          <div class="mood-note">
+            <textarea id="moodNote" placeholder="记录一下今天的心情..." data-zh="记录一下今天的心情..." data-en="Record today's mood..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 生活记录 -->
+      <div class="life-diary-card">
+        <div class="life-diary-card-header">
+          <i class="fas fa-pen-fancy"></i>
+          <h3 data-zh="生活记录" data-en="Life Record">生活记录</h3>
+        </div>
+        <div class="life-diary-card-content">
+          <div class="diary-form">
+            <div class="form-group">
+              <label data-zh="标题" data-en="Title">标题</label>
+              <input type="text" id="diaryTitle" placeholder="给今天起个标题..." data-zh="给今天起个标题..." data-en="Give today a title...">
+            </div>
+            <div class="form-group">
+              <label data-zh="内容" data-en="Content">内容</label>
+              <textarea id="diaryContent" rows="6" placeholder="记录今天发生的有趣事情..." data-zh="记录今天发生的有趣事情..." data-en="Record interesting things that happened today..."></textarea>
+            </div>
+            <button class="save-diary-btn" id="saveDiary" data-zh="保存日记" data-en="Save Diary">保存日记</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 生活统计 -->
+      <div class="life-diary-card">
+        <div class="life-diary-card-header">
+          <i class="fas fa-chart-pie"></i>
+          <h3 data-zh="生活统计" data-en="Life Statistics">生活统计</h3>
+        </div>
+        <div class="life-diary-card-content">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-number">127</div>
+              <div class="stat-label" data-zh="日记天数" data-en="Diary Days">日记天数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">89</div>
+              <div class="stat-label" data-zh="开心天数" data-en="Happy Days">开心天数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">156</div>
+              <div class="stat-label" data-zh="照片数量" data-en="Photos">照片数量</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">23</div>
+              <div class="stat-label" data-zh="标签数量" data-en="Tags">标签数量</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 生活目标 -->
+      <div class="life-diary-card">
+        <div class="life-diary-card-header">
+          <i class="fas fa-bullseye"></i>
+          <h3 data-zh="生活目标" data-en="Life Goals">生活目标</h3>
+        </div>
+        <div class="life-diary-card-content">
+          <div class="goals-list">
+            <div class="goal-item completed">
+              <div class="goal-checkbox">
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="goal-content">
+                <div class="goal-title" data-zh="学会做饭" data-en="Learn to cook">学会做饭</div>
+                <div class="goal-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                  </div>
+                  <span class="progress-text">100%</span>
+                </div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <div class="goal-checkbox">
+                <i class="fas fa-circle"></i>
+              </div>
+              <div class="goal-content">
+                <div class="goal-title" data-zh="读完10本书" data-en="Read 10 books">读完10本书</div>
+                <div class="goal-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 60%"></div>
+                  </div>
+                  <span class="progress-text">60%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="add-goal-btn" data-zh="添加新目标" data-en="Add New Goal">添加新目标</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.life-diary-container {
+  min-height: 100vh;
+  background: var(--life-bg, linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%));
+  padding: 20px;
+  position: relative;
+}
+
+.life-diary-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 40px 0;
+}
+
+.life-diary-title {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--life-primary, #fff);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.life-diary-title i {
+  font-size: 2.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.life-diary-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255,255,255,0.9);
+  font-family: var(--life-font, 'Arial', sans-serif);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.life-diary-main {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.life-diary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 30px;
+}
+
+.life-diary-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+}
+
+.life-diary-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.life-diary-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.life-diary-card-header i {
+  font-size: 1.5rem;
+}
+
+.life-diary-card-header h3 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.life-diary-card-content {
+  padding: 25px;
+}
+
+/* 心情选择器样式 - 修复按钮重叠问题 */
+.mood-selector {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.mood-option {
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  min-height: 65px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mood-option:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.mood-option.selected {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mood-option i {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.mood-option span {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.mood-option[data-mood="happy"] i { color: #ffd700; }
+.mood-option[data-mood="calm"] i { color: #87ceeb; }
+.mood-option[data-mood="excited"] i { color: #ff6b6b; }
+.mood-option[data-mood="sad"] i { color: #6c5ce7; }
+.mood-option[data-mood="angry"] i { color: #e17055; }
+
+.mood-note textarea {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  resize: vertical;
+  font-family: var(--life-font, 'Arial', sans-serif);
+  transition: border-color 0.3s ease;
+  min-height: 100px;
+}
+
+.mood-note textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* 日记表单样式 */
+.diary-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: var(--life-font, 'Arial', sans-serif);
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.save-diary-btn {
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.save-diary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* 统计样式 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* 目标样式 */
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.goal-item:hover {
+  background: #e9ecef;
+}
+
+.goal-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.goal-item.completed .goal-checkbox {
+  background: #28a745;
+  color: white;
+}
+
+.goal-item:not(.completed) .goal-checkbox {
+  border: 2px solid #dee2e6;
+  color: transparent;
+}
+
+.goal-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.goal-item.completed .goal-title {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  min-width: 30px;
+  text-align: right;
+}
+
+.add-goal-btn {
+  width: 100%;
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease;
+  margin-top: 10px;
+}
+
+.add-goal-btn:hover {
+  background: #5a6fd8;
+}
+
+/* 语言切换按钮样式 */
+.geek-language-switch-fixed {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  gap: 10px;
+  background: rgba(255,255,255,0.9);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.geek-lang-btn-fixed {
+  padding: 8px 16px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Arial', sans-serif;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.geek-lang-btn-fixed:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.geek-lang-btn-fixed.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* 动画 */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 响应式设计 - 修复按钮重叠问题 */
+@media (max-width: 768px) {
+  .life-diary-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .life-diary-title {
+    font-size: 2rem;
+  }
+  
+  .mood-selector {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .mood-option {
+    padding: 8px 4px;
+    min-height: 60px;
+  }
+  
+  .mood-option i {
+    font-size: 1.2rem;
+    margin-bottom: 3px;
+  }
+  
+  .mood-option span {
+    font-size: 0.7rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .goal-progress {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
+  
+  .progress-text {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .mood-selector {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  
+  .mood-option {
+    padding: 6px 2px;
+    min-height: 55px;
+  }
+  
+  .mood-option i {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+  }
+  
+  .mood-option span {
+    font-size: 0.65rem;
+  }
+  
+  .life-diary-container {
+    padding: 10px;
+  }
+  
+  .life-diary-card-content {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mood-selector {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3px;
+  }
+  
+  .mood-option {
+    padding: 5px 1px;
+    min-height: 50px;
+  }
+  
+  .mood-option i {
+    font-size: 1rem;
+    margin-bottom: 2px;
+  }
+  
+  .mood-option span {
+    font-size: 0.6rem;
+  }
+  
+  .life-diary-container {
+    padding: 5px;
+  }
+  
+  .life-diary-card-content {
+    padding: 10px;
+  }
+}
+
+/* 快捷键提示样式 */
+.theme-switch-hint {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.theme-switch-hint:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.hint-content i {
+  font-size: 1rem;
+  color: #764ba2;
+}
+
+.hint-content span {
+  white-space: nowrap;
+}
+
+.help-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.help-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.1);
+}
+
+/* 快捷键帮助面板样式 */
+.shortcuts-help-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(255,255,255,0.98);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  z-index: 10000;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.shortcuts-help-panel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.help-panel-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.help-panel-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-help-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-help-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.help-panel-content {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shortcuts-section {
+  margin-bottom: 25px;
+}
+
+.shortcuts-section h4 {
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  padding-bottom: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.shortcut-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+  padding-left: 10px;
+  border-radius: 6px;
+}
+
+.shortcut-key {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 80px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.shortcut-desc {
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-left: 15px;
+}
+
+/* 遮罩层 */
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.help-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+</style>
+
+<script>
+// 快捷键支持
+document.addEventListener('keydown', function(e) {
+  // 只在非输入框中响应快捷键
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
+  // Ctrl/Cmd + 数字键切换主题
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+    switch(e.key) {
+      case '1':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case '2':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case '3':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case '4':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+    }
+  }
+  
+  // Alt + 字母键跳转到工具页面
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    switch(e.key.toLowerCase()) {
+      case 'e':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+      case 'l':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case 'f':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case 'c':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case 'p':
+        e.preventDefault();
+        window.location.href = '/tools/pdf-converter/';
+        break;
+      case 'r':
+        e.preventDefault();
+        window.location.href = '/tools/redbook-generator/';
+        break;
+      case 't':
+        e.preventDefault();
+        window.location.href = '/tools/test-case-generator/';
+        break;
+      case 'w':
+        e.preventDefault();
+        window.location.href = '/tools/web-crawler/';
+        break;
+      case 's':
+        e.preventDefault();
+        window.location.href = '/tools/self-analysis/';
+        break;
+      case 'b':
+        e.preventDefault();
+        window.location.href = '/tools/storyboard/';
+        break;
+      case 'm':
+        e.preventDefault();
+        window.location.href = '/tools/music-healing/';
+        break;
+      case 'd':
+        e.preventDefault();
+        window.location.href = '/tools/meditation-guide/';
+        break;
+      case 'a':
+        e.preventDefault();
+        window.location.href = '/tools/fortune-analyzer/';
+        break;
+    }
+  }
+});
+
+// 初始化快捷键帮助面板
+function initShortcutsHelp() {
+  const helpBtn = document.getElementById('showShortcutsHelp');
+  const helpPanel = document.getElementById('shortcutsHelpPanel');
+  const closeBtn = document.getElementById('closeShortcutsHelp');
+  const overlay = document.getElementById('helpOverlay');
+  
+  // 显示帮助面板
+  helpBtn.addEventListener('click', function() {
+    helpPanel.classList.add('show');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden'; // 防止背景滚动
+  });
+  
+  // 关闭帮助面板
+  function closeHelpPanel() {
+    helpPanel.classList.remove('show');
+    overlay.classList.remove('show');
+    document.body.style.overflow = ''; // 恢复滚动
+  }
+  
+  closeBtn.addEventListener('click', closeHelpPanel);
+  overlay.addEventListener('click', closeHelpPanel);
+  
+  // ESC键关闭帮助面板
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && helpPanel.classList.contains('show')) {
+      closeHelpPanel();
+    }
+  });
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+  initShortcutsHelp();
+});
+
+// 语言切换功能
+document.querySelectorAll('.geek-lang-btn-fixed').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const lang = this.getAttribute('data-lang');
+    switchLanguage(lang);
+    
+    // 更新按钮状态
+    document.querySelectorAll('.geek-lang-btn-fixed').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+function switchLanguage(lang) {
+  // 更新所有带有data-zh和data-en属性的元素
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.textContent = element.getAttribute('data-en');
+      if (element.placeholder) {
+        element.placeholder = element.getAttribute('data-en');
+      }
+    } else {
+      element.textContent = element.getAttribute('data-zh');
+      if (element.placeholder) {
+        element.placeholder = element.getAttribute('data-zh');
+      }
+    }
+  });
+}
+
+// 心情选择功能
+document.querySelectorAll('.mood-option').forEach(option => {
+  option.addEventListener('click', function() {
+    document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
+    this.classList.add('selected');
+  });
+});
+
+// 保存日记功能
+document.getElementById('saveDiary').addEventListener('click', function() {
+  const title = document.getElementById('diaryTitle').value;
+  const content = document.getElementById('diaryContent').value;
+  const selectedMood = document.querySelector('.mood-option.selected');
+  const moodNote = document.getElementById('moodNote').value;
+  
+  if (!title || !content) {
+    const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
+    const message = currentLang === 'en' 
+      ? 'Please fill in title and content!' 
+      : '请填写标题和内容！';
+    alert(message);
+    return;
+  }
+  
+  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
+  const message = currentLang === 'en' 
+    ? 'Diary saved successfully!' 
+    : '日记保存成功！';
+  alert(message);
+  
+  // 清空表单
+  document.getElementById('diaryTitle').value = '';
+  document.getElementById('diaryContent').value = '';
+  document.getElementById('moodNote').value = '';
+  document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
+});
+
+// 目标点击功能
+document.querySelectorAll('.goal-checkbox').forEach(checkbox => {
+  checkbox.addEventListener('click', function() {
+    const goalItem = this.closest('.goal-item');
+    goalItem.classList.toggle('completed');
+  });
+});
+
+// 添加目标按钮
+document.querySelector('.add-goal-btn').addEventListener('click', function() {
+  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
+  const message = currentLang === 'en' 
+    ? 'Add new goal feature coming soon!' 
+    : '添加新目标功能即将推出！';
+  alert(message);
+});
+</script>
+{% endblock %} 

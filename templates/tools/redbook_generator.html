@@ -12,19 +12,37 @@
 .upload-button {
   display: inline-block;
   padding: 20px 40px;
-  border: 3px dashed #007bff;
+  border: 3px dashed var(--geek-primary, #00ffe7);
   border-radius: 12px;
-  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+  background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%);
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 15px;
+  color: var(--geek-text, #e6e6e6);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.upload-button:hover::before {
+  left: 100%;
 }
 
 .upload-button:hover {
-  border-color: #0056b3;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-color: var(--geek-accent, #00bfff);
+  background: linear-gradient(135deg, rgba(0,255,231,0.1) 0%, rgba(0,191,255,0.1) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0,255,231,0.2);
 }
 
 .upload-button:active {
@@ -124,13 +142,11 @@
     </div>
     
     <!-- 主要上传入口 -->
-    <div class="main-upload-area" id="mainUploadArea">
-      <div class="upload-button" onclick="document.getElementById('imageUpload').click()">
-        <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #007bff; margin-bottom: 10px; display: block;"></i>
-        <div style="font-size: 18px; font-weight: 600; color: #007bff; margin-bottom: 5px;">点击上传图片</div>
-        <div style="font-size: 14px; color: #666;">或拖拽图片到此处</div>
-      </div>
-      <div class="upload-tip" style="font-size: 12px; color: #999; margin-top: 10px;">
+    <div class="geek-upload-area" id="mainUploadArea" onclick="document.getElementById('imageUpload').click()">
+      <i class="fas fa-cloud-upload-alt upload-icon"></i>
+      <div class="upload-text">点击上传图片</div>
+      <div class="upload-hint">或拖拽图片到此处</div>
+      <div style="font-size: 12px; color: var(--geek-text-muted); margin-top: 10px;">
         支持 JPG、PNG、WebP、HEIC 格式，最大 100MB，最多9张图片
       </div>
     </div>
@@ -479,7 +495,7 @@ function bindEventListeners() {
         generateBtn.disabled = true;
 
         // 发送请求到后端
-        axios.post('/tools/api/redbook-generate/', formData, {
+        axios.post('/tools/api/generate-redbook/', formData, {
             headers: {
                 'X-CSRFToken': getCSRFToken(),
                 'Content-Type': 'multipart/form-data'

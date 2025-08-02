@@ -1,37 +1,466 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="geek-auth-card">
-  <div class="geek-auth-title">注册 QATOOLBOX</div>
-  <hr class="geek-auth-divider">
-  {% if messages %}
-    <div class="alert alert-warning mb-3">
-      <ul class="list-unstyled mb-0">
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
+<div class="geek-auth-container">
+  <div class="geek-auth-card">
+    <div class="geek-auth-header">
+      <div class="geek-auth-title">
+        <i class="fas fa-user-plus"></i>
+        <span>QATOOLBOX 注册</span>
+      </div>
+      <div class="geek-auth-subtitle">加入数字革命</div>
+      <div class="geek-language-switch">
+        <button class="geek-lang-btn active" data-lang="zh">中文</button>
+        <button class="geek-lang-btn" data-lang="en">English</button>
+      </div>
     </div>
-  {% endif %}
-  <form method="POST" autocomplete="off">
-    {% csrf_token %}
-    <div class="geek-auth-input-group">
-      <i class="fas fa-user-plus"></i>
-      <input type="text" name="username" required class="geek-auth-input" placeholder="用户名">
-    </div>
-    <div class="geek-auth-input-group">
-      <i class="fas fa-lock"></i>
-      <input type="password" name="password" required class="geek-auth-input" placeholder="密码">
-    </div>
-    <div class="geek-auth-input-group">
-      <i class="fas fa-lock"></i>
-      <input type="password" name="password_confirm" required class="geek-auth-input" placeholder="确认密码">
-    </div>
-    <div class="geek-auth-input-group">
-      <i class="fas fa-envelope"></i>
-      <input type="email" name="email" class="geek-auth-input" placeholder="邮箱（可选）">
-    </div>
-    <button type="submit" class="geek-auth-btn">注册</button>
-    <a href="{% url 'login' %}" class="geek-auth-link">已有账号？去登录</a>
-  </form>
+    
+    {% if messages %}
+      <div class="geek-alert geek-alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <ul class="geek-alert-list">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    
+    <form method="POST" autocomplete="off" class="geek-auth-form">
+      {% csrf_token %}
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <input type="text" name="username" required class="geek-input" placeholder="选择用户名" data-zh="选择用户名" data-en="Choose username">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <input type="password" name="password" required class="geek-input" placeholder="创建密码" data-zh="创建密码" data-en="Create password">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <input type="password" name="password_confirm" required class="geek-input" placeholder="确认密码" data-zh="确认密码" data-en="Confirm password">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <input type="email" name="email" class="geek-input" placeholder="邮箱（可选）" data-zh="邮箱（可选）" data-en="Email (optional)">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <button type="submit" class="geek-btn geek-btn-primary">
+        <i class="fas fa-user-plus"></i>
+        <span data-zh="注册" data-en="REGISTER">注册</span>
+      </button>
+      
+      <div class="geek-auth-links">
+        <a href="{% url 'login' %}" class="geek-link">
+          <i class="fas fa-sign-in-alt"></i>
+          <span data-zh="已有账号？去登录" data-en="Already have account? Login">已有账号？去登录</span>
+        </a>
+      </div>
+    </form>
+  </div>
 </div>
+
+<style>
+.geek-auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--geek-bg, #0a0e17);
+}
+
+.geek-auth-card {
+  background: var(--geek-gradient-card, linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%));
+  border: 1px solid var(--geek-border, rgba(0, 255, 231, 0.1));
+  border-radius: var(--geek-radius, 16px);
+  box-shadow: var(--geek-shadow, 0 8px 32px rgba(0,0,0,0.6));
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  overflow: hidden;
+}
+
+.geek-auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.geek-auth-card:hover::before {
+  transform: scaleX(1);
+}
+
+.geek-auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.geek-auth-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--geek-primary, #00ffe7);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.geek-auth-title i {
+  font-size: 1.5rem;
+}
+
+.geek-auth-subtitle {
+  color: var(--geek-text-muted, #8a9ba8);
+  font-size: 0.9rem;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  margin-bottom: 15px;
+}
+
+.geek-language-switch {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.geek-lang-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 255, 231, 0.3);
+  background: rgba(0, 255, 231, 0.1);
+  color: var(--geek-text-muted, #8a9ba8);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+}
+
+.geek-lang-btn:hover {
+  border-color: var(--geek-primary, #00ffe7);
+  color: var(--geek-primary, #00ffe7);
+}
+
+.geek-lang-btn.active {
+  background: var(--geek-primary, #00ffe7);
+  color: #000;
+  border-color: var(--geek-primary, #00ffe7);
+}
+
+.geek-alert {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.geek-alert-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.geek-alert i {
+  margin-top: 2px;
+}
+
+.geek-alert-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.geek-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.geek-input-group {
+  position: relative;
+}
+
+.geek-input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--geek-primary, #00ffe7);
+  z-index: 2;
+}
+
+.geek-input {
+  width: 100%;
+  padding: 15px 15px 15px 45px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 231, 0.2);
+  border-radius: 8px;
+  color: var(--geek-text, #e6e6e6);
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  transition: all 0.3s ease;
+}
+
+.geek-input::placeholder {
+  color: var(--geek-text-muted, #8a9ba8);
+}
+
+.geek-input:focus {
+  outline: none;
+  border-color: var(--geek-primary, #00ffe7);
+  box-shadow: 0 0 0 2px rgba(0, 255, 231, 0.2);
+}
+
+.geek-input-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  transition: width 0.3s ease;
+}
+
+.geek-input:focus + .geek-input-line {
+  width: 100%;
+}
+
+.geek-btn {
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.geek-btn-primary {
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  color: #000;
+}
+
+.geek-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 231, 0.3);
+}
+
+.geek-auth-links {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.geek-link {
+  color: var(--geek-primary, #00ffe7);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+}
+
+.geek-link:hover {
+  color: var(--geek-accent, #00bfff);
+  text-decoration: none;
+  transform: translateX(5px);
+}
+
+@media (max-width: 480px) {
+  .geek-auth-card {
+    padding: 30px 20px;
+  }
+  
+  .geek-auth-title {
+    font-size: 1.5rem;
+  }
+}
+</style>
+
+<script>
+// 添加输入框焦点效果
+document.querySelectorAll('.geek-input').forEach(input => {
+  input.addEventListener('focus', function() {
+    this.parentElement.classList.add('focused');
+  });
+  
+  input.addEventListener('blur', function() {
+    this.parentElement.classList.remove('focused');
+  });
+});
+
+// 语言切换功能
+document.querySelectorAll('.geek-lang-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const lang = this.getAttribute('data-lang');
+    switchLanguage(lang);
+    
+    // 更新按钮状态
+    document.querySelectorAll('.geek-lang-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+function switchLanguage(lang) {
+  // 更新标题和副标题
+  const title = document.querySelector('.geek-auth-title span');
+  const subtitle = document.querySelector('.geek-auth-subtitle');
+  
+  if (lang === 'en') {
+    title.textContent = 'QATOOLBOX REGISTER';
+    subtitle.textContent = 'Join the digital revolution';
+  } else {
+    title.textContent = 'QATOOLBOX 注册';
+    subtitle.textContent = '加入数字革命';
+  }
+  
+  // 更新输入框占位符
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.placeholder = element.getAttribute('data-en');
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.placeholder = element.getAttribute('data-zh');
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+  
+  // 更新按钮文本
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+}
+
+// 密码强度检查
+document.querySelector('input[name="password"]').addEventListener('input', function() {
+  const password = this.value;
+  const strength = checkPasswordStrength(password);
+  updatePasswordStrengthIndicator(strength);
+});
+
+function checkPasswordStrength(password) {
+  let score = 0;
+  
+  if (password.length >= 8) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  
+  if (score <= 2) return 'weak';
+  if (score <= 3) return 'medium';
+  return 'strong';
+}
+
+function updatePasswordStrengthIndicator(strength) {
+  const input = document.querySelector('input[name="password"]');
+  const existingIndicator = input.parentElement.querySelector('.password-strength');
+  
+  if (existingIndicator) {
+    existingIndicator.remove();
+  }
+  
+  if (input.value.length > 0) {
+    const indicator = document.createElement('div');
+    indicator.className = `password-strength password-strength-${strength}`;
+    indicator.innerHTML = `
+      <span class="strength-text">${strength === 'weak' ? '弱' : strength === 'medium' ? '中' : '强'}</span>
+      <div class="strength-bar">
+        <div class="strength-fill strength-fill-${strength}"></div>
+      </div>
+    `;
+    input.parentElement.appendChild(indicator);
+  }
+}
+</script>
+
+<style>
+.password-strength {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.strength-text {
+  font-size: 0.8rem;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.strength-fill-weak {
+  width: 33%;
+  background: #ff4444;
+}
+
+.strength-fill-medium {
+  width: 66%;
+  background: #ffc107;
+}
+
+.strength-fill-strong {
+  width: 100%;
+  background: #00ffe7;
+}
+
+.password-strength-weak .strength-text {
+  color: #ff4444;
+}
+
+.password-strength-medium .strength-text {
+  color: #ffc107;
+}
+
+.password-strength-strong .strength-text {
+  color: #00ffe7;
+}
+</style>
 {% endblock %}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>头像上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .upload-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .avatar-preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .avatar-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 50%;
+            border: 3px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-form">
+        <h2>头像上传测试</h2>
+        <form id="avatarForm">
+            <div class="form-group">
+                <label for="avatar">选择头像文件：</label>
+                <div class="geek-file-upload" onclick="document.getElementById('avatar').click()">
+                    <i class="fas fa-user-circle upload-icon"></i>
+                    <div class="upload-text">点击选择头像文件</div>
+                    <div class="upload-hint">支持 JPG、PNG、GIF 格式</div>
+                    <input type="file" id="avatar" name="avatar" accept="image/*" required style="display: none;">
+                </div>
+            </div>
+            <button type="submit">上传头像</button>
+        </form>
+        
+        <div id="result"></div>
+        <div id="avatarPreview" class="avatar-preview"></div>
+    </div>
+
+    <script>
+        document.getElementById('avatarForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('avatar');
+            const resultDiv = document.getElementById('result');
+            const previewDiv = document.getElementById('avatarPreview');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<div class="error">请选择文件</div>';
+                return;
+            }
+            
+            formData.append('avatar', fileInput.files[0]);
+            
+            // 显示上传进度
+            resultDiv.innerHTML = '<div class="success">正在上传...</div>';
+            
+            fetch('/users/upload_avatar/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `<div class="success">${data.message}</div>`;
+                    if (data.avatar_url) {
+                        previewDiv.innerHTML = `<img src="${data.avatar_url}" alt="头像预览">`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="error">${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                resultDiv.innerHTML = '<div class="error">上传失败，请重试</div>';
+            });
+        });
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html> 

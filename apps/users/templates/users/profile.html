@@ -1,40 +1,488 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ user.username }} 的用户资料{% endblock %}
+{% block title %}{{ user.username }} 的个人资料{% endblock %}
 
 {% block content %}
-<div class="geek-card">
-    <div class="geek-title">
-        <i class="fas fa-user-circle"></i> {{ user.username }} 的用户资料
-    </div>
-    <div class="geek-terminal">
-        <div class="profile-info" style="text-align: left; margin: 20px 0;">
-            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
-                <span style="color: #00ff00; font-weight: bold;">用户名:</span>
-                <span style="color: #fff; margin-left: 10px;">{{ user.username }}</span>
+<div class="profile-container">
+    <!-- 用户信息卡片 -->
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <img id="profile-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea;">
             </div>
-            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
-                <span style="color: #00ff00; font-weight: bold;">电子邮件:</span>
-                <span style="color: #fff; margin-left: 10px;">{{ user.email|default:"未设置" }}</span>
-            </div>
-            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
-                <span style="color: #00ff00; font-weight: bold;">注册时间:</span>
-                <span style="color: #fff; margin-left: 10px;">{{ user.date_joined|date:"Y-m-d H:i" }}</span>
-            </div>
-            <div class="info-row" style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 5px;">
-                <span style="color: #00ff00; font-weight: bold;">最后登录:</span>
-                <span style="color: #fff; margin-left: 10px;">{{ user.last_login|date:"Y-m-d H:i"|default:"从未登录" }}</span>
+            <div class="profile-info">
+                <h2 class="profile-name">{{ user.first_name|default:user.username }}</h2>
+                <p class="profile-email">{{ user.email|default:"未设置邮箱" }}</p>
+                <div class="profile-stats">
+                    <span class="stat-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        注册于 {{ user.date_joined|date:"Y年m月d日" }}
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        最后登录 {{ user.last_login|date:"Y-m-d H:i"|default:"从未登录" }}
+                    </span>
+                </div>
             </div>
         </div>
         
-        <div class="action-buttons" style="margin-top: 30px;">
-            <a href="{% url 'profile_edit' %}" class="geek-btn" style="margin-right: 15px;">
-                <i class="fas fa-edit"></i> 编辑资料
+        <div class="profile-actions">
+            <a href="{% url 'profile_edit' %}" class="profile-btn primary">
+                <i class="fas fa-edit"></i>
+                编辑资料
             </a>
-            <a href="{% url 'logout' %}" class="geek-btn geek-btn-danger" onclick="stopMedia()">
-                <i class="fas fa-sign-out-alt"></i> 登出
+            <a href="{% url 'logout' %}" class="profile-btn secondary">
+                <i class="fas fa-sign-out-alt"></i>
+                退出登录
             </a>
         </div>
     </div>
+
+    <!-- 隐藏的作者信息 -->
+    <div class="hidden-author-info">
+        <button class="secret-btn" onclick="toggleAuthorInfo()">
+            <i class="fas fa-question-circle"></i>
+        </button>
+        
+        <div class="author-card hidden" id="authorCard">
+            <div class="author-header">
+                <h3 class="author-title">
+                    <i class="fas fa-code"></i>
+                    关于开发者
+                </h3>
+                <p class="author-subtitle">一个热爱技术的测试工程师</p>
+            </div>
+            
+            <div class="author-content">
+                <div class="author-bio">
+                    <p>👨‍💻 测试工程师 | 🎵 音乐爱好者 | 🚀 技术探索者</p>
+                    <p>热爱自动化测试、性能优化和用户体验设计，致力于创造有趣且实用的工具。</p>
+                </div>
+                
+                <div class="author-links">
+                    <a href="/media/高杰-测试工程师.pdf" target="_blank" class="author-link">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>查看简历</span>
+                    </a>
+                    <a href="https://github.com/shinytsing/QAToolbox" target="_blank" class="author-link">
+                        <i class="fab fa-github"></i>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://music.163.com/#/user/home?id=555356040" target="_blank" class="author-link">
+                        <i class="fab fa-netease"></i>
+                        <span>网易云音乐</span>
+                    </a>
+                    <a href="#" class="author-link" onclick="showWeChatQR()">
+                        <i class="fab fa-weixin"></i>
+                        <span>微信联系</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- 微信二维码模态框 -->
+<div class="qr-modal" id="wechatQRModal">
+    <div class="qr-content">
+        <div class="qr-header">
+            <h3>微信联系</h3>
+            <button class="qr-close" onclick="hideWeChatQR()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="qr-body">
+            <img src="/media/vx.jpg" alt="微信二维码" class="qr-image">
+            <p>扫描二维码添加微信好友</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    gap: 2rem;
+}
+
+.profile-card {
+    background: var(--card-bg, rgba(255, 255, 255, 0.1));
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow, 0 8px 32px rgba(0, 0, 0, 0.1));
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
+    transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover, 0 12px 40px rgba(0, 0, 0, 0.15));
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.profile-name {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary, #333);
+}
+
+.profile-email {
+    color: var(--text-secondary, #666);
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #666);
+}
+
+.profile-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.profile-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.profile-btn.primary {
+    background: var(--primary, #667eea);
+    color: white;
+}
+
+.profile-btn.primary:hover {
+    background: var(--primary-hover, #5a6fd8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.profile-btn.secondary {
+    background: transparent;
+    color: var(--text-primary, #333);
+    border: 2px solid var(--border, rgba(0, 0, 0, 0.1));
+}
+
+.profile-btn.secondary:hover {
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+    transform: translateY(-2px);
+}
+
+.author-card {
+    background: var(--card-bg, rgba(255, 255, 255, 0.1));
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow, 0 8px 32px rgba(0, 0, 0, 0.1));
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
+    transition: all 0.3s ease;
+}
+
+.author-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover, 0 12px 40px rgba(0, 0, 0, 0.15));
+}
+
+.author-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.author-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary, #333);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.author-subtitle {
+    color: var(--text-secondary, #666);
+    margin: 0;
+    font-size: 1rem;
+}
+
+.author-bio {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.author-bio p {
+    margin: 0.5rem 0;
+    color: var(--text-secondary, #666);
+    line-height: 1.6;
+}
+
+.author-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.author-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-primary, #333);
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.author-link:hover {
+    background: var(--primary, #667eea);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.author-link i {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+}
+
+.qr-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.qr-modal.show {
+    display: flex;
+}
+
+.qr-content {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.qr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.qr-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.qr-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.qr-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.qr-image {
+    max-width: 200px;
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.qr-body p {
+    color: #666;
+    margin: 0;
+}
+
+/* 隐藏的作者信息 */
+.hidden-author-info {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.secret-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary, #667eea);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.secret-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.author-card.hidden {
+    display: none;
+}
+
+.author-card.show {
+    display: block;
+    animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-stats {
+        justify-content: center;
+    }
+    
+    .profile-actions {
+        justify-content: center;
+    }
+    
+    .author-links {
+        grid-template-columns: 1fr;
+    }
+    
+    .hidden-author-info {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .secret-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+    }
+}
+</style>
+
+<script>
+function showWeChatQR() {
+    document.getElementById('wechatQRModal').classList.add('show');
+}
+
+function hideWeChatQR() {
+    document.getElementById('wechatQRModal').classList.remove('show');
+}
+
+function toggleAuthorInfo() {
+    const authorCard = document.getElementById('authorCard');
+    if (authorCard) {
+        authorCard.classList.toggle('show');
+        authorCard.classList.toggle('hidden');
+    }
+}
+
+// 点击模态框外部关闭
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('wechatQRModal');
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            hideWeChatQR();
+        }
+    });
+    
+    // 点击作者卡片外部关闭
+    document.addEventListener('click', function(e) {
+        const authorCard = document.getElementById('authorCard');
+        const secretBtn = document.querySelector('.secret-btn');
+        
+        if (authorCard && !authorCard.contains(e.target) && !secretBtn.contains(e.target)) {
+            authorCard.classList.remove('show');
+            authorCard.classList.add('hidden');
+        }
+    });
+});
+</script>
 {% endblock %}

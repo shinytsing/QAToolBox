@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}反馈管理 - 管理员{% endblock %}
 
@@ -51,7 +52,16 @@
                                                 <span class="badge badge-secondary">已关闭</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ feedback.user_name|default:feedback.user.username|default:"匿名用户" }}</td>
+                                        <td>
+                                            {% if feedback.user %}
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{% if feedback.user.profile.avatar %}{{ feedback.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
+                                                    <span>{{ feedback.user.username }}</span>
+                                                </div>
+                                            {% else %}
+                                                {{ feedback.user_name|default:"匿名用户" }}
+                                            {% endif %}
+                                        </td>
                                         <td>{{ feedback.created_at|date:"Y-m-d H:i" }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-primary" onclick="showFeedbackDetail({{ feedback.id }})">

@@ -1,0 +1,1606 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI自我认知助手{% endblock %}
+
+{% block extra_css %}
+<!-- 确保主题CSS能够正确加载 -->
+<style>
+/* 创意写作页面特定的主题适配 */
+.life-container {
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+/* 主题切换时的过渡效果 */
+.life-container.theme-transition {
+  transition: all 0.5s ease;
+}
+
+/* 确保主题切换时页面元素能够正确响应 */
+.life-card {
+  transition: all 0.3s ease;
+}
+
+.life-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+/* 快捷键提示样式 */
+.theme-switch-hint {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.theme-switch-hint:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.hint-content i {
+  font-size: 1rem;
+  color: #764ba2;
+}
+
+.hint-content span {
+  white-space: nowrap;
+}
+
+.help-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.help-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.1);
+}
+
+/* 快捷键帮助面板样式 */
+.shortcuts-help-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(255,255,255,0.98);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  z-index: 10000;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.shortcuts-help-panel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.help-panel-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.help-panel-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-help-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-help-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.help-panel-content {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shortcuts-section {
+  margin-bottom: 25px;
+}
+
+.shortcuts-section h4 {
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  padding-bottom: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.shortcut-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+  padding-left: 10px;
+  border-radius: 6px;
+}
+
+.shortcut-key {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 80px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.shortcut-desc {
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-left: 15px;
+}
+
+/* 遮罩层 */
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.help-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="life-container">
+  <!-- 主题切换提示 -->
+  <div class="theme-switch-hint">
+    <div class="hint-content">
+      <i class="fas fa-keyboard"></i>
+      <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
+      <button class="help-btn" id="showShortcutsHelp">
+        <i class="fas fa-question-circle"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 快捷键帮助面板 -->
+  <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
+    <div class="help-panel-header">
+      <h3><i class="fas fa-keyboard"></i> 快捷键帮助</h3>
+      <button class="close-help-btn" id="closeShortcutsHelp">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="help-panel-content">
+      <div class="shortcuts-section">
+        <h4><i class="fas fa-palette"></i> 主题切换</h4>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 1</span>
+          <span class="shortcut-desc">生活模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 2</span>
+          <span class="shortcut-desc">极客模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 3</span>
+          <span class="shortcut-desc">狂暴模式</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Ctrl + 4</span>
+          <span class="shortcut-desc">Emo模式</span>
+        </div>
+      </div>
+      <div class="shortcuts-section">
+        <h4><i class="fas fa-tools"></i> 工具跳转</h4>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + E</span>
+          <span class="shortcut-desc">情感日记</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + L</span>
+          <span class="shortcut-desc">生活日记</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + F</span>
+          <span class="shortcut-desc">健身中心</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + C</span>
+          <span class="shortcut-desc">创意写作</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + P</span>
+          <span class="shortcut-desc">PDF转换器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + R</span>
+          <span class="shortcut-desc">小红书生成器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + T</span>
+          <span class="shortcut-desc">测试用例生成器</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + W</span>
+          <span class="shortcut-desc">网页爬虫</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + S</span>
+          <span class="shortcut-desc">自我分析</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + B</span>
+          <span class="shortcut-desc">故事板</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + M</span>
+          <span class="shortcut-desc">音乐疗愈</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + D</span>
+          <span class="shortcut-desc">冥想指南</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">Alt + A</span>
+          <span class="shortcut-desc">运势分析</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遮罩层 -->
+  <div class="help-overlay" id="helpOverlay"></div>
+
+  <!-- 生活风格背景 -->
+  <div class="life-background">
+    <div class="life-pattern"></div>
+    <div class="life-elements">
+      <div class="life-element" style="--delay: 0s">🌱</div>
+      <div class="life-element" style="--delay: 2s">☀️</div>
+      <div class="life-element" style="--delay: 4s">🌸</div>
+      <div class="life-element" style="--delay: 6s">🍃</div>
+    </div>
+  </div>
+
+  <!-- 主要内容 -->
+  <div class="life-content">
+    <div class="life-card main-card">
+      <div class="life-title">
+        <span class="title-icon">🧠</span>
+        <span class="title-text">AI自我认知助手</span>
+      </div>
+      
+      <div class="life-subtitle">
+        与AI深度交流，获得你的自我说明书
+      </div>
+      
+             <!-- 认知模式选择 -->
+       <div class="life-section">
+         <h3 class="section-title">选择认知模式</h3>
+         <div class="life-options">
+           <div class="life-option active" data-type="deep">
+             <div class="option-icon">🔍</div>
+             <div class="option-text">深度探索</div>
+           </div>
+           <div class="life-option" data-type="personality">
+             <div class="option-icon">🎭</div>
+             <div class="option-text">性格分析</div>
+           </div>
+           <div class="life-option" data-type="values">
+             <div class="option-icon">💎</div>
+             <div class="option-text">价值观探索</div>
+           </div>
+           <div class="life-option" data-type="challenge">
+             <div class="option-icon">⚡</div>
+             <div class="option-text">挑战问题</div>
+           </div>
+         </div>
+       </div>
+      
+             <!-- 输入区域 -->
+       <div class="life-section">
+         <h3 class="section-title">分享你的想法</h3>
+         <div class="life-input-group">
+           <textarea 
+             id="contentInput" 
+             class="life-textarea" 
+             placeholder="请分享你的想法、经历、困惑或想要探索的方面..."
+             rows="4"
+           ></textarea>
+           <div class="input-decoration">
+             <span class="decoration-line"></span>
+             <span class="decoration-dot"></span>
+           </div>
+         </div>
+       </div>
+      
+             <!-- 探索深度选择 -->
+       <div class="life-section">
+         <h3 class="section-title">选择探索深度</h3>
+         <div class="life-style-options">
+           <div class="style-option active" data-style="gentle">
+             <div class="style-icon">🌱</div>
+             <div class="style-name">温和引导</div>
+           </div>
+           <div class="style-option" data-style="direct">
+             <div class="style-icon">🎯</div>
+             <div class="style-name">直接深入</div>
+           </div>
+           <div class="style-option" data-style="challenging">
+             <div class="style-icon">🔥</div>
+             <div class="style-name">挑战突破</div>
+           </div>
+           <div class="style-option" data-style="systematic">
+             <div class="style-icon">📋</div>
+             <div class="style-name">系统分析</div>
+           </div>
+         </div>
+       </div>
+      
+             <!-- 操作按钮 -->
+       <div class="life-action-buttons">
+         <button id="generateBtn" class="life-btn life-btn-primary">
+           <span class="btn-icon">🧠</span>
+           <span class="btn-text">开始探索</span>
+         </button>
+         
+         <button id="clearBtn" class="life-btn life-btn-secondary">
+           <span class="btn-icon">🔄</span>
+           <span class="btn-text">重新开始</span>
+         </button>
+       </div>
+    </div>
+    
+         <!-- 结果展示区域 -->
+     <div id="resultSection" class="life-card result-card" style="display: none;">
+       <div class="result-header">
+         <h3 class="section-title">AI的深度分析</h3>
+         <button id="copyBtn" class="life-btn life-btn-small">
+           <span class="btn-icon">📋</span>
+           <span class="btn-text">复制</span>
+         </button>
+       </div>
+       
+       <div id="generatedContent" class="generated-content">
+         <!-- 生成的内容将在这里显示 -->
+       </div>
+       
+       <div class="result-actions">
+         <button id="regenerateBtn" class="life-btn life-btn-secondary">
+           <span class="btn-icon">🔄</span>
+           <span class="btn-text">继续探索</span>
+         </button>
+         
+         <button id="saveBtn" class="life-btn life-btn-primary">
+           <span class="btn-icon">💾</span>
+           <span class="btn-text">保存分析</span>
+         </button>
+       </div>
+     </div>
+  </div>
+</div>
+
+<style>
+/* 生活风格容器 */
+.life-container {
+  min-height: 100vh;
+  background: var(--life-bg, #f8f9fa);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 生活风格背景 */
+.life-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+.life-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(40, 167, 69, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(23, 162, 184, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 193, 7, 0.05) 0%, transparent 50%);
+  animation: lifeFloat 20s ease-in-out infinite;
+}
+
+@keyframes lifeFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(1deg); }
+  66% { transform: translateY(10px) rotate(-1deg); }
+}
+
+.life-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.life-element {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.3;
+  animation: lifeElementFloat 8s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.life-element:nth-child(1) { top: 10%; left: 10%; }
+.life-element:nth-child(2) { top: 20%; right: 15%; }
+.life-element:nth-child(3) { bottom: 30%; left: 20%; }
+.life-element:nth-child(4) { bottom: 20%; right: 10%; }
+
+@keyframes lifeElementFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+  50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+}
+
+/* 主要内容 */
+.life-content {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.main-card {
+  background: var(--life-gradient-card, linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%));
+  border: 1px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-radius: var(--life-radius, 12px);
+  box-shadow: var(--life-shadow, 0 4px 20px rgba(0, 0, 0, 0.08));
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  padding: 40px;
+  margin-bottom: 30px;
+}
+
+.main-card:hover {
+  box-shadow: var(--life-shadow-hover, 0 8px 30px rgba(0, 0, 0, 0.12));
+  transform: translateY(-2px);
+}
+
+/* 标题样式 */
+.life-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.title-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.title-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--life-primary, #28a745);
+  background: var(--life-gradient, linear-gradient(135deg, #28a745 0%, #17a2b8 100%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.life-subtitle {
+  text-align: center;
+  color: var(--life-text-muted, #6c757d);
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+  font-weight: 400;
+}
+
+/* 区块样式 */
+.life-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  color: var(--life-primary, #28a745);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: var(--life-gradient, linear-gradient(135deg, #28a745 0%, #17a2b8 100%));
+  border-radius: 2px;
+  margin-right: 10px;
+}
+
+/* 选项样式 */
+.life-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.life-option {
+  background: var(--life-card-bg, #ffffff);
+  border: 2px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-radius: var(--life-radius, 12px);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.life-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(40, 167, 69, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.life-option:hover::before {
+  left: 100%;
+}
+
+.life-option:hover {
+  border-color: var(--life-primary, #28a745);
+  transform: translateY(-2px);
+  box-shadow: var(--life-shadow-hover, 0 8px 30px rgba(0, 0, 0, 0.12));
+}
+
+.life-option.active {
+  border-color: var(--life-primary, #28a745);
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(23, 162, 184, 0.1) 100%);
+}
+
+.option-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.option-text {
+  font-weight: 500;
+  color: var(--life-text, #212529);
+}
+
+/* 风格选项 */
+.life-style-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.style-option {
+  background: var(--life-card-bg, #ffffff);
+  border: 2px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-radius: var(--life-radius, 12px);
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.style-option:hover {
+  border-color: var(--life-primary, #28a745);
+  transform: translateY(-2px);
+}
+
+.style-option.active {
+  border-color: var(--life-primary, #28a745);
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(23, 162, 184, 0.1) 100%);
+}
+
+.style-icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.style-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--life-text, #212529);
+}
+
+/* 输入组样式 */
+.life-input-group {
+  position: relative;
+}
+
+.life-textarea {
+  width: 100%;
+  padding: 20px;
+  border: 2px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-radius: var(--life-radius, 12px);
+  background: var(--life-card-bg, #ffffff);
+  color: var(--life-text, #212529);
+  font-family: var(--life-font, 'Inter', 'Segoe UI', 'Roboto', sans-serif);
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.life-textarea:focus {
+  outline: none;
+  border-color: var(--life-primary, #28a745);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.life-textarea::placeholder {
+  color: var(--life-text-muted, #6c757d);
+}
+
+/* 按钮样式 */
+.life-action-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.life-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 30px;
+  border: none;
+  border-radius: var(--life-radius, 12px);
+  font-family: var(--life-font, 'Inter', 'Segoe UI', 'Roboto', sans-serif);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.life-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.life-btn:hover::before {
+  left: 100%;
+}
+
+.life-btn-primary {
+  background: var(--life-gradient, linear-gradient(135deg, #28a745 0%, #17a2b8 100%));
+  color: white;
+}
+
+.life-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.life-btn-secondary {
+  background: var(--life-card-bg, #ffffff);
+  color: var(--life-primary, #28a745);
+  border: 2px solid var(--life-primary, #28a745);
+}
+
+.life-btn-secondary:hover {
+  background: var(--life-primary, #28a745);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.life-btn-small {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+/* 结果卡片 */
+.result-card {
+  background: var(--life-gradient-card, linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%));
+  border: 1px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-radius: var(--life-radius, 12px);
+  box-shadow: var(--life-shadow, 0 4px 20px rgba(0, 0, 0, 0.08));
+  backdrop-filter: blur(10px);
+  padding: 30px;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.generated-content {
+  background: var(--life-card-bg, #ffffff);
+  border: 1px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-radius: var(--life-radius, 12px);
+  padding: 20px;
+  margin-bottom: 20px;
+  min-height: 100px;
+  line-height: 1.8;
+  color: var(--life-text, #212529);
+  font-size: 1rem;
+}
+
+.result-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--life-primary, #28a745);
+  font-weight: 500;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--life-border, rgba(40, 167, 69, 0.1));
+  border-top: 2px solid var(--life-primary, #28a745);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 主题切换提示样式 */
+.theme-switch-hint {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.theme-switch-hint:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 0.9rem;
+  color: #28a745;
+  font-weight: 600;
+}
+
+.hint-content i {
+  font-size: 1rem;
+  color: #20c997;
+}
+
+.hint-content span {
+  white-space: nowrap;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .life-container {
+    padding: 15px;
+  }
+  
+  .main-card {
+    padding: 25px;
+  }
+  
+  .title-text {
+    font-size: 2rem;
+  }
+  
+  .life-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .life-style-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .life-action-buttons {
+    flex-direction: column;
+  }
+  
+  .result-actions {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+// 主题切换快捷键支持
+document.addEventListener('keydown', function(e) {
+  // 只在非输入框中响应快捷键
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
+  // Ctrl/Cmd + 数字键切换主题
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+    switch(e.key) {
+              case '1':
+          e.preventDefault();
+          switchGlobalThemeWithRefresh('life');
+          break;
+        case '2':
+          e.preventDefault();
+          switchGlobalThemeWithRefresh('work');
+          break;
+        case '3':
+          e.preventDefault();
+          switchGlobalThemeWithRefresh('training');
+          break;
+        case '4':
+          e.preventDefault();
+          switchGlobalThemeWithRefresh('emo');
+          break;
+    }
+  }
+});
+
+// 切换主题并刷新页面（用于快捷键）
+async function switchGlobalThemeWithRefresh(theme) {
+  try {
+    // 显示加载状态
+    const themeNames = {
+      'life': '生活',
+      'work': '极客',
+      'training': '狂暴',
+      'emo': 'Emo'
+    };
+    const themeName = themeNames[theme] || theme;
+    
+    // 更新后端
+    const response = await fetch('/users/theme/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ mode: theme })
+    });
+    
+    if (!response.ok) {
+      throw new Error('主题切换请求失败');
+    }
+    
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || '主题切换失败');
+    }
+    
+    // 保存主题设置到localStorage
+    localStorage.setItem('current-theme', theme);
+    
+    // 显示成功通知
+    showNotification(`已成功切换到${themeName}模式，页面即将刷新`, 'success');
+    
+    // 延迟刷新页面以确保背景正确更新
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500); // 1.5秒后刷新，让用户看到通知
+    
+  } catch (error) {
+    console.error('Failed to switch theme:', error);
+    showNotification('主题切换失败: ' + error.message, 'error');
+  }
+}
+
+// 主题切换函数
+async function switchGlobalTheme(theme) {
+  try {
+    // 显示加载状态
+    const themeNames = {
+      'life': '生活',
+      'work': '极客',
+      'training': '狂暴',
+      'emo': 'Emo'
+    };
+    const themeName = themeNames[theme] || theme;
+    
+    // 更新后端
+    const response = await fetch('/users/theme/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ mode: theme })
+    });
+    
+    if (!response.ok) {
+      throw new Error('主题切换请求失败');
+    }
+    
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || '主题切换失败');
+    }
+    
+    // 应用主题样式
+    applyThemeStyles(theme);
+    
+    // 保存主题设置到localStorage
+    localStorage.setItem('current-theme', theme);
+    
+    // 显示成功通知
+    showNotification(`已成功切换到${themeName}模式`, 'success');
+    
+    // 添加切换动画效果
+    document.body.style.transition = 'all 0.5s ease';
+    document.body.style.transform = 'scale(0.98)';
+    setTimeout(() => {
+      document.body.style.transform = 'scale(1)';
+    }, 200);
+    
+  } catch (error) {
+    console.error('Failed to switch theme:', error);
+    showNotification('主题切换失败: ' + error.message, 'error');
+  }
+}
+
+// 应用主题样式
+function applyThemeStyles(theme) {
+  const themeConfig = {
+    'life': {
+      cssFile: '/static/life.css',
+      bgClass: 'life-bg',
+      containerClass: 'life-container',
+      title: 'AI自我认知助手',
+      subtitle: '与AI深度交流，获得你的自我说明书',
+      icon: '🧠',
+      options: [
+        { type: 'deep', icon: '🔍', text: '深度探索' },
+        { type: 'personality', icon: '🎭', text: '性格分析' },
+        { type: 'values', icon: '💎', text: '价值观探索' },
+        { type: 'challenge', icon: '⚡', text: '挑战问题' }
+      ]
+    },
+    'work': {
+      cssFile: '/static/geek.css',
+      bgClass: 'geek-bg',
+      containerClass: 'geek-container',
+      title: 'AI代码助手',
+      subtitle: '智能编程，高效开发',
+      icon: '⚡',
+      options: [
+        { type: 'debug', icon: '🐛', text: '代码调试' },
+        { type: 'optimize', icon: '🚀', text: '性能优化' },
+        { type: 'refactor', icon: '🔧', text: '代码重构' },
+        { type: 'learn', icon: '📚', text: '技术学习' }
+      ]
+    },
+    'training': {
+      cssFile: '/static/rage.css',
+      bgClass: 'rage-bg',
+      containerClass: 'rage-container',
+      title: 'AI训练助手',
+      subtitle: '突破极限，挑战自我',
+      icon: '🔥',
+      options: [
+        { type: 'strength', icon: '💪', text: '力量训练' },
+        { type: 'cardio', icon: '🏃', text: '有氧运动' },
+        { type: 'flexibility', icon: '🧘', text: '柔韧性' },
+        { type: 'endurance', icon: '🏋️', text: '耐力训练' }
+      ]
+    },
+    'emo': {
+      cssFile: '/static/emo.css',
+      bgClass: 'emo-bg',
+      containerClass: 'emo-container',
+      title: 'AI情感助手',
+      subtitle: '倾听内心，疗愈心灵',
+      icon: '💔',
+      options: [
+        { type: 'therapy', icon: '🫂', text: '情感疗愈' },
+        { type: 'meditation', icon: '🧘‍♀️', text: '冥想引导' },
+        { type: 'expression', icon: '🎨', text: '情感表达' },
+        { type: 'support', icon: '🤗', text: '心理支持' }
+      ]
+    }
+  };
+  
+  const config = themeConfig[theme];
+  if (!config) return;
+  
+  // 更新CSS文件
+  const themeLink = document.getElementById('dynamic-theme-css');
+  if (themeLink) {
+    themeLink.href = config.cssFile;
+  }
+  
+  // 更新背景类
+  document.body.className = document.body.className.replace(/theme-\w+-bg/g, '');
+  document.body.classList.add(config.bgClass);
+  
+  // 更新容器类
+  const container = document.querySelector('.life-container');
+  if (container) {
+    // 移除所有主题相关的类
+    container.className = container.className.replace(/life-container|geek-container|rage-container|emo-container/g, '');
+    container.classList.add(config.containerClass);
+    
+    // 添加主题切换动画
+    container.classList.add('theme-transition');
+    setTimeout(() => {
+      container.classList.remove('theme-transition');
+    }, 500);
+  }
+  
+  // 更新页面内容
+  updatePageContent(theme, config);
+  
+  // 更新主题切换提示的文本
+  const hintText = document.querySelector('.theme-switch-hint span');
+  if (hintText) {
+    const themeNames = {
+      'life': '生活模式',
+      'work': '极客模式', 
+      'training': '狂暴模式',
+      'emo': 'Emo模式'
+    };
+    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 (当前: ${themeNames[theme]})`;
+  }
+}
+
+// 更新页面内容
+function updatePageContent(theme, config) {
+  // 更新标题
+  const titleElement = document.querySelector('.title-text');
+  if (titleElement) {
+    titleElement.textContent = config.title;
+  }
+  
+  // 更新标题图标
+  const titleIcon = document.querySelector('.title-icon');
+  if (titleIcon) {
+    titleIcon.textContent = config.icon;
+  }
+  
+  // 更新副标题
+  const subtitleElement = document.querySelector('.life-subtitle');
+  if (subtitleElement) {
+    subtitleElement.textContent = config.subtitle;
+  }
+  
+  // 更新选项
+  const optionsContainer = document.querySelector('.life-options');
+  if (optionsContainer && config.options) {
+    optionsContainer.innerHTML = '';
+    
+    config.options.forEach((option, index) => {
+      const optionElement = document.createElement('div');
+      optionElement.className = 'life-option' + (index === 0 ? ' active' : '');
+      optionElement.setAttribute('data-type', option.type);
+      optionElement.innerHTML = `
+        <div class="option-icon">${option.icon}</div>
+        <div class="option-text">${option.text}</div>
+      `;
+      
+      // 添加点击事件
+      optionElement.addEventListener('click', function() {
+        document.querySelectorAll('.life-option').forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+        selectedType = this.getAttribute('data-type');
+      });
+      
+      optionsContainer.appendChild(optionElement);
+    });
+  }
+}
+
+// 显示通知
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed; top: 20px; right: 20px; 
+    background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'}; 
+    color: white; padding: 15px 20px; border-radius: 5px; 
+    z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+  `;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentNode) {
+      document.body.removeChild(notification);
+    }
+  }, 3000);
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// 快捷键支持
+document.addEventListener('keydown', function(e) {
+  // 只在非输入框中响应快捷键
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
+  // Ctrl/Cmd + 数字键切换主题模式
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+    switch(e.key) {
+      case '1':
+        e.preventDefault();
+        switchThemeMode('work');
+        break;
+      case '2':
+        e.preventDefault();
+        switchThemeMode('life');
+        break;
+      case '3':
+        e.preventDefault();
+        switchThemeMode('training');
+        break;
+      case '4':
+        e.preventDefault();
+        switchThemeMode('emo');
+        break;
+    }
+  }
+  
+  // Alt + 字母键跳转到工具页面
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    switch(e.key.toLowerCase()) {
+      case 'e':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+      case 'l':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case 'f':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case 'c':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case 'p':
+        e.preventDefault();
+        window.location.href = '/tools/pdf-converter/';
+        break;
+      case 'r':
+        e.preventDefault();
+        window.location.href = '/tools/redbook-generator/';
+        break;
+      case 't':
+        e.preventDefault();
+        window.location.href = '/tools/test-case-generator/';
+        break;
+      case 'w':
+        e.preventDefault();
+        window.location.href = '/tools/web-crawler/';
+        break;
+      case 's':
+        e.preventDefault();
+        window.location.href = '/tools/self-analysis/';
+        break;
+      case 'b':
+        e.preventDefault();
+        window.location.href = '/tools/storyboard/';
+        break;
+      case 'm':
+        e.preventDefault();
+        window.location.href = '/tools/music-healing/';
+        break;
+      case 'd':
+        e.preventDefault();
+        window.location.href = '/tools/meditation-guide/';
+        break;
+      case 'a':
+        e.preventDefault();
+        window.location.href = '/tools/fortune-analyzer/';
+        break;
+    }
+  }
+});
+
+// 初始化快捷键帮助面板
+function initShortcutsHelp() {
+  const helpBtn = document.getElementById('showShortcutsHelp');
+  const helpPanel = document.getElementById('shortcutsHelpPanel');
+  const closeBtn = document.getElementById('closeShortcutsHelp');
+  const overlay = document.getElementById('helpOverlay');
+  
+  // 显示帮助面板
+  helpBtn.addEventListener('click', function() {
+    helpPanel.classList.add('show');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden'; // 防止背景滚动
+  });
+  
+  // 关闭帮助面板
+  function closeHelpPanel() {
+    helpPanel.classList.remove('show');
+    overlay.classList.remove('show');
+    document.body.style.overflow = ''; // 恢复滚动
+  }
+  
+  closeBtn.addEventListener('click', closeHelpPanel);
+  overlay.addEventListener('click', closeHelpPanel);
+  
+  // ESC键关闭帮助面板
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && helpPanel.classList.contains('show')) {
+      closeHelpPanel();
+    }
+  });
+}
+
+// 初始化页面主题
+function initPageTheme() {
+  // 从localStorage获取当前主题
+  const currentTheme = localStorage.getItem('current-theme') || 'life';
+  
+  // 应用当前主题
+  applyThemeStyles(currentTheme);
+  
+  // 更新主题切换提示
+  const hintText = document.querySelector('.theme-switch-hint span');
+  if (hintText) {
+    const themeNames = {
+      'life': '生活模式',
+      'work': '极客模式', 
+      'training': '狂暴模式',
+      'emo': 'Emo模式'
+    };
+    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具 (当前: ${themeNames[currentTheme]})`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 初始化页面主题
+  initPageTheme();
+  
+  // 初始化快捷键帮助面板
+  initShortcutsHelp();
+  
+  // 获取元素
+  const contentInput = document.getElementById('contentInput');
+  const generateBtn = document.getElementById('generateBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const resultSection = document.getElementById('resultSection');
+  const generatedContent = document.getElementById('generatedContent');
+  const copyBtn = document.getElementById('copyBtn');
+  const regenerateBtn = document.getElementById('regenerateBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  
+  // 选项选择
+  const options = document.querySelectorAll('.life-option');
+  const styleOptions = document.querySelectorAll('.style-option');
+  
+  let selectedType = 'social';
+  let selectedStyle = 'warm';
+  
+  // 选项点击事件
+  options.forEach(option => {
+    option.addEventListener('click', function() {
+      options.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+      selectedType = this.getAttribute('data-type');
+    });
+  });
+  
+  // 风格选择事件
+  styleOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      styleOptions.forEach(opt => opt.classList.remove('active'));
+      this.classList.add('active');
+      selectedStyle = this.getAttribute('data-style');
+    });
+  });
+  
+     // 开始探索
+   generateBtn.addEventListener('click', function() {
+     const content = contentInput.value.trim();
+     if (!content) {
+       alert('请分享你的想法或经历');
+       return;
+     }
+     
+     // 显示加载状态
+     generateBtn.innerHTML = '<div class="loading"><div class="loading-spinner"></div><span>AI正在思考...</span></div>';
+     generateBtn.disabled = true;
+     
+     // 模拟API调用
+     setTimeout(() => {
+       const aiPrompt = generateAIPrompt(content, selectedType, selectedStyle);
+       generatedContent.innerHTML = aiPrompt;
+       resultSection.style.display = 'block';
+       
+       // 恢复按钮状态
+       generateBtn.innerHTML = '<span class="btn-icon">🧠</span><span class="btn-text">开始探索</span>';
+       generateBtn.disabled = false;
+       
+       // 滚动到结果区域
+       resultSection.scrollIntoView({ behavior: 'smooth' });
+     }, 2000);
+   });
+  
+     // 清空内容
+   clearBtn.addEventListener('click', function() {
+     contentInput.value = '';
+     resultSection.style.display = 'none';
+     options.forEach(opt => opt.classList.remove('active'));
+     styleOptions.forEach(opt => opt.classList.remove('active'));
+     document.querySelector('[data-type="deep"]').classList.add('active');
+     document.querySelector('[data-style="gentle"]').classList.add('active');
+     selectedType = 'deep';
+     selectedStyle = 'gentle';
+   });
+  
+  // 复制文案
+  copyBtn.addEventListener('click', function() {
+    const text = generatedContent.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">已复制</span>';
+      setTimeout(() => {
+        copyBtn.innerHTML = originalText;
+      }, 2000);
+    });
+  });
+  
+  // 重新生成
+  regenerateBtn.addEventListener('click', function() {
+    generateBtn.click();
+  });
+  
+     // 保存分析
+   saveBtn.addEventListener('click', function() {
+     const text = generatedContent.textContent;
+     const blob = new Blob([text], { type: 'text/plain' });
+     const url = URL.createObjectURL(blob);
+     const a = document.createElement('a');
+     a.href = url;
+     a.download = 'AI自我认知分析.txt';
+     a.click();
+     URL.revokeObjectURL(url);
+   });
+  
+     // 生成AI自我认知提示词
+   function generateAIPrompt(input, type, style) {
+     const typeConfigs = {
+       deep: {
+         title: '深度探索模式',
+         icon: '🔍',
+         focus: '全面了解你的内心世界'
+       },
+       personality: {
+         title: '性格分析模式',
+         icon: '🎭',
+         focus: '深入分析你的性格特质'
+       },
+       values: {
+         title: '价值观探索模式',
+         icon: '💎',
+         focus: '探索你的核心价值观'
+       },
+       challenge: {
+         title: '挑战问题模式',
+         icon: '⚡',
+         focus: '面对内心深处的挑战'
+       }
+     };
+     
+     const styleConfigs = {
+       gentle: {
+         approach: '温和引导',
+         tone: '温暖理解',
+         method: '循序渐进'
+       },
+       direct: {
+         approach: '直接深入',
+         tone: '坦诚直接',
+         method: '直击核心'
+       },
+       challenging: {
+         approach: '挑战突破',
+         tone: '激励挑战',
+         method: '突破舒适区'
+       },
+       systematic: {
+         approach: '系统分析',
+         tone: '理性客观',
+         method: '结构化探索'
+       }
+     };
+     
+     const config = typeConfigs[type];
+     const styleConfig = styleConfigs[style];
+     
+     return `
+<div style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(23, 162, 184, 0.1) 100%); padding: 20px; border-radius: 12px; border-left: 4px solid #28a745; margin-bottom: 20px;">
+  <h3 style="color: #28a745; margin: 0 0 15px 0; display: flex; align-items: center;">
+    <span style="font-size: 1.5rem; margin-right: 10px;">${config.icon}</span>
+    ${config.title} - ${styleConfig.approach}
+  </h3>
+  <p style="margin: 0; color: #495057; line-height: 1.6;">
+    基于你分享的"${input}"，我为你定制了${styleConfig.method}的自我认知探索方案。
+  </p>
+</div>
+
+<div style="background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.2); margin-bottom: 20px;">
+  <h4 style="color: #28a745; margin: 0 0 15px 0;">🤖 给DeepSeek AI的提示词：</h4>
+  
+  <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 3px solid #17a2b8; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; color: #495057;">
+你是一位专业的心理咨询师和人生导师，专门帮助用户进行深度自我认知和探索。
+
+<strong>用户背景：</strong>${input}
+
+<strong>探索目标：</strong>${config.focus}
+
+<strong>指导原则：</strong>
+• 采用${styleConfig.tone}的态度
+• 使用${styleConfig.method}的方式
+• 让用户回答你的问题来了解他们
+• 用户回答完后，询问是否有遗漏的部分，继续提问
+• 如果用户看不懂问题，用直白的语言重新询问
+• 如果用户不知道答案，鼓励他们回答"不知道"
+• 适时进行总结
+• 如果用户觉得总结不够完整，询问是否有遗漏
+• 最后深入分析用户这个人，综合考虑，提炼核心特质
+• 最后可以帮用户生成十个他们最不敢面对的问题
+
+<strong>对话流程：</strong>
+1. 首先通过提问了解用户的基本情况和想法
+2. 深入探索用户的经历、感受和价值观
+3. 分析用户的性格特质和行为模式
+4. 总结用户的核心特征和潜在问题
+5. 提供建设性的建议和指导
+6. 生成挑战性问题促进进一步思考
+
+请开始与用户进行深度对话，帮助他们更好地认识自己。
+  </div>
+</div>
+
+<div style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 107, 157, 0.1) 100%); padding: 20px; border-radius: 12px; border-left: 4px solid #ffc107;">
+  <h4 style="color: #856404; margin: 0 0 15px 0;">💡 使用建议：</h4>
+  <ul style="margin: 0; padding-left: 20px; color: #856404; line-height: 1.6;">
+    <li>将上述提示词复制到DeepSeek AI对话中</li>
+    <li>按照AI的引导，诚实回答每一个问题</li>
+    <li>不要急于求成，给自己足够的时间思考</li>
+    <li>保持开放和诚实的态度，这是自我认知的关键</li>
+    <li>记录下AI的分析结果，定期回顾和反思</li>
+  </ul>
+</div>
+
+<div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(40, 167, 69, 0.1); border-radius: 8px;">
+  <p style="margin: 0; color: #28a745; font-weight: 500;">
+    🌱 记住：自我认知是一个持续的过程，每一次对话都是成长的机会
+  </p>
+</div>`;
+   }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,1902 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PDF转换引擎 - QATOOLBOX{% endblock %}
+
+{% block extra_css %}
+<style>
+/* PDF转换器专用样式 - 支持主题切换 */
+.pdf-converter-modern {
+  min-height: 100vh;
+  color: var(--text-color, #ffffff);
+  font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题样式 */
+.work-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  color: #00ff41;
+}
+
+/* 生活主题样式 */
+.life-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+  color: #2c3e50;
+}
+
+/* 狂暴主题样式 */
+.training-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #ff3838 0%, #ff6b6b 50%, #ff3838 100%);
+  color: #ffffff;
+}
+
+/* Emo主题样式 */
+.emo-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #6c5ce7 100%);
+  color: #ffffff;
+}
+
+.converter-header-modern {
+  text-align: center;
+  padding: 4rem 0 2rem;
+  position: relative;
+}
+
+.converter-header-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  border-radius: 2px;
+}
+
+.converter-title-modern {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .converter-title-modern {
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 生活主题 */
+.life-theme .converter-title-modern {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 狂暴主题 */
+.training-theme .converter-title-modern {
+  background: linear-gradient(135deg, #ff3838 0%, #ff6b6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Emo主题 */
+.emo-theme .converter-title-modern {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.converter-subtitle-modern {
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .converter-subtitle-modern {
+  color: rgba(0, 255, 65, 0.7);
+}
+
+/* 生活主题 */
+.life-theme .converter-subtitle-modern {
+  color: rgba(44, 62, 80, 0.8);
+}
+
+/* 狂暴主题 */
+.training-theme .converter-subtitle-modern {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Emo主题 */
+.emo-theme .converter-subtitle-modern {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.conversion-types-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.type-card-modern {
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 极客主题 */
+.work-theme .type-card-modern {
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  color: #00ff41;
+}
+
+.work-theme .type-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.work-theme .type-card-modern:hover {
+  border-color: #00ff41;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 255, 65, 0.2);
+}
+
+.work-theme .type-card-modern.selected {
+  border-color: #00ff41;
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 255, 65, 0.3);
+}
+
+/* 生活主题 */
+.life-theme .type-card-modern {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(254, 202, 87, 0.05) 100%);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  color: #2c3e50;
+}
+
+.life-theme .type-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 107, 107, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.life-theme .type-card-modern:hover {
+  border-color: #ff6b6b;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(255, 107, 107, 0.2);
+}
+
+.life-theme .type-card-modern.selected {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  box-shadow: 0 16px 48px rgba(255, 107, 107, 0.3);
+}
+
+/* 狂暴主题 */
+.training-theme .type-card-modern {
+  background: linear-gradient(135deg, rgba(255, 56, 56, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%);
+  border: 1px solid rgba(255, 56, 56, 0.2);
+  color: #ffffff;
+}
+
+.training-theme .type-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 56, 56, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.training-theme .type-card-modern:hover {
+  border-color: #ff3838;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(255, 56, 56, 0.2);
+}
+
+.training-theme .type-card-modern.selected {
+  border-color: #ff3838;
+  background: rgba(255, 56, 56, 0.1);
+  box-shadow: 0 16px 48px rgba(255, 56, 56, 0.3);
+}
+
+/* Emo主题 */
+.emo-theme .type-card-modern {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(162, 155, 254, 0.05) 100%);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  color: #ffffff;
+}
+
+.emo-theme .type-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(108, 92, 231, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.emo-theme .type-card-modern:hover {
+  border-color: #6c5ce7;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(108, 92, 231, 0.2);
+}
+
+.emo-theme .type-card-modern.selected {
+  border-color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.1);
+  box-shadow: 0 16px 48px rgba(108, 92, 231, 0.3);
+}
+
+.type-card-modern:hover::before {
+  left: 100%;
+}
+
+.type-card-modern .card-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .type-card-modern .card-icon {
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 生活主题 */
+.life-theme .type-card-modern .card-icon {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 狂暴主题 */
+.training-theme .type-card-modern .card-icon {
+  background: linear-gradient(135deg, #ff3838 0%, #ff6b6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Emo主题 */
+.emo-theme .type-card-modern .card-icon {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.type-card-modern h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .type-card-modern h4 {
+  color: #00ff41;
+}
+
+/* 生活主题 */
+.life-theme .type-card-modern h4 {
+  color: #2c3e50;
+}
+
+/* 狂暴主题 */
+.training-theme .type-card-modern h4 {
+  color: #ffffff;
+}
+
+/* Emo主题 */
+.emo-theme .type-card-modern h4 {
+  color: #ffffff;
+}
+
+.type-card-modern p {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .type-card-modern p {
+  color: rgba(0, 255, 65, 0.7);
+}
+
+/* 生活主题 */
+.life-theme .type-card-modern p {
+  color: rgba(44, 62, 80, 0.8);
+}
+
+/* 狂暴主题 */
+.training-theme .type-card-modern p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Emo主题 */
+.emo-theme .type-card-modern p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.feature-tags-modern {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.feature-tag-modern {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .feature-tag-modern {
+  background: rgba(0, 255, 65, 0.1);
+  color: #00ff41;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+/* 生活主题 */
+.life-theme .feature-tag-modern {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+/* 狂暴主题 */
+.training-theme .feature-tag-modern {
+  background: rgba(255, 56, 56, 0.1);
+  color: #ff3838;
+  border: 1px solid rgba(255, 56, 56, 0.2);
+}
+
+/* Emo主题 */
+.emo-theme .feature-tag-modern {
+  background: rgba(108, 92, 231, 0.1);
+  color: #6c5ce7;
+  border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.upload-section-modern {
+  border-radius: 24px;
+  padding: 3rem;
+  margin: 2rem 0;
+  backdrop-filter: blur(20px);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .upload-section-modern {
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+/* 生活主题 */
+.life-theme .upload-section-modern {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(254, 202, 87, 0.05) 100%);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+/* 狂暴主题 */
+.training-theme .upload-section-modern {
+  background: linear-gradient(135deg, rgba(255, 56, 56, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%);
+  border: 1px solid rgba(255, 56, 56, 0.2);
+}
+
+/* Emo主题 */
+.emo-theme .upload-section-modern {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(162, 155, 254, 0.05) 100%);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.upload-area-modern {
+  border: 2px dashed;
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 极客主题 */
+.work-theme .upload-area-modern {
+  border-color: rgba(0, 255, 65, 0.2);
+}
+
+.work-theme .upload-area-modern:hover {
+  border-color: #00ff41;
+  background: rgba(0, 255, 65, 0.05);
+}
+
+.work-theme .upload-area-modern.dragover {
+  border-color: #00ff41;
+  background: rgba(0, 255, 65, 0.1);
+  transform: scale(1.02);
+}
+
+/* 生活主题 */
+.life-theme .upload-area-modern {
+  border-color: rgba(255, 107, 107, 0.2);
+}
+
+.life-theme .upload-area-modern:hover {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.life-theme .upload-area-modern.dragover {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  transform: scale(1.02);
+}
+
+/* 狂暴主题 */
+.training-theme .upload-area-modern {
+  border-color: rgba(255, 56, 56, 0.2);
+}
+
+.training-theme .upload-area-modern:hover {
+  border-color: #ff3838;
+  background: rgba(255, 56, 56, 0.05);
+}
+
+.training-theme .upload-area-modern.dragover {
+  border-color: #ff3838;
+  background: rgba(255, 56, 56, 0.1);
+  transform: scale(1.02);
+}
+
+/* Emo主题 */
+.emo-theme .upload-area-modern {
+  border-color: rgba(108, 92, 231, 0.2);
+}
+
+.emo-theme .upload-area-modern:hover {
+  border-color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.05);
+}
+
+.emo-theme .upload-area-modern.dragover {
+  border-color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.1);
+  transform: scale(1.02);
+}
+
+.upload-icon-modern {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .upload-icon-modern {
+  color: #00ff41;
+}
+
+/* 生活主题 */
+.life-theme .upload-icon-modern {
+  color: #ff6b6b;
+}
+
+/* 狂暴主题 */
+.training-theme .upload-icon-modern {
+  color: #ff3838;
+}
+
+/* Emo主题 */
+.emo-theme .upload-icon-modern {
+  color: #6c5ce7;
+}
+
+.upload-text-modern {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .upload-text-modern {
+  color: #00ff41;
+}
+
+/* 生活主题 */
+.life-theme .upload-text-modern {
+  color: #2c3e50;
+}
+
+/* 狂暴主题 */
+.training-theme .upload-text-modern {
+  color: #ffffff;
+}
+
+/* Emo主题 */
+.emo-theme .upload-text-modern {
+  color: #ffffff;
+}
+
+.upload-hint-modern {
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+/* 极客主题 */
+.work-theme .upload-hint-modern {
+  color: rgba(0, 255, 65, 0.7);
+}
+
+/* 生活主题 */
+.life-theme .upload-hint-modern {
+  color: rgba(44, 62, 80, 0.8);
+}
+
+/* 狂暴主题 */
+.training-theme .upload-hint-modern {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Emo主题 */
+.emo-theme .upload-hint-modern {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.file-info-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.file-icon-modern {
+  font-size: 2rem;
+  color: #00d4ff;
+}
+
+.file-details-modern {
+  flex: 1;
+}
+
+.file-name-modern {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.file-size-modern {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.remove-file-modern {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 12px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.remove-file-modern:hover {
+  background: rgba(255, 107, 107, 0.2);
+  transform: scale(1.1);
+}
+
+.convert-btn-modern {
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* 极客主题 */
+.work-theme .convert-btn-modern {
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+  box-shadow: 0 8px 24px rgba(0, 255, 65, 0.3);
+}
+
+.work-theme .convert-btn-modern:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 16px 40px rgba(0, 255, 65, 0.5);
+}
+
+/* 生活主题 */
+.life-theme .convert-btn-modern {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+}
+
+.life-theme .convert-btn-modern:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 16px 40px rgba(255, 107, 107, 0.5);
+}
+
+/* 狂暴主题 */
+.training-theme .convert-btn-modern {
+  background: linear-gradient(135deg, #ff3838 0%, #ff6b6b 100%);
+  box-shadow: 0 8px 24px rgba(255, 56, 56, 0.3);
+}
+
+.training-theme .convert-btn-modern:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 16px 40px rgba(255, 56, 56, 0.5);
+}
+
+/* Emo主题 */
+.emo-theme .convert-btn-modern {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  box-shadow: 0 8px 24px rgba(108, 92, 231, 0.3);
+}
+
+.emo-theme .convert-btn-modern:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 16px 40px rgba(108, 92, 231, 0.5);
+}
+
+.convert-btn-modern:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.progress-section-modern {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 3rem;
+  margin: 2rem 0;
+  backdrop-filter: blur(20px);
+  text-align: center;
+}
+
+.progress-bar-modern {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  height: 8px;
+  margin: 2rem 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill-modern {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill-modern::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-text-modern {
+  color: #ffffff;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.result-section-modern {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 3rem;
+  margin: 2rem 0;
+  backdrop-filter: blur(20px);
+}
+
+.result-item-modern {
+  text-align: center;
+  padding: 2rem;
+}
+
+.result-icon-modern {
+  font-size: 4rem;
+  color: #4ecdc4;
+  margin-bottom: 1.5rem;
+}
+
+.result-title-modern {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.result-description-modern {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.result-actions-modern {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.download-btn-modern {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.download-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 212, 255, 0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.convert-again-btn-modern {
+  background: transparent;
+  color: #00d4ff;
+  border: 2px solid #00d4ff;
+  border-radius: 16px;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.convert-again-btn-modern:hover {
+  background: #00d4ff;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.image-gallery-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.image-item-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.image-item-modern img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.image-item-modern .page-info {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+/* 主题切换按钮样式 */
+.theme-switcher-modern {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.theme-btn-modern {
+  background: transparent;
+  border: 2px solid;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(10px);
+}
+
+/* 极客主题 */
+.work-theme .theme-btn-modern {
+  border-color: rgba(0, 255, 65, 0.3);
+  color: #00ff41;
+  background: rgba(0, 255, 65, 0.1);
+}
+
+.work-theme .theme-btn-modern:hover,
+.work-theme .theme-btn-modern.active {
+  background: rgba(0, 255, 65, 0.2);
+  border-color: #00ff41;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 255, 65, 0.3);
+}
+
+/* 生活主题 */
+.life-theme .theme-btn-modern {
+  border-color: rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.life-theme .theme-btn-modern:hover,
+.life-theme .theme-btn-modern.active {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: #ff6b6b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+}
+
+/* 狂暴主题 */
+.training-theme .theme-btn-modern {
+  border-color: rgba(255, 56, 56, 0.3);
+  color: #ff3838;
+  background: rgba(255, 56, 56, 0.1);
+}
+
+.training-theme .theme-btn-modern:hover,
+.training-theme .theme-btn-modern.active {
+  background: rgba(255, 56, 56, 0.2);
+  border-color: #ff3838;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 56, 56, 0.3);
+}
+
+/* Emo主题 */
+.emo-theme .theme-btn-modern {
+  border-color: rgba(108, 92, 231, 0.3);
+  color: #6c5ce7;
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.emo-theme .theme-btn-modern:hover,
+.emo-theme .theme-btn-modern.active {
+  background: rgba(108, 92, 231, 0.2);
+  border-color: #6c5ce7;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
+}
+
+/* 快捷键提示样式 */
+.theme-switch-hint {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.theme-switch-hint:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.hint-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.hint-content i {
+  font-size: 1rem;
+  color: #764ba2;
+}
+
+.hint-content span {
+  white-space: nowrap;
+}
+
+.help-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: #667eea;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 8px;
+}
+
+.help-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: scale(1.1);
+}
+
+/* 快捷键帮助面板样式 */
+.shortcuts-help-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(255,255,255,0.98);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  z-index: 10000;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.shortcuts-help-panel.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.help-panel-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.help-panel-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-help-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-help-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
+}
+
+.help-panel-content {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shortcuts-section {
+  margin-bottom: 25px;
+}
+
+.shortcuts-section h4 {
+  color: #667eea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  padding-bottom: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.shortcut-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+  padding-left: 10px;
+  border-radius: 6px;
+}
+
+.shortcut-key {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 80px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.shortcut-desc {
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  margin-left: 15px;
+}
+
+/* 遮罩层 */
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.help-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 768px) {
+  .converter-title-modern {
+    font-size: 2.5rem;
+  }
+  
+  .conversion-types-modern {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .upload-section-modern {
+    padding: 2rem;
+  }
+  
+  .result-actions-modern {
+    flex-direction: column;
+  }
+  
+  .theme-switcher-modern {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .theme-btn-modern {
+    width: 200px;
+    justify-content: center;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pdf-converter-modern">
+  <div class="container">
+    <!-- 标题区域 -->
+    <div class="converter-header-modern">
+      <h1 class="converter-title-modern">PDF转换引擎</h1>
+      <p class="converter-subtitle-modern">
+        高效的文件格式转换工具，支持多种格式互转，采用现代化设计
+      </p>
+      
+      <!-- 主题切换按钮 -->
+      <div class="theme-switcher-modern" style="margin-top: 2rem;">
+        <button class="theme-btn-modern" onclick="switchTheme('work')" data-theme="work">
+          <i class="fas fa-code"></i> 极客模式
+        </button>
+        <button class="theme-btn-modern" onclick="switchTheme('life')" data-theme="life">
+          <i class="fas fa-heart"></i> 生活模式
+        </button>
+        <button class="theme-btn-modern" onclick="switchTheme('training')" data-theme="training">
+          <i class="fas fa-fire"></i> 狂暴模式
+        </button>
+        <button class="theme-btn-modern" onclick="switchTheme('emo')" data-theme="emo">
+          <i class="fas fa-music"></i> Emo模式
+        </button>
+      </div>
+
+      <!-- 快捷键提示 -->
+      <div class="theme-switch-hint" style="margin-top: 1rem;">
+        <div class="hint-content">
+          <i class="fas fa-keyboard"></i>
+          <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
+          <button class="help-btn" id="showShortcutsHelp">
+            <i class="fas fa-question-circle"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 快捷键帮助面板 -->
+    <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
+      <div class="help-panel-header">
+        <h3><i class="fas fa-keyboard"></i> 快捷键帮助</h3>
+        <button class="close-help-btn" id="closeShortcutsHelp">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="help-panel-content">
+        <div class="shortcuts-section">
+          <h4><i class="fas fa-palette"></i> 主题切换</h4>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Ctrl + 1</span>
+            <span class="shortcut-desc">生活模式</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Ctrl + 2</span>
+            <span class="shortcut-desc">极客模式</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Ctrl + 3</span>
+            <span class="shortcut-desc">狂暴模式</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Ctrl + 4</span>
+            <span class="shortcut-desc">Emo模式</span>
+          </div>
+        </div>
+        <div class="shortcuts-section">
+          <h4><i class="fas fa-tools"></i> 工具跳转</h4>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + E</span>
+            <span class="shortcut-desc">情感日记</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + L</span>
+            <span class="shortcut-desc">生活日记</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + F</span>
+            <span class="shortcut-desc">健身中心</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + C</span>
+            <span class="shortcut-desc">创意写作</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + P</span>
+            <span class="shortcut-desc">PDF转换器</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + R</span>
+            <span class="shortcut-desc">小红书生成器</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + T</span>
+            <span class="shortcut-desc">测试用例生成器</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + W</span>
+            <span class="shortcut-desc">网页爬虫</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + S</span>
+            <span class="shortcut-desc">自我分析</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + B</span>
+            <span class="shortcut-desc">故事板</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + M</span>
+            <span class="shortcut-desc">音乐疗愈</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + D</span>
+            <span class="shortcut-desc">冥想指南</span>
+          </div>
+          <div class="shortcut-item">
+            <span class="shortcut-key">Alt + A</span>
+            <span class="shortcut-desc">运势分析</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div class="help-overlay" id="helpOverlay"></div>
+    </div>
+    
+    <!-- 转换类型选择 -->
+    <div class="conversion-types-modern">
+      <div class="type-card-modern" data-type="pdf-to-word" onclick="selectType('pdf-to-word')">
+        <div class="card-icon">
+          <i class="fas fa-file-pdf"></i>
+          <i class="fas fa-arrow-right"></i>
+          <i class="fas fa-file-word"></i>
+        </div>
+        <h4>PDF转Word</h4>
+        <p>将PDF文档转换为可编辑的Word格式，保持原始格式和布局</p>
+        <div class="feature-tags-modern">
+          <span class="feature-tag-modern">OCR识别</span>
+          <span class="feature-tag-modern">保持格式</span>
+        </div>
+      </div>
+      
+      <div class="type-card-modern" data-type="word-to-pdf" onclick="selectType('word-to-pdf')">
+        <div class="card-icon">
+          <i class="fas fa-file-word"></i>
+          <i class="fas fa-arrow-right"></i>
+          <i class="fas fa-file-pdf"></i>
+        </div>
+        <h4>Word转PDF</h4>
+        <p>将Word文档转换为PDF格式，确保文档的安全性和一致性</p>
+        <div class="feature-tags-modern">
+          <span class="feature-tag-modern">高质量</span>
+          <span class="feature-tag-modern">快速转换</span>
+        </div>
+      </div>
+      
+      <div class="type-card-modern" data-type="pdf-to-image" onclick="selectType('pdf-to-image')">
+        <div class="card-icon">
+          <i class="fas fa-file-pdf"></i>
+          <i class="fas fa-arrow-right"></i>
+          <i class="fas fa-image"></i>
+        </div>
+        <h4>PDF转图片</h4>
+        <p>将PDF页面转换为高清图片格式，支持批量处理</p>
+        <div class="feature-tags-modern">
+          <span class="feature-tag-modern">高清输出</span>
+          <span class="feature-tag-modern">批量处理</span>
+        </div>
+      </div>
+      
+      <div class="type-card-modern" data-type="image-to-pdf" onclick="selectType('image-to-pdf')">
+        <div class="card-icon">
+          <i class="fas fa-images"></i>
+          <i class="fas fa-arrow-right"></i>
+          <i class="fas fa-file-pdf"></i>
+        </div>
+        <h4>图片转PDF</h4>
+        <p>将多张图片合并为PDF文档，支持智能排序和压缩优化</p>
+        <div class="feature-tags-modern">
+          <span class="feature-tag-modern">智能排序</span>
+          <span class="feature-tag-modern">压缩优化</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 文件上传区域 -->
+    <div class="upload-section-modern" id="fileUpload" style="display: none;">
+      <h3 style="color: #00d4ff; margin-bottom: 2rem; font-size: 1.5rem;">
+        <i class="fas fa-cloud-upload-alt"></i>
+        上传文件
+      </h3>
+      
+      <div class="upload-area-modern" onclick="document.getElementById('fileInput').click()" id="uploadArea">
+        <div class="upload-icon-modern">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <div class="upload-text-modern">拖拽文件到此处或点击选择文件</div>
+        <div class="upload-hint-modern" id="uploadHint">支持多种格式文件</div>
+        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="display: none;">
+      </div>
+      
+      <!-- 文件信息显示 -->
+      <div class="file-info-modern" id="fileInfo" style="display: none;">
+        <div class="file-icon-modern">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="file-details-modern">
+          <div class="file-name-modern" id="fileName"></div>
+          <div class="file-size-modern" id="fileSize"></div>
+        </div>
+        <button class="remove-file-modern" onclick="removeFile()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 转换按钮 -->
+      <button class="convert-btn-modern" onclick="convertFile()" id="convertBtn" style="display: none;">
+        <i class="fas fa-cogs"></i>
+        <span>开始转换</span>
+      </button>
+    </div>
+    
+    <!-- 转换进度区域 -->
+    <div class="progress-section-modern" id="conversionProgress" style="display: none;">
+      <h3 style="color: #00d4ff; margin-bottom: 2rem; font-size: 1.5rem;">
+        <i class="fas fa-spinner fa-spin"></i>
+        正在转换
+      </h3>
+      <div class="progress-bar-modern">
+        <div class="progress-fill-modern" id="progressFill"></div>
+      </div>
+      <div class="progress-text-modern" id="progressText">准备中...</div>
+    </div>
+    
+    <!-- 转换结果区域 -->
+    <div class="result-section-modern" id="conversionResult" style="display: none;">
+      <div class="result-item-modern" id="resultContent">
+        <!-- 结果内容将在这里显示 -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedType = '';
+let selectedFile = null;
+
+// 主题切换函数
+function switchTheme(theme) {
+    // 更新body类名
+    document.body.className = theme + '-theme';
+    
+    // 更新主题按钮状态
+    document.querySelectorAll('.theme-btn-modern').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
+    
+    // 保存主题到localStorage
+    localStorage.setItem('pdf-converter-theme', theme);
+    
+    // 显示通知
+    const themeNames = {
+        'work': '极客模式',
+        'life': '生活模式',
+        'training': '狂暴模式',
+        'emo': 'Emo模式'
+    };
+    showNotification(`已切换到${themeNames[theme]}`, 'success');
+}
+
+// 快捷键支持
+document.addEventListener('keydown', function(e) {
+  // 只在非输入框中响应快捷键
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
+  // Ctrl/Cmd + 数字键切换主题
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+    switch(e.key) {
+      case '1':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case '2':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case '3':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case '4':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+    }
+  }
+  
+  // Alt + 字母键跳转到工具页面
+  if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    switch(e.key.toLowerCase()) {
+      case 'e':
+        e.preventDefault();
+        window.location.href = '/tools/emo-diary/';
+        break;
+      case 'l':
+        e.preventDefault();
+        window.location.href = '/tools/life-diary/';
+        break;
+      case 'f':
+        e.preventDefault();
+        window.location.href = '/tools/fitness/';
+        break;
+      case 'c':
+        e.preventDefault();
+        window.location.href = '/tools/creative-writer/';
+        break;
+      case 'p':
+        e.preventDefault();
+        window.location.href = '/tools/pdf-converter/';
+        break;
+      case 'r':
+        e.preventDefault();
+        window.location.href = '/tools/redbook-generator/';
+        break;
+      case 't':
+        e.preventDefault();
+        window.location.href = '/tools/test-case-generator/';
+        break;
+      case 'w':
+        e.preventDefault();
+        window.location.href = '/tools/web-crawler/';
+        break;
+      case 's':
+        e.preventDefault();
+        window.location.href = '/tools/self-analysis/';
+        break;
+      case 'b':
+        e.preventDefault();
+        window.location.href = '/tools/storyboard/';
+        break;
+      case 'm':
+        e.preventDefault();
+        window.location.href = '/tools/music-healing/';
+        break;
+      case 'd':
+        e.preventDefault();
+        window.location.href = '/tools/meditation-guide/';
+        break;
+      case 'a':
+        e.preventDefault();
+        window.location.href = '/tools/fortune-analyzer/';
+        break;
+    }
+  }
+});
+
+// 初始化快捷键帮助面板
+function initShortcutsHelp() {
+  const helpBtn = document.getElementById('showShortcutsHelp');
+  const helpPanel = document.getElementById('shortcutsHelpPanel');
+  const closeBtn = document.getElementById('closeShortcutsHelp');
+  const overlay = document.getElementById('helpOverlay');
+  
+  // 显示帮助面板
+  helpBtn.addEventListener('click', function() {
+    helpPanel.classList.add('show');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden'; // 防止背景滚动
+  });
+  
+  // 关闭帮助面板
+  function closeHelpPanel() {
+    helpPanel.classList.remove('show');
+    overlay.classList.remove('show');
+    document.body.style.overflow = ''; // 恢复滚动
+  }
+  
+  closeBtn.addEventListener('click', closeHelpPanel);
+  overlay.addEventListener('click', closeHelpPanel);
+  
+  // ESC键关闭帮助面板
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && helpPanel.classList.contains('show')) {
+      closeHelpPanel();
+    }
+  });
+}
+
+// 页面加载时恢复主题
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('pdf-converter-theme') || 'work';
+    switchTheme(savedTheme);
+    
+    // 初始化快捷键帮助面板
+    initShortcutsHelp();
+});
+
+function selectType(type) {
+    selectedType = type;
+    
+    // 更新选中状态
+    document.querySelectorAll('.type-card-modern').forEach(card => {
+        card.classList.remove('selected');
+    });
+    document.querySelector(`[data-type="${type}"]`).classList.add('selected');
+    
+    // 显示文件上传区域
+    document.getElementById('fileUpload').style.display = 'block';
+    
+    // 更新上传提示
+    updateUploadHint(type);
+    
+    showNotification(`已选择${getTypeName(type)}转换`, 'info');
+}
+
+function getTypeName(type) {
+    const names = {
+        'pdf-to-word': 'PDF转Word',
+        'word-to-pdf': 'Word转PDF',
+        'pdf-to-image': 'PDF转图片',
+        'image-to-pdf': '图片转PDF'
+    };
+    return names[type] || type;
+}
+
+function updateUploadHint(type) {
+    const hints = {
+        'pdf-to-word': '支持 PDF 格式文件',
+        'word-to-pdf': '支持 Word 格式文件 (.doc, .docx)',
+        'pdf-to-image': '支持 PDF 格式文件',
+        'image-to-pdf': '支持图片格式文件 (.jpg, .jpeg, .png)'
+    };
+    document.getElementById('uploadHint').textContent = hints[type] || '支持多种格式';
+}
+
+// 文件上传处理
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        selectedFile = file;
+        displayFileInfo(file);
+        document.getElementById('convertBtn').style.display = 'inline-flex';
+        showNotification(`已选择文件: ${file.name}`, 'success');
+    }
+});
+
+// 拖拽上传
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        const file = files[0];
+        selectedFile = file;
+        displayFileInfo(file);
+        document.getElementById('convertBtn').style.display = 'inline-flex';
+        showNotification(`已选择文件: ${file.name}`, 'success');
+    }
+});
+
+function displayFileInfo(file) {
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    
+    fileInfo.style.display = 'flex';
+    document.getElementById('uploadArea').style.display = 'none';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function removeFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('uploadArea').style.display = 'block';
+    document.getElementById('convertBtn').style.display = 'none';
+}
+
+function convertFile() {
+    if (!selectedFile) {
+        showNotification('请先选择文件', 'warning');
+        return;
+    }
+    
+    if (!selectedType) {
+        showNotification('请先选择转换类型', 'warning');
+        return;
+    }
+    
+    // 显示进度区域
+    document.getElementById('conversionProgress').style.display = 'block';
+    document.getElementById('conversionResult').style.display = 'none';
+    
+    // 执行实际转换
+    performConversion();
+}
+
+function performConversion() {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('type', selectedType);
+    
+    // 显示进度
+    simulateProgress();
+    
+    // 发送API请求
+    fetch('/tools/api/pdf-converter/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showConversionResult(data);
+        } else {
+            showNotification(data.error || '转换失败', 'error');
+            document.getElementById('conversionProgress').style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('转换错误:', error);
+        showNotification('转换过程中发生错误', 'error');
+        document.getElementById('conversionProgress').style.display = 'none';
+    });
+}
+
+function simulateProgress() {
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    let progress = 0;
+    
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90; // 保留10%给实际完成
+        
+        progressFill.style.width = progress + '%';
+        
+        if (progress < 30) {
+            progressText.textContent = '正在分析文件...';
+        } else if (progress < 60) {
+            progressText.textContent = '正在转换格式...';
+        } else {
+            progressText.textContent = '正在优化输出...';
+        }
+    }, 200);
+    
+    // 保存interval以便后续清除
+    window.progressInterval = interval;
+}
+
+function showConversionResult(data) {
+    // 清除进度模拟
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+    }
+    
+    document.getElementById('conversionProgress').style.display = 'none';
+    
+    const resultContent = document.getElementById('resultContent');
+    const fileName = selectedFile.name;
+    
+    if (data.type === 'images') {
+        // 显示图片结果
+        let imagesHtml = '<div class="image-gallery-modern">';
+        data.data.forEach((image, index) => {
+            imagesHtml += `
+                <div class="image-item-modern">
+                    <img src="data:image/png;base64,${image.data}" alt="页面 ${image.page}">
+                    <div class="page-info">第 ${image.page} 页</div>
+                </div>
+            `;
+        });
+        imagesHtml += '</div>';
+        
+        resultContent.innerHTML = `
+            <div class="result-icon-modern">
+                <i class="fas fa-images"></i>
+            </div>
+            <div class="result-title-modern">✅ 转换完成</div>
+            <div class="result-description-modern">
+                文件 <strong>${fileName}</strong> 已成功转换为图片格式，共 ${data.data.length} 页
+            </div>
+            ${imagesHtml}
+            <div class="result-actions-modern">
+                <button class="convert-again-btn-modern" onclick="convertAgain()">
+                    <i class="fas fa-redo"></i>
+                    转换其他文件
+                </button>
+            </div>
+        `;
+    } else {
+        // 显示文件下载结果
+        resultContent.innerHTML = `
+            <div class="result-icon-modern">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="result-title-modern">✅ 转换完成</div>
+            <div class="result-description-modern">
+                文件 <strong>${fileName}</strong> 已成功转换为 ${getTypeName(selectedType)} 格式
+            </div>
+            <div class="result-actions-modern">
+                <a href="${data.download_url}" class="download-btn-modern" download="${data.filename}">
+                    <i class="fas fa-download"></i>
+                    下载文件
+                </a>
+                <button class="convert-again-btn-modern" onclick="convertAgain()">
+                    <i class="fas fa-redo"></i>
+                    转换其他文件
+                </button>
+            </div>
+        `;
+    }
+    
+    document.getElementById('conversionResult').style.display = 'block';
+    showNotification('文件转换完成！', 'success');
+}
+
+function convertAgain() {
+    removeFile();
+    document.getElementById('conversionResult').style.display = 'none';
+    document.getElementById('fileUpload').style.display = 'none';
+    document.querySelectorAll('.type-card-modern').forEach(card => {
+        card.classList.remove('selected');
+    });
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 通知系统
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `modern-notification ${type}`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px 20px;
+        color: #ffffff;
+        backdrop-filter: blur(20px);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+        max-width: 300px;
+    `;
+    
+    // 根据类型设置颜色
+    if (type === 'success') {
+        notification.style.borderColor = 'var(--modern-secondary)';
+        notification.style.background = 'rgba(78, 205, 196, 0.1)';
+    } else if (type === 'error') {
+        notification.style.borderColor = 'var(--modern-accent)';
+        notification.style.background = 'rgba(255, 107, 107, 0.1)';
+    } else if (type === 'warning') {
+        notification.style.borderColor = 'var(--modern-secondary)';
+        notification.style.background = 'rgba(255, 193, 7, 0.1)';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %} 

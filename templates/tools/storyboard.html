@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}故事板 - 故事疗愈{% endblock %}
+
+{% block content %}
+<div class="storyboard-container">
+    <!-- 引导说明 -->
+    <div class="storyboard-guide">
+        <h3>📖 故事疗愈空间</h3>
+        <p>在这里，你可以：</p>
+        <ul>
+            <li>分享你的故事，获得情感共鸣</li>
+            <li>阅读他人的故事，找到内心的慰藉</li>
+            <li>让AI为你创作专属的治愈故事</li>
+            <li>在文字中找到力量与希望</li>
+        </ul>
+    </div>
+
+    <!-- 故事创作区域 -->
+    <div class="story-creation">
+        <h4>✍️ 创作你的故事</h4>
+        <div class="story-input-container">
+            <textarea id="storyPrompt" placeholder="描述你想要的故事主题、情感或情节..." rows="4"></textarea>
+            <button id="generateStoryBtn" class="generate-btn">
+                <i class="fas fa-magic"></i> 生成故事
+            </button>
+        </div>
+    </div>
+
+    <!-- 故事展示区域 -->
+    <div class="story-display" id="storyDisplay" style="display: none;">
+        <h4>📚 你的专属故事</h4>
+        <div class="story-content" id="storyContent"></div>
+        <div class="story-actions">
+            <button id="saveStoryBtn" class="action-btn">
+                <i class="fas fa-bookmark"></i> 保存故事
+            </button>
+            <button id="shareStoryBtn" class="action-btn">
+                <i class="fas fa-share"></i> 分享故事
+            </button>
+            <button id="newStoryBtn" class="action-btn">
+                <i class="fas fa-plus"></i> 新故事
+            </button>
+        </div>
+    </div>
+
+    <!-- 故事库 -->
+    <div class="story-library">
+        <h4>📚 治愈故事库</h4>
+        <div class="story-grid" id="storyGrid">
+            <!-- 预设的治愈故事 -->
+            <div class="story-card">
+                <h5>🌙 月光下的约定</h5>
+                <p>在城市的某个角落，有一个女孩总是独自一人。直到有一天，她遇见了月光...</p>
+                <div class="story-tags">
+                    <span class="tag">治愈</span>
+                    <span class="tag">友情</span>
+                </div>
+            </div>
+            <div class="story-card">
+                <h5>🌸 春天的来信</h5>
+                <p>冬天即将过去，春天正在路上。每一朵花都在等待绽放的时刻...</p>
+                <div class="story-tags">
+                    <span class="tag">希望</span>
+                    <span class="tag">成长</span>
+                </div>
+            </div>
+            <div class="story-card">
+                <h5>🌟 星星的眼泪</h5>
+                <p>当星星落泪时，它们会变成流星。而每一颗流星都承载着一个愿望...</p>
+                <div class="story-tags">
+                    <span class="tag">梦想</span>
+                    <span class="tag">勇气</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.storyboard-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.storyboard-guide {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.storyboard-guide h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.5em;
+}
+
+.storyboard-guide ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.storyboard-guide li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.story-creation {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.story-creation h4 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.story-input-container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+#storyPrompt {
+    flex: 1;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 14px;
+    resize: none;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+}
+
+#storyPrompt:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.generate-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+}
+
+.generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.story-display {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.story-display h4 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.story-content {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.story-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 2px solid #667eea;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.story-library {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.story-library h4 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.story-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.story-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+}
+
+.story-card h5 {
+    color: #667eea;
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.story-card p {
+    color: #666;
+    line-height: 1.6;
+    margin: 0 0 15px 0;
+}
+
+.story-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .storyboard-container {
+        padding: 15px;
+    }
+    
+    .story-input-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .generate-btn {
+        align-self: flex-end;
+        width: fit-content;
+    }
+    
+    .story-actions {
+        justify-content: center;
+    }
+    
+    .story-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const storyPrompt = document.getElementById('storyPrompt');
+    const generateStoryBtn = document.getElementById('generateStoryBtn');
+    const storyDisplay = document.getElementById('storyDisplay');
+    const storyContent = document.getElementById('storyContent');
+    const saveStoryBtn = document.getElementById('saveStoryBtn');
+    const shareStoryBtn = document.getElementById('shareStoryBtn');
+    const newStoryBtn = document.getElementById('newStoryBtn');
+
+    // 生成故事
+    function generateStory() {
+        const prompt = storyPrompt.value.trim();
+        if (!prompt) {
+            alert('请输入故事主题或情节描述');
+            return;
+        }
+
+        // 显示加载状态
+        generateStoryBtn.disabled = true;
+        generateStoryBtn.innerHTML = '<div class="loading"></div> 生成中...';
+
+        // 调用API生成故事
+        fetch('/tools/api/storyboard/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                prompt: prompt
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            generateStoryBtn.disabled = false;
+            generateStoryBtn.innerHTML = '<i class="fas fa-magic"></i> 生成故事';
+
+            if (data.success) {
+                storyContent.innerHTML = data.story.replace(/\n/g, '<br>');
+                storyDisplay.style.display = 'block';
+                storyDisplay.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert('生成故事时出现错误：' + data.error);
+            }
+        })
+        .catch(error => {
+            generateStoryBtn.disabled = false;
+            generateStoryBtn.innerHTML = '<i class="fas fa-magic"></i> 生成故事';
+            alert('网络错误，请稍后重试');
+            console.error('Error:', error);
+        });
+    }
+
+    // 保存故事
+    function saveStory() {
+        const story = storyContent.textContent;
+        const blob = new Blob([story], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '我的治愈故事.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 分享故事
+    function shareStory() {
+        const story = storyContent.textContent;
+        if (navigator.share) {
+            navigator.share({
+                title: '我的治愈故事',
+                text: story,
+                url: window.location.href
+            });
+        } else {
+            // 复制到剪贴板
+            navigator.clipboard.writeText(story).then(() => {
+                alert('故事已复制到剪贴板');
+            }).catch(() => {
+                alert('复制失败，请手动复制');
+            });
+        }
+    }
+
+    // 新故事
+    function newStory() {
+        storyPrompt.value = '';
+        storyDisplay.style.display = 'none';
+        storyPrompt.focus();
+    }
+
+    // 事件监听
+    generateStoryBtn.addEventListener('click', generateStory);
+    saveStoryBtn.addEventListener('click', saveStory);
+    shareStoryBtn.addEventListener('click', shareStory);
+    newStoryBtn.addEventListener('click', newStory);
+
+    // 回车生成故事
+    storyPrompt.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            generateStory();
+        }
+    });
+
+    // 故事卡片点击事件
+    document.querySelectorAll('.story-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const title = this.querySelector('h5').textContent;
+            const content = this.querySelector('p').textContent;
+            storyPrompt.value = `请基于"${title}"的主题，创作一个治愈的故事。故事应该包含：${content}`;
+        });
+    });
+
+    // 获取CSRF Token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %} 

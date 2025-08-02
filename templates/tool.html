@@ -1,21 +1,28 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="{% static 'geek.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'punk.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'rage.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'emo.css' %}">
+{% endblock %}
+
 {% block content %}
 {% if user.is_authenticated %}
-<div class="geek-card">
-  <div class="geek-title">工具集</div>
-  <div class="geek-terminal">选择你要使用的工具：</div>
-  <div class="geek-tool-grid">
-    <a href="{% url 'test_case_generator' %}" class="geek-tool-card">
-      <div class="geek-tool-icon"><i class="fas fa-robot"></i></div>
-      <div class="geek-tool-title">测试用例生成器</div>
-      <div class="geek-tool-desc">AI智能生成测试用例，提升效率</div>
-    </a>
-    <a href="{% url 'redbook_generator_page' %}" class="geek-tool-card">
-      <div class="geek-tool-icon"><i class="fas fa-book-open"></i></div>
-      <div class="geek-tool-title">小红书文案生成器</div>
-      <div class="geek-tool-desc">一键生成爆款文案，内容创作更轻松</div>
-    </a>
-    <!-- 可继续添加更多工具卡片 -->
+<div id="tool-container" class="geek-card">
+  <div id="tool-title" class="geek-title">专业效率中心</div>
+  
+  <!-- 各模式的terminal div -->
+  <div id="tool-terminal" class="geek-terminal"></div>
+  <div id="life-terminal" class="punk-terminal" style="display: none;"></div>
+  <div id="training-terminal" class="rage-terminal" style="display: none;"></div>
+  <div id="emo-terminal" class="emo-terminal" style="display: none;"></div>
+  
+
+  
+  <div id="tool-grid" class="geek-tool-grid">
+    <!-- 工具卡片将通过JavaScript动态生成 -->
   </div>
 </div>
 {% else %}
@@ -36,4 +43,1396 @@
   </div>
 </div>
 {% endif %}
+
+<style>
+/* 模式切换器已移除，主题切换功能移至导航菜单 */
+
+/* 主题切换优化 - 确保流畅切换 */
+body.work-theme .geek-card,
+body.work-theme .geek-title,
+body.work-theme .geek-terminal,
+body.work-theme .geek-tool-grid,
+body.work-theme .geek-tool-card {
+    display: block !important;
+}
+
+body.life-theme .punk-card,
+body.life-theme .punk-title,
+body.life-theme .punk-terminal,
+body.life-theme .punk-tool-grid,
+body.life-theme .punk-tool-card {
+    display: block !important;
+}
+
+body.training-theme .rage-card,
+body.training-theme .rage-title,
+body.training-theme .rage-terminal,
+body.training-theme .rage-tool-grid,
+body.training-theme .rage-tool-card {
+    display: block !important;
+}
+
+body.emo-theme .emo-card,
+body.emo-theme .emo-title,
+body.emo-theme .emo-terminal,
+body.emo-theme .emo-tool-grid,
+body.emo-theme .emo-tool-card {
+    display: block !important;
+}
+
+/* 防止布局抖动的关键样式 */
+#tool-container {
+    min-height: 100vh;
+    contain: layout style paint;
+    will-change: auto;
+}
+
+.tool-grid-container {
+    contain: layout style paint;
+    will-change: auto;
+}
+
+/* 确保工具卡片在切换时保持稳定 */
+.tool-card {
+    contain: layout style paint;
+    will-change: auto;
+    transform: translateZ(0);
+}
+
+/* 防止字体加载导致的布局抖动 */
+body {
+    font-display: swap;
+}
+
+/* 优化CSS切换性能 */
+* {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* 覆盖punk.css中的复杂悬浮效果，提升性能 */
+.punk-tool-card:hover {
+    /* 简化的悬浮效果，移除复杂的3D变换和动画 */
+    transform: translateY(-2px) translateZ(0) !important;
+    box-shadow: 0 4px 15px rgba(255, 0, 128, 0.2) !important;
+    background: linear-gradient(135deg, 
+        rgba(255, 0, 128, 0.15), 
+        rgba(255, 107, 157, 0.15)) !important;
+    border-color: rgba(255, 0, 128, 0.4) !important;
+}
+
+.punk-tool-card:hover .punk-tool-icon {
+    /* 移除复杂的动画，只保留简单的颜色变化 */
+    animation: none !important;
+    filter: drop-shadow(0 0 15px var(--punk-secondary)) !important;
+    transform: scale(1.05) translateZ(0) !important;
+}
+
+.punk-tool-card:hover .punk-tool-title {
+    /* 简化标题悬浮效果 */
+    text-shadow: 0 0 10px var(--punk-secondary) !important;
+    transform: scale(1.02) translateZ(0) !important;
+}
+
+/* 覆盖其他主题的复杂悬浮效果 */
+.geek-tool-card:hover .geek-tool-icon,
+.rage-tool-card:hover .rage-tool-icon,
+.emo-tool-card:hover .emo-tool-icon {
+    animation: none !important;
+    transform: scale(1.05) translateZ(0) !important;
+}
+
+/* 覆盖rage.css中的复杂悬浮效果 */
+.rage-tool-card:hover {
+    transform: translateY(-2px) translateZ(0) !important;
+    box-shadow: 0 4px 15px rgba(255, 68, 68, 0.2) !important;
+}
+
+.rage-tool-card:hover::before {
+    opacity: 0 !important;
+    animation: none !important;
+}
+
+/* 覆盖emo.css中的复杂悬浮效果 */
+.emo-tool-card:hover {
+    transform: translateY(-2px) translateZ(0) !important;
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.2) !important;
+}
+
+.emo-tool-card:hover::before {
+    left: -100% !important;
+    animation: none !important;
+}
+
+/* 优化will-change属性，减少内存占用 */
+.tool-card {
+    will-change: transform, box-shadow;
+}
+
+.tool-card:hover {
+    will-change: transform, box-shadow;
+}
+
+/* 移除不必要的动画，提升性能 */
+@media (prefers-reduced-motion: reduce) {
+    .punk-tool-card:hover,
+    .geek-tool-card:hover,
+    .rage-tool-card:hover,
+    .emo-tool-card:hover {
+        transform: none !important;
+        animation: none !important;
+    }
+    
+    .punk-tool-card:hover .punk-tool-icon,
+    .geek-tool-card:hover .geek-tool-icon,
+    .rage-tool-card:hover .rage-tool-icon,
+    .emo-tool-card:hover .emo-tool-icon {
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+/* 性能优化：减少重绘和回流 */
+.tool-card,
+.geek-tool-card,
+.punk-tool-card,
+.rage-tool-card,
+.emo-tool-card {
+    /* 优化渲染性能 */
+    contain: layout style paint;
+    /* 防止布局抖动 */
+    transform: translateZ(0);
+    /* 优化字体渲染 */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 禁用复杂的CSS动画，提升性能 */
+.punk-tool-icon,
+.geek-tool-icon,
+.rage-tool-icon,
+.emo-tool-icon {
+    animation: none !important;
+}
+
+/* 简化所有工具卡片的悬浮效果 */
+.tool-card:hover,
+.geek-tool-card:hover,
+.punk-tool-card:hover,
+.rage-tool-card:hover,
+.emo-tool-card:hover {
+    /* 统一的简化悬浮效果 */
+    transform: translateY(-2px) translateZ(0) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+
+
+
+
+/* 优化的瀑布流布局样式 (生活模式) */
+.punk-masonry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.masonry-large {
+    grid-column: span 2;
+}
+
+.masonry-medium {
+    grid-column: span 1;
+}
+
+.masonry-small {
+    grid-column: span 1;
+}
+
+/* 统一的网格布局样式 */
+.geek-matrix-grid,
+.rage-hexagon-grid,
+.emo-waterfall-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* 生活模式专用网格布局 */
+.punk-masonry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2.5rem;
+    margin-top: 2rem;
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* 工具卡片基础样式优化 */
+.tool-card {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: background-color, border-color;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+    /* 防止布局抖动 */
+    contain: layout style paint;
+    /* 优化过渡效果 */
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tool-card:hover {
+    /* 移除复杂的变换，只改变颜色 */
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 各模式工具卡片专用样式 */
+.geek-tool-card {
+    background: linear-gradient(135deg, rgba(0, 255, 231, 0.1), rgba(0, 191, 255, 0.1));
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+.geek-tool-card:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 231, 0.15), rgba(0, 191, 255, 0.15));
+    border-color: rgba(0, 255, 231, 0.4);
+}
+
+.punk-tool-card {
+    background: linear-gradient(135deg, rgba(255, 0, 128, 0.1), rgba(255, 107, 157, 0.1));
+    border: 2px solid rgba(255, 0, 128, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    font-family: 'Segoe UI', 'Arial', 'Helvetica', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.punk-tool-card:hover {
+    background: linear-gradient(135deg, rgba(255, 0, 128, 0.15), rgba(255, 107, 157, 0.15));
+    border-color: rgba(255, 0, 128, 0.4);
+}
+
+.rage-tool-card {
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(255, 107, 107, 0.1));
+    border: 3px solid rgba(255, 68, 68, 0.3);
+    border-radius: 15px;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    font-family: 'Segoe UI', 'Arial', 'Helvetica', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.rage-tool-card:hover {
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(255, 107, 107, 0.15));
+    border-color: rgba(255, 68, 68, 0.4);
+}
+
+.emo-tool-card {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 25px;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    font-family: 'Segoe UI', 'Arial', 'Helvetica', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.emo-tool-card:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+/* 各模式的terminal样式 */
+.geek-terminal {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    color: #00ffe7;
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    font-size: 1.1rem;
+    position: relative;
+    border: 1px solid rgba(0,255,231,0.2);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+    text-align: center;
+    /* 硬件加速 */
+    transform: translateZ(0);
+}
+
+.geek-terminal::before {
+    content: '$ ';
+    color: #00ffe7;
+    font-weight: bold;
+    animation: blink 1.2s steps(1) infinite;
+}
+
+.geek-terminal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #00ffe7, #00bfff);
+    animation: geekScan 3s ease-in-out infinite;
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.punk-terminal {
+    background: linear-gradient(135deg, #ff0080 0%, #ff6b9d 100%);
+    color: white;
+    font-family: 'Segoe UI', 'Arial', 'Helvetica', sans-serif;
+    padding: 1.5rem 2rem;
+    border-radius: 20px;
+    margin: 1.5rem 0;
+    font-size: 1.1rem;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 25px rgba(255,0,128,0.3);
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    /* 硬件加速 */
+    transform: translateZ(0);
+}
+
+.punk-terminal::before {
+    content: '🎨 ';
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+
+.punk-terminal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ff0080, #00ff80);
+    /* 移除动画，减少卡顿 */
+    /* animation: punkScan 2.5s ease-in-out infinite; */
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.rage-terminal {
+    background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
+    color: white;
+    font-family: 'Segoe UI', 'Arial', 'Helvetica', sans-serif;
+    padding: 1.5rem 2rem;
+    border-radius: 15px;
+    margin: 1.5rem 0;
+    font-size: 1.1rem;
+    position: relative;
+    border: 3px solid rgba(255,255,255,0.4);
+    box-shadow: 0 10px 30px rgba(255,68,68,0.4);
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    /* 硬件加速 */
+    transform: translateZ(0);
+}
+
+.rage-terminal::before {
+    content: '🔥 ';
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+
+.rage-terminal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff4444, #ffaa44);
+    /* 移除动画，减少卡顿 */
+    /* animation: rageScan 2s ease-in-out infinite; */
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+.emo-terminal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-family: 'Segoe UI', 'Arial', 'Helvetica', sans-serif;
+    padding: 1.5rem 2rem;
+    border-radius: 25px;
+    margin: 1.5rem 0;
+    font-size: 1.1rem;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 8px 25px rgba(102,126,234,0.3);
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    /* 硬件加速 */
+    transform: translateZ(0);
+}
+
+.emo-terminal::before {
+    content: '💔 ';
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+
+.emo-terminal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #f093fb);
+    /* 移除动画，减少卡顿 */
+    /* animation: emoScan 3.5s ease-in-out infinite; */
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* 动画效果 */
+@keyframes geekScan {
+    0% { transform: translateX(-100%) translateZ(0); }
+    100% { transform: translateX(100%) translateZ(0); }
+}
+
+@keyframes punkScan {
+    0% { transform: translateX(-100%) translateZ(0); }
+    100% { transform: translateX(100%) translateZ(0); }
+}
+
+@keyframes rageScan {
+    0% { transform: translateX(-100%) translateZ(0); }
+    100% { transform: translateX(100%) translateZ(0); }
+}
+
+@keyframes emoScan {
+    0% { transform: translateX(-100%) translateZ(0); }
+    100% { transform: translateX(100%) translateZ(0); }
+}
+
+@keyframes blink {
+    50% { opacity: 0.2; }
+}
+
+/* 响应式设计 - 电脑设备 */
+@media (min-width: 1024px) {
+    .geek-terminal,
+    .punk-terminal,
+    .rage-terminal,
+    .emo-terminal {
+        padding: 2rem 3rem;
+        font-size: 1.3rem;
+        margin: 2rem 0;
+    }
+    
+    .geek-matrix-grid,
+    .rage-hexagon-grid,
+    .emo-waterfall-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+    
+    .punk-masonry-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 3rem;
+        margin-top: 3rem;
+    }
+}
+
+/* 响应式设计 - 平板设备 */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .geek-terminal,
+    .punk-terminal,
+    .rage-terminal,
+    .emo-terminal {
+        padding: 1.8rem 2.5rem;
+        font-size: 1.2rem;
+        margin: 1.8rem 0;
+    }
+    
+    .geek-matrix-grid,
+    .rage-hexagon-grid,
+    .emo-waterfall-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.8rem;
+        margin-top: 2.5rem;
+    }
+    
+    .punk-masonry-grid {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2.5rem;
+        margin-top: 2.5rem;
+    }
+}
+
+/* 响应式设计 - 移动设备 */
+@media (max-width: 767px) {
+    .geek-terminal,
+    .punk-terminal,
+    .rage-terminal,
+    .emo-terminal {
+        padding: 1.2rem 1.5rem;
+        font-size: 1rem;
+        margin: 1.2rem 0;
+        border-radius: 10px;
+    }
+    
+    .geek-matrix-grid,
+    .rage-hexagon-grid,
+    .emo-waterfall-grid {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+        margin-top: 2rem;
+        padding: 0 10px;
+    }
+    
+    .punk-masonry-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+        padding: 0 15px;
+    }
+    
+    .geek-title {
+        font-size: 1.8rem;
+        padding: 1.5rem;
+    }
+}
+
+/* 响应式设计 - 小屏移动设备 */
+@media (max-width: 480px) {
+    .geek-terminal,
+    .punk-terminal,
+    .rage-terminal,
+    .emo-terminal {
+        padding: 1rem 1.2rem;
+        font-size: 0.95rem;
+        margin: 1rem 0;
+    }
+    
+    .geek-matrix-grid,
+    .rage-hexagon-grid,
+    .emo-waterfall-grid {
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding: 0 5px;
+    }
+    
+    .punk-masonry-grid {
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        padding: 0 10px;
+    }
+    
+    .geek-title {
+        font-size: 1.6rem;
+        padding: 1.2rem;
+    }
+}
+
+/* 减少动画 - 为偏好减少动画的用户 */
+@media (prefers-reduced-motion: reduce) {
+    .geek-terminal::after,
+    .punk-terminal::after,
+    .rage-terminal::after,
+    .emo-terminal::after {
+        animation: none;
+    }
+    
+    .geek-terminal::before {
+        animation: none;
+    }
+}
+
+/* 性能优化 - 减少重绘和重排 */
+* {
+    box-sizing: border-box;
+}
+
+.tool-card,
+.mode-btn,
+.geek-terminal,
+.punk-terminal,
+.rage-terminal,
+.emo-terminal {
+    /* 优化渲染性能 */
+    contain: layout style paint;
+    /* 防止布局抖动 */
+    transform: translateZ(0);
+    /* 优化字体渲染 */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 防止页面抖动和闪烁 */
+#tool-container {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: opacity, transform;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+    /* 优化合成层 */
+    contain: layout style paint;
+    /* 全屏布局 */
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* 优化工具网格容器 */
+.tool-grid-container {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+    /* 防止布局抖动 */
+    contain: layout style paint;
+}
+
+/* 防止按钮点击时的抖动 - 已移除模式切换按钮 */
+
+/* 优化动画性能 */
+@media (prefers-reduced-motion: reduce) {
+    .tool-card,
+    #tool-container {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* 优化的六边形布局样式 (狂暴模式) */
+.rage-hexagon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.hexagon-wrapper {
+    position: relative;
+    background: linear-gradient(45deg, #ff4444, #ff8844);
+    border-radius: 15px;
+    padding: 1rem;
+    transform: perspective(1000px) rotateX(10deg) translateZ(0);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* 硬件加速 */
+    will-change: transform;
+}
+
+.hexagon-wrapper:hover {
+    transform: perspective(1000px) rotateX(0deg) scale(1.02) translateZ(0);
+}
+
+.hexagon-inner {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.level-indicator {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ff4444;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+
+
+/* 优化的响应式设计 */
+@media (max-width: 768px) {
+    .punk-masonry-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-auto-rows: 100px;
+    }
+    
+    .masonry-large {
+        grid-row: span 2;
+        grid-column: span 1;
+    }
+    
+    .matrix-category-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .rage-hexagon-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
+
+/* 性能优化：减少重绘和回流 */
+.geek-card,
+.punk-container,
+.rage-container,
+.emo-container {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+    /* 优化合成层 */
+    contain: layout style paint;
+}
+
+/* 优化字体渲染 */
+.geek-title,
+.punk-title,
+.rage-title,
+.emo-title {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    /* 优化字体渲染 */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 优化的动画性能 */
+.tool-card-enter {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95) translateZ(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tool-card-enter-active {
+    opacity: 1;
+    transform: translateY(0) scale(1) translateZ(0);
+}
+
+.tool-card-exit {
+    opacity: 1;
+    transform: translateY(0) scale(1) translateZ(0);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tool-card-exit-active {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95) translateZ(0);
+}
+
+/* 减少重绘的优化 */
+.tool-grid-container {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* 优化悬停效果 */
+.tool-card {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+.tool-card:hover {
+    /* 简化的悬浮效果，减少性能消耗 */
+    transform: translateY(-2px) translateZ(0);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 性能优化：减少不必要的动画 */
+@media (prefers-reduced-motion: reduce) {
+    .tool-card,
+    .matrix-category,
+    .hexagon-wrapper {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* 优化渲染性能 */
+.geek-tool-card,
+.punk-tool-card,
+.rage-tool-card,
+.emo-tool-card {
+    /* 硬件加速 */
+    transform: translateZ(0);
+    will-change: transform, box-shadow;
+    /* 防止重绘优化 */
+    backface-visibility: hidden;
+    perspective: 1000px;
+    /* 优化合成层 */
+    contain: layout style paint;
+}
+</style>
+
+<script>
+// 背景音乐配置
+const musicConfig = {
+    life: '{% static "audio/saturday.mp3" %}',     // 周六轻松音乐 - 朋克生活
+    work: '{% static "audio/tuesday.mp3" %}',     // 周二专注音乐 - 极客工作  
+    training: '{% static "audio/monday.mp3" %}',  // 周一激昂音乐 - 狂暴训练
+    emo: '{% static "audio/thursday.mp3" %}'      // 周四情感音乐 - Emo疗愈
+};
+
+// 工具配置数据
+const toolConfigs = {
+    life: {
+        title: '🎨 生活创意工作室',
+        subtitle: '过了一百种生活我才能看明白',
+        containerClass: 'punk-container',
+        titleClass: 'punk-title',
+        subtitleClass: 'punk-subtitle',
+        terminalClass: 'punk-terminal',
+        gridClass: 'punk-masonry-grid',
+        cardClass: 'punk-tool-card',
+        iconClass: 'punk-tool-icon',
+        titleCardClass: 'punk-tool-title',
+        descClass: 'punk-tool-desc',
+        layoutStyle: 'masonry',
+        tools: [
+            {
+                url: '{% url "life_diary" %}',
+                icon: 'fas fa-book-open',
+                title: '生活日记本',
+                desc: '记录美好时光，珍藏生活点滴',
+                size: 'large'
+            },
+            {
+                url: '{% url "creative_writer" %}',
+                icon: 'fas fa-brain',
+                title: 'AI自我认知助手',
+                desc: '与AI深度交流，获得自我说明书',
+                size: 'medium'
+            },
+            {
+                url: '{% url "redbook_generator" %}',
+                icon: 'fas fa-feather-alt',
+                title: '创意文案生成器',
+                desc: '生活化文案创作，温暖表达',
+                size: 'medium'
+            },
+            {
+                url: '{% url "storyboard" %}',
+                icon: 'fas fa-film',
+                title: '故事板创作',
+                desc: '用故事记录生活，用创意点亮日常',
+                size: 'medium'
+            },
+            {
+                url: '{% url "fortune_analyzer" %}',
+                icon: 'fas fa-heart',
+                title: '情缘解码器',
+                desc: '探索内心，寻找真爱',
+                size: 'medium'
+            },
+            {
+                url: '{% url "self_analysis" %}',
+                icon: 'fas fa-user-astronaut',
+                title: '人生百态镜',
+                desc: 'AI深度对话，照见真实的自己',
+                size: 'medium'
+            }
+        ]
+    },
+    work: {
+        title: '⚡ 专业效率中心',
+        subtitle: '君子生非异也，善假于物也。',
+        containerClass: 'geek-card',
+        titleClass: 'geek-title',
+        subtitleClass: 'geek-subtitle',
+        terminalClass: 'geek-terminal',
+        gridClass: 'geek-matrix-grid',
+        cardClass: 'geek-tool-card',
+        iconClass: 'geek-tool-icon',
+        titleCardClass: 'geek-tool-title',
+        descClass: 'geek-tool-desc',
+        layoutStyle: 'matrix',
+        tools: [
+            {
+                url: '{% url "test_case_generator" %}',
+                icon: 'fas fa-robot',
+                title: 'AI测试生成器',
+                desc: '智能化测试用例生成',
+                category: 'ai'
+            },
+            {
+                url: '{% url "pdf_converter" %}',
+                icon: 'fas fa-file-code',
+                title: 'PDF处理引擎',
+                desc: '高效文档转换系统',
+                category: 'tools'
+            },
+            {
+                url: '{% url "web_crawler" %}',
+                icon: 'fas fa-spider',
+                title: '数据爬虫工具',
+                desc: '智能网络数据采集',
+                category: 'data'
+            }
+        ]
+    },
+    training: {
+        title: '🔥 极限训练场',
+        subtitle: '突破极限，释放潜能',
+        containerClass: 'rage-container',
+        titleClass: 'rage-title',
+        subtitleClass: 'rage-subtitle',
+        terminalClass: 'rage-terminal',
+        gridClass: 'rage-hexagon-grid',
+        cardClass: 'rage-tool-card',
+        iconClass: 'rage-tool-icon',
+        titleCardClass: 'rage-tool-title',
+        descClass: 'rage-tool-desc',
+        layoutStyle: 'hexagon',
+        tools: [
+            {
+                url: '/fitness/',
+                icon: 'fas fa-dumbbell',
+                title: '健身中心',
+                desc: '释放野性力量',
+                level: 'expert'
+            }
+        ]
+    },
+    emo: {
+        title: '💔 情感疗愈空间',
+                        subtitle: '她说难过好过没感情',
+        containerClass: 'emo-container',
+        titleClass: 'emo-title',
+        subtitleClass: 'emo-subtitle',
+        terminalClass: 'emo-terminal',
+        gridClass: 'emo-grid',
+        cardClass: 'emo-tool-card',
+        iconClass: 'emo-tool-icon',
+        titleCardClass: 'emo-tool-title',
+        descClass: 'emo-tool-desc',
+        layoutStyle: 'emo',
+        tools: [
+            {
+                url: '{% url "storyboard" %}',
+                icon: 'fas fa-film',
+                title: '故事板',
+                desc: '用故事治愈心灵',
+                mood: 'contemplative'
+            }
+        ]
+    }
+};
+
+let currentMode = 'work';
+let isPlaying = true;
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', async function() {
+    
+    // 获取用户当前主题
+    try {
+        const response = await fetch('/users/theme/', {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                currentMode = data.data.mode || 'work';
+            }
+        }
+    } catch (error) {
+        console.log('Failed to load user theme:', error);
+    }
+    
+    // 应用主题
+    applyTheme(currentMode);
+    updateActiveButton(currentMode);
+    renderTools(currentMode);
+    updateMusic(currentMode);
+});
+
+// CSS预加载已移除，使用直接切换方式
+
+// 监听导航菜单中的主题切换事件
+document.addEventListener('click', function(e) {
+    const themeSwitch = e.target.closest('.theme-switch');
+    if (themeSwitch) {
+        e.preventDefault(); // 阻止默认的链接行为
+        const mode = themeSwitch.dataset.mode;
+        
+        if (mode !== currentMode) {
+            // 直接调用切换函数
+            switchMode(mode);
+        }
+    }
+});
+
+// 无抖动模式切换函数
+function switchMode(mode) {
+    if (mode === currentMode) return;
+    
+    // 使用 requestAnimationFrame 确保在下一帧执行，避免布局抖动
+    requestAnimationFrame(() => {
+        // 批量更新，减少重排
+        const updates = () => {
+            currentMode = mode;
+            updateActiveButton(mode);
+            applyTheme(mode);
+            renderTools(mode);
+            updateMusic(mode);
+        };
+        
+        // 立即执行更新
+        updates();
+        
+        // 异步更新后端，不阻塞UI
+        fetch('/users/theme/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ mode: mode })
+        }).catch(error => {
+            console.log('Failed to update theme:', error);
+        });
+    });
+}
+
+// 无抖动主题应用函数
+function applyTheme(mode) {
+    // 使用 requestAnimationFrame 确保流畅的样式切换
+    requestAnimationFrame(() => {
+        // 直接更新body类名，所有CSS文件已预加载
+        document.body.className = mode + '-theme';
+    });
+}
+
+// 无抖动更新激活按钮
+function updateActiveButton(mode) {
+    // 使用 requestAnimationFrame 确保流畅的按钮状态更新
+    requestAnimationFrame(() => {
+        // 更新导航菜单中的主题切换按钮状态
+        document.querySelectorAll('.theme-switch').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const activeBtn = document.querySelector(`.theme-switch[data-mode="${mode}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+    });
+}
+
+// 无抖动渲染工具卡片函数
+function renderTools(mode) {
+    const config = toolConfigs[mode];
+    const container = document.getElementById('tool-container');
+    const title = document.getElementById('tool-title');
+    const grid = document.getElementById('tool-grid');
+    
+    if (!container || !title || !grid) {
+        console.error('Required elements not found');
+        return;
+    }
+    
+    // 使用 requestAnimationFrame 确保流畅的DOM更新
+    requestAnimationFrame(() => {
+        // 批量更新，减少重排
+        const batchUpdate = () => {
+            // 隐藏所有terminal div
+            const allTerminals = ['tool-terminal', 'life-terminal', 'training-terminal', 'emo-terminal'];
+            allTerminals.forEach(id => {
+                const terminal = document.getElementById(id);
+                if (terminal) {
+                    terminal.style.display = 'none';
+                    terminal.textContent = '';
+                }
+            });
+            
+            // 显示当前模式的terminal div
+            const currentTerminalId = mode === 'work' ? 'tool-terminal' : `${mode}-terminal`;
+            const currentTerminal = document.getElementById(currentTerminalId);
+            
+            if (currentTerminal) {
+                currentTerminal.style.display = 'block';
+                currentTerminal.textContent = config.subtitle;
+            }
+            
+            // 批量更新样式类
+            container.className = config.containerClass;
+            title.className = config.titleClass;
+            grid.className = config.gridClass + ' tool-grid-container';
+            
+            // 更新标题
+            title.innerHTML = config.title;
+            
+            // 更新右上角的模式显示
+            updateThemeBadge(mode);
+        };
+        
+        // 执行批量更新
+        batchUpdate();
+        
+        // 使用 DocumentFragment 优化DOM操作
+        const fragment = document.createDocumentFragment();
+        
+        // 预构建所有工具卡片
+        config.tools.forEach(tool => {
+            const toolLink = document.createElement('a');
+            toolLink.href = tool.url;
+            toolLink.className = `${config.cardClass} tool-card`;
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.className = config.iconClass;
+            iconDiv.innerHTML = `<i class="${tool.icon}"></i>`;
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = config.titleCardClass;
+            titleDiv.textContent = tool.title;
+            
+            const descDiv = document.createElement('div');
+            descDiv.className = config.descClass;
+            descDiv.textContent = tool.desc;
+            
+            toolLink.appendChild(iconDiv);
+            toolLink.appendChild(titleDiv);
+            toolLink.appendChild(descDiv);
+            
+            fragment.appendChild(toolLink);
+        });
+        
+        // 一次性更新DOM
+        grid.innerHTML = '';
+        grid.appendChild(fragment);
+    });
+}
+
+// 优化的瀑布流布局 (生活模式)
+function renderMasonryLayout(config, container) {
+    config.tools.forEach(tool => {
+        const sizeClass = tool.size === 'large' ? 'masonry-large' : 
+                         tool.size === 'small' ? 'masonry-small' : 'masonry-medium';
+        const card = document.createElement('a');
+        card.href = tool.url;
+        card.className = `${config.cardClass} ${sizeClass} tool-card`;
+        card.innerHTML = `
+            <div class="${config.iconClass}">
+                <i class="${tool.icon}"></i>
+            </div>
+            <div class="${config.titleCardClass}">${tool.title}</div>
+            <div class="${config.descClass}">${tool.desc}</div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 优化的矩阵布局 (极客模式)
+function renderMatrixLayout(config, container) {
+    // 直接渲染所有工具，不分类
+    const toolsFragment = document.createDocumentFragment();
+    
+    config.tools.forEach(tool => {
+        const toolLink = document.createElement('a');
+        toolLink.href = tool.url;
+        toolLink.className = `${config.cardClass} tool-card`;
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = config.iconClass;
+        iconDiv.innerHTML = `<i class="${tool.icon}"></i>`;
+        
+        const titleDiv = document.createElement('div');
+        titleDiv.className = config.titleCardClass;
+        titleDiv.textContent = tool.title;
+        
+        const descDiv = document.createElement('div');
+        descDiv.className = config.descClass;
+        descDiv.textContent = tool.desc;
+        
+        toolLink.appendChild(iconDiv);
+        toolLink.appendChild(titleDiv);
+        toolLink.appendChild(descDiv);
+        
+        toolsFragment.appendChild(toolLink);
+    });
+    
+    container.appendChild(toolsFragment);
+}
+
+// 优化的六边形布局 (狂暴模式)
+function renderHexagonLayout(config, container) {
+    config.tools.forEach(tool => {
+        const card = document.createElement('a');
+        card.href = tool.url;
+        card.className = `${config.cardClass} tool-card`;
+        card.innerHTML = `
+            <div class="hexagon-wrapper">
+                <div class="hexagon-inner">
+                    <div class="${config.iconClass}">
+                        <i class="${tool.icon}"></i>
+                    </div>
+                    <div class="${config.titleCardClass}">${tool.title}</div>
+                    <div class="${config.descClass}">${tool.desc}</div>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 优化的Emo布局 (情感模式)
+function renderEmoLayout(config, container) {
+    config.tools.forEach(tool => {
+        const moodClass = `mood-${tool.mood || 'emotional'}`;
+        const card = document.createElement('a');
+        card.href = tool.url;
+        card.className = `${config.cardClass} tool-card`;
+        card.innerHTML = `
+            <div class="${config.iconClass}">
+                <i class="${tool.icon}"></i>
+            </div>
+            <div class="${config.titleCardClass}">${tool.title}</div>
+            <div class="${config.descClass}">${tool.desc}</div>
+            <div class="emo-mood-tag ${moodClass}">${getMoodName(tool.mood)}</div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 优化的默认布局
+function renderDefaultLayout(config, container) {
+    config.tools.forEach(tool => {
+        const card = document.createElement('a');
+        card.href = tool.url;
+        card.className = `${config.cardClass} tool-card`;
+        card.innerHTML = `
+            <div class="${config.iconClass}">
+                <i class="${tool.icon}"></i>
+            </div>
+            <div class="${config.titleCardClass}">${tool.title}</div>
+            <div class="${config.descClass}">${tool.desc}</div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 音乐相关函数 - 使用全局音乐系统
+function updateMusic(mode) {
+    // 使用全局的 setThemeMusic 函数
+    if (typeof setThemeMusic === 'function') {
+        setThemeMusic(mode);
+    }
+}
+
+// 更新主题徽章
+function updateThemeBadge(mode) {
+    const themeBadge = document.querySelector('.theme-badge');
+    if (themeBadge) {
+        // 移除所有模式类
+        themeBadge.classList.remove('punk', 'geek', 'rage', 'emo');
+        
+        // 添加当前模式类
+        const modeMap = {
+            'life': 'punk',
+            'work': 'geek', 
+            'training': 'rage',
+            'emo': 'emo'
+        };
+        
+        const badgeClass = modeMap[mode];
+        if (badgeClass) {
+            themeBadge.classList.add(badgeClass);
+        }
+        
+        // 更新徽章文本
+        const modeNames = {
+            'life': '生活',
+            'work': '极客',
+            'training': '狂暴', 
+            'emo': 'Emo'
+        };
+        
+        themeBadge.textContent = modeNames[mode] || mode;
+    }
+}
+
+// 工具函数
+function getCategoryName(cat) {
+    const names = {
+        'ai': '🤖 AI工具',
+        'data': '📊 数据处理', 
+        'tools': '🔧 实用工具',
+        'other': '📦 其他'
+    };
+    return names[cat] || cat;
+}
+
+
+
+function getMoodName(mood) {
+    const names = {
+        'melancholy': '忧郁',
+        'nostalgic': '怀旧',
+        'contemplative': '沉思',
+        'emotional': '情感'
+    };
+    return names[mood] || '情感';
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %}

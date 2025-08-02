@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI友情链接 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ai-links-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .ai-links-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .ai-links-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+    
+    .ai-links-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .category-section {
+        margin-bottom: 40px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .category-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 20px 30px;
+        font-size: 1.3rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .category-header i {
+        margin-right: 10px;
+        font-size: 1.5rem;
+    }
+    
+    .links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 30px;
+    }
+    
+    .ai-link-card {
+        background: white;
+        border: 2px solid #f0f0f0;
+        border-radius: 12px;
+        padding: 25px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ai-link-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        border-color: #667eea;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .ai-link-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .ai-link-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .link-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .link-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        margin-right: 15px;
+        object-fit: cover;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #667eea;
+    }
+    
+    .link-icon img {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+    
+    .link-info h3 {
+        margin: 0 0 5px 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .link-url {
+        font-size: 0.9rem;
+        color: #667eea;
+        word-break: break-all;
+    }
+    
+    .link-description {
+        color: #666;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .category-icon {
+        font-size: 1.2rem;
+        margin-right: 8px;
+    }
+    
+    .visual-category { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .music-category { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .programming-category { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .image-category { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .other-category { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state h3 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+    
+    @media (max-width: 768px) {
+        .ai-links-container {
+            padding: 10px;
+        }
+        
+        .ai-links-header h1 {
+            font-size: 2rem;
+        }
+        
+        .links-grid {
+            grid-template-columns: 1fr;
+            padding: 20px;
+        }
+        
+        .ai-link-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-links-container">
+    <div class="ai-links-header">
+        <h1><i class="fas fa-link"></i> AI友情链接</h1>
+        <p>精选优质AI工具，助力您的创作和工作</p>
+    </div>
+    
+    {% if links_by_category %}
+        {% for category, links in links_by_category.items %}
+        <div class="category-section">
+            <div class="category-header">
+                {% if category == "视觉" %}
+                    <i class="fas fa-palette"></i>
+                {% elif category == "音乐" %}
+                    <i class="fas fa-music"></i>
+                {% elif category == "编程" %}
+                    <i class="fas fa-code"></i>
+                {% elif category == "图片" %}
+                    <i class="fas fa-image"></i>
+                {% else %}
+                    <i class="fas fa-star"></i>
+                {% endif %}
+                {{ category }}
+            </div>
+            <div class="links-grid">
+                {% for link in links %}
+                <a href="{{ link.url }}" target="_blank" class="ai-link-card">
+                    <div class="link-header">
+                        <div class="link-icon">
+                            {% if link.icon %}
+                                <img src="{{ link.icon.url }}" alt="{{ link.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <i class="fas fa-globe" style="display: none;"></i>
+                            {% elif link.icon_url %}
+                                <img src="{{ link.icon_url }}" alt="{{ link.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <i class="fas fa-globe" style="display: none;"></i>
+                            {% else %}
+                                <i class="fas fa-globe"></i>
+                            {% endif %}
+                        </div>
+                        <div class="link-info">
+                            <h3>{{ link.name }}</h3>
+                            <div class="link-url">{{ link.url }}</div>
+                        </div>
+                    </div>
+                    {% if link.description %}
+                    <p class="link-description">{{ link.description }}</p>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-link"></i>
+            <h3>暂无AI友情链接</h3>
+            <p>管理员正在添加更多优质的AI工具链接</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

@@ -3,33 +3,368 @@
 {% block title %}编辑用户资料{% endblock %}
 
 {% block content %}
-<div class="geek-card">
-    <div class="geek-title">
-        <i class="fas fa-edit"></i> 编辑资料
+<div class="geek-auth-container">
+  <div class="geek-auth-card">
+    <div class="geek-auth-header">
+      <div class="geek-auth-title">
+        <i class="fas fa-edit"></i>
+        <span data-zh="编辑资料" data-en="Edit Profile">编辑资料</span>
+      </div>
+      <div class="geek-auth-subtitle" data-zh="更新您的个人信息" data-en="Update your personal information">更新您的个人信息</div>
+      <div class="geek-language-switch">
+        <button class="geek-lang-btn active" data-lang="zh">中文</button>
+        <button class="geek-lang-btn" data-lang="en">English</button>
+      </div>
     </div>
-    <div class="geek-terminal">
-        <form method="POST" style="text-align: left; margin: 20px 0;">
-            {% csrf_token %}
-            <div class="form-group" style="margin: 20px 0;">
-                <label for="username" style="color: #00ff00; font-weight: bold; display: block; margin-bottom: 5px;">用户名:</label>
-                <input type="text" id="username" name="username" value="{{ user.username }}" required 
-                       style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #00ff00; border-radius: 5px; color: #fff; font-family: 'Courier New', monospace;">
-            </div>
-            <div class="form-group" style="margin: 20px 0;">
-                <label for="email" style="color: #00ff00; font-weight: bold; display: block; margin-bottom: 5px;">电子邮件:</label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" required 
-                       style="width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #00ff00; border-radius: 5px; color: #fff; font-family: 'Courier New', monospace;">
-            </div>
-            
-            <div class="action-buttons" style="margin-top: 30px;">
-                <button type="submit" class="geek-btn" style="margin-right: 15px;">
-                    <i class="fas fa-save"></i> 保存更改
-                </button>
-                <a href="{% url 'profile_view' %}" class="geek-btn geek-btn-secondary">
-                    <i class="fas fa-arrow-left"></i> 返回资料
-                </a>
-            </div>
-        </form>
-    </div>
+    
+    {% if messages %}
+      <div class="geek-alert geek-alert-info">
+        <i class="fas fa-info-circle"></i>
+        <ul class="geek-alert-list">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    
+    <form method="POST" class="geek-auth-form">
+      {% csrf_token %}
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <input type="text" id="username" name="username" value="{{ user.username }}" required class="geek-input" 
+               data-zh="请输入用户名" data-en="Enter username" placeholder="请输入用户名">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <input type="email" id="email" name="email" value="{{ user.email }}" required class="geek-input" 
+               data-zh="请输入邮箱" data-en="Enter email" placeholder="请输入邮箱">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-input-group">
+        <div class="geek-input-icon">
+          <i class="fas fa-phone"></i>
+        </div>
+        <input type="tel" id="phone" name="phone" value="{{ user.profile.phone|default:'' }}" class="geek-input" 
+               data-zh="请输入手机号（可选）" data-en="Enter phone number (optional)" placeholder="请输入手机号（可选）">
+        <div class="geek-input-line"></div>
+      </div>
+      
+      <div class="geek-btn-group">
+        <button type="submit" class="geek-btn geek-btn-primary">
+          <i class="fas fa-save"></i>
+          <span data-zh="保存更改" data-en="Save Changes">保存更改</span>
+        </button>
+        
+        <a href="{% url 'profile' %}" class="geek-btn geek-btn-secondary">
+          <i class="fas fa-arrow-left"></i>
+          <span data-zh="返回资料" data-en="Back to Profile">返回资料</span>
+        </a>
+      </div>
+    </form>
+  </div>
 </div>
+
+<style>
+.geek-auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--geek-bg, #0a0e17);
+}
+
+.geek-auth-card {
+  background: var(--geek-gradient-card, linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%));
+  border: 1px solid var(--geek-border, rgba(0, 255, 231, 0.1));
+  border-radius: var(--geek-radius, 16px);
+  box-shadow: var(--geek-shadow, 0 8px 32px rgba(0,0,0,0.6));
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  overflow: hidden;
+}
+
+.geek-auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.geek-auth-card:hover::before {
+  transform: scaleX(1);
+}
+
+.geek-auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.geek-auth-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--geek-primary, #00ffe7);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.geek-auth-title i {
+  font-size: 1.5rem;
+}
+
+.geek-auth-subtitle {
+  color: var(--geek-text-muted, #8a9ba8);
+  font-size: 0.9rem;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  margin-bottom: 15px;
+}
+
+.geek-language-switch {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.geek-lang-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 255, 231, 0.3);
+  background: rgba(0, 255, 231, 0.1);
+  color: var(--geek-text-muted, #8a9ba8);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+}
+
+.geek-lang-btn:hover {
+  border-color: var(--geek-primary, #00ffe7);
+  color: var(--geek-primary, #00ffe7);
+}
+
+.geek-lang-btn.active {
+  background: var(--geek-primary, #00ffe7);
+  color: #000;
+  border-color: var(--geek-primary, #00ffe7);
+}
+
+.geek-alert {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.geek-alert-info {
+  background: rgba(0, 123, 255, 0.1);
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  color: #007bff;
+}
+
+.geek-alert i {
+  margin-top: 2px;
+}
+
+.geek-alert-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.geek-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.geek-input-group {
+  position: relative;
+}
+
+.geek-input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--geek-primary, #00ffe7);
+  z-index: 2;
+}
+
+.geek-input {
+  width: 100%;
+  padding: 15px 15px 15px 45px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 231, 0.2);
+  border-radius: 8px;
+  color: var(--geek-text, #e6e6e6);
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  transition: all 0.3s ease;
+}
+
+.geek-input::placeholder {
+  color: var(--geek-text-muted, #8a9ba8);
+}
+
+.geek-input:focus {
+  outline: none;
+  border-color: var(--geek-primary, #00ffe7);
+  box-shadow: 0 0 0 2px rgba(0, 255, 231, 0.2);
+}
+
+.geek-input-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  transition: width 0.3s ease;
+}
+
+.geek-input:focus + .geek-input-line {
+  width: 100%;
+}
+
+.geek-btn-group {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.geek-btn {
+  flex: 1;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+}
+
+.geek-btn-primary {
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  color: #000;
+}
+
+.geek-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 231, 0.3);
+}
+
+.geek-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--geek-text, #e6e6e6);
+  border: 1px solid rgba(0, 255, 231, 0.3);
+}
+
+.geek-btn-secondary:hover {
+  background: rgba(0, 255, 231, 0.1);
+  border-color: var(--geek-primary, #00ffe7);
+  color: var(--geek-primary, #00ffe7);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+  .geek-auth-card {
+    padding: 30px 20px;
+  }
+  
+  .geek-auth-title {
+    font-size: 1.5rem;
+  }
+  
+  .geek-btn-group {
+    flex-direction: column;
+  }
+}
+</style>
+
+<script>
+// 添加输入框焦点效果
+document.querySelectorAll('.geek-input').forEach(input => {
+  input.addEventListener('focus', function() {
+    this.parentElement.classList.add('focused');
+  });
+  
+  input.addEventListener('blur', function() {
+    this.parentElement.classList.remove('focused');
+  });
+});
+
+// 语言切换功能
+document.querySelectorAll('.geek-lang-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const lang = this.getAttribute('data-lang');
+    switchLanguage(lang);
+    
+    // 更新按钮状态
+    document.querySelectorAll('.geek-lang-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+function switchLanguage(lang) {
+  // 更新标题和副标题
+  const title = document.querySelector('.geek-auth-title span');
+  const subtitle = document.querySelector('.geek-auth-subtitle');
+  
+  if (lang === 'en') {
+    title.textContent = 'Edit Profile';
+    subtitle.textContent = 'Update your personal information';
+  } else {
+    title.textContent = '编辑资料';
+    subtitle.textContent = '更新您的个人信息';
+  }
+  
+  // 更新输入框占位符
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.placeholder = element.getAttribute('data-en');
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.placeholder = element.getAttribute('data-zh');
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+  
+  // 更新按钮文本
+  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
+    if (lang === 'en') {
+      element.textContent = element.getAttribute('data-en');
+    } else {
+      element.textContent = element.getAttribute('data-zh');
+    }
+  });
+}
+</script>
 {% endblock %}

@@ -1,0 +1,300 @@
+{% extends 'tools/base_tool.html' %}
+{% load static %}
+
+{% block title %}音乐疗愈室 - 让音乐抚慰心灵{% endblock %}
+
+{% block tool_content %}
+<div class="music-healing-container">
+    <div class="healing-header">
+        <h1><i class="fas fa-music"></i> 音乐疗愈室</h1>
+        <p class="healing-subtitle">让音乐抚慰心灵，找到内心的平静</p>
+    </div>
+
+    <div class="healing-content">
+        <!-- 心情选择 -->
+        <div class="mood-selector">
+            <h3><i class="fas fa-heart"></i> 选择当前心情</h3>
+            <div class="mood-grid">
+                <div class="mood-card" data-mood="sad">
+                    <div class="mood-icon">😢</div>
+                    <div class="mood-name">难过</div>
+                </div>
+                <div class="mood-card" data-mood="anxious">
+                    <div class="mood-icon">😰</div>
+                    <div class="mood-name">焦虑</div>
+                </div>
+                <div class="mood-card" data-mood="angry">
+                    <div class="mood-icon">😠</div>
+                    <div class="mood-name">愤怒</div>
+                </div>
+                <div class="mood-card" data-mood="lonely">
+                    <div class="mood-icon">😔</div>
+                    <div class="mood-name">孤独</div>
+                </div>
+                <div class="mood-card" data-mood="tired">
+                    <div class="mood-icon">😴</div>
+                    <div class="mood-name">疲惫</div>
+                </div>
+                <div class="mood-card" data-mood="happy">
+                    <div class="mood-icon">😊</div>
+                    <div class="mood-name">开心</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 音乐推荐 -->
+        <div class="music-recommendations">
+            <h3><i class="fas fa-list"></i> 推荐音乐</h3>
+            <div class="recommendations-grid" id="recommendationsGrid">
+                <p style="text-align: center; opacity: 0.7;">请先选择心情</p>
+            </div>
+        </div>
+
+        <!-- 疗愈效果 -->
+        <div class="healing-effects">
+            <h3><i class="fas fa-spa"></i> 疗愈效果</h3>
+            <div class="effects-grid">
+                <div class="effect-card">
+                    <div class="effect-icon">🧘‍♀️</div>
+                    <div class="effect-title">放松身心</div>
+                </div>
+                <div class="effect-card">
+                    <div class="effect-icon">💝</div>
+                    <div class="effect-title">情感共鸣</div>
+                </div>
+                <div class="effect-card">
+                    <div class="effect-icon">🌟</div>
+                    <div class="effect-title">提升心情</div>
+                </div>
+                <div class="effect-card">
+                    <div class="effect-icon">🌙</div>
+                    <div class="effect-title">改善睡眠</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.music-healing-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    color: white;
+}
+
+.healing-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.healing-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.healing-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.healing-content > div {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.healing-content h3 {
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mood-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.mood-card {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.mood-card:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+}
+
+.mood-card.selected {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: #fff;
+}
+
+.mood-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.mood-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.music-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.music-cover {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.music-info {
+    flex: 1;
+}
+
+.music-title {
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.music-artist {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.effects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.effect-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.effect-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.effect-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.effect-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+</style>
+
+<script>
+let currentMood = null;
+const musicRecommendations = {
+    sad: [
+        { title: "温柔安慰", artist: "治愈系音乐", cover: "💙" },
+        { title: "温暖怀抱", artist: "轻柔钢琴", cover: "🎹" },
+        { title: "心灵抚慰", artist: "自然音效", cover: "🌿" }
+    ],
+    anxious: [
+        { title: "宁静时光", artist: "冥想音乐", cover: "🧘‍♀️" },
+        { title: "平静呼吸", artist: "白噪音", cover: "🌊" },
+        { title: "内心安宁", artist: "轻音乐", cover: "🎵" }
+    ],
+    angry: [
+        { title: "释放压力", artist: "摇滚疗愈", cover: "🎸" },
+        { title: "平静下来", artist: "古典音乐", cover: "🎻" },
+        { title: "情绪释放", artist: "电子音乐", cover: "🎧" }
+    ],
+    lonely: [
+        { title: "陪伴时光", artist: "温暖人声", cover: "🎤" },
+        { title: "不再孤单", artist: "民谣音乐", cover: "🎪" },
+        { title: "心灵对话", artist: "轻音乐", cover: "🎼" }
+    ],
+    tired: [
+        { title: "恢复能量", artist: "活力音乐", cover: "⚡" },
+        { title: "轻松休息", artist: "轻音乐", cover: "🌙" },
+        { title: "重新出发", artist: "励志音乐", cover: "🌟" }
+    ],
+    happy: [
+        { title: "快乐延续", artist: "欢快音乐", cover: "🎉" },
+        { title: "分享喜悦", artist: "流行音乐", cover: "🎵" },
+        { title: "美好时光", artist: "轻快节奏", cover: "🎶" }
+    ]
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMoodSelector();
+});
+
+function initializeMoodSelector() {
+    const moodCards = document.querySelectorAll('.mood-card');
+    moodCards.forEach(card => {
+        card.addEventListener('click', function() {
+            moodCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            currentMood = this.dataset.mood;
+            updateRecommendations();
+        });
+    });
+}
+
+function updateRecommendations() {
+    const recommendationsGrid = document.getElementById('recommendationsGrid');
+    const tracks = musicRecommendations[currentMood];
+    
+    let html = '';
+    tracks.forEach(track => {
+        html += `
+            <div class="music-item">
+                <div class="music-cover">${track.cover}</div>
+                <div class="music-info">
+                    <div class="music-title">${track.title}</div>
+                    <div class="music-artist">${track.artist}</div>
+                </div>
+            </div>
+        `;
+    });
+    recommendationsGrid.innerHTML = html;
+}
+</script>
+{% endblock %} 

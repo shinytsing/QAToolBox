@@ -1,0 +1,1142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}社交媒体订阅 - QATOOLBOX{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-item">
+    <a href="{% url 'tools' %}" class="breadcrumb-link geek-breadcrumb-link">
+        <i class="fas fa-wrench"></i>
+        工具集
+    </a>
+</div>
+<div class="breadcrumb-item">
+    <a href="{% url 'web_crawler' %}" class="breadcrumb-link geek-breadcrumb-link">
+        <i class="fas fa-rss"></i>
+        社交媒体订阅
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="social-subscription-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <i class="fas fa-rss"></i>
+                <h1>社交媒体订阅</h1>
+            </div>
+            <p class="header-subtitle">实时监控您关注的社交媒体用户，不错过任何重要动态</p>
+        </div>
+        <div class="header-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number" id="totalSubscriptions">0</span>
+                    <span class="stat-label">总订阅</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon active">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number" id="activeSubscriptions">0</span>
+                    <span class="stat-label">活跃中</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon notification">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number" id="newNotifications">0</span>
+                    <span class="stat-label">新提醒</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+        <!-- 左侧：订阅管理 -->
+        <div class="left-panel">
+            <!-- 添加订阅卡片 -->
+            <div class="add-subscription-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-plus-circle"></i> 添加新订阅</h3>
+                </div>
+                <div class="card-body">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-globe"></i>
+                                选择平台
+                            </label>
+                            <select id="platform" class="form-select">
+                                <option value="">请选择平台</option>
+                                <option value="xiaohongshu">小红书</option>
+                                <option value="douyin">抖音</option>
+                                <option value="netease">网易云音乐</option>
+                                <option value="weibo">微博</option>
+                                <option value="bilibili">B站</option>
+                                <option value="zhihu">知乎</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-user"></i>
+                                用户ID/用户名
+                            </label>
+                            <input type="text" id="userId" class="form-input" placeholder="请输入用户ID或用户名">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-bell"></i>
+                                订阅类型
+                            </label>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="newPosts" checked>
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">新动态</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="newFollowers" checked>
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">新关注</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="profileChanges">
+                                    <span class="checkmark"></span>
+                                    <span class="label-text">资料变化</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-clock"></i>
+                                检查频率
+                            </label>
+                            <select id="checkFrequency" class="form-select">
+                                <option value="5">5分钟</option>
+                                <option value="15" selected>15分钟</option>
+                                <option value="30">30分钟</option>
+                                <option value="60">1小时</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary" onclick="addSubscription()">
+                        <i class="fas fa-plus"></i>
+                        添加订阅
+                    </button>
+                </div>
+            </div>
+
+            <!-- 订阅列表 -->
+            <div class="subscription-list-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-list"></i> 我的订阅</h3>
+                    <div class="header-actions">
+                        <button class="btn-icon" onclick="refreshSubscriptions()" title="刷新">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="subscription-items" id="subscriptionItems">
+                        <!-- 订阅项目将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：通知中心 -->
+        <div class="right-panel">
+            <div class="notification-center-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-bell"></i> 通知中心</h3>
+                    <div class="header-actions">
+                        <button class="btn-icon" onclick="markAllAsRead()" title="全部标记为已读">
+                            <i class="fas fa-check-double"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="notification-filters">
+                        <button class="filter-btn active" data-filter="all">
+                            <i class="fas fa-list"></i>
+                            全部
+                        </button>
+                        <button class="filter-btn" data-filter="newPosts">
+                            <i class="fas fa-file-alt"></i>
+                            新动态
+                        </button>
+                        <button class="filter-btn" data-filter="newFollowers">
+                            <i class="fas fa-users"></i>
+                            新关注
+                        </button>
+                        <button class="filter-btn" data-filter="profileChanges">
+                            <i class="fas fa-user-edit"></i>
+                            资料变化
+                        </button>
+                    </div>
+                    
+                    <div class="notification-list" id="notificationList">
+                        <!-- 通知项目将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 模拟数据
+let subscriptions = [
+    {
+        id: 1,
+        platform: 'xiaohongshu',
+        platformName: '小红书',
+        target_user_id: 'user123',
+        target_user_name: '时尚博主小美',
+        subscription_types: ['newPosts', 'newFollowers'],
+        check_frequency: 15,
+        status: 'active',
+        last_check: '2024-01-15 10:30:00',
+        avatar_url: 'https://via.placeholder.com/40'
+    },
+    {
+        id: 2,
+        platform: 'douyin',
+        platformName: '抖音',
+        target_user_id: 'douyin456',
+        target_user_name: '音乐达人阿强',
+        subscription_types: ['newPosts'],
+        check_frequency: 30,
+        status: 'active',
+        last_check: '2024-01-15 10:15:00',
+        avatar_url: 'https://via.placeholder.com/40'
+    }
+];
+
+let notifications = [
+    {
+        id: 1,
+        subscription_id: 1,
+        notification_type: 'newPosts',
+        title: '时尚博主小美发布了新动态',
+        content: '分享了一套春季穿搭，包含详细的搭配技巧...',
+        created_at: '2024-01-15 10:25:00',
+        is_read: false,
+        platform: '小红书'
+    },
+    {
+        id: 2,
+        subscription_id: 1,
+        notification_type: 'newFollowers',
+        title: '时尚博主小美新增关注者',
+        content: '新增了 15 个关注者，总关注数达到 12,345',
+        created_at: '2024-01-15 09:45:00',
+        is_read: true,
+        platform: '小红书'
+    }
+];
+
+// 平台配置
+const platformConfig = {
+    xiaohongshu: { name: '小红书', icon: 'fas fa-heart', color: '#ff2442' },
+    douyin: { name: '抖音', icon: 'fas fa-music', color: '#000000' },
+    netease: { name: '网易云音乐', icon: 'fas fa-headphones', color: '#c20c0c' },
+    weibo: { name: '微博', icon: 'fab fa-weibo', color: '#e6162d' },
+    bilibili: { name: 'B站', icon: 'fas fa-play-circle', color: '#00a1d6' },
+    zhihu: { name: '知乎', icon: 'fas fa-question-circle', color: '#0084ff' }
+};
+
+// 初始化页面
+document.addEventListener('DOMContentLoaded', function() {
+    loadSubscriptions();
+    loadNotifications();
+    loadStats();
+});
+
+// 加载订阅列表
+async function loadSubscriptions() {
+    try {
+        const response = await fetch('/tools/api/social-subscription/list/');
+        const data = await response.json();
+        
+        if (data.success) {
+            subscriptions = data.subscriptions;
+            renderSubscriptionList();
+        }
+    } catch (error) {
+        console.error('Error loading subscriptions:', error);
+    }
+}
+
+// 加载通知列表
+async function loadNotifications() {
+    try {
+        const response = await fetch('/tools/api/social-subscription/notifications/');
+        const data = await response.json();
+        
+        if (data.success) {
+            notifications = data.notifications;
+            renderNotificationList();
+        }
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+// 加载统计信息
+async function loadStats() {
+    try {
+        const response = await fetch('/tools/api/social-subscription/stats/');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateSubscriptionStats(data.stats);
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// 添加订阅函数
+async function addSubscription() {
+    const platform = document.getElementById('platform').value;
+    const userId = document.getElementById('userId').value;
+    const newPosts = document.getElementById('newPosts').checked;
+    const newFollowers = document.getElementById('newFollowers').checked;
+    const profileChanges = document.getElementById('profileChanges').checked;
+    const frequency = document.getElementById('checkFrequency').value;
+    
+    if (!platform || !userId) {
+        showNotification('请选择平台并输入用户ID', 'warning');
+        return;
+    }
+    
+    if (!newPosts && !newFollowers && !profileChanges) {
+        showNotification('请至少选择一种订阅类型', 'warning');
+        return;
+    }
+    
+    const types = [];
+    if (newPosts) types.push('newPosts');
+    if (newFollowers) types.push('newFollowers');
+    if (profileChanges) types.push('profileChanges');
+    
+    try {
+        const response = await fetch('/tools/api/social-subscription/add/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                platform: platform,
+                user_id: userId,
+                user_name: `用户${userId}`,
+                subscription_types: types,
+                check_frequency: parseInt(frequency)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('订阅添加成功！', 'success');
+            loadSubscriptions();
+            
+            // 清空表单
+            document.getElementById('platform').value = '';
+            document.getElementById('userId').value = '';
+            document.getElementById('newPosts').checked = true;
+            document.getElementById('newFollowers').checked = true;
+            document.getElementById('profileChanges').checked = false;
+        } else {
+            showNotification(data.error || '添加订阅失败', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('网络错误，请稍后重试', 'error');
+    }
+}
+
+async function removeSubscription(id) {
+    if (confirm('确定要取消这个订阅吗？')) {
+        try {
+            const response = await fetch('/tools/api/social-subscription/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    subscription_id: id,
+                    action: 'delete'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('订阅已取消', 'info');
+                loadSubscriptions();
+                loadStats();
+            } else {
+                showNotification(data.error || '取消订阅失败', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('网络错误，请稍后重试', 'error');
+        }
+    }
+}
+
+async function toggleSubscription(id) {
+    try {
+        const response = await fetch('/tools/api/social-subscription/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                subscription_id: id,
+                action: 'toggle'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`订阅已${data.status === 'active' ? '启用' : '暂停'}`, 'info');
+            loadSubscriptions();
+            loadStats();
+        } else {
+            showNotification(data.error || '操作失败', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('网络错误，请稍后重试', 'error');
+    }
+}
+
+function updateSubscriptionStats(stats) {
+    if (stats) {
+        document.getElementById('totalSubscriptions').textContent = stats.total_subscriptions;
+        document.getElementById('activeSubscriptions').textContent = stats.active_subscriptions;
+        document.getElementById('newNotifications').textContent = stats.new_notifications;
+    } else {
+        // 使用本地数据作为后备
+        document.getElementById('totalSubscriptions').textContent = subscriptions.length;
+        document.getElementById('activeSubscriptions').textContent = subscriptions.filter(s => s.status === 'active').length;
+        document.getElementById('newNotifications').textContent = notifications.filter(n => !n.is_read).length;
+    }
+}
+
+function renderSubscriptionList() {
+    const container = document.getElementById('subscriptionItems');
+    container.innerHTML = '';
+    
+    if (subscriptions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-rss"></i>
+                </div>
+                <h4>还没有订阅任何用户</h4>
+                <p>添加您的第一个订阅开始监控动态吧！</p>
+            </div>
+        `;
+        return;
+    }
+    
+    subscriptions.forEach(sub => {
+        const platform = platformConfig[sub.platform];
+        const typesText = sub.subscription_types.map(type => {
+            switch(type) {
+                case 'newPosts': return '新动态';
+                case 'newFollowers': return '新关注';
+                case 'profileChanges': return '资料变化';
+                default: return type;
+            }
+        }).join('、');
+        
+        const subscriptionHtml = `
+            <div class="subscription-item ${sub.status}">
+                <div class="subscription-header">
+                    <div class="platform-info">
+                        <div class="platform-icon" style="background: ${platform.color}">
+                            <i class="${platform.icon}"></i>
+                        </div>
+                        <div class="platform-details">
+                            <span class="platform-name">${platform.name}</span>
+                            <span class="subscription-status ${sub.status}">
+                                <i class="fas fa-${sub.status === 'active' ? 'play' : 'pause'}"></i>
+                                ${sub.status === 'active' ? '监控中' : '已暂停'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="subscription-actions">
+                        <button class="btn-icon" onclick="toggleSubscription(${sub.id})" title="${sub.status === 'active' ? '暂停' : '启用'}">
+                            <i class="fas fa-${sub.status === 'active' ? 'pause' : 'play'}"></i>
+                        </button>
+                        <button class="btn-icon delete" onclick="removeSubscription(${sub.id})" title="取消订阅">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="subscription-content">
+                    <div class="user-info">
+                        <img src="${sub.avatar_url || 'https://via.placeholder.com/40'}" alt="头像" class="user-avatar">
+                        <div class="user-details">
+                            <div class="user-name">${sub.target_user_name}</div>
+                            <div class="user-id">@${sub.target_user_id}</div>
+                        </div>
+                    </div>
+                    <div class="subscription-details">
+                        <div class="detail-item">
+                            <span class="label">订阅类型：</span>
+                            <span class="value">${typesText}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">检查频率：</span>
+                            <span class="value">${sub.check_frequency}分钟</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">最后检查：</span>
+                            <span class="value">${sub.last_check ? new Date(sub.last_check).toLocaleString() : '未检查'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += subscriptionHtml;
+    });
+}
+
+function renderNotificationList() {
+    const container = document.getElementById('notificationList');
+    container.innerHTML = '';
+    
+    if (notifications.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-bell-slash"></i>
+                </div>
+                <h4>暂无通知</h4>
+                <p>当您订阅的用户有新动态时会在这里显示</p>
+            </div>
+        `;
+        return;
+    }
+    
+    notifications.forEach(notification => {
+        const typeIcon = {
+            newPosts: 'fas fa-file-alt',
+            newFollowers: 'fas fa-users',
+            profileChanges: 'fas fa-user-edit'
+        }[notification.notification_type];
+        
+        const typeColor = {
+            newPosts: '#28a745',
+            newFollowers: '#17a2b8',
+            profileChanges: '#ffc107'
+        }[notification.notification_type];
+        
+        const notificationHtml = `
+            <div class="notification-item ${notification.is_read ? 'read' : 'unread'}">
+                <div class="notification-icon" style="background: ${typeColor}">
+                    <i class="${typeIcon}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <div class="notification-title">${notification.title}</div>
+                        <div class="notification-time">${new Date(notification.created_at).toLocaleString()}</div>
+                    </div>
+                    <div class="notification-text">${notification.content}</div>
+                    <div class="notification-meta">
+                        <span class="notification-platform">${notification.platform}</span>
+                        <span class="notification-type">${notification.notification_type === 'newPosts' ? '新动态' : notification.notification_type === 'newFollowers' ? '新关注' : '资料变化'}</span>
+                    </div>
+                </div>
+                <div class="notification-actions">
+                    <button class="btn-icon" onclick="markAsRead(${notification.id})" title="标记为已读">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.innerHTML += notificationHtml;
+    });
+}
+
+async function markAsRead(id) {
+    try {
+        const response = await fetch('/tools/api/social-subscription/mark-read/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                notification_id: id
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            loadNotifications();
+            loadStats();
+        } else {
+            showNotification(data.error || '操作失败', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('网络错误，请稍后重试', 'error');
+    }
+}
+
+// 通知过滤
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('filter-btn')) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        const filter = e.target.dataset.filter;
+        filterNotifications(filter);
+    }
+});
+
+// 过滤通知
+function filterNotifications(filter) {
+    const notificationItems = document.querySelectorAll('.notification-item');
+    notificationItems.forEach(item => {
+        if (filter === 'all') {
+            item.style.display = 'flex';
+        } else {
+            const notificationType = item.querySelector('.notification-type').textContent;
+            const typeMap = {
+                'newPosts': '新动态',
+                'newFollowers': '新关注',
+                'profileChanges': '资料变化'
+            };
+            if (typeMap[filter] === notificationType) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+}
+
+// 刷新订阅列表
+async function refreshSubscriptions() {
+    const refreshBtn = document.querySelector('.btn-icon i.fa-sync-alt');
+    refreshBtn.classList.add('fa-spin');
+    
+    try {
+        await loadSubscriptions();
+        await loadStats();
+        showNotification('订阅列表已刷新', 'success');
+    } catch (error) {
+        showNotification('刷新失败，请稍后重试', 'error');
+    } finally {
+        refreshBtn.classList.remove('fa-spin');
+    }
+}
+
+// 全部标记为已读
+async function markAllAsRead() {
+    try {
+        const response = await fetch('/tools/api/social-subscription/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('已全部标记为已读', 'success');
+            loadNotifications();
+            loadStats();
+        } else {
+            showNotification(data.error || '操作失败', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('网络错误，请稍后重试', 'error');
+    }
+}
+
+function showNotification(message, type) {
+    // 实现通知显示逻辑
+    console.log(`${type}: ${message}`);
+    
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification-toast ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 显示动画
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // 自动移除
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+}
+
+// 获取CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+.subscription-form {
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.subscription-form h3 {
+    color: var(--geek-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin: 0;
+}
+
+.subscription-list {
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.subscription-list h3 {
+    color: var(--geek-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.subscription-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    background: var(--geek-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--geek-primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--geek-text-muted);
+    font-size: 0.9rem;
+}
+
+.subscription-items {
+    display: grid;
+    gap: 1rem;
+}
+
+.subscription-item {
+    background: var(--geek-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.subscription-item.paused {
+    opacity: 0.6;
+}
+
+.subscription-item:hover {
+    border-color: var(--geek-primary);
+    transform: translateY(-2px);
+}
+
+.subscription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.platform-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-name {
+    font-weight: 600;
+    color: var(--geek-primary);
+}
+
+.subscription-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    background: none;
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--geek-text);
+}
+
+.action-btn:hover {
+    background: var(--geek-primary);
+    color: white;
+    border-color: var(--geek-primary);
+}
+
+.action-btn.delete:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+
+.subscription-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--geek-text);
+    margin-bottom: 0.25rem;
+}
+
+.user-id {
+    color: var(--geek-text-muted);
+    font-size: 0.9rem;
+}
+
+.subscription-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-item .label {
+    color: var(--geek-text-muted);
+}
+
+.detail-item .value {
+    color: var(--geek-text);
+    font-weight: 500;
+}
+
+.notification-center {
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.notification-center h3 {
+    color: var(--geek-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.notification-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: var(--geek-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--geek-text);
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: var(--geek-primary);
+    color: white;
+    border-color: var(--geek-primary);
+}
+
+.notification-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: var(--geek-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.notification-item.unread {
+    border-left: 4px solid var(--geek-primary);
+    background: rgba(var(--geek-primary-rgb), 0.05);
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--geek-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: var(--geek-text);
+    margin-bottom: 0.5rem;
+}
+
+.notification-text {
+    color: var(--geek-text-muted);
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.notification-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.notification-time {
+    color: var(--geek-text-muted);
+}
+
+.notification-platform {
+    color: var(--geek-primary);
+    font-weight: 500;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--geek-text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .subscription-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .subscription-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 通知toast样式 */
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+}
+
+.notification-toast.show {
+    transform: translateX(0);
+}
+
+.notification-toast.success {
+    border-left: 4px solid #28a745;
+}
+
+.notification-toast.error {
+    border-left: 4px solid #dc3545;
+}
+
+.notification-toast.warning {
+    border-left: 4px solid #ffc107;
+}
+
+.notification-toast.info {
+    border-left: 4px solid #17a2b8;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.notification-content i {
+    font-size: 1.2rem;
+}
+
+.notification-toast.success .notification-content i {
+    color: #28a745;
+}
+
+.notification-toast.error .notification-content i {
+    color: #dc3545;
+}
+
+.notification-toast.warning .notification-content i {
+    color: #ffc107;
+}
+
+.notification-toast.info .notification-content i {
+    color: #17a2b8;
+}
+</style>
+{% endblock %} 

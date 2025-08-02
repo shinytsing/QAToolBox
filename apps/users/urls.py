@@ -5,7 +5,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
-    path('profile/', views.profile_view, name='profile_view'),
+    path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     path('generate-captcha/', views.generate_captcha, name='generate_captcha'),
     
@@ -23,4 +23,13 @@ urlpatterns = [
     path('api/admin/batch-operation/', views.admin_batch_operation_api, name='admin_batch_operation_api'),
     path('api/admin/monitoring-stats/', views.admin_monitoring_stats_api, name='admin_monitoring_stats_api'),
     path('api/admin/force-logout/<int:user_id>/', views.admin_force_logout_api, name='admin_force_logout_api'),
+    
+    # 主题API
+    path('theme/', views.theme_api, name='theme_api'),
+    
+    # 头像上传API
+    path('upload_avatar/', views.upload_avatar, name='upload_avatar'),
+    
+    # 头像上传测试页面
+    path('avatar_test/', views.avatar_test_view, name='avatar_test'),
 ]

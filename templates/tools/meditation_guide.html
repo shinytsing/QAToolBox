@@ -1,0 +1,336 @@
+{% extends 'tools/base_tool.html' %}
+{% load static %}
+
+{% block title %}冥想引导师 - 寻找内心的平静{% endblock %}
+
+{% block tool_content %}
+<div class="meditation-container">
+    <div class="meditation-header">
+        <h1><i class="fas fa-om"></i> 冥想引导师</h1>
+        <p class="meditation-subtitle">寻找内心的平静，与自我对话</p>
+    </div>
+
+    <div class="meditation-content">
+        <!-- 冥想类型选择 -->
+        <div class="meditation-types">
+            <h3><i class="fas fa-list"></i> 选择冥想类型</h3>
+            <div class="types-grid">
+                <div class="type-card" data-type="breathing">
+                    <div class="type-icon">🫁</div>
+                    <div class="type-name">呼吸冥想</div>
+                </div>
+                <div class="type-card" data-type="mindfulness">
+                    <div class="type-icon">🧘‍♀️</div>
+                    <div class="type-name">正念冥想</div>
+                </div>
+                <div class="type-card" data-type="loving">
+                    <div class="type-icon">💝</div>
+                    <div class="type-name">慈心冥想</div>
+                </div>
+                <div class="type-card" data-type="body">
+                    <div class="type-icon">👤</div>
+                    <div class="type-name">身体扫描</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 冥想练习区域 -->
+        <div class="meditation-practice">
+            <h3><i class="fas fa-play-circle"></i> 冥想练习</h3>
+            <div class="practice-area">
+                <div class="breathing-circle" id="breathingCircle">
+                    <div class="circle-inner">
+                        <div class="breathing-text" id="breathingText">准备开始</div>
+                        <div class="timer" id="timer">10:00</div>
+                    </div>
+                </div>
+                
+                <div class="practice-controls">
+                    <button class="control-btn start-btn" onclick="startMeditation()">
+                        <i class="fas fa-play"></i> 开始冥想
+                    </button>
+                    <button class="control-btn reset-btn" onclick="resetMeditation()">
+                        <i class="fas fa-redo"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 冥想指导 -->
+        <div class="meditation-guidance">
+            <h3><i class="fas fa-lightbulb"></i> 冥想指导</h3>
+            <div class="guidance-content">
+                <div class="guidance-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>找到舒适的姿势</h4>
+                        <p>坐在垫子上或椅子上，保持背部挺直但不僵硬。</p>
+                    </div>
+                </div>
+                <div class="guidance-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>闭上眼睛</h4>
+                        <p>轻轻闭上眼睛，让视觉的干扰消失。</p>
+                    </div>
+                </div>
+                <div class="guidance-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>关注呼吸</h4>
+                        <p>自然地呼吸，观察呼吸的流动。</p>
+                    </div>
+                </div>
+                <div class="guidance-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>保持专注</h4>
+                        <p>当思绪飘散时，温柔地将注意力带回到呼吸上。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.meditation-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    color: white;
+}
+
+.meditation-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.meditation-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.meditation-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.meditation-content > div {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.meditation-content h3 {
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.type-card {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.type-card:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+}
+
+.type-card.selected {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: #fff;
+}
+
+.type-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.type-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.practice-area {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.breathing-circle {
+    width: 200px;
+    height: 200px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s ease;
+    animation: pulse 4s ease-in-out infinite;
+}
+
+.circle-inner {
+    text-align: center;
+}
+
+.breathing-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.timer {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.practice-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.control-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.start-btn {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+}
+
+.reset-btn {
+    background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+}
+
+.guidance-content {
+    display: grid;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.guidance-step {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+}
+
+.step-content p {
+    opacity: 0.9;
+    line-height: 1.5;
+}
+</style>
+
+<script>
+let currentType = null;
+let isMeditating = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTypeSelector();
+});
+
+function initializeTypeSelector() {
+    const typeCards = document.querySelectorAll('.type-card');
+    typeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            typeCards.forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            currentType = this.dataset.type;
+        });
+    });
+}
+
+function startMeditation() {
+    if (!currentType) {
+        alert('请先选择冥想类型');
+        return;
+    }
+    
+    if (isMeditating) return;
+    
+    isMeditating = true;
+    document.getElementById('breathingText').textContent = '冥想中...';
+    document.querySelector('.start-btn').textContent = '冥想中...';
+    document.querySelector('.start-btn').disabled = true;
+    
+    // 模拟10分钟冥想
+    setTimeout(() => {
+        isMeditating = false;
+        document.getElementById('breathingText').textContent = '冥想完成';
+        document.querySelector('.start-btn').textContent = '开始冥想';
+        document.querySelector('.start-btn').disabled = false;
+        alert('恭喜！您完成了冥想练习。');
+    }, 10000); // 10秒演示
+}
+
+function resetMeditation() {
+    isMeditating = false;
+    document.getElementById('breathingText').textContent = '准备开始';
+    document.getElementById('timer').textContent = '10:00';
+    document.querySelector('.start-btn').textContent = '开始冥想';
+    document.querySelector('.start-btn').disabled = false;
+}
+</script>
+{% endblock %} 

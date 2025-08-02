@@ -1,0 +1,261 @@
+/* 生活模式 - 温暖舒适风格 */
+
+:root {
+  /* 生活模式色彩系统 */
+  --life-bg: #f8f9fa;
+  --life-card-bg: #ffffff;
+  --life-primary: #28a745;
+  --life-accent: #17a2b8;
+  --life-secondary: #ffc107;
+  --life-text: #212529;
+  --life-text-muted: #6c757d;
+  --life-border: rgba(40, 167, 69, 0.1);
+  --life-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --life-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --life-radius: 12px;
+  --life-radius-lg: 16px;
+  --life-font: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  --life-gradient: linear-gradient(135deg, #28a745 0%, #17a2b8 100%);
+  --life-gradient-card: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+}
+
+body.life-theme {
+  background: var(--life-bg);
+  color: var(--life-text);
+  font-family: var(--life-font);
+  transition: all 0.3s ease;
+}
+
+/* 生活模式背景动画 */
+body.life-theme::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(40, 167, 69, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(23, 162, 184, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 193, 7, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: lifeFloat 20s ease-in-out infinite;
+}
+
+@keyframes lifeFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(1deg); }
+  66% { transform: translateY(10px) rotate(-1deg); }
+}
+
+/* 生活模式卡片样式 */
+.life-card {
+  background: var(--life-gradient-card);
+  border: 1px solid var(--life-border);
+  border-radius: var(--life-radius);
+  box-shadow: var(--life-shadow);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.life-card:hover {
+  box-shadow: var(--life-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* 生活模式标题样式 */
+.life-title {
+  color: var(--life-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  background: var(--life-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.life-subtitle {
+  color: var(--life-text-muted);
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 400;
+}
+
+/* 生活模式工具网格 */
+.life-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 2rem;
+}
+
+.life-tool-card {
+  background: var(--life-card-bg);
+  border: 2px solid var(--life-border);
+  border-radius: var(--life-radius-lg);
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.life-tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(40, 167, 69, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.life-tool-card:hover::before {
+  left: 100%;
+}
+
+.life-tool-card:hover {
+  border-color: var(--life-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(40, 167, 69, 0.15);
+}
+
+.life-tool-icon {
+  font-size: 3rem;
+  color: var(--life-primary);
+  margin-bottom: 1rem;
+}
+
+.life-tool-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--life-text);
+  margin-bottom: 0.5rem;
+}
+
+.life-tool-description {
+  color: var(--life-text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+/* 生活模式按钮样式 */
+.life-btn {
+  background: var(--life-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--life-radius);
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.life-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.life-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.life-btn-secondary {
+  background: transparent;
+  color: var(--life-primary);
+  border: 2px solid var(--life-primary);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);
+}
+
+.life-btn-secondary:hover {
+  background: var(--life-primary);
+  color: white;
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+/* 生活模式导航栏 */
+.life-navbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--life-border);
+}
+
+.life-navbar .nav-link {
+  color: var(--life-text);
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.life-navbar .nav-link:hover {
+  color: var(--life-primary);
+}
+
+/* 生活模式用户菜单 */
+.life-user-menu {
+  background: var(--life-card-bg);
+  border: 1px solid var(--life-border);
+  border-radius: var(--life-radius);
+  box-shadow: var(--life-shadow);
+}
+
+.life-mode-indicator {
+  background: var(--life-gradient);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+/* 生活模式响应式设计 */
+@media (max-width: 768px) {
+  .life-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .life-title {
+    font-size: 2rem;
+  }
+  
+  .life-subtitle {
+    font-size: 1rem;
+  }
+}
+
+/* 生活模式切换按钮 */
+.life-mode-btn {
+  background: var(--life-card-bg);
+  border: 1px solid var(--life-primary);
+  color: var(--life-primary);
+  transition: all 0.3s ease;
+}
+
+.life-mode-btn:hover {
+  border-color: var(--life-accent);
+  background: var(--life-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.life-mode-btn.active {
+  border-color: var(--life-accent);
+  background: var(--life-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+} 
