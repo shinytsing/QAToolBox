@@ -49,7 +49,9 @@ from .views import (
     job_search_machine, job_search_profile, job_search_dashboard,
     create_job_search_request_api, start_job_search_api, get_job_search_requests_api,
     get_job_applications_api, save_job_profile_api, get_job_profile_api,
-    get_job_search_statistics_api, update_application_status_api, add_application_notes_api
+    get_job_search_statistics_api, update_application_status_api, add_application_notes_api,
+    generate_boss_qr_code_api, check_boss_login_status_api, get_boss_login_status_api,
+    boss_logout_api, send_contact_request_api
 )
 from views import tool_view
 from .generate_test_cases_api import GenerateTestCasesAPI
@@ -269,4 +271,11 @@ urlpatterns = [
     path('api/job-search/statistics/', get_job_search_statistics_api, name='get_job_search_statistics_api'),
     path('api/job-search/application/update-status/', update_application_status_api, name='update_application_status_api'),
     path('api/job-search/application/add-notes/', add_application_notes_api, name='add_application_notes_api'),
+    
+    # Boss直聘API路由
+    path('api/boss/qr-code/', generate_boss_qr_code_api, name='generate_boss_qr_code_api'),
+    path('api/boss/check-login/', check_boss_login_status_api, name='check_boss_login_status_api'),
+    path('api/boss/login-status/', get_boss_login_status_api, name='get_boss_login_status_api'),
+    path('api/boss/logout/', boss_logout_api, name='boss_logout_api'),
+    path('api/boss/send-contact/', send_contact_request_api, name='send_contact_request_api'),
 ]

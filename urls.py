@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+import time
 from django.contrib import admin
 from django.urls import include, path
 from views import home_view, tool_view, welcome_view, theme_demo_view, custom_static_serve
@@ -52,7 +53,17 @@ def anti_programmer_desire_test_view(request):
     """反程序员档案和欲望代办测试页面"""
     return render(request, 'test_anti_programmer_desire.html')
 
+def health_check_view(request):
+    """健康检查视图"""
+    from django.http import JsonResponse
+    return JsonResponse({
+        'status': 'healthy',
+        'timestamp': time.time(),
+        'version': '1.0.0'
+    })
+
 urlpatterns = [
+    path('health/', health_check_view, name='health_check'),
     path('', home_view, name='home'),
     path('welcome/', welcome_view, name='welcome'),
     path('theme-demo/', theme_demo_view, name='theme_demo'),

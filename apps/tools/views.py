@@ -5871,3 +5871,112 @@ def generate_travel_guide(destination, travel_style, budget_range, travel_durati
         }
 
 
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def generate_boss_qr_code_api(request):
+    """生成Boss直聘登录二维码API"""
+    try:
+        job_service = JobSearchService()
+        result = job_service.generate_qr_code(request.user.id)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'生成二维码失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def check_boss_login_status_api(request):
+    """检查Boss直聘登录状态API"""
+    try:
+        job_service = JobSearchService()
+        result = job_service.check_qr_login_status(request.user.id)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'检查登录状态失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_boss_login_status_api(request):
+    """获取Boss直聘登录状态API"""
+    try:
+        job_service = JobSearchService()
+        result = job_service.get_login_status(request.user.id)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取登录状态失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def boss_logout_api(request):
+    """Boss直聘退出登录API"""
+    try:
+        job_service = JobSearchService()
+        result = job_service.logout(request.user.id)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'退出登录失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def send_contact_request_api(request):
+    """发送联系请求API"""
+    try:
+        data = json.loads(request.body)
+        job_id = data.get('job_id')
+        
+        if not job_id:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供职位ID'
+            })
+        
+        # 检查登录状态
+        job_service = JobSearchService()
+        login_status = job_service.get_login_status(request.user.id)
+        
+        if not login_status.get('is_logged_in'):
+            return JsonResponse({
+                'success': False,
+                'message': '请先登录Boss直聘'
+            })
+        
+        # 发送联系请求
+        result = job_service.boss_api.send_contact_request(job_id)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'发送联系请求失败: {str(e)}'
+        })
+
+

@@ -5,207 +5,9 @@ import random
 from typing import List, Dict, Optional
 from django.conf import settings
 from django.utils import timezone
+from django.core.cache import cache
 from ..models import JobSearchRequest, JobApplication, JobSearchProfile
-
-
-class BossZhipinAPI:
-    """Boss直聘API服务类"""
-    
-    def __init__(self):
-        self.base_url = "https://www.zhipin.com"
-        self.api_url = "https://www.zhipin.com/api"
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-        }
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
-    
-    def search_jobs(self, 
-                   job_title: str, 
-                   location: str, 
-                   min_salary: int, 
-                   max_salary: int,
-                   job_type: str = 'full_time',
-                   experience_level: str = '1-3',
-                   keywords: List[str] = None,
-                   page: int = 1,
-                   page_size: int = 30) -> Dict:
-        """
-        搜索职位
-        """
-        try:
-            # 构建搜索参数
-            search_params = {
-                'query': job_title,
-                'city': location,
-                'salary_min': min_salary * 1000,  # 转换为元
-                'salary_max': max_salary * 1000,
-                'page': page,
-                'pageSize': page_size,
-                'jobType': self._convert_job_type(job_type),
-                'experience': self._convert_experience(experience_level),
-            }
-            
-            if keywords:
-                search_params['keywords'] = ','.join(keywords)
-            
-            # 模拟API调用（实际项目中需要真实的Boss直聘API）
-            return self._mock_search_results(search_params)
-            
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'data': []
-            }
-    
-    def apply_job(self, job_id: str, user_profile: JobSearchProfile) -> Dict:
-        """
-        投递简历到指定职位
-        """
-        try:
-            # 模拟投递过程
-            time.sleep(random.uniform(1, 3))  # 模拟网络延迟
-            
-            # 模拟成功率
-            success_rate = random.uniform(0.7, 0.95)
-            is_success = random.random() < success_rate
-            
-            if is_success:
-                return {
-                    'success': True,
-                    'message': '投递成功',
-                    'application_id': f'app_{job_id}_{int(time.time())}',
-                    'status': 'applied'
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': '投递失败，请稍后重试',
-                    'status': 'failed'
-                }
-                
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'status': 'error'
-            }
-    
-    def get_job_details(self, job_id: str) -> Dict:
-        """
-        获取职位详情
-        """
-        try:
-            # 模拟职位详情数据
-            return self._mock_job_details(job_id)
-        except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'data': {}
-            }
-    
-    def _convert_job_type(self, job_type: str) -> str:
-        """转换工作类型"""
-        type_mapping = {
-            'full_time': '1',
-            'part_time': '2',
-            'internship': '3',
-            'freelance': '4'
-        }
-        return type_mapping.get(job_type, '1')
-    
-    def _convert_experience(self, experience: str) -> str:
-        """转换经验要求"""
-        exp_mapping = {
-            'fresh': '1',
-            '1-3': '2',
-            '3-5': '3',
-            '5-10': '4',
-            '10+': '5'
-        }
-        return exp_mapping.get(experience, '2')
-    
-    def _mock_search_results(self, params: Dict) -> Dict:
-        """模拟搜索结果"""
-        job_titles = [
-            'Python开发工程师', '前端开发工程师', 'Java开发工程师', 
-            '数据分析师', '产品经理', 'UI设计师', '运维工程师',
-            '测试工程师', '算法工程师', '架构师'
-        ]
-        
-        companies = [
-            '腾讯科技', '阿里巴巴', '字节跳动', '百度', '美团',
-            '滴滴出行', '京东科技', '网易', '小米科技', '华为'
-        ]
-        
-        locations = ['北京', '上海', '深圳', '广州', '杭州', '成都', '南京', '武汉']
-        
-        results = []
-        for i in range(params.get('pageSize', 30)):
-            job = {
-                'id': f'job_{params["page"]}_{i}',
-                'title': random.choice(job_titles),
-                'company': random.choice(companies),
-                'location': random.choice(locations),
-                'salary_min': params['salary_min'] // 1000,
-                'salary_max': params['salary_max'] // 1000,
-                'experience': params.get('experience', '2'),
-                'education': random.choice(['本科', '硕士', '博士']),
-                'company_size': random.choice(['100-499人', '500-999人', '1000-9999人', '10000人以上']),
-                'industry': random.choice(['互联网', '金融', '教育', '医疗', '电商']),
-                'description': f'这是一个{random.choice(job_titles)}的职位，要求有相关工作经验...',
-                'requirements': ['熟悉相关技术栈', '有团队协作能力', '良好的沟通能力'],
-                'benefits': ['五险一金', '年终奖', '带薪年假', '免费午餐'],
-                'url': f'https://www.zhipin.com/job_detail/{params["page"]}_{i}.html',
-                'logo': f'https://img.bosszhipin.com/company_logo/logo_{i}.png'
-            }
-            results.append(job)
-        
-        return {
-            'success': True,
-            'data': {
-                'jobs': results,
-                'total': 150,
-                'page': params['page'],
-                'pageSize': params['pageSize']
-            }
-        }
-    
-    def _mock_job_details(self, job_id: str) -> Dict:
-        """模拟职位详情"""
-        return {
-            'success': True,
-            'data': {
-                'id': job_id,
-                'title': 'Python开发工程师',
-                'company': '腾讯科技',
-                'location': '深圳',
-                'salary_range': '15K-30K',
-                'experience': '3-5年',
-                'education': '本科及以上',
-                'description': '负责公司核心产品的后端开发工作...',
-                'requirements': [
-                    '熟悉Python编程语言',
-                    '熟悉Django/Flask等Web框架',
-                    '熟悉MySQL、Redis等数据库',
-                    '有良好的代码规范和团队协作能力'
-                ],
-                'benefits': [
-                    '五险一金',
-                    '年终奖',
-                    '带薪年假',
-                    '免费午餐',
-                    '定期团建'
-                ]
-            }
-        }
+from .boss_zhipin_api import BossZhipinAPI
 
 
 class JobSearchService:
@@ -213,6 +15,104 @@ class JobSearchService:
     
     def __init__(self):
         self.boss_api = BossZhipinAPI()
+    
+    def generate_qr_code(self, user_id: int) -> Dict:
+        """生成Boss直聘登录二维码"""
+        try:
+            result = self.boss_api.generate_qr_code()
+            if result.get('success'):
+                # 将二维码信息缓存到Redis，设置过期时间为5分钟
+                cache_key = f'boss_qr_code_{user_id}'
+                cache.set(cache_key, {
+                    'qr_code_id': result['qr_code_id'],
+                    'qr_code_url': result['qr_code_url'],
+                    'created_at': time.time()
+                }, 300)  # 5分钟过期
+            
+            return result
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'生成二维码失败: {str(e)}'
+            }
+    
+    def check_qr_login_status(self, user_id: int) -> Dict:
+        """检查二维码登录状态"""
+        try:
+            # 从缓存获取二维码信息
+            cache_key = f'boss_qr_code_{user_id}'
+            qr_info = cache.get(cache_key)
+            
+            if not qr_info:
+                return {
+                    'success': False,
+                    'message': '二维码已过期，请重新生成'
+                }
+            
+            result = self.boss_api.check_qr_login_status(qr_info['qr_code_id'])
+            
+            if result.get('success') and result.get('status') == 'SUCCESS':
+                # 登录成功，清除缓存
+                cache.delete(cache_key)
+                
+                # 保存登录状态到用户缓存
+                login_cache_key = f'boss_login_{user_id}'
+                cache.set(login_cache_key, {
+                    'is_logged_in': True,
+                    'login_time': time.time(),
+                    'user_info': result.get('user_info', {})
+                }, 3600)  # 1小时过期
+            
+            return result
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'检查登录状态失败: {str(e)}'
+            }
+    
+    def get_login_status(self, user_id: int) -> Dict:
+        """获取登录状态"""
+        try:
+            # 检查缓存中的登录状态
+            cache_key = f'boss_login_{user_id}'
+            login_info = cache.get(cache_key)
+            
+            if login_info and login_info.get('is_logged_in'):
+                return {
+                    'success': True,
+                    'is_logged_in': True,
+                    'login_time': login_info.get('login_time'),
+                    'user_info': login_info.get('user_info', {})
+                }
+            
+            return {
+                'success': True,
+                'is_logged_in': False
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'获取登录状态失败: {str(e)}'
+            }
+    
+    def logout(self, user_id: int) -> Dict:
+        """退出登录"""
+        try:
+            self.boss_api.logout()
+            
+            # 清除缓存
+            cache.delete(f'boss_qr_code_{user_id}')
+            cache.delete(f'boss_login_{user_id}')
+            
+            return {
+                'success': True,
+                'message': '退出登录成功'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'退出登录失败: {str(e)}'
+            }
     
     def create_job_search_request(self, user, **kwargs) -> JobSearchRequest:
         """创建求职请求"""
@@ -274,10 +174,10 @@ class JobSearchService:
                     
                     # 如果匹配度达到60%以上，进行投递
                     if match_score >= 60:
-                        # 投递简历
-                        apply_result = self.boss_api.apply_job(job['id'], user_profile)
+                        # 发送联系请求
+                        contact_result = self.boss_api.send_contact_request(job['id'])
                         
-                        if apply_result.get('success'):
+                        if contact_result.get('success'):
                             # 创建申请记录
                             JobApplication.objects.create(
                                 job_search_request=job_request,
@@ -290,7 +190,7 @@ class JobSearchService:
                                 job_description=job.get('description', ''),
                                 requirements=job.get('requirements', []),
                                 benefits=job.get('benefits', []),
-                                status='applied',
+                                status='contacted',
                                 platform='boss',
                                 job_url=job['url'],
                                 match_score=match_score,

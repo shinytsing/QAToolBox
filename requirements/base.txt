@@ -39,6 +39,7 @@ python-dateutil==2.9.0.post0
 pytz==2025.2
 tenacity==9.1.2
 prettytable==3.16.0
+qrcode==7.4.2
 
 # 开发工具
 gunicorn==23.0.0

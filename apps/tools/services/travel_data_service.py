@@ -676,14 +676,40 @@ class TravelDataService:
         """创建增强版攻略（备选方案）"""
         days = self._parse_travel_duration(travel_duration)
         
+        # 如果real_data中没有景点、美食、贴士数据，则使用默认数据
+        attractions = real_data.get('景点', [])
+        foods = real_data.get('美食', [])
+        tips = real_data.get('贴士', [])
+        
+        # 如果数据为空，使用默认数据
+        if not attractions:
+            attractions = [f'{destination}著名景点1', f'{destination}历史文化景点', f'{destination}自然风光']
+        if not foods:
+            foods = [f'{destination}特色美食1', f'{destination}特色美食2', f'{destination}传统小吃']
+        if not tips:
+            tips = [
+                '建议提前了解当地天气',
+                '准备常用药品',
+                '注意人身和财物安全',
+                '提前预订酒店和门票',
+                '准备现金和移动支付'
+            ]
+        
+        # 创建完整的数据结构
+        enhanced_data = {
+            '景点': attractions,
+            '美食': foods,
+            '贴士': tips
+        }
+        
         return {
             'destination': destination,
             'travel_style': travel_style,
             'budget_range': budget_range,
             'travel_duration': travel_duration,
             'interests': interests,
-            'must_visit_attractions': real_data.get('景点', [])[:5],
-            'food_recommendations': real_data.get('美食', [])[:5],
+            'must_visit_attractions': attractions[:5],
+            'food_recommendations': foods[:5],
             'transportation_guide': {
                 '地铁': f'{destination}地铁四通八达，建议购买交通卡',
                 '公交': '公交车线路覆盖广泛，票价便宜',
@@ -695,10 +721,10 @@ class TravelDataService:
                 '交通': '50-100元/天',
                 '门票': '100-200元/天'
             },
-            'travel_tips': real_data.get('贴士', [])[:5],
+            'travel_tips': tips[:5],
             'best_time_to_visit': '春秋两季，气候宜人',
-            'daily_schedule': self._generate_daily_schedule(destination, days, real_data),
-            'cost_breakdown': self._generate_cost_breakdown(destination, days, budget_range, real_data)
+            'daily_schedule': self._generate_daily_schedule(destination, days, enhanced_data),
+            'cost_breakdown': self._generate_cost_breakdown(destination, days, budget_range, enhanced_data)
         }
     
     def _create_basic_guide(self, destination: str, travel_style: str, 

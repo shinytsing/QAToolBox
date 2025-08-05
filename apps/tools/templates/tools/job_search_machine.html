@@ -37,13 +37,39 @@
     margin-bottom: 40px;
 }
 
-.job-form-card, .job-status-card {
+.job-form-card, .job-status-card, .boss-login-card {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 15px;
     padding: 30px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.login-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.status-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.status-text.logged-in {
+    color: #4CAF50;
+}
+
+#qrCodeImage img {
+    max-width: 200px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .card-title {
@@ -367,6 +393,24 @@
         <p>输入职位要求和期望薪资，让AI自动为您投递简历到Boss直聘</p>
     </div>
 
+    <!-- Boss直聘登录状态 -->
+    <div class="boss-login-card" style="margin-bottom: 30px;">
+        <h3 class="card-title">🔐 Boss直聘登录</h3>
+        <div id="bossLoginStatus">
+            <div class="login-status-item">
+                <span class="status-text">未登录</span>
+                <button class="btn-secondary" onclick="generateQRCode()">扫码登录</button>
+            </div>
+        </div>
+        
+        <!-- 二维码显示区域 -->
+        <div id="qrCodeContainer" style="display: none; text-align: center; margin-top: 20px;">
+            <div id="qrCodeImage"></div>
+            <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">请使用Boss直聘APP扫描二维码登录</p>
+            <div id="qrCodeStatus" style="margin-top: 10px; font-size: 14px; color: #FF9800;"></div>
+        </div>
+    </div>
+
     <div class="job-search-grid">
         <!-- 求职请求表单 -->
         <div class="job-form-card">
@@ -482,11 +526,152 @@ let currentApplicationId = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadJobRequests();
     loadApplications();
+    checkBossLoginStatus();
 });
 
+// Boss直聘登录相关函数
+let qrCodeCheckInterval = null;
+
+// 检查Boss直聘登录状态
+async function checkBossLoginStatus() {
+    try {
+        const response = await fetch('/tools/api/boss/login-status/');
+        const result = await response.json();
+        
+        if (result.success) {
+            updateBossLoginStatus(result.is_logged_in, result.user_info);
+        }
+    } catch (error) {
+        console.error('检查登录状态失败:', error);
+    }
+}
+
+// 更新Boss直聘登录状态显示
+function updateBossLoginStatus(isLoggedIn, userInfo = null) {
+    const statusContainer = document.getElementById('bossLoginStatus');
+    
+    if (isLoggedIn) {
+        statusContainer.innerHTML = `
+            <div class="login-status-item">
+                <div>
+                    <span class="status-text logged-in">已登录</span>
+                    ${userInfo ? `<div style="font-size: 14px; opacity: 0.8; margin-top: 5px;">${userInfo.name || '用户'}</div>` : ''}
+                </div>
+                <button class="btn-secondary" onclick="bossLogout()">退出登录</button>
+            </div>
+        `;
+    } else {
+        statusContainer.innerHTML = `
+            <div class="login-status-item">
+                <span class="status-text">未登录</span>
+                <button class="btn-secondary" onclick="generateQRCode()">扫码登录</button>
+            </div>
+        `;
+    }
+}
+
+// 生成二维码
+async function generateQRCode() {
+    try {
+        const response = await fetch('/tools/api/boss/qr-code/');
+        const result = await response.json();
+        
+        if (result.success) {
+            // 显示二维码
+            const qrContainer = document.getElementById('qrCodeContainer');
+            const qrImage = document.getElementById('qrCodeImage');
+            const qrStatus = document.getElementById('qrCodeStatus');
+            
+            qrImage.innerHTML = `<img src="${result.qr_code_image}" alt="Boss直聘登录二维码">`;
+            qrStatus.textContent = '等待扫码...';
+            qrContainer.style.display = 'block';
+            
+            // 开始轮询检查登录状态
+            startQRCodeCheck();
+        } else {
+            showAlert(result.message, 'error');
+        }
+    } catch (error) {
+        showAlert('生成二维码失败，请重试', 'error');
+    }
+}
+
+// 开始轮询检查二维码登录状态
+function startQRCodeCheck() {
+    if (qrCodeCheckInterval) {
+        clearInterval(qrCodeCheckInterval);
+    }
+    
+    qrCodeCheckInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/tools/api/boss/check-login/');
+            const result = await response.json();
+            
+            if (result.success) {
+                const qrStatus = document.getElementById('qrCodeStatus');
+                qrStatus.textContent = result.message;
+                
+                if (result.status === 'SUCCESS') {
+                    // 登录成功
+                    clearInterval(qrCodeCheckInterval);
+                    qrCodeCheckInterval = null;
+                    
+                    // 隐藏二维码
+                    document.getElementById('qrCodeContainer').style.display = 'none';
+                    
+                    // 更新登录状态
+                    updateBossLoginStatus(true, result.user_info);
+                    
+                    showAlert('Boss直聘登录成功！', 'success');
+                } else if (result.status === 'EXPIRED') {
+                    // 二维码过期
+                    clearInterval(qrCodeCheckInterval);
+                    qrCodeCheckInterval = null;
+                    qrStatus.textContent = '二维码已过期，请重新生成';
+                }
+            }
+        } catch (error) {
+            console.error('检查登录状态失败:', error);
+        }
+    }, 2000); // 每2秒检查一次
+}
+
+// Boss直聘退出登录
+async function bossLogout() {
+    try {
+        const response = await fetch('/tools/api/boss/logout/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            updateBossLoginStatus(false);
+            showAlert('已退出登录', 'success');
+        } else {
+            showAlert(result.message, 'error');
+        }
+    } catch (error) {
+        showAlert('退出登录失败，请重试', 'error');
+    }
+}
+
 // 创建求职请求
-document.getElementById('jobSearchForm').addEventListener('submit', function(e) {
+document.getElementById('jobSearchForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    // 检查Boss直聘登录状态
+    const loginResponse = await fetch('/tools/api/boss/login-status/');
+    const loginResult = await loginResponse.json();
+    
+    if (!loginResult.success || !loginResult.is_logged_in) {
+        showAlert('请先登录Boss直聘', 'error');
+        return;
+    }
     
     const formData = {
         job_title: document.getElementById('jobTitle').value,
