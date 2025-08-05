@@ -114,7 +114,7 @@ def test_contact_request_curl():
     """测试联系请求的curl命令"""
     print("\n\n📋 联系请求curl命令示例:")
     
-    curl_command = '''curl 'https://www.zhipin.com/wapi/zpgeek/friend/add.json?securityId=iRaGjHDSwTDaX-k1Xte2V1lJSM6qwihE8T0HeTiFXqEoLjEjij-rh6NcxqYwHbliu-cqQrBZoW5fvbXti81DBQPudaeGNGkzOWzN1XMMkJuBjnN1LIxZoT30PNQVEXpjWnM4gYDMrT_U0T_f03skd2qg-azkzdYtPnSpwZq8mktUV4-aXbPig5Y16nrxvQ1TpKQ1pEK_UvrGcoH4pEa7I4m3my9YscsOdxKCfk3uBDPmWAAIkE5CL-D8sKA2Nj8XMnpaV5n-1hHG54JyBIk~&jobId=043cec34c6fd052a03R42968F1NV&lid=c61b52b4-c532-4677-8c0b-821294aadf8a.f1:common.eyJzZXNzaW9uSWQiOiI4ZjNiMzQwMi1mZDJhLTQzMmUtODgxMi03YzM3MmJmNWEwZDgiLCJyY2RCelR5cGUiOiJmMV9ncmNkIn0.1&_=1754370242456' \\
+    curl_command = """curl 'https://www.zhipin.com/wapi/zpgeek/friend/add.json?securityId=iRaGjHDSwTDaX-k1Xte2V1lJSM6qwihE8T0HeTiFXqEoLjEjij-rh6NcxqYwHbliu-cqQrBZoW5fvbXti81DBQPudaeGNGkzOWzN1XMMkJuBjnN1LIxZoT30PNQVEXpjWnM4gYDMrT_U0T_f03skd2qg-azkzdYtPnSpwZq8mktUV4-aXbPig5Y16nrxvQ1TpKQ1pEK_UvrGcoH4pEa7I4m3my9YscsOdxKCfk3uBDPmWAAIkE5CL-D8sKA2Nj8XMnpaV5n-1hHG54JyBIk~&jobId=043cec34c6fd052a03R42968F1NV&lid=c61b52b4-c532-4677-8c0b-821294aadf8a.f1:common.eyJzZXNzaW9uSWQiOiI4ZjNiMzQwMi1mZDJhLTQzMmUtODgxMi03YzM3MmJmNWEwZDgiLCJyY2RCelR5cGUiOiJmMV9ncmNkIn0.1&_=1754370242456' \\
   -H 'Accept: application/json, text/plain, */*' \\
   -H 'Accept-Language: zh,en;q=0.9,de;q=0.8,is;q=0.7,an;q=0.6,am;q=0.5,ast;q=0.4,ee;q=0.3,ga;q=0.2,et;q=0.1,or;q=0.1,oc;q=0.1,om;q=0.1,eu;q=0.1,bg;q=0.1,be;q=0.1,nso;q=0.1,bs;q=0.1,pl;q=0.1,fa;q=0.1,br;q=0.1,tn;q=0.1,de-AT;q=0.1,de-DE;q=0.1,en-IE;q=0.1,en-AU;q=0.1,en-CA;q=0.1,en-US;q=0.1,en-ZA;q=0.1,en-NZ;q=0.1,en-IN;q=0.1,en-GB-oxendict;q=0.1,en-GB;q=0.1,sq;q=0.1,zh-CN;q=0.1' \\
   -H 'Connection: keep-alive' \\
@@ -131,8 +131,8 @@ def test_contact_request_curl():
   -H 'sec-ch-ua-platform: "macOS"' \\
   -H 'token: xh80ty18jhMwFOJs' \\
   -H 'traceId: F-9d7798UjdGVt0HZ3' \\
-  -H 'zp_token: V2RNgvF-X-3F5rVtRuyhgbLiu47DrQxyU~|RNgvF-X-3F5rVtRuyhgbLiu47DrXxCw~' \\
-  --data-raw 'sessionId=''''
+  -H 'zp_token: V2RNgvF-X-3F5rVtRuyhgbLiu47DrXxCw~' \\
+  --data-raw 'sessionId='"""
     
     print(curl_command)
     

@@ -220,7 +220,7 @@ class BossZhipinAPI:
             }
             
             if keywords:
-                search_params['keywords'] = ',''.join(keywords)
+                search_params['keywords'] = ','.join(keywords)
             
             search_url = f"{self.api_url}/zpgeek/search/job_list.json"
             response = self.session.get(search_url, params=search_params)
