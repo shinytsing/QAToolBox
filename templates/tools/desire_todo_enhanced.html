@@ -1,0 +1,1110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}欲望代办系统{% endblock %}
+{% block tool_title_display %}欲望代办系统{% endblock %}
+
+{% block extra_css %}
+<style>
+.desire-todo-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.desire-todo-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 68, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: desirePulse 8s ease-in-out infinite;
+}
+
+@keyframes desirePulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.desire-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.desire-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700, #ff4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 40px rgba(255, 68, 68, 0.5);
+  animation: desireGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes desireGlow {
+  from { filter: brightness(1) hue-rotate(0deg); }
+  to { filter: brightness(1.2) hue-rotate(10deg); }
+}
+
+.desire-subtitle {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.desire-motto {
+  font-size: 1rem;
+  color: rgba(255, 215, 0, 0.8);
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+
+.desire-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.desire-card {
+  background: rgba(26, 26, 26, 0.9);
+  border: 3px solid rgba(255, 68, 68, 0.4);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(15px);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.desire-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.desire-card:hover::before {
+  transform: scaleX(1);
+}
+
+.desire-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(255, 68, 68, 0.3);
+  border-color: #ff4444;
+}
+
+.card-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ff4444;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* 欲望代办分类 */
+.desire-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.category-btn {
+  background: rgba(255, 68, 68, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.category-btn:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: #ff4444;
+  transform: translateY(-3px);
+}
+
+.category-btn.active {
+  background: rgba(255, 68, 68, 0.3);
+  border-color: #ff4444;
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+}
+
+.category-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* 欲望代办列表 */
+.desire-todo-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.todo-item {
+  background: rgba(255, 68, 68, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.todo-item:hover {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: #ff4444;
+  transform: translateX(5px);
+}
+
+.todo-item.completed {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
+  opacity: 0.7;
+}
+
+.todo-item.completed .todo-title {
+  text-decoration: line-through;
+  color: #28a745;
+}
+
+.todo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.todo-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ff6b35;
+  flex: 1;
+}
+
+.todo-priority {
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 1rem;
+}
+
+.priority-high {
+  background: rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+}
+
+.priority-medium {
+  background: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+}
+
+.priority-low {
+  background: rgba(40, 167, 69, 0.3);
+  color: #28a745;
+}
+
+.todo-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.todo-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.todo-reward {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.todo-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.todo-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-complete {
+  background: #28a745;
+  color: white;
+}
+
+.btn-complete:hover {
+  background: #218838;
+  transform: scale(1.05);
+}
+
+.btn-edit {
+  background: #ffc107;
+  color: #000;
+}
+
+.btn-edit:hover {
+  background: #e0a800;
+  transform: scale(1.05);
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+/* 添加新代办 */
+.add-todo-form {
+  background: rgba(26, 26, 26, 0.8);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ff6b35;
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 5px;
+  color: #ffffff;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #ff4444;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 5px;
+  color: #ffffff;
+  font-family: inherit;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 5px;
+  color: #ffffff;
+  font-family: inherit;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 68, 68, 0.4);
+}
+
+/* 欲望统计 */
+.desire-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-item {
+  background: rgba(255, 68, 68, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: #ff4444;
+  transform: translateY(-3px);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ffd700;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #ff6b35;
+  font-weight: 600;
+}
+
+/* 欲望奖励系统 */
+.desire-rewards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.reward-item {
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.reward-item:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  transform: translateY(-3px);
+}
+
+.reward-item.unlocked {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: #ffd700;
+  animation: rewardGlow 2s ease-in-out infinite;
+}
+
+@keyframes rewardGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+}
+
+.reward-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.reward-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffd700;
+  margin-bottom: 0.5rem;
+}
+
+.reward-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.reward-cost {
+  font-size: 0.9rem;
+  color: #ff6b35;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* 通知动画 */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .desire-title {
+    font-size: 2.5rem;
+  }
+  
+  .desire-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .desire-card {
+    padding: 1.5rem;
+  }
+  
+  .todo-actions {
+    flex-direction: column;
+  }
+  
+  .todo-btn {
+    width: 100%;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="desire-todo-container">
+  <div class="desire-header">
+    <h1 class="desire-title">🔥 欲望代办系统</h1>
+    <p class="desire-subtitle">将欲望转化为动力，让每个任务都有意义</p>
+    <p class="desire-motto">"完成一个任务，实现一个欲望"</p>
+  </div>
+
+  <!-- 欲望统计 -->
+  <div class="desire-stats">
+    <div class="stat-item">
+      <div class="stat-value" id="totalTodos">12</div>
+      <div class="stat-label">总代办数</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="completedTodos">8</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="pendingTodos">4</div>
+      <div class="stat-label">待完成</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="totalRewards">¥2,450</div>
+      <div class="stat-label">总奖励</div>
+    </div>
+  </div>
+
+  <div class="desire-grid">
+    <!-- 添加新代办 -->
+    <div class="desire-card">
+      <h2 class="card-title">添加新欲望代办</h2>
+      <form class="add-todo-form" id="addTodoForm">
+        <div class="form-group">
+          <label class="form-label">代办标题</label>
+          <input type="text" class="form-input" id="todoTitle" placeholder="输入你的欲望代办..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">描述</label>
+          <textarea class="form-textarea" id="todoDescription" placeholder="详细描述这个欲望代办..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <select class="form-select" id="todoCategory" required>
+            <option value="">选择分类</option>
+            <option value="work">工作相关</option>
+            <option value="personal">个人成长</option>
+            <option value="health">健康生活</option>
+            <option value="social">社交关系</option>
+            <option value="entertainment">娱乐放松</option>
+            <option value="finance">财务目标</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">优先级</label>
+          <select class="form-select" id="todoPriority" required>
+            <option value="">选择优先级</option>
+            <option value="high">高优先级</option>
+            <option value="medium">中优先级</option>
+            <option value="low">低优先级</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">欲望奖励</label>
+          <input type="text" class="form-input" id="todoReward" placeholder="完成后的奖励，如：买一双新鞋 ¥500">
+        </div>
+        <button type="submit" class="submit-btn">添加欲望代办</button>
+      </form>
+    </div>
+
+    <!-- 代办分类 -->
+    <div class="desire-card">
+      <h2 class="card-title">欲望代办分类</h2>
+      <div class="desire-categories">
+        <button class="category-btn active" data-category="all">
+          <span class="category-icon">📋</span>
+          全部代办
+        </button>
+        <button class="category-btn" data-category="work">
+          <span class="category-icon">💼</span>
+          工作相关
+        </button>
+        <button class="category-btn" data-category="personal">
+          <span class="category-icon">🎯</span>
+          个人成长
+        </button>
+        <button class="category-btn" data-category="health">
+          <span class="category-icon">💪</span>
+          健康生活
+        </button>
+        <button class="category-btn" data-category="social">
+          <span class="category-icon">👥</span>
+          社交关系
+        </button>
+        <button class="category-btn" data-category="entertainment">
+          <span class="category-icon">🎮</span>
+          娱乐放松
+        </button>
+        <button class="category-btn" data-category="finance">
+          <span class="category-icon">💰</span>
+          财务目标
+        </button>
+      </div>
+    </div>
+
+    <!-- 代办列表 -->
+    <div class="desire-card">
+      <h2 class="card-title">欲望代办列表</h2>
+      <div class="desire-todo-list" id="todoList">
+        <div class="todo-item" data-category="work">
+          <div class="todo-header">
+            <div class="todo-title">完成项目重构</div>
+            <div class="todo-priority priority-high">高优先级</div>
+          </div>
+          <div class="todo-description">重构现有代码架构，提高系统性能和可维护性</div>
+          <div class="todo-meta">
+            <span>分类: 工作相关</span>
+            <span class="todo-reward">奖励: ¥1,000</span>
+          </div>
+          <div class="todo-actions">
+            <button class="todo-btn btn-complete" onclick="completeTodo(this)">完成</button>
+            <button class="todo-btn btn-edit" onclick="editTodo(this)">编辑</button>
+            <button class="todo-btn btn-delete" onclick="deleteTodo(this)">删除</button>
+          </div>
+        </div>
+
+        <div class="todo-item completed" data-category="personal">
+          <div class="todo-header">
+            <div class="todo-title">学习新编程语言</div>
+            <div class="todo-priority priority-medium">中优先级</div>
+          </div>
+          <div class="todo-description">学习Rust编程语言，掌握系统级编程技能</div>
+          <div class="todo-meta">
+            <span>分类: 个人成长</span>
+            <span class="todo-reward">奖励: ¥500</span>
+          </div>
+          <div class="todo-actions">
+            <button class="todo-btn btn-complete" disabled>已完成</button>
+            <button class="todo-btn btn-edit" onclick="editTodo(this)">编辑</button>
+            <button class="todo-btn btn-delete" onclick="deleteTodo(this)">删除</button>
+          </div>
+        </div>
+
+        <div class="todo-item" data-category="health">
+          <div class="todo-header">
+            <div class="todo-title">健身30天</div>
+            <div class="todo-priority priority-medium">中优先级</div>
+          </div>
+          <div class="todo-description">连续30天进行健身锻炼，改善身体状况</div>
+          <div class="todo-meta">
+            <span>分类: 健康生活</span>
+            <span class="todo-reward">奖励: 买一双新跑鞋</span>
+          </div>
+          <div class="todo-actions">
+            <button class="todo-btn btn-complete" onclick="completeTodo(this)">完成</button>
+            <button class="todo-btn btn-edit" onclick="editTodo(this)">编辑</button>
+            <button class="todo-btn btn-delete" onclick="deleteTodo(this)">删除</button>
+          </div>
+        </div>
+
+        <div class="todo-item" data-category="entertainment">
+          <div class="todo-header">
+            <div class="todo-title">看一部经典电影</div>
+            <div class="todo-priority priority-low">低优先级</div>
+          </div>
+          <div class="todo-description">观看《肖申克的救赎》，感受经典电影的魅力</div>
+          <div class="todo-meta">
+            <span>分类: 娱乐放松</span>
+            <span class="todo-reward">奖励: 买一包零食</span>
+          </div>
+          <div class="todo-actions">
+            <button class="todo-btn btn-complete" onclick="completeTodo(this)">完成</button>
+            <button class="todo-btn btn-edit" onclick="editTodo(this)">编辑</button>
+            <button class="todo-btn btn-delete" onclick="deleteTodo(this)">删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 欲望奖励系统 -->
+    <div class="desire-card">
+      <h2 class="card-title">欲望奖励系统</h2>
+      <div class="desire-rewards">
+        <div class="reward-item unlocked">
+          <div class="reward-icon">🎮</div>
+          <div class="reward-name">游戏时间</div>
+          <div class="reward-desc">完成3个代办后获得1小时游戏时间</div>
+          <div class="reward-cost">需要: 3个代办</div>
+        </div>
+        <div class="reward-item">
+          <div class="reward-icon">🍕</div>
+          <div class="reward-name">美食奖励</div>
+          <div class="reward-desc">完成5个代办后享受一顿美食</div>
+          <div class="reward-cost">需要: 5个代办</div>
+        </div>
+        <div class="reward-item">
+          <div class="reward-icon">🛍️</div>
+          <div class="reward-name">购物奖励</div>
+          <div class="reward-desc">完成10个代办后购买心仪物品</div>
+          <div class="reward-cost">需要: 10个代办</div>
+        </div>
+        <div class="reward-item">
+          <div class="reward-icon">✈️</div>
+          <div class="reward-name">旅行奖励</div>
+          <div class="reward-desc">完成20个代办后安排一次旅行</div>
+          <div class="reward-cost">需要: 20个代办</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 欲望代办系统交互功能
+class DesireTodoSystem {
+  constructor() {
+    this.todos = [];
+    this.currentCategory = 'all';
+    this.init();
+  }
+  
+  init() {
+    this.bindEvents();
+    this.loadTodos();
+    this.loadStats();
+  }
+  
+  bindEvents() {
+    // 分类筛选
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.filterByCategory(e.target.getAttribute('data-category'));
+      });
+    });
+    
+    // 添加新代办
+    document.getElementById('addTodoForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.addNewTodo();
+    });
+  }
+  
+  async loadTodos() {
+    try {
+      const response = await fetch('/tools/api/desire-todos/');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.todos = data.todos;
+        this.renderTodos();
+      }
+    } catch (error) {
+      console.log('加载代办失败:', error);
+    }
+  }
+  
+  async loadStats() {
+    try {
+      const response = await fetch('/tools/api/desire-todos/stats/');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.updateStatsDisplay(data.stats);
+      }
+    } catch (error) {
+      console.log('加载统计失败:', error);
+    }
+  }
+  
+  filterByCategory(category) {
+    this.currentCategory = category;
+    
+    // 更新按钮状态
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-category="${category}"]`).classList.add('active');
+    
+    // 筛选代办
+    const todos = document.querySelectorAll('.todo-item');
+    todos.forEach(todo => {
+      if (category === 'all' || todo.getAttribute('data-category') === category) {
+        todo.style.display = 'block';
+      } else {
+        todo.style.display = 'none';
+      }
+    });
+  }
+  
+  async addNewTodo() {
+    const title = document.getElementById('todoTitle').value;
+    const description = document.getElementById('todoDescription').value;
+    const category = document.getElementById('todoCategory').value;
+    const priority = document.getElementById('todoPriority').value;
+    const reward = document.getElementById('todoReward').value;
+    
+    try {
+      const response = await fetch('/tools/api/desire-todos/add/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.getCSRFToken()
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          category,
+          priority,
+          reward
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const todoItem = this.createTodoItem({
+          id: data.todo_id,
+          title,
+          description,
+          category,
+          priority,
+          reward,
+          is_completed: false,
+          created_at: new Date().toLocaleString()
+        });
+        
+        document.getElementById('todoList').prepend(todoItem);
+        document.getElementById('addTodoForm').reset();
+        
+        this.showNotification('欲望代办添加成功！', 'success');
+        this.loadStats();
+      } else {
+        this.showNotification('添加失败: ' + data.error, 'error');
+      }
+    } catch (error) {
+      this.showNotification('添加失败: ' + error.message, 'error');
+    }
+  }
+  
+  createTodoItem(todo) {
+    const categoryNames = {
+      'work': '工作相关',
+      'personal': '个人成长',
+      'health': '健康生活',
+      'social': '社交关系',
+      'entertainment': '娱乐放松',
+      'finance': '财务目标'
+    };
+    
+    const priorityClasses = {
+      'high': 'priority-high',
+      'medium': 'priority-medium',
+      'low': 'priority-low'
+    };
+    
+    const todoItem = document.createElement('div');
+    todoItem.className = `todo-item ${todo.is_completed ? 'completed' : ''}`;
+    todoItem.setAttribute('data-category', todo.category);
+    todoItem.setAttribute('data-id', todo.id);
+    
+    todoItem.innerHTML = `
+      <div class="todo-header">
+        <div class="todo-title">${todo.title}</div>
+        <div class="todo-priority ${priorityClasses[todo.priority]}">${todo.priority === 'high' ? '高' : todo.priority === 'medium' ? '中' : '低'}优先级</div>
+      </div>
+      <div class="todo-description">${todo.description}</div>
+      <div class="todo-meta">
+        <span>分类: ${categoryNames[todo.category]}</span>
+        <span class="todo-reward">奖励: ${todo.reward}</span>
+      </div>
+      <div class="todo-actions">
+        <button class="todo-btn btn-complete" onclick="desireTodoSystem.completeTodo(${todo.id})" ${todo.is_completed ? 'disabled' : ''}>
+          ${todo.is_completed ? '已完成' : '完成'}
+        </button>
+        <button class="todo-btn btn-edit" onclick="desireTodoSystem.editTodo(${todo.id})">编辑</button>
+        <button class="todo-btn btn-delete" onclick="desireTodoSystem.deleteTodo(${todo.id})">删除</button>
+      </div>
+    `;
+    
+    return todoItem;
+  }
+  
+  renderTodos() {
+    const todoList = document.getElementById('todoList');
+    todoList.innerHTML = '';
+    
+    this.todos.forEach(todo => {
+      const todoItem = this.createTodoItem(todo);
+      todoList.appendChild(todoItem);
+    });
+  }
+  
+  async completeTodo(todoId) {
+    try {
+      const response = await fetch('/tools/api/desire-todos/complete/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.getCSRFToken()
+        },
+        body: JSON.stringify({ todo_id: todoId })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const todoItem = document.querySelector(`[data-id="${todoId}"]`);
+        todoItem.classList.add('completed');
+        const completeBtn = todoItem.querySelector('.btn-complete');
+        completeBtn.textContent = '已完成';
+        completeBtn.disabled = true;
+        
+        this.showNotification('欲望代办完成！', 'success');
+        this.loadStats();
+        this.checkRewards();
+      } else {
+        this.showNotification('完成失败: ' + data.error, 'error');
+      }
+    } catch (error) {
+      this.showNotification('完成失败: ' + error.message, 'error');
+    }
+  }
+  
+  async deleteTodo(todoId) {
+    if (!confirm('确定要删除这个代办吗？')) return;
+    
+    try {
+      const response = await fetch('/tools/api/desire-todos/delete/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.getCSRFToken()
+        },
+        body: JSON.stringify({ todo_id: todoId })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const todoItem = document.querySelector(`[data-id="${todoId}"]`);
+        todoItem.remove();
+        
+        this.showNotification('欲望代办删除成功', 'success');
+        this.loadStats();
+      } else {
+        this.showNotification('删除失败: ' + data.error, 'error');
+      }
+    } catch (error) {
+      this.showNotification('删除失败: ' + error.message, 'error');
+    }
+  }
+  
+  editTodo(todoId) {
+    const todoItem = document.querySelector(`[data-id="${todoId}"]`);
+    const title = todoItem.querySelector('.todo-title').textContent;
+    const description = todoItem.querySelector('.todo-description').textContent;
+    
+    // 这里可以实现编辑功能
+    this.showNotification('编辑功能开发中...', 'info');
+  }
+  
+  updateStatsDisplay(stats) {
+    document.getElementById('totalTodos').textContent = stats.total_todos;
+    document.getElementById('completedTodos').textContent = stats.completed_todos;
+    document.getElementById('pendingTodos').textContent = stats.pending_todos;
+    document.getElementById('totalRewards').textContent = stats.total_rewards;
+  }
+  
+  checkRewards() {
+    const completedTodos = document.querySelectorAll('.todo-item.completed').length;
+    const rewards = document.querySelectorAll('.reward-item');
+    
+    rewards.forEach((reward, index) => {
+      const required = [3, 5, 10, 20][index];
+      if (completedTodos >= required) {
+        reward.classList.add('unlocked');
+      }
+    });
+  }
+  
+  getCSRFToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    return token ? token.value : '';
+  }
+  
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+      background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+}
+
+// 全局函数
+function completeTodo(btn) {
+  const todoItem = btn.closest('.todo-item');
+  const todoId = todoItem.getAttribute('data-id');
+  desireTodoSystem.completeTodo(todoId);
+}
+
+function editTodo(btn) {
+  const todoItem = btn.closest('.todo-item');
+  const todoId = todoItem.getAttribute('data-id');
+  desireTodoSystem.editTodo(todoId);
+}
+
+function deleteTodo(btn) {
+  const todoItem = btn.closest('.todo-item');
+  const todoId = todoItem.getAttribute('data-id');
+  desireTodoSystem.deleteTodo(todoId);
+}
+
+// 初始化欲望代办系统
+let desireTodoSystem;
+document.addEventListener('DOMContentLoaded', function() {
+  desireTodoSystem = new DesireTodoSystem();
+});
+
+// 完成代办
+function completeTodo(btn) {
+  const todoItem = btn.closest('.todo-item');
+  todoItem.classList.add('completed');
+  btn.textContent = '已完成';
+  btn.disabled = true;
+  
+  // 显示完成动画
+  todoItem.style.animation = 'rewardGlow 1s ease-in-out';
+  setTimeout(() => {
+    todoItem.style.animation = '';
+  }, 1000);
+  
+  // 更新统计
+  updateStats();
+  
+  // 检查奖励
+  checkRewards();
+}
+
+// 编辑代办
+function editTodo(btn) {
+  const todoItem = btn.closest('.todo-item');
+  const title = todoItem.querySelector('.todo-title').textContent;
+  const description = todoItem.querySelector('.todo-description').textContent;
+  
+  // 这里可以实现编辑功能
+  alert(`编辑代办: ${title}\n\n描述: ${description}\n\n编辑功能开发中...`);
+}
+
+// 删除代办
+function deleteTodo(btn) {
+  const todoItem = btn.closest('.todo-item');
+  if (confirm('确定要删除这个代办吗？')) {
+    todoItem.remove();
+    updateStats();
+  }
+}
+
+// 检查奖励
+function checkRewards() {
+  const completedTodos = document.querySelectorAll('.todo-item.completed').length;
+  const rewards = document.querySelectorAll('.reward-item');
+  
+  rewards.forEach((reward, index) => {
+    const required = [3, 5, 10, 20][index];
+    if (completedTodos >= required) {
+      reward.classList.add('unlocked');
+    }
+  });
+}
+
+// 更新统计函数（全局）
+function updateStats() {
+  const totalTodos = document.querySelectorAll('.todo-item').length;
+  const completedTodos = document.querySelectorAll('.todo-item.completed').length;
+  const pendingTodos = totalTodos - completedTodos;
+  
+  document.getElementById('totalTodos').textContent = totalTodos;
+  document.getElementById('completedTodos').textContent = completedTodos;
+  document.getElementById('pendingTodos').textContent = pendingTodos;
+}
+</script>
+{% endblock %} 

@@ -1,52 +1,32 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block title %}小红书生成器 - QAToolBox{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 <style>
-/* 主要上传区域样式 */
-.main-upload-area {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.upload-button {
-  display: inline-block;
-  padding: 20px 40px;
-  border: 3px dashed var(--geek-primary, #00ffe7);
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%);
-  cursor: pointer;
+/* 动态主题适配样式 */
+.redbook-container {
+  min-height: 100vh;
   transition: all 0.3s ease;
-  margin-bottom: 15px;
-  color: var(--geek-text, #e6e6e6);
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-.upload-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.2), transparent);
-  transition: left 0.5s ease;
+/* 主题切换时的过渡效果 */
+.redbook-container.theme-transition {
+  transition: all 0.5s ease;
 }
 
-.upload-button:hover::before {
-  left: 100%;
+/* 确保主题切换时页面元素能够正确响应 */
+.redbook-card {
+  transition: all 0.3s ease;
 }
 
-.upload-button:hover {
-  border-color: var(--geek-accent, #00bfff);
-  background: linear-gradient(135deg, rgba(0,255,231,0.1) 0%, rgba(0,191,255,0.1) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,255,231,0.2);
-}
-
-.upload-button:active {
-  transform: translateY(0);
+.redbook-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
 }
 
 /* 图片列表样式 */
@@ -61,14 +41,14 @@
   display: flex;
   align-items: center;
   padding: 15px;
-  background: #f8f9fa;
+  background: var(--geek-bg-secondary, #f8f9fa);
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--geek-border, #e9ecef);
   transition: all 0.3s ease;
 }
 
 .image-item:hover {
-  background: #e9ecef;
+  background: var(--geek-bg-hover, #e9ecef);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -79,7 +59,7 @@
   border-radius: 6px;
   object-fit: cover;
   margin-right: 15px;
-  border: 2px solid #fff;
+  border: 2px solid var(--geek-border, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -89,19 +69,19 @@
 
 .image-name {
   font-weight: 600;
-  color: #333;
+  color: var(--geek-text, #333);
   margin-bottom: 5px;
   font-size: 14px;
 }
 
 .image-size {
-  color: #666;
+  color: var(--geek-text-muted, #666);
   font-size: 12px;
   margin-bottom: 5px;
 }
 
 .image-index {
-  color: #007bff;
+  color: var(--geek-primary, #007bff);
   font-weight: 600;
   font-size: 12px;
 }
@@ -112,7 +92,7 @@
 }
 
 .remove-image-btn {
-  background: #dc3545;
+  background: var(--geek-error, #dc3545);
   color: white;
   border: none;
   border-radius: 4px;
@@ -123,97 +103,253 @@
 }
 
 .remove-image-btn:hover {
-  background: #c82333;
+  background: var(--geek-error-hover, #c82333);
   transform: scale(1.05);
+}
+
+/* 结果区域样式 */
+.result-section {
+  background: var(--geek-bg-secondary, #f8f9fa);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid var(--geek-border, #e9ecef);
+}
+
+.result-content {
+  color: var(--geek-text, #333);
+  line-height: 1.6;
+}
+
+.result-content h4 {
+  color: var(--geek-primary, #007bff);
+  margin-bottom: 15px;
+}
+
+.tags {
+  margin-top: 15px;
+}
+
+.tag {
+  display: inline-block;
+  background: var(--geek-accent, #00bfff);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin: 2px;
+  font-size: 12px;
+}
+
+/* 小红书发布区域样式 */
+.redbook-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--geek-bg-secondary, #fff5f5) 0%, var(--geek-bg, #f8f9fa) 100%);
+  border-radius: 12px;
+  border: 2px solid var(--geek-accent, #ff2442);
+}
+
+.redbook-section h4 {
+  color: var(--geek-accent, #ff2442);
+  margin-top: 0;
+  text-align: center;
+  font-size: 20px;
+}
+
+.publish-guide {
+  margin-top: 15px;
+  background: var(--geek-bg, white);
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid var(--geek-accent, #ff2442);
+}
+
+.publish-guide h5 {
+  color: var(--geek-accent, #ff2442);
+  margin-top: 0;
+}
+
+.publish-guide ol {
+  text-align: left;
+  padding-left: 20px;
+  color: var(--geek-text, #333);
+}
+
+.copy-section {
+  margin-top: 15px;
+  text-align: center;
+}
+
+/* 状态信息样式 */
+.status, .error, .loading {
+  text-align: center;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.error {
+  background: var(--geek-error-bg, #f8d7da);
+  color: var(--geek-error, #721c24);
+  border: 1px solid var(--geek-error-border, #f5c6cb);
+}
+
+.loading {
+  background: var(--geek-info-bg, #d1ecf1);
+  color: var(--geek-info, #0c5460);
+  border: 1px solid var(--geek-info-border, #bee5eb);
+}
+
+/* 上传区域样式 */
+.geek-upload-area {
+  border: 3px dashed var(--geek-primary, #00ffe7);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--geek-bg, rgba(26,31,46,0.9)) 0%, var(--geek-primary-bg, rgba(0,255,231,0.1)) 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+  color: var(--geek-text, #e6e6e6);
+  position: relative;
+  overflow: hidden;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.geek-upload-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--geek-primary-bg, rgba(0, 255, 231, 0.2)), transparent);
+  transition: left 0.5s ease;
+}
+
+.geek-upload-area:hover::before {
+  left: 100%;
+}
+
+.geek-upload-area:hover {
+  border-color: var(--geek-accent, #00bfff);
+  background: linear-gradient(135deg, var(--geek-primary-bg, rgba(0,255,231,0.1)) 0%, var(--geek-accent-bg, rgba(0,191,255,0.1)) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px var(--geek-primary-shadow, rgba(0,255,231,0.2));
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: var(--geek-primary, #00ffe7);
+  margin-bottom: 15px;
+  display: block;
+}
+
+.upload-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.upload-hint {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 10px;
 }
 </style>
 
-<div class="geek-card" style="max-width: 800px; margin: 2rem auto;">
-  <div class="geek-title" style="text-align:center;">小红书爆款文案生成器</div>
-  <div class="geek-terminal" style="margin-bottom:2rem;">上传图片，AI自动识别并生成爆款文案</div>
-  
-  <div class="image-upload-container">
-    <div class="image-counter" id="imageCounter" style="text-align: center; margin-bottom: 10px; color: #666; font-size: 14px;">
-      已选择 0/9 张图片
-    </div>
+<div class="redbook-container" id="redbookContainer">
+  <div class="redbook-card" id="redbookCard" style="max-width: 800px; margin: 2rem auto;">
+    <div class="redbook-title" id="redbookTitle" style="text-align:center;">小红书爆款文案生成器</div>
+    <div class="redbook-terminal" id="redbookTerminal" style="margin-bottom:2rem;">上传图片，AI自动识别并生成爆款文案</div>
     
-    <div class="upload-status" id="uploadStatus" style="text-align: center; margin-bottom: 10px; color: #007bff; font-size: 12px; display: none;">
-      <i class="fas fa-spinner fa-spin"></i> 正在处理图片...
-    </div>
-    
-    <!-- 主要上传入口 -->
-    <div class="geek-upload-area" id="mainUploadArea" onclick="document.getElementById('imageUpload').click()">
-      <i class="fas fa-cloud-upload-alt upload-icon"></i>
-      <div class="upload-text">点击上传图片</div>
-      <div class="upload-hint">或拖拽图片到此处</div>
-      <div style="font-size: 12px; color: var(--geek-text-muted); margin-top: 10px;">
-        支持 JPG、PNG、WebP、HEIC 格式，最大 100MB，最多9张图片
-      </div>
-    </div>
-    
-    <!-- 图片列表 -->
-    <div class="image-list" id="imageList">
-      <!-- 图片将在这里显示 -->
-    </div>
-    
-    <input type="file" id="imageUpload" accept="image/*,.heic,.heif" multiple style="display:none;">
-  </div>
-  
-  <div class="error" id="errorMsg" style="display:none;"></div>
-  <div class="loading" id="loadingMsg" style="display:none;"><i class="fas fa-spinner fa-spin"></i> 正在处理图片并生成文案...</div>
-  
-  <div class="button-group" style="text-align:center;margin:20px 0;">
-    <button id="clearBtn" class="geek-auth-btn" style="background-color: #6c757d; margin-right: 10px; max-width:120px;">
-      <i class="fas fa-trash"></i> 清除图片
-    </button>
-    <button id="generateBtn" class="geek-auth-btn" style="max-width:220px;">
-      <i class="fas fa-magic"></i> 生成文案并发布
-    </button>
-  </div>
-  
-  <div class="result-section" id="resultSection" style="display:none;">
-    <h3 style="color:var(--primary);margin-top:0;">生成结果</h3>
-    <div class="result-content">
-      <h4 id="generatedTitle"></h4>
-      <div id="generatedContent"></div>
-      <div class="tags" id="generatedTags"></div>
-    </div>
-    
-    <!-- 小红书登录和发布区域 -->
-    <div class="redbook-section" style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #fff5f5 0%, #f8f9fa 100%); border-radius: 12px; border: 2px solid #ff2442;">
-      <h4 style="color: #ff2442; margin-top: 0; text-align: center; font-size: 20px;">
-        📱 发布到小红书
-      </h4>
-      
-      <div class="login-section" style="text-align: center; margin-bottom: 20px;">
-        <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-          使用小红书App扫描二维码快速登录
-        </p>
-        <a id="redbookLoginBtn" href="#" target="_blank" class="geek-auth-btn" style="display: inline-block; margin: 10px 0; background-color: #ff2442; font-size: 16px; padding: 12px 24px;">
-          <i class="fas fa-qrcode"></i> 电脑端扫码登录
-        </a>
+    <div class="image-upload-container">
+      <div class="image-counter" id="imageCounter" style="text-align: center; margin-bottom: 10px; color: var(--geek-text-muted, #666); font-size: 14px;">
+        已选择 0/9 张图片
       </div>
       
-      <div class="publish-guide" id="publishGuide" style="margin-top: 15px; background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ff2442;">
-        <h5 style="color: #ff2442; margin-top: 0;">🚀 快速发布步骤：</h5>
-        <ol style="text-align: left; padding-left: 20px; color: #333;">
-          <li>点击上方按钮，打开小红书电脑端登录页面</li>
-          <li>使用小红书App扫描页面上的二维码</li>
-          <li>登录成功后，点击"直接发布到小红书"</li>
-          <li>文案和标签会自动填充到编辑器中</li>
-          <li>上传您的图片，点击发布即可</li>
-        </ol>
+      <div class="upload-status" id="uploadStatus" style="text-align: center; margin-bottom: 10px; color: var(--geek-primary, #007bff); font-size: 12px; display: none;">
+        <i class="fas fa-spinner fa-spin"></i> 正在处理图片...
       </div>
       
-      <div class="copy-section" style="margin-top: 15px; text-align: center;">
-        <button id="copyAllBtn" class="geek-auth-btn" style="background-color: #28a745; margin: 0 10px;">
-          <i class="fas fa-copy"></i> 一键复制文案
-        </button>
-        <div id="copyStatus" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+      <!-- 主要上传入口 -->
+      <div class="geek-upload-area" id="mainUploadArea" onclick="document.getElementById('imageUpload').click()">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <div class="upload-text">点击上传图片</div>
+        <div class="upload-hint">或拖拽图片到此处</div>
+        <div style="font-size: 12px; color: var(--geek-text-muted); margin-top: 10px;">
+          支持 JPG、PNG、WebP、HEIC 格式，最大 100MB，最多9张图片
+        </div>
       </div>
+      
+      <!-- 图片列表 -->
+      <div class="image-list" id="imageList">
+        <!-- 图片将在这里显示 -->
+      </div>
+      
+      <input type="file" id="imageUpload" accept="image/*,.heic,.heif" multiple style="display:none;">
     </div>
     
-    <div class="status" id="publishStatus"></div>
+    <div class="error" id="errorMsg" style="display:none;"></div>
+    <div class="loading" id="loadingMsg" style="display:none;"><i class="fas fa-spinner fa-spin"></i> 正在处理图片并生成文案...</div>
+    
+    <div class="button-group" style="text-align:center;margin:20px 0;">
+      <button id="clearBtn" class="geek-auth-btn" style="background-color: var(--geek-secondary, #6c757d); margin-right: 10px; max-width:120px;">
+        <i class="fas fa-trash"></i> 清除图片
+      </button>
+      <button id="generateBtn" class="geek-auth-btn" style="max-width:220px;">
+        <i class="fas fa-magic"></i> 生成文案并发布
+      </button>
+      <!-- 隐藏爆款文案按钮 -->
+      <!-- <button id="viralBtn" class="geek-auth-btn" style="background-color: var(--geek-accent, #ff2442); margin-left: 10px; max-width:150px;">
+        <i class="fas fa-fire"></i> 爆款文案
+      </button> -->
+    </div>
+    
+    <div class="result-section" id="resultSection" style="display:none;">
+      <h3 style="color:var(--geek-primary);margin-top:0;">生成结果</h3>
+      <div class="result-content">
+        <h4 id="generatedTitle"></h4>
+        <div id="generatedContent"></div>
+        <div class="tags" id="generatedTags"></div>
+      </div>
+      
+      <!-- 小红书登录和发布区域 -->
+      <div class="redbook-section">
+        <h4>
+          📱 发布到小红书
+        </h4>
+        
+        <div class="login-section" style="text-align: center; margin-bottom: 20px;">
+          <p style="color: var(--geek-text-muted, #666); margin-bottom: 15px; font-size: 14px;">
+            使用小红书App扫描二维码快速登录
+          </p>
+          <a id="redbookLoginBtn" href="#" target="_blank" class="geek-auth-btn" style="display: inline-block; margin: 10px 0; background-color: var(--geek-accent, #ff2442); font-size: 16px; padding: 12px 24px;">
+            <i class="fas fa-qrcode"></i> 电脑端扫码登录
+          </a>
+        </div>
+        
+        <div class="publish-guide" id="publishGuide">
+          <h5>🚀 快速发布步骤：</h5>
+          <ol>
+            <li>点击上方按钮，打开小红书电脑端登录页面</li>
+            <li>使用小红书App扫描页面上的二维码</li>
+            <li>登录成功后，点击"直接发布到小红书"</li>
+            <li>文案和标签会自动填充到编辑器中</li>
+            <li>上传您的图片，点击发布即可</li>
+          </ol>
+        </div>
+        
+        <div class="copy-section">
+          <button id="copyAllBtn" class="geek-auth-btn" style="background-color: var(--geek-success, #28a745); margin: 0 10px;">
+            <i class="fas fa-copy"></i> 一键复制文案
+          </button>
+          <div id="copyStatus" style="margin-top: 10px; font-size: 14px; color: var(--geek-text-muted, #666);"></div>
+        </div>
+      </div>
+      
+      <div class="status" id="publishStatus"></div>
+    </div>
   </div>
 </div>
 
@@ -224,9 +360,34 @@
 // 全局变量
 let uploadedImages = [];
 let generatedData = null;
+let currentTheme = 'work'; // 默认主题
 
 // DOM元素
-let imageUpload, imageList, imageCounter, uploadStatus, mainUploadArea, generateBtn, resultSection, generatedTitle, generatedContent, generatedTags, publishStatus, loadingMsg, errorMsg, redbookLoginBtn, copyAllBtn, copyStatus, clearBtn;
+let imageUpload, imageList, imageCounter, uploadStatus, mainUploadArea, generateBtn, /* viralBtn, */ resultSection, generatedTitle, generatedContent, generatedTags, publishStatus, loadingMsg, errorMsg, redbookLoginBtn, copyAllBtn, copyStatus, clearBtn, redbookContainer, redbookCard, redbookTitle, redbookTerminal;
+
+// 主题配置
+const themeConfig = {
+    'work': {
+        css: 'geek.css',
+        title: '小红书爆款文案生成器',
+        subtitle: '上传图片，AI自动识别并生成爆款文案'
+    },
+    'life': {
+        css: 'life.css',
+        title: '小红书爆款文案生成器',
+        subtitle: '上传图片，AI自动识别并生成爆款文案'
+    },
+    'training': {
+        css: 'rage.css',
+        title: '小红书爆款文案生成器',
+        subtitle: '上传图片，AI自动识别并生成爆款文案'
+    },
+    'emo': {
+        css: 'emo.css',
+        title: '小红书爆款文案生成器',
+        subtitle: '上传图片，AI自动识别并生成爆款文案'
+    }
+};
 
 // 等待DOM加载完成
 document.addEventListener('DOMContentLoaded', function() {
@@ -237,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadStatus = document.getElementById('uploadStatus');
     mainUploadArea = document.getElementById('mainUploadArea');
     generateBtn = document.getElementById('generateBtn');
+    // viralBtn = document.getElementById('viralBtn'); // 已隐藏爆款文案按钮
     resultSection = document.getElementById('resultSection');
     generatedTitle = document.getElementById('generatedTitle');
     generatedContent = document.getElementById('generatedContent');
@@ -248,13 +410,83 @@ document.addEventListener('DOMContentLoaded', function() {
     copyAllBtn = document.getElementById('copyAllBtn');
     copyStatus = document.getElementById('copyStatus');
     clearBtn = document.getElementById('clearBtn');
+    redbookContainer = document.getElementById('redbookContainer');
+    redbookCard = document.getElementById('redbookCard');
+    redbookTitle = document.getElementById('redbookTitle');
+    redbookTerminal = document.getElementById('redbookTerminal');
+    
+    // 初始化主题
+    initTheme();
     
     // 初始化图片列表
     updateImageList();
     
     // 绑定事件监听器
     bindEventListeners();
+    
+    // 监听主题变化
+    listenForThemeChanges();
 });
+
+// 初始化主题
+function initTheme() {
+    // 从localStorage获取当前主题
+    const savedTheme = localStorage.getItem('currentTheme') || 'work';
+    applyTheme(savedTheme);
+}
+
+// 应用主题
+function applyTheme(theme) {
+    currentTheme = theme;
+    
+    // 更新CSS文件
+    const themeCSS = document.getElementById('dynamic-theme-css');
+    if (themeCSS && themeConfig[theme]) {
+        themeCSS.href = '/static/' + themeConfig[theme].css;
+    }
+    
+    // 更新页面元素
+    updatePageElements(theme);
+    
+    // 保存主题到localStorage
+    localStorage.setItem('currentTheme', theme);
+}
+
+// 更新页面元素
+function updatePageElements(theme) {
+    // 更新容器类名
+    redbookContainer.className = `redbook-container ${theme}-theme`;
+    redbookCard.className = `redbook-card ${theme}-card`;
+    
+    // 更新标题
+    if (redbookTitle) {
+        redbookTitle.className = `redbook-title ${theme}-title`;
+        redbookTitle.textContent = themeConfig[theme]?.title || '小红书爆款文案生成器';
+    }
+    
+    // 更新副标题
+    if (redbookTerminal) {
+        redbookTerminal.className = `redbook-terminal ${theme}-terminal`;
+        redbookTerminal.textContent = themeConfig[theme]?.subtitle || '上传图片，AI自动识别并生成爆款文案';
+    }
+}
+
+// 监听主题变化
+function listenForThemeChanges() {
+    // 监听来自base.html的主题变化事件
+    window.addEventListener('themeChanged', function(event) {
+        const newTheme = event.detail.theme;
+        applyTheme(newTheme);
+    });
+    
+    // 定期检查主题变化
+    setInterval(() => {
+        const savedTheme = localStorage.getItem('currentTheme');
+        if (savedTheme && savedTheme !== currentTheme) {
+            applyTheme(savedTheme);
+        }
+    }, 1000);
+}
 
 // 文件大小格式化函数
 function formatFileSize(bytes) {
@@ -610,6 +842,149 @@ function bindEventListeners() {
             loadingMsg.style.display = 'none';
         });
     });
+
+    // 爆款文案按钮点击事件 - 已隐藏
+    /*
+    viralBtn.addEventListener('click', function() {
+        console.log('爆款文案按钮被点击');
+        
+        if (uploadedImages.length === 0) {
+            showError('请先上传图片，然后点击爆款文案按钮');
+            return;
+        }
+
+        // 显示特殊提示
+        showSuccess('🔥 正在生成爆款文案，请稍候...');
+        
+        // 准备FormData
+        const formData = new FormData();
+        uploadedImages.forEach(imageData => {
+            formData.append('images', imageData.file);
+        });
+
+        // 显示加载状态
+        showLoading();
+        viralBtn.disabled = true;
+        generateBtn.disabled = true;
+
+        // 发送请求到后端，使用特殊的爆款文案提示
+        axios.post('/tools/api/generate-redbook/', formData, {
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'multipart/form-data'
+            },
+            timeout: 60000 // 超时时间60秒
+        })
+        .then(response => {
+            // 处理成功响应
+            const data = response.data;
+            if (data.error) {
+                showError(data.error);
+                return;
+            }
+
+            // 保存生成的数据
+            generatedData = data;
+            
+            // 显示结果
+            generatedTitle.textContent = data.title;
+            generatedContent.innerHTML = data.content.replace(/\n/g, '<br>');
+
+            // 处理标签
+            generatedTags.innerHTML = '';
+            if (data.tags && data.tags.length > 0) {
+                data.tags.forEach(tag => {
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'tag';
+                    tagElement.textContent = tag;
+                    generatedTags.appendChild(tagElement);
+                });
+            }
+
+            // 设置小红书登录和发布链接
+            if (data.redbook_login_url) {
+                redbookLoginBtn.href = data.redbook_login_url;
+                
+                // 根据设备类型设置不同的按钮文本和行为
+                if (data.is_mobile) {
+                    redbookLoginBtn.innerHTML = '<i class="fas fa-mobile-alt"></i> 打开小红书App';
+                    redbookLoginBtn.title = '直接打开小红书App并填充文案';
+                    redbookLoginBtn.style.backgroundColor = '#ff2442';
+                    
+                    // 添加下载App按钮
+                    const downloadBtn = document.createElement('a');
+                    downloadBtn.href = 'https://www.xiaohongshu.com/download';
+                    downloadBtn.target = '_blank';
+                    downloadBtn.className = 'geek-auth-btn';
+                    downloadBtn.style.cssText = 'background-color: #28a745; margin-left: 10px; display: inline-block; text-decoration: none;';
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> 下载小红书App';
+                    downloadBtn.title = '下载小红书App';
+                    
+                    const loginSection = redbookLoginBtn.parentNode;
+                    loginSection.appendChild(downloadBtn);
+                } else {
+                    redbookLoginBtn.innerHTML = '<i class="fas fa-qrcode"></i> 电脑端扫码登录';
+                    redbookLoginBtn.title = '扫码登录后自动跳转到发布页面';
+                }
+            }
+            
+            // 添加智能发布按钮
+            if (data.redbook_publish_url) {
+                const publishBtn = document.createElement('a');
+                publishBtn.href = data.redbook_publish_url;
+                publishBtn.target = '_blank';
+                publishBtn.className = 'geek-auth-btn';
+                publishBtn.style.cssText = 'background-color: #ff2442; margin-left: 10px; display: inline-block; text-decoration: none;';
+                
+                if (data.is_mobile) {
+                    publishBtn.innerHTML = '<i class="fas fa-rocket"></i> 一键发布到App';
+                    publishBtn.title = '直接跳转到小红书App发布页面';
+                } else {
+                    publishBtn.innerHTML = '<i class="fas fa-rocket"></i> 一键发布到小红书';
+                    publishBtn.title = '直接跳转到小红书发布页面，文案自动填充';
+                }
+                
+                // 添加点击事件，显示发布提示
+                publishBtn.addEventListener('click', function(e) {
+                    showPublishGuide(data.is_mobile);
+                });
+                
+                // 将发布按钮添加到登录按钮的父容器中
+                const loginSection = redbookLoginBtn.parentNode;
+                loginSection.appendChild(publishBtn);
+                
+                // 添加说明文字
+                const publishNote = document.createElement('div');
+                publishNote.style.cssText = 'font-size: 12px; color: #666; margin-top: 5px;';
+                if (data.is_mobile) {
+                    publishNote.innerHTML = '💡 点击按钮直接打开小红书App，文案将自动填充';
+                } else {
+                    publishNote.innerHTML = '💡 扫码登录后会自动跳转到发布页面，文案将自动填充';
+                }
+                loginSection.appendChild(publishNote);
+            }
+
+            // 显示发布状态
+            const imageCount = data.image_count || 0;
+            publishStatus.textContent = `🔥 爆款文案生成成功！请登录小红书后发布 (共${imageCount}张图片)`;
+
+            // 显示结果区域
+            showResult();
+        })
+        .catch(error => {
+            // 处理错误
+            const errorMessage = error.response?.data?.error || '爆款文案生成失败，请稍后重试';
+            showError(errorMessage);
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            // 恢复按钮状态
+            viralBtn.disabled = false;
+            generateBtn.disabled = false;
+            loadingMsg.style.display = 'none';
+        });
+    });
+    */
 
     // 清除图片功能
     clearBtn.addEventListener('click', function() {

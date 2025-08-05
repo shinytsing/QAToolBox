@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>副标题测试 - Four Modes, One Beast</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0e17;
+            color: #00ffe7;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #00bfff;
+            box-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #00ffe7;
+            text-shadow: 0 0 20px rgba(0, 255, 231, 0.8);
+            margin-bottom: 2rem;
+            letter-spacing: 3px;
+        }
+        
+        .quote-container {
+            position: relative;
+            margin: 1.5rem 0;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .quote-subtitle {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00bfff;
+            text-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 2px;
+            transition: all 0.5s ease;
+            animation: subtitlePulse 4s ease-in-out infinite;
+            text-align: center;
+        }
+        
+        @keyframes subtitlePulse {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+                opacity: 0.9;
+            }
+            50% { 
+                text-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+                opacity: 1;
+            }
+        }
+        
+        .description {
+            margin-top: 2rem;
+            color: #888;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 15px;
+            background: rgba(0, 191, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid #00bfff;
+        }
+        
+        .status h3 {
+            color: #00bfff;
+            margin-top: 0;
+        }
+        
+        .status ul {
+            text-align: left;
+            color: #ccc;
+        }
+        
+        .status li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="title">ModeShift</div>
+        
+        <div class="quote-container">
+            <div class="quote-subtitle">Four Modes, One Beast</div>
+        </div>
+        
+        <div class="description">
+            测试页面：验证主页副标题修改效果<br>
+            只保留"Four Modes, One Beast"作为唯一副标题
+        </div>
+        
+        <div class="status">
+            <h3>修改状态</h3>
+            <ul>
+                <li>✅ 移除了"Shift Your Dark, Code Your Light"主标题</li>
+                <li>✅ 移除了"Not Schizophrenia, Just Versatility"页脚</li>
+                <li>✅ 移除了引用装饰元素</li>
+                <li>✅ 移除了JavaScript动画切换逻辑</li>
+                <li>✅ 调整了副标题样式，使其更突出</li>
+                <li>✅ 优化了容器布局</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 简单的页面加载确认
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('副标题测试页面加载完成');
+            console.log('当前副标题: Four Modes, One Beast');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圆润齿轮图标测试</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0a0e17;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            color: #00ffe7;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ffe7;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ffffff;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+        
+        .gear-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.8rem;
+            position: relative;
+            width: 380px;
+            height: 160px;
+          background: radial-gradient(circle, rgba(0, 255, 231, 0.1) 0%, transparent 70%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 0 auto 3rem;
+        }
+        
+        .gear {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #ffffff;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(0, 255, 231, 0.1) 40%, rgba(0, 191, 255, 0.1) 100%);
+            border: 3px solid rgba(0, 255, 231, 0.3);
+            box-shadow: 
+                0 0 30px rgba(0, 255, 231, 0.4),
+                inset 0 0 30px rgba(0, 255, 231, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            animation: gearFloat 4s ease-in-out infinite;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+        
+        .gear-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 70%);
+            z-index: 2;
+            box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        .gear-teeth {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(0, 255, 231, 0.2) 8deg,
+                rgba(0, 255, 231, 0.4) 12deg,
+                rgba(0, 255, 231, 0.2) 16deg,
+                transparent 30deg,
+                transparent 45deg,
+                rgba(0, 255, 231, 0.2) 53deg,
+                rgba(0, 255, 231, 0.4) 57deg,
+                rgba(0, 255, 231, 0.2) 61deg,
+                transparent 75deg,
+                transparent 90deg,
+                rgba(0, 255, 231, 0.2) 98deg,
+                rgba(0, 255, 231, 0.4) 102deg,
+                rgba(0, 255, 231, 0.2) 106deg,
+                transparent 120deg,
+                transparent 135deg,
+                rgba(0, 255, 231, 0.2) 143deg,
+                rgba(0, 255, 231, 0.4) 147deg,
+                rgba(0, 255, 231, 0.2) 151deg,
+                transparent 165deg,
+                transparent 180deg,
+                rgba(0, 255, 231, 0.2) 188deg,
+                rgba(0, 255, 231, 0.4) 192deg,
+                rgba(0, 255, 231, 0.2) 196deg,
+                transparent 210deg,
+                transparent 225deg,
+                rgba(0, 255, 231, 0.2) 233deg,
+                rgba(0, 255, 231, 0.4) 237deg,
+                rgba(0, 255, 231, 0.2) 241deg,
+                transparent 255deg,
+                transparent 270deg,
+                rgba(0, 255, 231, 0.2) 278deg,
+                rgba(0, 255, 231, 0.4) 282deg,
+                rgba(0, 255, 231, 0.2) 286deg,
+                transparent 300deg,
+                transparent 315deg,
+                rgba(0, 255, 231, 0.2) 323deg,
+                rgba(0, 255, 231, 0.4) 327deg,
+                rgba(0, 255, 231, 0.2) 331deg,
+                transparent 345deg
+            );
+            animation: gearRotate 5s linear infinite;
+            z-index: 1;
+            filter: blur(0.5px);
+        }
+        
+        @keyframes gearRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes gearFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                filter: brightness(1) contrast(1);
+            }
+            25% { 
+                transform: translateY(-6px) rotate(90deg) scale(1.03); 
+                filter: brightness(1.05) contrast(1.02);
+            }
+            50% { 
+                transform: translateY(-10px) rotate(180deg) scale(1.06); 
+                filter: brightness(1.1) contrast(1.05);
+            }
+            75% { 
+                transform: translateY(-6px) rotate(270deg) scale(1.03); 
+                filter: brightness(1.05) contrast(1.02);
+            }
+        }
+        
+        .gear:hover {
+            transform: scale(1.1) rotate(180deg);
+            box-shadow: 
+                0 0 50px rgba(0, 255, 231, 0.7),
+                inset 0 0 40px rgba(0, 255, 231, 0.1),
+                0 12px 40px rgba(0, 0, 0, 0.4);
+            border-color: #00ffe7;
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)) brightness(1.1);
+        }
+        
+        .gear:hover .gear-teeth {
+            animation-duration: 1.5s;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(0, 255, 231, 0.3) 8deg,
+                rgba(0, 255, 231, 0.7) 12deg,
+                rgba(0, 255, 231, 0.3) 16deg,
+                transparent 30deg,
+                transparent 45deg,
+                rgba(0, 255, 231, 0.3) 53deg,
+                rgba(0, 255, 231, 0.7) 57deg,
+                rgba(0, 255, 231, 0.3) 61deg,
+                transparent 75deg,
+                transparent 90deg,
+                rgba(0, 255, 231, 0.3) 98deg,
+                rgba(0, 255, 231, 0.7) 102deg,
+                rgba(0, 255, 231, 0.3) 106deg,
+                transparent 120deg,
+                transparent 135deg,
+                rgba(0, 255, 231, 0.3) 143deg,
+                rgba(0, 255, 231, 0.7) 147deg,
+                rgba(0, 255, 231, 0.3) 151deg,
+                transparent 165deg,
+                transparent 180deg,
+                rgba(0, 255, 231, 0.3) 188deg,
+                rgba(0, 255, 231, 0.7) 192deg,
+                rgba(0, 255, 231, 0.3) 196deg,
+                transparent 210deg,
+                transparent 225deg,
+                rgba(0, 255, 231, 0.3) 233deg,
+                rgba(0, 255, 231, 0.7) 237deg,
+                rgba(0, 255, 231, 0.3) 241deg,
+                transparent 255deg,
+                transparent 270deg,
+                rgba(0, 255, 231, 0.3) 278deg,
+                rgba(0, 255, 231, 0.7) 282deg,
+                rgba(0, 255, 231, 0.3) 286deg,
+                transparent 300deg,
+                transparent 315deg,
+                rgba(0, 255, 231, 0.3) 323deg,
+                rgba(0, 255, 231, 0.7) 327deg,
+                rgba(0, 255, 231, 0.3) 331deg,
+                transparent 345deg
+            );
+            filter: blur(0.3px);
+        }
+        
+        .gear-1 {
+            animation-delay: 0s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(0, 255, 231, 0.15) 40%, rgba(0, 191, 255, 0.15) 100%);
+        }
+        
+        .gear-2 {
+            animation-delay: 0.5s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(40, 167, 69, 0.15) 40%, rgba(23, 162, 184, 0.15) 100%);
+        }
+        
+        .gear-3 {
+            animation-delay: 1s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 107, 53, 0.15) 100%);
+        }
+        
+        .gear-4 {
+            animation-delay: 1.5s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 0, 110, 0.15) 40%, rgba(0, 255, 255, 0.15) 100%);
+        }
+        
+        .gear-container:hover .gear {
+            animation-play-state: running;
+        }
+        
+        .gear-container:not(:hover) .gear {
+            animation-play-state: paused;
+        }
+        
+        .description {
+            background: rgba(0, 255, 231, 0.1);
+            border: 1px solid rgba(0, 255, 231, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 2rem;
+        }
+        
+        .description h3 {
+            color: #00ffe7;
+            margin-bottom: 1rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 3px solid #00ffe7;
+        }
+        
+        .feature h4 {
+            color: #00ffe7;
+            margin-bottom: 0.5rem;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .comparison-item h4 {
+            color: #00ffe7;
+            margin-bottom: 1rem;
+        }
+        
+        .comparison-item ul {
+            text-align: left;
+            padding-left: 1.5rem;
+        }
+        
+        .comparison-item li {
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="title">圆润齿轮图标设计</h1>
+        <p class="subtitle">Shift Your Dark, Code Your Light</p>
+        
+        <div class="gear-container">
+            <div class="gear gear-1">
+                <div class="gear-inner">
+                    <i class="fas fa-code"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+            <div class="gear gear-2">
+                <div class="gear-inner">
+                    <i class="fas fa-leaf"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+            <div class="gear gear-3">
+                <div class="gear-inner">
+                    <i class="fas fa-fire"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+            <div class="gear gear-4">
+                <div class="gear-inner">
+                    <i class="fas fa-robot"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="description">
+            <h3>圆润齿轮设计改进</h3>
+            <p>新的齿轮设计更加圆润美观，提升了视觉效果和质感：</p>
+            
+            <div class="comparison">
+                <div class="comparison-item">
+                    <h4>🎨 视觉改进</h4>
+                    <ul>
+                        <li>径向渐变背景，增加立体感</li>
+                        <li>更柔和的边框和阴影</li>
+                        <li>内阴影效果，增强深度</li>
+                        <li>模糊滤镜，让齿纹更圆润</li>
+                    </ul>
+                </div>
+                
+                <div class="comparison-item">
+                    <h4>⚡ 动画优化</h4>
+                    <ul>
+                        <li>更平滑的浮动动画</li>
+                        <li>亮度对比度动态变化</li>
+                        <li>悬停时更自然的缩放</li>
+                        <li>齿纹旋转速度优化</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="features">
+                <div class="feature">
+                    <h4>🌟 圆润效果</h4>
+                    <p>使用径向渐变和模糊滤镜，让齿轮看起来更加圆润自然</p>
+                </div>
+                <div class="feature">
+                    <h4>💎 立体质感</h4>
+                    <p>多层阴影和内阴影效果，增强立体感和质感</p>
+                </div>
+                <div class="feature">
+                    <h4>🎭 平滑动画</h4>
+                    <p>使用cubic-bezier缓动函数，让动画更加平滑自然</p>
+                </div>
+                <div class="feature">
+                    <h4>🌈 动态效果</h4>
+                    <p>悬停时亮度增强，齿纹颜色加深，提供更好的视觉反馈</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 齿轮点击事件
+        document.querySelectorAll('.gear').forEach(gear => {
+            gear.addEventListener('click', function() {
+                // 移除所有齿轮的活跃状态
+                document.querySelectorAll('.gear').forEach(g => g.classList.remove('active'));
+                
+                // 添加当前齿轮的活跃状态
+                this.classList.add('active');
+                
+                // 显示点击反馈
+                console.log('齿轮被点击:', this.querySelector('i').className);
+            });
+        });
+        
+        // 鼠标悬停效果
+        const gearContainer = document.querySelector('.gear-container');
+        
+        gearContainer.addEventListener('mouseenter', function() {
+            document.querySelectorAll('.gear').forEach(gear => {
+                gear.style.animationPlayState = 'running';
+            });
+        });
+        
+        gearContainer.addEventListener('mouseleave', function() {
+            document.querySelectorAll('.gear').forEach(gear => {
+                gear.style.animationPlayState = 'paused';
+            });
+        });
+    </script>
+</body>
+</html> 

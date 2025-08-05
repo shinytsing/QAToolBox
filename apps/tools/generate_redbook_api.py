@@ -69,7 +69,7 @@ class GenerateRedBookAPI(APIView):
             
             # 6. 记录使用日志
             image_names = [f.name for f in image_files]
-            self._log_usage(request.user, ', '.join(image_names), parsed_result)
+            self._log_usage(request.user if request.user.is_authenticated else None, ', '.join(image_names), parsed_result)
             
             # 7. 根据设备类型返回不同的发布链接
             if is_mobile:
@@ -524,17 +524,22 @@ class GenerateRedBookAPI(APIView):
             with open(temp_file_path, 'rb') as f:
                 django_file = File(f, name=f'redbook_result_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
                 
-                ToolUsageLog.objects.create(
-                    user=user,
-                    tool_type='REDBOOK',
-                    input_data=json.dumps({
-                        'image_name': image_name,
-                        'generated_title': result['title'],
-                        'generated_tags': result['tags']
-                    }, ensure_ascii=False),
-                    output_file=django_file,
-                    raw_response=json.dumps(result, ensure_ascii=False)
-                )
+                # 处理匿名用户的情况
+                if user is None:
+                    # 对于匿名用户，不记录到数据库，只记录到日志
+                    logger.info(f"匿名用户使用红书生成器 - 图片: {image_name}, 标题: {result['title']}")
+                else:
+                    ToolUsageLog.objects.create(
+                        user=user,
+                        tool_type='REDBOOK',
+                        input_data=json.dumps({
+                            'image_name': image_name,
+                            'generated_title': result['title'],
+                            'generated_tags': result['tags']
+                        }, ensure_ascii=False),
+                        output_file=django_file,
+                        raw_response=json.dumps(result, ensure_ascii=False)
+                    )
             
             # 清理临时文件
             if os.path.exists(temp_file_path):

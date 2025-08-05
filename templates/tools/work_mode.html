@@ -1,0 +1,620 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}极客模式{% endblock %}
+{% block tool_title_display %}极客模式{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 极客模式点击计数器 */
+.work-mode-click-counter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff41;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  z-index: 1000;
+  border: 1px solid #00ff41;
+  display: none;
+}
+
+.work-mode-click-counter.show {
+  display: block;
+}
+
+/* 故障等级指示器 */
+.glitch-level-indicator {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff0000;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  z-index: 1000;
+  border: 1px solid #ff0000;
+  display: none;
+}
+
+.glitch-level-indicator.show {
+  display: block;
+}
+
+.glitch-level-bar {
+  width: 100px;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.glitch-level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff0000, #ff6600, #ffff00);
+  transition: width 0.3s ease;
+}
+.rage-container {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+.rage-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(0, 255, 65, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 204, 51, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(0, 255, 0, 0.1) 0%, transparent 50%);
+  z-index: -1;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.rage-container:hover::before {
+  animation: ragePulse 3s ease-in-out infinite;
+}
+
+@keyframes ragePulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.02) rotate(0.5deg);
+    opacity: 1;
+  }
+}
+
+.rage-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 3rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.rage-title {
+  color: #00ff41;
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.rage-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rage-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.training-card {
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(0, 255, 65, 0.1) 100%);
+  border: 2px solid rgba(0, 255, 65, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 255, 65, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.training-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 50%, #00ff00 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.training-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.training-card:hover::after {
+  transform: scaleX(1);
+}
+
+.training-card:hover::before {
+  left: 100%;
+}
+
+.training-card:hover {
+  box-shadow: 0 12px 48px rgba(0, 255, 65, 0.4);
+  transform: translateY(-4px) scale(1.02);
+  border-color: #00ff41;
+}
+
+.training-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #00ff41;
+  text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+  /* 减少动画复杂度，只在悬停时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在悬停时播放动画 */
+.training-card:hover .training-icon {
+  animation: rageBounce 2s ease-in-out infinite;
+}
+
+@keyframes rageBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.05); }
+}
+
+.training-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.training-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.training-btn {
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+  color: #000000;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 5px 15px rgba(0, 255, 65, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.training-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.training-btn:hover::before {
+  left: 100%;
+}
+
+.training-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 255, 65, 0.6);
+}
+
+/* 添加滚动性能优化 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .rage-title {
+    font-size: 2.5rem;
+  }
+  
+  .rage-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .rage-container {
+    padding: 1rem;
+  }
+}
+
+/* 赛博哥特模式样式 */
+.cyberpunk-mode {
+  background: linear-gradient(135deg, #000000 0%, #1a0033 25%, #330066 50%, #6600cc 75%, #9900ff 100%) !important;
+  animation: cyberpunkPulse 1s ease-in-out infinite !important;
+}
+
+@keyframes cyberpunkPulse {
+  0%, 100% { 
+    background: linear-gradient(135deg, #000000 0%, #1a0033 25%, #330066 50%, #6600cc 75%, #9900ff 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #330066 0%, #6600cc 25%, #9900ff 50%, #cc33ff 75%, #ff66ff 100%);
+  }
+}
+
+/* 故障效果样式 */
+.glitch-text {
+  animation: glitch 0.3s infinite;
+  text-shadow: 
+    2px 0 #ff0000,
+    -2px 0 #00ffff,
+    0 2px #00ff00,
+    0 -2px #ff00ff;
+}
+
+@keyframes glitch {
+  0%, 100% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+}
+
+/* 故障等级效果 */
+.glitch-level-1 .rage-title { animation: glitch 0.5s infinite; }
+.glitch-level-2 .rage-title { animation: glitch 0.3s infinite; }
+.glitch-level-3 .rage-title { animation: glitch 0.2s infinite; }
+.glitch-level-4 .rage-title { animation: glitch 0.1s infinite; }
+.glitch-level-5 .rage-title { animation: glitch 0.05s infinite; }
+
+.glitch-level-2 .training-card { animation: glitch 0.8s infinite; }
+.glitch-level-3 .training-card { animation: glitch 0.6s infinite; }
+.glitch-level-4 .training-card { animation: glitch 0.4s infinite; }
+.glitch-level-5 .training-card { animation: glitch 0.2s infinite; }
+
+/* 故障粒子效果 */
+.glitch-particle {
+  position: fixed;
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 9999;
+  animation: glitchFloat 2s linear infinite;
+  color: #ff0000;
+}
+
+@keyframes glitchFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 点击计数器 -->
+<div class="work-mode-click-counter" id="clickCounter">
+  <div>点击次数: <span id="clickCount">0</span>/4</div>
+</div>
+
+<!-- 故障等级指示器 -->
+<div class="glitch-level-indicator" id="glitchIndicator">
+  <div>故障等级: <span id="glitchLevel">0</span>/5</div>
+  <div class="glitch-level-bar">
+    <div class="glitch-level-fill" id="glitchBar"></div>
+  </div>
+</div>
+
+<div class="rage-container" id="rageContainer">
+  <div class="rage-header">
+    <h1 class="rage-title">
+      <i class="fas fa-code"></i> 极客模式
+    </h1>
+    <p class="rage-subtitle">🚀 高效、精准、专业的开发工具集合</p>
+  </div>
+
+  <div class="rage-tools-grid">
+    <div class="training-card" onclick="window.location.href='/tools/web-crawler/'">
+      <div class="training-icon">
+        <i class="fas fa-spider"></i>
+      </div>
+      <h3 class="training-title">数据爬虫</h3>
+      <p class="training-description">高效数据采集，自动化信息获取，支持多种网站</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/pdf-converter/'">
+      <div class="training-icon">
+        <i class="fas fa-file-pdf"></i>
+      </div>
+      <h3 class="training-title">PDF转换引擎</h3>
+      <p class="training-description">高效PDF转换工具，支持多种格式，快速处理文档</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/test-case-generator/'">
+      <div class="training-icon">
+        <i class="fas fa-vial"></i>
+      </div>
+      <h3 class="training-title">测试用例生成器</h3>
+      <p class="training-description">智能生成测试用例，提高代码质量，确保系统稳定</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/douyin-analyzer/'">
+      <div class="training-icon">
+        <i class="fas fa-video"></i>
+      </div>
+      <h3 class="training-title">抖音视频分析</h3>
+      <p class="training-description">深度分析UP主内容，生成产品功能预览，AI驱动创新</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// 极客模式点击计数器
+let workModeClickCount = 0;
+let cyberpunkMode = false;
+let glitchLevel = 0;
+let glitchResetTimer = null;
+
+// 页面点击事件监听
+document.addEventListener('click', function(e) {
+  // 增加点击计数
+  workModeClickCount++;
+  console.log('极客模式点击次数:', workModeClickCount);
+  
+  // 显示点击计数器
+  const clickCounter = document.getElementById('clickCounter');
+  const clickCount = document.getElementById('clickCount');
+  clickCounter.classList.add('show');
+  clickCount.textContent = workModeClickCount;
+  
+  // 检查是否达到4次点击
+  if (workModeClickCount >= 4 && !cyberpunkMode) {
+    activateCyberpunkMode();
+  }
+  
+  // 如果已经在赛博哥特模式下，增加故障等级
+  if (cyberpunkMode) {
+    increaseGlitchLevel();
+  }
+});
+
+// 激活赛博哥特模式
+function activateCyberpunkMode() {
+  console.log('⚡ 激活赛博哥特模式！');
+  cyberpunkMode = true;
+  
+  // 添加赛博哥特样式
+  const container = document.getElementById('rageContainer');
+  if (container) {
+    container.classList.add('cyberpunk-mode');
+  }
+  
+  // 显示故障等级指示器
+  const glitchIndicator = document.getElementById('glitchIndicator');
+  glitchIndicator.classList.add('show');
+  
+  // 创建故障效果
+  createGlitchEffect();
+  
+  // 显示赛博哥特提示
+  showCyberpunkMessage();
+}
+
+// 增加故障等级
+function increaseGlitchLevel() {
+  glitchLevel = Math.min(glitchLevel + 1, 5);
+  console.log('故障等级:', glitchLevel);
+  
+  // 更新故障等级显示
+  const glitchLevelSpan = document.getElementById('glitchLevel');
+  const glitchBar = document.getElementById('glitchBar');
+  
+  if (glitchLevelSpan) {
+    glitchLevelSpan.textContent = glitchLevel;
+  }
+  
+  if (glitchBar) {
+    glitchBar.style.width = (glitchLevel / 5 * 100) + '%';
+  }
+  
+  // 添加故障等级样式
+  const container = document.getElementById('rageContainer');
+  if (container) {
+    // 移除之前的故障等级样式
+    container.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3', 'glitch-level-4', 'glitch-level-5');
+    // 添加当前故障等级样式
+    container.classList.add('glitch-level-' + glitchLevel);
+  }
+  
+  // 重置故障等级计时器
+  if (glitchResetTimer) {
+    clearTimeout(glitchResetTimer);
+  }
+  
+  // 5秒后自动重置故障等级
+  glitchResetTimer = setTimeout(() => {
+    resetGlitchLevel();
+  }, 5000);
+}
+
+// 重置故障等级
+function resetGlitchLevel() {
+  console.log('🔄 故障等级重置');
+  glitchLevel = 0;
+  
+  // 更新显示
+  const glitchLevelSpan = document.getElementById('glitchLevel');
+  const glitchBar = document.getElementById('glitchBar');
+  
+  if (glitchLevelSpan) {
+    glitchLevelSpan.textContent = glitchLevel;
+  }
+  
+  if (glitchBar) {
+    glitchBar.style.width = '0%';
+  }
+  
+  // 移除故障等级样式
+  const container = document.getElementById('rageContainer');
+  if (container) {
+    container.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3', 'glitch-level-4', 'glitch-level-5');
+  }
+}
+
+// 创建故障效果
+function createGlitchEffect() {
+  // 创建故障粒子
+  for (let i = 0; i < 20; i++) {
+    createGlitchParticle();
+  }
+}
+
+// 创建故障粒子
+function createGlitchParticle() {
+  const particle = document.createElement('div');
+  particle.className = 'glitch-particle';
+  particle.innerHTML = ['ERROR', '404', 'NULL', 'BUG', 'CRASH'][Math.floor(Math.random() * 5)];
+  particle.style.left = Math.random() * 100 + '%';
+  particle.style.top = Math.random() * 100 + '%';
+  particle.style.animationDelay = Math.random() * 2 + 's';
+  
+  document.body.appendChild(particle);
+  
+  // 动画结束后移除粒子
+  setTimeout(() => {
+    if (particle.parentNode) {
+      particle.parentNode.removeChild(particle);
+    }
+  }, 2000);
+}
+
+// 显示赛博哥特提示
+function showCyberpunkMessage() {
+  const message = document.createElement('div');
+  message.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ff00ff;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid #ff00ff;
+    font-family: 'Courier New', monospace;
+    animation: messagePop 0.5s ease-out;
+  `;
+  message.innerHTML = `
+    <h2 style="color: #ff00ff; margin-bottom: 1rem;">⚡ 赛博哥特模式激活</h2>
+    <p style="color: #00ffff; margin: 0;">页面点击会增加故障等级</p>
+    <p style="color: #00ffff; margin: 0;">故障等级会在5秒后自动重置</p>
+  `;
+  document.body.appendChild(message);
+  
+  setTimeout(() => {
+    if (message.parentNode) {
+      message.parentNode.removeChild(message);
+    }
+  }, 3000);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('极客模式页面加载完成');
+  
+  // 隐藏计数器（初始状态）
+  const clickCounter = document.getElementById('clickCounter');
+  const glitchIndicator = document.getElementById('glitchIndicator');
+  
+  if (clickCounter) {
+    clickCounter.classList.remove('show');
+  }
+  
+  if (glitchIndicator) {
+    glitchIndicator.classList.remove('show');
+  }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,804 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}Emo模式{% endblock %}
+{% block tool_title_display %}Emo模式{% endblock %}
+
+{% block extra_css %}
+<style>
+.rage-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #7f8c8d 50%, #95a5a6 75%, #bdc3c7 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式样式 */
+.rage-container.agitated {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 25%, #e67e22 50%, #f39c12 75%, #f1c40f 100%);
+  animation: agitatedShake 0.5s ease-in-out infinite;
+}
+
+@keyframes agitatedShake {
+  0%, 100% { 
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  10% { 
+    transform: translateX(-2px) translateY(-1px) rotate(-0.5deg);
+  }
+  20% { 
+    transform: translateX(2px) translateY(1px) rotate(0.5deg);
+  }
+  30% { 
+    transform: translateX(-1px) translateY(-2px) rotate(-0.3deg);
+  }
+  40% { 
+    transform: translateX(1px) translateY(2px) rotate(0.3deg);
+  }
+  50% { 
+    transform: translateX(-3px) translateY(-1px) rotate(-0.7deg);
+  }
+  60% { 
+    transform: translateX(3px) translateY(1px) rotate(0.7deg);
+  }
+  70% { 
+    transform: translateX(-1px) translateY(-3px) rotate(-0.2deg);
+  }
+  80% { 
+    transform: translateX(1px) translateY(3px) rotate(0.2deg);
+  }
+  90% { 
+    transform: translateX(-2px) translateY(-1px) rotate(-0.4deg);
+  }
+}
+
+.rage-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(44, 62, 80, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(52, 73, 94, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(127, 140, 141, 0.2) 0%, transparent 50%);
+  z-index: -1;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 躁动模式下的背景动画 */
+.rage-container.agitated::before {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(231, 76, 60, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(192, 57, 43, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(230, 126, 34, 0.3) 0%, transparent 50%);
+  animation: agitatedPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes agitatedPulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: scale(1.02) rotate(1deg);
+    opacity: 0.9;
+  }
+}
+
+/* 只在用户悬停时播放动画 */
+.rage-container:hover::before {
+  animation: emoPulse 5s ease-in-out infinite;
+}
+
+@keyframes emoPulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% { 
+    transform: scale(1.005) rotate(0.2deg);
+    opacity: 0.8;
+  }
+}
+
+/* 浮动音符动画 */
+.floating-notes {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.note {
+  position: absolute;
+  font-size: 2rem;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  opacity: 0.5;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 躁动模式下的音符动画 */
+.rage-container.agitated .note {
+  animation: agitatedFloat 1s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+@keyframes agitatedFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.8;
+  }
+  25% { 
+    transform: translateY(-30px) rotate(90deg) scale(1.3);
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-20px) rotate(180deg) scale(0.7);
+    opacity: 0.6;
+  }
+  75% { 
+    transform: translateY(-50px) rotate(270deg) scale(1.5);
+    opacity: 1;
+  }
+}
+
+/* 只在用户悬停时播放动画 */
+.floating-notes:hover .note {
+  animation: floatNote 8s ease-in-out infinite;
+}
+
+.note:nth-child(1) { top: 15%; left: 10%; }
+.note:nth-child(2) { top: 25%; right: 20%; }
+.note:nth-child(3) { bottom: 35%; left: 15%; }
+.note:nth-child(4) { bottom: 20%; right: 15%; }
+.note:nth-child(5) { top: 55%; left: 8%; }
+.note:nth-child(6) { top: 65%; right: 8%; }
+
+@keyframes floatNote {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.5;
+  }
+  25% { 
+    transform: translateY(-20px) rotate(45deg) scale(1.1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateY(-15px) rotate(180deg) scale(0.8);
+    opacity: 0.5;
+  }
+  75% { 
+    transform: translateY(-45px) rotate(270deg) scale(1.2);
+    opacity: 0.9;
+  }
+}
+
+.rage-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 3rem 0;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的标题动画 */
+.rage-container.agitated .rage-header {
+  animation: agitatedHeader 0.6s ease-in-out infinite;
+}
+
+@keyframes agitatedHeader {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+  }
+  50% { 
+    transform: translateY(-5px) scale(1.02);
+  }
+}
+
+.rage-title {
+  color: #f093fb;
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(240, 147, 251, 0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: titleGlow 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的标题样式 */
+.rage-container.agitated .rage-title {
+  color: #ff4757;
+  text-shadow: 0 0 30px rgba(255, 71, 87, 0.8);
+  animation: agitatedTitleGlow 0.8s ease-in-out infinite;
+}
+
+@keyframes agitatedTitleGlow {
+  0%, 100% { 
+    text-shadow: 0 0 30px rgba(255, 71, 87, 0.8);
+    transform: scale(1);
+  }
+  50% { 
+    text-shadow: 0 0 50px rgba(255, 71, 87, 1);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(240, 147, 251, 0.5); }
+  50% { text-shadow: 0 0 50px rgba(240, 147, 251, 0.8); }
+}
+
+.rage-subtitle {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  animation: subtitleFloat 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的副标题样式 */
+.rage-container.agitated .rage-subtitle {
+  color: rgba(255, 255, 255, 1);
+  animation: agitatedSubtitleFloat 1s ease-in-out infinite;
+}
+
+@keyframes agitatedSubtitleFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-8px) scale(1.02);
+    opacity: 0.8;
+  }
+}
+
+@keyframes subtitleFloat {
+  0%, 100% { transform: translateY(0px); opacity: 0.9; }
+  50% { transform: translateY(-5px); opacity: 1; }
+}
+
+.rage-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的工具网格动画 */
+.rage-container.agitated .rage-tools-grid {
+  animation: agitatedGrid 0.7s ease-in-out infinite;
+}
+
+@keyframes agitatedGrid {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+  }
+  50% { 
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+.training-card {
+  background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.05) 100%);
+  border: 2px solid rgba(240, 147, 251, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(240, 147, 251, 0.1);
+  backdrop-filter: blur(20px);
+  transition: all 0.4s ease;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 躁动模式下的卡片样式 */
+.rage-container.agitated .training-card {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%);
+  border: 2px solid rgba(255, 71, 87, 0.3);
+  box-shadow: 0 8px 32px rgba(255, 71, 87, 0.2);
+  animation: agitatedCard 0.9s ease-in-out infinite;
+}
+
+@keyframes agitatedCard {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+    border-color: rgba(255, 71, 87, 0.3);
+  }
+  50% { 
+    transform: translateY(-5px) scale(1.03);
+    border-color: rgba(255, 152, 0, 0.5);
+  }
+}
+
+.training-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #667eea 100%);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+/* 躁动模式下的卡片顶部条 */
+.rage-container.agitated .training-card::after {
+  background: linear-gradient(135deg, #ff4757 0%, #ffa502 50%, #ff6348 100%);
+  transform: scaleX(1);
+  animation: agitatedBar 1s ease-in-out infinite;
+}
+
+@keyframes agitatedBar {
+  0%, 100% { 
+    opacity: 1;
+  }
+  50% { 
+    opacity: 0.5;
+  }
+}
+
+.training-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(240, 147, 251, 0.1), transparent);
+  transition: left 1s ease;
+}
+
+/* 躁动模式下的卡片光效 */
+.rage-container.agitated .training-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 71, 87, 0.2), transparent);
+  animation: agitatedShine 1.2s ease-in-out infinite;
+}
+
+@keyframes agitatedShine {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+.training-card:hover::after {
+  transform: scaleX(1);
+}
+
+.training-card:hover::before {
+  left: 100%;
+}
+
+.training-card:hover {
+  box-shadow: 0 16px 48px rgba(240, 147, 251, 0.2);
+  transform: translateY(-8px) scale(1.03);
+  border-color: rgba(240, 147, 251, 0.4);
+}
+
+/* 躁动模式下的悬停效果 */
+.rage-container.agitated .training-card:hover {
+  box-shadow: 0 16px 48px rgba(255, 71, 87, 0.3);
+  transform: translateY(-12px) scale(1.05);
+  border-color: rgba(255, 152, 0, 0.6);
+}
+
+.training-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: #f093fb;
+  text-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+  /* 减少动画复杂度，只在悬停时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的图标样式 */
+.rage-container.agitated .training-icon {
+  color: #ff4757;
+  text-shadow: 0 0 20px rgba(255, 71, 87, 0.8);
+  animation: agitatedIconFloat 1.1s ease-in-out infinite;
+}
+
+@keyframes agitatedIconFloat {
+  0%, 100% { 
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% { 
+    transform: translateY(-8px) rotate(5deg) scale(1.1);
+  }
+  50% { 
+    transform: translateY(-5px) rotate(-3deg) scale(0.9);
+  }
+  75% { 
+    transform: translateY(-10px) rotate(8deg) scale(1.2);
+  }
+}
+
+/* 只在悬停时播放动画 */
+.training-card:hover .training-icon {
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+
+.training-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的标题样式 */
+.rage-container.agitated .training-title {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 71, 87, 0.8);
+  animation: agitatedTitle 0.8s ease-in-out infinite;
+}
+
+@keyframes agitatedTitle {
+  0%, 100% { 
+    transform: scale(1);
+    text-shadow: 0 0 10px rgba(255, 71, 87, 0.8);
+  }
+  50% { 
+    transform: scale(1.02);
+    text-shadow: 0 0 15px rgba(255, 71, 87, 1);
+  }
+}
+
+.training-description {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+/* 躁动模式下的描述样式 */
+.rage-container.agitated .training-description {
+  color: rgba(255, 255, 255, 0.9);
+  animation: agitatedDescription 1.2s ease-in-out infinite;
+}
+
+@keyframes agitatedDescription {
+  0%, 100% { 
+    opacity: 0.9;
+  }
+  50% { 
+    opacity: 0.7;
+  }
+}
+
+.training-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #ffffff;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 8px 24px rgba(240, 147, 251, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 躁动模式下的按钮样式 */
+.rage-container.agitated .training-btn {
+  background: linear-gradient(135deg, #ff4757 0%, #ffa502 100%);
+  box-shadow: 0 8px 24px rgba(255, 71, 87, 0.5);
+  animation: agitatedButton 1s ease-in-out infinite;
+}
+
+@keyframes agitatedButton {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 8px 24px rgba(255, 71, 87, 0.5);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(255, 71, 87, 0.7);
+  }
+}
+
+.training-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.training-btn:hover::before {
+  left: 100%;
+}
+
+.training-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(240, 147, 251, 0.7);
+}
+
+/* 躁动模式下的按钮悬停效果 */
+.rage-container.agitated .training-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 16px 40px rgba(255, 71, 87, 0.8);
+}
+
+/* 点击计数器提示 */
+.click-counter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+.click-counter.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.click-counter.agitated {
+  background: rgba(255, 71, 87, 0.9);
+  animation: agitatedCounter 0.5s ease-in-out infinite;
+}
+
+@keyframes agitatedCounter {
+  0%, 100% { 
+    transform: translateY(0) scale(1);
+  }
+  50% { 
+    transform: translateY(-3px) scale(1.05);
+  }
+}
+
+@media (max-width: 768px) {
+  .rage-title {
+    font-size: 2.5rem;
+  }
+  
+  .rage-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .rage-container {
+    padding: 1rem;
+  }
+  
+  .note {
+    font-size: 1.5rem;
+  }
+  
+  .click-counter {
+    top: 10px;
+    right: 10px;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rage-container" id="rageContainer">
+  <!-- 点击计数器提示 -->
+  <div class="click-counter" id="clickCounter">
+    点击次数: <span id="clickCount">0</span>
+  </div>
+
+  <!-- 浮动情绪符号背景 -->
+  <div class="floating-notes">
+    <div class="note">💔</div>
+    <div class="note">😢</div>
+    <div class="note">🌧️</div>
+    <div class="note">💭</div>
+    <div class="note">🎵</div>
+    <div class="note">💜</div>
+  </div>
+
+  <div class="rage-header">
+    <h1 class="rage-title">
+      <i class="fas fa-music"></i> Emo模式
+    </h1>
+    <p class="rage-subtitle">💜 她说难过好过没有感情</p>
+  </div>
+
+  <div class="rage-tools-grid">
+    <div class="training-card" onclick="window.location.href='/tools/self-analysis/'">
+      <div class="training-icon">
+        <i class="fas fa-brain"></i>
+      </div>
+      <h3 class="training-title">自我分析</h3>
+      <p class="training-description">深度情感探索，自我认知，情绪模式分析</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/storyboard/'">
+      <div class="training-icon">
+        <i class="fas fa-film"></i>
+      </div>
+      <h3 class="training-title">故事板生成</h3>
+      <p class="training-description">快速生成故事板，可视化创意构思，提升项目效率</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/fortune-analyzer/'">
+      <div class="training-icon">
+                        <i class="fas fa-star"></i>
+      </div>
+      <h3 class="training-title">命运解析</h3>
+      <p class="training-description">探索内心世界，寻找情感答案，指引心灵方向</p>
+    </div>
+
+    <!-- 心动链接已移动到生活模式 -->
+  </div>
+</div>
+
+<script>
+// 点击计数器功能
+let clickCount = 0;
+let clickTimeout;
+const rageContainer = document.getElementById('rageContainer');
+const clickCounter = document.getElementById('clickCounter');
+const clickCountSpan = document.getElementById('clickCount');
+
+// 页面点击事件
+rageContainer.addEventListener('click', function(e) {
+  // 如果点击的是卡片，不增加计数（避免与卡片点击冲突）
+  if (e.target.closest('.training-card')) {
+    return;
+  }
+  
+  clickCount++;
+  clickCountSpan.textContent = clickCount;
+  
+  // 显示计数器
+  clickCounter.classList.add('show');
+  
+  // 清除之前的定时器
+  clearTimeout(clickTimeout);
+  
+  // 3秒后隐藏计数器
+  clickTimeout = setTimeout(() => {
+    clickCounter.classList.remove('show');
+  }, 3000);
+  
+  // 如果点击次数达到3次或以上，触发躁动模式
+  if (clickCount >= 3) {
+    rageContainer.classList.add('agitated');
+    clickCounter.classList.add('agitated');
+    
+    // 添加躁动提示
+    clickCounter.innerHTML = `点击次数: <span id="clickCount">${clickCount}</span> - 躁动模式已激活！`;
+    
+    // 播放躁动音效（可选）
+    playAgitatedSound();
+    
+    // 重置计数器（可选，让用户继续点击保持躁动状态）
+    // clickCount = 0;
+  }
+});
+
+// 躁动音效函数（可选）
+function playAgitatedSound() {
+  // 创建音频上下文
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  
+  // 创建躁动音效
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  // 设置音效参数
+  oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+  oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.2);
+  
+  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+  
+  // 播放音效
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + 0.2);
+}
+
+// 键盘事件支持（可选）
+document.addEventListener('keydown', function(e) {
+  // 按空格键也可以触发躁动模式
+  if (e.code === 'Space') {
+    e.preventDefault();
+    clickCount += 2; // 空格键增加2次点击
+    clickCountSpan.textContent = clickCount;
+    
+    clickCounter.classList.add('show');
+    clearTimeout(clickTimeout);
+    
+    clickTimeout = setTimeout(() => {
+      clickCounter.classList.remove('show');
+    }, 3000);
+    
+    if (clickCount >= 3) {
+      rageContainer.classList.add('agitated');
+      clickCounter.classList.add('agitated');
+      clickCounter.innerHTML = `点击次数: <span id="clickCount">${clickCount}</span> - 躁动模式已激活！`;
+      playAgitatedSound();
+    }
+  }
+  
+  // 按ESC键重置躁动模式
+  if (e.code === 'Escape') {
+    rageContainer.classList.remove('agitated');
+    clickCounter.classList.remove('agitated');
+    clickCount = 0;
+    clickCountSpan.textContent = clickCount;
+    clickCounter.innerHTML = `点击次数: <span id="clickCount">${clickCount}</span>`;
+    clickCounter.classList.remove('show');
+  }
+});
+
+// 页面加载时的初始化
+document.addEventListener('DOMContentLoaded', function() {
+  // 添加页面加载提示
+  setTimeout(() => {
+    clickCounter.innerHTML = `点击页面3次激活躁动模式！`;
+    clickCounter.classList.add('show');
+    
+    setTimeout(() => {
+      clickCounter.classList.remove('show');
+    }, 3000);
+  }, 1000);
+});
+</script>
+{% endblock %} 

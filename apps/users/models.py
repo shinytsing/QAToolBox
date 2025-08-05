@@ -242,3 +242,58 @@ class UserTheme(models.Model):
             'emo': '感受内心的情感波动',
         }
         return subtitles.get(self.mode, '探索无限可能')
+
+class UserModePreference(models.Model):
+    """用户模式偏好模型 - 记录用户点击各模式的次数"""
+    MODE_CHOICES = [
+        ('work', '极客模式'),
+        ('life', '生活模式'),
+        ('training', '狂暴模式'),
+        ('emo', 'Emo模式'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mode_preferences', verbose_name='用户')
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, verbose_name='模式')
+    click_count = models.IntegerField(default=0, verbose_name='点击次数')
+    last_click_time = models.DateTimeField(auto_now=True, verbose_name='最后点击时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        verbose_name = '用户模式偏好'
+        verbose_name_plural = '用户模式偏好'
+        unique_together = ['user', 'mode']
+        ordering = ['-click_count', '-last_click_time']
+        indexes = [
+            models.Index(fields=['user', 'mode']),
+            models.Index(fields=['user', 'click_count']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_mode_display()} ({self.click_count}次)"
+    
+    @classmethod
+    def get_user_preferred_mode(cls, user):
+        """获取用户最偏好的模式"""
+        try:
+            preference = cls.objects.filter(user=user).order_by('-click_count', '-last_click_time').first()
+            return preference.mode if preference else 'work'  # 默认极客模式
+        except:
+            return 'work'
+    
+    @classmethod
+    def record_mode_click(cls, user, mode):
+        """记录用户点击模式"""
+        try:
+            preference, created = cls.objects.get_or_create(
+                user=user,
+                mode=mode,
+                defaults={'click_count': 1}
+            )
+            if not created:
+                preference.click_count += 1
+                preference.save(update_fields=['click_count', 'updated_at'])
+            return True
+        except Exception as e:
+            print(f"记录模式点击失败: {e}")
+            return False

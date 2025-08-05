@@ -1,5 +1,5 @@
 """
-ASGI config for QAToolBox project.
+ASGI config for ModeShift project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

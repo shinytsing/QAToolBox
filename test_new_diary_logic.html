@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生活日记新逻辑测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        
+        /* 问题选择界面样式 */
+        .question-selection-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        
+        .selection-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .selection-header h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+        
+        .selection-header p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .questions-selection-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .question-selection-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .question-selection-item:hover {
+            border-color: #4CAF50;
+            background-color: #f8fff8;
+        }
+        
+        .question-checkbox {
+            margin-right: 12px;
+            margin-top: 2px;
+        }
+        
+        .question-select-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4CAF50;
+        }
+        
+        .question-content {
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .question-number {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 8px;
+            min-width: 20px;
+        }
+        
+        .question-text {
+            color: #333;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .selection-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .selection-actions .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        
+        .selection-actions .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* 问题输入框样式 */
+        .question-input-group {
+            margin-bottom: 20px;
+            padding: 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .question-label {
+            margin-bottom: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .question-answer {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 8px;
+        }
+        
+        .additional-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>生活日记新逻辑测试</h1>
+    
+    <div class="test-section">
+        <h2 class="test-title">1. AI生成问题解析测试</h2>
+        <p>测试AI生成的问题是否能正确解析</p>
+        <button onclick="testAIParsing()">测试AI问题解析</button>
+        <div id="aiParsingResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="test-title">2. 问题选择界面测试</h2>
+        <p>测试问题选择界面是否正常工作</p>
+        <button onclick="testQuestionSelection()">测试问题选择界面</button>
+        <div id="questionSelectionResult"></div>
+        <div id="questionSelectionContainer" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="test-title">3. 问题答案保存测试</h2>
+        <p>测试问题+答案的保存逻辑</p>
+        <button onclick="testQuestionAnswerSaving()">测试问题答案保存</button>
+        <div id="questionAnswerResult"></div>
+        <div id="questionInputContainer" style="display: none;"></div>
+    </div>
+
+    <script>
+        // 模拟AI生成的内容
+        const mockAIContent = `【10个疑问句】
+1. 今天最让你笑出声的瞬间是什么？
+
+2. 如果今天是一部电影，你会给它起什么名字？
+
+3. 今天遇到的人中，谁让你印象最深刻？
+
+4. 如果可以和今天的自己对话，你会说什么？
+
+5. 今天有什么事情让你感到意外惊喜？
+
+6. 如果今天可以重来一次，你会改变什么？
+
+7. 今天最想和谁分享你的心情？
+
+8. 今天学到了什么新东西？
+
+9. 明天最期待的事情是什么？
+
+10. 今天有什么让你感到特别感恩的？
+
+【推荐音乐】
+晴天 - 周杰伦`;
+
+        // 测试AI问题解析
+        function testAIParsing() {
+            const result = document.getElementById('aiParsingResult');
+            try {
+                const questions = parseAIQuestions(mockAIContent);
+                
+                if (questions.length === 10) {
+                    result.innerHTML = `
+                        <div class="test-result success">
+                            ✅ AI问题解析成功！<br>
+                            解析到 ${questions.length} 个问题<br>
+                            音乐推荐：${window.currentMusicRecommendation || '无'}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <strong>解析的问题：</strong>
+                            <ul>
+                                ${questions.map((q, i) => `<li>${i+1}. ${q}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `<div class="test-result error">❌ 问题解析失败，期望10个问题，实际${questions.length}个</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="test-result error">❌ 解析失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 测试问题选择界面
+        function testQuestionSelection() {
+            const result = document.getElementById('questionSelectionResult');
+            const container = document.getElementById('questionSelectionContainer');
+            
+            try {
+                const questions = parseAIQuestions(mockAIContent);
+                showQuestionSelectionInterface(questions);
+                
+                result.innerHTML = '<div class="test-result info">ℹ️ 问题选择界面已显示，请测试选择功能</div>';
+                container.style.display = 'block';
+            } catch (error) {
+                result.innerHTML = `<div class="test-result error">❌ 界面显示失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 测试问题答案保存
+        function testQuestionAnswerSaving() {
+            const result = document.getElementById('questionAnswerResult');
+            const container = document.getElementById('questionInputContainer');
+            
+            try {
+                // 模拟选中的问题
+                const selectedQuestions = [
+                    { index: 0, question: '今天最让你笑出声的瞬间是什么？' },
+                    { index: 2, question: '今天遇到的人中，谁让你印象最深刻？' },
+                    { index: 4, question: '今天有什么事情让你感到意外惊喜？' }
+                ];
+                
+                generateSelectedQuestionInputs(selectedQuestions);
+                
+                result.innerHTML = `
+                    <div class="test-result success">
+                        ✅ 问题输入框生成成功！<br>
+                        生成了 ${selectedQuestions.length} 个问题的输入框
+                    </div>
+                `;
+                container.style.display = 'block';
+            } catch (error) {
+                result.innerHTML = `<div class="test-result error">❌ 输入框生成失败: ${error.message}</div>`;
+            }
+        }
+        
+        // 解析AI生成的问题
+        function parseAIQuestions(content) {
+            const lines = content.split('\n');
+            let questions = [];
+            let music = '';
+            
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine === '') continue;
+                
+                if (trimmedLine.includes('🎵 音乐推荐：')) {
+                    music = trimmedLine.replace('🎵 音乐推荐：', '');
+                    continue;
+                }
+                
+                // 匹配数字编号的疑问句 (例如 "1. 你的问题?")
+                const questionMatch = trimmedLine.match(/^(\d+)\.\s*(.*)/);
+                if (questionMatch) {
+                    questions.push(questionMatch[2]); // 提取问题内容
+                } else if (trimmedLine.startsWith('• ')) {
+                    questions.push(trimmedLine.substring(2));
+                } else if (!trimmedLine.includes('🎵')) {
+                    questions.push(trimmedLine);
+                }
+            }
+            
+            // 保存音乐推荐信息
+            window.currentMusicRecommendation = music;
+            
+            return questions.filter(q => q.trim() !== '');
+        }
+        
+        // 显示问题选择界面
+        function showQuestionSelectionInterface(questions) {
+            const container = document.getElementById('questionSelectionContainer');
+            
+            let html = `
+                <div class="selection-header">
+                    <h3><i class="fas fa-check-circle"></i> 选择您想回答的问题</h3>
+                    <p>请选择您想要回答的问题，这些问题将作为您今天的生活记录内容</p>
+                </div>
+                <div class="questions-selection-list">
+            `;
+            
+            questions.forEach((question, index) => {
+                html += `
+                    <div class="question-selection-item" data-question="${question}" data-index="${index}">
+                        <div class="question-checkbox">
+                            <input type="checkbox" id="question${index}" class="question-select-checkbox">
+                            <label for="question${index}"></label>
+                        </div>
+                        <div class="question-content">
+                            <span class="question-number">${index + 1}.</span>
+                            <span class="question-text">${question}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                </div>
+                <div class="selection-actions">
+                    <button class="btn btn-secondary" onclick="selectAllQuestions()">
+                        <i class="fas fa-check-double"></i> 全选
+                    </button>
+                    <button class="btn btn-secondary" onclick="deselectAllQuestions()">
+                        <i class="fas fa-times"></i> 取消全选
+                    </button>
+                    <button class="btn btn-primary" onclick="confirmSelectedQuestions()">
+                        <i class="fas fa-arrow-right"></i> 确认选择并继续
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            
+            // 添加事件监听器
+            addQuestionSelectionListeners();
+        }
+        
+        // 添加问题选择事件监听器
+        function addQuestionSelectionListeners() {
+            const checkboxes = document.querySelectorAll('.question-select-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectionStatus();
+                });
+            });
+        }
+        
+        // 更新选择状态
+        function updateSelectionStatus() {
+            const checkboxes = document.querySelectorAll('.question-select-checkbox');
+            const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const totalCount = checkboxes.length;
+            
+            const confirmBtn = document.querySelector('.selection-actions .btn-primary');
+            if (confirmBtn) {
+                if (selectedCount > 0) {
+                    confirmBtn.innerHTML = `<i class="fas fa-arrow-right"></i> 确认选择 (${selectedCount}/${totalCount}) 并继续`;
+                    confirmBtn.disabled = false;
+                } else {
+                    confirmBtn.innerHTML = `<i class="fas fa-arrow-right"></i> 请至少选择一个问题`;
+                    confirmBtn.disabled = true;
+                }
+            }
+        }
+        
+        // 全选问题
+        function selectAllQuestions() {
+            const checkboxes = document.querySelectorAll('.question-select-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            updateSelectionStatus();
+        }
+        
+        // 取消全选
+        function deselectAllQuestions() {
+            const checkboxes = document.querySelectorAll('.question-select-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectionStatus();
+        }
+        
+        // 确认选择的问题
+        function confirmSelectedQuestions() {
+            const selectedQuestions = [];
+            const checkboxes = document.querySelectorAll('.question-select-checkbox');
+            
+            checkboxes.forEach((checkbox, index) => {
+                if (checkbox.checked) {
+                    const questionItem = checkbox.closest('.question-selection-item');
+                    const question = questionItem.getAttribute('data-question');
+                    selectedQuestions.push({
+                        index: index,
+                        question: question
+                    });
+                }
+            });
+            
+            if (selectedQuestions.length === 0) {
+                alert('请至少选择一个问题！');
+                return;
+            }
+            
+            // 隐藏选择界面，显示问题输入框
+            document.getElementById('questionSelectionContainer').style.display = 'none';
+            document.getElementById('questionInputContainer').style.display = 'block';
+            
+            // 生成选中问题的输入框
+            generateSelectedQuestionInputs(selectedQuestions);
+            
+            document.getElementById('questionAnswerResult').innerHTML = `
+                <div class="test-result success">
+                    ✅ 已选择 ${selectedQuestions.length} 个问题，请填写答案！
+                </div>
+            `;
+        }
+        
+        // 生成选中问题的输入框
+        function generateSelectedQuestionInputs(selectedQuestions) {
+            const container = document.getElementById('questionInputContainer');
+            container.innerHTML = '<h3>填写您的答案</h3>';
+            
+            // 为每个选中的问题生成输入框
+            selectedQuestions.forEach((questionData, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-input-group';
+                questionDiv.innerHTML = `
+                    <div class="question-label">
+                        <span class="question-number">${index + 1}.</span>
+                        <span class="question-text">${questionData.question}</span>
+                    </div>
+                    <textarea 
+                        id="question${index + 1}" 
+                        class="question-answer" 
+                        placeholder="请分享您的想法..."
+                        data-question="${questionData.question}"
+                        data-original-index="${questionData.index}"
+                    ></textarea>
+                    <div class="additional-input-section">
+                        <input 
+                            type="text" 
+                            id="additionalInput${index + 1}" 
+                            class="additional-input" 
+                            placeholder="补充说明..."
+                            data-question="${questionData.question}"
+                        >
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+            
+            // 添加保存按钮
+            const saveBtn = document.createElement('button');
+            saveBtn.innerHTML = '保存日记内容';
+            saveBtn.onclick = saveDiaryContent;
+            container.appendChild(saveBtn);
+        }
+        
+        // 保存日记内容
+        function saveDiaryContent() {
+            const questionAnswers = document.querySelectorAll('.question-answer');
+            let totalContent = '';
+            let questionAnswersData = [];
+            
+            questionAnswers.forEach((textarea, index) => {
+                if (textarea) {
+                    const answer = textarea.value.trim();
+                    const question = textarea.dataset.question;
+                    const originalIndex = textarea.dataset.originalIndex;
+                    const additionalInput = document.getElementById(`additionalInput${index + 1}`);
+                    const additionalAnswer = additionalInput ? additionalInput.value.trim() : '';
+                    
+                    if (answer) {
+                        // 构建问题+答案的内容
+                        const questionAnswerContent = `问题：${question}\n回答：${answer}`;
+                        if (additionalAnswer) {
+                            questionAnswerContent += `\n补充：${additionalAnswer}`;
+                        }
+                        totalContent += questionAnswerContent + '\n\n';
+                        
+                        // 收集问题答案数据
+                        questionAnswersData.push({
+                            question: question,
+                            answer: answer,
+                            additional_answer: additionalAnswer,
+                            order: parseInt(originalIndex) + 1
+                        });
+                    }
+                }
+            });
+            
+            if (totalContent) {
+                alert(`日记内容保存成功！\n\n内容预览：\n${totalContent.substring(0, 200)}...`);
+                console.log('保存的日记内容:', totalContent);
+                console.log('问题答案数据:', questionAnswersData);
+            } else {
+                alert('请至少填写一个问题的答案！');
+            }
+        }
+    </script>
+</body>
+</html> 

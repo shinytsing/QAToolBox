@@ -7,7 +7,24 @@ import os
 
 @login_required  # 仅允许登录用户访问
 def tool_view(request):
-    return render(request, 'tool.html')  # 确保这里指向你的工具模板
+    # 获取用户偏好模式
+    try:
+        from apps.users.models import UserModePreference
+        preferred_mode = UserModePreference.get_user_preferred_mode(request.user)
+    except:
+        preferred_mode = 'work'  # 默认极客模式
+    
+    context = {
+        'preferred_mode': preferred_mode,
+        'mode_names': {
+            'work': '极客模式',
+            'life': '生活模式',
+            'training': '狂暴模式',
+            'emo': 'Emo模式'
+        }
+    }
+    
+    return render(request, 'tool.html', context)  # 确保这里指向你的工具模板
 
 # 添加一个根视图函数
 def home_view(request):

@@ -17,31 +17,88 @@
   <div class="home-content">
     <div class="theme-card">
       <div class="theme-title">
-        <span class="title-glitch" data-text="QATOOLBOX">QATOOLBOX</span>
-        <span class="title-subtitle" data-translate="工具箱">工具箱</span>
-      </div>
-      
-      <div class="theme-subtitle-text">
-        <div class="quote-container">
-          <div class="quote-text" id="quoteText">君子生非异也，善假于物也。</div>
-          <div class="quote-decoration">
-            <span class="quote-mark">"</span>
-            <span class="quote-mark">"</span>
+        <div class="modeshift-logo" id="modeshiftLogo">
+          <div class="gear-container">
+            <div class="gear gear-1" data-theme="work">
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="thought-bubble"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="gear-inner">
+                <i class="fas fa-random"></i>
+                <div class="gear-teeth"></div>
+              </div>
+            </div>
+            <div class="gear gear-2" data-theme="life">
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="thought-bubble"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="gear-inner">
+                <i class="fas fa-leaf"></i>
+                <div class="gear-teeth"></div>
+              </div>
+            </div>
+            <div class="gear gear-3" data-theme="training">
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="thought-bubble"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="gear-inner">
+                <i class="fas fa-fire"></i>
+                <div class="gear-teeth"></div>
+              </div>
+            </div>
+            <div class="gear gear-4" data-theme="cyberpunk">
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="emotion-wave"></div>
+              <div class="thought-bubble"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="particle"></div>
+              <div class="gear-inner">
+                <i class="fas fa-robot"></i>
+                <div class="gear-teeth"></div>
+              </div>
+            </div>
+          </div>
+          <div class="logo-text">
+            <span class="title-glitch" data-text="ModeShift" id="titleClickable">ModeShift</span>
           </div>
         </div>
       </div>
       
+      <div class="theme-subtitle-text">
+        <div class="quote-container">
+          <div class="quote-subtitle">Four Modes, One Beast</div>
+        </div>
+      </div>
+      
       <div class="action-buttons">
-        <a href="{% url 'tools' %}" class="btn theme-auth-btn">
-          <span class="btn-text">进入工具集</span>
+        <a href="#" class="btn theme-auth-btn" id="enterToolsBtn" onclick="enterCurrentModeTools(event)">
+          <span class="btn-text">进入外世界</span>
           <span class="btn-icon">→</span>
         </a>
         
         <div class="theme-preview">
           <div class="theme-dots">
-            <div class="theme-dot active" data-theme="geek"></div>
+            <div class="theme-dot active" data-theme="work"></div>
             <div class="theme-dot" data-theme="life"></div>
-            <div class="theme-dot" data-theme="rage"></div>
+            <div class="theme-dot" data-theme="training"></div>
             <div class="theme-dot" data-theme="emo"></div>
           </div>
         </div>
@@ -96,6 +153,34 @@
     rgba(0, 255, 231, 0.1) 50%, 
     transparent 100%);
   animation: matrixRain 20s linear infinite;
+}
+
+/* 里世界背景效果 */
+.home-container::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 0, 110, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.03) 0%, transparent 50%);
+  z-index: -1;
+  animation: underworldPulse 15s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+@keyframes underworldPulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% { 
+    transform: scale(1.1) rotate(1deg);
+    opacity: 0.5;
+  }
 }
 
 @keyframes matrixRain {
@@ -204,7 +289,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.15), transparent);
   transition: left 0.5s ease;
 }
 
@@ -221,6 +306,798 @@
   will-change: transform;
 }
 
+/* ModeShift Logo样式 */
+.modeshift-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+}
+
+.gear-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4rem;
+  position: relative;
+  width: auto;
+  height: auto;
+  background: transparent;
+  border-radius: 0;
+  padding: 3rem;
+  border: none;
+  box-shadow: none;
+  will-change: transform;
+  transform: translateZ(0);
+  backdrop-filter: none;
+  overflow: visible;
+}
+
+.gear-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(0, 255, 231, 0.05) 90deg,
+    transparent 180deg,
+    transparent 270deg,
+    rgba(0, 255, 231, 0.05) 360deg
+  );
+  animation: containerRotate 10s linear infinite;
+  opacity: 0.5;
+}
+
+.gear-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  animation: containerGlow 4s ease-in-out infinite alternate;
+}
+
+/* 移除复杂的伪元素动画 */
+
+/* 移除复杂的容器动画 */
+
+        .gear {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2.5rem;
+          color: #ffffff;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+          transition: all 0.3s ease;
+          cursor: pointer;
+          position: relative;
+          will-change: transform;
+          transform: translateZ(0);
+          overflow: hidden;
+          z-index: 100;
+        }
+
+        /* 点击效果 */
+        .gear:active {
+          transform: scale(0.95);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+.gear::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gear-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.gear-inner i {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.gear:hover {
+  transform: scale(1.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.gear:hover::before {
+  opacity: 1;
+}
+
+.gear:hover .gear-inner i {
+  transform: scale(1.1);
+}
+
+        /* 动画关键帧 */
+        @keyframes gearFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+
+        @keyframes gearRotate {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes gearPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+
+        @keyframes gearBounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-15px); }
+          60% { transform: translateY(-7px); }
+        }
+
+        @keyframes gearShake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+          20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        @keyframes gearGlow {
+          0%, 100% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); }
+          50% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 255, 255, 0.3); }
+        }
+
+        @keyframes iconSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes iconBounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-8px); }
+          60% { transform: translateY(-4px); }
+        }
+
+        @keyframes iconPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+
+        @keyframes iconShake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+          20%, 40%, 60%, 80% { transform: translateX(3px); }
+        }
+
+        /* 不同齿轮的颜色主题和动画 */
+        .gear.gear-1 {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          animation: gearFloat 3s ease-in-out infinite, gearGlow 2s ease-in-out infinite;
+        }
+
+        .gear.gear-1 .gear-inner i {
+          animation: iconSpin 4s linear infinite;
+        }
+
+        .gear.gear-2 {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          animation: gearPulse 2.5s ease-in-out infinite, gearGlow 2s ease-in-out infinite 0.5s;
+        }
+
+        .gear.gear-2 .gear-inner i {
+          animation: iconBounce 2s ease-in-out infinite;
+        }
+
+        .gear.gear-3 {
+          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+          animation: gearBounce 3s ease-in-out infinite, gearGlow 2s ease-in-out infinite 1s;
+        }
+
+        .gear.gear-3 .gear-inner i {
+          animation: iconPulse 1.5s ease-in-out infinite;
+        }
+
+        .gear.gear-4 {
+          background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+          animation: gearShake 2s ease-in-out infinite, gearGlow 2s ease-in-out infinite 1.5s;
+        }
+
+        .gear.gear-4 .gear-inner i {
+          animation: iconShake 1.8s ease-in-out infinite;
+        }
+
+        /* 悬停时暂停动画 */
+        .gear:hover {
+          animation-play-state: paused;
+        }
+
+        .gear:hover .gear-inner i {
+          animation-play-state: paused;
+        }
+
+.gear-teeth {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, 
+    rgba(0, 255, 231, 0.2) 0%, 
+    rgba(0, 255, 231, 0.1) 30%, 
+    transparent 70%);
+  animation: gearPulse 3s ease-in-out infinite;
+  z-index: 1;
+  opacity: 0.8;
+}
+
+@keyframes gearRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.gear:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2)) brightness(1.1) contrast(1.05);
+  animation: gearHover 0.6s ease-in-out;
+}
+
+.gear.gear-1:hover {
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.7),
+    inset 0 5px 20px rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(0, 255, 255, 0.8),
+    0 0 80px rgba(0, 191, 255, 0.6);
+}
+
+.gear.gear-2:hover {
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.7),
+    inset 0 5px 20px rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(0, 255, 0, 0.8),
+    0 0 80px rgba(50, 205, 50, 0.6);
+}
+
+.gear.gear-3:hover {
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.7),
+    inset 0 5px 20px rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(255, 0, 0, 0.8),
+    0 0 80px rgba(255, 68, 68, 0.6);
+}
+
+.gear.gear-4:hover {
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.7),
+    inset 0 5px 20px rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(255, 0, 255, 0.8),
+    0 0 80px rgba(255, 64, 255, 0.6);
+}
+
+.gear:hover::before {
+  animation-duration: 1.5s;
+  opacity: 0.8;
+}
+
+.gear:hover::after {
+  animation-duration: 1s;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+}
+
+.gear:hover .gear-teeth {
+  animation-duration: 1.5s;
+  background: radial-gradient(circle at center, 
+    rgba(0, 255, 231, 0.4) 0%, 
+    rgba(0, 255, 231, 0.2) 30%, 
+    transparent 70%);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.gear.gear-1 {
+  animation-delay: 0s;
+  background: linear-gradient(135deg, rgba(0, 255, 231, 0.15) 0%, rgba(0, 191, 255, 0.1) 50%, rgba(0, 128, 255, 0.05) 100%);
+  border: 2px solid rgba(0, 255, 255, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 20px rgba(0, 255, 255, 0.3);
+  animation: gearFloat 4s ease-in-out infinite, heartbeat 2s ease-in-out infinite, gearDance 6s ease-in-out infinite !important;
+}
+
+.gear-1::before {
+  animation-delay: 0s;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(0, 255, 231, 0.2) 45deg,
+    rgba(0, 255, 231, 0.5) 90deg,
+    rgba(0, 255, 231, 0.2) 135deg,
+    transparent 180deg,
+    transparent 225deg,
+    rgba(0, 255, 231, 0.2) 270deg,
+    rgba(0, 255, 231, 0.5) 315deg,
+    rgba(0, 255, 231, 0.2) 360deg
+  );
+}
+
+.gear-1 .emotion-wave {
+  border-color: rgba(0, 255, 231, 0.4);
+}
+
+.gear-1 .thought-bubble {
+  background: rgba(0, 255, 231, 0.8);
+}
+
+.gear.gear-2 {
+  animation-delay: 0.5s;
+  background: linear-gradient(135deg, rgba(0, 255, 0, 0.15) 0%, rgba(50, 205, 50, 0.1) 50%, rgba(34, 139, 34, 0.05) 100%);
+  border: 2px solid rgba(0, 255, 0, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 20px rgba(0, 255, 0, 0.3);
+  animation: gearFloat 4s ease-in-out infinite 0.5s, calm 3s ease-in-out infinite, gearWiggle 5s ease-in-out infinite !important;
+}
+
+.gear-2::before {
+  animation-delay: 0.5s;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(40, 167, 69, 0.2) 45deg,
+    rgba(40, 167, 69, 0.5) 90deg,
+    rgba(40, 167, 69, 0.2) 135deg,
+    transparent 180deg,
+    transparent 225deg,
+    rgba(40, 167, 69, 0.2) 270deg,
+    rgba(40, 167, 69, 0.5) 315deg,
+    rgba(40, 167, 69, 0.2) 360deg
+  );
+}
+
+.gear-2 .emotion-wave {
+  border-color: rgba(40, 167, 69, 0.4);
+}
+
+.gear-2 .thought-bubble {
+  background: rgba(40, 167, 69, 0.8);
+}
+
+.gear.gear-3 {
+  animation-delay: 1s;
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.15) 0%, rgba(255, 68, 68, 0.1) 50%, rgba(204, 0, 0, 0.05) 100%);
+  border: 2px solid rgba(255, 0, 0, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 20px rgba(255, 0, 0, 0.3);
+  animation: gearFloat 4s ease-in-out infinite 1s, excited 1.5s ease-in-out infinite, gearRock 3s ease-in-out infinite !important;
+}
+
+.gear-3::before {
+  animation-delay: 1s;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 68, 68, 0.2) 45deg,
+    rgba(255, 68, 68, 0.5) 90deg,
+    rgba(255, 68, 68, 0.2) 135deg,
+    transparent 180deg,
+    transparent 225deg,
+    rgba(255, 68, 68, 0.2) 270deg,
+    rgba(255, 68, 68, 0.5) 315deg,
+    rgba(255, 68, 68, 0.2) 360deg
+  );
+}
+
+.gear-3 .emotion-wave {
+  border-color: rgba(255, 68, 68, 0.4);
+}
+
+.gear-3 .thought-bubble {
+  background: rgba(255, 68, 68, 0.8);
+}
+
+.gear.gear-4 {
+  animation-delay: 1.5s;
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.15) 0%, rgba(255, 64, 255, 0.1) 50%, rgba(204, 0, 204, 0.05) 100%);
+  border: 2px solid rgba(255, 0, 255, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 20px rgba(255, 0, 255, 0.3);
+  animation: gearFloat 4s ease-in-out infinite 1.5s, nervous 2.5s ease-in-out infinite, gearDance 7s ease-in-out infinite !important;
+}
+
+.gear-4::before {
+  animation-delay: 1.5s;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 0, 110, 0.2) 45deg,
+    rgba(255, 0, 110, 0.5) 90deg,
+    rgba(255, 0, 110, 0.2) 135deg,
+    transparent 180deg,
+    transparent 225deg,
+    rgba(255, 0, 110, 0.2) 270deg,
+    rgba(255, 0, 110, 0.5) 315deg,
+    rgba(255, 0, 110, 0.2) 360deg
+  );
+}
+
+.gear-4 .emotion-wave {
+  border-color: rgba(255, 0, 110, 0.4);
+}
+
+.gear-4 .thought-bubble {
+  background: rgba(255, 0, 110, 0.8);
+}
+
+@keyframes gearFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1); 
+  }
+  50% { 
+    transform: translateY(-6px) rotate(5deg) scale(1.02); 
+  }
+}
+
+@keyframes gearInterlock {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(360deg) scale(1.1); }
+}
+
+@keyframes gearPulse {
+  0%, 100% { 
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes gearInterlock {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.gear.active {
+  transform: scale(1.2);
+  box-shadow: 
+    0 15px 40px rgba(0, 255, 231, 0.6),
+    inset 0 4px 15px rgba(255, 255, 255, 0.25);
+  border-color: #00ffe7;
+  animation: gearActive 2s ease-in-out infinite;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 40%, rgba(0, 255, 231, 0.25) 100%);
+}
+
+.gear.active + .gear {
+  animation: gearInterlock 2s linear infinite;
+}
+
+.gear-container:hover .gear {
+  animation-play-state: running;
+}
+
+.gear-container:not(:hover) .gear {
+  animation-play-state: paused;
+}
+
+/* 齿轮联动效果 */
+.gear:hover {
+  z-index: 10;
+}
+
+.gear:hover + .gear {
+  z-index: 9;
+  transform: scale(1.05);
+}
+
+.gear:hover + .gear + .gear {
+  z-index: 8;
+  transform: scale(1.03);
+}
+
+.gear:hover + .gear + .gear + .gear {
+  z-index: 7;
+  transform: scale(1.01);
+}
+
+/* 里世界效果 */
+.gear:hover .gear-inner {
+  background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 30%, transparent 70%);
+  box-shadow: inset 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.gear:hover .gear-teeth {
+  animation-duration: 1s;
+  opacity: 1;
+}
+
+@keyframes gearActive {
+  0%, 100% { transform: scale(1.2) rotate(0deg); }
+  50% { transform: scale(1.25) rotate(3deg); }
+}
+
+@keyframes gearShine {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes gearGlow {
+  0% { 
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% { 
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+@keyframes gearHover {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.2) rotate(-2deg); }
+  50% { transform: scale(1.15) rotate(3deg); }
+  75% { transform: scale(1.18) rotate(-1deg); }
+  100% { transform: scale(1.15) rotate(5deg); }
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-2px) scale(1.05); }
+}
+
+@keyframes iconGlow {
+  0% { 
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  100% { 
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes containerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes containerGlow {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.8; }
+}
+
+/* 内心戏动画 */
+@keyframes emotionWave {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes thoughtBubble {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1) translateY(-5px);
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(1.1) translateY(-10px);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0) translateY(-15px);
+    opacity: 0;
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes nervous {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-2px) rotate(-1deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(1deg);
+  }
+}
+
+@keyframes excited {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  50% {
+    transform: scale(1.05) rotate(-3deg);
+  }
+  75% {
+    transform: scale(1.15) rotate(8deg);
+  }
+}
+
+@keyframes calm {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.8;
+  }
+}
+
+/* 图标动态动画 */
+@keyframes iconSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-3px) scale(1.1); }
+  50% { transform: translateY(-6px) scale(1.05); }
+  75% { transform: translateY(-3px) scale(1.1); }
+}
+
+@keyframes iconShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-2px) rotate(-5deg); }
+  50% { transform: translateX(2px) rotate(5deg); }
+  75% { transform: translateX(-1px) rotate(-3deg); }
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.2); }
+  50% { transform: scale(0.9); }
+  75% { transform: scale(1.1); }
+}
+
+/* 让gear整体动起来 */
+@keyframes gearDance {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-5px) rotate(2deg); }
+  50% { transform: translateY(-10px) rotate(-2deg); }
+  75% { transform: translateY(-5px) rotate(1deg); }
+}
+
+@keyframes gearWiggle {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-3px) rotate(-3deg); }
+  50% { transform: translateX(3px) rotate(3deg); }
+  75% { transform: translateX(-1px) rotate(-1deg); }
+}
+
+@keyframes gearRock {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+/* 粒子动画 */
+@keyframes particleFloat1 {
+  0%, 100% { 
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.3;
+  }
+  25% { 
+    transform: translateY(-10px) translateX(5px) scale(1.2);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateY(-20px) translateX(-3px) scale(0.8);
+    opacity: 0.5;
+  }
+  75% { 
+    transform: translateY(-15px) translateX(8px) scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes particleFloat2 {
+  0%, 100% { 
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.3;
+  }
+  33% { 
+    transform: translateY(-15px) translateX(-8px) scale(1.3);
+    opacity: 0.9;
+  }
+  66% { 
+    transform: translateY(-25px) translateX(5px) scale(0.7);
+    opacity: 0.4;
+  }
+}
+
+@keyframes particleFloat3 {
+  0%, 100% { 
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.3;
+  }
+  25% { 
+    transform: translateY(-8px) translateX(-5px) scale(1.1);
+    opacity: 0.7;
+  }
+  50% { 
+    transform: translateY(-18px) translateX(3px) scale(0.9);
+    opacity: 0.5;
+  }
+  75% { 
+    transform: translateY(-12px) translateX(-7px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.logo-text {
+  margin-top: 1rem;
+}
+
 /* 标题样式 */
 .theme-title {
   margin-bottom: 2rem;
@@ -234,13 +1111,25 @@
   text-shadow: 
     0 0 10px #00ffe7,
     0 0 20px #00ffe7,
-    0 0 30px #00ffe7;
+    0 0 30px rgba(0, 255, 231, 0.8);
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 4px;
   position: relative;
   display: inline-block;
-  animation: glitch 5s infinite;
+  animation: glitch 5s infinite, breathe 3s ease-in-out infinite;
   will-change: transform;
+  filter: brightness(1) contrast(1.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.title-glitch:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1) contrast(1.3);
+  text-shadow: 
+    0 0 15px #00ffe7,
+    0 0 25px #00ffe7,
+    0 0 35px rgba(0, 255, 231, 0.9);
 }
 
 .title-glitch::before,
@@ -257,56 +1146,222 @@
   animation: glitch-1 2s infinite;
   color: #ff00ff;
   z-index: -1;
+  text-shadow: 
+    0 0 8px #ff00ff,
+    0 0 16px #ff00ff;
+  filter: brightness(0.8);
 }
 
 .title-glitch::after {
   animation: glitch-2 2s infinite;
   color: #00ffff;
   z-index: -2;
+  text-shadow: 
+    0 0 8px #00ffff,
+    0 0 16px #00ffff;
+  filter: brightness(0.8);
 }
 
 @keyframes glitch {
-  0%, 90%, 100% { transform: translate(0); }
-  5% { transform: translate(-1px, 1px); }
-  10% { transform: translate(-1px, -1px); }
-  15% { transform: translate(1px, 1px); }
-  20% { transform: translate(1px, -1px); }
+  0%, 90%, 100% { 
+    transform: translate(0); 
+    text-shadow: 
+      0 0 10px #00ffe7,
+      0 0 20px #00ffe7,
+      0 0 30px rgba(0, 255, 231, 0.8);
+  }
+  5% { 
+    transform: translate(-2px, 2px); 
+    text-shadow: 
+      0 0 12px #00ffe7,
+      0 0 22px #00ffe7,
+      0 0 32px rgba(0, 255, 231, 0.9);
+  }
+  10% { 
+    transform: translate(-2px, -2px); 
+    text-shadow: 
+      0 0 12px #00ffe7,
+      0 0 22px #00ffe7,
+      0 0 32px rgba(0, 255, 231, 0.9);
+  }
+  15% { 
+    transform: translate(2px, 2px); 
+    text-shadow: 
+      0 0 12px #00ffe7,
+      0 0 22px #00ffe7,
+      0 0 32px rgba(0, 255, 231, 0.9);
+  }
+  20% { 
+    transform: translate(2px, -2px); 
+    text-shadow: 
+      0 0 12px #00ffe7,
+      0 0 22px #00ffe7,
+      0 0 32px rgba(0, 255, 231, 0.9);
+  }
 }
 
 @keyframes glitch-1 {
-  0%, 90%, 100% { transform: translate(0); }
-  5% { transform: translate(1px, -1px); }
-  10% { transform: translate(1px, 1px); }
-  15% { transform: translate(-1px, -1px); }
-  20% { transform: translate(-1px, 1px); }
+  0%, 90%, 100% { 
+    transform: translate(0); 
+    text-shadow: 
+      0 0 8px #ff00ff,
+      0 0 16px #ff00ff;
+  }
+  5% { 
+    transform: translate(2px, -2px); 
+    text-shadow: 
+      0 0 10px #ff00ff,
+      0 0 18px #ff00ff;
+  }
+  10% { 
+    transform: translate(2px, 2px); 
+    text-shadow: 
+      0 0 10px #ff00ff,
+      0 0 18px #ff00ff;
+  }
+  15% { 
+    transform: translate(-2px, -2px); 
+    text-shadow: 
+      0 0 10px #ff00ff,
+      0 0 18px #ff00ff;
+  }
+  20% { 
+    transform: translate(-2px, 2px); 
+    text-shadow: 
+      0 0 10px #ff00ff,
+      0 0 18px #ff00ff;
+  }
 }
 
 @keyframes glitch-2 {
-  0%, 90%, 100% { transform: translate(0); }
-  5% { transform: translate(-1px, 1px); }
-  10% { transform: translate(1px, -1px); }
-  15% { transform: translate(-1px, -1px); }
-  20% { transform: translate(1px, 1px); }
+  0%, 90%, 100% { 
+    transform: translate(0); 
+    text-shadow: 
+      0 0 8px #00ffff,
+      0 0 16px #00ffff;
+  }
+  5% { 
+    transform: translate(-2px, 2px); 
+    text-shadow: 
+      0 0 10px #00ffff,
+      0 0 18px #00ffff;
+  }
+  10% { 
+    transform: translate(2px, -2px); 
+    text-shadow: 
+      0 0 10px #00ffff,
+      0 0 18px #00ffff;
+  }
+  15% { 
+    transform: translate(-2px, -2px); 
+    text-shadow: 
+      0 0 10px #00ffff,
+      0 0 18px #00ffff;
+  }
+  20% { 
+    transform: translate(2px, 2px); 
+    text-shadow: 
+      0 0 10px #00ffff,
+      0 0 18px #00ffff;
+  }
 }
 
-.title-subtitle {
-  display: block;
-  font-size: 1.5rem;
-  color: rgba(0, 255, 231, 0.8);
-  font-weight: 400;
-  margin-top: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 2px;
+@keyframes breathe {
+  0%, 100% { 
+    filter: brightness(1.1) contrast(1.2);
+    text-shadow: 
+      0 0 10px #00ffe7,
+      0 0 20px #00ffe7,
+      0 0 30px rgba(0, 255, 231, 0.8);
+  }
+  50% { 
+    filter: brightness(1.2) contrast(1.3);
+    text-shadow: 
+      0 0 12px #00ffe7,
+      0 0 22px #00ffe7,
+      0 0 32px rgba(0, 255, 231, 0.9);
+  }
 }
 
-/* 引用文字样式 */
+
+
+/* 副标题样式 */
 .quote-container {
   position: relative;
-  margin: 2rem 0;
-  padding: 20px;
+  margin: 1.5rem 0;
+  padding: 15px;
+  text-align: center;
 }
 
 .quote-text {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--geek-primary, #00ffe7);
+  text-shadow: 0 0 15px rgba(0, 255, 231, 0.5);
+  margin-bottom: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 2px;
+  transition: all 0.5s ease;
+  animation: quoteGlow 3s ease-in-out infinite;
+}
+
+@keyframes quoteGlow {
+  0%, 100% { 
+    text-shadow: 0 0 15px rgba(0, 255, 231, 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    text-shadow: 0 0 25px rgba(0, 255, 231, 0.8);
+    transform: scale(1.02);
+  }
+}
+
+.quote-subtitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--geek-accent, #00bfff);
+  text-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+  margin: 1rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 2px;
+  transition: all 0.5s ease;
+  animation: subtitlePulse 4s ease-in-out infinite;
+  text-align: center;
+}
+
+.quote-footer {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--geek-secondary, #ff6b9d);
+  text-shadow: 0 0 8px rgba(255, 107, 157, 0.3);
+  font-style: italic;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+  transition: all 0.5s ease;
+  animation: footerFade 5s ease-in-out infinite;
+}
+
+@keyframes subtitlePulse {
+  0%, 100% { 
+    text-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+    opacity: 0.9;
+  }
+  50% { 
+    text-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+    opacity: 1;
+  }
+}
+
+@keyframes footerFade {
+  0%, 100% { 
+    text-shadow: 0 0 8px rgba(255, 107, 157, 0.3);
+    opacity: 0.7;
+  }
+  50% { 
+    text-shadow: 0 0 12px rgba(255, 107, 157, 0.5);
+    opacity: 1;
+  }
+}
   font-size: 1.4rem;
   color: #ffffff;
   font-weight: 500;
@@ -448,7 +1503,7 @@
   position: relative;
 }
 
-.theme-dot[data-theme="geek"] {
+.theme-dot[data-theme="work"] {
   background: #00ffe7;
   box-shadow: 0 0 10px #00ffe7;
 }
@@ -458,7 +1513,7 @@
   box-shadow: 0 0 10px #667eea;
 }
 
-.theme-dot[data-theme="rage"] {
+.theme-dot[data-theme="training"] {
   background: #ff6b35;
   box-shadow: 0 0 10px #ff6b35;
 }
@@ -531,10 +1586,7 @@
     letter-spacing: 6px;
   }
   
-  .title-subtitle {
-    font-size: 2rem;
-    letter-spacing: 3px;
-  }
+
   
   .quote-text {
     font-size: 1.8rem;
@@ -572,10 +1624,7 @@
     letter-spacing: 4px;
   }
   
-  .title-subtitle {
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-  }
+
   
   .quote-text {
     font-size: 1.4rem;
@@ -613,10 +1662,7 @@
     letter-spacing: 2px;
   }
   
-  .title-subtitle {
-    font-size: 1.2rem;
-    letter-spacing: 1px;
-  }
+
   
   .quote-text {
     font-size: 1.2rem;
@@ -675,10 +1721,7 @@
     letter-spacing: 1px;
   }
   
-  .title-subtitle {
-    font-size: 1rem;
-    letter-spacing: 0.5px;
-  }
+
   
   .quote-text {
     font-size: 1.1rem;
@@ -763,9 +1806,7 @@
     letter-spacing: 0.5px;
   }
   
-  .title-subtitle {
-    font-size: 0.9rem;
-  }
+
   
   .quote-text {
     font-size: 1rem;
@@ -805,9 +1846,7 @@
     font-size: 2rem;
   }
   
-  .title-subtitle {
-    font-size: 1rem;
-  }
+
   
   .quote-text {
     font-size: 1rem;
@@ -888,6 +1927,48 @@
   }
 }
 
+/* 主题特定样式 */
+.home-container.work-theme {
+  background: var(--geek-bg, #0a0e17);
+}
+
+.home-container.life-theme {
+  background: linear-gradient(135deg, #1a4d2e 0%, #2d5a3d 100%);
+}
+
+.home-container.training-theme {
+  background: linear-gradient(135deg, #2d1b1b 0%, #4a2c2c 100%);
+}
+
+.home-container.cyberpunk-theme {
+  background: #0a0a0a;
+}
+
+/* 主题特定的齿轮样式 */
+.work-theme .gear-1 {
+  background: linear-gradient(135deg, rgba(0, 255, 231, 0.4), rgba(0, 191, 255, 0.4));
+  border-color: #00ffe7;
+  box-shadow: 0 0 25px rgba(0, 255, 231, 0.5);
+}
+
+.life-theme .gear-2 {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.4), rgba(23, 162, 184, 0.4));
+  border-color: #28a745;
+  box-shadow: 0 0 25px rgba(40, 167, 69, 0.5);
+}
+
+.training-theme .gear-3 {
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.4), rgba(255, 107, 53, 0.4));
+  border-color: #ff4444;
+  box-shadow: 0 0 25px rgba(255, 68, 68, 0.5);
+}
+
+.cyberpunk-theme .gear-4 {
+  background: linear-gradient(135deg, rgba(255, 0, 110, 0.4), rgba(0, 255, 255, 0.4));
+  border-color: #ff006e;
+  box-shadow: 0 0 25px rgba(255, 0, 110, 0.5);
+}
+
 /* 移动设备性能优化 */
 @media (max-width: 768px) {
   .title-glitch {
@@ -914,10 +1995,149 @@
   .theme-card:hover {
     transform: translateY(-2px) scale(1.005) !important;
   }
+  
+  .gear-container {
+    width: 300px;
+    height: 120px;
+  }
+  
+  .gear {
+    width: 60px;
+    height: 60px;
+    font-size: 1.4rem;
+  }
 }
 </style>
 
 <script>
+// ModeShift Logo交互功能
+document.addEventListener('DOMContentLoaded', function() {
+  const gears = document.querySelectorAll('.gear');
+  const logo = document.getElementById('modeshiftLogo');
+  let currentTheme = 'work';
+  
+  // 齿轮点击事件 - 跳转到对应页面
+  gears.forEach(gear => {
+    gear.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const theme = this.getAttribute('data-theme');
+      console.log('齿轮被点击:', theme); // 调试信息
+      
+      // 移除所有齿轮的活跃状态
+      gears.forEach(g => g.classList.remove('active'));
+      
+      // 添加当前齿轮的活跃状态
+      this.classList.add('active');
+      
+      // 更新当前主题
+      currentTheme = theme;
+      
+      // 更新网站整体风格
+      updateWebsiteStyle(theme);
+      
+      // 如果有switchGlobalTheme函数则调用
+      if (typeof switchGlobalTheme === 'function') {
+        switchGlobalTheme(theme);
+      }
+      
+      // 跳转到对应的工具页面
+      // 主题页面映射
+      const themePageMapping = {
+        'life': '/tools/life/',
+        'work': '/tools/work/',
+        'training': '/tools/training/',
+        'cyberpunk': '/tools/emo/'
+      };
+      
+      // 跳转到对应的工具页面
+      const targetPage = themePageMapping[theme] || '/tools/work/';
+      console.log('准备跳转到:', targetPage); // 调试信息
+      window.location.href = targetPage;
+    });
+  });
+  
+  // 更新网站整体风格
+  function updateWebsiteStyle(theme) {
+    const root = document.documentElement;
+    const homeContainer = document.querySelector('.home-container');
+    
+    // 移除所有主题类
+    homeContainer.classList.remove('work-theme', 'life-theme', 'training-theme', 'cyberpunk-theme');
+    
+    // 添加当前主题类
+    homeContainer.classList.add(theme + '-theme');
+    
+    // 更新CSS变量
+    switch(theme) {
+      case 'work':
+        root.style.setProperty('--geek-primary', '#00ffe7');
+        root.style.setProperty('--geek-accent', '#00bfff');
+        root.style.setProperty('--geek-secondary', '#ff6b9d');
+        break;
+      case 'life':
+        root.style.setProperty('--geek-primary', '#28a745');
+        root.style.setProperty('--geek-accent', '#17a2b8');
+        root.style.setProperty('--geek-secondary', '#ffc107');
+        break;
+      case 'training':
+        root.style.setProperty('--geek-primary', '#ff4444');
+        root.style.setProperty('--geek-accent', '#ff6b35');
+        root.style.setProperty('--geek-secondary', '#ffd700');
+        break;
+      case 'cyberpunk':
+        root.style.setProperty('--geek-primary', '#ff006e');
+        root.style.setProperty('--geek-accent', '#00ffff');
+        root.style.setProperty('--geek-secondary', '#ffd700');
+        break;
+    }
+  }
+  
+  // 鼠标悬停效果
+  logo.addEventListener('mouseenter', function() {
+    gears.forEach(gear => {
+      gear.style.animationPlayState = 'running';
+    });
+  });
+  
+  logo.addEventListener('mouseleave', function() {
+    gears.forEach(gear => {
+      gear.style.animationPlayState = 'paused';
+    });
+  });
+  
+  // 简化的齿轮联动效果
+  gears.forEach((gear, index) => {
+    gear.addEventListener('mouseenter', function() {
+      // 激活当前齿轮
+      this.style.zIndex = '10';
+      this.style.animation = 'gearInterlock 1s ease-in-out infinite';
+      
+      // 激活相邻齿轮
+      gears.forEach((otherGear, otherIndex) => {
+        if (otherIndex !== index) {
+          const delay = Math.abs(otherIndex - index) * 0.2;
+          otherGear.style.zIndex = 10 - Math.abs(otherIndex - index);
+          otherGear.style.animation = `gearInterlock 1s ease-in-out infinite ${delay}s`;
+        }
+      });
+    });
+    
+    gear.addEventListener('mouseleave', function() {
+      // 恢复所有齿轮的默认状态
+      gears.forEach(g => {
+        g.style.zIndex = '1';
+        g.style.animation = 'gearFloat 4s ease-in-out infinite';
+      });
+    });
+  });
+  
+  // 初始化默认主题
+  updateWebsiteStyle(currentTheme);
+  document.querySelector('.gear-1').classList.add('active');
+});
+
 // 主题切换功能
 document.querySelectorAll('.theme-dot').forEach(dot => {
   dot.addEventListener('click', function() {
@@ -927,33 +2147,27 @@ document.querySelectorAll('.theme-dot').forEach(dot => {
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
     this.classList.add('active');
     
-    // 切换主题
-    switchGlobalTheme(theme);
+    // 更新body类名以反映当前主题
+    document.body.className = '';
+    if (theme === 'work') {
+      document.body.classList.add('work-theme');
+    } else if (theme === 'life') {
+      document.body.classList.add('life-theme');
+    } else if (theme === 'training') {
+      document.body.classList.add('training-theme');
+    } else if (theme === 'emo') {
+      document.body.classList.add('emo-theme');
+    }
+    
+    // 如果有switchGlobalTheme函数则调用
+    if (typeof switchGlobalTheme === 'function') {
+      switchGlobalTheme(theme);
+    }
   });
 });
 
-// 引用文字动画
-const quoteText = document.getElementById('quoteText');
-const quotes = [
-  "君子生非异也，善假于物也。",
-  "工欲善其事，必先利其器。",
-  "学而时习之，不亦说乎。",
-  "知之者不如好之者，好之者不如乐之者。"
-];
-
-let currentQuoteIndex = 0;
-
-function changeQuote() {
-  quoteText.style.opacity = '0';
-  setTimeout(() => {
-    currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
-    quoteText.textContent = quotes[currentQuoteIndex];
-    quoteText.style.opacity = '1';
-  }, 500);
-}
-
-// 每10秒切换一次引用
-setInterval(changeQuote, 10000);
+// 副标题固定显示
+const quoteSubtitle = document.querySelector('.quote-subtitle');
 
 // 检测设备类型
 function isMobileDevice() {
@@ -1016,13 +2230,49 @@ if (isTouchDevice()) {
   });
 }
 
+// 进入当前模式工具页面
+function enterCurrentModeTools(event) {
+  event.preventDefault();
+  
+  // 检查用户是否已登录
+  {% if user.is_authenticated %}
+    // 用户已登录，获取当前主题
+    let currentTheme = 'work'; // 默认极客模式
+    
+    // 从body类名中获取当前主题
+    const bodyClass = document.body.className;
+    if (bodyClass.includes('life-theme')) {
+      currentTheme = 'life';
+    } else if (bodyClass.includes('training-theme')) {
+      currentTheme = 'training';
+    } else if (bodyClass.includes('emo-theme')) {
+      currentTheme = 'emo';
+    }
+    
+    // 主题页面映射
+    const themePageMapping = {
+      'life': '/tools/life/',
+      'work': '/tools/work/',
+      'training': '/tools/training/',
+      'emo': '/tools/emo/'
+    };
+    
+    // 跳转到对应的工具页面
+    const targetPage = themePageMapping[currentTheme] || '/tools/work/';
+    window.location.href = targetPage;
+  {% else %}
+    // 用户未登录，跳转到登录页面
+    window.location.href = '/users/login/';
+  {% endif %}
+}
+
 // 初始化极客主题
 document.addEventListener('DOMContentLoaded', function() {
   // 设置默认主题为极客模式
   document.body.className = 'work-theme';
   
   // 激活极客主题点
-  document.querySelector('.theme-dot[data-theme="geek"]').classList.add('active');
+  document.querySelector('.theme-dot[data-theme="work"]').classList.add('active');
 });
 </script>
 {% endblock %}

@@ -1,0 +1,602 @@
+/* 赛博哥特 + 故障艺术风格 */
+
+:root {
+  /* 赛博哥特色彩系统 */
+  --cyber-bg: #0a0a0a;
+  --cyber-card-bg: #1a1a1a;
+  --cyber-primary: #ff006e;
+  --cyber-accent: #00ffff;
+  --cyber-secondary: #ffd700;
+  --cyber-text: #ffffff;
+  --cyber-text-muted: #888888;
+  --cyber-border: rgba(255, 0, 110, 0.3);
+  --cyber-shadow: 0 8px 32px rgba(255, 0, 110, 0.2);
+  --cyber-shadow-hover: 0 8px 32px rgba(255, 0, 110, 0.4);
+  --cyber-radius: 8px;
+  --cyber-radius-lg: 16px;
+  --cyber-font-mono: 'Courier New', 'Monaco', 'Consolas', monospace;
+  --cyber-font-sans: 'Arial', 'Helvetica', sans-serif;
+  --cyber-gradient: linear-gradient(135deg, #ff006e 0%, #00ffff 50%, #ffd700 100%);
+  --cyber-gradient-card: linear-gradient(135deg, rgba(26,26,26,0.9) 0%, rgba(255,0,110,0.1) 100%);
+  
+  /* 故障艺术效果变量 */
+  --glitch-offset: 2px;
+  --glitch-blur: 0.5px;
+  --glitch-duration: 0.3s;
+}
+
+body.cyberpunk-theme {
+  background: var(--cyber-bg);
+  color: var(--cyber-text);
+  font-family: var(--cyber-font-sans);
+  transition: all 0.3s ease;
+  margin: 0;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 赛博哥特背景动画 */
+body.cyberpunk-theme::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: cyberMatrix 20s ease-in-out infinite;
+}
+
+@keyframes cyberMatrix {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.8;
+  }
+  33% { 
+    transform: translateY(-15px) rotate(1deg);
+    opacity: 1;
+  }
+  66% { 
+    transform: translateY(10px) rotate(-1deg);
+    opacity: 0.9;
+  }
+}
+
+/* 故障艺术效果 - 第一次点击 */
+body.cyberpunk-theme.glitch-level-1::before {
+  animation: cyberMatrix 20s ease-in-out infinite, glitchLevel1 0.5s ease-in-out infinite;
+}
+
+@keyframes glitchLevel1 {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    transform: translateY(-2px) rotate(0.5deg);
+    filter: hue-rotate(10deg);
+  }
+  50% { 
+    transform: translateY(2px) rotate(-0.5deg);
+    filter: hue-rotate(-10deg);
+  }
+  75% { 
+    transform: translateY(-1px) rotate(0.2deg);
+    filter: hue-rotate(5deg);
+  }
+}
+
+/* 故障艺术效果 - 第二次点击 */
+body.cyberpunk-theme.glitch-level-2::before {
+  animation: cyberMatrix 20s ease-in-out infinite, glitchLevel2 0.3s ease-in-out infinite;
+}
+
+@keyframes glitchLevel2 {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+    filter: hue-rotate(0deg) saturate(1);
+  }
+  20% { 
+    transform: translateY(-4px) rotate(1deg);
+    filter: hue-rotate(20deg) saturate(1.2);
+  }
+  40% { 
+    transform: translateY(4px) rotate(-1deg);
+    filter: hue-rotate(-20deg) saturate(0.8);
+  }
+  60% { 
+    transform: translateY(-2px) rotate(0.5deg);
+    filter: hue-rotate(15deg) saturate(1.1);
+  }
+  80% { 
+    transform: translateY(2px) rotate(-0.5deg);
+    filter: hue-rotate(-15deg) saturate(0.9);
+  }
+}
+
+/* 故障艺术效果 - 第三次点击 */
+body.cyberpunk-theme.glitch-level-3::before {
+  animation: cyberMatrix 20s ease-in-out infinite, glitchLevel3 0.2s ease-in-out infinite;
+}
+
+@keyframes glitchLevel3 {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg);
+    filter: hue-rotate(0deg) saturate(1) contrast(1);
+  }
+  16% { 
+    transform: translateY(-6px) rotate(2deg);
+    filter: hue-rotate(30deg) saturate(1.5) contrast(1.2);
+  }
+  32% { 
+    transform: translateY(6px) rotate(-2deg);
+    filter: hue-rotate(-30deg) saturate(0.5) contrast(0.8);
+  }
+  48% { 
+    transform: translateY(-3px) rotate(1deg);
+    filter: hue-rotate(25deg) saturate(1.3) contrast(1.1);
+  }
+  64% { 
+    transform: translateY(3px) rotate(-1deg);
+    filter: hue-rotate(-25deg) saturate(0.7) contrast(0.9);
+  }
+  80% { 
+    transform: translateY(-1px) rotate(0.5deg);
+    filter: hue-rotate(10deg) saturate(1.1) contrast(1.05);
+  }
+  96% { 
+    transform: translateY(1px) rotate(-0.5deg);
+    filter: hue-rotate(-10deg) saturate(0.9) contrast(0.95);
+  }
+}
+
+/* 赛博哥特卡片样式 */
+.cyber-card {
+  background: var(--cyber-gradient-card);
+  border: 2px solid var(--cyber-border);
+  border-radius: var(--cyber-radius);
+  box-shadow: var(--cyber-shadow);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cyber-gradient);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.cyber-card:hover::after {
+  transform: scaleX(1);
+}
+
+.cyber-card:hover {
+  box-shadow: var(--cyber-shadow-hover);
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--cyber-primary);
+}
+
+/* 故障艺术卡片效果 */
+body.cyberpunk-theme.glitch-level-1 .cyber-card {
+  animation: cardGlitch1 2s ease-in-out infinite;
+}
+
+body.cyberpunk-theme.glitch-level-2 .cyber-card {
+  animation: cardGlitch2 1.5s ease-in-out infinite;
+}
+
+body.cyberpunk-theme.glitch-level-3 .cyber-card {
+  animation: cardGlitch3 1s ease-in-out infinite;
+}
+
+@keyframes cardGlitch1 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes cardGlitch2 {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  25% { transform: translateY(-2px) scale(1.01); }
+  50% { transform: translateY(2px) scale(0.99); }
+  75% { transform: translateY(-1px) scale(1.005); }
+}
+
+@keyframes cardGlitch3 {
+  0%, 100% { transform: translateY(0px) scale(1) rotate(0deg); }
+  20% { transform: translateY(-3px) scale(1.02) rotate(0.5deg); }
+  40% { transform: translateY(3px) scale(0.98) rotate(-0.5deg); }
+  60% { transform: translateY(-1px) scale(1.01) rotate(0.2deg); }
+  80% { transform: translateY(1px) scale(0.99) rotate(-0.2deg); }
+}
+
+/* 赛博哥特标题样式 */
+.cyber-title {
+  color: var(--cyber-primary);
+  font-size: 2.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: 3px;
+  text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+  animation: cyberGlow 2s ease-in-out infinite alternate;
+  font-family: var(--cyber-font-mono);
+}
+
+@keyframes cyberGlow {
+  from { 
+    text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+    filter: hue-rotate(0deg);
+  }
+  to { 
+    text-shadow: 0 0 30px rgba(255, 0, 110, 0.8), 0 0 40px rgba(255, 0, 110, 0.3);
+    filter: hue-rotate(10deg);
+  }
+}
+
+/* 故障艺术标题效果 */
+body.cyberpunk-theme.glitch-level-1 .cyber-title {
+  animation: cyberGlow 2s ease-in-out infinite alternate, titleGlitch1 3s ease-in-out infinite;
+}
+
+body.cyberpunk-theme.glitch-level-2 .cyber-title {
+  animation: cyberGlow 2s ease-in-out infinite alternate, titleGlitch2 2s ease-in-out infinite;
+}
+
+body.cyberpunk-theme.glitch-level-3 .cyber-title {
+  animation: cyberGlow 2s ease-in-out infinite alternate, titleGlitch3 1s ease-in-out infinite;
+}
+
+@keyframes titleGlitch1 {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(1px); }
+}
+
+@keyframes titleGlitch2 {
+  0%, 100% { transform: translateX(0px) skewX(0deg); }
+  25% { transform: translateX(2px) skewX(1deg); }
+  50% { transform: translateX(-2px) skewX(-1deg); }
+  75% { transform: translateX(1px) skewX(0.5deg); }
+}
+
+@keyframes titleGlitch3 {
+  0%, 100% { transform: translateX(0px) skewX(0deg) scale(1); }
+  20% { transform: translateX(3px) skewX(2deg) scale(1.01); }
+  40% { transform: translateX(-3px) skewX(-2deg) scale(0.99); }
+  60% { transform: translateX(1px) skewX(1deg) scale(1.005); }
+  80% { transform: translateX(-1px) skewX(-1deg) scale(0.995); }
+}
+
+.cyber-subtitle {
+  color: var(--cyber-text-muted);
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 400;
+  font-family: var(--cyber-font-mono);
+  letter-spacing: 1px;
+}
+
+/* 赛博哥特工具网格 */
+.cyber-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 2rem;
+}
+
+.cyber-tool-card {
+  background: var(--cyber-card-bg);
+  border: 2px solid var(--cyber-border);
+  border-radius: var(--cyber-radius-lg);
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cyber-tool-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, var(--cyber-primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: cyberRotate 4s linear infinite;
+}
+
+.cyber-tool-card:hover::before {
+  opacity: 0.1;
+}
+
+@keyframes cyberRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.cyber-tool-card:hover {
+  border-color: var(--cyber-primary);
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 16px 60px rgba(255, 0, 110, 0.2);
+}
+
+.cyber-tool-icon {
+  font-size: 3.5rem;
+  color: var(--cyber-primary);
+  margin-bottom: 1rem;
+  animation: cyberPulse 2s ease-in-out infinite;
+}
+
+@keyframes cyberPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.cyber-tool-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--cyber-text);
+  margin-bottom: 0.5rem;
+  font-family: var(--cyber-font-mono);
+  letter-spacing: 1px;
+}
+
+.cyber-tool-description {
+  color: var(--cyber-text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* 赛博哥特按钮样式 */
+.cyber-btn {
+  background: var(--cyber-gradient);
+  color: var(--cyber-bg);
+  border: none;
+  border-radius: var(--cyber-radius);
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--cyber-font-mono);
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(255, 0, 110, 0.2);
+}
+
+.cyber-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.cyber-btn:hover::before {
+  left: 100%;
+}
+
+.cyber-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(255, 0, 110, 0.4);
+  color: var(--cyber-bg);
+  text-decoration: none;
+}
+
+.cyber-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.cyber-btn-secondary {
+  background: transparent;
+  color: var(--cyber-primary);
+  border: 2px solid var(--cyber-primary);
+  box-shadow: 0 4px 15px rgba(255, 0, 110, 0.1);
+}
+
+.cyber-btn-secondary:hover {
+  background: var(--cyber-primary);
+  color: var(--cyber-bg);
+  box-shadow: 0 8px 25px rgba(255, 0, 110, 0.3);
+}
+
+/* 赛博哥特终端样式 */
+.cyber-terminal {
+  background: #111111;
+  color: var(--cyber-primary);
+  font-family: var(--cyber-font-mono);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  font-size: 1.1rem;
+  position: relative;
+  border: 1px solid var(--cyber-border);
+}
+
+.cyber-terminal::before {
+  content: '$ ';
+  color: var(--cyber-accent);
+  font-weight: bold;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.5; }
+}
+
+/* 赛博哥特导航栏 */
+.cyber-navbar {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--cyber-border);
+}
+
+.cyber-navbar .nav-link {
+  color: var(--cyber-text);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-family: var(--cyber-font-mono);
+}
+
+.cyber-navbar .nav-link:hover {
+  color: var(--cyber-primary);
+  text-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+}
+
+/* 赛博哥特用户菜单 */
+.cyber-user-menu {
+  background: var(--cyber-card-bg);
+  border: 1px solid var(--cyber-border);
+  border-radius: var(--cyber-radius);
+  box-shadow: var(--cyber-shadow);
+}
+
+.cyber-mode-indicator {
+  background: var(--cyber-gradient);
+  color: var(--cyber-bg);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 8px;
+  font-family: var(--cyber-font-mono);
+  letter-spacing: 1px;
+  animation: cyberPulse 2s ease-in-out infinite;
+}
+
+/* 赛博哥特响应式设计 */
+@media (max-width: 768px) {
+  .cyber-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .cyber-title {
+    font-size: 2.2rem;
+  }
+  
+  .cyber-subtitle {
+    font-size: 1rem;
+  }
+  
+  .cyber-tool-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* 赛博哥特切换按钮 */
+.cyber-mode-btn {
+  background: var(--cyber-gradient-card);
+  border: 1px solid var(--cyber-border);
+  color: var(--cyber-text);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.cyber-mode-btn:hover {
+  border-color: var(--cyber-primary);
+  box-shadow: var(--cyber-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.cyber-mode-btn.active {
+  border-color: var(--cyber-primary);
+  background: rgba(255, 0, 110, 0.1);
+  box-shadow: var(--cyber-shadow-hover);
+}
+
+/* 故障艺术切换指示器 */
+.glitch-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--cyber-gradient);
+  color: var(--cyber-bg);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--cyber-font-mono);
+  letter-spacing: 1px;
+  z-index: 1000;
+  animation: cyberPulse 2s ease-in-out infinite;
+  display: none;
+}
+
+body.cyberpunk-theme.glitch-level-1 .glitch-indicator,
+body.cyberpunk-theme.glitch-level-2 .glitch-indicator,
+body.cyberpunk-theme.glitch-level-3 .glitch-indicator {
+  display: block;
+}
+
+/* 故障艺术扫描线效果 */
+body.cyberpunk-theme.glitch-level-2::after,
+body.cyberpunk-theme.glitch-level-3::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--cyber-primary);
+  z-index: 999;
+  animation: scanline 2s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+/* 故障艺术噪点效果 */
+body.cyberpunk-theme.glitch-level-3::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 0, 110, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  z-index: -2;
+  animation: noise 0.5s ease-in-out infinite;
+  opacity: 0.1;
+}
+
+@keyframes noise {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+} 

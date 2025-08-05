@@ -1,0 +1,742 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}心动链接 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.heart-link-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #667eea 100%);
+    color: #ffffff;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.heart-link-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="hearts" patternUnits="userSpaceOnUse" width="20" height="20"><path d="M10,6 Q10,0 15,6 T20,6 Q20,0 15,6 T10,6" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23hearts)"/></svg>');
+    animation: float 20s linear infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    100% { transform: translateY(-20px); }
+}
+
+@keyframes slideInRight {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.notification {
+    transition: all 0.3s ease;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 0;
+    line-height: 1;
+}
+
+.notification-close:hover {
+    opacity: 0.8;
+}
+
+.heart-link-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 3rem;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.heart-link-header {
+    margin-bottom: 2rem;
+}
+
+.heart-link-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.heart-link-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2rem;
+}
+
+.heart-link-status {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-text {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.status-description {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.heart-link-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.heart-btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 150px;
+    justify-content: center;
+}
+
+.heart-btn-primary {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.heart-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+}
+
+.heart-btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.heart-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.heart-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.heart-animation {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: heartbeat 2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.matched-info {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.matched-user {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.matched-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.matched-details h4 {
+    margin: 0;
+    color: #4CAF50;
+}
+
+.matched-details p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 768px) {
+    .heart-link-container {
+        padding: 1rem;
+    }
+    
+    .heart-link-card {
+        padding: 2rem;
+    }
+    
+    .heart-link-title {
+        font-size: 2rem;
+    }
+    
+    .heart-link-actions {
+        flex-direction: column;
+    }
+    
+    .heart-btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="heart-link-container">
+    <div class="heart-link-card">
+        <div class="heart-link-header">
+            <div class="heart-animation">💕</div>
+            <h1 class="heart-link-title">心动链接</h1>
+            <p class="heart-link-subtitle">寻找心灵的共鸣，开启美好的邂逅</p>
+        </div>
+        
+        <div class="heart-link-status" id="status-container">
+            <div class="status-text" id="status-text">准备开始心动之旅</div>
+            <div class="status-description" id="status-description">点击下方按钮开始寻找有缘人</div>
+        </div>
+        
+        <div class="heart-link-actions" id="actions-container">
+            <button class="heart-btn heart-btn-primary" id="start-btn" onclick="startHeartLink()">
+                <i class="fas fa-heart"></i>
+                开始寻找
+            </button>
+            <button class="heart-btn heart-btn-secondary" id="cancel-btn" onclick="cancelHeartLink()" style="display: none;">
+                <i class="fas fa-times"></i>
+                取消匹配
+            </button>
+            <a href="{% url 'home' %}" class="heart-btn heart-btn-secondary">
+                <i class="fas fa-home"></i>
+                返回首页
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentRequestId = null;
+let roomId = null;
+let statusCheckInterval = null;
+let countdownInterval = null;
+let expireTimeout = null;
+
+async function startHeartLink() {
+    try {
+        // 更新UI状态
+        const startBtn = document.getElementById('start-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const statusText = document.getElementById('status-text');
+        const statusDescription = document.getElementById('status-description');
+        
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<span class="loading-spinner"></span> 正在匹配...';
+        cancelBtn.style.display = 'inline-flex';
+        
+        statusText.textContent = '正在寻找有缘人...';
+        statusDescription.textContent = '请耐心等待，系统正在为您匹配';
+        
+        // 发送匹配请求
+        const response = await fetch('/tools/api/heart-link/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+        
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('服务器返回了非JSON格式的响应，请检查登录状态');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.reconnect && data.room_id) {
+                // 重连到现有聊天室
+                roomId = data.room_id;
+                showNotification('正在重连到聊天室...', 'info');
+                handleReconnect(data.matched_user);
+            } else if (data.matched && data.room_id) {
+                // 新匹配成功
+                currentRequestId = data.request_id;
+                roomId = data.room_id;
+                handleMatchSuccess();
+            } else {
+                // 等待匹配
+                currentRequestId = data.request_id;
+                statusText.textContent = '匹配请求已发送';
+                statusDescription.textContent = '正在等待其他用户响应...';
+                
+                // 开始轮询状态
+                startStatusCheck();
+                
+                // 启动倒计时
+                startCountdown();
+            }
+        } else {
+            if (data.redirect_url) {
+                showNotification('请先登录后再使用心动链接功能', 'warning');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 2000);
+            } else {
+                throw new Error(data.message || '匹配请求失败');
+            }
+        }
+        
+    } catch (error) {
+        console.error('启动心动链接失败:', error);
+        showNotification('启动心动链接失败: ' + error.message, 'error');
+        resetUI();
+    }
+}
+
+async function cancelHeartLink() {
+    try {
+        if (!currentRequestId) {
+            resetUI();
+            return;
+        }
+        
+        const response = await fetch('/tools/api/heart-link/cancel/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ request_id: currentRequestId })
+        });
+        
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('服务器返回了非JSON格式的响应，请检查登录状态');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('已取消匹配请求', 'info');
+        } else {
+            if (data.redirect_url) {
+                showNotification('请先登录后再使用心动链接功能', 'warning');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 2000);
+            } else {
+                showNotification('取消匹配失败: ' + data.message, 'error');
+            }
+        }
+        
+    } catch (error) {
+        console.error('取消心动链接失败:', error);
+        showNotification('取消匹配失败: ' + error.message, 'error');
+    } finally {
+        resetUI();
+    }
+}
+
+function startCountdown() {
+    // 清除之前的倒计时
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    if (expireTimeout) {
+        clearTimeout(expireTimeout);
+    }
+    
+    // 设置10分钟倒计时
+    let timeLeft = 10 * 60; // 10分钟 = 600秒
+    
+    const updateCountdown = () => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        const statusDescription = document.getElementById('status-description');
+        
+        if (timeLeft > 0) {
+            statusDescription.textContent = `正在等待其他用户响应... (${minutes}:${seconds.toString().padStart(2, '0')})`;
+            timeLeft--;
+        } else {
+            // 倒计时结束，自动过期
+            showNotification('匹配请求已过期', 'warning');
+            resetUI();
+        }
+    };
+    
+    // 立即更新一次
+    updateCountdown();
+    
+    // 每秒更新倒计时
+    countdownInterval = setInterval(updateCountdown, 1000);
+    
+    // 10分钟后自动过期
+    expireTimeout = setTimeout(() => {
+        showNotification('匹配请求已过期', 'warning');
+        resetUI();
+    }, 10 * 60 * 1000);
+}
+
+function startStatusCheck() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+    
+    statusCheckInterval = setInterval(async () => {
+        try {
+            // 调用检查匹配状态的API
+            const response = await fetch('/tools/api/heart-link/status/', {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+            
+            // 检查响应类型
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('状态检查返回了非JSON格式的响应');
+                return;
+            }
+            
+            const data = await response.json();
+            
+                         if (data.success) {
+                 if (data.status === 'matched') {
+                     roomId = data.room_id;
+                     showNotification('匹配成功！', 'success');
+                     handleMatchSuccess();
+                 } else if (data.status === 'expired') {
+                     showNotification('匹配请求已过期', 'warning');
+                     resetUI();
+                 } else if (data.status === 'not_found') {
+                     // 请求可能已被取消或匹配成功
+                     resetUI();
+                 }
+                 // 如果状态是pending，继续等待
+             }
+        } catch (error) {
+            console.error('检查状态失败:', error);
+        }
+    }, 3000); // 每3秒检查一次
+}
+
+function handleMatchSuccess() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+    
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    if (expireTimeout) {
+        clearTimeout(expireTimeout);
+    }
+    
+    const statusContainer = document.getElementById('status-container');
+    const actionsContainer = document.getElementById('actions-container');
+    
+    // 显示匹配成功信息
+    statusContainer.innerHTML = `
+        <div class="matched-info">
+            <div class="matched-user">
+                <div class="matched-avatar">👤</div>
+                <div class="matched-details">
+                    <h4>匹配成功！</h4>
+                    <p>已为您找到有缘人，可以开始聊天了</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 更新按钮
+    actionsContainer.innerHTML = `
+        <a href="/tools/heart-link/chat/${roomId}/" class="heart-btn heart-btn-primary">
+            <i class="fas fa-comments"></i>
+            开始聊天
+        </a>
+        <a href="{% url 'home' %}" class="heart-btn heart-btn-secondary">
+            <i class="fas fa-home"></i>
+            返回首页
+        </a>
+    `;
+}
+
+function handleReconnect(matchedUser) {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+    
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    if (expireTimeout) {
+        clearTimeout(expireTimeout);
+    }
+    
+    const statusContainer = document.getElementById('status-container');
+    const actionsContainer = document.getElementById('actions-container');
+    
+    // 显示重连信息
+    statusContainer.innerHTML = `
+        <div class="matched-info">
+            <div class="matched-user">
+                <div class="matched-avatar">🔄</div>
+                <div class="matched-details">
+                    <h4>发现活跃聊天室</h4>
+                    <p>您已有一个与 ${matchedUser} 的聊天室</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 更新按钮 - 增加拒绝重连选项
+    actionsContainer.innerHTML = `
+        <a href="/tools/heart-link/chat/${roomId}/" class="heart-btn heart-btn-primary">
+            <i class="fas fa-comments"></i>
+            重进房间
+        </a>
+        <button class="heart-btn heart-btn-secondary" onclick="rejectReconnect()">
+            <i class="fas fa-times"></i>
+            拒绝重连
+        </button>
+        <a href="{% url 'home' %}" class="heart-btn heart-btn-secondary">
+            <i class="fas fa-home"></i>
+            返回首页
+        </a>
+    `;
+}
+
+function resetUI() {
+    const startBtn = document.getElementById('start-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const statusText = document.getElementById('status-text');
+    const statusDescription = document.getElementById('status-description');
+    
+    startBtn.disabled = false;
+    startBtn.innerHTML = '<i class="fas fa-heart"></i> 开始寻找';
+    cancelBtn.style.display = 'none';
+    
+    statusText.textContent = '准备开始心动之旅';
+    statusDescription.textContent = '点击下方按钮开始寻找有缘人';
+    
+    currentRequestId = null;
+    roomId = null;
+    
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
+    }
+    
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+    
+    if (expireTimeout) {
+        clearTimeout(expireTimeout);
+        expireTimeout = null;
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function getCSRFToken() {
+    // 首先尝试从meta标签获取
+    const metaToken = document.querySelector('meta[name="csrf-token"]');
+    if (metaToken) {
+        return metaToken.getAttribute('content');
+    }
+    
+    // 然后尝试从隐藏的input字段获取
+    const inputToken = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (inputToken) {
+        return inputToken.value;
+    }
+    
+    // 最后尝试从cookie获取
+    return getCookie('csrftoken');
+}
+
+function showNotification(message, type = 'info') {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    // 添加样式
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196F3'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 10000;
+        max-width: 300px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// 页面加载时检查是否有未完成的匹配请求
+document.addEventListener('DOMContentLoaded', function() {
+    // 检查用户是否有活跃的聊天室
+    checkActiveChatRoom();
+});
+
+async function rejectReconnect() {
+    try {
+        // 结束当前的聊天室
+        const response = await fetch('/tools/api/heart-link/cleanup/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                room_id: roomId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('已结束当前聊天室，可以重新开始匹配', 'info');
+            resetUI();
+        } else {
+            showNotification('结束聊天室失败: ' + data.error, 'error');
+        }
+    } catch (error) {
+        console.error('拒绝重连失败:', error);
+        showNotification('拒绝重连失败: ' + error.message, 'error');
+    }
+}
+
+async function checkActiveChatRoom() {
+    try {
+        const response = await fetch('/tools/api/heart-link/status/', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.status === 'matched' && data.room_id) {
+            // 用户已有活跃的聊天室，显示重连状态
+            roomId = data.room_id;
+            const matchedUser = data.matched_user || '未知用户';
+            handleReconnect(matchedUser);
+        }
+    } catch (error) {
+        console.error('检查活跃聊天室失败:', error);
+    }
+}
+</script>
+{% endblock %} 

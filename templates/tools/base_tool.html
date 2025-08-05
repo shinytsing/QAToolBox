@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% block tool_title_inner %}工具{% endblock %} - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<!-- 工具页面通用样式 -->
+<style>
+/* 工具页面容器 */
+.tool-container {
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* 工具页面头部 */
+.tool-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.tool-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tool-description {
+    font-size: 1.1rem;
+    color: var(--text-color, #333);
+    opacity: 0.8;
+    line-height: 1.6;
+}
+
+/* 工具内容区域 */
+.tool-content {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* 工具卡片样式 */
+.tool-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 工具按钮样式 */
+.tool-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin: 5px;
+}
+
+.tool-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.tool-btn:active {
+    transform: translateY(0);
+}
+
+/* 工具输入框样式 */
+.tool-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px 15px;
+    color: var(--text-color, #333);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.tool-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* 工具结果区域 */
+.tool-result {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+}
+
+/* 加载动画 */
+.tool-loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.tool-loading.show {
+    display: block;
+}
+
+.spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 3px solid #667eea;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .tool-container {
+        padding: 10px;
+    }
+    
+    .tool-header {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .tool-title {
+        font-size: 2rem;
+    }
+    
+    .tool-content {
+        padding: 20px;
+    }
+    
+    .tool-card {
+        padding: 15px;
+    }
+}
+
+/* 主题适配 */
+.tool-container[data-theme="emo"] {
+    background: var(--emo-bg, linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%));
+}
+
+.tool-container[data-theme="life"] {
+    background: var(--life-bg, linear-gradient(135deg, #a8edea 0%, #fed6e3 100%));
+}
+
+.tool-container[data-theme="work"] {
+    background: var(--work-bg, linear-gradient(135deg, #2c3e50 0%, #34495e 100%));
+}
+
+.tool-container[data-theme="training"] {
+    background: var(--training-bg, linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%));
+}
+
+.tool-container[data-theme="punk"] {
+    background: var(--punk-bg, linear-gradient(135deg, #000000 0%, #434343 100%));
+}
+
+.tool-container[data-theme="training"] {
+    background: var(--rage-bg, linear-gradient(135deg, #ff0000 0%, #8b0000 100%));
+}
+
+.tool-container[data-theme="modern"] {
+    background: var(--modern-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+}
+
+.tool-container[data-theme="work"] {
+    background: var(--geek-bg, linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%));
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container" data-theme="{{ user_theme|default:'modern' }}">
+    <!-- 工具内容区域 -->
+    <div class="tool-content">
+        {% block tool_content %}
+        <!-- 子模板将在这里插入具体内容 -->
+        {% endblock %}
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="tool-loading" id="toolLoading">
+        <div class="spinner"></div>
+        <p>正在处理中，请稍候...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 工具页面通用JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // 显示加载动画
+    function showLoading() {
+        document.getElementById('toolLoading').classList.add('show');
+    }
+    
+    // 隐藏加载动画
+    function hideLoading() {
+        document.getElementById('toolLoading').classList.remove('show');
+    }
+    
+    // 全局暴露加载函数
+    window.showToolLoading = showLoading;
+    window.hideToolLoading = hideLoading;
+    
+    // 主题切换处理
+    function updateToolTheme(theme) {
+        const container = document.querySelector('.tool-container');
+        if (container) {
+            container.setAttribute('data-theme', theme);
+        }
+    }
+    
+    // 监听主题变化
+    if (typeof window.currentTheme !== 'undefined') {
+        updateToolTheme(window.currentTheme);
+    }
+    
+    // 暴露主题更新函数
+    window.updateToolTheme = updateToolTheme;
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,778 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}欲望仪表盘{% endblock %}
+{% block tool_title_display %}欲望仪表盘{% endblock %}
+
+{% block extra_css %}
+<style>
+.desire-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.desire-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 68, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: backgroundPulse 8s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.main-title {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-card {
+  background: rgba(26, 26, 26, 0.8);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover::before {
+  transform: scaleX(1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(255, 68, 68, 0.2);
+  border-color: #ff4444;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #ff4444;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-icon {
+  font-size: 1.8rem;
+}
+
+.desire-level-display {
+  background: rgba(255, 68, 68, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  text-align: left;
+}
+
+.desire-bar {
+  color: #ff4444;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.desire-item {
+  color: #ffd700;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.desire-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.desire-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid #ff4444;
+  transition: all 0.3s ease;
+}
+
+.desire-list-item:hover {
+  background: rgba(255, 68, 68, 0.1);
+  transform: translateX(5px);
+}
+
+.desire-list-item.fulfilled {
+  border-left-color: #00ff00;
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.desire-info {
+  flex: 1;
+}
+
+.desire-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #ffffff;
+}
+
+.desire-description {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.3rem;
+}
+
+.desire-condition {
+  font-size: 0.8rem;
+  color: #ff6b35;
+  font-style: italic;
+}
+
+.desire-intensity {
+  color: #ffd700;
+  font-weight: 600;
+  margin-left: 1rem;
+}
+
+.desire-type-badge {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.stat-item {
+  background: rgba(255, 68, 68, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 68, 68, 0.2);
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ff4444;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.fulfillment-history {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.fulfillment-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 3px solid #00ff00;
+}
+
+.fulfillment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.fulfillment-title {
+  font-weight: 600;
+  color: #00ff00;
+}
+
+.fulfillment-date {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.fulfillment-details {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.fulfillment-image {
+  width: 100%;
+  max-width: 300px;
+  height: 200px;
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 68, 68, 0.3);
+}
+
+.action-btn.secondary {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, #00ff00, #00cc00);
+  color: white;
+}
+
+.new-desire-form {
+  background: rgba(26, 26, 26, 0.9);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #ff4444;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: #ff4444;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.intensity-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.intensity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ff4444;
+  cursor: pointer;
+}
+
+.intensity-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ff4444;
+  cursor: pointer;
+  border: none;
+}
+
+.intensity-display {
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #ffd700;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .main-title {
+    font-size: 2rem;
+  }
+  
+  .desire-container {
+    padding: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="desire-container">
+  <div class="header-section">
+    <h1 class="main-title">
+      <i class="fas fa-heart"></i> 欲望仪表盘
+    </h1>
+    <p class="subtitle">🔥 实时欲望浓度 + 🎨 AI生成欲望兑现图</p>
+  </div>
+
+  <!-- 欲望浓度显示 -->
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-chart-line card-icon"></i>
+        当前欲望浓度
+      </h2>
+      
+      <div class="desire-level-display">
+        <div class="desire-bar">[当前欲望浓度] ███████░░░ {{ dashboard_data.dashboard.current_desire_level }}%</div>
+        {% for desire in dashboard_data.desires|slice:":3" %}
+        <div class="desire-item">▸ {{ desire.title }}: {{ desire.intensity_stars }}</div>
+        {% endfor %}
+      </div>
+      
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ dashboard_data.dashboard.current_desire_level }}%"></div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ dashboard_data.dashboard.total_desires }}</div>
+          <div class="stat-label">总欲望数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ dashboard_data.dashboard.fulfilled_desires }}</div>
+          <div class="stat-label">已满足</div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="refreshDesireData()">
+          <i class="fas fa-sync"></i> 刷新数据
+        </button>
+        <button class="action-btn secondary" onclick="showDesireProgress()">
+          <i class="fas fa-chart-pie"></i> 进度分析
+        </button>
+      </div>
+    </div>
+
+    <!-- 欲望列表 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-list card-icon"></i>
+        欲望清单
+      </h2>
+      
+      <ul class="desire-list">
+        {% for desire in dashboard_data.desires %}
+        <li class="desire-list-item {% if desire.is_fulfilled %}fulfilled{% endif %}">
+          <div class="desire-info">
+            <div class="desire-title">{{ desire.title }}</div>
+            <div class="desire-description">{{ desire.description|default:"无描述" }}</div>
+            <div class="desire-condition">满足条件: {{ desire.fulfillment_condition }}</div>
+          </div>
+          <div class="desire-intensity">{{ desire.intensity_stars }}</div>
+          <span class="desire-type-badge">{{ desire.type }}</span>
+        </li>
+        {% empty %}
+        <li class="desire-list-item">
+          <div class="desire-info">
+            <div class="desire-title">暂无欲望</div>
+            <div class="desire-description">添加你的第一个欲望吧！</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="showAddDesireForm()">
+          <i class="fas fa-plus"></i> 添加欲望
+        </button>
+        <button class="action-btn secondary" onclick="fulfillRandomDesire()">
+          <i class="fas fa-magic"></i> 随机满足
+        </button>
+      </div>
+    </div>
+
+    <!-- 兑现历史 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-history card-icon"></i>
+        兑现历史
+      </h2>
+      
+      <div class="fulfillment-history">
+        {% for fulfillment in fulfillment_history %}
+        <div class="fulfillment-item">
+          <div class="fulfillment-header">
+            <div class="fulfillment-title">{{ fulfillment.desire_title }}</div>
+            <div class="fulfillment-date">{{ fulfillment.created_at }}</div>
+          </div>
+          <div class="fulfillment-details">
+            完成任务: {{ fulfillment.task_completed }}<br>
+            任务详情: {{ fulfillment.task_details }}<br>
+            满足度: {{ fulfillment.satisfaction_level }}/10
+          </div>
+          {% if fulfillment.ai_prompt %}
+          <div class="fulfillment-image">
+            <div style="text-align: center; color: rgba(255, 255, 255, 0.6);">
+              <i class="fas fa-image" style="font-size: 2rem; margin-bottom: 0.5rem;"></i><br>
+              AI生成图片<br>
+              <small>{{ fulfillment.ai_prompt|truncatechars:50 }}</small>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="fulfillment-item">
+          <div style="text-align: center; color: rgba(255, 255, 255, 0.6); padding: 2rem;">
+            <i class="fas fa-heart" style="font-size: 3rem; margin-bottom: 1rem; color: #ff4444;"></i>
+            <p>暂无兑现记录</p>
+            <p>开始满足你的欲望吧！</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加欲望表单 -->
+  <div id="addDesireForm" class="new-desire-form" style="display: none;">
+    <h2 class="card-title">
+      <i class="fas fa-plus card-icon"></i>
+      添加新欲望
+    </h2>
+    
+    <form id="desireForm">
+      <div class="form-group">
+        <label class="form-label">欲望标题</label>
+        <input type="text" class="form-input" id="desireTitle" placeholder="例如: 想要玛莎拉蒂" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">欲望类型</label>
+        <select class="form-select" id="desireType" required>
+          <option value="material">物质欲望</option>
+          <option value="social">社交欲望</option>
+          <option value="escape">逃避欲望</option>
+          <option value="achievement">成就欲望</option>
+          <option value="recognition">认可欲望</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">欲望描述</label>
+        <textarea class="form-textarea" id="desireDescription" placeholder="详细描述你的欲望..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">满足条件</label>
+        <input type="text" class="form-input" id="fulfillmentCondition" placeholder="例如: 完成100行代码" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">欲望强度: <span id="intensityValue">3</span>/5</label>
+        <input type="range" class="intensity-slider" id="desireIntensity" min="1" max="5" value="3">
+        <div class="intensity-display" id="intensityStars">★★★☆☆</div>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="submit" class="action-btn">
+          <i class="fas fa-save"></i> 保存欲望
+        </button>
+        <button type="button" class="action-btn secondary" onclick="hideAddDesireForm()">
+          <i class="fas fa-times"></i> 取消
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// 刷新欲望数据
+function refreshDesireData() {
+  fetch('/tools/api/desire-dashboard/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    }
+  });
+}
+
+// 显示欲望进度
+function showDesireProgress() {
+  fetch('/tools/api/desire-dashboard/progress/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const progress = data.data;
+      alert(`欲望进度分析:\n\n总欲望数: ${progress.total}\n已满足: ${progress.fulfilled}\n剩余: ${progress.remaining}\n完成率: ${progress.progress_percentage}%\n\n继续努力满足更多欲望！`);
+    }
+  });
+}
+
+// 显示添加欲望表单
+function showAddDesireForm() {
+  document.getElementById('addDesireForm').style.display = 'block';
+  document.getElementById('addDesireForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 隐藏添加欲望表单
+function hideAddDesireForm() {
+  document.getElementById('addDesireForm').style.display = 'none';
+}
+
+// 随机满足欲望
+function fulfillRandomDesire() {
+  const taskTypes = ['coding', 'fitness', 'coding', 'coding'];
+  const taskDetails = [
+    '完成了100行代码',
+    '完成了高强度训练',
+    '重构了函数',
+    '完成了完整项目'
+  ];
+  
+  const randomIndex = Math.floor(Math.random() * taskTypes.length);
+  const taskType = taskTypes[randomIndex];
+  const taskDetails = taskDetails[randomIndex];
+  
+  checkDesireFulfillment(taskType, taskDetails);
+}
+
+// 检查欲望满足
+function checkDesireFulfillment(taskType, taskDetails) {
+  fetch('/tools/api/desire-dashboard/check-fulfillment/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      task_type: taskType,
+      task_details: taskDetails
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.fulfilled_desires && data.fulfilled_desires.length > 0) {
+      alert(`🎉 ${data.message}\n\n满足的欲望:\n${data.fulfilled_desires.map(d => `- ${d.desire_title}`).join('\n')}\n\n正在生成AI兑现图片...`);
+      
+      // 为每个满足的欲望生成AI图片
+      data.fulfilled_desires.forEach(desire => {
+        generateDesireImage(desire.fulfillment_id, desire.desire_title);
+      });
+      
+      // 刷新页面显示最新数据
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      alert(data.message || '继续努力，还没有满足的欲望！');
+    }
+  });
+}
+
+// 生成欲望兑现图片
+function generateDesireImage(fulfillmentId, desireTitle) {
+  fetch('/tools/api/desire-dashboard/generate-image/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      fulfillment_id: fulfillmentId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`🎨 AI图片生成成功！\n\n欲望: ${desireTitle}\n图片: ${data.image_url}\n\n这就是你的欲望兑现图！`);
+    } else {
+      alert('AI图片生成失败: ' + data.message);
+    }
+  });
+}
+
+// 表单提交
+document.getElementById('desireForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    title: document.getElementById('desireTitle').value,
+    desire_type: document.getElementById('desireType').value,
+    description: document.getElementById('desireDescription').value,
+    fulfillment_condition: document.getElementById('fulfillmentCondition').value,
+    intensity: parseInt(document.getElementById('desireIntensity').value)
+  };
+  
+  fetch('/tools/api/desire-dashboard/add/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('欲望添加成功！');
+      location.reload();
+    } else {
+      alert('添加失败: ' + data.message);
+    }
+  });
+});
+
+// 强度滑块事件
+document.getElementById('desireIntensity').addEventListener('input', function(e) {
+  const value = parseInt(e.target.value);
+  document.getElementById('intensityValue').textContent = value;
+  document.getElementById('intensityStars').textContent = '★'.repeat(value) + '☆'.repeat(5 - value);
+});
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+{% endblock %} 

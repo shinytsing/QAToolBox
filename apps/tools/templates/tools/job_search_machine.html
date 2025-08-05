@@ -1,0 +1,792 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}自动求职机 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.job-search-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+}
+
+.job-search-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.job-search-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.job-search-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.job-search-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.job-form-card, .job-status-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #fff;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #45a049, #4CAF50);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(45deg, #1976D2, #2196F3);
+    transform: translateY(-1px);
+}
+
+.status-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #4CAF50;
+}
+
+.status-item.pending {
+    border-left-color: #FF9800;
+}
+
+.status-item.processing {
+    border-left-color: #2196F3;
+}
+
+.status-item.completed {
+    border-left-color: #4CAF50;
+}
+
+.status-item.failed {
+    border-left-color: #f44336;
+}
+
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.status-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.pending {
+    background: #FF9800;
+    color: white;
+}
+
+.status-badge.processing {
+    background: #2196F3;
+    color: white;
+}
+
+.status-badge.completed {
+    background: #4CAF50;
+    color: white;
+}
+
+.status-badge.failed {
+    background: #f44336;
+    color: white;
+}
+
+.status-details {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    transition: width 0.3s ease;
+}
+
+.job-applications {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.application-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.application-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.application-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.application-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.application-company {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.application-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.match-score {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.application-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-success {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-info {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-warning {
+    background: #FF9800;
+    color: white;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid;
+}
+
+.alert-success {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: #4CAF50;
+    color: #4CAF50;
+}
+
+.alert-error {
+    background: rgba(244, 67, 54, 0.2);
+    border-color: #f44336;
+    color: #f44336;
+}
+
+.alert-info {
+    background: rgba(33, 150, 243, 0.2);
+    border-color: #2196F3;
+    color: #2196F3;
+}
+
+@media (max-width: 768px) {
+    .job-search-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .job-search-header h1 {
+        font-size: 2rem;
+    }
+    
+    .application-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .application-meta {
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="job-search-container">
+    <div class="job-search-header">
+        <h1>🤖 自动求职机</h1>
+        <p>输入职位要求和期望薪资，让AI自动为您投递简历到Boss直聘</p>
+    </div>
+
+    <div class="job-search-grid">
+        <!-- 求职请求表单 -->
+        <div class="job-form-card">
+            <h3 class="card-title">📝 创建求职请求</h3>
+            <form id="jobSearchForm">
+                <div class="form-group">
+                    <label for="jobTitle">职位名称 *</label>
+                    <input type="text" id="jobTitle" class="form-control" placeholder="如：Python开发工程师" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="location">工作地点 *</label>
+                    <input type="text" id="location" class="form-control" placeholder="如：北京、上海、深圳" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="minSalary">最低薪资 (K/月) *</label>
+                    <input type="number" id="minSalary" class="form-control" placeholder="如：15" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxSalary">最高薪资 (K/月) *</label>
+                    <input type="number" id="maxSalary" class="form-control" placeholder="如：30" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="jobType">工作类型</label>
+                    <select id="jobType" class="form-control">
+                        <option value="full_time">全职</option>
+                        <option value="part_time">兼职</option>
+                        <option value="internship">实习</option>
+                        <option value="freelance">自由职业</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="experienceLevel">经验要求</label>
+                    <select id="experienceLevel" class="form-control">
+                        <option value="fresh">应届生</option>
+                        <option value="1-3" selected>1-3年</option>
+                        <option value="3-5">3-5年</option>
+                        <option value="5-10">5-10年</option>
+                        <option value="10+">10年以上</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="keywords">关键词 (用逗号分隔)</label>
+                    <input type="text" id="keywords" class="form-control" placeholder="如：Python,Django,MySQL">
+                </div>
+                
+                <div class="form-group">
+                    <label for="maxApplications">最大投递数量</label>
+                    <input type="number" id="maxApplications" class="form-control" value="50" min="1" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="applicationInterval">投递间隔 (秒)</label>
+                    <input type="number" id="applicationInterval" class="form-control" value="30" min="10" max="60">
+                </div>
+                
+                <button type="submit" class="btn-primary" id="createRequestBtn">
+                    <span id="createRequestText">🚀 创建求职请求</span>
+                    <span id="createRequestLoading" class="loading-spinner" style="display: none;"></span>
+                </button>
+            </form>
+        </div>
+
+        <!-- 求职状态 -->
+        <div class="job-status-card">
+            <h3 class="card-title">📊 求职状态</h3>
+            <div id="jobStatusList">
+                <p style="text-align: center; opacity: 0.7;">暂无求职请求</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 申请记录 -->
+    <div class="job-applications">
+        <h3 class="card-title">📋 申请记录</h3>
+        <div id="applicationsList">
+            <p style="text-align: center; opacity: 0.7;">暂无申请记录</p>
+        </div>
+    </div>
+</div>
+
+<!-- 状态更新模态框 -->
+<div id="statusModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>更新申请状态</h3>
+        <select id="statusSelect" class="form-control">
+            <option value="applied">已投递</option>
+            <option value="viewed">已查看</option>
+            <option value="contacted">已联系</option>
+            <option value="interview">面试邀请</option>
+            <option value="rejected">已拒绝</option>
+            <option value="accepted">已录用</option>
+        </select>
+        <div style="margin-top: 20px;">
+            <button class="btn-primary" onclick="updateApplicationStatus()">更新状态</button>
+            <button class="btn-secondary" onclick="closeStatusModal()">取消</button>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentApplicationId = null;
+
+// 页面加载时获取数据
+document.addEventListener('DOMContentLoaded', function() {
+    loadJobRequests();
+    loadApplications();
+});
+
+// 创建求职请求
+document.getElementById('jobSearchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        job_title: document.getElementById('jobTitle').value,
+        location: document.getElementById('location').value,
+        min_salary: document.getElementById('minSalary').value,
+        max_salary: document.getElementById('maxSalary').value,
+        job_type: document.getElementById('jobType').value,
+        experience_level: document.getElementById('experienceLevel').value,
+        keywords: document.getElementById('keywords').value.split(',').map(k => k.trim()).filter(k => k),
+        max_applications: parseInt(document.getElementById('maxApplications').value),
+        application_interval: parseInt(document.getElementById('applicationInterval').value)
+    };
+    
+    createJobRequest(formData);
+});
+
+// 创建求职请求API调用
+async function createJobRequest(data) {
+    const btn = document.getElementById('createRequestBtn');
+    const text = document.getElementById('createRequestText');
+    const loading = document.getElementById('createRequestLoading');
+    
+    btn.disabled = true;
+    text.style.display = 'none';
+    loading.style.display = 'inline-block';
+    
+    try {
+        const response = await fetch('/tools/api/job-search/create-request/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('求职请求创建成功！', 'success');
+            document.getElementById('jobSearchForm').reset();
+            loadJobRequests();
+            
+            // 询问是否立即开始求职
+            if (confirm('是否立即开始自动求职？')) {
+                startJobSearch(result.request_id);
+            }
+        } else {
+            showAlert(result.message, 'error');
+        }
+    } catch (error) {
+        showAlert('创建请求失败，请重试', 'error');
+    } finally {
+        btn.disabled = false;
+        text.style.display = 'inline';
+        loading.style.display = 'none';
+    }
+}
+
+// 开始自动求职
+async function startJobSearch(requestId) {
+    try {
+        const response = await fetch('/tools/api/job-search/start/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ request_id: requestId })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(result.message, 'success');
+            loadJobRequests();
+            loadApplications();
+        } else {
+            showAlert(result.message, 'error');
+        }
+    } catch (error) {
+        showAlert('开始求职失败，请重试', 'error');
+    }
+}
+
+// 加载求职请求列表
+async function loadJobRequests() {
+    try {
+        const response = await fetch('/tools/api/job-search/requests/');
+        const result = await response.json();
+        
+        if (result.success) {
+            displayJobRequests(result.data);
+        }
+    } catch (error) {
+        console.error('加载求职请求失败:', error);
+    }
+}
+
+// 显示求职请求列表
+function displayJobRequests(requests) {
+    const container = document.getElementById('jobStatusList');
+    
+    if (requests.length === 0) {
+        container.innerHTML = '<p style="text-align: center; opacity: 0.7;">暂无求职请求</p>';
+        return;
+    }
+    
+    container.innerHTML = requests.map(request => `
+        <div class="status-item ${request.status}">
+            <div class="status-header">
+                <div>
+                    <div class="status-title">${request.job_title}</div>
+                    <div class="status-details">${request.location} | ${request.salary_range}</div>
+                </div>
+                <span class="status-badge ${request.status}">${getStatusText(request.status)}</span>
+            </div>
+            <div class="status-details">
+                找到职位: ${request.total_jobs_found} | 投递简历: ${request.total_applications_sent}
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${request.progress_percentage}%"></div>
+            </div>
+            <div class="status-details">
+                成功率: ${request.success_rate.toFixed(1)}% | 创建时间: ${request.created_at}
+            </div>
+            ${request.status === 'pending' ? `
+                <button class="btn-secondary" onclick="startJobSearch(${request.id})">开始求职</button>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+// 加载申请记录
+async function loadApplications() {
+    try {
+        const response = await fetch('/tools/api/job-search/applications/');
+        const result = await response.json();
+        
+        if (result.success) {
+            displayApplications(result.data);
+        }
+    } catch (error) {
+        console.error('加载申请记录失败:', error);
+    }
+}
+
+// 显示申请记录
+function displayApplications(applications) {
+    const container = document.getElementById('applicationsList');
+    
+    if (applications.length === 0) {
+        container.innerHTML = '<p style="text-align: center; opacity: 0.7;">暂无申请记录</p>';
+        return;
+    }
+    
+    container.innerHTML = applications.map(app => `
+        <div class="application-item">
+            <div class="application-header">
+                <div>
+                    <div class="application-title">${app.job_title}</div>
+                    <div class="application-company">${app.company_name}</div>
+                </div>
+                <div class="match-score">匹配度 ${app.match_score}%</div>
+            </div>
+            <div class="application-meta">
+                <span>📍 ${app.location}</span>
+                <span>💰 ${app.salary_range}</span>
+                <span>📅 ${app.application_time}</span>
+                <span class="status-badge ${app.status}">${getStatusText(app.status)}</span>
+            </div>
+            <div class="application-actions">
+                <button class="btn-sm btn-info" onclick="window.open('${app.job_url}', '_blank')">查看职位</button>
+                <button class="btn-sm btn-warning" onclick="openStatusModal(${app.id})">更新状态</button>
+                <button class="btn-sm btn-success" onclick="addNotes(${app.id})">添加备注</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 获取状态文本
+function getStatusText(status) {
+    const statusMap = {
+        'pending': '等待中',
+        'processing': '处理中',
+        'completed': '已完成',
+        'failed': '失败',
+        'applied': '已投递',
+        'viewed': '已查看',
+        'contacted': '已联系',
+        'interview': '面试邀请',
+        'rejected': '已拒绝',
+        'accepted': '已录用'
+    };
+    return statusMap[status] || status;
+}
+
+// 打开状态更新模态框
+function openStatusModal(applicationId) {
+    currentApplicationId = applicationId;
+    document.getElementById('statusModal').style.display = 'block';
+}
+
+// 关闭状态更新模态框
+function closeStatusModal() {
+    document.getElementById('statusModal').style.display = 'none';
+    currentApplicationId = null;
+}
+
+// 更新申请状态
+async function updateApplicationStatus() {
+    if (!currentApplicationId) return;
+    
+    const status = document.getElementById('statusSelect').value;
+    
+    try {
+        const response = await fetch('/tools/api/job-search/application/update-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                application_id: currentApplicationId,
+                status: status
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('状态更新成功', 'success');
+            closeStatusModal();
+            loadApplications();
+        } else {
+            showAlert(result.message, 'error');
+        }
+    } catch (error) {
+        showAlert('更新状态失败，请重试', 'error');
+    }
+}
+
+// 添加备注
+function addNotes(applicationId) {
+    const notes = prompt('请输入备注信息：');
+    if (notes === null) return;
+    
+    fetch('/tools/api/job-search/application/add-notes/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            application_id: applicationId,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('备注添加成功', 'success');
+            loadApplications();
+        } else {
+            showAlert(result.message, 'error');
+        }
+    })
+    .catch(error => {
+        showAlert('添加备注失败，请重试', 'error');
+    });
+}
+
+// 显示提示信息
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    
+    const container = document.querySelector('.job-search-container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

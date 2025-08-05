@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冥想音效测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .audio-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .audio-btn {
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .audio-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .audio-btn.selected {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+        }
+        
+        .audio-btn i {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+        
+        .current-audio-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .current-audio-info i {
+            color: #4CAF50;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+        
+        .warning {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <h1>🧘 冥想音效测试页面</h1>
+    
+    <div class="test-section">
+        <h2>音效按钮测试</h2>
+        <p>点击下面的按钮测试不同模式的音效：</p>
+        
+        <div class="audio-buttons">
+            <button class="audio-btn" data-mode="life" onclick="selectAudioMode('life')">
+                <i class="fas fa-heart"></i> 生活模式
+            </button>
+            <button class="audio-btn" data-mode="work" onclick="selectAudioMode('work')">
+                <i class="fas fa-briefcase"></i> 工作模式
+            </button>
+            <button class="audio-btn" data-mode="training" onclick="selectAudioMode('training')">
+                <i class="fas fa-dumbbell"></i> 训练模式
+            </button>
+            <button class="audio-btn" data-mode="emo" onclick="selectAudioMode('emo')">
+                <i class="fas fa-smile"></i> 情感模式
+            </button>
+        </div>
+        
+        <div class="current-audio-info" id="currentAudioInfo" style="display: none;">
+            <i class="fas fa-music"></i>
+            <span id="currentAudioText">当前音效信息</span>
+        </div>
+        
+        <div id="status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <ul>
+            <li>点击任意音效按钮会调用音乐API获取对应模式的音乐</li>
+            <li>成功获取后会显示音乐信息并尝试播放</li>
+            <li>如果播放失败，会显示警告信息</li>
+            <li>当前选中的按钮会高亮显示</li>
+        </ul>
+    </div>
+
+    <script>
+        let audioPlayer = null;
+        let currentAudioMode = null;
+        let currentAudioInfo = null;
+        
+        // 音效模式配置
+        const audioModes = {
+            life: { name: '生活模式', icon: 'fas fa-heart', desc: '轻松愉悦的生活音乐' },
+            work: { name: '工作模式', icon: 'fas fa-briefcase', desc: '专注高效的工作音乐' },
+            training: { name: '训练模式', icon: 'fas fa-dumbbell', desc: '充满活力的训练音乐' },
+            emo: { name: '情感模式', icon: 'fas fa-smile', desc: '温暖治愈的情感音乐' }
+        };
+        
+        // 选择音效模式
+        async function selectAudioMode(mode) {
+            // 更新按钮状态
+            document.querySelectorAll('.audio-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('selected');
+            
+            currentAudioMode = mode;
+            showStatus(`🔄 正在获取${audioModes[mode].name}音效...`, 'info');
+            
+            try {
+                // 调用音乐API获取对应模式的音乐
+                const response = await fetch(`/tools/api/music/?mode=${mode}&action=random`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const song = data.data;
+                    currentAudioInfo = song;
+                    
+                    // 停止当前播放的音频
+                    if (audioPlayer) {
+                        audioPlayer.pause();
+                        audioPlayer = null;
+                    }
+                    
+                    // 播放新的音频
+                    audioPlayer = new Audio(song.play_url);
+                    audioPlayer.loop = true;
+                    audioPlayer.volume = 0.5;
+                    
+                    audioPlayer.play().then(() => {
+                        // 显示当前音效信息
+                        document.getElementById('currentAudioInfo').style.display = 'flex';
+                        document.getElementById('currentAudioText').textContent = `${song.name} - ${song.artist}`;
+                        
+                        showStatus(`🎵 已切换到${audioModes[mode].name}音效: ${song.name} - ${song.artist}`, 'success');
+                    }).catch(error => {
+                        console.log('音频播放失败:', error);
+                        showStatus(`🎵 音效获取成功，但播放失败，请检查网络连接。歌曲: ${song.name} - ${song.artist}`, 'warning');
+                        
+                        // 显示音效信息（即使播放失败）
+                        document.getElementById('currentAudioInfo').style.display = 'flex';
+                        document.getElementById('currentAudioText').textContent = `${song.name} - ${song.artist}`;
+                    });
+                    
+                } else {
+                    showStatus(`❌ 获取${audioModes[mode].name}音效失败: ${data.error || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('获取音效失败:', error);
+                showStatus(`❌ 网络错误，无法获取${audioModes[mode].name}音效: ${error.message}`, 'error');
+            }
+        }
+        
+        // 获取CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // 显示状态信息
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // 页面加载时显示欢迎信息
+        window.onload = function() {
+            showStatus('🎵 欢迎使用冥想音效测试！请点击上面的按钮测试不同模式的音效。', 'info');
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动链接重连功能演示</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #f093fb;
+        }
+        
+        .demo-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .demo-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #f093fb;
+        }
+        
+        .demo-description {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .demo-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+        
+        .demo-button.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .demo-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .status-display {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-list li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💕 心动链接重连功能演示</h1>
+        
+        <div class="demo-section">
+            <div class="demo-title">🎯 功能概述</div>
+            <div class="demo-description">
+                重连机制允许用户在已经匹配成功并建立聊天室后，再次点击"开始寻找"按钮时能够直接回到现有的聊天室，而不是创建新的匹配请求。
+            </div>
+            
+            <ul class="feature-list">
+                <li>自动检测用户是否有活跃的聊天室</li>
+                <li>如果已有聊天室，显示"重进房间"按钮</li>
+                <li>如果无聊天室，正常进行匹配流程</li>
+                <li>页面加载时自动检查聊天室状态</li>
+                <li>友好的用户提示和状态显示</li>
+            </ul>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🔧 技术实现</div>
+            <div class="demo-description">
+                重连功能通过以下技术实现：
+            </div>
+            
+            <div class="code-block">
+// 后端API逻辑
+if active_chat_room:
+    return JsonResponse({
+        'success': True,
+        'reconnect': True,
+        'room_id': active_chat_room.room_id,
+        'matched_user': matched_user.username,
+        'message': '您已有一个活跃的聊天室，正在为您重连...'
+    })
+
+// 前端处理逻辑
+if (data.reconnect && data.room_id) {
+    roomId = data.room_id;
+    showNotification('正在重连到聊天室...', 'info');
+    handleReconnect(data.matched_user);
+}
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">📱 用户体验流程</div>
+            <div class="demo-description">
+                用户使用重连功能的完整流程：
+            </div>
+            
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <strong>步骤1:</strong> 用户首次使用心动链接，成功匹配并进入聊天室<br>
+                <strong>步骤2:</strong> 用户离开聊天页面，返回心动链接主页<br>
+                <strong>步骤3:</strong> 用户再次点击"开始寻找"按钮<br>
+                <strong>步骤4:</strong> 系统检测到用户已有活跃聊天室<br>
+                <strong>步骤5:</strong> 显示"重进房间"按钮，用户可直接回到聊天室
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🎨 界面变化</div>
+            <div class="demo-description">
+                重连功能带来的界面变化：
+            </div>
+            
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin: 15px 0;">
+                <div style="flex: 1; min-width: 200px; background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+                    <strong>正常匹配状态:</strong><br>
+                    <button class="demo-button">开始聊天</button>
+                </div>
+                <div style="flex: 1; min-width: 200px; background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+                    <strong>重连状态:</strong><br>
+                    <button class="demo-button">🔄 重进房间</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🧪 测试功能</div>
+            <div class="demo-description">
+                点击下方按钮测试重连功能的不同场景：
+            </div>
+            
+            <button class="demo-button" onclick="simulateNormalMatch()">模拟正常匹配</button>
+            <button class="demo-button" onclick="simulateReconnect()">模拟重连场景</button>
+            <button class="demo-button secondary" onclick="clearStatus()">清除状态</button>
+            
+            <div class="status-display" id="status-display">
+                状态: 等待测试...
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">📋 API响应示例</div>
+            <div class="demo-description">
+                重连功能的API响应格式：
+            </div>
+            
+            <div class="code-block">
+// 重连响应
+{
+    "success": true,
+    "reconnect": true,
+    "room_id": "chat-room-123",
+    "matched_user": "张三",
+    "message": "您已有一个活跃的聊天室，正在为您重连..."
+}
+
+// 正常匹配响应
+{
+    "success": true,
+    "matched": false,
+    "request_id": 456,
+    "message": "正在等待匹配..."
+}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function simulateNormalMatch() {
+            const statusDisplay = document.getElementById('status-display');
+            statusDisplay.textContent = `状态: 正常匹配流程
+- 用户点击"开始寻找"
+- 系统创建新的匹配请求
+- 显示"正在等待匹配..."
+- 按钮显示为"开始寻找"`;
+        }
+        
+        function simulateReconnect() {
+            const statusDisplay = document.getElementById('status-display');
+            statusDisplay.textContent = `状态: 重连流程
+- 用户点击"开始寻找"
+- 系统检测到活跃聊天室
+- 显示"重连成功！"
+- 按钮显示为"重进房间"
+- 用户可直接进入聊天室`;
+        }
+        
+        function clearStatus() {
+            const statusDisplay = document.getElementById('status-display');
+            statusDisplay.textContent = '状态: 等待测试...';
+        }
+    </script>
+</body>
+</html> 

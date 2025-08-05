@@ -23,6 +23,7 @@ body.life-theme {
   background: var(--life-bg);
   color: var(--life-text);
   font-family: var(--life-font);
+ 
   transition: all 0.3s ease;
 }
 

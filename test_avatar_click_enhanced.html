@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>头像点击测试 - 增强版</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            padding: 20px;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+            position: relative;
+        }
+        
+        .test-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff41, #ff0066, #00ffff, #ff00ff);
+            border-radius: 15px;
+            z-index: -1;
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00ff41;
+            text-shadow: 0 0 10px #00ff41;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .avatar-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            border: 1px solid #333;
+            position: relative;
+        }
+        
+        #user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #00ff41;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+        
+        #user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+        }
+        
+        .click-counter {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .counter-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .counter-item {
+            text-align: center;
+            padding: 10px;
+            background: #333;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+        
+        .counter-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00ff41;
+        }
+        
+        .instructions {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #333;
+        }
+        
+        .instructions h3 {
+            color: #00ff41;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+            padding: 8px 0;
+            border-left: 3px solid #00ff41;
+            padding-left: 15px;
+        }
+        
+        .status-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 10px;
+            border: 1px solid #333;
+            display: none;
+        }
+        
+        .status-message {
+            font-size: 1.1em;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff41, #00ffff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* 里世界入口动画 */
+        @keyframes glitch {
+            0%, 90%, 100% { 
+                transform: translate(0); 
+                filter: hue-rotate(0deg) brightness(1);
+            }
+            5% { 
+                transform: translate(-2px, 2px); 
+                filter: hue-rotate(180deg) brightness(1.5);
+            }
+            10% { 
+                transform: translate(-2px, -2px); 
+                filter: hue-rotate(90deg) brightness(1.3);
+            }
+            15% { 
+                transform: translate(2px, 2px); 
+                filter: hue-rotate(270deg) brightness(1.4);
+            }
+            20% { 
+                transform: translate(2px, -2px); 
+                filter: hue-rotate(45deg) brightness(1.6);
+            }
+        }
+        
+        /* 赛博哥特故障艺术效果 */
+        .glitch-level-1 {
+            animation: glitchLevel1 0.5s infinite;
+        }
+        
+        .glitch-level-2 {
+            animation: glitchLevel2 0.3s infinite;
+        }
+        
+        .glitch-level-3 {
+            animation: glitchLevel3 0.1s infinite;
+        }
+        
+        @keyframes glitchLevel1 {
+            0%, 90%, 100% { 
+                transform: translate(0); 
+                filter: hue-rotate(0deg);
+            }
+            5% { 
+                transform: translate(-1px, 1px); 
+                filter: hue-rotate(45deg);
+            }
+            10% { 
+                transform: translate(1px, -1px); 
+                filter: hue-rotate(90deg);
+            }
+        }
+        
+        @keyframes glitchLevel2 {
+            0%, 80%, 100% { 
+                transform: translate(0); 
+                filter: hue-rotate(0deg) brightness(1);
+            }
+            5% { 
+                transform: translate(-2px, 2px); 
+                filter: hue-rotate(90deg) brightness(1.2);
+            }
+            10% { 
+                transform: translate(2px, -2px); 
+                filter: hue-rotate(180deg) brightness(1.1);
+            }
+            15% { 
+                transform: translate(-1px, -1px); 
+                filter: hue-rotate(270deg) brightness(1.3);
+            }
+        }
+        
+        @keyframes glitchLevel3 {
+            0%, 70%, 100% { 
+                transform: translate(0); 
+                filter: hue-rotate(0deg) brightness(1) contrast(1);
+            }
+            5% { 
+                transform: translate(-3px, 3px); 
+                filter: hue-rotate(45deg) brightness(1.5) contrast(1.2);
+            }
+            10% { 
+                transform: translate(3px, -3px); 
+                filter: hue-rotate(90deg) brightness(1.3) contrast(1.1);
+            }
+            15% { 
+                transform: translate(-2px, -2px); 
+                filter: hue-rotate(135deg) brightness(1.4) contrast(1.3);
+            }
+            20% { 
+                transform: translate(2px, 2px); 
+                filter: hue-rotate(180deg) brightness(1.6) contrast(1.4);
+            }
+        }
+        
+        .glitch-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 255, 65, 0.9);
+            color: #000;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .theme-switcher {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .theme-btn {
+            background: #333;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-btn:hover {
+            background: #00ff41;
+            color: #000;
+        }
+        
+        .theme-btn.active {
+            background: #00ff41;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="glitch-indicator" id="glitchIndicator">故障等级: 0</div>
+    
+    <div class="test-container">
+        <h1>🎭 头像点击测试 - 增强版</h1>
+        
+        <div class="theme-switcher">
+            <button class="theme-btn active" data-theme="cyberpunk">赛博哥特</button>
+            <button class="theme-btn" data-theme="normal">普通模式</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 测试说明：</h3>
+            <ul>
+                <li>🎯 点击头像四次（3秒内）可以进入里世界</li>
+                <li>✨ 每次点击都会有视觉反馈和缩放效果</li>
+                <li>🎨 第四次点击会触发特殊故障动画效果</li>
+                <li>⚡ 赛博哥特模式下，页面点击会增加故障等级</li>
+                <li>🔄 故障等级会在5秒后自动重置</li>
+            </ul>
+        </div>
+        
+        <div class="avatar-container">
+            <img id="user-avatar" src="https://via.placeholder.com/40x40/00ff41/000000?text=头像" alt="用户头像">
+            <div>
+                <div style="font-weight: bold; color: #00ff41;">用户名</div>
+                <div style="font-size: 0.9em; color: #666;">赛博哥特模式</div>
+            </div>
+        </div>
+        
+        <div class="click-counter">
+            <div class="counter-display">
+                <div class="counter-item">
+                    <div>点击次数</div>
+                    <div class="counter-value" id="click-count">0</div>
+                </div>
+                <div class="counter-item">
+                    <div>剩余时间</div>
+                    <div class="counter-value" id="timer">3.0</div>
+                </div>
+                <div class="counter-item">
+                    <div>故障等级</div>
+                    <div class="counter-value" id="glitch-level">0</div>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
+        <div id="status" class="status-panel">
+            <div id="status-message" class="status-message">状态信息将在这里显示</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let clickCount = 0;
+        let clickTimer = null;
+        let timerInterval = null;
+        let glitchLevel = 0;
+        let glitchTimer = null;
+        let currentTheme = 'cyberpunk';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const userAvatar = document.getElementById('user-avatar');
+            const clickCountElement = document.getElementById('click-count');
+            const timerElement = document.getElementById('timer');
+            const statusElement = document.getElementById('status');
+            const statusMessageElement = document.getElementById('status-message');
+            const progressFillElement = document.getElementById('progress-fill');
+            const glitchLevelElement = document.getElementById('glitch-level');
+            const glitchIndicatorElement = document.getElementById('glitchIndicator');
+            
+            // 头像点击事件
+            if (userAvatar) {
+                userAvatar.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    clickCount++;
+                    clickCountElement.textContent = clickCount;
+                    
+                    // 清除之前的定时器
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                    }
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                    }
+                    
+                    // 设置3秒后重置点击计数
+                    let timeLeft = 3.0;
+                    timerElement.textContent = timeLeft.toFixed(1);
+                    
+                    timerInterval = setInterval(() => {
+                        timeLeft -= 0.1;
+                        timerElement.textContent = timeLeft.toFixed(1);
+                        
+                        // 更新进度条
+                        const progress = ((3.0 - timeLeft) / 3.0) * 100;
+                        progressFillElement.style.width = progress + '%';
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                        }
+                    }, 100);
+                    
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                        clickCountElement.textContent = clickCount;
+                        timerElement.textContent = '3.0';
+                        progressFillElement.style.width = '0%';
+                        statusElement.style.display = 'none';
+                    }, 3000);
+                    
+                    // 点击反馈效果
+                    this.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 200);
+                    
+                    // 显示状态信息
+                    statusElement.style.display = 'block';
+                    if (clickCount === 1) {
+                        statusMessageElement.textContent = '第一次点击 - 继续点击头像';
+                        statusMessageElement.style.background = '#4CAF50';
+                        statusMessageElement.style.color = '#fff';
+                    } else if (clickCount === 2) {
+                        statusMessageElement.textContent = '第二次点击 - 再点击两次';
+                        statusMessageElement.style.background = '#FF9800';
+                        statusMessageElement.style.color = '#fff';
+                    } else if (clickCount === 3) {
+                        statusMessageElement.textContent = '第三次点击 - 最后一次点击！';
+                        statusMessageElement.style.background = '#FF5722';
+                        statusMessageElement.style.color = '#fff';
+                    }
+                    
+                    // 第四次点击进入里世界
+                    if (clickCount === 4) {
+                        clickCount = 0;
+                        clickCountElement.textContent = clickCount;
+                        clearTimeout(clickTimer);
+                        clearInterval(timerInterval);
+                        
+                        // 显示进入里世界的动画效果
+                        this.style.animation = 'glitch 0.5s infinite';
+                        this.style.filter = 'hue-rotate(180deg) brightness(1.5)';
+                        
+                        statusMessageElement.textContent = '进入里世界...';
+                        statusMessageElement.style.background = '#ff0066';
+                        statusMessageElement.style.color = '#fff';
+                        
+                        setTimeout(() => {
+                            window.location.href = '/tools/vanity-os/';
+                        }, 1000);
+                    }
+                });
+            }
+            
+            // 页面点击事件 - 故障艺术效果
+            document.addEventListener('click', function(e) {
+                if (currentTheme === 'cyberpunk' && !e.target.closest('.avatar-container')) {
+                    // 清除之前的定时器
+                    if (glitchTimer) {
+                        clearTimeout(glitchTimer);
+                    }
+                    
+                    // 增加故障等级
+                    glitchLevel = (glitchLevel + 1) % 4;
+                    glitchLevelElement.textContent = glitchLevel;
+                    
+                    // 移除所有故障等级类
+                    document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                    
+                    // 添加新的故障等级类
+                    if (glitchLevel > 0) {
+                        document.body.classList.add('glitch-level-' + glitchLevel);
+                        glitchIndicatorElement.textContent = '故障等级: ' + glitchLevel;
+                        glitchIndicatorElement.style.display = 'block';
+                    } else {
+                        glitchIndicatorElement.style.display = 'none';
+                    }
+                    
+                    // 设置5秒后自动重置故障等级
+                    glitchTimer = setTimeout(() => {
+                        glitchLevel = 0;
+                        glitchLevelElement.textContent = glitchLevel;
+                        document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                        glitchIndicatorElement.style.display = 'none';
+                    }, 5000);
+                }
+            });
+            
+            // 主题切换
+            const themeButtons = document.querySelectorAll('.theme-btn');
+            themeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const theme = this.dataset.theme;
+                    
+                    // 更新按钮状态
+                    themeButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 更新主题
+                    currentTheme = theme;
+                    
+                    // 重置故障等级
+                    glitchLevel = 0;
+                    glitchLevelElement.textContent = glitchLevel;
+                    document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                    glitchIndicatorElement.style.display = 'none';
+                    
+                    if (glitchTimer) {
+                        clearTimeout(glitchTimer);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

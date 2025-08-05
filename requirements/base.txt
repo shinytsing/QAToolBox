@@ -1,0 +1,44 @@
+# QAToolBox 基础依赖
+# 核心框架
+Django==4.2.23
+djangorestframework==3.16.0
+django-cors-headers==4.7.0
+django-crispy-forms==2.4
+django-filter==25.1
+django-simple-captcha==0.6.2
+crispy-bootstrap5==2025.6
+
+# 数据处理
+pandas==2.3.1
+numpy==2.0.2
+matplotlib==3.9.4
+pyecharts==2.0.8
+
+# 文件处理
+Pillow==11.3.0
+python-docx==1.2.0
+pdfplumber==0.11.7
+pdfminer.six==20250506
+pypdfium2==4.30.0
+xmind==1.2.0
+reportlab==4.4.3
+
+# 网络请求
+requests==2.32.4
+urllib3==2.5.0
+beautifulsoup4==4.13.4
+lxml==6.0.0
+
+# 异步任务
+celery==5.5.3
+redis==6.2.0
+
+# 工具库
+python-dotenv==1.1.1
+python-dateutil==2.9.0.post0
+pytz==2025.2
+tenacity==9.1.2
+prettytable==3.16.0
+
+# 开发工具
+gunicorn==23.0.0

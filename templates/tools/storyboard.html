@@ -1,9 +1,11 @@
-{% extends "base.html" %}
+{% extends "tools/base_tool.html" %}
 {% load static %}
 
-{% block title %}故事板 - 故事疗愈{% endblock %}
+{% block tool_title_inner %}故事板{% endblock %}
+{% block tool_title_display %}故事板{% endblock %}
+{% block tool_description %}故事疗愈空间 - 分享故事，获得情感共鸣{% endblock %}
 
-{% block content %}
+{% block tool_content %}
 <div class="storyboard-container">
     <!-- 引导说明 -->
     <div class="storyboard-guide">

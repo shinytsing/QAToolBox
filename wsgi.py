@@ -1,5 +1,5 @@
 """
-WSGI config for QAToolBox project.
+WSGI config for ModeShift project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

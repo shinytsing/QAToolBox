@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外世界按钮测试</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0e17;
+            color: #00ffe7;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #00bfff;
+            box-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #00ffe7;
+            text-shadow: 0 0 20px rgba(0, 255, 231, 0.8);
+            margin-bottom: 2rem;
+            letter-spacing: 3px;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00bfff;
+            text-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+            margin: 1rem 0;
+            letter-spacing: 2px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(45deg, #00bfff, #00ffe7);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 191, 255, 0.5);
+        }
+        
+        .btn-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover .btn-icon {
+            transform: translateX(3px);
+        }
+        
+        .description {
+            margin: 2rem 0;
+            color: #888;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 15px;
+            background: rgba(0, 191, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid #00bfff;
+        }
+        
+        .status h3 {
+            color: #00bfff;
+            margin-top: 0;
+        }
+        
+        .status ul {
+            text-align: left;
+            color: #ccc;
+        }
+        
+        .status li {
+            margin: 8px 0;
+        }
+        
+        .world-concepts {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .world-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .world-card h4 {
+            color: #00bfff;
+            margin-top: 0;
+        }
+        
+        .world-card p {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="title">ModeShift</div>
+        <div class="subtitle">Four Modes, One Beast</div>
+        
+        <div class="description">
+            测试页面：验证"进入外世界"按钮修改效果<br>
+            将"进入工具集"改为"进入外世界"
+        </div>
+        
+        <button class="btn" onclick="alert('进入外世界功能测试')">
+            <span class="btn-text">进入外世界</span>
+            <span class="btn-icon">→</span>
+        </button>
+        
+        <div class="world-concepts">
+            <div class="world-card">
+                <h4>🌍 外世界概念</h4>
+                <p>代表现实世界的工具和功能，与里世界形成对比</p>
+            </div>
+            <div class="world-card">
+                <h4>🎭 里世界概念</h4>
+                <p>代表隐藏的特殊功能和秘密区域，需要特殊方式进入</p>
+            </div>
+            <div class="world-card">
+                <h4>⚡ 世界切换</h4>
+                <p>通过不同入口在不同世界间切换，提供不同的体验</p>
+            </div>
+        </div>
+        
+        <div class="status">
+            <h3>修改状态</h3>
+            <ul>
+                <li>✅ 主页按钮文案：进入工具集 → 进入外世界</li>
+                <li>✅ 中文翻译更新：进入外世界</li>
+                <li>✅ 英文翻译更新：Enter Outer World</li>
+                <li>✅ 按钮样式保持不变</li>
+                <li>✅ 功能逻辑保持不变</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 简单的页面加载确认
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('外世界按钮测试页面加载完成');
+            console.log('当前按钮文案: 进入外世界');
+        });
+    </script>
+</body>
+</html> 

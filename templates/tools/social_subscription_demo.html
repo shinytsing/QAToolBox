@@ -1,0 +1,616 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}社交媒体订阅功能演示{% endblock %}
+
+{% block content %}
+<div class="social-subscription-demo-container">
+    <div class="demo-header">
+        <h1><i class="fas fa-bell"></i> 社交媒体订阅功能演示</h1>
+        <p>展示增强的订阅类型区分和详细通知内容</p>
+    </div>
+
+    <div class="demo-content">
+        <!-- 订阅类型说明 -->
+        <div class="demo-section">
+            <h2><i class="fas fa-info-circle"></i> 订阅类型说明</h2>
+            <div class="subscription-types-demo">
+                <div class="type-card">
+                    <div class="type-icon newPosts">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="type-info">
+                        <h3>新动态</h3>
+                        <p>用户发布的新内容，包括帖子、视频、文章等</p>
+                        <div class="type-example">
+                            <strong>示例：</strong>用户发布了新的穿搭分享，包含详细内容、图片、标签和统计数据
+                        </div>
+                    </div>
+                </div>
+
+                <div class="type-card">
+                    <div class="type-icon newFollowers">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="type-info">
+                        <h3>新粉丝</h3>
+                        <p>有新用户关注了被订阅者（被订阅者获得新粉丝）</p>
+                        <div class="type-example">
+                            <strong>示例：</strong>用户获得了新粉丝"小红薯123"，显示粉丝头像、名称和当前总粉丝数
+                        </div>
+                    </div>
+                </div>
+
+                <div class="type-card">
+                    <div class="type-icon newFollowing">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div class="type-info">
+                        <h3>新关注</h3>
+                        <p>被订阅者新关注了其他用户（被订阅者关注了别人）</p>
+                        <div class="type-example">
+                            <strong>示例：</strong>用户新关注了"时尚达人"，显示关注对象头像、名称和当前关注总数
+                        </div>
+                    </div>
+                </div>
+
+                <div class="type-card">
+                    <div class="type-icon profileChanges">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="type-info">
+                        <h3>资料变化</h3>
+                        <p>用户资料信息的变化，如头像、昵称、简介等</p>
+                        <div class="type-example">
+                            <strong>示例：</strong>用户更新了头像，显示变化前后的对比信息
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知展示演示 -->
+        <div class="demo-section">
+            <h2><i class="fas fa-bell"></i> 通知内容演示</h2>
+            <div class="notifications-demo">
+                <!-- 新动态通知演示 -->
+                <div class="notification-demo-item">
+                    <div class="notification-icon newPosts">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">小红书博主发布了新动态</div>
+                        <div class="notification-text">分享了一套穿搭分享，包含详细的搭配技巧和购买链接...</div>
+                        
+                        <div class="notification-post-content">
+                            <div class="post-text">今天分享一套穿搭分享，希望大家喜欢！包含详细的搭配技巧和购买链接，记得点赞收藏哦～</div>
+                            <div class="post-images">
+                                <img src="https://via.placeholder.com/60x60/ff6b6b/ffffff?text=1" alt="帖子图片" class="post-image">
+                                <img src="https://via.placeholder.com/60x60/4ecdc4/ffffff?text=2" alt="帖子图片" class="post-image">
+                                <img src="https://via.placeholder.com/60x60/45b7d1/ffffff?text=3" alt="帖子图片" class="post-image">
+                            </div>
+                            <div class="post-tags">
+                                <span class="tag">穿搭分享</span>
+                                <span class="tag">分享</span>
+                                <span class="tag">推荐</span>
+                            </div>
+                            <div class="post-stats">
+                                <span><i class="fas fa-heart"></i> 245</span>
+                                <span><i class="fas fa-comment"></i> 32</span>
+                                <span><i class="fas fa-share"></i> 8</span>
+                            </div>
+                        </div>
+                        
+                        <div class="notification-meta">
+                            <span><i class="fas fa-clock"></i> 2小时前</span>
+                            <span><i class="fas fa-tag"></i> 小红书</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新粉丝通知演示 -->
+                <div class="notification-demo-item">
+                    <div class="notification-icon newFollowers">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">小红书博主获得了新粉丝</div>
+                        <div class="notification-text">新增了 5 个粉丝，当前粉丝数达到 9599</div>
+                        
+                        <div class="notification-follower-info">
+                            <div class="follower-avatar">
+                                <img src="https://via.placeholder.com/50x50/ff6b6b/ffffff?text=粉" alt="粉丝头像">
+                            </div>
+                            <div class="follower-details">
+                                <div class="follower-name">小红薯123</div>
+                                <div class="follower-id">ID: user_12345</div>
+                            </div>
+                            <div class="follower-count">
+                                <i class="fas fa-users"></i> 总粉丝数: 9599
+                            </div>
+                        </div>
+                        
+                        <div class="notification-meta">
+                            <span><i class="fas fa-clock"></i> 1小时前</span>
+                            <span><i class="fas fa-tag"></i> 小红书</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新关注通知演示 -->
+                <div class="notification-demo-item">
+                    <div class="notification-icon newFollowing">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">小红书博主关注了新用户</div>
+                        <div class="notification-text">新关注了 时尚达人，当前关注数达到 156</div>
+                        
+                        <div class="notification-following-info">
+                            <div class="following-avatar">
+                                <img src="https://via.placeholder.com/50x50/4ecdc4/ffffff?text=关" alt="关注对象头像">
+                            </div>
+                            <div class="following-details">
+                                <div class="following-name">时尚达人</div>
+                                <div class="following-id">ID: user_67890</div>
+                            </div>
+                            <div class="following-count">
+                                <i class="fas fa-user-friends"></i> 当前关注数: 156
+                            </div>
+                        </div>
+                        
+                        <div class="notification-meta">
+                            <span><i class="fas fa-clock"></i> 30分钟前</span>
+                            <span><i class="fas fa-tag"></i> 小红书</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资料变化通知演示 -->
+                <div class="notification-demo-item">
+                    <div class="notification-icon profileChanges">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">小红书博主更新了资料</div>
+                        <div class="notification-text">更新了头像，快去看看吧！</div>
+                        
+                        <div class="notification-profile-changes">
+                            <div class="change-type">
+                                <i class="fas fa-edit"></i> 更新了头像
+                            </div>
+                            <div class="profile-comparison">
+                                <div class="old-profile">
+                                    <strong>变化前:</strong>
+                                    <div>昵称: 旧昵称</div>
+                                    <div>简介: 旧简介</div>
+                                </div>
+                                <div class="new-profile">
+                                    <strong>变化后:</strong>
+                                    <div>昵称: 新昵称</div>
+                                    <div>简介: 新简介</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="notification-meta">
+                            <span><i class="fas fa-clock"></i> 15分钟前</span>
+                            <span><i class="fas fa-tag"></i> 小红书</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能特点 -->
+        <div class="demo-section">
+            <h2><i class="fas fa-star"></i> 功能特点</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>类型区分</h3>
+                    <p>明确区分新粉丝和新关注，避免混淆</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h3>详细内容</h3>
+                    <p>显示完整的变化内容，包括图片、标签、统计数据等</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3>可视化展示</h3>
+                    <p>通过头像、图片、标签等元素直观展示信息</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>响应式设计</h3>
+                    <p>适配各种设备，提供良好的移动端体验</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 演示页面样式 */
+.social-subscription-demo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.demo-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 40px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+}
+
+.demo-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.demo-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.demo-section {
+    margin-bottom: 50px;
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.demo-section h2 {
+    color: #333;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 订阅类型演示 */
+.subscription-types-demo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.type-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.type-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.type-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.type-icon.newPosts { background: #4facfe; }
+.type-icon.newFollowers { background: #f093fb; }
+.type-icon.newFollowing { background: #ffa726; }
+.type-icon.profileChanges { background: #43e97b; }
+
+.type-info h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.type-info p {
+    margin: 0 0 10px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.type-example {
+    font-size: 0.9rem;
+    color: #888;
+    background: rgba(0, 123, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid #007bff;
+}
+
+/* 通知演示 */
+.notifications-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.notification-demo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.notification-demo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.notification-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+/* 复用现有的通知详情样式 */
+.notification-post-content,
+.notification-follower-info,
+.notification-following-info,
+.notification-profile-changes {
+    margin-top: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.post-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.post-images {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.post-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.post-tags {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    background: #e9ecef;
+    color: #495057;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.post-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.post-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.follower-avatar,
+.following-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.follower-avatar img,
+.following-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.follower-details,
+.following-details {
+    flex: 1;
+}
+
+.follower-name,
+.following-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 2px;
+}
+
+.follower-id,
+.following-id {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.follower-count,
+.following-count {
+    font-size: 12px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.change-type {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    font-size: 13px;
+}
+
+.old-profile,
+.new-profile {
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.old-profile {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.new-profile {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.old-profile strong,
+.new-profile strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+.notification-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 10px;
+}
+
+/* 功能特点 */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 25px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.feature-card h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.feature-card p {
+    color: #666;
+    line-height: 1.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .demo-header h1 {
+        font-size: 2rem;
+    }
+    
+    .subscription-types-demo {
+        grid-template-columns: 1fr;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-comparison {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %} 

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}情感日记 - Emo模式{% endblock %}
+{% block tool_title_inner %}情感日记 - Emo模式{% endblock %}
+{% block tool_title_display %}情感日记 - Emo模式{% endblock %}
 
 {% block extra_css %}
 <!-- 确保主题CSS能够正确加载 -->
@@ -83,6 +84,17 @@
 /* 狂暴模式切换动画 */
 .emo-diary-container.training-transition {
   animation: trainingModeSwitch 1.8s ease-in-out;
+}
+
+/* 消息提示动画 */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
 }
 
 @keyframes trainingModeSwitch {
@@ -237,22 +249,9 @@
 
 {% block content %}
 <div class="emo-diary-container">
-  <!-- 语言切换按钮 -->
-  <div class="geek-language-switch-fixed">
-    <button class="geek-lang-btn-fixed active" data-lang="zh">中文</button>
-    <button class="geek-lang-btn-fixed" data-lang="en">English</button>
-  </div>
 
-  <!-- 快捷键提示 -->
-  <div class="theme-switch-hint">
-    <div class="hint-content">
-      <i class="fas fa-keyboard"></i>
-      <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
-      <button class="help-btn" id="showShortcutsHelp">
-        <i class="fas fa-question-circle"></i>
-      </button>
-    </div>
-  </div>
+
+
 
   <!-- 快捷键帮助面板 -->
   <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
@@ -1053,21 +1052,7 @@
   background: #5a6fd8;
 }
 
-/* 语言切换按钮样式 */
-.geek-language-switch-fixed {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  gap: 10px;
-  background: rgba(255,255,255,0.9);
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
+
 
 /* 主题切换提示样式 */
 .theme-switch-hint {
@@ -1265,28 +1250,7 @@
   visibility: visible;
 }
 
-.geek-lang-btn-fixed {
-  padding: 8px 16px;
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: 'Arial', sans-serif;
-  font-size: 0.8rem;
-}
 
-.geek-lang-btn-fixed:hover {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.2);
-}
-
-.geek-lang-btn-fixed.active {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
 
 /* 动画 */
 @keyframes pulse {
@@ -1374,7 +1338,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'r':
         e.preventDefault();
-        window.location.href = '/tools/redbook-generator/';
+        // window.location.href = '/tools/redbook-generator/'; // 已隐藏
         break;
       case 't':
         e.preventDefault();
@@ -1408,7 +1372,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// 切换主题并刷新页面（用于快捷键）
+// 切换主题并跳转到主页（用于快捷键）
 async function switchGlobalThemeWithRefresh(theme) {
   try {
     // 显示加载状态
@@ -1420,7 +1384,7 @@ async function switchGlobalThemeWithRefresh(theme) {
     };
     
     const themeName = themeNames[theme] || theme;
-    showMessage(`正在切换到${themeName}模式并刷新页面...`, 'info');
+    showMessage(`正在切换到${themeName}模式，即将跳转到对应页面...`, 'info');
     
     // 更新后端
     const response = await fetch('/users/theme/', {
@@ -1441,10 +1405,17 @@ async function switchGlobalThemeWithRefresh(theme) {
       throw new Error(data.error || '主题切换失败');
     }
     
-    // 主题切换成功，刷新页面
+    // 主题切换成功，跳转到对应mode的主页面
     setTimeout(() => {
-      window.location.reload();
-    }, 500); // 延迟500ms让用户看到成功提示
+      const themePages = {
+        'life': '/tools/life/',
+        'work': '/tools/work/',
+        'training': '/tools/training/',
+        'emo': '/tools/emo/'
+      };
+      const targetPage = themePages[theme] || '/';
+      window.location.href = targetPage;
+    }, 800); // 延迟800ms让用户看到成功提示
     
   } catch (error) {
     console.error('主题切换失败:', error);
@@ -1540,7 +1511,7 @@ function updateEmoDiaryTemplate(theme) {
       'training': '狂暴',
       'emo': 'Emo'
     };
-    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具 (当前: ${themeNames[theme]}模式)`;
+
   }
   
   // 更新快捷方式显示
@@ -1694,7 +1665,7 @@ function applyThemeStyles(theme) {
       'training': '狂暴模式',
       'emo': 'Emo模式'
     };
-    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具 (当前: ${themeNames[theme]})`;
+
   }
 }
 
@@ -1849,7 +1820,7 @@ function initPageTheme() {
       'training': '狂暴模式',
       'emo': 'Emo模式'
     };
-    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 (当前: ${themeNames[currentTheme]})`;
+
   }
 }
 
@@ -1893,34 +1864,7 @@ function initShortcutsHelp() {
   });
 }
 
-// 语言切换功能
-document.querySelectorAll('.geek-lang-btn-fixed').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const lang = this.getAttribute('data-lang');
-    switchLanguage(lang);
-    
-    // 更新按钮状态
-    document.querySelectorAll('.geek-lang-btn-fixed').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-  });
-});
 
-function switchLanguage(lang) {
-  // 更新所有带有data-zh和data-en属性的元素
-  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
-    if (lang === 'en') {
-      element.textContent = element.getAttribute('data-en');
-      if (element.placeholder) {
-        element.placeholder = element.getAttribute('data-en');
-      }
-    } else {
-      element.textContent = element.getAttribute('data-zh');
-      if (element.placeholder) {
-        element.placeholder = element.getAttribute('data-zh');
-      }
-    }
-  });
-}
 
 // 情感选择功能
 document.querySelectorAll('.emotion-option').forEach(option => {
@@ -1938,37 +1882,104 @@ document.getElementById('emotionIntensity').addEventListener('input', function()
 });
 
 // 保存日记功能
-document.getElementById('saveDiary').addEventListener('click', function() {
-  const title = document.getElementById('diaryTitle').value;
-  const content = document.getElementById('diaryContent').value;
-  const triggers = document.getElementById('triggers').value;
+document.getElementById('saveDiary').addEventListener('click', async function() {
+  const title = document.getElementById('diaryTitle').value.trim();
+  const content = document.getElementById('diaryContent').value.trim();
+  const triggers = document.getElementById('triggers').value.trim();
   const selectedEmotion = document.querySelector('.emotion-option.selected');
-  const emotionNote = document.getElementById('emotionNote').value;
+  const emotionNote = document.getElementById('emotionNote').value.trim();
   const intensity = document.getElementById('emotionIntensity').value;
   
   if (!title || !content) {
-    const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-    const message = currentLang === 'en' 
-      ? 'Please fill in title and content!' 
-      : '请填写标题和内容！';
-    alert(message);
+    showMessage('请填写标题和内容！', 'error');
     return;
   }
   
-  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-  const message = currentLang === 'en' 
-    ? 'Emotion record saved successfully!' 
-    : '情感记录保存成功！';
-  alert(message);
+  const emotion = selectedEmotion ? selectedEmotion.dataset.emotion : 'neutral';
   
-  // 清空表单
-  document.getElementById('diaryTitle').value = '';
-  document.getElementById('diaryContent').value = '';
-  document.getElementById('triggers').value = '';
-  document.getElementById('emotionNote').value = '';
-  document.getElementById('emotionIntensity').value = '5';
-  document.querySelectorAll('.emotion-option').forEach(o => o.classList.remove('selected'));
+  try {
+    const response = await fetch('/tools/api/emo-diary/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        action: 'save_diary',
+        title: title,
+        content: content,
+        emotion: emotion,
+        intensity: parseInt(intensity),
+        triggers: triggers,
+        emotion_note: emotionNote
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showMessage('情感记录保存成功！', 'success');
+      
+      // 清空表单
+      document.getElementById('diaryTitle').value = '';
+      document.getElementById('diaryContent').value = '';
+      document.getElementById('triggers').value = '';
+      document.getElementById('emotionNote').value = '';
+      document.getElementById('emotionIntensity').value = '5';
+      document.querySelectorAll('.emotion-option').forEach(o => o.classList.remove('selected'));
+    } else {
+      showMessage(data.error || '保存失败', 'error');
+    }
+  } catch (error) {
+    console.error('保存失败:', error);
+    showMessage('保存失败，请重试', 'error');
+  }
 });
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// 显示消息提示
+function showMessage(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    max-width: 300px;
+  `;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
 
 // 音乐播放器功能
 let isPlaying = false;
@@ -1984,19 +1995,11 @@ document.getElementById('playBtn').addEventListener('click', function() {
 });
 
 document.getElementById('prevBtn').addEventListener('click', function() {
-  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-  const message = currentLang === 'en' 
-    ? 'Previous song feature coming soon!' 
-    : '上一首功能即将推出！';
-  alert(message);
+  alert('上一首功能即将推出！');
 });
 
 document.getElementById('nextBtn').addEventListener('click', function() {
-  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-  const message = currentLang === 'en' 
-    ? 'Next song feature coming soon!' 
-    : '下一首功能即将推出！';
-  alert(message);
+  alert('下一首功能即将推出！');
 });
 
 // 播放列表功能

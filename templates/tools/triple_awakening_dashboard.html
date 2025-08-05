@@ -1,0 +1,831 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}三重觉醒仪表盘{% endblock %}
+{% block tool_title_display %}三重觉醒仪表盘{% endblock %}
+
+{% block extra_css %}
+<style>
+.triple-awakening-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.triple-awakening-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 68, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: backgroundPulse 10s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.main-title {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ff4444, #00ffff, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(255, 68, 68, 0.3);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-card {
+  background: rgba(26, 26, 26, 0.8);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #ff4444, #00ffff, #ffd700);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover::before {
+  transform: scaleX(1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(255, 68, 68, 0.2);
+  border-color: #ff4444;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #ff4444;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-icon {
+  font-size: 1.8rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  background: rgba(255, 68, 68, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 68, 68, 0.2);
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ff4444;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.challenge-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.challenge-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid #ff4444;
+}
+
+.challenge-item.completed {
+  border-left-color: #00ff00;
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.challenge-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ff4444;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.challenge-checkbox.checked {
+  background: #ff4444;
+  color: white;
+}
+
+.challenge-text {
+  flex: 1;
+  margin-left: 1rem;
+  font-size: 0.9rem;
+}
+
+.challenge-points {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.currency-item {
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(0, 255, 255, 0.1));
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+.currency-amount {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #ffd700;
+  margin-bottom: 0.5rem;
+}
+
+.currency-name {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 68, 68, 0.3);
+}
+
+.action-btn.secondary {
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, #00ff00, #00cc00);
+}
+
+.chart-container {
+  height: 200px;
+  margin: 1rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 68, 68, 0.2);
+}
+
+.chart-placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+.recent-activities {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid #00ffff;
+}
+
+.activity-icon {
+  font-size: 1.2rem;
+  margin-right: 1rem;
+  color: #00ffff;
+}
+
+.activity-details {
+  flex: 1;
+}
+
+.activity-title {
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .currency-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .main-title {
+    font-size: 2rem;
+  }
+  
+  .triple-awakening-container {
+    padding: 1rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="triple-awakening-container">
+  <div class="header-section">
+    <h1 class="main-title">
+      <i class="fas fa-brain"></i> 三重觉醒仪表盘
+    </h1>
+    <p class="subtitle">🔥 物理级存在感 | 💻 代码健身房 | 💰 痛苦货币化</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- 物理级存在感 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-dumbbell card-icon"></i>
+        物理级存在感
+      </h2>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ workout_data.dashboard.total_workouts }}</div>
+          <div class="stat-label">总训练次数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ workout_data.dashboard.current_streak }}</div>
+          <div class="stat-label">连续天数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ workout_data.dashboard.total_duration }}</div>
+          <div class="stat-label">总时长(分钟)</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ workout_data.dashboard.total_calories }}</div>
+          <div class="stat-label">消耗卡路里</div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-placeholder">
+          📈 力量增长曲线图<br>
+          (对比代码提交次数曲线)
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="startFitnessWorkout()">
+          <i class="fas fa-play"></i> 开始训练
+        </button>
+        <button class="action-btn secondary" onclick="recordExhaustion()">
+          <i class="fas fa-microphone"></i> 记录力竭
+        </button>
+      </div>
+    </div>
+
+    <!-- 代码健身房 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-code card-icon"></i>
+        代码健身房
+      </h2>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">{{ ai_dependency_data.total_lines }}</div>
+          <div class="stat-label">总代码行数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ ai_dependency_data.rejection_count }}</div>
+          <div class="stat-label">拒绝AI次数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ ai_dependency_data.manual_lines }}</div>
+          <div class="stat-label">手写代码行数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ ai_dependency_data.dependency_score|floatformat:1 }}%</div>
+          <div class="stat-label">AI依赖度</div>
+        </div>
+      </div>
+      
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ ai_dependency_data.dependency_score }}%"></div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="startCodeWorkout()">
+          <i class="fas fa-keyboard"></i> 代码训练
+        </button>
+        <button class="action-btn secondary" onclick="showAIDependency()">
+          <i class="fas fa-chart-line"></i> 依赖度分析
+        </button>
+      </div>
+    </div>
+
+    <!-- 痛苦货币化 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-coins card-icon"></i>
+        痛苦货币化
+      </h2>
+      
+      <div class="currency-grid">
+        {% for currency_type, currency_info in pain_currency_data.items %}
+        <div class="currency-item">
+          <div class="currency-amount">{{ currency_info.amount }}</div>
+          <div class="currency-name">{{ currency_info.display_name }}</div>
+        </div>
+        {% empty %}
+        <div class="currency-item">
+          <div class="currency-amount">0</div>
+          <div class="currency-name">力竭币</div>
+        </div>
+        <div class="currency-item">
+          <div class="currency-amount">0</div>
+          <div class="currency-name">拒绝币</div>
+        </div>
+        <div class="currency-item">
+          <div class="currency-amount">0</div>
+          <div class="currency-name">手写币</div>
+        </div>
+        <div class="currency-item">
+          <div class="currency-amount">0</div>
+          <div class="currency-name">突破币</div>
+        </div>
+        {% endfor %}
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="showPainCurrency()">
+          <i class="fas fa-wallet"></i> 货币详情
+        </button>
+        <button class="action-btn secondary" onclick="createExhaustionProof()">
+          <i class="fas fa-certificate"></i> 力竭证明
+        </button>
+      </div>
+    </div>
+
+    <!-- 每日挑战 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-trophy card-icon"></i>
+        每日挑战
+      </h2>
+      
+      <div class="challenge-list">
+        {% for task in daily_challenge.tasks %}
+        <div class="challenge-item {% if task.completed %}completed{% endif %}">
+          <div class="challenge-checkbox {% if task.completed %}checked{% endif %}" 
+               onclick="completeTask({{ task.id }})">
+            {% if task.completed %}<i class="fas fa-check"></i>{% endif %}
+          </div>
+          <div class="challenge-text">{{ task.title }}</div>
+          <div class="challenge-points">+{{ task.points }}</div>
+        </div>
+        {% empty %}
+        <div class="challenge-item">
+          <div class="challenge-checkbox" onclick="completeTask(1)"></div>
+          <div class="challenge-text">写1行原生JS (1个引体向上)</div>
+          <div class="challenge-points">+5</div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-checkbox" onclick="completeTask(2)"></div>
+          <div class="challenge-text">拒绝1次AI补全 (10秒平板支撑)</div>
+          <div class="challenge-points">+10</div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-checkbox" onclick="completeTask(3)"></div>
+          <div class="challenge-text">重构1个函数 (20个深蹲)</div>
+          <div class="challenge-points">+15</div>
+        </div>
+        <div class="challenge-item">
+          <div class="challenge-checkbox" onclick="completeTask(4)"></div>
+          <div class="challenge-text">手写一个算法 (30个俯卧撑)</div>
+          <div class="challenge-points">+20</div>
+        </div>
+        {% endfor %}
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn success" onclick="claimReward()">
+          <i class="fas fa-gift"></i> 领取奖励
+        </button>
+      </div>
+    </div>
+
+    <!-- 最近活动 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-history card-icon"></i>
+        最近活动
+      </h2>
+      
+      <div class="recent-activities">
+        {% for workout in workout_data.recent_workouts %}
+        <div class="activity-item">
+          <i class="fas fa-dumbbell activity-icon"></i>
+          <div class="activity-details">
+            <div class="activity-title">{{ workout.type }} - {{ workout.intensity }}</div>
+            <div class="activity-time">{{ workout.date }}</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="activity-item">
+          <i class="fas fa-info-circle activity-icon"></i>
+          <div class="activity-details">
+            <div class="activity-title">暂无活动记录</div>
+            <div class="activity-time">开始你的第一次训练吧！</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- AI协作声明 -->
+    <div class="dashboard-card">
+      <h2 class="card-title">
+        <i class="fas fa-robot card-icon"></i>
+        AI协作声明
+      </h2>
+      
+      <div class="chart-container">
+        <div class="chart-placeholder">
+          🤖 3D模型展示<br>
+          骨架代码 + AI肌肉 + 神经系统
+        </div>
+      </div>
+      
+      <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin: 1rem 0;">
+        这就是数字时代的健身——我的大脑负责举起思想的杠铃
+      </p>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="window.location.href='/tools/copilot/'">
+          <i class="fas fa-eye"></i> 查看协作
+        </button>
+        <button class="action-btn secondary" onclick="createCollaboration()">
+          <i class="fas fa-plus"></i> 新建协作
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 开始健身训练
+function startFitnessWorkout() {
+  const workoutData = {
+    workout_type: 'strength',
+    intensity: 'intense',
+    duration_minutes: Math.floor(Math.random() * 60) + 30,
+    calories_burned: Math.floor(Math.random() * 500) + 200,
+    heart_rate_avg: Math.floor(Math.random() * 40) + 120,
+    heart_rate_max: Math.floor(Math.random() * 30) + 160,
+    exercises: ['深蹲', '俯卧撑', '平板支撑'],
+    notes: '突破极限训练',
+    is_exhausted: Math.random() > 0.7
+  };
+  
+  fetch('/tools/api/triple-awakening/fitness-workout/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(workoutData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('健身训练记录创建成功！');
+      location.reload();
+    } else {
+      alert('训练记录失败: ' + data.message);
+    }
+  });
+}
+
+// 记录力竭音频
+function recordExhaustion() {
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const mediaRecorder = new MediaRecorder(stream);
+        const audioChunks = [];
+        
+        mediaRecorder.ondataavailable = event => {
+          audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append('audio', audioBlob);
+          formData.append('workout_session_id', '1');
+          
+          fetch('/tools/api/triple-awakening/record-audio/', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('力竭音频记录成功！');
+            } else {
+              alert('音频记录失败: ' + data.message);
+            }
+          });
+        };
+        
+        mediaRecorder.start();
+        alert('开始录音5秒...');
+        
+        setTimeout(() => {
+          mediaRecorder.stop();
+          stream.getTracks().forEach(track => track.stop());
+        }, 5000);
+      })
+      .catch(err => {
+        alert('无法访问麦克风: ' + err.message);
+      });
+  } else {
+    alert('浏览器不支持音频录制');
+  }
+}
+
+// 开始代码训练
+function startCodeWorkout() {
+  const workoutData = {
+    workout_type: 'pull_up',
+    duration_seconds: Math.floor(Math.random() * 300) + 60,
+    difficulty_level: Math.floor(Math.random() * 5) + 1,
+    code_snippet: '// 原生JavaScript代码\nconst element = document.getElementById("myElement");\nelement.addEventListener("click", () => console.log("Hello World!"));',
+    ai_rejection_count: Math.floor(Math.random() * 10),
+    manual_code_lines: Math.floor(Math.random() * 50) + 10,
+    refactored_functions: Math.floor(Math.random() * 5) + 1,
+    is_exhausted: Math.random() > 0.7
+  };
+  
+  fetch('/tools/api/triple-awakening/code-workout/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(workoutData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('代码训练记录创建成功！');
+      location.reload();
+    } else {
+      alert('训练记录失败: ' + data.message);
+    }
+  });
+}
+
+// 显示AI依赖度
+function showAIDependency() {
+  fetch('/tools/api/triple-awakening/ai-dependency/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      const info = data.data;
+      alert(`AI依赖度分析:\n\n总代码行数: ${info.total_lines}\nAI生成代码: ${info.ai_lines}\n手写代码: ${info.manual_lines}\n拒绝AI次数: ${info.rejection_count}\n依赖度评分: ${info.dependency_score}%\n\n最后更新: ${info.last_updated}`);
+    }
+  });
+}
+
+// 显示痛苦货币
+function showPainCurrency() {
+  fetch('/tools/api/triple-awakening/pain-currency/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      let currencyInfo = '痛苦货币详情:\n\n';
+      for (const [type, info] of Object.entries(data.data)) {
+        currencyInfo += `${info.display_name}:\n  当前余额: ${info.amount}\n  总获得: ${info.total_earned}\n  总消费: ${info.total_spent}\n\n`;
+      }
+      currencyInfo += '可用于兑换:\n- 网站会员积分\n- 特殊功能解锁\n- 成就徽章\n- 开发者食谱';
+      alert(currencyInfo);
+    }
+  });
+}
+
+// 创建力竭证明
+function createExhaustionProof() {
+  const proofData = {
+    proof_type: 'fitness',
+    workout_session_id: 1
+  };
+  
+  fetch('/tools/api/triple-awakening/exhaustion-proof/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(proofData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`力竭证明创建成功！\n\n推特内容:\n${data.tweet_content}\n\nNFT元数据已生成，可以铸造为链上NFT！`);
+    } else {
+      alert('力竭证明创建失败: ' + data.message);
+    }
+  });
+}
+
+// 完成任务
+function completeTask(taskId) {
+  fetch('/tools/api/triple-awakening/complete-task/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({ task_id: taskId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`任务完成！获得 ${data.task.points} 积分\n总积分: ${data.total_score}`);
+      if (data.all_completed) {
+        alert('🎉 恭喜完成所有任务！解锁"开发者增肌食谱"彩蛋！');
+      }
+      location.reload();
+    } else {
+      alert('任务完成失败: ' + data.message);
+    }
+  });
+}
+
+// 领取奖励
+function claimReward() {
+  alert('🎁 开发者增肌食谱:\n\n1. 蛋白质: 每公斤体重1.6-2.2克\n2. 碳水化合物: 训练前后补充\n3. 健康脂肪: 坚果、鱼油\n4. 维生素D: 促进肌肉生长\n5. 充足睡眠: 8-9小时\n6. 水分: 每天2-3升\n\n💪 继续训练，突破极限！');
+}
+
+// 创建协作
+function createCollaboration() {
+  const collaborationData = {
+    collaboration_type: 'skeleton',
+    original_code: '// 骨架代码\nfunction processData() {\n  // TODO: 实现数据处理逻辑\n}',
+    ai_generated_code: '// AI生成的肌肉代码\nfunction processData(data) {\n  return data.map(item => ({\n    id: item.id,\n    processed: item.value * 2\n  }));\n}',
+    final_code: '// 最终神经系统代码\nfunction processData(data) {\n  if (!Array.isArray(data)) {\n    throw new Error("数据必须是数组");\n  }\n  \n  return data\n    .filter(item => item && item.value)\n    .map(item => ({\n      id: item.id,\n      processed: item.value * 2,\n      timestamp: Date.now()\n    }));\n}',
+    project_name: '数据处理系统',
+    description: '展示从骨架到肌肉到神经系统的完整协作过程'
+  };
+  
+  fetch('/tools/api/triple-awakening/copilot-collaboration/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(collaborationData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('AI协作声明创建成功！');
+      window.location.href = '/tools/copilot/';
+    } else {
+      alert('协作声明创建失败: ' + data.message);
+    }
+  });
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+{% endblock %} 

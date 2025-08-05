@@ -1,12 +1,13 @@
 {% extends 'tools/base_tool.html' %}
 {% load static %}
 
-{% block title %}冥想引导师 - 寻找内心的平静{% endblock %}
+{% block tool_title_inner %}冥想引导师 - 寻找内心的平静{% endblock %}
+{% block tool_title_display %}冥想引导师 - 寻找内心的平静{% endblock %}
 
 {% block tool_content %}
 <div class="meditation-container">
     <div class="meditation-header">
-        <h1><i class="fas fa-om"></i> 冥想引导师</h1>
+        <h1><i class="fas fa-pray"></i> 冥想引导师</h1>
         <p class="meditation-subtitle">寻找内心的平静，与自我对话</p>
     </div>
 
@@ -34,10 +35,34 @@
             </div>
         </div>
 
+        <!-- 冥想指导 -->
+        <div class="meditation-guidance">
+            <h3><i class="fas fa-lightbulb"></i> 冥想指导</h3>
+            <div class="guidance-content" id="guidanceContent">
+                <!-- 动态指导内容将在这里显示 -->
+                <div class="guidance-placeholder">
+                    <p>请选择冥想类型查看相应的指导内容</p>
+                </div>
+            </div>
+        </div>
+
         <!-- 冥想练习区域 -->
         <div class="meditation-practice">
             <h3><i class="fas fa-play-circle"></i> 冥想练习</h3>
             <div class="practice-area">
+                <!-- 时间选择 -->
+                <div class="time-selection">
+                    <h4><i class="fas fa-clock"></i> 选择冥想时长</h4>
+                    <div class="time-options">
+                        <button class="time-btn" data-time="300">5分钟</button>
+                        <button class="time-btn" data-time="600">10分钟</button>
+                        <button class="time-btn" data-time="900">15分钟</button>
+                        <button class="time-btn" data-time="1200">20分钟</button>
+                        <button class="time-btn" data-time="1800">30分钟</button>
+                        <button class="time-btn" data-time="3600">60分钟</button>
+                    </div>
+                </div>
+
                 <div class="breathing-circle" id="breathingCircle">
                     <div class="circle-inner">
                         <div class="breathing-text" id="breathingText">准备开始</div>
@@ -49,43 +74,46 @@
                     <button class="control-btn start-btn" onclick="startMeditation()">
                         <i class="fas fa-play"></i> 开始冥想
                     </button>
+                    <button class="control-btn pause-btn" onclick="pauseMeditation()" style="display: none;">
+                        <i class="fas fa-pause"></i> 暂停
+                    </button>
                     <button class="control-btn reset-btn" onclick="resetMeditation()">
                         <i class="fas fa-redo"></i> 重置
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <!-- 冥想指导 -->
-        <div class="meditation-guidance">
-            <h3><i class="fas fa-lightbulb"></i> 冥想指导</h3>
-            <div class="guidance-content">
-                <div class="guidance-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>找到舒适的姿势</h4>
-                        <p>坐在垫子上或椅子上，保持背部挺直但不僵硬。</p>
+                
+                <!-- 音效选择区域 -->
+                <div class="audio-section">
+                    <h4><i class="fas fa-music"></i> 冥想音效</h4>
+                    <div class="audio-controls">
+                        <div class="audio-buttons">
+                            <button class="audio-btn" data-mode="life" onclick="selectAudioMode('life')">
+                                <i class="fas fa-heart"></i> 生活模式
+                            </button>
+                            <button class="audio-btn" data-mode="work" onclick="selectAudioMode('work')">
+                                <i class="fas fa-briefcase"></i> 工作模式
+                            </button>
+                            <button class="audio-btn" data-mode="training" onclick="selectAudioMode('training')">
+                                <i class="fas fa-dumbbell"></i> 训练模式
+                            </button>
+                            <button class="audio-btn" data-mode="emo" onclick="selectAudioMode('emo')">
+                                <i class="fas fa-smile"></i> 情感模式
+                            </button>
+                        </div>
+                        <div class="custom-audio-section">
+                            <input type="file" id="customAudio" accept="audio/*" style="display: none;">
+                            <button class="control-btn upload-btn" onclick="document.getElementById('customAudio').click()">
+                                <i class="fas fa-upload"></i> 上传自定义音效
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="guidance-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>闭上眼睛</h4>
-                        <p>轻轻闭上眼睛，让视觉的干扰消失。</p>
+                    <div class="volume-control">
+                        <label>音量: <span id="volumeValue">50%</span></label>
+                        <input type="range" id="volumeSlider" min="0" max="100" value="50">
                     </div>
-                </div>
-                <div class="guidance-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>关注呼吸</h4>
-                        <p>自然地呼吸，观察呼吸的流动。</p>
-                    </div>
-                </div>
-                <div class="guidance-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h4>保持专注</h4>
-                        <p>当思绪飘散时，温柔地将注意力带回到呼吸上。</p>
+                    <div class="current-audio-info" id="currentAudioInfo" style="display: none;">
+                        <i class="fas fa-music"></i>
+                        <span id="currentAudioText">当前音效信息</span>
                     </div>
                 </div>
             </div>
@@ -94,88 +122,171 @@
 </div>
 
 <style>
+/* 生活模式主题背景 */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 浮动爱心背景 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+body:hover::before {
+  animation: lifePulse 4s ease-in-out infinite;
+}
+
+@keyframes lifePulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.01) rotate(0.3deg);
+    opacity: 1;
+  }
+}
+
 .meditation-container {
     max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
-    color: white;
+    position: relative;
+    z-index: 1;
+    color: #ffffff;
 }
 
 .meditation-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    padding: 40px 0;
 }
 
 .meditation-header h1 {
-    font-size: 2.5rem;
+    font-size: 3rem;
+    font-weight: 900;
+    color: #ffffff;
     margin-bottom: 10px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+  50% { text-shadow: 0 2px 20px rgba(255,255,255,0.5); }
+}
+
+.meditation-header h1 i {
+    font-size: 2.5rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
 .meditation-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    animation: subtitleFloat 4s ease-in-out infinite;
 }
 
-.meditation-content > div {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
+@keyframes subtitleFloat {
+  0%, 100% { transform: translateY(0px); opacity: 0.9; }
+  50% { transform: translateY(-5px); opacity: 1; }
+}
+
+.meditation-content {
+    display: grid;
+    gap: 30px;
+}
+
+.meditation-types, .meditation-practice, .meditation-guidance {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 30px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    /* 性能优化 */
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.meditation-types:hover, .meditation-practice:hover, .meditation-guidance:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.meditation-types h3, .meditation-practice h3, .meditation-guidance h3 {
+    color: #ffffff;
     margin-bottom: 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.meditation-content h3 {
-    margin-bottom: 15px;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .types-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
+    gap: 20px;
 }
 
 .type-card {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
     padding: 20px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    backdrop-filter: blur(10px);
+    color: #ffffff;
 }
 
 .type-card:hover {
-    background: rgba(255, 255, 255, 0.3);
     transform: translateY(-3px);
-}
-
-.type-card.selected {
-    background: rgba(255, 255, 255, 0.4);
-    border-color: #fff;
+    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .type-icon {
-    font-size: 3rem;
+    font-size: 2.5rem;
     margin-bottom: 10px;
 }
 
 .type-name {
-    font-size: 1.2rem;
     font-weight: 600;
+    font-size: 1.1rem;
 }
 
 .practice-area {
     text-align: center;
-    margin-top: 15px;
 }
 
 .breathing-circle {
@@ -183,112 +294,449 @@
     height: 200px;
     border: 3px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    margin: 0 auto 20px;
+    margin: 0 auto 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.5s ease;
-    animation: pulse 4s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.breathing-circle:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
 }
 
 .circle-inner {
     text-align: center;
+    color: #ffffff;
 }
 
 .breathing-text {
     font-size: 1.2rem;
     font-weight: 600;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 .timer {
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    font-size: 2rem;
+    font-weight: 700;
 }
 
 .practice-controls {
     display: flex;
     gap: 15px;
     justify-content: center;
-    margin-bottom: 20px;
 }
 
 .control-btn {
-    background: rgba(255, 255, 255, 0.2);
+    padding: 12px 24px;
     border: none;
-    border-radius: 25px;
-    padding: 12px 25px;
-    color: white;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+    color: #ffffff;
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
 }
 
 .control-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
-}
-
-.start-btn {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-}
-
-.reset-btn {
-    background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
 }
 
 .guidance-content {
     display: grid;
-    gap: 15px;
-    margin-top: 15px;
+    gap: 20px;
 }
 
 .guidance-step {
     display: flex;
-    gap: 15px;
     align-items: flex-start;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    gap: 15px;
     padding: 15px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
 }
 
 .step-number {
     width: 30px;
     height: 30px;
-    background: linear-gradient(45deg, #4CAF50, #45a049);
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-weight: 600;
+    color: #ffffff;
     flex-shrink: 0;
 }
 
 .step-content h4 {
-    margin-bottom: 5px;
+    color: #ffffff;
+    margin: 0 0 5px 0;
     font-size: 1.1rem;
 }
 
 .step-content p {
-    opacity: 0.9;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
     line-height: 1.5;
+}
+
+/* 时间选择样式 */
+.time-selection {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.time-selection h4 {
+    color: #ffffff;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.time-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.time-btn {
+    padding: 10px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-weight: 600;
+}
+
+.time-btn:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.time-btn.selected {
+    border-color: #ff6b6b;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+}
+
+/* 音效控制样式 */
+.audio-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.audio-section h4 {
+    color: #ffffff;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.audio-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.audio-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.audio-btn {
+    padding: 12px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    backdrop-filter: blur(10px);
+}
+
+.audio-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.audio-btn.selected {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.audio-btn i {
+    font-size: 16px;
+    margin-bottom: 2px;
+}
+
+.custom-audio-section {
+    display: flex;
+    justify-content: center;
+}
+
+.current-audio-info {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.current-audio-info i {
+    color: #4CAF50;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-control label {
+    color: #ffffff;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+.volume-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+}
+
+.volume-control input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    cursor: pointer;
+}
+
+.guidance-placeholder {
+    text-align: center;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+}
+
+/* 倒计时动画 */
+.breathing-circle.meditating {
+    animation: breathingPulse 4s ease-in-out infinite;
+}
+
+@keyframes breathingPulse {
+    0%, 100% { 
+        transform: scale(1);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    50% { 
+        transform: scale(1.1);
+        border-color: #ff6b6b;
+    }
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to { 
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from { 
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to { 
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* 完成通知样式 */
+.completion-notification {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.notification-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    color: #ffffff;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.5s ease;
+    max-width: 400px;
+    width: 90%;
+}
+
+.notification-content i {
+    font-size: 3rem;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+.notification-content h3 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #ffffff;
+}
+
+.notification-content p {
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.notification-content button {
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.notification-content button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 添加滚动性能优化 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 
 <script>
 let currentType = null;
 let isMeditating = false;
+let isPaused = false;
+let meditationTimer = null;
+let selectedTime = 600; // 默认10分钟
+let totalSeconds = 600;
+let remainingSeconds = 600;
+let audioPlayer = null;
+let customAudioUrl = null;
+
+// 冥想指导内容
+const guidanceContent = {
+    breathing: [
+        { title: "准备姿势", description: "坐在垫子上或椅子上，保持背部挺直但不僵硬，双手自然放在膝盖上。" },
+        { title: "调整呼吸", description: "闭上眼睛，开始深呼吸。吸气时数1-4，呼气时数1-6，让呼吸变得缓慢而均匀。" },
+        { title: "专注呼吸", description: "将注意力完全集中在呼吸上，感受空气进入和离开身体的感觉。" },
+        { title: "保持专注", description: "当思绪飘散时，温柔地将注意力带回到呼吸上，不要评判自己。" },
+        { title: "结束冥想", description: "慢慢睁开眼睛，感受内心的平静和专注。" }
+    ],
+    mindfulness: [
+        { title: "正念准备", description: "找到一个舒适的姿势，保持背部挺直，双手自然放置。" },
+        { title: "身体扫描", description: "从头顶开始，逐一感受身体的每个部位，释放紧张和压力。" },
+        { title: "观察思绪", description: "观察脑海中出现的想法，就像看云朵飘过天空，不执着也不抗拒。" },
+        { title: "当下觉察", description: "专注于当下的感受，无论是声音、触觉还是内心的情绪。" },
+        { title: "慈悲心", description: "对自己和他人保持慈悲心，接纳一切如其所是。" }
+    ],
+    loving: [
+        { title: "慈心准备", description: "坐在舒适的位置，闭上眼睛，想象心中有一盏温暖的灯。" },
+        { title: "对自己慈悲", description: "首先对自己说：愿我平安，愿我健康，愿我快乐，愿我自在。" },
+        { title: "对亲人慈悲", description: "想象你爱的人，对他们说：愿你平安，愿你健康，愿你快乐，愿你自在。" },
+        { title: "对所有人慈悲", description: "将慈悲心扩展到所有人：愿所有人平安，愿所有人健康，愿所有人快乐。" },
+        { title: "回向功德", description: "将冥想的功德回向给所有众生，愿世界充满爱与和平。" }
+    ],
+    body: [
+        { title: "身体扫描准备", description: "平躺或坐着，闭上眼睛，开始身体扫描冥想。" },
+        { title: "从头开始", description: "从头顶开始，感受头部的重量和温度，释放任何紧张。" },
+        { title: "逐部位扫描", description: "依次感受面部、颈部、肩膀、手臂、胸部、腹部、腿部、脚部。" },
+        { title: "深度放松", description: "在每个部位停留几秒钟，感受放松的感觉向全身扩散。" },
+        { title: "整体感受", description: "感受整个身体的放松和舒适，享受这种深度的休息。" }
+    ]
+};
+
+// 音效模式配置
+const audioModes = {
+    life: { name: '生活模式', icon: 'fas fa-heart', desc: '轻松愉悦的生活音乐' },
+    work: { name: '工作模式', icon: 'fas fa-briefcase', desc: '专注高效的工作音乐' },
+    training: { name: '训练模式', icon: 'fas fa-dumbbell', desc: '充满活力的训练音乐' },
+    emo: { name: '情感模式', icon: 'fas fa-smile', desc: '温暖治愈的情感音乐' }
+};
+
+let currentAudioMode = null;
+let currentAudioInfo = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeTypeSelector();
+    initializeTimeSelector();
+    initializeVolumeControl();
+    initializeCustomAudio();
 });
 
 function initializeTypeSelector() {
@@ -298,8 +746,210 @@ function initializeTypeSelector() {
             typeCards.forEach(c => c.classList.remove('selected'));
             this.classList.add('selected');
             currentType = this.dataset.type;
+            updateGuidance();
         });
     });
+}
+
+function initializeTimeSelector() {
+    const timeButtons = document.querySelectorAll('.time-btn');
+    timeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            timeButtons.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedTime = parseInt(this.dataset.time);
+            totalSeconds = selectedTime;
+            remainingSeconds = selectedTime;
+            document.getElementById('timer').textContent = formatTime(remainingSeconds);
+        });
+    });
+    
+    // 默认选择10分钟
+    document.querySelector('[data-time="600"]').classList.add('selected');
+}
+
+// 选择音效模式
+async function selectAudioMode(mode) {
+    // 更新按钮状态
+    document.querySelectorAll('.audio-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('selected');
+    
+    currentAudioMode = mode;
+    
+    try {
+        // 调用音乐API获取对应模式的音乐
+        const response = await fetch(`/tools/api/music/?mode=${mode}&action=random`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            const song = data.data;
+            currentAudioInfo = song;
+            
+            // 停止当前播放的音频
+            if (audioPlayer) {
+                audioPlayer.pause();
+                audioPlayer = null;
+            }
+            
+            // 播放新的音频
+            audioPlayer = new Audio(song.play_url);
+            audioPlayer.loop = true;
+            audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
+            
+            audioPlayer.play().then(() => {
+                // 显示当前音效信息
+                document.getElementById('currentAudioInfo').style.display = 'flex';
+                document.getElementById('currentAudioText').textContent = `${song.name} - ${song.artist}`;
+                
+                showNotification(`🎵 已切换到${audioModes[mode].name}音效`, 'success');
+            }).catch(error => {
+                console.log('音频播放失败:', error);
+                showNotification(`🎵 音效获取成功，但播放失败，请检查网络连接`, 'warning');
+                
+                // 显示音效信息（即使播放失败）
+                document.getElementById('currentAudioInfo').style.display = 'flex';
+                document.getElementById('currentAudioText').textContent = `${song.name} - ${song.artist}`;
+            });
+            
+        } else {
+            showNotification(`❌ 获取${audioModes[mode].name}音效失败`, 'error');
+        }
+    } catch (error) {
+        console.error('获取音效失败:', error);
+        showNotification(`❌ 网络错误，无法获取${audioModes[mode].name}音效`, 'error');
+    }
+}
+
+function initializeVolumeControl() {
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    
+    volumeSlider.addEventListener('input', function() {
+        const volume = this.value;
+        volumeValue.textContent = volume + '%';
+        if (audioPlayer) {
+            audioPlayer.volume = volume / 100;
+        }
+    });
+}
+
+function initializeCustomAudio() {
+    const customAudioInput = document.getElementById('customAudio');
+    customAudioInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            customAudioUrl = URL.createObjectURL(file);
+            document.getElementById('audioSelect').value = 'custom';
+            playCustomAudio();
+        }
+    });
+}
+
+
+
+function playCustomAudio() {
+    if (customAudioUrl) {
+        // 清除按钮选择状态
+        document.querySelectorAll('.audio-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        if (audioPlayer) {
+            audioPlayer.pause();
+        }
+        audioPlayer = new Audio(customAudioUrl);
+        audioPlayer.loop = true;
+        audioPlayer.volume = document.getElementById('volumeSlider').value / 100;
+        
+        audioPlayer.play().then(() => {
+            // 显示当前音效信息
+            document.getElementById('currentAudioInfo').style.display = 'flex';
+            document.getElementById('currentAudioText').textContent = '自定义音效';
+            
+            showNotification('🎵 自定义音效播放成功', 'success');
+        }).catch(e => {
+            console.log('自定义音频播放失败:', e);
+            showNotification('❌ 自定义音效播放失败', 'error');
+        });
+    }
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 显示通知
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        ${type === 'success' ? 'background: #4CAF50;' : ''}
+        ${type === 'error' ? 'background: #f44336;' : ''}
+        ${type === 'warning' ? 'background: #ff9800;' : ''}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+function updateGuidance() {
+    const guidanceElement = document.getElementById('guidanceContent');
+    if (currentType && guidanceContent[currentType]) {
+        const steps = guidanceContent[currentType];
+        let html = '';
+        steps.forEach((step, index) => {
+            html += `
+                <div class="guidance-step">
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        <h4>${step.title}</h4>
+                        <p>${step.description}</p>
+                    </div>
+                </div>
+            `;
+        });
+        guidanceElement.innerHTML = html;
+    } else {
+        guidanceElement.innerHTML = '<div class="guidance-placeholder"><p>请选择冥想类型查看相应的指导内容</p></div>';
+    }
 }
 
 function startMeditation() {
@@ -308,29 +958,153 @@ function startMeditation() {
         return;
     }
     
-    if (isMeditating) return;
+    if (isMeditating && !isPaused) return;
     
-    isMeditating = true;
-    document.getElementById('breathingText').textContent = '冥想中...';
-    document.querySelector('.start-btn').textContent = '冥想中...';
-    document.querySelector('.start-btn').disabled = true;
+    if (isPaused) {
+        // 继续冥想
+        isPaused = false;
+        document.querySelector('.start-btn').style.display = 'none';
+        document.querySelector('.pause-btn').style.display = 'inline-block';
+        document.getElementById('breathingCircle').classList.add('meditating');
+        startTimer();
+    } else {
+        // 开始冥想
+        isMeditating = true;
+        isPaused = false;
+        document.getElementById('breathingText').textContent = '冥想中...';
+        document.querySelector('.start-btn').style.display = 'none';
+        document.querySelector('.pause-btn').style.display = 'inline-block';
+        document.getElementById('breathingCircle').classList.add('meditating');
+        startTimer();
+    }
+}
+
+function pauseMeditation() {
+    if (!isMeditating) return;
     
-    // 模拟10分钟冥想
-    setTimeout(() => {
-        isMeditating = false;
-        document.getElementById('breathingText').textContent = '冥想完成';
-        document.querySelector('.start-btn').textContent = '开始冥想';
-        document.querySelector('.start-btn').disabled = false;
-        alert('恭喜！您完成了冥想练习。');
-    }, 10000); // 10秒演示
+    isPaused = true;
+    document.getElementById('breathingText').textContent = '已暂停';
+    document.querySelector('.start-btn').style.display = 'inline-block';
+    document.querySelector('.pause-btn').style.display = 'none';
+    document.getElementById('breathingCircle').classList.remove('meditating');
+    clearInterval(meditationTimer);
 }
 
 function resetMeditation() {
     isMeditating = false;
+    isPaused = false;
+    remainingSeconds = selectedTime;
+    totalSeconds = selectedTime;
+    
     document.getElementById('breathingText').textContent = '准备开始';
-    document.getElementById('timer').textContent = '10:00';
-    document.querySelector('.start-btn').textContent = '开始冥想';
-    document.querySelector('.start-btn').disabled = false;
+    document.getElementById('timer').textContent = formatTime(remainingSeconds);
+    document.querySelector('.start-btn').style.display = 'inline-block';
+    document.querySelector('.pause-btn').style.display = 'none';
+    document.getElementById('breathingCircle').classList.remove('meditating');
+    
+    clearInterval(meditationTimer);
+    
+    // 停止音频
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer = null;
+    }
+}
+
+function startTimer() {
+    clearInterval(meditationTimer);
+    meditationTimer = setInterval(() => {
+        remainingSeconds--;
+        document.getElementById('timer').textContent = formatTime(remainingSeconds);
+        
+        if (remainingSeconds <= 0) {
+            completeMeditation();
+        }
+    }, 1000);
+}
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
+function completeMeditation() {
+    clearInterval(meditationTimer);
+    isMeditating = false;
+    isPaused = false;
+    
+    document.getElementById('breathingText').textContent = '冥想完成';
+    document.getElementById('timer').textContent = '00:00';
+    document.querySelector('.start-btn').style.display = 'inline-block';
+    document.querySelector('.pause-btn').style.display = 'none';
+    document.getElementById('breathingCircle').classList.remove('meditating');
+    
+    // 停止音频
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer = null;
+    }
+    
+    // 播放完成提示音
+    playCompletionSound();
+    
+    // 显示完成通知
+    setTimeout(() => {
+        showCompletionNotification();
+    }, 500);
+}
+
+function playCompletionSound() {
+    // 创建提示音（使用Web Audio API）
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // 设置提示音参数
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+        console.log('提示音播放失败:', e);
+        // 备用方案：使用简单的音频文件
+        const completionSound = new Audio('/static/audio/thursday.mp3');
+        completionSound.volume = 0.3;
+        completionSound.play().catch(e => console.log('备用提示音播放失败:', e));
+    }
+}
+
+function showCompletionNotification() {
+    // 创建完成通知
+    const notification = document.createElement('div');
+    notification.className = 'completion-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-check-circle"></i>
+            <h3>冥想完成！</h3>
+            <p>恭喜您完成了 ${formatTime(selectedTime)} 的冥想练习</p>
+            <button onclick="this.parentElement.parentElement.remove()">确定</button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
 }
 </script>
 {% endblock %} 

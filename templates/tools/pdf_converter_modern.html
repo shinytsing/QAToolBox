@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}PDF转换引擎 - QATOOLBOX{% endblock %}
+{% block tool_title_inner %}PDF转换引擎{% endblock %}
+{% block tool_title_display %}PDF转换引擎{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -125,9 +126,11 @@
 
 .conversion-types-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  margin: 3rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 3.5rem;
+  margin: 3rem auto;
+  max-width: 1400px;
+  padding: 0 2rem;
 }
 
 .type-card-modern {
@@ -406,7 +409,7 @@
 .upload-section-modern {
   border-radius: 24px;
   padding: 3rem;
-  margin: 2rem 0;
+  margin: 3rem 0;
   backdrop-filter: blur(20px);
   text-align: center;
   transition: all 0.3s ease;
@@ -646,7 +649,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
 }
 
 /* 极客主题 */
@@ -704,7 +708,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 3rem;
-  margin: 2rem 0;
+  margin: 3rem 0;
   backdrop-filter: blur(20px);
   text-align: center;
 }
@@ -753,7 +757,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 3rem;
-  margin: 2rem 0;
+  margin: 3rem 0;
   backdrop-filter: blur(20px);
 }
 
@@ -857,88 +861,324 @@
   font-size: 0.9rem;
 }
 
-/* 主题切换按钮样式 */
-.theme-switcher-modern {
+/* 功能特色区域样式 */
+.features-section-modern {
+  margin: 4rem 0;
+  padding: 3rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.features-title-modern {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  color: #00d4ff;
   display: flex;
+  align-items: center;
   justify-content: center;
   gap: 1rem;
+}
+
+.features-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.feature-card-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.feature-card-modern:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+.feature-card-modern:hover::before {
+  left: 100%;
+}
+
+.feature-icon-modern {
+  font-size: 3rem;
+  color: #00d4ff;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.feature-card-modern:hover .feature-icon-modern {
+  transform: scale(1.1);
+}
+
+.feature-card-modern h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.feature-card-modern p {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* 统计区域样式 */
+.stats-section-modern {
+  margin: 4rem 0;
+  padding: 3rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-title-modern {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  color: #00d4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.stats-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.stat-card-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card-modern:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 45px rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+.stat-number-modern {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #00d4ff;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.stat-label-modern {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* 最近转换记录样式 */
+.recent-conversions-modern {
+  margin: 4rem 0;
+  padding: 3rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.recent-title-modern {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  color: #00d4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.recent-list-modern {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.recent-item-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.recent-item-modern:hover {
+  transform: translateX(10px);
+  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+}
+
+.recent-icon-modern {
+  font-size: 1.5rem;
+  color: #00d4ff;
+  width: 40px;
+  text-align: center;
+}
+
+.recent-info-modern {
+  flex: 1;
+}
+
+.recent-name-modern {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.recent-time-modern {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.recent-status-modern {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.recent-status-modern.success {
+  background: rgba(0, 255, 0, 0.2);
+  color: #00ff00;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.recent-status-modern.error {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff0000;
+  border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+/* 通知样式 */
+.notification-modern {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 10000;
+  transform: translateX(400px);
+  transition: all 0.3s ease;
+  max-width: 350px;
+}
+
+.notification-modern.show {
+  transform: translateX(0);
+}
+
+.notification-modern.success {
+  border-color: rgba(0, 255, 0, 0.3);
+  color: #00aa00;
+}
+
+.notification-modern.error {
+  border-color: rgba(255, 0, 0, 0.3);
+  color: #ff0000;
+}
+
+.notification-modern.info {
+  border-color: rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+}
+
+.notification-modern i {
+  font-size: 1.2rem;
+}
+
+.notification-modern span {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* 拖拽上传样式 */
+.upload-area-modern.dragover {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+  transform: scale(1.02);
+}
+
+/* 转换结果样式 */
+.result-header-modern {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.result-header-modern i {
+  font-size: 4rem;
+  color: #00ff00;
+  margin-bottom: 1rem;
+}
+
+.result-header-modern h3 {
+  font-size: 2rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.result-info-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.result-info-modern p {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+}
+
+.result-actions-modern {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
   flex-wrap: wrap;
 }
 
-.theme-btn-modern {
-  background: transparent;
-  border: 2px solid;
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  backdrop-filter: blur(10px);
-}
 
-/* 极客主题 */
-.work-theme .theme-btn-modern {
-  border-color: rgba(0, 255, 65, 0.3);
-  color: #00ff41;
-  background: rgba(0, 255, 65, 0.1);
-}
-
-.work-theme .theme-btn-modern:hover,
-.work-theme .theme-btn-modern.active {
-  background: rgba(0, 255, 65, 0.2);
-  border-color: #00ff41;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 255, 65, 0.3);
-}
-
-/* 生活主题 */
-.life-theme .theme-btn-modern {
-  border-color: rgba(255, 107, 107, 0.3);
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
-}
-
-.life-theme .theme-btn-modern:hover,
-.life-theme .theme-btn-modern.active {
-  background: rgba(255, 107, 107, 0.2);
-  border-color: #ff6b6b;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
-}
-
-/* 狂暴主题 */
-.training-theme .theme-btn-modern {
-  border-color: rgba(255, 56, 56, 0.3);
-  color: #ff3838;
-  background: rgba(255, 56, 56, 0.1);
-}
-
-.training-theme .theme-btn-modern:hover,
-.training-theme .theme-btn-modern.active {
-  background: rgba(255, 56, 56, 0.2);
-  border-color: #ff3838;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 56, 56, 0.3);
-}
-
-/* Emo主题 */
-.emo-theme .theme-btn-modern {
-  border-color: rgba(108, 92, 231, 0.3);
-  color: #6c5ce7;
-  background: rgba(108, 92, 231, 0.1);
-}
-
-.emo-theme .theme-btn-modern:hover,
-.emo-theme .theme-btn-modern.active {
-  background: rgba(108, 92, 231, 0.2);
-  border-color: #6c5ce7;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
-}
 
 /* 快捷键提示样式 */
 .theme-switch-hint {
@@ -1154,15 +1394,7 @@
     flex-direction: column;
   }
   
-  .theme-switcher-modern {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .theme-btn-modern {
-    width: 200px;
-    justify-content: center;
-  }
+
 }
 </style>
 {% endblock %}
@@ -1177,32 +1409,9 @@
         高效的文件格式转换工具，支持多种格式互转，采用现代化设计
       </p>
       
-      <!-- 主题切换按钮 -->
-      <div class="theme-switcher-modern" style="margin-top: 2rem;">
-        <button class="theme-btn-modern" onclick="switchTheme('work')" data-theme="work">
-          <i class="fas fa-code"></i> 极客模式
-        </button>
-        <button class="theme-btn-modern" onclick="switchTheme('life')" data-theme="life">
-          <i class="fas fa-heart"></i> 生活模式
-        </button>
-        <button class="theme-btn-modern" onclick="switchTheme('training')" data-theme="training">
-          <i class="fas fa-fire"></i> 狂暴模式
-        </button>
-        <button class="theme-btn-modern" onclick="switchTheme('emo')" data-theme="emo">
-          <i class="fas fa-music"></i> Emo模式
-        </button>
-      </div>
 
-      <!-- 快捷键提示 -->
-      <div class="theme-switch-hint" style="margin-top: 1rem;">
-        <div class="hint-content">
-          <i class="fas fa-keyboard"></i>
-          <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
-          <button class="help-btn" id="showShortcutsHelp">
-            <i class="fas fa-question-circle"></i>
-          </button>
-        </div>
-      </div>
+
+
     </div>
     
     <!-- 快捷键帮助面板 -->
@@ -1409,6 +1618,116 @@
         <!-- 结果内容将在这里显示 -->
       </div>
     </div>
+    
+    <!-- 功能特色区域 -->
+    <div class="features-section-modern">
+      <h3 class="features-title-modern">
+        <i class="fas fa-star"></i>
+        功能特色
+      </h3>
+      <div class="features-grid-modern">
+        <div class="feature-card-modern">
+          <div class="feature-icon-modern">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <h4>快速转换</h4>
+          <p>采用先进算法，转换速度提升300%，支持批量处理</p>
+        </div>
+        <div class="feature-card-modern">
+          <div class="feature-icon-modern">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h4>安全可靠</h4>
+          <p>文件本地处理，不上传服务器，保护您的隐私安全</p>
+        </div>
+        <div class="feature-card-modern">
+          <div class="feature-icon-modern">
+            <i class="fas fa-mobile-alt"></i>
+          </div>
+          <h4>多端支持</h4>
+          <p>支持桌面端和移动端，随时随地进行文件转换</p>
+        </div>
+        <div class="feature-card-modern">
+          <div class="feature-icon-modern">
+            <i class="fas fa-palette"></i>
+          </div>
+          <h4>智能优化</h4>
+          <p>自动优化文件大小和质量，平衡效果与性能</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 使用统计区域 -->
+    <div class="stats-section-modern">
+      <h3 class="stats-title-modern">
+        <i class="fas fa-chart-line"></i>
+        转换统计
+      </h3>
+      <div class="stats-grid-modern">
+        <div class="stat-card-modern">
+          <div class="stat-number-modern" id="totalConversions">1,234,567</div>
+          <div class="stat-label-modern">总转换次数</div>
+        </div>
+        <div class="stat-card-modern">
+          <div class="stat-number-modern" id="totalFiles">89,012</div>
+          <div class="stat-label-modern">处理文件数</div>
+        </div>
+        <div class="stat-card-modern">
+          <div class="stat-number-modern" id="avgSpeed">2.3s</div>
+          <div class="stat-label-modern">平均转换时间</div>
+        </div>
+        <div class="stat-card-modern">
+          <div class="stat-number-modern" id="userSatisfaction">99.8%</div>
+          <div class="stat-label-modern">用户满意度</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 最近转换记录 -->
+    <div class="recent-conversions-modern">
+      <h3 class="recent-title-modern">
+        <i class="fas fa-history"></i>
+        最近转换
+      </h3>
+      <div class="recent-list-modern" id="recentConversions">
+        <div class="recent-item-modern">
+          <div class="recent-icon-modern">
+            <i class="fas fa-file-pdf"></i>
+          </div>
+          <div class="recent-info-modern">
+            <div class="recent-name-modern">document.pdf</div>
+            <div class="recent-time-modern">2分钟前</div>
+          </div>
+          <div class="recent-status-modern success">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+        <div class="recent-item-modern">
+          <div class="recent-icon-modern">
+            <i class="fas fa-file-word"></i>
+          </div>
+          <div class="recent-info-modern">
+            <div class="recent-name-modern">report.docx</div>
+            <div class="recent-time-modern">5分钟前</div>
+          </div>
+          <div class="recent-status-modern success">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+        <div class="recent-item-modern">
+          <div class="recent-icon-modern">
+            <i class="fas fa-image"></i>
+          </div>
+          <div class="recent-info-modern">
+            <div class="recent-name-modern">photos.jpg</div>
+            <div class="recent-time-modern">10分钟前</div>
+          </div>
+          <div class="recent-status-modern success">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -1418,29 +1737,316 @@
 let selectedType = '';
 let selectedFile = null;
 
-// 主题切换函数
-function switchTheme(theme) {
-    // 更新body类名
-    document.body.className = theme + '-theme';
+// 数字动画函数
+function animateNumber(element, target, duration = 2000) {
+  const start = 0;
+  const increment = target / (duration / 16);
+  let current = start;
+  
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
     
-    // 更新主题按钮状态
-    document.querySelectorAll('.theme-btn-modern').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
-    
-    // 保存主题到localStorage
-    localStorage.setItem('pdf-converter-theme', theme);
-    
-    // 显示通知
-    const themeNames = {
-        'work': '极客模式',
-        'life': '生活模式',
-        'training': '狂暴模式',
-        'emo': 'Emo模式'
-    };
-    showNotification(`已切换到${themeNames[theme]}`, 'success');
+    if (target >= 1000000) {
+      element.textContent = Math.floor(current).toLocaleString();
+    } else if (target >= 1000) {
+      element.textContent = Math.floor(current).toLocaleString();
+    } else if (target < 1) {
+      element.textContent = current.toFixed(1);
+    } else {
+      element.textContent = Math.floor(current);
+    }
+  }, 16);
 }
+
+// 选择转换类型
+function selectType(type) {
+  selectedType = type;
+  
+  // 移除所有卡片的选中状态
+  document.querySelectorAll('.type-card-modern').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  // 添加选中状态到当前卡片
+  const selectedCard = document.querySelector(`[data-type="${type}"]`);
+  if (selectedCard) {
+    selectedCard.classList.add('selected');
+  }
+  
+  // 显示文件上传区域
+  document.getElementById('fileUpload').style.display = 'block';
+  
+  // 更新上传提示
+  updateUploadHint(type);
+  
+  // 滚动到上传区域
+  document.getElementById('fileUpload').scrollIntoView({ 
+    behavior: 'smooth', 
+    block: 'start' 
+  });
+}
+
+// 更新上传提示
+function updateUploadHint(type) {
+  const uploadHint = document.getElementById('uploadHint');
+  const fileInput = document.getElementById('fileInput');
+  
+  switch(type) {
+    case 'pdf-to-word':
+      uploadHint.textContent = '支持PDF文件';
+      fileInput.accept = '.pdf';
+      break;
+    case 'word-to-pdf':
+      uploadHint.textContent = '支持Word文档 (.doc, .docx)';
+      fileInput.accept = '.doc,.docx';
+      break;
+    case 'pdf-to-image':
+      uploadHint.textContent = '支持PDF文件';
+      fileInput.accept = '.pdf';
+      break;
+    case 'image-to-pdf':
+      uploadHint.textContent = '支持图片文件 (.jpg, .jpeg, .png)';
+      fileInput.accept = '.jpg,.jpeg,.png';
+      break;
+    default:
+      uploadHint.textContent = '支持多种格式文件';
+      fileInput.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+  }
+}
+
+// 文件上传处理
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFile = file;
+    displayFileInfo(file);
+    document.getElementById('convertBtn').style.display = 'block';
+  }
+}
+
+// 显示文件信息
+function displayFileInfo(file) {
+  const fileInfo = document.getElementById('fileInfo');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  
+  fileName.textContent = file.name;
+  fileSize.textContent = formatFileSize(file.size);
+  
+  fileInfo.style.display = 'flex';
+  document.getElementById('uploadArea').style.display = 'none';
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 移除文件
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('uploadArea').style.display = 'block';
+  document.getElementById('convertBtn').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+// 转换文件
+function convertFile() {
+  if (!selectedType || !selectedFile) {
+    showNotification('请先选择转换类型和文件！', 'error');
+    return;
+  }
+  
+  // 显示转换进度
+  document.getElementById('fileUpload').style.display = 'none';
+  document.getElementById('conversionProgress').style.display = 'block';
+  
+  // 模拟转换进度
+  simulateConversion();
+}
+
+// 模拟转换过程
+function simulateConversion() {
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  let progress = 0;
+  
+  const interval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress > 100) progress = 100;
+    
+    progressFill.style.width = progress + '%';
+    
+    if (progress < 30) {
+      progressText.textContent = '正在分析文件...';
+    } else if (progress < 60) {
+      progressText.textContent = '正在转换格式...';
+    } else if (progress < 90) {
+      progressText.textContent = '正在优化质量...';
+    } else {
+      progressText.textContent = '转换完成！';
+    }
+    
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        showConversionResult();
+      }, 500);
+    }
+  }, 200);
+}
+
+// 显示转换结果
+function showConversionResult() {
+  document.getElementById('conversionProgress').style.display = 'none';
+  document.getElementById('conversionResult').style.display = 'block';
+  
+  const resultContent = document.getElementById('resultContent');
+  const fileName = selectedFile.name;
+  const fileExtension = fileName.split('.').pop();
+  
+  let resultHtml = `
+    <div class="result-header-modern">
+      <i class="fas fa-check-circle"></i>
+      <h3>转换成功！</h3>
+    </div>
+    <div class="result-info-modern">
+      <p><strong>原文件：</strong>${fileName}</p>
+      <p><strong>转换类型：</strong>${getConversionTypeName(selectedType)}</p>
+      <p><strong>转换时间：</strong>${new Date().toLocaleString()}</p>
+    </div>
+    <div class="result-actions-modern">
+      <button class="download-btn-modern" onclick="downloadFile()">
+        <i class="fas fa-download"></i>
+        下载文件
+      </button>
+      <button class="convert-again-btn-modern" onclick="convertAgain()">
+        <i class="fas fa-redo"></i>
+        再次转换
+      </button>
+    </div>
+  `;
+  
+  resultContent.innerHTML = resultHtml;
+}
+
+// 获取转换类型名称
+function getConversionTypeName(type) {
+  const typeNames = {
+    'pdf-to-word': 'PDF转Word',
+    'word-to-pdf': 'Word转PDF',
+    'pdf-to-image': 'PDF转图片',
+    'image-to-pdf': '图片转PDF'
+  };
+  return typeNames[type] || type;
+}
+
+// 下载文件
+function downloadFile() {
+  showNotification('文件下载功能开发中...', 'info');
+}
+
+// 再次转换
+function convertAgain() {
+  // 重置所有状态
+  selectedType = '';
+  selectedFile = null;
+  
+  // 隐藏所有区域
+  document.getElementById('fileUpload').style.display = 'none';
+  document.getElementById('conversionProgress').style.display = 'none';
+  document.getElementById('conversionResult').style.display = 'none';
+  
+  // 移除选中状态
+  document.querySelectorAll('.type-card-modern').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  // 重置文件输入
+  document.getElementById('fileInput').value = '';
+  
+  // 显示转换类型选择
+  document.querySelector('.conversion-types-modern').style.display = 'grid';
+  
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+  // 创建通知元素
+  const notification = document.createElement('div');
+  notification.className = `notification-modern ${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+    <span>${message}</span>
+  `;
+  
+  // 添加到页面
+  document.body.appendChild(notification);
+  
+  // 显示动画
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 100);
+  
+  // 自动隐藏
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 3000);
+}
+
+// 页面加载时启动动画
+document.addEventListener('DOMContentLoaded', function() {
+  // 延迟启动动画，让页面先加载完成
+  setTimeout(() => {
+    animateNumber(document.getElementById('totalConversions'), 1234567);
+    animateNumber(document.getElementById('totalFiles'), 89012);
+    animateNumber(document.getElementById('avgSpeed'), 2.3);
+    animateNumber(document.getElementById('userSatisfaction'), 99.8);
+  }, 1000);
+  
+  // 绑定文件上传事件
+  document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+  
+  // 绑定拖拽上传事件
+  const uploadArea = document.getElementById('uploadArea');
+  
+  uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  
+  uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+  });
+  
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      document.getElementById('fileInput').files = files;
+      handleFileUpload({ target: { files: files } });
+    }
+  });
+});
+
+
 
 // 快捷键支持
 document.addEventListener('keydown', function(e) {
@@ -1562,11 +2168,8 @@ function initShortcutsHelp() {
   });
 }
 
-// 页面加载时恢复主题
+// 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
-    const savedTheme = localStorage.getItem('pdf-converter-theme') || 'work';
-    switchTheme(savedTheme);
-    
     // 初始化快捷键帮助面板
     initShortcutsHelp();
 });
@@ -1814,6 +2417,49 @@ function showConversionResult(data) {
     
     document.getElementById('conversionResult').style.display = 'block';
     showNotification('文件转换完成！', 'success');
+}
+
+function selectType(type) {
+    // 移除所有卡片的选中状态
+    document.querySelectorAll('.type-card-modern').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // 选中当前卡片
+    const selectedCard = document.querySelector(`.type-card-modern[data-type='${type}']`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
+    
+    // 显示文件上传区域
+    document.getElementById('fileUpload').style.display = 'block';
+    
+    // 隐藏其他区域
+    document.getElementById('conversionProgress').style.display = 'none';
+    document.getElementById('conversionResult').style.display = 'none';
+    
+    // 更新上传提示
+    const uploadHint = document.getElementById('uploadHint');
+    const fileInput = document.getElementById('fileInput');
+    
+    switch(type) {
+        case 'pdf-to-word':
+            uploadHint.textContent = '支持PDF文件，最大50MB';
+            fileInput.accept = '.pdf';
+            break;
+        case 'word-to-pdf':
+            uploadHint.textContent = '支持Word文档，最大50MB';
+            fileInput.accept = '.doc,.docx';
+            break;
+        case 'pdf-to-image':
+            uploadHint.textContent = '支持PDF文件，最大50MB';
+            fileInput.accept = '.pdf';
+            break;
+        case 'image-to-pdf':
+            uploadHint.textContent = '支持图片文件，最大50MB';
+            fileInput.accept = '.jpg,.jpeg,.png,.gif,.bmp';
+            break;
+    }
 }
 
 function convertAgain() {

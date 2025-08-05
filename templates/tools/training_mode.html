@@ -1,0 +1,1009 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}狂暴模式{% endblock %}
+{% block tool_title_display %}狂暴模式{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 狂暴模式点击计数器 */
+.training-mode-click-counter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff4444;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  z-index: 1000;
+  border: 1px solid #ff4444;
+  display: none;
+}
+
+.training-mode-click-counter.show {
+  display: block;
+}
+
+/* 狂躁症等级指示器 */
+.mania-level-indicator {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff0000;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  z-index: 1000;
+  border: 1px solid #ff0000;
+  display: none;
+}
+
+.mania-level-indicator.show {
+  display: block;
+}
+
+.mania-level-bar {
+  width: 100px;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.mania-level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff0000, #ff6600, #ffff00);
+  transition: width 0.3s ease;
+}
+.rage-container {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+.rage-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 68, 68, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+  z-index: -1;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.rage-container:hover::before {
+  animation: ragePulse 3s ease-in-out infinite;
+}
+
+@keyframes ragePulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.02) rotate(0.5deg);
+    opacity: 1;
+  }
+}
+
+/* 浮动火焰动画 */
+.floating-fire {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.fire {
+  position: absolute;
+  font-size: 2rem;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  opacity: 0.7;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.floating-fire:hover .fire {
+  animation: floatFire 4s ease-in-out infinite;
+}
+
+.fire:nth-child(1) { top: 15%; left: 10%; }
+.fire:nth-child(2) { top: 25%; right: 20%; }
+.fire:nth-child(3) { bottom: 35%; left: 15%; }
+.fire:nth-child(4) { bottom: 20%; right: 15%; }
+.fire:nth-child(5) { top: 55%; left: 8%; }
+.fire:nth-child(6) { top: 65%; right: 8%; }
+
+@keyframes floatFire {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.7;
+  }
+  25% { 
+    transform: translateY(-15px) rotate(45deg) scale(1.1);
+    opacity: 1;
+  }
+  50% { 
+    transform: translateY(-8px) rotate(90deg) scale(0.9);
+    opacity: 0.5;
+  }
+  75% { 
+    transform: translateY(-20px) rotate(135deg) scale(1.2);
+    opacity: 0.9;
+  }
+}
+
+.rage-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 3rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.rage-title {
+  color: #ff4444;
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.rage-container:hover .rage-title {
+  animation: titleShake 2s ease-in-out infinite;
+}
+
+@keyframes titleShake {
+  0%, 100% { transform: translateX(0px); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+.rage-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.rage-container:hover .rage-subtitle {
+  animation: subtitlePulse 3s ease-in-out infinite;
+}
+
+@keyframes subtitlePulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.rage-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  justify-items: center;
+}
+
+.training-card {
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(255, 68, 68, 0.1) 100%);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(255, 68, 68, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.training-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #ff4444 0%, #ff6b35 50%, #ffd700 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.training-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 68, 68, 0.1), transparent);
+  transition: left 0.8s ease;
+}
+
+.training-card:hover::after {
+  transform: scaleX(1);
+}
+
+.training-card:hover::before {
+  left: 100%;
+}
+
+.training-card:hover {
+  box-shadow: 0 12px 48px rgba(255, 68, 68, 0.4);
+  transform: translateY(-4px) scale(1.02);
+  border-color: #ff4444;
+}
+
+.training-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #ff4444;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+  animation: rageBounce 2s ease-in-out infinite;
+}
+
+@keyframes rageBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.1); }
+}
+
+.training-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.training-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.training-btn {
+  background: linear-gradient(135deg, #ff4444 0%, #ff6b35 100%);
+  color: #000000;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.training-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.training-btn:hover::before {
+  left: 100%;
+}
+
+.training-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(255, 68, 68, 0.6);
+}
+
+/* 欲望仪表盘样式 */
+.desire-display {
+  background: rgba(255, 68, 68, 0.1);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre-line;
+  text-align: left;
+}
+
+.desire-bar {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.desire-item {
+  color: #ffd700;
+  margin: 0.2rem 0;
+}
+
+/* 添加滚动性能优化 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .rage-title {
+    font-size: 2.5rem;
+  }
+  
+  .rage-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .rage-container {
+    padding: 1rem;
+  }
+}
+
+/* 血色模式样式 */
+.blood-mode {
+  background: linear-gradient(135deg, #8b0000 0%, #dc143c 25%, #ff0000 50%, #b22222 75%, #8b0000 100%) !important;
+  animation: bloodPulse 1.5s ease-in-out infinite !important;
+}
+
+@keyframes bloodPulse {
+  0%, 100% { 
+    background: linear-gradient(135deg, #8b0000 0%, #dc143c 25%, #ff0000 50%, #b22222 75%, #8b0000 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #ff0000 0%, #8b0000 25%, #dc143c 50%, #ff0000 75%, #b22222 100%);
+  }
+}
+
+/* 狂躁症效果样式 */
+.mania-text {
+  animation: maniaShake 0.2s infinite;
+  text-shadow: 
+    2px 0 #ff0000,
+    -2px 0 #ff0000,
+    0 2px #ff0000,
+    0 -2px #ff0000;
+}
+
+@keyframes maniaShake {
+  0%, 100% {
+    transform: translate(0);
+  }
+  25% {
+    transform: translate(-3px, 3px);
+  }
+  50% {
+    transform: translate(-3px, -3px);
+  }
+  75% {
+    transform: translate(3px, 3px);
+  }
+}
+
+/* 狂躁症等级效果 */
+.mania-level-1 .rage-title { animation: maniaShake 0.8s infinite; }
+.mania-level-2 .rage-title { animation: maniaShake 0.6s infinite; }
+.mania-level-3 .rage-title { animation: maniaShake 0.4s infinite; }
+.mania-level-4 .rage-title { animation: maniaShake 0.2s infinite; }
+.mania-level-5 .rage-title { animation: maniaShake 0.1s infinite; }
+
+.mania-level-2 .training-card { animation: maniaShake 1s infinite; }
+.mania-level-3 .training-card { animation: maniaShake 0.8s infinite; }
+.mania-level-4 .training-card { animation: maniaShake 0.6s infinite; }
+.mania-level-5 .training-card { animation: maniaShake 0.4s infinite; }
+
+/* 血色粒子效果 */
+.blood-particle {
+  position: fixed;
+  font-size: 1.5rem;
+  pointer-events: none;
+  z-index: 9999;
+  animation: bloodFloat 3s linear infinite;
+  color: #ff0000;
+}
+
+@keyframes bloodFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* 血色雨效果 */
+.blood-rain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(139, 0, 0, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(220, 20, 60, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 0, 0, 0.3) 0%, transparent 50%);
+  animation: bloodRain 2s ease-in-out infinite;
+}
+
+@keyframes bloodRain {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 点击计数器 -->
+<div class="training-mode-click-counter" id="clickCounter">
+  <div>点击次数: <span id="clickCount">0</span>/4</div>
+</div>
+
+<!-- 狂躁症等级指示器 -->
+<div class="mania-level-indicator" id="maniaIndicator">
+  <div>狂躁症等级: <span id="maniaLevel">0</span>/5</div>
+  <div class="mania-level-bar">
+    <div class="mania-level-fill" id="maniaBar"></div>
+  </div>
+</div>
+
+<div class="rage-container" id="rageContainer">
+  <!-- 浮动火焰背景 -->
+  <div class="floating-fire">
+    <div class="fire">🔥</div>
+    <div class="fire">⚡</div>
+    <div class="fire">💥</div>
+    <div class="fire">🚀</div>
+    <div class="fire">⚔️</div>
+    <div class="fire">🎯</div>
+  </div>
+
+  <div class="rage-header">
+    <h1 class="rage-title">
+      <i class="fas fa-fire"></i> 狂暴模式
+    </h1>
+    <p class="rage-subtitle">💪 突破极限，挑战自我，释放潜能</p>
+  </div>
+
+  <!-- 欲望仪表盘显示 -->
+  <div id="desireDisplay" class="desire-display" style="display: none;">
+    <div class="desire-bar">[当前欲望浓度] ███████░░░ 73%</div>
+    <div class="desire-item">▸ 想要玛莎拉蒂: ★★★☆☆</div>
+    <div class="desire-item">▸ 想要被网红注目: ★★☆☆☆</div>
+    <div class="desire-item">▸ 想要三天不写代码: ★★★★★</div>
+  </div>
+
+  <div class="rage-tools-grid">
+    <div class="training-card" onclick="window.location.href='/tools/fitness/'">
+      <div class="training-icon">
+        <i class="fas fa-dumbbell"></i>
+      </div>
+      <h3 class="training-title">极限健身</h3>
+      <p class="training-description">高强度训练计划，突破体能极限，挑战身体潜能</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/triple-awakening/'">
+      <div class="training-icon">
+        <i class="fas fa-brain"></i>
+      </div>
+      <h3 class="training-title">三重觉醒</h3>
+      <p class="training-description">物理级存在感 + 代码健身房 + 痛苦货币化系统</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='/tools/copilot/'">
+      <div class="training-icon">
+        <i class="fas fa-robot"></i>
+      </div>
+      <h3 class="training-title">AI协作声明</h3>
+      <p class="training-description">展示你的骨架代码、AI肌肉、神经系统协作过程</p>
+    </div>
+
+    <div class="training-card" onclick="startCodeWorkout()">
+      <div class="training-icon">
+        <i class="fas fa-code"></i>
+      </div>
+      <h3 class="training-title">代码健身房</h3>
+      <p class="training-description">原生JS引体向上 + 拒绝AI平板支撑 + 重构函数深蹲</p>
+    </div>
+
+    <div class="training-card" onclick="startDailyChallenge()">
+      <div class="training-icon">
+        <i class="fas fa-trophy"></i>
+      </div>
+      <h3 class="training-title">每日挑战</h3>
+      <p class="training-description">完成挑战解锁"开发者增肌食谱"彩蛋</p>
+    </div>
+
+    <div class="training-card" onclick="showPainCurrency()">
+      <div class="training-icon">
+        <i class="fas fa-coins"></i>
+      </div>
+      <h3 class="training-title">痛苦货币</h3>
+      <p class="training-description">力竭币、拒绝币、手写币、突破币兑换系统</p>
+    </div>
+
+    <div class="training-card" onclick="showDesireDashboard()">
+      <div class="training-icon">
+        <i class="fas fa-heart"></i>
+      </div>
+      <h3 class="training-title">欲望仪表盘</h3>
+      <p class="training-description">实时欲望浓度 + AI生成欲望兑现图</p>
+    </div>
+
+    <div class="training-card" onclick="toggleDesireDisplay()">
+      <div class="training-icon">
+        <i class="fas fa-eye"></i>
+      </div>
+      <h3 class="training-title">欲望预览</h3>
+      <p class="training-description">查看当前欲望状态和满足进度</p>
+    </div>
+
+    <div class="training-card" onclick="fulfillDesire()">
+      <div class="training-icon">
+        <i class="fas fa-magic"></i>
+      </div>
+      <h3 class="training-title">欲望兑现</h3>
+      <p class="training-description">完成任务生成AI欲望兑现图</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// 代码训练功能
+function startCodeWorkout() {
+  const workoutType = prompt('选择训练类型:\n1. 引体向上(原生JS)\n2. 平板支撑(拒绝AI)\n3. 深蹲(重构函数)\n4. 俯卧撑(手写算法)\n5. 波比跳(调试代码)');
+  
+  if (!workoutType) return;
+  
+  const workoutData = {
+    workout_type: ['pull_up', 'plank', 'squat', 'push_up', 'burpee'][parseInt(workoutType) - 1],
+    duration_seconds: Math.floor(Math.random() * 300) + 60,
+    difficulty_level: Math.floor(Math.random() * 5) + 1,
+    code_snippet: '// 你的代码片段',
+    ai_rejection_count: Math.floor(Math.random() * 10),
+    manual_code_lines: Math.floor(Math.random() * 50) + 10,
+    refactored_functions: Math.floor(Math.random() * 5) + 1
+  };
+  
+  fetch('/tools/api/triple-awakening/code-workout/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(workoutData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('代码训练记录创建成功！');
+      // 检查欲望满足
+      checkDesireFulfillment('coding', `完成了${workoutData.manual_code_lines}行代码`);
+    } else {
+      alert('训练记录失败: ' + data.message);
+    }
+  });
+}
+
+// 每日挑战功能
+function startDailyChallenge() {
+  fetch('/tools/api/triple-awakening/workout-dashboard/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('每日挑战已开始！\n\n任务列表:\n▢ 写1行原生JS (1个引体向上)\n▢ 拒绝1次AI补全 (10秒平板支撑)\n▢ 重构1个函数 (20个深蹲)\n▢ 手写一个算法 (30个俯卧撑)\n\n完成所有任务解锁"开发者增肌食谱"彩蛋！');
+    }
+  });
+}
+
+// 痛苦货币展示
+function showPainCurrency() {
+  fetch('/tools/api/triple-awakening/pain-currency/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      let currencyInfo = '痛苦货币余额:\n\n';
+      for (const [type, info] of Object.entries(data.data)) {
+        currencyInfo += `${info.display_name}: ${info.amount}\n`;
+      }
+      currencyInfo += '\n可用于兑换:\n- 网站会员积分\n- 特殊功能解锁\n- 成就徽章\n- 开发者食谱';
+      alert(currencyInfo);
+    }
+  });
+}
+
+// 显示欲望仪表盘
+function showDesireDashboard() {
+  window.location.href = '/tools/desire-dashboard/';
+}
+
+// 切换欲望显示
+function toggleDesireDisplay() {
+  const display = document.getElementById('desireDisplay');
+  if (display.style.display === 'none') {
+    display.style.display = 'block';
+    loadDesireData();
+  } else {
+    display.style.display = 'none';
+  }
+}
+
+// 加载欲望数据
+function loadDesireData() {
+  fetch('/tools/api/desire-dashboard/')
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      updateDesireDisplay(data.data);
+    }
+  });
+}
+
+// 更新欲望显示
+function updateDesireDisplay(data) {
+  const display = document.getElementById('desireDisplay');
+  const level = data.dashboard.current_desire_level;
+  const filledBlocks = Math.floor(level / 10);
+  const emptyBlocks = 10 - filledBlocks;
+  const bar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+  
+  let displayText = `[当前欲望浓度] ${bar} ${level}%\n`;
+  
+  // 显示前3个欲望
+  data.desires.slice(0, 3).forEach(desire => {
+    displayText += `▸ ${desire.title}: ${desire.intensity_stars}\n`;
+  });
+  
+  display.textContent = displayText;
+}
+
+// 欲望兑现功能
+function fulfillDesire() {
+  const taskType = prompt('选择任务类型:\n1. 写100行代码\n2. 完成高强度训练\n3. 重构函数\n4. 完成项目');
+  
+  if (!taskType) return;
+  
+  const taskTypes = ['coding', 'fitness', 'coding', 'coding'];
+  const taskDetails = [
+    '完成了100行代码',
+    '完成了高强度训练',
+    '重构了函数',
+    '完成了完整项目'
+  ];
+  
+  const selectedType = taskTypes[parseInt(taskType) - 1];
+  const selectedDetails = taskDetails[parseInt(taskType) - 1];
+  
+  checkDesireFulfillment(selectedType, selectedDetails);
+}
+
+// 检查欲望满足
+function checkDesireFulfillment(taskType, taskDetails) {
+  fetch('/tools/api/desire-dashboard/check-fulfillment/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      task_type: taskType,
+      task_details: taskDetails
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.fulfilled_desires && data.fulfilled_desires.length > 0) {
+      alert(`🎉 ${data.message}\n\n满足的欲望:\n${data.fulfilled_desires.map(d => `- ${d.desire_title}`).join('\n')}\n\n正在生成AI兑现图片...`);
+      
+      // 为每个满足的欲望生成AI图片
+      data.fulfilled_desires.forEach(desire => {
+        generateDesireImage(desire.fulfillment_id, desire.desire_title);
+      });
+    } else {
+      alert(data.message || '继续努力，还没有满足的欲望！');
+    }
+  });
+}
+
+// 生成欲望兑现图片
+function generateDesireImage(fulfillmentId, desireTitle) {
+  fetch('/tools/api/desire-dashboard/generate-image/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      fulfillment_id: fulfillmentId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`🎨 AI图片生成成功！\n\n欲望: ${desireTitle}\n图片: ${data.image_url}\n\n这就是你的欲望兑现图！`);
+    } else {
+      alert('AI图片生成失败: ' + data.message);
+    }
+  });
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// 页面加载时初始化欲望显示
+document.addEventListener('DOMContentLoaded', function() {
+  // 延迟显示欲望仪表盘，增加神秘感
+  setTimeout(() => {
+    const display = document.getElementById('desireDisplay');
+    display.style.display = 'block';
+    loadDesireData();
+  }, 2000);
+});
+
+// 狂暴模式点击计数器
+let trainingModeClickCount = 0;
+let bloodMode = false;
+let maniaLevel = 0;
+let maniaResetTimer = null;
+
+// 页面点击事件监听
+document.addEventListener('click', function(e) {
+  // 增加点击计数
+  trainingModeClickCount++;
+  console.log('狂暴模式点击次数:', trainingModeClickCount);
+  
+  // 显示点击计数器
+  const clickCounter = document.getElementById('clickCounter');
+  const clickCount = document.getElementById('clickCount');
+  clickCounter.classList.add('show');
+  clickCount.textContent = trainingModeClickCount;
+  
+  // 检查是否达到4次点击
+  if (trainingModeClickCount >= 4 && !bloodMode) {
+    activateBloodMode();
+  }
+  
+  // 如果已经在血色模式下，增加狂躁症等级
+  if (bloodMode) {
+    increaseManiaLevel();
+  }
+});
+
+// 激活血色模式
+function activateBloodMode() {
+  console.log('🩸 激活血色模式！');
+  bloodMode = true;
+  
+  // 添加血色样式
+  const container = document.getElementById('rageContainer');
+  if (container) {
+    container.classList.add('blood-mode');
+  }
+  
+  // 显示狂躁症等级指示器
+  const maniaIndicator = document.getElementById('maniaIndicator');
+  maniaIndicator.classList.add('show');
+  
+  // 创建血色效果
+  createBloodEffect();
+  
+  // 显示血色提示
+  showBloodMessage();
+}
+
+// 增加狂躁症等级
+function increaseManiaLevel() {
+  maniaLevel = Math.min(maniaLevel + 1, 5);
+  console.log('狂躁症等级:', maniaLevel);
+  
+  // 更新狂躁症等级显示
+  const maniaLevelSpan = document.getElementById('maniaLevel');
+  const maniaBar = document.getElementById('maniaBar');
+  
+  if (maniaLevelSpan) {
+    maniaLevelSpan.textContent = maniaLevel;
+  }
+  
+  if (maniaBar) {
+    maniaBar.style.width = (maniaLevel / 5 * 100) + '%';
+  }
+  
+  // 添加狂躁症等级样式
+  const container = document.getElementById('rageContainer');
+  if (container) {
+    // 移除之前的狂躁症等级样式
+    container.classList.remove('mania-level-1', 'mania-level-2', 'mania-level-3', 'mania-level-4', 'mania-level-5');
+    // 添加当前狂躁症等级样式
+    container.classList.add('mania-level-' + maniaLevel);
+  }
+  
+  // 重置狂躁症等级计时器
+  if (maniaResetTimer) {
+    clearTimeout(maniaResetTimer);
+  }
+  
+  // 5秒后自动重置狂躁症等级
+  maniaResetTimer = setTimeout(() => {
+    resetManiaLevel();
+  }, 5000);
+}
+
+// 重置狂躁症等级
+function resetManiaLevel() {
+  console.log('🔄 狂躁症等级重置');
+  maniaLevel = 0;
+  
+  // 更新显示
+  const maniaLevelSpan = document.getElementById('maniaLevel');
+  const maniaBar = document.getElementById('maniaBar');
+  
+  if (maniaLevelSpan) {
+    maniaLevelSpan.textContent = maniaLevel;
+  }
+  
+  if (maniaBar) {
+    maniaBar.style.width = '0%';
+  }
+  
+  // 移除狂躁症等级样式
+  const container = document.getElementById('rageContainer');
+  if (container) {
+    container.classList.remove('mania-level-1', 'mania-level-2', 'mania-level-3', 'mania-level-4', 'mania-level-5');
+  }
+}
+
+// 创建血色效果
+function createBloodEffect() {
+  // 创建血色雨效果
+  const bloodRain = document.createElement('div');
+  bloodRain.className = 'blood-rain';
+  document.body.appendChild(bloodRain);
+  
+  // 创建血色粒子
+  for (let i = 0; i < 30; i++) {
+    createBloodParticle();
+  }
+  
+  // 5秒后移除血色雨
+  setTimeout(() => {
+    if (bloodRain.parentNode) {
+      bloodRain.parentNode.removeChild(bloodRain);
+    }
+  }, 5000);
+}
+
+// 创建血色粒子
+function createBloodParticle() {
+  const particle = document.createElement('div');
+  particle.className = 'blood-particle';
+  particle.innerHTML = ['🩸', '💀', '⚔️', '🔥', '💥'][Math.floor(Math.random() * 5)];
+  particle.style.left = Math.random() * 100 + '%';
+  particle.style.top = Math.random() * 100 + '%';
+  particle.style.animationDelay = Math.random() * 2 + 's';
+  
+  document.body.appendChild(particle);
+  
+  // 动画结束后移除粒子
+  setTimeout(() => {
+    if (particle.parentNode) {
+      particle.parentNode.removeChild(particle);
+    }
+  }, 3000);
+}
+
+// 显示血色提示
+function showBloodMessage() {
+  const message = document.createElement('div');
+  message.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    background: rgba(139, 0, 0, 0.9);
+    color: #ff0000;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid #ff0000;
+    font-family: 'Courier New', monospace;
+    animation: messagePop 0.5s ease-out;
+  `;
+  message.innerHTML = `
+    <h2 style="color: #ff0000; margin-bottom: 1rem;">🩸 血色模式激活</h2>
+    <p style="color: #ffffff; margin: 0;">页面点击会增加狂躁症等级</p>
+    <p style="color: #ffffff; margin: 0;">狂躁症等级会在5秒后自动重置</p>
+  `;
+  document.body.appendChild(message);
+  
+  setTimeout(() => {
+    if (message.parentNode) {
+      message.parentNode.removeChild(message);
+    }
+  }, 3000);
+}
+
+// 初始化计数器（初始状态）
+document.addEventListener('DOMContentLoaded', function() {
+  const clickCounter = document.getElementById('clickCounter');
+  const maniaIndicator = document.getElementById('maniaIndicator');
+  
+  if (clickCounter) {
+    clickCounter.classList.remove('show');
+  }
+  
+  if (maniaIndicator) {
+    maniaIndicator.classList.remove('show');
+  }
+});
+</script>
+{% endblock %} 

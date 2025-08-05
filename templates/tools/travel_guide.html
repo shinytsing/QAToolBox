@@ -1,0 +1,1810 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}WanderAI 智能旅游攻略{% endblock %}
+{% block tool_title_display %}WanderAI 智能旅游攻略{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 旅游攻略页面样式 */
+.travel-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  color: #ffffff;
+  font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.travel-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: travelFloat 20s ease-in-out infinite;
+}
+
+@keyframes travelFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(1deg); }
+  66% { transform: translateY(10px) rotate(-1deg); }
+}
+
+.travel-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 2;
+}
+
+.travel-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+}
+
+.travel-subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2rem;
+}
+
+.travel-form {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.form-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.form-select {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.form-select option {
+  background: #2c3e50;
+  color: #ffffff;
+}
+
+.interests-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.interest-tag {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.interest-tag:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.interest-tag.selected {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+.generate-btn {
+  width: 100%;
+  padding: 1.2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.generate-btn:active {
+  transform: translateY(0);
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  display: none;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.guide-result {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.guide-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #ffffff;
+}
+
+.guide-sections {
+  display: grid;
+  gap: 2rem;
+}
+
+.guide-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-icon {
+  font-size: 1.5rem;
+}
+
+.section-content {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+/* 景点样式 */
+.attraction-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #4facfe;
+}
+
+.attraction-name {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.attraction-details {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.attraction-price {
+  color: #4facfe;
+  font-weight: 500;
+}
+
+.attraction-time {
+  color: #f093fb;
+  font-weight: 500;
+}
+
+.attraction-rating {
+  color: #ffd700;
+  font-weight: 500;
+}
+
+.attraction-tips {
+  color: #f5576c;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* 美食样式 */
+.food-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #f093fb;
+}
+
+.food-name {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.food-specialty {
+  color: #f093fb;
+  font-weight: 500;
+}
+
+.food-price {
+  color: #4facfe;
+  font-weight: 500;
+}
+
+.food-rating {
+  color: #ffd700;
+  font-weight: 500;
+}
+
+.food-tips {
+  color: #f5576c;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* 交通样式 */
+.transport-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #667eea;
+}
+
+.transport-title {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.transport-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+/* 天气样式 */
+.weather-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #764ba2;
+}
+
+.weather-season {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.weather-desc {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 预算样式 */
+.budget-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #f5576c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budget-type {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.budget-amount {
+  color: #4facfe;
+  font-weight: 500;
+}
+
+/* 贴士样式 */
+.tip-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #4facfe;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 详细攻略样式 */
+.detailed-guide {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detailed-guide h3 {
+  color: #ffffff;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.detailed-guide h4 {
+  color: #ffffff;
+  margin: 1.5rem 0 1rem 0;
+  font-size: 1.1rem;
+  border-left: 3px solid #4facfe;
+  padding-left: 1rem;
+}
+
+.detailed-guide p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.detailed-guide ul {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.detailed-guide li {
+  margin-bottom: 0.5rem;
+}
+
+/* 每日行程样式 */
+.daily-schedule-section {
+  margin-bottom: 2rem;
+}
+
+.day-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.day-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.day-date {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.time-slots {
+  display: grid;
+  gap: 1rem;
+}
+
+.time-slot {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 3px solid #4facfe;
+}
+
+.time-slot-title {
+  font-weight: 600;
+  color: #4facfe;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.activity-item {
+  margin-bottom: 0.8rem;
+}
+
+.activity-name {
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.activity-location {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.activity-cost {
+  color: #f093fb;
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.activity-tips {
+  color: #f5576c;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.accommodation-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-left: 3px solid #f093fb;
+}
+
+.accommodation-title {
+  font-weight: 600;
+  color: #f093fb;
+  margin-bottom: 0.5rem;
+}
+
+/* 时间线样式 */
+.timeline-section {
+  margin-bottom: 2rem;
+}
+
+.timeline-day {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timeline-day-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.timeline-activities {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.timeline-activity {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.activity-time {
+  min-width: 80px;
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
+.activity-details {
+  flex: 1;
+}
+
+.activity-name {
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.activity-location {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.activity-cost {
+  color: #f093fb;
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.activity-tips {
+  color: #f5576c;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* 费用明细样式 */
+.cost-section {
+  margin-bottom: 2rem;
+}
+
+.cost-summary {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.total-cost {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4facfe;
+  margin-bottom: 0.5rem;
+}
+
+.cost-details {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.cost-breakdown {
+  display: grid;
+  gap: 1rem;
+}
+
+.cost-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 3px solid #f093fb;
+}
+
+.cost-info {
+  flex: 1;
+}
+
+.cost-type {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.cost-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.cost-amount {
+  text-align: right;
+}
+
+.cost-value {
+  font-weight: 600;
+  color: #4facfe;
+  font-size: 1.1rem;
+}
+
+.cost-daily {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+/* 操作按钮 */
+.guide-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 0.8rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 导航按钮 */
+.nav-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.nav-btn {
+  padding: 1rem 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.nav-btn.active {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .travel-container {
+    padding: 1rem;
+  }
+  
+  .travel-title {
+    font-size: 2.5rem;
+  }
+  
+  .guide-actions {
+    flex-direction: column;
+  }
+  
+  .nav-buttons {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="travel-container">
+  <div class="travel-header">
+    <h1 class="travel-title">WanderAI 智能旅游攻略</h1>
+    <p class="travel-subtitle">基于真实数据的个性化旅游攻略生成器</p>
+  </div>
+
+  <!-- 导航按钮 -->
+  <div class="nav-buttons">
+    <button class="nav-btn active" onclick="showTravelForm()">新建攻略</button>
+    <button class="nav-btn" onclick="showGuidesList()">我的攻略</button>
+  </div>
+
+  <!-- 旅游攻略表单 -->
+  <div id="travelForm" class="travel-form">
+    <div class="form-group">
+      <label class="form-label">目的地</label>
+      <input type="text" id="destination" class="form-input" placeholder="请输入目的地，如：北京、上海、重庆..." required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">旅行风格</label>
+      <select id="travelStyle" class="form-select">
+        <option value="general">通用型</option>
+        <option value="adventure">冒险型</option>
+        <option value="leisure">休闲型</option>
+        <option value="cultural">文化型</option>
+        <option value="foodie">美食型</option>
+        <option value="shopping">购物型</option>
+        <option value="photography">摄影型</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">预算范围</label>
+      <select id="budgetRange" class="form-select">
+        <option value="budget">经济型 (2000-3000元)</option>
+        <option value="medium" selected>舒适型 (4000-6000元)</option>
+        <option value="luxury">豪华型 (8000-12000元)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">旅行时长</label>
+      <select id="travelDuration" class="form-select">
+        <option value="1-2天">1-2天</option>
+        <option value="3-5天" selected>3-5天</option>
+        <option value="1周">1周</option>
+        <option value="2周">2周</option>
+        <option value="1个月">1个月</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">兴趣偏好 (可多选)</label>
+      <div class="interests-container">
+        <div class="interest-tag" data-interest="美食">美食</div>
+        <div class="interest-tag" data-interest="文化">文化</div>
+        <div class="interest-tag" data-interest="自然">自然</div>
+        <div class="interest-tag" data-interest="购物">购物</div>
+        <div class="interest-tag" data-interest="历史">历史</div>
+        <div class="interest-tag" data-interest="艺术">艺术</div>
+        <div class="interest-tag" data-interest="运动">运动</div>
+        <div class="interest-tag" data-interest="摄影">摄影</div>
+        <div class="interest-tag" data-interest="夜生活">夜生活</div>
+        <div class="interest-tag" data-interest="温泉">温泉</div>
+        <div class="interest-tag" data-interest="海滩">海滩</div>
+        <div class="interest-tag" data-interest="登山">登山</div>
+      </div>
+    </div>
+
+    <button class="generate-btn" onclick="generateTravelGuide()">
+      <i class="fas fa-magic"></i> 生成智能攻略
+    </button>
+  </div>
+
+  <!-- 加载中 -->
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+    <p>正在生成您的专属旅游攻略...</p>
+  </div>
+
+  <!-- 攻略结果 -->
+  <div id="guideResult" class="guide-result">
+    <h2 id="guideTitle" class="guide-title"></h2>
+    <div id="guideSections" class="guide-sections"></div>
+    
+    <!-- 详细攻略 -->
+    <div id="detailedGuide" class="detailed-guide" style="display: none;">
+      <h3>📋 详细攻略</h3>
+      
+      <!-- 每日行程 -->
+      <div id="dailySchedule" class="daily-schedule-section" style="display: none;">
+        <h4>🗓️ 每日行程安排</h4>
+        <div id="dailyScheduleContent"></div>
+      </div>
+      
+      <!-- 活动时间线 -->
+      <div id="activityTimeline" class="timeline-section" style="display: none;">
+        <h4>⏰ 活动时间线</h4>
+        <div id="timelineContent"></div>
+      </div>
+      
+      <!-- 费用明细 -->
+      <div id="costBreakdown" class="cost-section" style="display: none;">
+        <h4>💰 费用明细</h4>
+        <div id="costContent"></div>
+      </div>
+      
+      <!-- 原始详细攻略 -->
+      <div id="detailedContent"></div>
+    </div>
+    
+    <!-- 操作按钮 -->
+    <div class="guide-actions">
+      <button class="action-btn" onclick="showDetailedGuide()">
+        <i class="fas fa-file-alt"></i> 查看详细攻略
+      </button>
+      <button class="action-btn" onclick="exportGuide()">
+        <i class="fas fa-download"></i> 导出TXT
+      </button>
+      <button class="action-btn primary" onclick="exportPDF()">
+        <i class="fas fa-file-pdf"></i> 导出PDF
+      </button>
+      <button class="action-btn" onclick="showTravelForm()">
+        <i class="fas fa-plus"></i> 新建攻略
+      </button>
+    </div>
+  </div>
+
+  <!-- 攻略列表 -->
+  <div id="guidesList" class="guide-result" style="display: none;">
+    <h2 class="guide-title">我的旅游攻略</h2>
+    <div id="guidesContainer"></div>
+  </div>
+</div>
+
+<script>
+let currentGuide = null;
+let selectedInterests = [];
+
+// 兴趣标签选择
+document.querySelectorAll('.interest-tag').forEach(tag => {
+  tag.addEventListener('click', function() {
+    const interest = this.dataset.interest;
+    if (this.classList.contains('selected')) {
+      this.classList.remove('selected');
+      selectedInterests = selectedInterests.filter(i => i !== interest);
+    } else {
+      this.classList.add('selected');
+      selectedInterests.push(interest);
+    }
+  });
+});
+
+// 生成旅游攻略
+async function generateTravelGuide() {
+  const destination = document.getElementById('destination').value.trim();
+  const travelStyle = document.getElementById('travelStyle').value;
+  const budgetRange = document.getElementById('budgetRange').value;
+  const travelDuration = document.getElementById('travelDuration').value;
+
+  if (!destination) {
+    alert('请输入目的地');
+    return;
+  }
+
+  document.getElementById('travelForm').style.display = 'none';
+  document.getElementById('guideResult').style.display = 'none';
+  document.getElementById('guidesList').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  
+  try {
+    const response = await fetch('/tools/api/travel-guide/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        destination: destination,
+        travel_style: travelStyle,
+        budget_range: budgetRange,
+        travel_duration: travelDuration,
+        interests: selectedInterests
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentGuide = data.guide;
+      displayTravelGuide(data.guide);
+    } else {
+      alert('生成攻略失败: ' + data.error);
+      showTravelForm();
+    }
+  } catch (error) {
+    console.error('生成攻略失败:', error);
+    alert('生成攻略失败，请重试');
+    showTravelForm();
+  }
+}
+
+// 显示旅游攻略
+function displayTravelGuide(guide) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('guideResult').style.display = 'block';
+  
+  document.getElementById('guideTitle').textContent = guide.destination + ' 旅游攻略';
+  
+  // 保存攻略ID用于PDF导出
+  currentGuide.id = guide.id;
+  
+  const sectionsContainer = document.getElementById('guideSections');
+  sectionsContainer.innerHTML = '';
+  
+  // 必去景点
+  if (guide.must_visit_attractions && guide.must_visit_attractions.length > 0) {
+    const attractionsSection = createAttractionsSection(guide.must_visit_attractions);
+    sectionsContainer.appendChild(attractionsSection);
+  }
+  
+  // 美食推荐
+  if (guide.food_recommendations && guide.food_recommendations.length > 0) {
+    const foodSection = createFoodSection(guide.food_recommendations);
+    sectionsContainer.appendChild(foodSection);
+  }
+  
+  // 交通指南
+  if (guide.transportation_guide) {
+    const transportSection = createTransportSection(guide.transportation_guide);
+    sectionsContainer.appendChild(transportSection);
+  }
+  
+  // 天气信息
+  if (guide.weather_info) {
+    const weatherSection = createWeatherSection(guide.weather_info);
+    sectionsContainer.appendChild(weatherSection);
+  }
+  
+  // 最佳旅行时间
+  if (guide.best_time_to_visit) {
+    const timeSection = createSection('📅 最佳旅行时间', 
+      `<p>${guide.best_time_to_visit}</p>`
+    );
+    sectionsContainer.appendChild(timeSection);
+  }
+  
+  // 预算估算
+  if (guide.budget_estimate) {
+    const budgetSection = createBudgetSection(guide.budget_estimate);
+    sectionsContainer.appendChild(budgetSection);
+  }
+  
+  // 旅行贴士
+  if (guide.travel_tips && guide.travel_tips.length > 0) {
+    const tipsSection = createTipsSection(guide.travel_tips);
+    sectionsContainer.appendChild(tipsSection);
+  }
+  
+  // 保存详细攻略内容
+  if (guide.detailed_guide) {
+    document.getElementById('detailedContent').innerHTML = formatDetailedGuide(guide.detailed_guide);
+  }
+  
+  // 显示每日行程
+  if (guide.daily_schedule && guide.daily_schedule.length > 0) {
+    displayDailySchedule(guide.daily_schedule);
+  }
+  
+  // 显示活动时间线
+  if (guide.activity_timeline && guide.activity_timeline.length > 0) {
+    displayActivityTimeline(guide.activity_timeline);
+  }
+  
+  // 显示费用明细
+  if (guide.cost_breakdown) {
+    displayCostBreakdown(guide.cost_breakdown);
+  }
+}
+
+// 创建景点区块
+function createAttractionsSection(attractions) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  
+  let content = '<div class="section-title"><span class="section-icon">🏛️</span>必去景点</div><div class="section-content">';
+  
+  attractions.forEach(attraction => {
+    // 解析景点信息
+    const parts = attraction.split(' - ');
+    const name = parts[0];
+    const description = parts[1] || '';
+    
+    // 提取价格、时间、评分等信息
+    const priceMatch = description.match(/门票:([^,]+)/);
+    const timeMatch = description.match(/开放时间:([^,]+)/);
+    const ratingMatch = description.match(/评分:([^,]+)/);
+    const tipsMatch = description.match(/建议:([^,]+)/);
+    
+    content += `
+      <div class="attraction-item">
+        <div class="attraction-name">${name}</div>
+        <div class="attraction-details">
+          ${description}
+          ${priceMatch ? `<div class="attraction-price">门票: ${priceMatch[1]}</div>` : ''}
+          ${timeMatch ? `<div class="attraction-time">开放时间: ${timeMatch[1]}</div>` : ''}
+          ${ratingMatch ? `<div class="attraction-rating">评分: ${ratingMatch[1]}</div>` : ''}
+          ${tipsMatch ? `<div class="attraction-tips">💡 ${tipsMatch[1]}</div>` : ''}
+        </div>
+      </div>
+    `;
+  });
+  
+  content += '</div>';
+  section.innerHTML = content;
+  return section;
+}
+
+// 创建美食区块
+function createFoodSection(restaurants) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  
+  let content = '<div class="section-title"><span class="section-icon">🍜</span>美食推荐</div><div class="section-content">';
+  
+  restaurants.forEach(restaurant => {
+    // 解析餐厅信息
+    const parts = restaurant.split(' - ');
+    const name = parts[0];
+    const specialty = parts[1] || '';
+    const priceRange = parts[2] || '';
+    
+    content += `
+      <div class="food-item">
+        <div class="food-name">${name}</div>
+        <div class="food-details">
+          ${specialty ? `<div class="food-specialty">特色: ${specialty}</div>` : ''}
+          ${priceRange ? `<div class="food-price">价格: ${priceRange}</div>` : ''}
+        </div>
+      </div>
+    `;
+  });
+  
+  content += '</div>';
+  section.innerHTML = content;
+  return section;
+}
+
+// 创建交通区块
+function createTransportSection(transportation) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  
+  let content = '<div class="section-title"><span class="section-icon">🚗</span>交通指南</div><div class="section-content">';
+  
+  Object.entries(transportation).forEach(([key, value]) => {
+    content += `
+      <div class="transport-item">
+        <div class="transport-title">${key}</div>
+        <div class="transport-desc">${value}</div>
+      </div>
+    `;
+  });
+  
+  content += '</div>';
+  section.innerHTML = content;
+  return section;
+}
+
+// 创建天气区块
+function createWeatherSection(weather) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  
+  let content = '<div class="section-title"><span class="section-icon">🌤️</span>天气信息</div><div class="section-content">';
+  
+  if (weather.current) {
+    content += `
+      <div class="weather-item">
+        <div class="weather-season">当前天气</div>
+        <div class="weather-desc">
+          温度: ${weather.current.temperature} | 
+          天气: ${weather.current.condition} | 
+          湿度: ${weather.current.humidity} | 
+          风力: ${weather.current.wind}
+        </div>
+      </div>
+    `;
+  }
+  
+  if (weather.forecast) {
+    Object.entries(weather.forecast).forEach(([day, desc]) => {
+      content += `
+        <div class="weather-item">
+          <div class="weather-season">${day}</div>
+          <div class="weather-desc">${desc}</div>
+        </div>
+      `;
+    });
+  }
+  
+  if (weather.best_season) {
+    content += `
+      <div class="weather-item">
+        <div class="weather-season">最佳季节</div>
+        <div class="weather-desc">${weather.best_season}</div>
+      </div>
+    `;
+  }
+  
+  content += '</div>';
+  section.innerHTML = content;
+  return section;
+}
+
+// 创建预算区块
+function createBudgetSection(budget) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  
+  let content = '<div class="section-title"><span class="section-icon">💰</span>预算估算</div><div class="section-content">';
+  
+  Object.entries(budget).forEach(([type, amount]) => {
+    content += `
+      <div class="budget-item">
+        <div class="budget-type">${type}</div>
+        <div class="budget-amount">${amount}</div>
+      </div>
+    `;
+  });
+  
+  content += '</div>';
+  section.innerHTML = content;
+  return section;
+}
+
+// 创建贴士区块
+function createTipsSection(tips) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  
+  let content = '<div class="section-title"><span class="section-icon">💡</span>旅行贴士</div><div class="section-content">';
+  
+  tips.forEach(tip => {
+    content += `<div class="tip-item">${tip}</div>`;
+  });
+  
+  content += '</div>';
+  section.innerHTML = content;
+  return section;
+}
+
+// 创建通用区块
+function createSection(title, content) {
+  const section = document.createElement('div');
+  section.className = 'guide-section';
+  section.innerHTML = `
+    <div class="section-title">
+      <span class="section-icon">${title.split(' ')[0]}</span>
+      ${title.split(' ').slice(1).join(' ')}
+    </div>
+    <div class="section-content">
+      ${content}
+    </div>
+  `;
+  return section;
+}
+
+// 格式化详细攻略
+function formatDetailedGuide(content) {
+  // 将换行符转换为HTML段落
+  return content.split('\n\n').map(paragraph => {
+    if (paragraph.trim()) {
+      return `<p>${paragraph.trim()}</p>`;
+    }
+    return '';
+  }).join('');
+}
+
+// 显示每日行程
+function displayDailySchedule(dailySchedule) {
+  const container = document.getElementById('dailyScheduleContent');
+  const section = document.getElementById('dailySchedule');
+  
+  let html = '';
+  
+  dailySchedule.forEach(day => {
+    html += `
+      <div class="day-card">
+        <div class="day-header">
+          <div class="day-title">第${day.day}天</div>
+          <div class="day-date">${day.date}</div>
+        </div>
+        
+        <div class="time-slots">
+          ${renderTimeSlot('🌅 上午', day.morning)}
+          ${renderTimeSlot('☀️ 下午', day.afternoon)}
+          ${renderTimeSlot('🌆 傍晚', day.evening)}
+          ${renderTimeSlot('🌙 夜晚', day.night)}
+        </div>
+        
+        ${day.accommodation ? `
+          <div class="accommodation-info">
+            <div class="accommodation-title">🏨 住宿安排</div>
+            <div>${day.accommodation}</div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+  section.style.display = 'block';
+}
+
+// 渲染时间段
+function renderTimeSlot(title, activities) {
+  if (!activities || activities.length === 0) {
+    return '';
+  }
+  
+  let html = `
+    <div class="time-slot">
+      <div class="time-slot-title">${title}</div>
+  `;
+  
+  activities.forEach(activity => {
+    html += `
+      <div class="activity-item">
+        <div class="activity-name">${activity.activity}</div>
+        ${activity.location ? `<div class="activity-location">📍 ${activity.location}</div>` : ''}
+        ${activity.cost ? `<div class="activity-cost">💰 ${activity.cost}</div>` : ''}
+        ${activity.tips ? `<div class="activity-tips">💡 ${activity.tips}</div>` : ''}
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  return html;
+}
+
+// 显示活动时间线
+function displayActivityTimeline(timeline) {
+  const container = document.getElementById('timelineContent');
+  const section = document.getElementById('activityTimeline');
+  
+  let html = '';
+  
+  timeline.forEach(day => {
+    html += `
+      <div class="timeline-day">
+        <div class="timeline-day-header">${day.date}</div>
+        <div class="timeline-activities">
+    `;
+    
+    day.activities.forEach(activity => {
+      html += `
+        <div class="timeline-activity">
+          <div class="activity-time">${activity.time}</div>
+          <div class="activity-details">
+            <div class="activity-name">${activity.activity}</div>
+            ${activity.location ? `<div class="activity-location">📍 ${activity.location}</div>` : ''}
+            ${activity.cost ? `<div class="activity-cost">💰 ${activity.cost}</div>` : ''}
+            ${activity.tips ? `<div class="activity-tips">💡 ${activity.tips}</div>` : ''}
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+  section.style.display = 'block';
+}
+
+// 显示费用明细
+function displayCostBreakdown(costBreakdown) {
+  const container = document.getElementById('costContent');
+  const section = document.getElementById('costBreakdown');
+  
+  let html = `
+    <div class="cost-summary">
+      <div class="total-cost">¥${costBreakdown.total_cost}</div>
+      <div class="cost-details">
+        ${costBreakdown.travel_days}天行程 · ${getBudgetRangeText(costBreakdown.budget_range)}
+      </div>
+    </div>
+    
+    <div class="cost-breakdown">
+  `;
+  
+  // 住宿费用
+  if (costBreakdown.accommodation) {
+    html += `
+      <div class="cost-item">
+        <div class="cost-info">
+          <div class="cost-type">🏨 住宿费用</div>
+          <div class="cost-description">${costBreakdown.accommodation.description}</div>
+        </div>
+        <div class="cost-amount">
+          <div class="cost-value">¥${costBreakdown.accommodation.total_cost}</div>
+          <div class="cost-daily">¥${costBreakdown.accommodation.daily_cost}/天</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 餐饮费用
+  if (costBreakdown.food) {
+    html += `
+      <div class="cost-item">
+        <div class="cost-info">
+          <div class="cost-type">🍽️ 餐饮费用</div>
+          <div class="cost-description">${costBreakdown.food.description}</div>
+        </div>
+        <div class="cost-amount">
+          <div class="cost-value">¥${costBreakdown.food.total_cost}</div>
+          <div class="cost-daily">¥${costBreakdown.food.daily_cost}/天</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 交通费用
+  if (costBreakdown.transport) {
+    html += `
+      <div class="cost-item">
+        <div class="cost-info">
+          <div class="cost-type">🚗 市内交通</div>
+          <div class="cost-description">${costBreakdown.transport.description}</div>
+        </div>
+        <div class="cost-amount">
+          <div class="cost-value">¥${costBreakdown.transport.total_cost}</div>
+          <div class="cost-daily">¥${costBreakdown.transport.daily_cost}/天</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 景点门票
+  if (costBreakdown.attractions) {
+    html += `
+      <div class="cost-item">
+        <div class="cost-info">
+          <div class="cost-type">🎫 景点门票</div>
+          <div class="cost-description">${costBreakdown.attractions.description}</div>
+        </div>
+        <div class="cost-amount">
+          <div class="cost-value">¥${costBreakdown.attractions.total_cost}</div>
+          <div class="cost-daily">¥${costBreakdown.attractions.daily_cost}/天</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 往返交通
+  if (costBreakdown.round_trip) {
+    html += `
+      <div class="cost-item">
+        <div class="cost-info">
+          <div class="cost-type">✈️ 往返交通</div>
+          <div class="cost-description">${costBreakdown.round_trip.description}</div>
+        </div>
+        <div class="cost-amount">
+          <div class="cost-value">¥${costBreakdown.round_trip.cost}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  
+  container.innerHTML = html;
+  section.style.display = 'block';
+}
+
+// 获取预算范围文本
+function getBudgetRangeText(budgetRange) {
+  const budgetTexts = {
+    'budget': '经济型',
+    'medium': '舒适型',
+    'luxury': '豪华型'
+  };
+  return budgetTexts[budgetRange] || '舒适型';
+}
+
+// 显示详细攻略
+function showDetailedGuide() {
+  const detailedGuide = document.getElementById('detailedGuide');
+  if (detailedGuide.style.display === 'none') {
+    detailedGuide.style.display = 'block';
+    
+    // 滚动到详细攻略位置
+    detailedGuide.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
+  } else {
+    detailedGuide.style.display = 'none';
+  }
+}
+
+// 导出攻略为TXT
+function exportGuide() {
+  if (!currentGuide) return;
+  
+  // 创建导出内容
+  let exportContent = `${currentGuide.destination} 旅游攻略\n\n`;
+  
+  // 添加各个部分
+  if (currentGuide.must_visit_attractions) {
+    exportContent += '🏛️ 必去景点:\n';
+    currentGuide.must_visit_attractions.forEach(attraction => {
+      exportContent += `• ${attraction}\n`;
+    });
+    exportContent += '\n';
+  }
+  
+  if (currentGuide.food_recommendations) {
+    exportContent += '🍜 美食推荐:\n';
+    currentGuide.food_recommendations.forEach(food => {
+      exportContent += `• ${food}\n`;
+    });
+    exportContent += '\n';
+  }
+  
+  if (currentGuide.transportation_guide) {
+    exportContent += '🚗 交通指南:\n';
+    Object.entries(currentGuide.transportation_guide).forEach(([key, value]) => {
+      exportContent += `• ${key}: ${value}\n`;
+    });
+    exportContent += '\n';
+  }
+  
+  // 添加详细攻略
+  if (currentGuide.daily_schedule && currentGuide.daily_schedule.length > 0) {
+    exportContent += '🗓️ 每日行程安排:\n\n';
+    currentGuide.daily_schedule.forEach(day => {
+      exportContent += `第${day.day}天 (${day.date}):\n`;
+      
+      if (day.morning && day.morning.length > 0) {
+        exportContent += '  上午:\n';
+        day.morning.forEach(activity => {
+          exportContent += `    ${activity.time} - ${activity.activity}\n`;
+          if (activity.location) exportContent += `      地点: ${activity.location}\n`;
+          if (activity.cost) exportContent += `      费用: ${activity.cost}\n`;
+          if (activity.tips) exportContent += `      提示: ${activity.tips}\n`;
+        });
+      }
+      
+      if (day.afternoon && day.afternoon.length > 0) {
+        exportContent += '  下午:\n';
+        day.afternoon.forEach(activity => {
+          exportContent += `    ${activity.time} - ${activity.activity}\n`;
+          if (activity.location) exportContent += `      地点: ${activity.location}\n`;
+          if (activity.cost) exportContent += `      费用: ${activity.cost}\n`;
+          if (activity.tips) exportContent += `      提示: ${activity.tips}\n`;
+        });
+      }
+      
+      if (day.evening && day.evening.length > 0) {
+        exportContent += '  傍晚:\n';
+        day.evening.forEach(activity => {
+          exportContent += `    ${activity.time} - ${activity.activity}\n`;
+          if (activity.location) exportContent += `      地点: ${activity.location}\n`;
+          if (activity.cost) exportContent += `      费用: ${activity.cost}\n`;
+          if (activity.tips) exportContent += `      提示: ${activity.tips}\n`;
+        });
+      }
+      
+      if (day.accommodation) {
+        exportContent += `  住宿: ${day.accommodation}\n`;
+      }
+      
+      exportContent += '\n';
+    });
+  }
+  
+  // 添加费用明细
+  if (currentGuide.cost_breakdown) {
+    exportContent += '💰 费用明细:\n';
+    exportContent += `总费用: ¥${currentGuide.cost_breakdown.total_cost}\n`;
+    exportContent += `行程天数: ${currentGuide.cost_breakdown.travel_days}天\n`;
+    exportContent += `预算类型: ${getBudgetRangeText(currentGuide.cost_breakdown.budget_range)}\n\n`;
+    
+    if (currentGuide.cost_breakdown.accommodation) {
+      exportContent += `住宿费用: ¥${currentGuide.cost_breakdown.accommodation.total_cost} (¥${currentGuide.cost_breakdown.accommodation.daily_cost}/天)\n`;
+    }
+    if (currentGuide.cost_breakdown.food) {
+      exportContent += `餐饮费用: ¥${currentGuide.cost_breakdown.food.total_cost} (¥${currentGuide.cost_breakdown.food.daily_cost}/天)\n`;
+    }
+    if (currentGuide.cost_breakdown.transport) {
+      exportContent += `市内交通: ¥${currentGuide.cost_breakdown.transport.total_cost} (¥${currentGuide.cost_breakdown.transport.daily_cost}/天)\n`;
+    }
+    if (currentGuide.cost_breakdown.attractions) {
+      exportContent += `景点门票: ¥${currentGuide.cost_breakdown.attractions.total_cost} (¥${currentGuide.cost_breakdown.attractions.daily_cost}/天)\n`;
+    }
+    if (currentGuide.cost_breakdown.round_trip) {
+      exportContent += `往返交通: ¥${currentGuide.cost_breakdown.round_trip.cost}\n`;
+    }
+    exportContent += '\n';
+  }
+  
+  if (currentGuide.travel_tips) {
+    exportContent += '💡 旅行贴士:\n';
+    currentGuide.travel_tips.forEach(tip => {
+      exportContent += `• ${tip}\n`;
+    });
+    exportContent += '\n';
+  }
+  
+  // 创建下载链接
+  const blob = new Blob([exportContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentGuide.destination}旅游攻略.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 导出攻略为PDF
+async function exportPDF() {
+  if (!currentGuide) return;
+  
+  try {
+    // 显示加载提示
+    const exportBtn = document.querySelector('.action-btn.primary');
+    const originalText = exportBtn.innerHTML;
+    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成PDF中...';
+    exportBtn.disabled = true;
+    
+    // 检查是否有有效的攻略ID
+    if (!currentGuide || !currentGuide.id) {
+      alert('请先生成旅游攻略');
+      return;
+    }
+    
+    // 调用PDF导出API
+    const response = await fetch(`/tools/api/travel-guide/${currentGuide.id}/export/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+    
+    if (response.ok) {
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/pdf')) {
+        // 处理PDF响应
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentGuide.destination}_旅游攻略.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        alert('PDF导出成功！');
+      } else {
+        // 处理JSON响应（文本格式）
+        const data = await response.json();
+        if (data.success) {
+          // 创建文本文件下载
+          const blob = new Blob([data.formatted_content], { type: 'text/plain;charset=utf-8' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${currentGuide.destination}_旅游攻略.txt`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          alert('文本格式导出成功！');
+        } else {
+          alert('导出失败: ' + (data.error || '未知错误'));
+        }
+      }
+    } else {
+      const errorData = await response.json();
+      alert('导出失败: ' + (errorData.error || '未知错误'));
+    }
+  } catch (error) {
+    console.error('PDF导出失败:', error);
+    alert('PDF导出失败，请重试');
+  } finally {
+    // 恢复按钮状态
+    const exportBtn = document.querySelector('.action-btn.primary');
+    exportBtn.innerHTML = '<i class="fas fa-file-pdf"></i> 导出PDF';
+    exportBtn.disabled = false;
+  }
+}
+
+// 显示攻略表单
+function showTravelForm() {
+  document.getElementById('travelForm').style.display = 'block';
+  document.getElementById('guideResult').style.display = 'none';
+  document.getElementById('guidesList').style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
+  
+  // 更新导航按钮状态
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector('.nav-btn').classList.add('active');
+}
+
+// 显示攻略列表
+function showGuidesList() {
+  document.getElementById('travelForm').style.display = 'none';
+  document.getElementById('guideResult').style.display = 'none';
+  document.getElementById('guidesList').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+  
+  // 更新导航按钮状态
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.nav-btn')[1].classList.add('active');
+  
+  loadTravelGuides();
+}
+
+// 加载旅游攻略列表
+async function loadTravelGuides() {
+  try {
+    const response = await fetch('/tools/api/travel-guide/list/');
+    const data = await response.json();
+    
+    if (data.success) {
+      displayGuidesList(data.guides);
+    } else {
+      console.error('加载攻略列表失败:', data.error);
+    }
+  } catch (error) {
+    console.error('加载攻略列表失败:', error);
+  }
+}
+
+// 显示攻略列表
+function displayGuidesList(guides) {
+  const container = document.getElementById('guidesContainer');
+  
+  if (guides.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">✈️</div>
+        <div class="empty-text">还没有创建任何旅游攻略</div>
+        <div class="empty-subtext">点击上方"新建攻略"开始您的旅行规划</div>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = guides.map(guide => `
+    <div class="guide-card" onclick="loadGuideDetail(${guide.id})">
+      <div class="guide-card-header">
+        <div class="guide-destination">${guide.destination}</div>
+        <div class="guide-favorite" onclick="event.stopPropagation(); toggleFavoriteGuide(${guide.id})">
+          <i class="fas fa-heart ${guide.is_favorite ? 'text-danger' : ''}"></i>
+        </div>
+      </div>
+      <div class="guide-stats">
+        <div class="guide-stat">
+          <i class="fas fa-map-marker-alt"></i>
+          ${guide.attractions_count} 个景点
+        </div>
+        <div class="guide-stat">
+          <i class="fas fa-utensils"></i>
+          ${guide.food_count} 个餐厅
+        </div>
+        <div class="guide-stat">
+          <i class="fas fa-calendar"></i>
+          ${guide.created_at}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 加载攻略详情
+async function loadGuideDetail(guideId) {
+  try {
+    const response = await fetch(`/tools/api/travel-guide/${guideId}/`);
+    const data = await response.json();
+    
+    if (data.success) {
+      currentGuide = data.guide;
+      displayTravelGuide(data.guide);
+      showTravelForm(); // 切换到攻略显示页面
+    } else {
+      console.error('加载攻略详情失败:', data.error);
+    }
+  } catch (error) {
+    console.error('加载攻略详情失败:', error);
+  }
+}
+
+// 切换收藏状态
+async function toggleFavoriteGuide(guideId) {
+  try {
+    const response = await fetch(`/tools/api/travel-guide/${guideId}/toggle-favorite/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // 重新加载攻略列表
+      loadTravelGuides();
+    } else {
+      console.error('切换收藏状态失败:', data.error);
+    }
+  } catch (error) {
+    console.error('切换收藏状态失败:', error);
+  }
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+{% endblock %} 

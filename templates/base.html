@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>{% block title %}QATOOLBOX{% endblock %}</title>
+    <title>{% block title %}ModeShift{% endblock %}</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
@@ -135,6 +135,30 @@
             50% { opacity: 1; box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
         }
         
+        /* 里世界入口动画 */
+        @keyframes glitch {
+            0%, 90%, 100% { 
+                transform: translate(0); 
+                filter: hue-rotate(0deg) brightness(1);
+            }
+            5% { 
+                transform: translate(-2px, 2px); 
+                filter: hue-rotate(180deg) brightness(1.5);
+            }
+            10% { 
+                transform: translate(-2px, -2px); 
+                filter: hue-rotate(90deg) brightness(1.3);
+            }
+            15% { 
+                transform: translate(2px, 2px); 
+                filter: hue-rotate(270deg) brightness(1.4);
+            }
+            20% { 
+                transform: translate(2px, -2px); 
+                filter: hue-rotate(45deg) brightness(1.6);
+            }
+        }
+        
         /* 主题切换悬停效果 */
         .theme-switch:hover {
             background: rgba(255, 255, 255, 0.1) !important;
@@ -157,106 +181,48 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-        /* 主题背景样式 */
-        .theme-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
+        
+        /* 隐藏滚动条样式 */
+        /* Webkit浏览器 (Chrome, Safari, Edge) */
+        ::-webkit-scrollbar {
+            width: 0px;
+            height: 0px;
         }
         
-        .background-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transition: opacity 0.5s ease;
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
         
-        .bg-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.3);
+        ::-webkit-scrollbar-thumb {
+            background: transparent;
         }
         
-        .bg-video {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: cover;
+        ::-webkit-scrollbar-thumb:hover {
+            background: transparent;
         }
         
-        /* 浮动元素动画 */
-        .floating-elements {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+        /* Firefox浏览器 */
+        html {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         
-        .floating-element {
-            position: absolute;
-            font-size: 2rem;
-            animation: float 6s ease-in-out infinite;
-            animation-delay: var(--delay);
-            opacity: 0.6;
+        /* IE和Edge */
+        body {
+            -ms-overflow-style: none;
         }
         
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        /* 确保所有可滚动元素都隐藏滚动条 */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
         
-        /* 生活模式背景 */
-        .life-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        *::-webkit-scrollbar {
+            width: 0px;
+            height: 0px;
         }
-        
-        .life-bg .floating-element:nth-child(1) { top: 10%; left: 10%; }
-        .life-bg .floating-element:nth-child(2) { top: 20%; right: 15%; }
-        .life-bg .floating-element:nth-child(3) { bottom: 30%; left: 20%; }
-        .life-bg .floating-element:nth-child(4) { bottom: 15%; right: 10%; }
-        
-        /* 极客模式背景 */
-        .geek-bg {
-            background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
-        }
-        
-        .geek-bg .floating-element:nth-child(1) { top: 15%; left: 15%; }
-        .geek-bg .floating-element:nth-child(2) { top: 25%; right: 20%; }
-        .geek-bg .floating-element:nth-child(3) { bottom: 25%; left: 25%; }
-        .geek-bg .floating-element:nth-child(4) { bottom: 20%; right: 15%; }
-        
-        /* 狂暴模式背景 */
-        .rage-bg {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-        }
-        
-        .rage-bg .floating-element:nth-child(1) { top: 10%; left: 20%; }
-        .rage-bg .floating-element:nth-child(2) { top: 30%; right: 10%; }
-        .rage-bg .floating-element:nth-child(3) { bottom: 20%; left: 15%; }
-        .rage-bg .floating-element:nth-child(4) { bottom: 10%; right: 25%; }
-        
-        /* Emo模式背景 */
-        .emo-bg {
-            background: linear-gradient(135deg, #f5f0ff 0%, #e8d5ff 100%);
-        }
-        
-        .emo-bg .floating-element:nth-child(1) { top: 20%; left: 10%; }
+
         .emo-bg .floating-element:nth-child(2) { top: 15%; right: 20%; }
         .emo-bg .floating-element:nth-child(3) { bottom: 25%; left: 25%; }
         .emo-bg .floating-element:nth-child(4) { bottom: 15%; right: 10%; }
@@ -492,23 +458,7 @@
             100% { text-shadow: 0 0 20px rgba(0, 255, 231, 0.8); }
         }
 
-        /* 滚动条样式 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(45deg, #00ffe7, #0099ff);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(45deg, #00ccb8, #0077cc);
-        }
 
         /* 选择文本样式 */
         ::selection {
@@ -1210,7 +1160,7 @@
     <div class="page-loader" id="pageLoader">
         <div class="loader-content">
             <div class="loader-spinner"></div>
-            <div class="loader-text">QATOOLBOX</div>
+            <div class="loader-text">ModeShift</div>
         </div>
     </div>
 
@@ -1272,7 +1222,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-light">
             <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-toolbox"></i> QATOOLBOX
+                <i class="fas fa-cogs"></i> ModeShift
                 <div id="theme-subtitle" class="theme-subtitle" data-translate="专注技术，追求卓越">专注技术，追求卓越</div>
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -1283,7 +1233,7 @@
                 <ul class="navbar-nav mr-auto">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tools' %}">
+                        <a class="nav-link" href="#" onclick="goToCurrentModeTools(); return false;">
                             <i class="fas fa-tools"></i> <span data-translate="工具集">工具集</span>
                         </a>
                     </li>
@@ -1293,11 +1243,7 @@
                             <i class="fas fa-lightbulb"></i> <span data-translate="我的建议">我的建议</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'ai_links' %}">
-                            <i class="fas fa-link"></i> <span data-translate="AI友情链接">AI友情链接</span>
-                        </a>
-                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息">
                             <i class="fas fa-info-circle"></i> <span data-translate="关于">关于</span>
@@ -1447,57 +1393,7 @@
         </nav>
     </header>
 
-    <!-- 主题背景 -->
-    <div class="theme-background" id="theme-background">
-        <!-- 生活模式背景 -->
-        <div class="background-layer life-bg" style="display: none;">
-            <div class="bg-overlay"></div>
-            <div class="floating-elements">
-                <div class="floating-element" style="--delay: 0s;">🌱</div>
-                <div class="floating-element" style="--delay: 2s;">🌸</div>
-                <div class="floating-element" style="--delay: 4s;">🌿</div>
-                <div class="floating-element" style="--delay: 6s;">🍃</div>
-            </div>
-        </div>
-        
-        <!-- 极客模式背景 -->
-        <div class="background-layer geek-bg" style="display: none;">
-            <div class="bg-overlay"></div>
-            <div class="matrix-rain" id="matrix-rain"></div>
-            <div class="floating-elements">
-                <div class="floating-element" style="--delay: 0s;">💻</div>
-                <div class="floating-element" style="--delay: 1s;">⚡</div>
-                <div class="floating-element" style="--delay: 2s;">🔧</div>
-                <div class="floating-element" style="--delay: 3s;">🚀</div>
-            </div>
-        </div>
-        
-        <!-- 狂暴模式背景 -->
-        <div class="background-layer rage-bg" style="display: none;">
-            <div class="bg-overlay"></div>
-            <video autoplay muted loop class="bg-video">
-                <source src="/static/video/sunday.mp4" type="video/mp4">
-            </video>
-            <div class="floating-elements">
-                <div class="floating-element" style="--delay: 0s;">🔥</div>
-                <div class="floating-element" style="--delay: 1s;">⚡</div>
-                <div class="floating-element" style="--delay: 2s;">💪</div>
-                <div class="floating-element" style="--delay: 3s;">🏃</div>
-            </div>
-        </div>
-        
-        <!-- Emo模式背景 -->
-        <div class="background-layer emo-bg" style="display: none;">
-            <div class="bg-overlay"></div>
-            <div class="emo-particles" id="emo-particles"></div>
-            <div class="floating-elements">
-                <div class="floating-element" style="--delay: 0s;">💜</div>
-                <div class="floating-element" style="--delay: 2s;">💔</div>
-                <div class="floating-element" style="--delay: 4s;">💕</div>
-                <div class="floating-element" style="--delay: 6s;">💖</div>
-            </div>
-        </div>
-    </div>
+
 
     <div class="container">
         <div class="content-block">
@@ -1721,24 +1617,29 @@
                         </div>
                     </div>
                     
-                    <!-- 趣味统计 -->
+                    <!-- AI Link -->
                     <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
                         <h4 style="color: white; margin-bottom: 15px; font-size: 16px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
-                            <i class="fas fa-chart-line" style="margin-right: 8px;"></i> 趣味统计
+                            <i class="fas fa-link" style="margin-right: 8px;"></i> AI Link
                         </h4>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                             <div style="text-align: center;">
-                                <div style="font-size: 24px; font-weight: bold; color: #ff6b6b; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">1000+</div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">代码行数</div>
+                                <div style="font-size: 24px; font-weight: bold; color: #ff6b6b; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">AI</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">智能助手</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 24px; font-weight: bold; color: #4ecdc4; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">50+</div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">Bug修复</div>
+                                <div style="font-size: 24px; font-weight: bold; color: #4ecdc4; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Link</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">友情链接</div>
                             </div>
                             <div style="text-align: center;">
                                 <div style="font-size: 24px; font-weight: bold; color: #45b7d1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">∞</div>
-                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">创意无限</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">无限可能</div>
                             </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <a href="{% url 'ai_links' %}" style="display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 20px; font-size: 14px; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i> 查看AI Link
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -2479,6 +2380,12 @@
                 badgeClass: '',
                 subtitle: '专注技术，追求卓越'
             },
+            'cyberpunk': {
+                name: '赛博哥特',
+                css: 'cyberpunk.css',
+                badgeClass: 'cyberpunk',
+                subtitle: '赛博朋克，故障艺术'
+            },
             'training': {
                 name: '狂暴',
                 css: 'rage.css',
@@ -2496,6 +2403,25 @@
         // 页面加载时初始化主题
         document.addEventListener('DOMContentLoaded', async function() {
             await loadUserTheme();
+            
+                            // 检查当前页面路径，确保主题与页面匹配
+                setTimeout(function() {
+                    var currentPath = window.location.pathname;
+                    var pathToTheme = {
+                        '/tools/life/': 'life',
+                        '/tools/work/': 'work',
+                        '/tools/cyberpunk/': 'cyberpunk',
+                        '/tools/training/': 'training',
+                        '/tools/emo/': 'emo'
+                    };
+                    
+                    var expectedTheme = pathToTheme[currentPath];
+                    if (expectedTheme && expectedTheme !== currentTheme && themeConfig[expectedTheme]) {
+                        // 如果当前页面路径与主题不匹配，自动切换到对应主题
+                        console.log('页面路径 ' + currentPath + ' 与当前主题 ' + currentTheme + ' 不匹配，自动切换到 ' + expectedTheme + ' 主题');
+                        switchGlobalTheme(expectedTheme);
+                    }
+                }, 100);
         });
         
         // 加载用户主题
@@ -2830,10 +2756,11 @@
         
         // 主题与页面对应关系
         const themePageMapping = {
-            'life': '/tools/creative_writer/',
-            'work': '/tools/pdf_converter_modern/',
-            'training': '/tools/fitness/',
-            'emo': '/tools/emo-diary/'
+            'life': '/tools/life/',
+            'work': '/tools/work/',
+            'cyberpunk': '/tools/cyberpunk/',
+            'training': '/tools/training/',
+            'emo': '/tools/emo/'
         };
         
         // 获取当前页面路径
@@ -2858,14 +2785,18 @@
                 // 检查当前页面是否已经匹配该主题
                 if (isCurrentPageMatchingTheme(newTheme)) {
                     // 如果当前页面已经匹配该主题，只切换主题样式，不跳转页面
-                    if (newTheme !== currentTheme) {
+                    if (newTheme !== currentTheme && themeConfig[newTheme]) {
                         switchGlobalTheme(newTheme);
                     } else {
                         showNotification('当前页面已经是该主题模式', 'info');
                     }
                 } else {
                     // 如果当前页面不匹配该主题，先切换主题，然后跳转到对应页面
-                    switchGlobalThemeAndNavigate(newTheme);
+                    if (themeConfig[newTheme]) {
+                        switchGlobalThemeAndNavigate(newTheme);
+                    } else {
+                        showNotification('无效的主题参数', 'error');
+                    }
                 }
             }
         });
@@ -2873,6 +2804,13 @@
         // 切换主题并跳转到对应页面
         async function switchGlobalThemeAndNavigate(theme) {
             try {
+                // 验证theme参数
+                if (!theme || !themeConfig[theme]) {
+                    console.error('Invalid theme:', theme);
+                    showNotification('无效的主题参数', 'error');
+                    return;
+                }
+                
                 // 显示加载状态
                 const themeName = themeConfig[theme].name;
                 showNotification(`正在切换到${themeName}模式并跳转页面...`, 'info');
@@ -2935,6 +2873,13 @@
         // 切换全局主题
         async function switchGlobalTheme(theme) {
             try {
+                // 验证theme参数
+                if (!theme || !themeConfig[theme]) {
+                    console.error('Invalid theme:', theme);
+                    showNotification('无效的主题参数', 'error');
+                    return;
+                }
+                
                 // 显示加载状态
                 const themeName = themeConfig[theme].name;
                 showNotification(`正在切换到${themeName}模式...`, 'info');
@@ -2957,6 +2902,13 @@
                 
                 if (!response.ok) {
                     throw new Error('主题切换请求失败');
+                }
+                
+                // 检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // 如果返回的不是JSON，可能是重定向到登录页面
+                    throw new Error('请先登录后再切换主题');
                 }
                 
                 const data = await response.json();
@@ -2995,12 +2947,19 @@
             }
         }
         
-        // 带页面刷新的主题切换函数
+        // 带页面跳转的主题切换函数
         async function switchGlobalThemeWithRefresh(theme) {
             try {
+                // 验证theme参数
+                if (!theme || !themeConfig[theme]) {
+                    console.error('Invalid theme:', theme);
+                    showNotification('无效的主题参数', 'error');
+                    return;
+                }
+                
                 // 显示加载状态
                 const themeName = themeConfig[theme].name;
-                showNotification(`正在切换到${themeName}模式并刷新页面...`, 'info');
+                showNotification(`正在切换到${themeName}模式，即将跳转到对应页面...`, 'info');
                 
                 // 添加加载动画
                 const badge = document.getElementById('theme-badge');
@@ -3022,15 +2981,29 @@
                     throw new Error('主题切换请求失败');
                 }
                 
+                // 检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    // 如果返回的不是JSON，可能是重定向到登录页面
+                    throw new Error('请先登录后再切换主题');
+                }
+                
                 const data = await response.json();
                 if (!data.success) {
                     throw new Error(data.error || '主题切换失败');
                 }
                 
-                // 主题切换成功，刷新页面
+                // 主题切换成功，跳转到对应mode的主页面
                 setTimeout(() => {
-                    window.location.reload();
-                }, 500); // 延迟500ms让用户看到成功提示
+                    const themePages = {
+                        'life': '/tools/life/',
+                        'work': '/tools/work/',
+                        'training': '/tools/training/',
+                        'emo': '/tools/emo/'
+                    };
+                    const targetPage = themePages[theme] || '/';
+                    window.location.href = targetPage;
+                }, 800); // 延迟800ms让用户看到成功提示
                 
             } catch (error) {
                 console.error('Failed to switch theme:', error);
@@ -3039,6 +3012,24 @@
                 // 恢复徽章显示
                 updateThemeBadge(currentTheme);
             }
+        }
+        
+        // 跳转到当前mode的工具页面
+        function goToCurrentModeTools() {
+            {% if user.is_authenticated %}
+                const currentTheme = localStorage.getItem('currentTheme') || 'work';
+                const themePages = {
+                    'life': '/tools/life/',
+                    'work': '/tools/work/',
+                    'training': '/tools/training/',
+                    'emo': '/tools/emo/'
+                };
+                const targetPage = themePages[currentTheme] || '/tools/work/';
+                window.location.href = targetPage;
+            {% else %}
+                // 用户未登录，跳转到登录页面
+                window.location.href = '/users/login/';
+            {% endif %}
         }
         
         // 音乐相关函数
@@ -3295,19 +3286,35 @@
                     switch(e.key) {
                         case '1':
                             e.preventDefault();
-                            switchGlobalThemeWithRefresh('life');
+                            {% if user.is_authenticated %}
+                                switchGlobalThemeWithRefresh('life');
+                            {% else %}
+                                showNotification('请先登录后再使用快捷键切换主题', 'warning');
+                            {% endif %}
                             break;
                         case '2':
                             e.preventDefault();
-                            switchGlobalThemeWithRefresh('work');
+                            {% if user.is_authenticated %}
+                                switchGlobalThemeWithRefresh('work');
+                            {% else %}
+                                showNotification('请先登录后再使用快捷键切换主题', 'warning');
+                            {% endif %}
                             break;
                         case '3':
                             e.preventDefault();
-                            switchGlobalThemeWithRefresh('training');
+                            {% if user.is_authenticated %}
+                                switchGlobalThemeWithRefresh('training');
+                            {% else %}
+                                showNotification('请先登录后再使用快捷键切换主题', 'warning');
+                            {% endif %}
                             break;
                         case '4':
                             e.preventDefault();
-                            switchGlobalThemeWithRefresh('emo');
+                            {% if user.is_authenticated %}
+                                switchGlobalThemeWithRefresh('emo');
+                            {% else %}
+                                showNotification('请先登录后再使用快捷键切换主题', 'warning');
+                            {% endif %}
                             break;
                     }
                 }
@@ -3481,7 +3488,7 @@
         function translateToChinese() {
             const translations = {
                 // 导航栏
-                'QATOOLBOX': 'QATOOLBOX',
+                'QATOOLBOX': 'ModeShift',
                 '专注技术，追求卓越': '专注技术，追求卓越',
                 '工具集': '工具集',
                 '我的建议': '我的建议',
@@ -3522,7 +3529,7 @@
                 '工欲善其事，必先利其器。': '工欲善其事，必先利其器。',
                 '学而时习之，不亦说乎。': '学而时习之，不亦说乎。',
                 '知之者不如好之者，好之者不如乐之者。': '知之者不如好之者，好之者不如乐之者。',
-                '进入工具集': '进入工具集'
+                '进入外世界': '进入外世界'
             };
             
             applyTranslations(translations);
@@ -3532,7 +3539,7 @@
         function translateToEnglish() {
             const translations = {
                 // 导航栏
-                'QATOOLBOX': 'QATOOLBOX',
+                'QATOOLBOX': 'ModeShift',
                 '专注技术，追求卓越': 'Focus on Technology, Pursue Excellence',
                 '工具集': 'Tools',
                 '我的建议': 'My Suggestions',
@@ -3573,7 +3580,7 @@
                 '工欲善其事，必先利其器。': 'To do a good job, one must first sharpen one\'s tools.',
                 '学而时习之，不亦说乎。': 'Is it not pleasant to learn and practice what you have learned?',
                 '知之者不如好之者，好之者不如乐之者。': 'Those who know are not as good as those who love, and those who love are not as good as those who enjoy.',
-                '进入工具集': 'Enter Tools'
+                '进入外世界': 'Enter Outer World'
             };
             
             applyTranslations(translations);
@@ -3623,6 +3630,140 @@
             }
             return cookieValue;
         }
+        
+        // 里世界入口逻辑 - 点击头像四次进入
+        document.addEventListener('DOMContentLoaded', function() {
+            const userAvatar = document.getElementById('user-avatar');
+            if (userAvatar) {
+                let clickCount = 0;
+                let clickTimer = null;
+                
+                userAvatar.addEventListener('click', function(e) {
+                    // 阻止事件冒泡，避免触发下拉菜单
+                    e.stopPropagation();
+                    
+                    clickCount++;
+                    
+                    // 清除之前的定时器
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                    }
+                    
+                    // 设置3秒后重置点击计数
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                    }, 3000);
+                    
+                    // 点击反馈效果
+                    this.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 200);
+                    
+                    // 第四次点击进入里世界
+                    if (clickCount === 4) {
+                        // 重置计数
+                        clickCount = 0;
+                        clearTimeout(clickTimer);
+                        
+                        // 显示进入里世界的动画效果
+                        this.style.animation = 'glitch 0.5s infinite';
+                        this.style.filter = 'hue-rotate(180deg) brightness(1.5)';
+                        
+                        setTimeout(() => {
+                            // 跳转到里世界页面
+                            window.location.href = '/tools/vanity-os/';
+                        }, 1000);
+                    }
+                });
+            }
+        });
+        
+        // 赛博哥特故障艺术切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            let glitchLevel = 0;
+            let glitchTimer = null;
+            
+            // 添加故障艺术指示器
+            const glitchIndicator = document.createElement('div');
+            glitchIndicator.className = 'glitch-indicator';
+            glitchIndicator.textContent = '故障等级: 0';
+            document.body.appendChild(glitchIndicator);
+            
+            // 监听页面点击事件
+            document.addEventListener('click', function(e) {
+                // 如果当前是赛博哥特主题，才启用故障艺术切换
+                if (document.body.classList.contains('cyberpunk-theme')) {
+                    // 排除一些不需要触发故障艺术切换的元素
+                    if (e.target.closest('.nav-link') || 
+                        e.target.closest('.dropdown-menu') || 
+                        e.target.closest('.btn') ||
+                        e.target.closest('.form-control') ||
+                        e.target.closest('.theme-switch')) {
+                        return;
+                    }
+                    
+                    // 清除之前的定时器
+                    if (glitchTimer) {
+                        clearTimeout(glitchTimer);
+                    }
+                    
+                    // 增加故障等级
+                    glitchLevel = (glitchLevel + 1) % 4; // 0, 1, 2, 3
+                    
+                    // 移除所有故障等级类
+                    document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                    
+                    // 添加新的故障等级类
+                    if (glitchLevel > 0) {
+                        document.body.classList.add('glitch-level-' + glitchLevel);
+                        glitchIndicator.textContent = '故障等级: ' + glitchLevel;
+                        
+                        // 显示故障艺术指示器
+                        glitchIndicator.style.display = 'block';
+                        
+                        // 添加故障音效（可选）
+                        playGlitchSound(glitchLevel);
+                    } else {
+                        glitchIndicator.textContent = '故障等级: 0';
+                        glitchIndicator.style.display = 'none';
+                    }
+                    
+                    // 设置5秒后自动重置故障等级
+                    glitchTimer = setTimeout(() => {
+                        glitchLevel = 0;
+                        document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                        glitchIndicator.style.display = 'none';
+                    }, 5000);
+                }
+            });
+            
+            // 故障音效函数（可选）
+            function playGlitchSound(level) {
+                // 这里可以添加故障音效
+                // 由于浏览器限制，需要用户交互才能播放音频
+                console.log('故障等级:', level);
+            }
+            
+            // 主题切换时重置故障等级
+            const originalApplyGlobalTheme = window.applyGlobalTheme;
+            window.applyGlobalTheme = function(theme) {
+                if (originalApplyGlobalTheme) {
+                    originalApplyGlobalTheme(theme);
+                }
+                
+                // 如果切换到非赛博哥特主题，重置故障等级
+                if (!document.body.classList.contains('cyberpunk-theme')) {
+                    glitchLevel = 0;
+                    document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                    if (glitchIndicator) {
+                        glitchIndicator.style.display = 'none';
+                    }
+                }
+            };
+        });
     </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

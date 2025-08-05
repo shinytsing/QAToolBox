@@ -276,12 +276,12 @@ def suggestions_api(request):
                 'images': suggestion.images or [],
                 'videos': suggestion.videos or []
             })
-        return JsonResponse({'success': True, 'suggestions': suggestions_data})
+        return JsonResponse({'success': True, 'suggestions': suggestions_data}, content_type='application/json')
     
     elif request.method == 'POST':
         # 检查用户是否已登录
         if not request.user.is_authenticated:
-            return JsonResponse({'error': '请先登录后再提交建议'}, status=401)
+            return JsonResponse({'error': '请先登录后再提交建议'}, status=401, content_type='application/json')
         
         # 提交新建议
         try:
@@ -293,7 +293,7 @@ def suggestions_api(request):
             videos = data.get('videos', [])
             
             if not title or not content:
-                return JsonResponse({'error': '标题和内容不能为空'}, status=400)
+                return JsonResponse({'error': '标题和内容不能为空'}, status=400, content_type='application/json')
             
             # 创建建议（用户已登录）
             suggestion = Suggestion.objects.create(
@@ -311,10 +311,10 @@ def suggestions_api(request):
                 'success': True,
                 'message': '建议提交成功！',
                 'suggestion_id': suggestion.id
-            })
+            }, content_type='application/json')
             
         except json.JSONDecodeError:
-            return JsonResponse({'error': '无效的JSON数据'}, status=400)
+            return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
@@ -350,12 +350,12 @@ def feedback_api(request):
                 'created_at': feedback.created_at.strftime('%Y-%m-%d %H:%M'),
                 'admin_response': feedback.admin_response
             })
-        return JsonResponse({'feedbacks': feedbacks_data})
+        return JsonResponse({'feedbacks': feedbacks_data}, content_type='application/json')
     
     elif request.method == 'POST':
         # 检查用户是否已登录
         if not request.user.is_authenticated:
-            return JsonResponse({'error': '请先登录后再提交反馈'}, status=401)
+            return JsonResponse({'error': '请先登录后再提交反馈'}, status=401, content_type='application/json')
         
         # 提交新反馈
         try:
@@ -364,7 +364,7 @@ def feedback_api(request):
             content = data.get('content', '')
             
             if not content:
-                return JsonResponse({'error': '反馈内容不能为空'}, status=400)
+                return JsonResponse({'error': '反馈内容不能为空'}, status=400, content_type='application/json')
             
             # 创建反馈（用户已登录）
             feedback = Feedback.objects.create(
@@ -379,10 +379,10 @@ def feedback_api(request):
                 'success': True,
                 'message': '反馈提交成功！',
                 'feedback_id': feedback.id
-            })
+            }, content_type='application/json')
             
         except json.JSONDecodeError:
-            return JsonResponse({'error': '无效的JSON数据'}, status=400)
+            return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
@@ -431,7 +431,7 @@ def admin_reply_suggestion(request):
         })
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -455,10 +455,10 @@ def admin_reply_feedback(request):
         return JsonResponse({
             'success': True,
             'message': '回复已保存'
-        })
+        }, content_type='application/json')
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -502,7 +502,7 @@ def admin_dashboard_stats_api(request):
                 'active_users': active_users,
                 'recent_logs': logs_data
             }
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -519,7 +519,7 @@ def admin_batch_change_status_api(request):
         new_status = data.get('new_status', 'reviewing')
         
         if not suggestion_ids:
-            return JsonResponse({'error': '请选择要操作的建议'}, status=400)
+            return JsonResponse({'error': '请选择要操作的建议'}, status=400, content_type='application/json')
         
         # 批量更新建议状态
         updated_count = 0
@@ -547,10 +547,10 @@ def admin_batch_change_status_api(request):
             'success': True,
             'message': f'成功更新 {updated_count} 条建议状态',
             'updated_count': updated_count
-        })
+        }, content_type='application/json')
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -567,7 +567,7 @@ def admin_batch_process_suggestions(request):
         response = data.get('response', '')
         
         if not suggestion_ids:
-            return JsonResponse({'error': '请选择要处理的建议'}, status=400)
+            return JsonResponse({'error': '请选择要处理的建议'}, status=400, content_type='application/json')
         
         processed_count = 0
         for suggestion_id in suggestion_ids:
@@ -603,10 +603,10 @@ def admin_batch_process_suggestions(request):
             'success': True,
             'message': f'成功处理 {processed_count} 条建议',
             'processed_count': processed_count
-        })
+        }, content_type='application/json')
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -622,7 +622,7 @@ def announcement_list_api(request):
             return JsonResponse({
                 'success': True,
                 'announcements': []
-            })
+            }, content_type='application/json')
         
         # 检查用户是否已经看过公告（使用session跟踪）
         session_key = f'announcements_seen_{request.user.id}'
@@ -664,7 +664,7 @@ def announcement_list_api(request):
         return JsonResponse({
             'success': True,
             'announcements': new_announcements  # 只返回用户没看过的新公告
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -676,14 +676,14 @@ def announcement_admin_api(request):
     """管理员公告管理API"""
     # 检查管理员权限
     if not request.user.is_authenticated:
-        return JsonResponse({'error': '需要登录'}, status=401)
+        return JsonResponse({'error': '需要登录'}, status=401, content_type='application/json')
     
     try:
         user_role = UserRole.objects.get(user=request.user)
         if user_role.role not in ['admin', 'super_admin']:
-            return JsonResponse({'error': '权限不足'}, status=403)
+            return JsonResponse({'error': '权限不足'}, status=403, content_type='application/json')
     except UserRole.DoesNotExist:
-        return JsonResponse({'error': '权限不足'}, status=403)
+        return JsonResponse({'error': '权限不足'}, status=403, content_type='application/json')
     
     if request.method == 'GET':
         # 获取所有公告（管理员视图）
@@ -711,7 +711,7 @@ def announcement_admin_api(request):
             return JsonResponse({
                 'success': True,
                 'announcements': announcements_data
-            })
+            }, content_type='application/json')
             
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
@@ -753,10 +753,10 @@ def announcement_admin_api(request):
                 'success': True,
                 'message': '公告保存成功',
                 'announcement_id': announcement.id
-            })
+            }, content_type='application/json')
             
         except json.JSONDecodeError:
-            return JsonResponse({'error': '无效的JSON数据'}, status=400)
+            return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
@@ -767,14 +767,14 @@ def announcement_delete_api(request, announcement_id):
     """删除公告"""
     # 检查管理员权限
     if not request.user.is_authenticated:
-        return JsonResponse({'error': '需要登录'}, status=401)
+        return JsonResponse({'error': '需要登录'}, status=401, content_type='application/json')
     
     try:
         user_role = UserRole.objects.get(user=request.user)
         if user_role.role not in ['admin', 'super_admin']:
-            return JsonResponse({'error': '权限不足'}, status=403)
+            return JsonResponse({'error': '权限不足'}, status=403, content_type='application/json')
     except UserRole.DoesNotExist:
-        return JsonResponse({'error': '权限不足'}, status=403)
+        return JsonResponse({'error': '权限不足'}, status=403, content_type='application/json')
     
     try:
         announcement = get_object_or_404(Announcement, id=announcement_id)
@@ -783,7 +783,7 @@ def announcement_delete_api(request, announcement_id):
         return JsonResponse({
             'success': True,
             'message': '公告删除成功'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -815,7 +815,7 @@ def fetch_ai_link_icon(request):
         link_id = data.get('link_id')
         
         if not link_id:
-            return JsonResponse({'success': False, 'message': '缺少链接ID'})
+            return JsonResponse({'success': False, 'message': '缺少链接ID'}, content_type='application/json')
         
         link = get_object_or_404(AILink, id=link_id)
         
@@ -823,7 +823,7 @@ def fetch_ai_link_icon(request):
         favicon_url = extract_favicon_url(link.url)
         
         if not favicon_url:
-            return JsonResponse({'success': False, 'message': '无法获取网站图标'})
+            return JsonResponse({'success': False, 'message': '无法获取网站图标'}, content_type='application/json')
         
         # 下载并保存图标
         domain = get_domain_from_url(link.url)
@@ -840,9 +840,9 @@ def fetch_ai_link_icon(request):
                 'success': True, 
                 'message': '图标获取成功',
                 'icon_url': link.icon.url
-            })
+            }, content_type='application/json')
         else:
-            return JsonResponse({'success': False, 'message': '图标下载失败'})
+            return JsonResponse({'success': False, 'message': '图标下载失败'}, content_type='application/json')
             
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'操作失败: {str(e)}'})
@@ -904,7 +904,7 @@ def create_ai_links_from_list(request):
         return JsonResponse({
             'success': True,
             'message': f'成功创建 {created_count} 个AI友情链接'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'创建失败: {str(e)}'})

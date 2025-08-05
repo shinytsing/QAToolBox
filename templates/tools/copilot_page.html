@@ -1,0 +1,755 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}AI协作声明{% endblock %}
+{% block tool_title_display %}AI协作声明{% endblock %}
+
+{% block extra_css %}
+<style>
+.copilot-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.copilot-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 68, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: backgroundPulse 8s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.main-title {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #00ffff, #ff4444, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+.collaboration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.collaboration-card {
+  background: rgba(26, 26, 26, 0.8);
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.collaboration-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #00ffff, #ff4444, #ffd700);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.collaboration-card:hover::before {
+  transform: scaleX(1);
+}
+
+.collaboration-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #00ffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-icon {
+  font-size: 1.8rem;
+}
+
+.code-section {
+  margin: 1.5rem 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.code-header {
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+  color: #000;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.code-content {
+  padding: 1rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #e0e0e0;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.code-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.code-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.code-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.3d-model-container {
+  height: 300px;
+  background: rgba(0, 255, 255, 0.05);
+  border-radius: 12px;
+  margin: 2rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(0, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.model-placeholder {
+  text-align: center;
+  color: rgba(0, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+.model-layers {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.model-layer {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 900;
+  color: white;
+  position: relative;
+  animation: layerFloat 3s ease-in-out infinite;
+}
+
+.model-layer:nth-child(1) {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  animation-delay: 0s;
+}
+
+.model-layer:nth-child(2) {
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+  animation-delay: 1s;
+}
+
+.model-layer:nth-child(3) {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  animation-delay: 2s;
+}
+
+@keyframes layerFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-10px) scale(1.05); }
+}
+
+.layer-label {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+}
+
+.collaboration-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.stat-item {
+  background: rgba(0, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #00ffff;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background: linear-gradient(135deg, #00ffff, #0080ff);
+  color: #000;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 255, 255, 0.3);
+}
+
+.action-btn.secondary {
+  background: linear-gradient(135deg, #ff4444, #ff6b35);
+  color: white;
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, #00ff00, #00cc00);
+  color: white;
+}
+
+.new-collaboration-form {
+  background: rgba(26, 26, 26, 0.9);
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #00ffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 0.8rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.collaboration-list {
+  margin-top: 2rem;
+}
+
+.collaboration-item {
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.collaboration-item:hover {
+  border-color: #00ffff;
+  box-shadow: 0 5px 15px rgba(0, 255, 255, 0.1);
+}
+
+.collaboration-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.collaboration-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #00ffff;
+}
+
+.collaboration-date {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.collaboration-description {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .collaboration-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .collaboration-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .main-title {
+    font-size: 2rem;
+  }
+  
+  .copilot-container {
+    padding: 1rem;
+  }
+  
+  .model-layers {
+    flex-direction: column;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="copilot-container">
+  <div class="header-section">
+    <h1 class="main-title">
+      <i class="fas fa-robot"></i> AI协作声明
+    </h1>
+    <p class="subtitle">这就是数字时代的健身——我的大脑负责举起思想的杠铃</p>
+  </div>
+
+  <!-- 3D模型展示 -->
+  <div class="3d-model-container">
+    <div class="model-layers">
+      <div class="model-layer">
+        <i class="fas fa-bone"></i>
+        <div class="layer-label">骨架代码</div>
+      </div>
+      <div class="model-layer">
+        <i class="fas fa-dumbbell"></i>
+        <div class="layer-label">AI肌肉</div>
+      </div>
+      <div class="model-layer">
+        <i class="fas fa-brain"></i>
+        <div class="layer-label">神经系统</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建协作表单 -->
+  <div class="new-collaboration-form">
+    <h2 class="card-title">
+      <i class="fas fa-plus card-icon"></i>
+      新建AI协作声明
+    </h2>
+    
+    <form id="collaborationForm">
+      <div class="form-group">
+        <label class="form-label">项目名称</label>
+        <input type="text" class="form-input" id="projectName" placeholder="输入项目名称" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">协作类型</label>
+        <select class="form-select" id="collaborationType" required>
+          <option value="skeleton">骨架代码</option>
+          <option value="muscle">肌肉代码</option>
+          <option value="nervous">神经系统</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">原始代码 (骨架)</label>
+        <textarea class="form-textarea" id="originalCode" placeholder="// 你的原始代码骨架" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">AI生成代码 (肌肉)</label>
+        <textarea class="form-textarea" id="aiGeneratedCode" placeholder="// AI生成的代码" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">最终代码 (神经系统)</label>
+        <textarea class="form-textarea" id="finalCode" placeholder="// 最终的完整代码" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">协作描述</label>
+        <textarea class="form-textarea" id="description" placeholder="描述这次协作的过程和收获" rows="3"></textarea>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="submit" class="action-btn">
+          <i class="fas fa-save"></i> 保存协作
+        </button>
+        <button type="button" class="action-btn secondary" onclick="previewCollaboration()">
+          <i class="fas fa-eye"></i> 预览效果
+        </button>
+        <button type="button" class="action-btn success" onclick="generateRandomCollaboration()">
+          <i class="fas fa-magic"></i> 生成示例
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 协作统计 -->
+  <div class="collaboration-grid">
+    <div class="collaboration-card">
+      <h2 class="card-title">
+        <i class="fas fa-chart-bar card-icon"></i>
+        协作统计
+      </h2>
+      
+      <div class="collaboration-stats">
+        <div class="stat-item">
+          <div class="stat-value">{{ collaborations|length }}</div>
+          <div class="stat-label">总协作数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ collaborations|length|add:"1" }}</div>
+          <div class="stat-label">代码行数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">85%</div>
+          <div class="stat-label">协作效率</div>
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="exportCollaborations()">
+          <i class="fas fa-download"></i> 导出数据
+        </button>
+        <button class="action-btn secondary" onclick="showCollaborationAnalytics()">
+          <i class="fas fa-chart-line"></i> 分析报告
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 协作历史 -->
+  <div class="collaboration-list">
+    <h2 class="card-title" style="margin-bottom: 1rem;">
+      <i class="fas fa-history card-icon"></i>
+      协作历史
+    </h2>
+    
+    {% for collaboration in collaborations %}
+    <div class="collaboration-item">
+      <div class="collaboration-header">
+        <div class="collaboration-title">{{ collaboration.project_name }}</div>
+        <div class="collaboration-date">{{ collaboration.created_at|date:"Y-m-d H:i" }}</div>
+      </div>
+      
+      <div class="collaboration-description">{{ collaboration.description|default:"无描述" }}</div>
+      
+      <div class="code-section">
+        <div class="code-header">{{ collaboration.get_collaboration_type_display }}</div>
+        <div class="code-content">{{ collaboration.original_code|truncatechars:200 }}</div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-btn" onclick="viewCollaboration({{ collaboration.id }})">
+          <i class="fas fa-eye"></i> 查看详情
+        </button>
+        <button class="action-btn secondary" onclick="shareCollaboration({{ collaboration.id }})">
+          <i class="fas fa-share"></i> 分享
+        </button>
+      </div>
+    </div>
+    {% empty %}
+    <div class="collaboration-item">
+      <div style="text-align: center; color: rgba(255, 255, 255, 0.6); padding: 2rem;">
+        <i class="fas fa-robot" style="font-size: 3rem; margin-bottom: 1rem; color: #00ffff;"></i>
+        <p>暂无协作记录</p>
+        <p>开始你的第一次AI协作吧！</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+// 表单提交
+document.getElementById('collaborationForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    collaboration_type: document.getElementById('collaborationType').value,
+    original_code: document.getElementById('originalCode').value,
+    ai_generated_code: document.getElementById('aiGeneratedCode').value,
+    final_code: document.getElementById('finalCode').value,
+    project_name: document.getElementById('projectName').value,
+    description: document.getElementById('description').value
+  };
+  
+  fetch('/tools/api/triple-awakening/copilot-collaboration/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(formData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('AI协作声明创建成功！');
+      location.reload();
+    } else {
+      alert('创建失败: ' + data.message);
+    }
+  });
+});
+
+// 预览协作
+function previewCollaboration() {
+  const originalCode = document.getElementById('originalCode').value;
+  const aiGeneratedCode = document.getElementById('aiGeneratedCode').value;
+  const finalCode = document.getElementById('finalCode').value;
+  
+  if (!originalCode || !aiGeneratedCode || !finalCode) {
+    alert('请先填写代码内容');
+    return;
+  }
+  
+  const preview = `
+协作预览:
+
+📋 原始代码 (骨架):
+${originalCode}
+
+🤖 AI生成代码 (肌肉):
+${aiGeneratedCode}
+
+🧠 最终代码 (神经系统):
+${finalCode}
+
+这就是数字时代的健身——我的大脑负责举起思想的杠铃！
+  `;
+  
+  alert(preview);
+}
+
+// 生成随机协作示例
+function generateRandomCollaboration() {
+  const examples = [
+    {
+      project_name: '数据处理系统',
+      collaboration_type: 'skeleton',
+      original_code: `// 骨架代码
+function processData() {
+  // TODO: 实现数据处理逻辑
+}`,
+      ai_generated_code: `// AI生成的肌肉代码
+function processData(data) {
+  return data.map(item => ({
+    id: item.id,
+    processed: item.value * 2
+  }));
+}`,
+      final_code: `// 最终神经系统代码
+function processData(data) {
+  if (!Array.isArray(data)) {
+    throw new Error("数据必须是数组");
+  }
+  
+  return data
+    .filter(item => item && item.value)
+    .map(item => ({
+      id: item.id,
+      processed: item.value * 2,
+      timestamp: Date.now()
+    }));
+}`,
+      description: '展示从骨架到肌肉到神经系统的完整协作过程'
+    },
+    {
+      project_name: '用户界面组件',
+      collaboration_type: 'muscle',
+      original_code: `// 骨架代码
+function createButton() {
+  // TODO: 创建按钮组件
+}`,
+      ai_generated_code: `// AI生成的肌肉代码
+function createButton(text, onClick) {
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.onclick = onClick;
+  return button;
+}`,
+      final_code: `// 最终神经系统代码
+function createButton(text, onClick, options = {}) {
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.className = options.className || 'btn';
+  button.disabled = options.disabled || false;
+  
+  if (onClick) {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      onClick(e);
+    });
+  }
+  
+  return button;
+}`,
+      description: '从简单按钮到功能完整的UI组件'
+    }
+  ];
+  
+  const example = examples[Math.floor(Math.random() * examples.length)];
+  
+  document.getElementById('projectName').value = example.project_name;
+  document.getElementById('collaborationType').value = example.collaboration_type;
+  document.getElementById('originalCode').value = example.original_code;
+  document.getElementById('aiGeneratedCode').value = example.ai_generated_code;
+  document.getElementById('finalCode').value = example.final_code;
+  document.getElementById('description').value = example.description;
+  
+  alert('已生成协作示例！');
+}
+
+// 查看协作详情
+function viewCollaboration(id) {
+  alert(`查看协作详情 ID: ${id}\n\n这里会显示完整的协作过程，包括代码对比、时间线等信息。`);
+}
+
+// 分享协作
+function shareCollaboration(id) {
+  const shareText = `🤖 我的AI协作声明 #${id}\n\n这就是数字时代的健身——我的大脑负责举起思想的杠铃！\n\n#AI协作 #三重觉醒 #代码健身房`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'AI协作声明',
+      text: shareText,
+      url: window.location.href
+    });
+  } else {
+    // 复制到剪贴板
+    navigator.clipboard.writeText(shareText).then(() => {
+      alert('协作内容已复制到剪贴板！');
+    });
+  }
+}
+
+// 导出协作数据
+function exportCollaborations() {
+  alert('📊 导出功能:\n\n- 导出为JSON格式\n- 导出为CSV格式\n- 生成协作报告\n- 分享到社交媒体\n\n功能开发中...');
+}
+
+// 显示协作分析
+function showCollaborationAnalytics() {
+  alert('📈 协作分析报告:\n\n- 协作效率: 85%\n- 代码质量提升: 40%\n- 开发速度提升: 60%\n- AI依赖度: 30%\n\n继续优化你的协作流程！');
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+{% endblock %} 

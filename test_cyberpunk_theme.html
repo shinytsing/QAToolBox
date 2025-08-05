@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博哥特主题测试</title>
+    <link rel="stylesheet" href="/static/cyberpunk.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+        }
+        
+        .test-container {
+            min-height: 100vh;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .test-title {
+            color: #ff006e;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: cyberGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes cyberGlow {
+            from { 
+                text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+                filter: hue-rotate(0deg);
+            }
+            to { 
+                text-shadow: 0 0 30px rgba(255, 0, 110, 0.8), 0 0 40px rgba(255, 0, 110, 0.3);
+                filter: hue-rotate(10deg);
+            }
+        }
+        
+        .test-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+        
+        .test-instruction {
+            font-size: 0.9rem;
+            color: rgba(0, 255, 255, 0.7);
+            font-style: italic;
+            margin-bottom: 2rem;
+        }
+        
+        .test-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .test-card {
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(255, 0, 110, 0.1) 100%);
+            border: 2px solid rgba(255, 0, 110, 0.3);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(255, 0, 110, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #ff006e 0%, #00ffff 50%, #ffd700 100%);
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(255, 0, 110, 0.4);
+            margin: 0.5rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .test-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 0, 110, 0.6);
+        }
+        
+        .glitch-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff006e 0%, #00ffff 50%, #ffd700 100%);
+            color: #000000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            z-index: 1000;
+            animation: cyberPulse 2s ease-in-out infinite;
+            display: none;
+        }
+        
+        @keyframes cyberPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        /* 故障艺术效果 - 第一次点击 */
+        body.glitch-level-1::before {
+            animation: cyberMatrix 20s ease-in-out infinite, glitchLevel1 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes glitchLevel1 {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+                filter: hue-rotate(0deg);
+            }
+            25% { 
+                transform: translateY(-2px) rotate(0.5deg);
+                filter: hue-rotate(10deg);
+            }
+            50% { 
+                transform: translateY(2px) rotate(-0.5deg);
+                filter: hue-rotate(-10deg);
+            }
+            75% { 
+                transform: translateY(-1px) rotate(0.2deg);
+                filter: hue-rotate(5deg);
+            }
+        }
+        
+        /* 故障艺术效果 - 第二次点击 */
+        body.glitch-level-2::before {
+            animation: cyberMatrix 20s ease-in-out infinite, glitchLevel2 0.3s ease-in-out infinite;
+        }
+        
+        @keyframes glitchLevel2 {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+                filter: hue-rotate(0deg) saturate(1);
+            }
+            20% { 
+                transform: translateY(-4px) rotate(1deg);
+                filter: hue-rotate(20deg) saturate(1.2);
+            }
+            40% { 
+                transform: translateY(4px) rotate(-1deg);
+                filter: hue-rotate(-20deg) saturate(0.8);
+            }
+            60% { 
+                transform: translateY(-2px) rotate(0.5deg);
+                filter: hue-rotate(15deg) saturate(1.1);
+            }
+            80% { 
+                transform: translateY(2px) rotate(-0.5deg);
+                filter: hue-rotate(-15deg) saturate(0.9);
+            }
+        }
+        
+        /* 故障艺术效果 - 第三次点击 */
+        body.glitch-level-3::before {
+            animation: cyberMatrix 20s ease-in-out infinite, glitchLevel3 0.2s ease-in-out infinite;
+        }
+        
+        @keyframes glitchLevel3 {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg);
+                filter: hue-rotate(0deg) saturate(1) contrast(1);
+            }
+            16% { 
+                transform: translateY(-6px) rotate(2deg);
+                filter: hue-rotate(30deg) saturate(1.5) contrast(1.2);
+            }
+            32% { 
+                transform: translateY(6px) rotate(-2deg);
+                filter: hue-rotate(-30deg) saturate(0.5) contrast(0.8);
+            }
+            48% { 
+                transform: translateY(-3px) rotate(1deg);
+                filter: hue-rotate(25deg) saturate(1.3) contrast(1.1);
+            }
+            64% { 
+                transform: translateY(3px) rotate(-1deg);
+                filter: hue-rotate(-25deg) saturate(0.7) contrast(0.9);
+            }
+            80% { 
+                transform: translateY(-1px) rotate(0.5deg);
+                filter: hue-rotate(10deg) saturate(1.1) contrast(1.05);
+            }
+            96% { 
+                transform: translateY(1px) rotate(-0.5deg);
+                filter: hue-rotate(-10deg) saturate(0.9) contrast(0.95);
+            }
+        }
+        
+        /* 故障艺术扫描线效果 */
+        body.glitch-level-2::after,
+        body.glitch-level-3::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #ff006e;
+            z-index: 999;
+            animation: scanline 2s linear infinite;
+            opacity: 0.3;
+        }
+        
+        @keyframes scanline {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+        
+        /* 故障艺术噪点效果 */
+        body.glitch-level-3::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255, 0, 110, 0.1) 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -2;
+            animation: noise 0.5s ease-in-out infinite;
+            opacity: 0.1;
+        }
+        
+        @keyframes noise {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-1px, 1px); }
+            50% { transform: translate(1px, -1px); }
+            75% { transform: translate(-1px, -1px); }
+        }
+        
+        body.glitch-level-1 .glitch-indicator,
+        body.glitch-level-2 .glitch-indicator,
+        body.glitch-level-3 .glitch-indicator {
+            display: block;
+        }
+    </style>
+</head>
+<body class="cyberpunk-theme">
+    <div class="test-container">
+        <div class="test-header">
+            <h1 class="test-title">
+                <i class="fas fa-robot"></i> 赛博哥特主题测试
+            </h1>
+            <p class="test-subtitle">🤖 赛博朋克，故障艺术</p>
+            <p class="test-instruction">💡 点击页面任意位置三次，体验不同等级的故障艺术效果</p>
+        </div>
+        
+        <div class="test-content">
+            <div class="test-card">
+                <h3>故障艺术效果测试</h3>
+                <p>点击页面任意位置来触发故障艺术效果：</p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>第1次点击：轻微故障效果</li>
+                    <li>第2次点击：中等故障效果 + 扫描线</li>
+                    <li>第3次点击：强烈故障效果 + 扫描线 + 噪点</li>
+                    <li>第4次点击：恢复正常</li>
+                </ul>
+                <br><br>
+                <button class="test-btn" onclick="resetGlitch()">重置故障等级</button>
+                <button class="test-btn" onclick="window.location.href='/tools/cyberpunk/'">进入赛博哥特模式</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 故障艺术指示器 -->
+    <div class="glitch-indicator" id="glitch-indicator">故障等级: 0</div>
+    
+    <script>
+        // 赛博哥特故障艺术切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const indicator = document.getElementById('glitch-indicator');
+            let glitchLevel = 0;
+            let glitchTimer = null;
+            
+            // 监听页面点击事件
+            document.addEventListener('click', function(e) {
+                // 排除按钮点击
+                if (e.target.closest('.test-btn')) {
+                    return;
+                }
+                
+                // 清除之前的定时器
+                if (glitchTimer) {
+                    clearTimeout(glitchTimer);
+                }
+                
+                // 增加故障等级
+                glitchLevel = (glitchLevel + 1) % 4; // 0, 1, 2, 3
+                
+                // 移除所有故障等级类
+                document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                
+                // 添加新的故障等级类
+                if (glitchLevel > 0) {
+                    document.body.classList.add('glitch-level-' + glitchLevel);
+                    indicator.textContent = '故障等级: ' + glitchLevel;
+                    
+                    // 显示故障艺术指示器
+                    indicator.style.display = 'block';
+                    
+                    // 添加故障音效（可选）
+                    playGlitchSound(glitchLevel);
+                } else {
+                    indicator.textContent = '故障等级: 0';
+                    indicator.style.display = 'none';
+                }
+                
+                // 设置5秒后自动重置故障等级
+                glitchTimer = setTimeout(() => {
+                    glitchLevel = 0;
+                    document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                    indicator.style.display = 'none';
+                }, 5000);
+            });
+            
+            // 故障音效函数（可选）
+            function playGlitchSound(level) {
+                console.log('故障等级:', level);
+                
+                // 可以添加一些视觉反馈
+                if (level === 3) {
+                    // 最高等级时添加屏幕闪烁效果
+                    document.body.style.filter = 'brightness(1.2)';
+                    setTimeout(() => {
+                        document.body.style.filter = 'brightness(1)';
+                    }, 100);
+                }
+            }
+            
+            // 重置故障等级函数
+            window.resetGlitch = function() {
+                glitchLevel = 0;
+                document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
+                indicator.style.display = 'none';
+                if (glitchTimer) {
+                    clearTimeout(glitchTimer);
+                }
+            };
+        });
+    </script>
+</body>
+</html> 

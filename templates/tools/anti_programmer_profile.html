@@ -1,0 +1,845 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}反程序员档案{% endblock %}
+{% block tool_title_display %}反程序员档案{% endblock %}
+
+{% block extra_css %}
+<style>
+.anti-programmer-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.anti-programmer-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 68, 68, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  animation: antiPulse 8s ease-in-out infinite;
+}
+
+@keyframes antiPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.anti-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.anti-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700, #ff4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 40px rgba(255, 68, 68, 0.5);
+  animation: antiGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes antiGlow {
+  from { filter: brightness(1) hue-rotate(0deg); }
+  to { filter: brightness(1.2) hue-rotate(10deg); }
+}
+
+.anti-subtitle {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.anti-motto {
+  font-size: 1rem;
+  color: rgba(255, 215, 0, 0.8);
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+
+.anti-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.anti-card {
+  background: rgba(26, 26, 26, 0.9);
+  border: 3px solid rgba(255, 68, 68, 0.4);
+  border-radius: 15px;
+  padding: 2rem;
+  backdrop-filter: blur(15px);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.anti-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff4444, #ff6b35, #ffd700);
+  animation: borderFlow 3s linear infinite;
+}
+
+@keyframes borderFlow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.anti-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(255, 68, 68, 0.3);
+  border-color: rgba(255, 68, 68, 0.8);
+}
+
+.card-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ff4444;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+/* 等级系统样式 */
+.level-system {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.level-display {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  margin-bottom: 1rem;
+}
+
+.level-title {
+  font-size: 1.2rem;
+  color: #ff6b35;
+  margin-bottom: 1rem;
+}
+
+.level-progress {
+  width: 100%;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.level-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4444, #ff6b35, #ffd700);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.level-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: progressShine 2s linear infinite;
+}
+
+@keyframes progressShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.exp-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 技能树样式 */
+.skill-tree {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.skill-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.skill-item:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.8);
+  transform: scale(1.05);
+}
+
+.skill-item.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skill-item.unlocked {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.skill-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.skill-name {
+  font-weight: 600;
+  color: #ff4444;
+  margin-bottom: 0.5rem;
+}
+
+.skill-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+.skill-requirement {
+  font-size: 0.7rem;
+  color: #ff6b35;
+  margin-top: 0.5rem;
+}
+
+/* 成就系统样式 */
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.achievement-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.achievement-item:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.8);
+}
+
+.achievement-item.completed {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  color: #ff4444;
+}
+
+.achievement-item.completed .achievement-icon {
+  color: #ffd700;
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-name {
+  font-weight: 600;
+  color: #ff4444;
+  margin-bottom: 0.3rem;
+}
+
+.achievement-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.3rem;
+}
+
+.achievement-progress {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.achievement-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4444, #ff6b35);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.achievement-item.completed .achievement-progress-fill {
+  background: linear-gradient(90deg, #ffd700, #ffed4e);
+}
+
+/* 统计信息样式 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: rgba(255, 68, 68, 0.8);
+  transform: scale(1.05);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .anti-programmer-container {
+    padding: 1rem;
+  }
+  
+  .anti-title {
+    font-size: 2.5rem;
+  }
+  
+  .anti-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .skill-tree {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .achievement-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 动画效果 */
+@keyframes skillUnlock {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.skill-item.unlocking {
+  animation: skillUnlock 0.5s ease;
+}
+
+@keyframes achievementComplete {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.achievement-item.completing {
+  animation: achievementComplete 0.5s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="anti-programmer-container">
+  <div class="anti-header">
+    <h1 class="anti-title">反程序员档案</h1>
+    <p class="anti-subtitle">拒绝AI依赖，回归编程本质</p>
+    <p class="anti-motto">"真正的程序员不需要AI补全，我们手写每一行代码"</p>
+  </div>
+
+  <div class="anti-grid">
+    <!-- 等级系统 -->
+    <div class="anti-card">
+      <h2 class="card-title">反程序员等级</h2>
+      <div class="level-system">
+        <div class="level-display" id="levelDisplay">LV.1</div>
+        <div class="level-title" id="levelTitle">代码新手</div>
+        <div class="level-progress">
+          <div class="level-progress-fill" id="levelProgress" style="width: 25%;"></div>
+        </div>
+        <div class="exp-info">
+          <span>经验值: <span id="currentExp">250</span></span>
+          <span>下一级: <span id="nextLevelExp">1000</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 技能树 -->
+    <div class="anti-card">
+      <h2 class="card-title">反程序员技能树</h2>
+      <div class="skill-tree">
+        <div class="skill-item unlocked" data-skill="handwriting">
+          <div class="skill-icon">✍️</div>
+          <div class="skill-name">手写代码</div>
+          <div class="skill-desc">精通手写代码技能，拒绝AI补全</div>
+        </div>
+        
+        <div class="skill-item unlocked" data-skill="ai-resistance">
+          <div class="skill-icon">🛡️</div>
+          <div class="skill-name">AI抵抗</div>
+          <div class="skill-desc">对AI工具保持警惕，坚持传统编程</div>
+        </div>
+        
+        <div class="skill-item unlocked" data-skill="debugging">
+          <div class="skill-icon">🔍</div>
+          <div class="skill-name">调试大师</div>
+          <div class="skill-desc">快速定位和解决问题，不依赖AI</div>
+        </div>
+        
+        <div class="skill-item locked" data-skill="algorithm">
+          <div class="skill-icon">🧮</div>
+          <div class="skill-name">算法巫师</div>
+          <div class="skill-desc">掌握复杂算法，手写高效代码</div>
+          <div class="skill-requirement">需要等级 5</div>
+        </div>
+        
+        <div class="skill-item locked" data-skill="architecture">
+          <div class="skill-icon">🏗️</div>
+          <div class="skill-name">系统架构师</div>
+          <div class="skill-desc">设计完整系统，构建可扩展架构</div>
+          <div class="skill-requirement">需要等级 8</div>
+        </div>
+        
+        <div class="skill-item locked" data-skill="poetry">
+          <div class="skill-icon">📝</div>
+          <div class="skill-name">代码诗人</div>
+          <div class="skill-desc">写出优雅代码，追求编程艺术</div>
+          <div class="skill-requirement">需要等级 10</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 成就系统 -->
+    <div class="anti-card">
+      <h2 class="card-title">反程序员成就</h2>
+      <div class="achievement-grid">
+        <div class="achievement-item" data-achievement="ai-reject">
+          <div class="achievement-icon">❌</div>
+          <div class="achievement-info">
+            <div class="achievement-name">拒绝AI补全</div>
+            <div class="achievement-desc">连续拒绝AI补全100次</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 45%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="achievement-item" data-achievement="handwriting">
+          <div class="achievement-icon">✍️</div>
+          <div class="achievement-info">
+            <div class="achievement-name">手写大师</div>
+            <div class="achievement-desc">手写1000行代码</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 78%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="achievement-item" data-achievement="debugging">
+          <div class="achievement-icon">🔧</div>
+          <div class="achievement-info">
+            <div class="achievement-name">调试专家</div>
+            <div class="achievement-desc">解决100个bug</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 32%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="achievement-item" data-achievement="algorithm">
+          <div class="achievement-icon">🧮</div>
+          <div class="achievement-info">
+            <div class="achievement-name">算法大师</div>
+            <div class="achievement-desc">手写10个复杂算法</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 60%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="achievement-item" data-achievement="architecture">
+          <div class="achievement-icon">🏗️</div>
+          <div class="achievement-info">
+            <div class="achievement-name">架构师</div>
+            <div class="achievement-desc">设计完整系统架构</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 15%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="achievement-item" data-achievement="poetry">
+          <div class="achievement-icon">📝</div>
+          <div class="achievement-info">
+            <div class="achievement-name">代码哲学家</div>
+            <div class="achievement-desc">写出优雅的代码</div>
+            <div class="achievement-progress">
+              <div class="achievement-progress-fill" style="width: 25%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 行为统计 -->
+    <div class="anti-card">
+      <h2 class="card-title">反程序员统计</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="handwrittenLines">2,847</div>
+          <div class="stat-label">手写代码行数</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="aiRejections">45</div>
+          <div class="stat-label">拒绝AI次数</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="bugsFixed">32</div>
+          <div class="stat-label">修复Bug数量</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="deepWorkHours">156</div>
+          <div class="stat-label">深度工作小时</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="algorithmsWritten">6</div>
+          <div class="stat-label">手写算法数量</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="systemsDesigned">2</div>
+          <div class="stat-label">设计系统数量</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 反程序员档案系统
+class AntiProgrammerProfile {
+  constructor() {
+    this.level = 1;
+    this.exp = 250;
+    this.nextLevelExp = 1000;
+    this.skills = {
+      handwriting: { unlocked: true, level: 3 },
+      aiResistance: { unlocked: true, level: 2 },
+      debugging: { unlocked: true, level: 2 },
+      algorithm: { unlocked: false, level: 0 },
+      architecture: { unlocked: false, level: 0 },
+      poetry: { unlocked: false, level: 0 }
+    };
+    this.achievements = {
+      aiReject: { completed: false, progress: 45, target: 100 },
+      handwriting: { completed: false, progress: 784, target: 1000 },
+      debugging: { completed: false, progress: 32, target: 100 },
+      algorithm: { completed: false, progress: 6, target: 10 },
+      architecture: { completed: false, progress: 2, target: 5 },
+      poetry: { completed: false, progress: 25, target: 100 }
+    };
+    this.stats = {
+      handwrittenLines: 2847,
+      aiRejections: 45,
+      bugsFixed: 32,
+      deepWorkHours: 156,
+      algorithmsWritten: 6,
+      systemsDesigned: 2
+    };
+    
+    this.init();
+  }
+  
+  init() {
+    this.updateLevelDisplay();
+    this.updateSkills();
+    this.updateAchievements();
+    this.updateStats();
+    this.bindEvents();
+  }
+  
+  updateLevelDisplay() {
+    const levelDisplay = document.getElementById('levelDisplay');
+    const levelTitle = document.getElementById('levelTitle');
+    const levelProgress = document.getElementById('levelProgress');
+    const currentExp = document.getElementById('currentExp');
+    const nextLevelExp = document.getElementById('nextLevelExp');
+    
+    const levelTitles = [
+      '代码新手', '代码学徒', '代码工匠', '代码专家', '代码大师',
+      '算法巫师', '系统架构师', '代码艺术家', '编程哲学家', '反AI传奇'
+    ];
+    
+    levelDisplay.textContent = `LV.${this.level}`;
+    levelTitle.textContent = levelTitles[this.level - 1] || '反AI传奇';
+    currentExp.textContent = this.exp;
+    nextLevelExp.textContent = this.nextLevelExp;
+    
+    const progressPercent = (this.exp / this.nextLevelExp) * 100;
+    levelProgress.style.width = `${progressPercent}%`;
+  }
+  
+  updateSkills() {
+    const skillItems = document.querySelectorAll('.skill-item');
+    
+    skillItems.forEach(item => {
+      const skillName = item.dataset.skill;
+      const skill = this.skills[skillName];
+      
+      if (skill && skill.unlocked) {
+        item.classList.remove('locked');
+        item.classList.add('unlocked');
+      } else {
+        item.classList.remove('unlocked');
+        item.classList.add('locked');
+      }
+    });
+  }
+  
+  updateAchievements() {
+    const achievementItems = document.querySelectorAll('.achievement-item');
+    
+    achievementItems.forEach(item => {
+      const achievementName = item.dataset.achievement;
+      const achievement = this.achievements[achievementName];
+      
+      if (achievement) {
+        const progressFill = item.querySelector('.achievement-progress-fill');
+        const progressPercent = (achievement.progress / achievement.target) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        
+        if (achievement.completed) {
+          item.classList.add('completed');
+        }
+      }
+    });
+  }
+  
+  updateStats() {
+    Object.keys(this.stats).forEach(statKey => {
+      const element = document.getElementById(statKey);
+      if (element) {
+        element.textContent = this.stats[statKey].toLocaleString();
+      }
+    });
+  }
+  
+  bindEvents() {
+    // 技能点击事件
+    const skillItems = document.querySelectorAll('.skill-item');
+    skillItems.forEach(item => {
+      item.addEventListener('click', () => {
+        if (!item.classList.contains('locked')) {
+          this.showSkillDetails(item);
+        }
+      });
+    });
+    
+    // 成就点击事件
+    const achievementItems = document.querySelectorAll('.achievement-item');
+    achievementItems.forEach(item => {
+      item.addEventListener('click', () => {
+        this.showAchievementDetails(item);
+      });
+    });
+  }
+  
+  showSkillDetails(skillItem) {
+    const skillName = skillItem.dataset.skill;
+    const skill = this.skills[skillName];
+    
+    if (skill) {
+      alert(`技能详情：${skillItem.querySelector('.skill-name').textContent}\n等级：${skill.level}\n状态：${skill.unlocked ? '已解锁' : '未解锁'}`);
+    }
+  }
+  
+  showAchievementDetails(achievementItem) {
+    const achievementName = achievementItem.dataset.achievement;
+    const achievement = this.achievements[achievementName];
+    
+    if (achievement) {
+      const progressPercent = (achievement.progress / achievement.target) * 100;
+      alert(`成就详情：${achievementItem.querySelector('.achievement-name').textContent}\n进度：${achievement.progress}/${achievement.target} (${progressPercent.toFixed(1)}%)\n状态：${achievement.completed ? '已完成' : '进行中'}`);
+    }
+  }
+  
+  // 添加经验值
+  addExp(amount) {
+    this.exp += amount;
+    
+    // 检查是否升级
+    while (this.exp >= this.nextLevelExp) {
+      this.exp -= this.nextLevelExp;
+      this.level++;
+      this.nextLevelExp = this.level * 1000;
+      this.onLevelUp();
+    }
+    
+    this.updateLevelDisplay();
+  }
+  
+  // 升级事件
+  onLevelUp() {
+    // 检查技能解锁
+    if (this.level >= 5 && !this.skills.algorithm.unlocked) {
+      this.skills.algorithm.unlocked = true;
+      this.unlockSkill('algorithm');
+    }
+    
+    if (this.level >= 8 && !this.skills.architecture.unlocked) {
+      this.skills.architecture.unlocked = true;
+      this.unlockSkill('architecture');
+    }
+    
+    if (this.level >= 10 && !this.skills.poetry.unlocked) {
+      this.skills.poetry.unlocked = true;
+      this.unlockSkill('poetry');
+    }
+    
+    this.updateSkills();
+    
+    // 显示升级动画
+    const levelDisplay = document.getElementById('levelDisplay');
+    levelDisplay.style.animation = 'none';
+    setTimeout(() => {
+      levelDisplay.style.animation = 'skillUnlock 0.5s ease';
+    }, 10);
+    
+    alert(`恭喜升级！当前等级：LV.${this.level}`);
+  }
+  
+  // 解锁技能
+  unlockSkill(skillName) {
+    const skillItem = document.querySelector(`[data-skill="${skillName}"]`);
+    if (skillItem) {
+      skillItem.classList.add('unlocking');
+      setTimeout(() => {
+        skillItem.classList.remove('unlocking');
+      }, 500);
+    }
+  }
+  
+  // 更新统计数据
+  updateStat(statName, value) {
+    if (this.stats.hasOwnProperty(statName)) {
+      this.stats[statName] = value;
+      this.updateStats();
+    }
+  }
+  
+  // 更新成就进度
+  updateAchievement(achievementName, progress) {
+    if (this.achievements.hasOwnProperty(achievementName)) {
+      this.achievements[achievementName].progress = progress;
+      
+      // 检查是否完成
+      if (progress >= this.achievements[achievementName].target && !this.achievements[achievementName].completed) {
+        this.achievements[achievementName].completed = true;
+        this.completeAchievement(achievementName);
+      }
+      
+      this.updateAchievements();
+    }
+  }
+  
+  // 完成成就
+  completeAchievement(achievementName) {
+    const achievementItem = document.querySelector(`[data-achievement="${achievementName}"]`);
+    if (achievementItem) {
+      achievementItem.classList.add('completing');
+      setTimeout(() => {
+        achievementItem.classList.remove('completing');
+      }, 500);
+    }
+    
+    // 给予奖励
+    this.addExp(100);
+    alert(`恭喜完成成就：${achievementItem.querySelector('.achievement-name').textContent}！获得100经验值！`);
+  }
+}
+
+// 初始化反程序员档案系统
+document.addEventListener('DOMContentLoaded', function() {
+  const antiProgrammer = new AntiProgrammerProfile();
+  
+  // 模拟一些交互
+  setTimeout(() => {
+    // 模拟拒绝AI补全
+    antiProgrammer.updateAchievement('aiReject', 50);
+    antiProgrammer.updateStat('aiRejections', 50);
+  }, 2000);
+  
+  setTimeout(() => {
+    // 模拟手写代码
+    antiProgrammer.updateAchievement('handwriting', 800);
+    antiProgrammer.updateStat('handwrittenLines', 3000);
+  }, 4000);
+});
+</script>
+{% endblock %} 

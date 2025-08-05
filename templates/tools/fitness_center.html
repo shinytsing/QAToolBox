@@ -1,26 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}健身中心 - 狂暴模式{% endblock %}
+{% block tool_title_inner %}健身中心 - 狂暴模式{% endblock %}
+{% block tool_title_display %}健身中心 - 狂暴模式{% endblock %}
 
 {% block content %}
 <div class="fitness-container">
-  <!-- 语言切换按钮 -->
-  <div class="geek-language-switch-fixed">
-    <button class="geek-lang-btn-fixed active" data-lang="zh">中文</button>
-    <button class="geek-lang-btn-fixed" data-lang="en">English</button>
-  </div>
+
 
   <!-- 快捷键提示 -->
-  <div class="theme-switch-hint">
-    <div class="hint-content">
-      <i class="fas fa-keyboard"></i>
-      <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
-      <button class="help-btn" id="showShortcutsHelp">
-        <i class="fas fa-question-circle"></i>
-      </button>
-    </div>
-  </div>
+
 
   <!-- 快捷键帮助面板 -->
   <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
@@ -729,43 +718,7 @@
   font-size: 0.9rem;
 }
 
-/* 语言切换按钮样式 */
-.geek-language-switch-fixed {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-  display: flex;
-  gap: 10px;
-  background: rgba(26,26,46,0.9);
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 107, 53, 0.2);
-  backdrop-filter: blur(10px);
-}
 
-.geek-lang-btn-fixed {
-  padding: 8px 16px;
-  border: 1px solid rgba(255, 107, 53, 0.3);
-  background: rgba(255, 107, 53, 0.1);
-  color: #a8a8a8;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.8rem;
-}
-
-.geek-lang-btn-fixed:hover {
-  border-color: #ff6b35;
-  color: #ff6b35;
-}
-
-.geek-lang-btn-fixed.active {
-  background: #ff6b35;
-  color: #000;
-  border-color: #ff6b35;
-}
 
 /* 动画 */
 @keyframes pulse {
@@ -1119,7 +1072,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'r':
         e.preventDefault();
-        window.location.href = '/tools/redbook-generator/';
+        // window.location.href = '/tools/redbook-generator/'; // 已隐藏
         break;
       case 't':
         e.preventDefault();
@@ -1190,28 +1143,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initShortcutsHelp();
 });
 
-// 语言切换功能
-document.querySelectorAll('.geek-lang-btn-fixed').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const lang = this.getAttribute('data-lang');
-    switchLanguage(lang);
-    
-    // 更新按钮状态
-    document.querySelectorAll('.geek-lang-btn-fixed').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-  });
-});
 
-function switchLanguage(lang) {
-  // 更新所有带有data-zh和data-en属性的元素
-  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
-    if (lang === 'en') {
-      element.textContent = element.getAttribute('data-en');
-    } else {
-      element.textContent = element.getAttribute('data-zh');
-    }
-  });
-}
 
 // 训练计划交互
 document.querySelectorAll('.plan-day').forEach(day => {
@@ -1230,7 +1162,7 @@ document.getElementById('startTimer').addEventListener('click', function() {
   if (!isRunning && timeLeft > 0) {
     isRunning = true;
     timerInterval = setInterval(updateTimer, 1000);
-    this.textContent = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Pause' : '暂停';
+    this.textContent = '暂停';
   }
 });
 
@@ -1238,7 +1170,7 @@ document.getElementById('pauseTimer').addEventListener('click', function() {
   if (isRunning) {
     isRunning = false;
     clearInterval(timerInterval);
-    document.getElementById('startTimer').textContent = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Resume' : '继续';
+    document.getElementById('startTimer').textContent = '继续';
   }
 });
 
@@ -1247,7 +1179,7 @@ document.getElementById('resetTimer').addEventListener('click', function() {
   clearInterval(timerInterval);
   timeLeft = 0;
   updateTimerDisplay();
-  document.getElementById('startTimer').textContent = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Start' : '开始';
+  document.getElementById('startTimer').textContent = '开始';
 });
 
 document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -1264,7 +1196,7 @@ function updateTimer() {
   } else {
     isRunning = false;
     clearInterval(timerInterval);
-    alert(document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang') === 'en' ? 'Workout completed!' : '训练完成！');
+    alert('训练完成！');
   }
 }
 
@@ -1287,10 +1219,7 @@ document.getElementById('calculateBMR').addEventListener('click', function() {
     const bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
     const tdee = bmr * activity;
     
-    const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-    const resultText = currentLang === 'en' 
-      ? `BMR: ${Math.round(bmr)} kcal/day\nTDEE: ${Math.round(tdee)} kcal/day`
-      : `基础代谢率: ${Math.round(bmr)} 千卡/天\n每日总消耗: ${Math.round(tdee)} 千卡/天`;
+    const resultText = `基础代谢率: ${Math.round(bmr)} 千卡/天\n每日总消耗: ${Math.round(tdee)} 千卡/天`;
     
     document.getElementById('bmrResult').textContent = resultText;
     document.getElementById('bmrResult').style.display = 'block';
@@ -1301,21 +1230,13 @@ document.getElementById('calculateBMR').addEventListener('click', function() {
 document.querySelectorAll('.video-item').forEach(item => {
   item.addEventListener('click', function() {
     const title = this.querySelector('.video-title').textContent;
-    const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-    const message = currentLang === 'en' 
-      ? `Starting video: ${title}` 
-      : `开始播放视频: ${title}`;
-    alert(message);
+    alert(`开始播放视频: ${title}`);
   });
 });
 
 // 添加记录按钮
 document.querySelector('.add-log-btn').addEventListener('click', function() {
-  const currentLang = document.querySelector('.geek-lang-btn-fixed.active').getAttribute('data-lang');
-  const message = currentLang === 'en' 
-    ? 'Add new workout log feature coming soon!' 
-    : '添加运动记录功能即将推出！';
-  alert(message);
+  alert('添加运动记录功能即将推出！');
 });
 </script>
 {% endblock %} 

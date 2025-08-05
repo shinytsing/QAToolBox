@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天室已结束处理演示 - QAToolBox</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #667eea 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .demo-section h2 {
+            color: #f093fb;
+            margin-bottom: 20px;
+        }
+        
+        .chat-demo {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        
+        .message.own {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.other {
+            background: rgba(255, 255, 255, 0.1);
+            margin-right: auto;
+        }
+        
+        .system-message {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            text-align: center;
+            margin: 20px auto;
+            max-width: 80%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .system-message-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        
+        .system-message-content i {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .input-demo {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .input-demo input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid rgba(240, 147, 251, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 14px;
+        }
+        
+        .input-demo input:focus {
+            outline: none;
+            border-color: rgba(240, 147, 251, 0.6);
+        }
+        
+        .input-demo input.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+        }
+        
+        .input-demo input.disabled::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .input-demo button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 10px;
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .input-demo button:hover {
+            transform: scale(1.05);
+        }
+        
+        .input-demo button.disabled {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: rgba(255, 255, 255, 0.3) !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .test-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .test-btn.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .status-indicator {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: #2ecc71;
+        }
+        
+        .status-ended {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: #e74c3c;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            color: #2ecc71;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>聊天室已结束异常处理演示</h1>
+        
+        <div class="demo-section">
+            <h2>🎯 问题描述</h2>
+            <p>当聊天室状态为"已结束"时，用户仍然可以尝试发送消息、获取消息或标记已读，这会导致异常情况。我们需要在前端和后端都添加相应的处理机制。</p>
+        </div>
+        
+        <div class="demo-section">
+            <h2>🔧 解决方案</h2>
+            <ul class="feature-list">
+                <li>后端API检查聊天室状态，返回410状态码和room_ended标志</li>
+                <li>前端检测到聊天室已结束时，显示友好提示</li>
+                <li>禁用输入框和发送按钮，防止继续操作</li>
+                <li>添加视觉反馈，明确告知用户聊天室状态</li>
+                <li>保持消息历史可见，但禁止新操作</li>
+            </ul>
+        </div>
+        
+        <div class="demo-section">
+            <h2>📱 演示界面</h2>
+            
+            <div class="test-buttons">
+                <button class="test-btn active" onclick="setRoomStatus('active')">聊天室活跃</button>
+                <button class="test-btn" onclick="setRoomStatus('ended')">聊天室已结束</button>
+                <button class="test-btn" onclick="simulateSendMessage()">模拟发送消息</button>
+                <button class="test-btn" onclick="simulateLoadMessages()">模拟加载消息</button>
+            </div>
+            
+            <div id="status-indicator" class="status-indicator status-active">
+                状态：聊天室活跃中
+            </div>
+            
+            <div class="chat-demo" id="chat-demo">
+                <div class="message other">
+                    <div>你好！很高兴认识你 😊</div>
+                    <small>14:30</small>
+                </div>
+                <div class="message own">
+                    <div>你好！我也很高兴认识你！</div>
+                    <small>14:31</small>
+                </div>
+                <div class="message other">
+                    <div>今天天气真不错呢</div>
+                    <small>14:32</small>
+                </div>
+            </div>
+            
+            <div class="input-demo">
+                <input type="text" id="message-input" placeholder="输入消息..." value="这是一条测试消息">
+                <button id="send-btn" onclick="simulateSendMessage()">发送</button>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>💻 后端API响应示例</h2>
+            
+            <h3>聊天室已结束时的API响应：</h3>
+            <div class="code-block">
+{
+  "success": false,
+  "error": "聊天室已结束，无法发送消息",
+  "room_ended": true
+}
+            </div>
+            
+            <h3>HTTP状态码：410 Gone</h3>
+            <p>使用410状态码表示资源已不存在，比404更准确地描述聊天室已结束的状态。</p>
+        </div>
+        
+        <div class="demo-section">
+            <h2>🎨 前端处理逻辑</h2>
+            <div class="code-block">
+// 发送消息时的处理
+.then(data => {
+    if (data.success) {
+        // 正常处理
+    } else if (data.room_ended) {
+        // 聊天室已结束，显示特殊提示并禁用发送功能
+        showRoomEndedMessage();
+        disableChatInput();
+    } else {
+        // 其他错误处理
+    }
+})
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>✅ 修复效果</h2>
+            <ul class="feature-list">
+                <li>用户无法向已结束的聊天室发送消息</li>
+                <li>清晰的视觉提示告知用户聊天室状态</li>
+                <li>输入框和按钮被禁用，防止误操作</li>
+                <li>保持消息历史可见，用户可以查看之前的对话</li>
+                <li>优雅的错误处理，不会出现异常或崩溃</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let roomStatus = 'active';
+        
+        function setRoomStatus(status) {
+            roomStatus = status;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.test-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新状态指示器
+            const statusIndicator = document.getElementById('status-indicator');
+            if (status === 'active') {
+                statusIndicator.className = 'status-indicator status-active';
+                statusIndicator.textContent = '状态：聊天室活跃中';
+                
+                // 启用输入框
+                const input = document.getElementById('message-input');
+                const sendBtn = document.getElementById('send-btn');
+                input.disabled = false;
+                input.placeholder = '输入消息...';
+                sendBtn.disabled = false;
+                input.classList.remove('disabled');
+                sendBtn.classList.remove('disabled');
+                
+                // 移除系统消息
+                const systemMessage = document.querySelector('.system-message');
+                if (systemMessage) {
+                    systemMessage.remove();
+                }
+            } else {
+                statusIndicator.className = 'status-indicator status-ended';
+                statusIndicator.textContent = '状态：聊天室已结束';
+                
+                // 禁用输入框
+                const input = document.getElementById('message-input');
+                const sendBtn = document.getElementById('send-btn');
+                input.disabled = true;
+                input.placeholder = '聊天室已结束';
+                sendBtn.disabled = true;
+                input.classList.add('disabled');
+                sendBtn.classList.add('disabled');
+                
+                // 显示系统消息
+                showRoomEndedMessage();
+            }
+        }
+        
+        function showRoomEndedMessage() {
+            // 移除已存在的系统消息
+            const existingMessage = document.querySelector('.system-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            const chatDemo = document.getElementById('chat-demo');
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'system-message';
+            systemMessage.innerHTML = `
+                <div class="system-message-content">
+                    <i class="fas fa-exclamation-triangle">⚠️</i>
+                    <span>聊天室已结束，无法继续发送消息</span>
+                </div>
+            `;
+            chatDemo.appendChild(systemMessage);
+            chatDemo.scrollTop = chatDemo.scrollHeight;
+        }
+        
+        function simulateSendMessage() {
+            if (roomStatus === 'ended') {
+                alert('聊天室已结束，无法发送消息');
+                return;
+            }
+            
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('请输入消息内容');
+                return;
+            }
+            
+            // 添加消息到聊天界面
+            const chatDemo = document.getElementById('chat-demo');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message own';
+            
+            const now = new Date();
+            const time = now.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            messageDiv.innerHTML = `
+                <div>${message}</div>
+                <small>${time}</small>
+            `;
+            
+            chatDemo.appendChild(messageDiv);
+            chatDemo.scrollTop = chatDemo.scrollHeight;
+            
+            // 清空输入框
+            input.value = '';
+        }
+        
+        function simulateLoadMessages() {
+            if (roomStatus === 'ended') {
+                alert('聊天室已结束，无法加载新消息');
+                return;
+            }
+            
+            alert('正在加载消息...');
+        }
+        
+        // 回车键发送消息
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                simulateSendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}AI自我认知助手{% endblock %}
+{% block tool_title_inner %}AI自我认知助手{% endblock %}
+{% block tool_title_display %}AI自我认知助手{% endblock %}
 
 {% block extra_css %}
 <!-- 确保主题CSS能够正确加载 -->
@@ -229,16 +230,7 @@
 {% csrf_token %}
 
 <div class="life-container">
-  <!-- 主题切换提示 -->
-  <div class="theme-switch-hint">
-    <div class="hint-content">
-      <i class="fas fa-keyboard"></i>
-      <span>快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具</span>
-      <button class="help-btn" id="showShortcutsHelp">
-        <i class="fas fa-question-circle"></i>
-      </button>
-    </div>
-  </div>
+
 
   <!-- 快捷键帮助面板 -->
   <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
@@ -950,7 +942,7 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// 切换主题并刷新页面（用于快捷键）
+// 切换主题并跳转到主页（用于快捷键）
 async function switchGlobalThemeWithRefresh(theme) {
   try {
     // 显示加载状态
@@ -985,12 +977,19 @@ async function switchGlobalThemeWithRefresh(theme) {
     localStorage.setItem('current-theme', theme);
     
     // 显示成功通知
-    showNotification(`已成功切换到${themeName}模式，页面即将刷新`, 'success');
+    showNotification(`已成功切换到${themeName}模式，即将跳转到对应页面`, 'success');
     
-    // 延迟刷新页面以确保背景正确更新
+    // 延迟跳转到对应mode的主页面
     setTimeout(() => {
-      window.location.reload();
-    }, 1500); // 1.5秒后刷新，让用户看到通知
+      const themePages = {
+        'life': '/tools/life/',
+        'work': '/tools/work/',
+        'training': '/tools/training/',
+        'emo': '/tools/emo/'
+      };
+      const targetPage = themePages[theme] || '/';
+      window.location.href = targetPage;
+    }, 1000); // 1秒后跳转到对应主页面
     
   } catch (error) {
     console.error('Failed to switch theme:', error);
@@ -1151,7 +1150,7 @@ function applyThemeStyles(theme) {
       'training': '狂暴模式',
       'emo': 'Emo模式'
     };
-    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 (当前: ${themeNames[theme]})`;
+
   }
 }
 
@@ -1291,7 +1290,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'r':
         e.preventDefault();
-        window.location.href = '/tools/redbook-generator/';
+        // window.location.href = '/tools/redbook-generator/'; // 已隐藏
         break;
       case 't':
         e.preventDefault();
@@ -1374,7 +1373,7 @@ function initPageTheme() {
       'training': '狂暴模式',
       'emo': 'Emo模式'
     };
-    hintText.textContent = `快捷键: Ctrl+1/2/3/4 切换主题 | Alt+字母 跳转工具 (当前: ${themeNames[currentTheme]})`;
+
   }
 }
 

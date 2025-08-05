@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, UserRole, UserStatus, UserMembership, UserActionLog, UserTheme
+from .models import Profile, UserRole, UserStatus, UserMembership, UserActionLog, UserTheme, UserModePreference
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
@@ -89,3 +89,28 @@ class UserThemeAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+@admin.register(UserModePreference)
+class UserModePreferenceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'mode', 'click_count', 'last_click_time', 'created_at', 'updated_at')
+    list_filter = ('mode', 'created_at', 'updated_at')
+    search_fields = ('user__username', 'user__email')
+    readonly_fields = ('created_at', 'updated_at', 'last_click_time')
+    ordering = ('-click_count', '-last_click_time')
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'mode', 'click_count')
+        }),
+        ('使用统计', {
+            'fields': ('last_click_time',),
+            'classes': ('collapse',)
+        }),
+        ('时间信息', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_queryset(self, request):
+        """优化查询，减少数据库访问"""
+        return super().get_queryset(request).select_related('user')

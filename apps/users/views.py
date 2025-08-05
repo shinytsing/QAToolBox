@@ -181,24 +181,7 @@ def generate_captcha(request):
     plt.close(fig)  # 关闭图像以释放内存
     return response
 
-@login_required
-def profile_view(request):
-    return render(request, 'users/profile.html', {'user': request.user})
 
-
-
-@login_required
-def profile_edit(request):
-    if request.method == 'POST':
-        form = UserEditForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()  # 保存修改的信息到数据库
-            messages.success(request, "资料已成功更新！")
-            return redirect('profile_view')  # 重定向到用户资料视图
-    else:
-        form = UserEditForm(instance=request.user)
-
-    return render(request, 'users/profile_edit.html', {'form': form})
 
 def register(request):
     if request.method == 'POST':
@@ -322,7 +305,7 @@ def profile_edit(request):
         if form.is_valid():
             form.save()
             messages.success(request, '个人资料已更新')
-            return redirect('profile_view')
+            return redirect('profile')
     else:
         form = ProfileEditForm(instance=profile)
     
@@ -413,7 +396,7 @@ def admin_change_user_status_api(request, user_id):
         return JsonResponse({
             'success': True,
             'message': f'用户状态已更新为 {status}'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
@@ -454,7 +437,7 @@ def admin_change_membership_api(request, user_id):
         return JsonResponse({
             'success': True,
             'message': f'用户会员已更新为 {membership_type}'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
@@ -487,7 +470,7 @@ def admin_change_role_api(request, user_id):
         return JsonResponse({
             'success': True,
             'message': f'用户角色已更新为 {role}'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
@@ -520,7 +503,7 @@ def admin_delete_user_api(request, user_id):
         return JsonResponse({
             'success': True,
             'message': '用户账号已删除'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
@@ -551,7 +534,7 @@ def admin_batch_operation_api(request):
         note = data.get('note', '')
         
         if not user_ids:
-            return JsonResponse({'success': False, 'message': '请选择要操作的用户'}, status=400)
+            return JsonResponse({'success': False, 'message': '请选择要操作的用户'}, status=400, content_type='application/json')
         
         success_count = 0
         failed_count = 0
@@ -612,7 +595,7 @@ def admin_batch_operation_api(request):
         return JsonResponse({
             'success': True,
             'message': f'批量操作完成，成功：{success_count}，失败：{failed_count}'
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
@@ -772,7 +755,7 @@ def admin_monitoring_stats_api(request):
             'recent_activities': activities_data,
             'api_stats': api_stats_data,
             'active_sessions': sessions_data,
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -830,10 +813,10 @@ def admin_force_logout_api(request, user_id):
         return JsonResponse({
             'success': True,
             'message': f'用户 {user.username} 已被强制登出'
-        })
+        }, content_type='application/json')
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': '无效的JSON数据'}, status=400)
+        return JsonResponse({'error': '无效的JSON数据'}, status=400, content_type='application/json')
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -868,12 +851,12 @@ def theme_api(request):
             mode = data.get('mode', 'work')
             
             # 验证模式是否有效
-            valid_modes = ['work', 'life', 'training', 'emo']
+            valid_modes = ['work', 'life', 'training', 'emo', 'cyberpunk']
             if mode not in valid_modes:
                 return JsonResponse({
                     'success': False,
                     'error': '无效的主题模式'
-                }, status=400)
+                }, status=400, content_type='application/json')
             
             # 更新或创建用户主题
             user_theme, created = UserTheme.objects.get_or_create(
@@ -904,7 +887,7 @@ def theme_api(request):
         return JsonResponse({
             'success': False,
             'error': '无效的JSON数据'
-        }, status=400)
+        }, status=400, content_type='application/json')
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -923,7 +906,7 @@ def upload_avatar(request):
             return JsonResponse({
                 'success': False,
                 'message': '请选择要上传的头像文件'
-            }, status=400)
+            }, status=400, content_type='application/json')
         
         avatar_file = request.FILES['avatar']
         
@@ -933,14 +916,14 @@ def upload_avatar(request):
             return JsonResponse({
                 'success': False,
                 'message': '只支持 JPG、PNG、GIF、WebP 格式的图片'
-            }, status=400)
+            }, status=400, content_type='application/json')
         
         # 验证文件大小（限制为5MB）
         if avatar_file.size > 5 * 1024 * 1024:
             return JsonResponse({
                 'success': False,
                 'message': '头像文件大小不能超过5MB'
-            }, status=400)
+            }, status=400, content_type='application/json')
         
         # 获取或创建用户资料
         try:
@@ -988,7 +971,7 @@ def upload_avatar(request):
             'success': True,
             'message': '头像上传成功',
             'avatar_url': profile.avatar.url if profile.avatar else None
-        })
+        }, content_type='application/json')
         
     except Exception as e:
         import traceback

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反程序员档案 & 欲望代办系统 - 测试页面</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 50%, #4a2c2c 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .test-title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700, #ff4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 40px rgba(255, 68, 68, 0.5);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1) hue-rotate(0deg); }
+            to { filter: brightness(1.2) hue-rotate(10deg); }
+        }
+
+        .test-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2rem;
+        }
+
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .test-card {
+            background: rgba(26, 26, 26, 0.9);
+            border: 3px solid rgba(255, 68, 68, 0.4);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #ff4444, #ff6b35, #ffd700);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .test-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .test-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(255, 68, 68, 0.3);
+            border-color: #ff4444;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ff4444;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card-description {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            color: rgba(255, 255, 255, 0.7);
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .feature-list li::before {
+            content: '🔥';
+            position: absolute;
+            left: 0;
+            color: #ff6b35;
+        }
+
+        .test-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff4444, #ff6b35);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 68, 68, 0.4);
+            color: white;
+        }
+
+        .demo-section {
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid rgba(255, 68, 68, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .demo-title {
+            font-size: 2rem;
+            color: #ffd700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .demo-item {
+            background: rgba(255, 68, 68, 0.1);
+            border: 2px solid rgba(255, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .demo-item:hover {
+            background: rgba(255, 68, 68, 0.2);
+            border-color: #ff4444;
+            transform: translateY(-3px);
+        }
+
+        .demo-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ffd700;
+        }
+
+        .demo-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ff6b35;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-desc {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            margin-top: 2rem;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #ffffff;
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .test-title {
+                font-size: 2rem;
+            }
+            
+            .test-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .test-card {
+                padding: 1.5rem;
+            }
+            
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1 class="test-title">🔥 反程序员档案 & 欲望代办系统</h1>
+            <p class="test-subtitle">测试页面 - 体验全新的反程序员形象和欲望代办功能</p>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h2 class="card-title">反程序员档案</h2>
+                <p class="card-description">
+                    一个独特的反程序员形象系统，记录你的编程成长轨迹，拒绝AI依赖，拥抱真实的编程艺术。
+                </p>
+                <ul class="feature-list">
+                    <li>反程序员等级系统</li>
+                    <li>技能树解锁机制</li>
+                    <li>成就系统</li>
+                    <li>行为记录统计</li>
+                    <li>反AI编程理念</li>
+                    <li>手写代码奖励</li>
+                </ul>
+                <a href="/tools/anti-programmer-profile/" class="test-btn">体验反程序员档案</a>
+            </div>
+
+            <div class="test-card">
+                <h2 class="card-title">欲望代办系统</h2>
+                <p class="card-description">
+                    将欲望转化为动力，让每个任务都有意义。通过完成代办来获得欲望奖励，实现自我激励。
+                </p>
+                <ul class="feature-list">
+                    <li>欲望代办分类</li>
+                    <li>优先级管理</li>
+                    <li>奖励系统</li>
+                    <li>进度统计</li>
+                    <li>完成动画</li>
+                    <li>欲望兑换</li>
+                </ul>
+                <a href="/tools/desire-todo-enhanced/" class="test-btn">体验欲望代办系统</a>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2 class="demo-title">功能特色展示</h2>
+            <div class="demo-grid">
+                <div class="demo-item">
+                    <div class="demo-icon">💪</div>
+                    <div class="demo-name">反程序员等级</div>
+                    <div class="demo-desc">从新手到大师的成长路径</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">🎯</div>
+                    <div class="demo-name">技能树系统</div>
+                    <div class="demo-desc">解锁各种编程技能</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">🏆</div>
+                    <div class="demo-name">成就系统</div>
+                    <div class="demo-desc">记录编程里程碑</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">📊</div>
+                    <div class="demo-name">行为统计</div>
+                    <div class="demo-desc">详细的行为记录</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">🔥</div>
+                    <div class="demo-name">欲望代办</div>
+                    <div class="demo-desc">将欲望转化为动力</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">🎁</div>
+                    <div class="demo-name">奖励系统</div>
+                    <div class="demo-desc">完成任务的奖励机制</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">📈</div>
+                    <div class="demo-name">进度追踪</div>
+                    <div class="demo-desc">实时进度统计</div>
+                </div>
+                <div class="demo-item">
+                    <div class="demo-icon">🎨</div>
+                    <div class="demo-name">视觉设计</div>
+                    <div class="demo-desc">炫酷的视觉效果</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/" class="back-btn">返回主页</a>
+        </div>
+    </div>
+
+    <script>
+        // 添加一些交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为演示项添加点击效果
+            document.querySelectorAll('.demo-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.style.animation = 'titleGlow 0.5s ease-in-out';
+                    setTimeout(() => {
+                        this.style.animation = '';
+                    }, 500);
+                });
+            });
+            
+            // 为卡片添加进入动画
+            const cards = document.querySelectorAll('.test-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(50px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html> 

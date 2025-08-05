@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}命运解析器 - QATOOLBOX{% endblock %}
+{% block tool_title_inner %}命运解析器{% endblock %}
+{% block tool_title_display %}命运解析器{% endblock %}
 
 {% block breadcrumb %}
 <div class="breadcrumb-item">
@@ -12,7 +13,7 @@
 </div>
 <div class="breadcrumb-item">
     <a href="{% url 'fortune_analyzer' %}" class="breadcrumb-link geek-breadcrumb-link">
-        <i class="fas fa-crystal-ball"></i>
+        <i class="fas fa-star"></i>
         命运解析器
     </a>
 </div>
@@ -24,7 +25,7 @@
     <div class="fortune-header">
         <div class="fortune-title-section">
             <div class="fortune-icon">
-                <i class="fas fa-crystal-ball"></i>
+                <i class="fas fa-star"></i>
             </div>
             <div class="fortune-title-content">
                 <h1 class="fortune-main-title">命运解析器</h1>
@@ -47,7 +48,7 @@
         <div class="fortune-form-section" id="formSection">
             <div class="form-card">
                 <div class="form-header">
-                    <h3><i class="fas fa-user-edit"></i> 个人信息</h3>
+                    <h3><i class="fas fa-user"></i> 个人信息</h3>
                     <p>请输入您的基本信息，让我们为您解析命运</p>
                 </div>
                 
@@ -389,6 +390,38 @@ document.addEventListener('DOMContentLoaded', function() {
     margin: 0 auto;
     padding: 2rem;
     min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 神秘粒子背景 */
+.fortune-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    z-index: 0;
+    animation: particleFloat 20s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+    50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
 }
 
 /* 头部区域样式 */
@@ -396,6 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
     text-align: center;
     margin-bottom: 3rem;
     position: relative;
+    z-index: 1;
 }
 
 .fortune-title-section {
@@ -407,36 +441,96 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .fortune-icon {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+    background-size: 300% 300%;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    animation: float 3s ease-in-out infinite;
+    box-shadow: 
+        0 20px 40px rgba(255, 107, 107, 0.4),
+        0 0 0 4px rgba(255, 255, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    animation: iconGlow 4s ease-in-out infinite, float 3s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.fortune-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: iconShine 3s ease-in-out infinite;
 }
 
 .fortune-icon i {
-    font-size: 2.5rem;
+    font-size: 3rem;
     color: white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1;
+    position: relative;
+}
+
+@keyframes iconGlow {
+    0%, 100% { 
+        background-position: 0% 50%;
+        box-shadow: 
+            0 20px 40px rgba(255, 107, 107, 0.4),
+            0 0 0 4px rgba(255, 255, 255, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+    50% { 
+        background-position: 100% 50%;
+        box-shadow: 
+            0 20px 40px rgba(255, 107, 107, 0.6),
+            0 0 0 4px rgba(255, 255, 255, 0.2),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
+}
+
+@keyframes iconShine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
 }
 
 .fortune-main-title {
-    font-size: 3rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+    background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
+    animation: titleGlow 4s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
 }
 
 .fortune-subtitle {
-    font-size: 1.2rem;
-    color: var(--geek-text-muted);
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.9);
     margin: 0.5rem 0 0 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+@keyframes titleGlow {
+    0%, 100% { 
+        background-position: 0% 50%;
+        text-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+    }
+    50% { 
+        background-position: 100% 50%;
+        text-shadow: 0 0 50px rgba(255, 107, 107, 0.8);
+    }
 }
 
 .fortune-decoration {
@@ -471,6 +565,8 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    position: relative;
+    z-index: 1;
 }
 
 /* 表单区域样式 */
@@ -479,27 +575,167 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .form-card {
-    background: var(--geek-card-bg);
-    border: 1px solid var(--geek-border);
-    border-radius: 20px;
-    padding: 2.5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    padding: 3rem;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    z-index: -1;
 }
 
 .form-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .form-header h3 {
-    font-size: 1.8rem;
-    color: var(--geek-primary);
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.95);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.form-header p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    margin: 0;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* 输入框样式 */
+.input-group, .input-row {
+    margin-bottom: 2rem;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.input-field {
+    position: relative;
+}
+
+.input-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    font-size: 1rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.input-field label i {
+    color: #ff6b6b;
+    font-size: 1.1rem;
+}
+
+.modern-input, .modern-textarea {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.modern-input::placeholder, .modern-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.modern-input:focus, .modern-textarea:focus {
+    outline: none;
+    border-color: #ff6b6b;
+    box-shadow: 
+        0 0 0 3px rgba(255, 107, 107, 0.2),
+        0 10px 25px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.modern-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* 按钮样式 */
+.analyze-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+    background-size: 300% 300%;
+    color: white;
+    border: none;
+    padding: 1.2rem 3rem;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 10px 30px rgba(255, 107, 107, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    animation: buttonGlow 4s ease-in-out infinite;
+}
+
+.analyze-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 15px 40px rgba(255, 107, 107, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.analyze-btn:active {
+    transform: translateY(-1px);
+}
+
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.analyze-btn:hover .btn-shine {
+    left: 100%;
+}
+
+@keyframes buttonGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .form-header p {
@@ -631,32 +867,50 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .result-card {
-    background: var(--geek-card-bg);
-    border: 1px solid var(--geek-border);
-    border-radius: 20px;
-    padding: 2.5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    padding: 3rem;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+}
+
+.result-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    z-index: -1;
 }
 
 .result-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .result-header h3 {
-    font-size: 1.8rem;
-    color: var(--geek-primary);
+    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.95);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .result-header p {
-    color: var(--geek-text-muted);
-    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* 命运卡片网格 */
@@ -668,18 +922,24 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .fortune-card {
-    background: var(--geek-bg);
-    border: 1px solid var(--geek-border);
-    border-radius: 16px;
-    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 10px 25px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .fortune-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .fortune-card::before {
@@ -689,37 +949,60 @@ document.addEventListener('DOMContentLoaded', function() {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+    background-size: 300% 300%;
+    animation: cardGlow 4s ease-in-out infinite;
+}
+
+@keyframes cardGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
 .card-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
 }
 
 .card-header i {
-    font-size: 1.2rem;
-    color: var(--geek-primary);
+    font-size: 1.5rem;
+    color: #ff6b6b;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
 }
 
 .card-header h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--geek-text);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
     margin: 0;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .card-content p {
-    color: var(--geek-text-muted);
-    line-height: 1.6;
-    margin: 0 0 1rem 0;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.7;
+    margin: 0 0 1.5rem 0;
+    font-size: 1.05rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .card-footer {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+}
+
+.fortune-score {
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .fortune-score {
@@ -839,36 +1122,72 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .crystal-ball {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1rem;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+    background-size: 300% 300%;
+    margin: 0 auto 2rem;
     position: relative;
+    animation: crystalFloat 2s ease-in-out infinite, crystalGlow 4s ease-in-out infinite;
+    box-shadow: 
+        0 20px 40px rgba(255, 107, 107, 0.4),
+        0 0 0 4px rgba(255, 255, 255, 0.1),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .ball-inner {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 50%;
-    animation: pulse 2s ease-in-out infinite;
-    position: relative;
-}
-
-.ball-inner::before {
-    content: '';
     position: absolute;
-    top: 20%;
-    left: 20%;
-    width: 60%;
-    height: 60%;
-    background: rgba(255, 255, 255, 0.2);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    animation: float 3s ease-in-out infinite;
+    background: rgba(255, 255, 255, 0.2);
+    animation: innerGlow 2s ease-in-out infinite;
+    backdrop-filter: blur(5px);
 }
 
 .loading-content p {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
     margin: 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    animation: textPulse 2s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+@keyframes innerGlow {
+    0%, 100% { 
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% { 
+        background: rgba(255, 255, 255, 0.4);
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+}
+
+@keyframes crystalGlow {
+    0%, 100% { 
+        background-position: 0% 50%;
+        box-shadow: 
+            0 20px 40px rgba(255, 107, 107, 0.4),
+            0 0 0 4px rgba(255, 255, 255, 0.1),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+    50% { 
+        background-position: 100% 50%;
+        box-shadow: 
+            0 20px 40px rgba(255, 107, 107, 0.6),
+            0 0 0 4px rgba(255, 255, 255, 0.2),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+    }
 }
 
 /* 动画定义 */

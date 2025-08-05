@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Slogan Test - ModeShift</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0a0e17;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            color: #00ffe7;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ffe7;
+        }
+        
+        .slogan-demo {
+            background: rgba(10, 14, 23, 0.9);
+            border: 2px solid #00ffe7;
+            border-radius: 20px;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 231, 0.3),
+                inset 0 0 30px rgba(0, 255, 231, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            margin: 2rem 0;
+        }
+        
+        .quote-container {
+            position: relative;
+            margin: 2rem 0;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .quote-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00ffe7;
+            text-shadow: 0 0 15px rgba(0, 255, 231, 0.5);
+            margin-bottom: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 2px;
+            transition: all 0.5s ease;
+            animation: quoteGlow 3s ease-in-out infinite;
+        }
+        
+        .quote-subtitle {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #00bfff;
+            text-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+            margin-bottom: 0.3rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px;
+            transition: all 0.5s ease;
+            animation: subtitlePulse 4s ease-in-out infinite;
+        }
+        
+        .quote-footer {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #ff6b9d;
+            text-shadow: 0 0 8px rgba(255, 107, 157, 0.3);
+            font-style: italic;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+            transition: all 0.5s ease;
+            animation: footerFade 5s ease-in-out infinite;
+        }
+        
+        .quote-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .quote-mark {
+            position: absolute;
+            font-size: 3rem;
+            color: rgba(0, 255, 231, 0.3);
+            font-family: serif;
+        }
+        
+        .quote-mark:first-child {
+            top: -10px;
+            left: -20px;
+        }
+        
+        .quote-mark:last-child {
+            bottom: -10px;
+            right: -20px;
+        }
+        
+        @keyframes quoteGlow {
+            0%, 100% { 
+                text-shadow: 0 0 15px rgba(0, 255, 231, 0.5);
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 25px rgba(0, 255, 231, 0.8);
+                transform: scale(1.02);
+            }
+        }
+        
+        @keyframes subtitlePulse {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+                opacity: 0.9;
+            }
+            50% { 
+                text-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes footerFade {
+            0%, 100% { 
+                text-shadow: 0 0 8px rgba(255, 107, 157, 0.3);
+                opacity: 0.7;
+            }
+            50% { 
+                text-shadow: 0 0 12px rgba(255, 107, 157, 0.5);
+                opacity: 1;
+            }
+        }
+        
+        .description {
+            background: rgba(0, 255, 231, 0.1);
+            border: 1px solid rgba(0, 255, 231, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 2rem;
+        }
+        
+        .description h3 {
+            color: #00ffe7;
+            margin-bottom: 1rem;
+        }
+        
+        .slogan-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .slogan-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 3px solid #00ffe7;
+            text-align: left;
+        }
+        
+        .slogan-item h4 {
+            color: #00ffe7;
+            margin-bottom: 0.5rem;
+        }
+        
+        .slogan-item .main {
+            font-weight: bold;
+            color: #00ffe7;
+            margin-bottom: 0.3rem;
+        }
+        
+        .slogan-item .subtitle {
+            color: #00bfff;
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .slogan-item .footer {
+            color: #ff6b9d;
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+        
+        .controls {
+            margin: 2rem 0;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #00ffe7, #00bfff);
+            border: none;
+            color: #0a0e17;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 231, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="title">New Slogan Test</h1>
+        
+        <div class="slogan-demo">
+            <div class="quote-container">
+                <div class="quote-text" id="quoteText">Shift Your Dark, Code Your Light</div>
+                <div class="quote-subtitle" id="quoteSubtitle">Four Modes, One Beast</div>
+                <div class="quote-footer" id="quoteFooter">Not Schizophrenia, Just Versatility</div>
+                <div class="quote-decoration">
+                    <span class="quote-mark">"</span>
+                    <span class="quote-mark">"</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" onclick="changeQuote()">Change Slogan</button>
+            <button class="btn" onclick="toggleAnimation()">Toggle Animation</button>
+        </div>
+        
+        <div class="description">
+            <h3>New Slogan Features</h3>
+            <p>The new slogan system features multiple variations with dynamic animations:</p>
+            
+            <div class="slogan-list">
+                <div class="slogan-item">
+                    <h4>Primary Slogan</h4>
+                    <div class="main">"Shift Your Dark, Code Your Light"</div>
+                    <div class="subtitle">Four Modes, One Beast</div>
+                    <div class="footer">Not Schizophrenia, Just Versatility</div>
+                </div>
+                
+                <div class="slogan-item">
+                    <h4>Alternative 1</h4>
+                    <div class="main">"Embrace the Chaos, Master the Code"</div>
+                    <div class="subtitle">Four Modes, One Beast</div>
+                    <div class="footer">Not Schizophrenia, Just Versatility</div>
+                </div>
+                
+                <div class="slogan-item">
+                    <h4>Alternative 2</h4>
+                    <div class="main">"Transform Reality, One Line at a Time"</div>
+                    <div class="subtitle">Four Modes, One Beast</div>
+                    <div class="footer">Not Schizophrenia, Just Versatility</div>
+                </div>
+                
+                <div class="slogan-item">
+                    <h4>Alternative 3</h4>
+                    <div class="main">"Code Your Dreams, Live Your Code"</div>
+                    <div class="subtitle">Four Modes, One Beast</div>
+                    <div class="footer">Not Schizophrenia, Just Versatility</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const quoteText = document.getElementById('quoteText');
+        const quoteSubtitle = document.getElementById('quoteSubtitle');
+        const quoteFooter = document.getElementById('quoteFooter');
+        
+        const quotes = [
+            {
+                main: "Shift Your Dark, Code Your Light",
+                subtitle: "Four Modes, One Beast",
+                footer: "Not Schizophrenia, Just Versatility"
+            },
+            {
+                main: "Embrace the Chaos, Master the Code",
+                subtitle: "Four Modes, One Beast",
+                footer: "Not Schizophrenia, Just Versatility"
+            },
+            {
+                main: "Transform Reality, One Line at a Time",
+                subtitle: "Four Modes, One Beast",
+                footer: "Not Schizophrenia, Just Versatility"
+            },
+            {
+                main: "Code Your Dreams, Live Your Code",
+                subtitle: "Four Modes, One Beast",
+                footer: "Not Schizophrenia, Just Versatility"
+            }
+        ];
+        
+        let currentQuoteIndex = 0;
+        let animationEnabled = true;
+        
+        function changeQuote() {
+            if (!animationEnabled) return;
+            
+            quoteText.style.opacity = '0';
+            quoteSubtitle.style.opacity = '0';
+            quoteFooter.style.opacity = '0';
+            
+            setTimeout(() => {
+                currentQuoteIndex = (currentQuoteIndex + 1) % quotes.length;
+                const currentQuote = quotes[currentQuoteIndex];
+                
+                quoteText.textContent = currentQuote.main;
+                quoteSubtitle.textContent = currentQuote.subtitle;
+                quoteFooter.textContent = currentQuote.footer;
+                
+                quoteText.style.opacity = '1';
+                quoteSubtitle.style.opacity = '1';
+                quoteFooter.style.opacity = '1';
+            }, 500);
+        }
+        
+        function toggleAnimation() {
+            animationEnabled = !animationEnabled;
+            const elements = [quoteText, quoteSubtitle, quoteFooter];
+            
+            elements.forEach(el => {
+                if (animationEnabled) {
+                    el.style.animationPlayState = 'running';
+                } else {
+                    el.style.animationPlayState = 'paused';
+                }
+            });
+        }
+        
+        // 自动切换标语
+        setInterval(changeQuote, 8000);
+    </script>
+</body>
+</html> 

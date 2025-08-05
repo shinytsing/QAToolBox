@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>齿轮联动与里世界效果测试</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0a0e17;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            color: #00ffe7;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ffe7;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 20px #00ffe7; }
+            50% { text-shadow: 0 0 30px #00ffe7, 0 0 40px #00ffe7; }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ffffff;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+        
+        .gear-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.8rem;
+            position: relative;
+            width: 380px;
+            height: 160px;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(0, 255, 231, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 0, 110, 0.05) 0%, transparent 70%),
+                linear-gradient(45deg, rgba(0, 0, 0, 0.3) 0%, transparent 50%);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(0, 255, 231, 0.2);
+            box-shadow: 
+                inset 0 0 50px rgba(0, 255, 231, 0.1),
+                0 0 30px rgba(0, 255, 231, 0.2);
+            animation: containerPulse 6s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            margin: 0 auto 3rem;
+        }
+        
+        .gear-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                conic-gradient(from 0deg, transparent, rgba(0, 255, 231, 0.1), transparent, rgba(0, 191, 255, 0.1), transparent);
+            animation: containerRotate 20s linear infinite;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        .gear-container::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle, transparent 30%, rgba(0, 255, 231, 0.05) 70%);
+            animation: containerFloat 8s ease-in-out infinite;
+            z-index: 0;
+        }
+        
+        .gear {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #ffffff;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(0, 255, 231, 0.1) 40%, rgba(0, 191, 255, 0.1) 100%);
+            border: 3px solid rgba(0, 255, 231, 0.3);
+            box-shadow: 
+                0 0 30px rgba(0, 255, 231, 0.4),
+                inset 0 0 30px rgba(0, 255, 231, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            animation: gearFloat 4s ease-in-out infinite;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            z-index: 1;
+        }
+        
+        .gear-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 70%);
+            z-index: 2;
+            box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+        
+        .gear-teeth {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(0, 255, 231, 0.2) 8deg,
+                rgba(0, 255, 231, 0.4) 12deg,
+                rgba(0, 255, 231, 0.2) 16deg,
+                transparent 30deg,
+                transparent 45deg,
+                rgba(0, 255, 231, 0.2) 53deg,
+                rgba(0, 255, 231, 0.4) 57deg,
+                rgba(0, 255, 231, 0.2) 61deg,
+                transparent 75deg,
+                transparent 90deg,
+                rgba(0, 255, 231, 0.2) 98deg,
+                rgba(0, 255, 231, 0.4) 102deg,
+                rgba(0, 255, 231, 0.2) 106deg,
+                transparent 120deg,
+                transparent 135deg,
+                rgba(0, 255, 231, 0.2) 143deg,
+                rgba(0, 255, 231, 0.4) 147deg,
+                rgba(0, 255, 231, 0.2) 151deg,
+                transparent 165deg,
+                transparent 180deg,
+                rgba(0, 255, 231, 0.2) 188deg,
+                rgba(0, 255, 231, 0.4) 192deg,
+                rgba(0, 255, 231, 0.2) 196deg,
+                transparent 210deg,
+                transparent 225deg,
+                rgba(0, 255, 231, 0.2) 233deg,
+                rgba(0, 255, 231, 0.4) 237deg,
+                rgba(0, 255, 231, 0.2) 241deg,
+                transparent 255deg,
+                transparent 270deg,
+                rgba(0, 255, 231, 0.2) 278deg,
+                rgba(0, 255, 231, 0.4) 282deg,
+                rgba(0, 255, 231, 0.2) 286deg,
+                transparent 300deg,
+                transparent 315deg,
+                rgba(0, 255, 231, 0.2) 323deg,
+                rgba(0, 255, 231, 0.4) 327deg,
+                rgba(0, 255, 231, 0.2) 331deg,
+                transparent 345deg
+            );
+            animation: gearRotate 5s linear infinite;
+            z-index: 1;
+            filter: blur(0.5px);
+        }
+        
+        @keyframes gearRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes gearFloat {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                filter: brightness(1) contrast(1) hue-rotate(0deg);
+            }
+            25% { 
+                transform: translateY(-6px) rotate(90deg) scale(1.03); 
+                filter: brightness(1.05) contrast(1.02) hue-rotate(90deg);
+            }
+            50% { 
+                transform: translateY(-10px) rotate(180deg) scale(1.06); 
+                filter: brightness(1.1) contrast(1.05) hue-rotate(180deg);
+            }
+            75% { 
+                transform: translateY(-6px) rotate(270deg) scale(1.03); 
+                filter: brightness(1.05) contrast(1.02) hue-rotate(270deg);
+            }
+        }
+        
+        @keyframes gearInterlock {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.05); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            75% { transform: rotate(270deg) scale(1.05); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        @keyframes gearPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 30px rgba(0, 255, 231, 0.4),
+                    inset 0 0 30px rgba(0, 255, 231, 0.05),
+                    0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 50px rgba(0, 255, 231, 0.7),
+                    inset 0 0 40px rgba(0, 255, 231, 0.15),
+                    0 12px 40px rgba(0, 0, 0, 0.4);
+            }
+        }
+        
+        @keyframes containerPulse {
+            0%, 100% { 
+                box-shadow: 
+                    inset 0 0 50px rgba(0, 255, 231, 0.1),
+                    0 0 30px rgba(0, 255, 231, 0.2);
+            }
+            50% { 
+                box-shadow: 
+                    inset 0 0 70px rgba(0, 255, 231, 0.2),
+                    0 0 50px rgba(0, 255, 231, 0.4);
+            }
+        }
+        
+        @keyframes containerRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes containerFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(10px, -10px) scale(1.05); }
+            50% { transform: translate(0, -20px) scale(1.1); }
+            75% { transform: translate(-10px, -10px) scale(1.05); }
+        }
+        
+        .gear-1 {
+            animation-delay: 0s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(0, 255, 231, 0.15) 40%, rgba(0, 191, 255, 0.15) 100%);
+        }
+        
+        .gear-2 {
+            animation-delay: 0.5s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(40, 167, 69, 0.15) 40%, rgba(23, 162, 184, 0.15) 100%);
+        }
+        
+        .gear-3 {
+            animation-delay: 1s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 68, 68, 0.15) 40%, rgba(255, 107, 53, 0.15) 100%);
+        }
+        
+        .gear-4 {
+            animation-delay: 1.5s;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 0, 110, 0.15) 40%, rgba(0, 255, 255, 0.15) 100%);
+        }
+        
+        .gear-container:hover .gear {
+            animation-play-state: running;
+        }
+        
+        .gear-container:not(:hover) .gear {
+            animation-play-state: paused;
+        }
+        
+        .description {
+            background: rgba(0, 255, 231, 0.1);
+            border: 1px solid rgba(0, 255, 231, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 2rem;
+        }
+        
+        .description h3 {
+            color: #00ffe7;
+            margin-bottom: 1rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 3px solid #00ffe7;
+        }
+        
+        .feature h4 {
+            color: #00ffe7;
+            margin-bottom: 0.5rem;
+        }
+        
+        .underworld-effects {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 0, 110, 0.1);
+            border: 1px solid rgba(255, 0, 110, 0.3);
+            border-radius: 8px;
+        }
+        
+        .underworld-effects h4 {
+            color: #ff006e;
+            margin-bottom: 1rem;
+        }
+        
+        .effect-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+        
+        .effect-item {
+            background: rgba(255, 0, 110, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="title">齿轮联动与里世界效果</h1>
+        <p class="subtitle">Shift Your Dark, Code Your Light</p>
+        
+        <div class="gear-container">
+            <div class="gear gear-1">
+                <div class="gear-inner">
+                    <i class="fas fa-code"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+            <div class="gear gear-2">
+                <div class="gear-inner">
+                    <i class="fas fa-leaf"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+            <div class="gear gear-3">
+                <div class="gear-inner">
+                    <i class="fas fa-fire"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+            <div class="gear gear-4">
+                <div class="gear-inner">
+                    <i class="fas fa-robot"></i>
+                    <div class="gear-teeth"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="description">
+            <h3>联动转换与里世界效果</h3>
+            <p>齿轮现在具有联动转换效果和里世界的神秘感：</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <h4>🔗 联动转换</h4>
+                    <p>悬停任意齿轮时，所有齿轮都会按顺序激活，形成连锁反应</p>
+                </div>
+                <div class="feature">
+                    <h4>🌌 里世界背景</h4>
+                    <p>容器具有多层动态背景，营造神秘的里世界氛围</p>
+                </div>
+                <div class="feature">
+                    <h4>🎭 色相旋转</h4>
+                    <p>齿轮浮动时会产生色相旋转效果，增强视觉冲击</p>
+                </div>
+                <div class="feature">
+                    <h4>⚡ 脉冲同步</h4>
+                    <p>联动时齿轮会产生同步脉冲效果，增强整体感</p>
+                </div>
+            </div>
+            
+            <div class="underworld-effects">
+                <h4>🌌 里世界特效</h4>
+                <div class="effect-list">
+                    <div class="effect-item">多层径向渐变背景</div>
+                    <div class="effect-item">旋转的圆锥渐变</div>
+                    <div class="effect-item">浮动的光晕效果</div>
+                    <div class="effect-item">脉冲的容器阴影</div>
+                    <div class="effect-item">模糊的毛玻璃效果</div>
+                    <div class="effect-item">动态的边框发光</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const gears = document.querySelectorAll('.gear');
+        const gearContainer = document.querySelector('.gear-container');
+        
+        // 齿轮联动效果
+        gears.forEach((gear, index) => {
+            gear.addEventListener('mouseenter', function() {
+                // 激活当前齿轮
+                this.style.zIndex = '10';
+                this.style.animation = 'gearInterlock 2s ease-in-out infinite';
+                
+                // 激活相邻齿轮
+                gears.forEach((otherGear, otherIndex) => {
+                    if (otherIndex !== index) {
+                        const delay = Math.abs(otherIndex - index) * 0.3;
+                        otherGear.style.zIndex = 10 - Math.abs(otherIndex - index);
+                        otherGear.style.animation = `gearInterlock 2s ease-in-out infinite ${delay}s`;
+                        
+                        // 添加脉冲效果
+                        otherGear.style.animation = `${otherGear.style.animation}, gearPulse 1s ease-in-out infinite`;
+                    }
+                });
+                
+                // 激活容器效果
+                gearContainer.style.animation = 'containerPulse 2s ease-in-out infinite';
+                
+                // 添加里世界效果
+                this.querySelector('.gear-inner').style.background = 
+                    'radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 30%, transparent 70%)';
+                this.querySelector('.gear-teeth').style.filter = 'blur(0.2px) brightness(1.2)';
+            });
+            
+            gear.addEventListener('mouseleave', function() {
+                // 恢复所有齿轮的默认状态
+                gears.forEach(g => {
+                    g.style.zIndex = '1';
+                    g.style.animation = 'gearFloat 4s ease-in-out infinite';
+                });
+                
+                // 恢复容器效果
+                gearContainer.style.animation = 'containerPulse 6s ease-in-out infinite';
+                
+                // 恢复里世界效果
+                this.querySelector('.gear-inner').style.background = 
+                    'radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, transparent 70%)';
+                this.querySelector('.gear-teeth').style.filter = 'blur(0.5px)';
+            });
+        });
+        
+        // 容器悬停效果
+        gearContainer.addEventListener('mouseenter', function() {
+            document.querySelectorAll('.gear').forEach(gear => {
+                gear.style.animationPlayState = 'running';
+            });
+        });
+        
+        gearContainer.addEventListener('mouseleave', function() {
+            document.querySelectorAll('.gear').forEach(gear => {
+                gear.style.animationPlayState = 'paused';
+            });
+        });
+    </script>
+</body>
+</html> 

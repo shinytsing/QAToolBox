@@ -402,22 +402,22 @@ body::before {
     transform: scale(1.1) !important;
 }
 
-/* 朋克滚动条 */
+/* 朋克滚动条 - 隐藏 */
 ::-webkit-scrollbar {
-    width: 15px;
+    width: 0px;
+    height: 0px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--punk-dark);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(45deg, var(--punk-primary), var(--punk-secondary));
-    border-radius: var(--punk-radius);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(45deg, var(--punk-secondary), var(--punk-primary));
+    background: transparent;
 }
 
 /* 瀑布流布局专用样式 */

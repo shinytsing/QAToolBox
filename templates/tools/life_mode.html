@@ -1,0 +1,1000 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}生活模式{% endblock %}
+{% block tool_title_display %}生活模式{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 生活模式点击计数器 */
+.life-mode-click-counter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  color: #ff6b6b;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 1000;
+  border: 2px solid #ff6b6b;
+  display: none;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.life-mode-click-counter.show {
+  display: block;
+  animation: counterPop 0.5s ease-out;
+}
+
+@keyframes counterPop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.rage-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+.rage-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  z-index: -1;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.rage-container:hover::before {
+  animation: lifePulse 4s ease-in-out infinite;
+}
+
+@keyframes lifePulse {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.01) rotate(0.3deg);
+    opacity: 1;
+  }
+}
+
+/* 浮动元素动画 */
+.floating-hearts {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.heart {
+  position: absolute;
+  font-size: 1.5rem;
+  /* 减少动画复杂度，只在用户交互时播放 */
+  animation: none;
+  opacity: 0.6;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在用户悬停时播放动画 */
+.floating-hearts:hover .heart {
+  animation: floatHeart 6s ease-in-out infinite;
+}
+
+.heart:nth-child(1) { top: 10%; left: 10%; }
+.heart:nth-child(2) { top: 20%; right: 15%; }
+.heart:nth-child(3) { bottom: 30%; left: 20%; }
+.heart:nth-child(4) { bottom: 15%; right: 10%; }
+.heart:nth-child(5) { top: 50%; left: 5%; }
+.heart:nth-child(6) { top: 60%; right: 5%; }
+
+@keyframes floatHeart {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateY(-15px) rotate(90deg) scale(1.1);
+    opacity: 1;
+  }
+}
+
+.rage-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 3rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+.rage-title {
+  color: #ffffff;
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); }
+  50% { text-shadow: 0 0 50px rgba(255, 255, 255, 0.8); }
+}
+
+.rage-subtitle {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  animation: subtitleFloat 4s ease-in-out infinite;
+}
+
+@keyframes subtitleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+.rage-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.training-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  transition: all 0.4s ease;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.training-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 50%, #f5576c 100%);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.training-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 1s ease;
+}
+
+.training-card:hover::after {
+  transform: scaleX(1);
+}
+
+.training-card:hover::before {
+  left: 100%;
+}
+
+.training-card:hover {
+  box-shadow: 0 16px 48px rgba(255, 255, 255, 0.2);
+  transform: translateY(-8px) scale(1.03);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.training-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  /* 减少动画复杂度，只在悬停时播放 */
+  animation: none;
+  /* 性能优化 */
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* 只在悬停时播放动画 */
+.training-card:hover .training-icon {
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+
+.training-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.training-description {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.training-btn {
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  color: #ffffff;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.training-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.training-btn:hover::before {
+  left: 100%;
+}
+
+.training-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+}
+
+/* 添加滚动性能优化 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .rage-title {
+    font-size: 2.5rem;
+  }
+  
+  .rage-tools-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .rage-container {
+    padding: 1rem;
+  }
+  
+  .heart {
+    font-size: 1rem;
+  }
+}
+
+/* 幸福满屏模式样式 */
+.happiness-mode {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%) !important;
+  animation: happinessPulse 2s ease-in-out infinite !important;
+}
+
+.happiness-mode .rage-title {
+  animation: happinessTitleGlow 1s ease-in-out infinite !important;
+  text-shadow: 0 0 50px rgba(255, 255, 255, 0.8), 0 0 100px rgba(255, 107, 107, 0.6) !important;
+}
+
+.happiness-mode .training-card {
+  animation: happinessCardFloat 3s ease-in-out infinite !important;
+  box-shadow: 0 20px 60px rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+@keyframes happinessPulse {
+  0%, 100% { 
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #48dbfb 50%, #ff9ff3 75%, #54a0ff 100%);
+  }
+  25% { 
+    background: linear-gradient(135deg, #feca57 0%, #48dbfb 25%, #ff9ff3 50%, #54a0ff 75%, #ff6b6b 100%);
+  }
+  50% { 
+    background: linear-gradient(135deg, #48dbfb 0%, #ff9ff3 25%, #54a0ff 50%, #ff6b6b 75%, #feca57 100%);
+  }
+  75% { 
+    background: linear-gradient(135deg, #ff9ff3 0%, #54a0ff 25%, #ff6b6b 50%, #feca57 75%, #48dbfb 100%);
+  }
+}
+
+@keyframes happinessTitleGlow {
+  0%, 100% { 
+    text-shadow: 0 0 50px rgba(255, 255, 255, 0.8), 0 0 100px rgba(255, 107, 107, 0.6);
+    transform: scale(1);
+  }
+  50% { 
+    text-shadow: 0 0 80px rgba(255, 255, 255, 1), 0 0 150px rgba(255, 107, 107, 0.8);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes happinessCardFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1);
+  }
+  50% { 
+    transform: translateY(-10px) scale(1.02);
+  }
+}
+
+/* 幸福粒子样式 */
+.happiness-particle {
+  position: fixed;
+  font-size: 2rem;
+  pointer-events: none;
+  z-index: 9999;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-20px) rotate(180deg) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-40px) rotate(360deg) scale(1.2);
+  }
+  100% {
+    transform: translateY(-60px) rotate(720deg) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* 彩虹光效样式 */
+.rainbow-effect {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(254, 202, 87, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(72, 219, 251, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 60% 60%, rgba(255, 159, 243, 0.3) 0%, transparent 50%);
+  z-index: 9998;
+  animation: rainbowGlow 3s ease-in-out infinite;
+}
+
+@keyframes rainbowGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* 爱心雨样式 */
+.falling-heart {
+  position: fixed;
+  font-size: 1.5rem;
+  pointer-events: none;
+  z-index: 9997;
+  animation: heartFall 3s linear infinite;
+}
+
+@keyframes heartFall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* 幸福提示消息样式 */
+.happiness-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  animation: messagePop 0.5s ease-out;
+}
+
+.happiness-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 3px solid #ff6b6b;
+}
+
+.happiness-content h2 {
+  color: #ff6b6b;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+}
+
+.happiness-content p {
+  color: #333;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+@keyframes messagePop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+</style>
+
+<script>
+// 生活模式点击计数器
+let lifeModeClickCount = 0;
+let happinessMode = false;
+
+// 页面点击事件监听
+document.addEventListener('click', function(e) {
+    // 如果已经在幸福模式，不增加计数
+    if (happinessMode) return;
+    
+    // 增加点击计数
+    lifeModeClickCount++;
+    console.log('生活模式点击次数:', lifeModeClickCount);
+    
+    // 显示点击计数器
+    const clickCounter = document.getElementById('clickCounter');
+    const clickCount = document.getElementById('clickCount');
+    clickCounter.classList.add('show');
+    clickCount.textContent = lifeModeClickCount;
+    
+    // 检查是否达到4次点击
+    if (lifeModeClickCount >= 4 && !happinessMode) {
+        activateHappinessMode();
+    }
+    
+    // 3秒后隐藏计数器（如果还没达到4次）
+    if (lifeModeClickCount < 4) {
+        setTimeout(() => {
+            if (!happinessMode) {
+                clickCounter.classList.remove('show');
+            }
+        }, 3000);
+    }
+});
+
+// 生活日记按钮点击处理函数
+function goToLifeDiary() {
+    console.log('点击生活日记按钮');
+    
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到生活日记页面
+        window.location.href = '/tools/life-diary-progressive/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/life-diary-progressive/', '_self');
+    }
+}
+
+// 爆款文案按钮点击处理函数 - 已隐藏
+/*
+function goToRedbookGenerator() {
+    console.log('点击爆款文案按钮');
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到小红书生成器页面
+        window.location.href = '/tools/redbook-generator/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/redbook-generator/', '_self');
+    }
+}
+*/
+
+// 冥想指导按钮点击处理函数
+function goToMeditationGuide() {
+    console.log('点击冥想指导按钮');
+    
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到冥想指导页面
+        window.location.href = '/tools/meditation-guide/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/meditation-guide/', '_self');
+    }
+}
+
+// 心动链接按钮点击处理函数
+function goToHeartLink() {
+    console.log('点击心动链接按钮');
+    
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到心动链接页面
+        window.location.href = '/tools/heart-link/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/heart-link/', '_self');
+    }
+}
+
+// 旅游攻略按钮点击处理函数
+function goToTravelGuide() {
+    console.log('点击旅游攻略按钮');
+    
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到旅游攻略页面
+        window.location.href = '/tools/travel-guide/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/travel-guide/', '_self');
+    }
+}
+
+// 自动求职机按钮点击处理函数
+function goToJobSearchMachine() {
+    console.log('点击自动求职机按钮');
+    
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到自动求职机页面
+        window.location.href = '/tools/job-search-machine/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/job-search-machine/', '_self');
+    }
+}
+
+// 激活幸福满屏模式
+function activateHappinessMode() {
+    console.log('🎉 激活幸福满屏模式！');
+    happinessMode = true;
+    
+    // 添加幸福满屏样式
+    const container = document.querySelector('.rage-container');
+    if (container) {
+        container.classList.add('happiness-mode');
+    }
+    
+    // 创建幸福满屏效果
+    createHappinessEffect();
+    
+    // 播放幸福音效（如果有的话）
+    playHappinessSound();
+    
+    // 显示幸福提示
+    showHappinessMessage();
+    
+    // 隐藏点击计数器
+    const clickCounter = document.getElementById('clickCounter');
+    if (clickCounter) {
+        clickCounter.classList.remove('show');
+    }
+    
+    // 8秒后恢复正常模式
+    setTimeout(() => {
+        deactivateHappinessMode();
+    }, 8000);
+}
+
+// 创建幸福满屏效果
+function createHappinessEffect() {
+    // 创建幸福粒子
+    for (let i = 0; i < 50; i++) {
+        createHappinessParticle();
+    }
+    
+    // 创建彩虹光效
+    createRainbowEffect();
+    
+    // 创建爱心雨
+    createHeartRain();
+}
+
+// 创建幸福粒子
+function createHappinessParticle() {
+    const particle = document.createElement('div');
+    particle.className = 'happiness-particle';
+    const emojis = ['✨', '💖', '🌸', '🌟', '💕', '🌺', '🎉', '🌈', '🎊', '💝', '🌻', '🌼', '🌷', '🍀', '🎋', '🎍'];
+    particle.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 2 + 's';
+    particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    particle.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem';
+    
+    document.body.appendChild(particle);
+    
+    // 动画结束后移除粒子
+    setTimeout(() => {
+        if (particle.parentNode) {
+            particle.parentNode.removeChild(particle);
+        }
+    }, 5000);
+}
+
+// 创建彩虹光效
+function createRainbowEffect() {
+    const rainbow = document.createElement('div');
+    rainbow.className = 'rainbow-effect';
+    document.body.appendChild(rainbow);
+    
+    setTimeout(() => {
+        if (rainbow.parentNode) {
+            rainbow.parentNode.removeChild(rainbow);
+        }
+    }, 5000);
+}
+
+// 创建爱心雨
+function createHeartRain() {
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            const heart = document.createElement('div');
+            heart.className = 'falling-heart';
+            const hearts = ['💖', '💕', '💗', '💓', '💝', '💞', '💟', '💌', '💘', '💙', '💚', '💛', '💜', '🧡', '🖤'];
+            heart.innerHTML = hearts[Math.floor(Math.random() * hearts.length)];
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            heart.style.fontSize = (Math.random() * 1 + 1) + 'rem';
+            
+            document.body.appendChild(heart);
+            
+            setTimeout(() => {
+                if (heart.parentNode) {
+                    heart.parentNode.removeChild(heart);
+                }
+            }, 3000);
+        }, i * 80);
+    }
+}
+
+// 播放幸福音效
+function playHappinessSound() {
+    // 这里可以添加音效播放逻辑
+    console.log('🎵 播放幸福音效');
+}
+
+// 显示幸福提示
+function showHappinessMessage() {
+    const messages = [
+        { title: '🎉 幸福满屏！', text: '生活如此美好，愿你永远快乐！' },
+        { title: '💖 幸福时刻！', text: '每一个瞬间都值得珍惜，愿你被爱包围！' },
+        { title: '🌸 美好时光！', text: '花开满屏，幸福如影随形！' },
+        { title: '🌟 闪耀时刻！', text: '你的光芒照亮了整个世界！' },
+        { title: '🌈 彩虹心情！', text: '愿你的生活如彩虹般绚丽多彩！' }
+    ];
+    
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    
+    const message = document.createElement('div');
+    message.className = 'happiness-message';
+    message.innerHTML = `
+        <div class="happiness-content">
+            <h2>${randomMessage.title}</h2>
+            <p>${randomMessage.text}</p>
+        </div>
+    `;
+    document.body.appendChild(message);
+    
+    setTimeout(() => {
+        if (message.parentNode) {
+            message.parentNode.removeChild(message);
+        }
+    }, 5000);
+}
+
+// 停用幸福满屏模式
+function deactivateHappinessMode() {
+    console.log('恢复正常模式');
+    happinessMode = false;
+    
+    const container = document.querySelector('.rage-container');
+    if (container) {
+        container.classList.remove('happiness-mode');
+    }
+    
+    // 重置点击计数
+    lifeModeClickCount = 0;
+    
+    // 清理所有幸福效果元素
+    const particles = document.querySelectorAll('.happiness-particle');
+    particles.forEach(particle => {
+        if (particle.parentNode) {
+            particle.parentNode.removeChild(particle);
+        }
+    });
+    
+    const rainbows = document.querySelectorAll('.rainbow-effect');
+    rainbows.forEach(rainbow => {
+        if (rainbow.parentNode) {
+            rainbow.parentNode.removeChild(rainbow);
+        }
+    });
+    
+    const hearts = document.querySelectorAll('.falling-heart');
+    hearts.forEach(heart => {
+        if (heart.parentNode) {
+            heart.parentNode.removeChild(heart);
+        }
+    });
+    
+    const messages = document.querySelectorAll('.happiness-message');
+    messages.forEach(message => {
+        if (message.parentNode) {
+            message.parentNode.removeChild(message);
+        }
+    });
+}
+
+// 页面加载完成后添加调试信息
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('生活模式页面加载完成');
+    
+    // 为所有按钮添加事件监听器和调试信息
+    const cards = document.querySelectorAll('.training-card');
+    cards.forEach((card, index) => {
+        const button = card.querySelector('.training-btn');
+        if (button) {
+            console.log(`按钮 ${index + 1} 找到:`, button.textContent.trim());
+            
+            // 添加鼠标悬停效果
+            button.addEventListener('mouseenter', function() {
+                this.style.cursor = 'pointer';
+            });
+            
+            // 确保按钮可点击
+            button.style.pointerEvents = 'auto';
+            button.style.userSelect = 'none';
+        } else {
+            console.error(`按钮 ${index + 1} 未找到`);
+        }
+    });
+    
+    // 特别检查爆款文案按钮 - 已隐藏
+    /*
+    const redbookCard = document.querySelector('.training-card:nth-child(2)');
+    const redbookButton = redbookCard ? redbookCard.querySelector('.training-btn') : null;
+    
+    if (redbookButton) {
+        console.log('爆款文案按钮找到:', redbookButton);
+        
+        // 添加额外的点击事件监听器作为备用
+        redbookButton.addEventListener('click', function(e) {
+            console.log('爆款文案按钮被点击（备用监听器）');
+            e.stopPropagation();
+            goToRedbookGenerator();
+        });
+        
+        // 添加鼠标悬停效果
+        redbookButton.addEventListener('mouseenter', function() {
+            this.style.cursor = 'pointer';
+        });
+    } else {
+        console.error('爆款文案按钮未找到');
+    }
+    */
+    
+    // 添加页面点击调试
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.training-card')) {
+            console.log('点击了卡片:', e.target.closest('.training-card').querySelector('.training-title')?.textContent);
+        }
+    });
+    
+    // 隐藏点击计数器（初始状态）
+    const clickCounter = document.getElementById('clickCounter');
+    if (clickCounter) {
+        clickCounter.classList.remove('show');
+    }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- 点击计数器 -->
+<div class="life-mode-click-counter" id="clickCounter">
+  <div>点击次数: <span id="clickCount">0</span>/4</div>
+</div>
+
+<div class="rage-container" id="rageContainer">
+  <!-- 浮动爱心背景 -->
+  <div class="floating-hearts">
+    <div class="heart">💖</div>
+    <div class="heart">🌸</div>
+    <div class="heart">🌿</div>
+    <div class="heart">✨</div>
+    <div class="heart">💕</div>
+    <div class="heart">🌱</div>
+  </div>
+
+  <div class="rage-header">
+    <h1 class="rage-title">
+      <i class="fas fa-heart"></i> 生活模式
+    </h1>
+    <p class="rage-subtitle">🌈 过了一百种生活我才看明白</p>
+  </div>
+
+  <div class="rage-tools-grid">
+    <div class="training-card" onclick="goToLifeDiary()">
+      <div class="training-icon">
+        <i class="fas fa-book-open"></i>
+      </div>
+      <h3 class="training-title">生活日记</h3>
+      <p class="training-description">层层递进记录每日心情，追踪生活目标，回顾美好时光</p>
+    </div>
+
+    <!-- 爆款文案已隐藏 -->
+
+    <div class="training-card" onclick="goToMeditationGuide()">
+      <div class="training-icon">
+                        <i class="fas fa-pray"></i>
+      </div>
+      <h3 class="training-title">冥想指导</h3>
+      <p class="training-description">放松身心，静心冥想，寻找内心平静</p>
+    </div>
+
+    <div class="training-card" onclick="goToHeartLink()">
+      <div class="training-icon">
+        <i class="fas fa-heart"></i>
+      </div>
+      <h3 class="training-title">心动链接</h3>
+      <p class="training-description">遇见另一个有趣的灵魂，建立情感连接，开始美好对话</p>
+    </div>
+
+    <div class="training-card" onclick="goToTravelGuide()">
+      <div class="training-icon">
+        <i class="fas fa-plane"></i>
+      </div>
+      <h3 class="training-title">WanderAI 旅游攻略</h3>
+      <p class="training-description">输入任何地名，获取个性化旅行建议，包含必去景点、美食推荐、交通指南等</p>
+    </div>
+
+    <div class="training-card" onclick="goToJobSearchMachine()">
+      <div class="training-icon">
+        <i class="fas fa-briefcase"></i>
+      </div>
+      <h3 class="training-title">自动求职机</h3>
+      <p class="training-description">输入职位要求和期望薪资，让AI自动为您投递简历到Boss直聘</p>
+    </div>
+  </div>
+</div>
+{% endblock %} 
