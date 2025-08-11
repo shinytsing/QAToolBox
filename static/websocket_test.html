@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .connected { background: rgba(40,167,69,0.8); }
+        .disconnected { background: rgba(220,53,69,0.8); }
+        .connecting { background: rgba(255,193,7,0.8); color: #333; }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 2px solid rgba(255,255,255,0.2);
+            padding: 15px;
+            margin: 15px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        .message {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+        }
+        .sent { background: rgba(0,123,255,0.3); }
+        .received { background: rgba(40,167,69,0.3); }
+        .system { background: rgba(255,193,7,0.3); color: #333; }
+        input, button {
+            padding: 12px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            flex: 1;
+        }
+        button {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket 连接测试</h1>
+        
+        <div id="status" class="status disconnected">未连接</div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="connect()">连接</button>
+            <button onclick="disconnect()">断开</button>
+            <button onclick="clearMessages()">清空消息</button>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="messageInput" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+        
+        <div id="messages"></div>
+    </div>
+    
+    <script>
+        let socket = null;
+        const roomId = 'test-room-' + Date.now();
+        
+        function updateStatus(message, className) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + className;
+        }
+        
+        function addMessage(message, type = 'system') {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function connect() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                addMessage('已经连接了', 'system');
+                return;
+            }
+            
+            updateStatus('连接中...', 'connecting');
+            addMessage('正在连接到 WebSocket...', 'system');
+            
+            // 测试不同的WebSocket URL
+            const wsUrl = `ws://localhost:8000/ws/chat/${roomId}/`;
+            
+            try {
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function(event) {
+                    updateStatus('已连接', 'connected');
+                    addMessage('WebSocket 连接成功！', 'system');
+                };
+                
+                socket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        addMessage('收到: ' + JSON.stringify(data, null, 2), 'received');
+                    } catch (e) {
+                        addMessage('收到: ' + event.data, 'received');
+                    }
+                };
+                
+                socket.onclose = function(event) {
+                    updateStatus('连接已关闭', 'disconnected');
+                    addMessage('WebSocket 连接已关闭', 'system');
+                };
+                
+                socket.onerror = function(error) {
+                    updateStatus('连接错误', 'disconnected');
+                    addMessage('WebSocket 连接错误: ' + error, 'system');
+                };
+                
+            } catch (error) {
+                updateStatus('连接失败', 'disconnected');
+                addMessage('创建 WebSocket 失败: ' + error.message, 'system');
+            }
+        }
+        
+        function disconnect() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const data = {
+                    type: 'message',
+                    content: message,
+                    message_type: 'text'
+                };
+                
+                socket.send(JSON.stringify(data));
+                addMessage('发送: ' + message, 'sent');
+                input.value = '';
+            } else {
+                addMessage('未连接，无法发送消息', 'system');
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        // 页面加载时自动连接
+        window.onload = function() {
+            setTimeout(connect, 1000);
+        };
+    </script>
+</body>
+</html>

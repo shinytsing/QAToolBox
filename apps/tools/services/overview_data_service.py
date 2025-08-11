@@ -246,7 +246,7 @@ class OverviewDataService:
             
             timezone = timezone_mapping.get(destination, 'Asia/Shanghai')
             
-            # 尝试多个时区API
+            # 尝试多个时区API，增加超时时间和重试机制
             apis = [
                 f"{self.timezone_api_url}/timezone/{timezone}",
                 f"http://api.timezonedb.com/v2.1/get-time-zone?key=demo&format=json&by=zone&zone={timezone}",
@@ -254,30 +254,50 @@ class OverviewDataService:
             ]
             
             for api_url in apis:
-                try:
-                    response = self.session.get(api_url, timeout=5)
-                    if response.status_code == 200:
-                        data = response.json()
+                for retry in range(2):  # 每个API重试2次
+                    try:
+                        logger.info(f"🔄 尝试时区API: {api_url} (尝试 {retry + 1}/2)")
+                        response = self.session.get(api_url, timeout=15)  # 增加超时时间到15秒
                         
-                        # 处理不同API的响应格式
-                        if 'datetime' in data:  # worldtimeapi.org
-                            return {
-                                'timezone': data.get('timezone', 'UTC+8'),
-                                'current_time': data.get('datetime', '2024-01-01T14:30:00')[11:16],
-                                'daylight_saving': '是' if data.get('dst', False) else '无',
-                                'utc_offset': data.get('utc_offset', '+08:00')
-                            }
-                        elif 'formatted' in data:  # timezonedb
-                            return {
-                                'timezone': data.get('zoneName', 'UTC+8'),
-                                'current_time': data.get('formatted', '14:30:00')[11:16],
-                                'daylight_saving': '是' if data.get('dst', 0) else '无',
-                                'utc_offset': f"+{data.get('gmtOffset', 28800)//3600:02d}:00"
-                            }
+                        if response.status_code == 200:
+                            data = response.json()
+                            
+                            # 处理不同API的响应格式
+                            if 'datetime' in data:  # worldtimeapi.org
+                                logger.info(f"✅ 成功从 {api_url} 获取时区信息")
+                                return {
+                                    'timezone': data.get('timezone', 'UTC+8'),
+                                    'current_time': data.get('datetime', '2024-01-01T14:30:00')[11:16],
+                                    'daylight_saving': '是' if data.get('dst', False) else '无',
+                                    'utc_offset': data.get('utc_offset', '+08:00')
+                                }
+                            elif 'formatted' in data:  # timezonedb
+                                logger.info(f"✅ 成功从 {api_url} 获取时区信息")
+                                return {
+                                    'timezone': data.get('zoneName', 'UTC+8'),
+                                    'current_time': data.get('formatted', '14:30:00')[11:16],
+                                    'daylight_saving': '是' if data.get('dst', 0) else '无',
+                                    'utc_offset': f"+{data.get('gmtOffset', 28800)//3600:02d}:00"
+                                }
+                            else:
+                                logger.warning(f"⚠️ API {api_url} 返回格式未知")
+                                continue
                         
-                except Exception as api_error:
-                    logger.warning(f"⚠️ 时区API {api_url} 失败: {api_error}")
-                    continue
+                    except requests.exceptions.Timeout:
+                        logger.warning(f"⏰ 时区API {api_url} 超时 (尝试 {retry + 1}/2)")
+                        if retry < 1:  # 还有重试机会
+                            time.sleep(2)  # 等待2秒后重试
+                            continue
+                    except requests.exceptions.ConnectionError as e:
+                        logger.warning(f"🔌 时区API {api_url} 连接错误 (尝试 {retry + 1}/2): {e}")
+                        if retry < 1:  # 还有重试机会
+                            time.sleep(2)  # 等待2秒后重试
+                            continue
+                    except Exception as api_error:
+                        logger.warning(f"⚠️ 时区API {api_url} 失败 (尝试 {retry + 1}/2): {api_error}")
+                        if retry < 1:  # 还有重试机会
+                            time.sleep(2)  # 等待2秒后重试
+                            continue
             
             # 所有API都失败，使用本地时间作为备用
             logger.warning("⚠️ 所有时区API都失败，使用本地时间")

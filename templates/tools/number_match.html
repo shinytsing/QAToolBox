@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}数字匹配 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.number-match-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+    color: white;
+}
+
+.match-title {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.match-subtitle {
+    font-size: 1.2em;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.number-input-container {
+    margin-bottom: 30px;
+}
+
+.number-input {
+    width: 200px;
+    height: 60px;
+    font-size: 2em;
+    text-align: center;
+    border: none;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+.number-input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.number-input:focus {
+    outline: none;
+    background: rgba(255,255,255,0.3);
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+.match-button {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 15px 40px;
+    font-size: 1.2em;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    margin: 0 10px;
+}
+
+.match-button:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.match-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.status-message {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-waiting {
+    background: rgba(255,193,7,0.2);
+    border: 1px solid rgba(255,193,7,0.3);
+}
+
+.status-success {
+    background: rgba(40,167,69,0.2);
+    border: 1px solid rgba(40,167,69,0.3);
+}
+
+.status-error {
+    background: rgba(220,53,69,0.2);
+    border: 1px solid rgba(220,53,69,0.3);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.match-info {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.match-info h3 {
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.match-info p {
+    margin: 10px 0;
+    opacity: 0.9;
+}
+
+.chat-link {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    padding: 12px 25px;
+    border-radius: 20px;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+.chat-link:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.rules {
+    margin-top: 40px;
+    text-align: left;
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.rules h3 {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.rules ul {
+    list-style: none;
+    padding: 0;
+}
+
+.rules li {
+    margin: 10px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.rules li:before {
+    content: "🔢";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+@media (max-width: 768px) {
+    .number-match-container {
+        margin: 20px;
+        padding: 30px;
+    }
+    
+    .match-title {
+        font-size: 2em;
+    }
+    
+    .number-input {
+        width: 150px;
+        height: 50px;
+        font-size: 1.5em;
+    }
+    
+    .match-button {
+        padding: 12px 30px;
+        font-size: 1em;
+        margin: 5px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="number-match-container">
+    <h1 class="match-title">🔢 数字匹配</h1>
+    <p class="match-subtitle">输入4位数字，找到相同数字的人开始聊天</p>
+    
+    <div class="number-input-container">
+        <input type="text" 
+               class="number-input" 
+               id="numberInput" 
+               placeholder="0000" 
+               maxlength="4" 
+               pattern="[0-9]{4}"
+               autocomplete="off">
+        <br>
+        <button class="match-button" id="matchButton" onclick="startMatch()">
+            <span id="matchButtonText">开始匹配</span>
+        </button>
+        <button class="match-button" id="cancelButton" onclick="cancelMatch()" style="display: none;">
+            取消匹配
+        </button>
+    </div>
+    
+    <div class="status-message" id="statusMessage" style="display: none;">
+        <div id="statusContent"></div>
+    </div>
+    
+    <div class="match-info" id="matchInfo" style="display: none;">
+        <h3>匹配信息</h3>
+        <div id="matchInfoContent"></div>
+    </div>
+    
+    <div class="rules">
+        <h3>📋 匹配规则</h3>
+        <ul>
+            <li>输入4位数字（0000-9999）</li>
+            <li>系统会寻找输入相同数字的用户</li>
+            <li>匹配成功后自动创建私密聊天室</li>
+            <li>只有输入相同数字的用户才能匹配</li>
+            <li>可以随时取消匹配</li>
+            <li>匹配成功后双方的数字会被清除</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+let isMatching = false;
+let matchCheckInterval = null;
+
+function startMatch() {
+    const numberInput = document.getElementById('numberInput');
+    const matchButton = document.getElementById('matchButton');
+    const cancelButton = document.getElementById('cancelButton');
+    const statusMessage = document.getElementById('statusMessage');
+    const statusContent = document.getElementById('statusContent');
+    
+    const number = numberInput.value.trim();
+    
+    // 验证输入
+    if (!number || number.length !== 4 || !/^\d{4}$/.test(number)) {
+        showStatus('请输入4位数字', 'error');
+        return;
+    }
+    
+    // 禁用输入和按钮
+    numberInput.disabled = true;
+    matchButton.disabled = true;
+    cancelButton.style.display = 'inline-block';
+    
+    // 显示等待状态
+    showStatus(`正在匹配数字 ${number}...`, 'waiting');
+    
+    // 发送匹配请求
+    fetch('/tools/api/number-match/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ number: number })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.matched) {
+                // 匹配成功
+                showStatus(data.message, 'success');
+                showMatchInfo(data);
+                isMatching = false;
+            } else {
+                // 等待匹配
+                showStatus(data.message, 'waiting');
+                isMatching = true;
+                startMatchCheck();
+            }
+        } else {
+            showStatus(data.error, 'error');
+            resetUI();
+        }
+    })
+    .catch(error => {
+        console.error('匹配失败:', error);
+        showStatus('匹配失败，请重试', 'error');
+        resetUI();
+    });
+}
+
+function cancelMatch() {
+    if (!isMatching) return;
+    
+    fetch('/tools/api/number-match/cancel/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showStatus('已取消匹配', 'error');
+        } else {
+            showStatus(data.error, 'error');
+        }
+        resetUI();
+    })
+    .catch(error => {
+        console.error('取消匹配失败:', error);
+        showStatus('取消匹配失败', 'error');
+        resetUI();
+    });
+}
+
+function startMatchCheck() {
+    // 每3秒检查一次匹配状态
+    matchCheckInterval = setInterval(() => {
+        if (!isMatching) {
+            clearInterval(matchCheckInterval);
+            return;
+        }
+        
+        // 这里可以添加检查匹配状态的逻辑
+        // 目前简化处理，用户需要手动刷新页面
+    }, 3000);
+}
+
+function showStatus(message, type) {
+    const statusMessage = document.getElementById('statusMessage');
+    const statusContent = document.getElementById('statusContent');
+    
+    statusMessage.className = `status-message status-${type}`;
+    statusContent.innerHTML = message;
+    statusMessage.style.display = 'block';
+}
+
+function showMatchInfo(data) {
+    const matchInfo = document.getElementById('matchInfo');
+    const matchInfoContent = document.getElementById('matchInfoContent');
+    
+    matchInfoContent.innerHTML = `
+        <p><strong>匹配用户:</strong> ${data.matched_user.display_name}</p>
+        <p><strong>聊天室ID:</strong> ${data.room_id}</p>
+        <a href="/tools/chat/enhanced/${data.room_id}/" class="chat-link">
+            💬 开始聊天
+        </a>
+        <a href="/tools/video-chat/${data.room_id}/" class="chat-link" style="margin-left: 10px;">
+            📹 视频通话
+        </a>
+    `;
+    
+    matchInfo.style.display = 'block';
+}
+
+function resetUI() {
+    const numberInput = document.getElementById('numberInput');
+    const matchButton = document.getElementById('matchButton');
+    const cancelButton = document.getElementById('cancelButton');
+    
+    numberInput.disabled = false;
+    matchButton.disabled = false;
+    cancelButton.style.display = 'none';
+    
+    isMatching = false;
+    if (matchCheckInterval) {
+        clearInterval(matchCheckInterval);
+        matchCheckInterval = null;
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 输入框事件
+document.getElementById('numberInput').addEventListener('input', function(e) {
+    // 只允许数字
+    this.value = this.value.replace(/[^0-9]/g, '');
+    
+    // 限制长度为4位
+    if (this.value.length > 4) {
+        this.value = this.value.slice(0, 4);
+    }
+});
+
+document.getElementById('numberInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        startMatch();
+    }
+});
+</script>
+{% endblock %}

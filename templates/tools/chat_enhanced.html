@@ -1,0 +1,738 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}增强聊天室{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    height: calc(100vh - 100px);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.participants-sidebar {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+.participants-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.participant-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.participant-card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+}
+
+.participant-card.online {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+.participant-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.participant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.participant-info {
+    flex: 1;
+}
+
+.participant-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.participant-status {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-indicator.online {
+    background: #28a745;
+    box-shadow: 0 0 6px rgba(40,167,69,0.4);
+}
+
+.status-indicator.offline {
+    background: #dc3545;
+}
+
+.participant-details {
+    margin-top: 10px;
+}
+
+.participant-bio {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.participant-membership {
+    font-size: 12px;
+    color: #007bff;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.participant-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.tag {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.chat-main {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.chat-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.video-chat-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.video-chat-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.video-chat-btn i {
+    font-size: 1.2em;
+}
+
+.chat-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.message.own {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 15px 18px;
+    border-radius: 20px;
+    position: relative;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+.message:not(.own) .message-content {
+    background: white;
+    color: #333;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    border-bottom-left-radius: 5px;
+}
+
+.message.own .message-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(102,126,234,0.3);
+    border-bottom-right-radius: 5px;
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.message-sender {
+    font-weight: 600;
+    font-size: 13px;
+    margin-right: 8px;
+}
+
+.message-time {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.message-text {
+    line-height: 1.6;
+    word-wrap: break-word;
+    font-size: 14px;
+}
+
+.chat-input {
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    background: white;
+    border-radius: 0 0 12px 12px;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.message-input {
+    flex: 1;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    padding: 12px 20px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.message-input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.send-button {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.send-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.input-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.tool-button {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #6c757d;
+}
+
+.tool-button:hover {
+    background: #007bff;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+}
+
+.tool-button.active {
+    background: #007bff;
+    color: white;
+}
+
+.emoji-panel {
+    position: absolute;
+    bottom: 100%;
+    left: 20px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    width: 320px;
+    max-height: 300px;
+    z-index: 1000;
+}
+
+.emoji-categories {
+    display: flex;
+    border-bottom: 1px solid #e9ecef;
+    padding: 10px;
+}
+
+.emoji-category {
+    background: none;
+    border: none;
+    padding: 8px;
+    margin: 0 2px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.3s ease;
+}
+
+.emoji-category:hover,
+.emoji-category.active {
+    background: #f8f9fa;
+}
+
+.emoji-list {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.emoji-item {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: background 0.3s ease;
+}
+
+.emoji-item:hover {
+    background: #f8f9fa;
+}
+
+/* 消息类型样式 */
+.message-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.message-image:hover {
+    transform: scale(1.05);
+}
+
+.message-video {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.message-audio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    min-width: 200px;
+}
+
+.audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.audio-play-button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.message-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    min-width: 200px;
+}
+
+.file-icon {
+    font-size: 24px;
+    color: #007bff;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.file-size {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* 语音录制样式 */
+.voice-recorder {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    z-index: 2000;
+    text-align: center;
+    display: none;
+}
+
+.voice-recorder.recording {
+    display: block;
+}
+
+.recording-indicator {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #dc3545;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.recording-time {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.recording-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.recording-button.stop {
+    background: #dc3545;
+    color: white;
+}
+
+.recording-button.cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.typing-indicator {
+    padding: 10px 20px;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+
+.connection-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.connection-status.connected {
+    background: #28a745;
+    color: white;
+}
+
+.connection-status.disconnected {
+    background: #dc3545;
+    color: white;
+}
+
+.connection-status.connecting {
+    background: #ffc107;
+    color: #212529;
+}
+
+.reconnect-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.reconnect-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.reconnect-btn, .refresh-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(10px);
+}
+
+.reconnect-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .chat-container {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    
+    .participants-sidebar {
+        order: 2;
+        max-height: 300px;
+    }
+    
+    .chat-main {
+        order: 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="connection-status disconnected" id="connectionStatus">
+    <i class="fas fa-wifi"></i> 未连接
+</div>
+
+<div class="chat-container">
+    <!-- 参与者侧边栏 -->
+    <div class="participants-sidebar">
+        <div class="participants-header">
+            <i class="fas fa-users"></i> 聊天参与者
+        </div>
+        <div id="participantsList">
+            <!-- 参与者列表将在这里动态生成 -->
+        </div>
+    </div>
+    
+    <!-- 聊天主区域 -->
+    <div class="chat-main">
+        <div class="chat-header">
+                            <div class="chat-title">💬 私密聊天</div>
+                <div class="chat-actions">
+                    <a href="/tools/video-chat/{{ room_id }}/" class="video-chat-btn" title="开始视频通话">
+                        <i class="fas fa-video"></i>
+                    </a>
+                </div>
+            <div class="chat-subtitle">与志同道合的朋友交流</div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- 消息将在这里动态生成 -->
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <i class="fas fa-ellipsis-h"></i> 对方正在输入...
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-toolbar">
+                <button class="tool-button" id="emojiButton" title="表情">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <button class="tool-button" id="imageButton" title="图片">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="tool-button" id="voiceButton" title="语音">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="tool-button" id="fileButton" title="文件">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <button class="tool-button" id="videoButton" title="视频">
+                    <i class="fas fa-video"></i>
+                </button>
+            </div>
+            <div class="input-group">
+                <input type="text" class="message-input" id="messageInput" placeholder="输入消息..." maxlength="500">
+                <button class="send-button" id="sendButton">
+                    <i class="fas fa-paper-plane"></i> 发送
+                </button>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <input type="file" id="fileInput" accept="*/*" style="display: none;">
+            <input type="file" id="videoInput" accept="video/*" style="display: none;">
+        </div>
+        
+        <!-- 表情面板 -->
+        <div class="emoji-panel" id="emojiPanel" style="display: none;">
+            <div class="emoji-categories">
+                <button class="emoji-category active" data-category="smileys">😊</button>
+                <button class="emoji-category" data-category="animals">🐶</button>
+                <button class="emoji-category" data-category="food">🍕</button>
+                <button class="emoji-category" data-category="activities">⚽</button>
+                <button class="emoji-category" data-category="objects">💡</button>
+                <button class="emoji-category" data-category="symbols">❤️</button>
+            </div>
+            <div class="emoji-list" id="emojiList">
+                <!-- 表情将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 语音录制器 -->
+<div class="voice-recorder" id="voiceRecorder">
+    <div class="recording-indicator">
+        <i class="fas fa-microphone"></i>
+    </div>
+    <div class="recording-time" id="recordingTime">00:00</div>
+    <div class="recording-controls">
+        <button class="recording-button stop" id="stopRecording">
+            <i class="fas fa-stop"></i> 停止
+        </button>
+        <button class="recording-button cancel" id="cancelRecording">
+            <i class="fas fa-times"></i> 取消
+        </button>
+    </div>
+</div>
+
+    <script src="{% static 'js/chat_enhanced.js' %}"></script>
+<script>
+// 设置房间ID
+window.roomId = '{{ room_id }}';
+</script>
+{% endblock %}

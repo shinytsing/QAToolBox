@@ -713,9 +713,13 @@ def pdf_converter_api(request):
         if file_type == 'pdf_to_word':
             output_filename += '.docx'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
         elif file_type == 'word_to_pdf':
             output_filename += '.pdf'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
         elif file_type == 'pdf_to_images':
             # 创建ZIP文件包含所有图片
             import zipfile
@@ -736,7 +740,7 @@ def pdf_converter_api(request):
             # 保存ZIP文件
             output_filename += '_images.zip'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(zip_content))
-            download_url = default_storage.url(file_path)
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
             
             # 更新转换记录为成功状态（如果存在）
             if conversion_record:
@@ -755,25 +759,29 @@ def pdf_converter_api(request):
                 'original_filename': file.name,
                 'file_size': len(zip_content),
                 'total_pages': len(result),
-                'message': f'已转换{len(result)}页，打包为ZIP文件供下载'
+                'message': f'已转换{len(result)}页，打包为ZIP文件供下载',
+                'conversion_type': conversion_type
             })
         elif file_type == 'images_to_pdf':
             output_filename += '.pdf'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
         elif file_type == 'text_to_pdf':
             output_filename += '.pdf'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
         elif file_type == 'pdf_to_text':
             output_filename += '.txt'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result.encode('utf-8')))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
         else:
             return JsonResponse({
                 'success': False,
                 'error': '未知的文件类型'
             }, status=500)
-        
-        # 返回下载链接
-        download_url = default_storage.url(file_path)
         
         # 更新转换记录为成功状态（如果存在）
         if conversion_record:
@@ -796,7 +804,8 @@ def pdf_converter_api(request):
             'type': 'file',
             'download_url': download_url,
             'filename': output_filename,
-            'original_filename': original_filename
+            'original_filename': original_filename,
+            'conversion_type': conversion_type
         })
         
     except Exception as e:
@@ -1117,7 +1126,7 @@ def pdf_converter_batch(request):
                     # 保存ZIP文件
                     output_filename = f"{uuid.uuid4()}_{conversion_type.replace('-', '_')}_images.zip"
                     file_path = default_storage.save(f'converted/{output_filename}', ContentFile(zip_content))
-                    download_url = default_storage.url(file_path)
+                    download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
                     
                     # 更新转换记录
                     if conversion_record:
@@ -1150,7 +1159,7 @@ def pdf_converter_batch(request):
                     result = result.encode('utf-8')
                 
                 file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
-                download_url = default_storage.url(file_path)
+                download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
                 
                 # 更新转换记录
                 if conversion_record:
@@ -1192,4 +1201,67 @@ def pdf_converter_batch(request):
         return JsonResponse({
             'success': False,
             'error': f'服务器错误: {str(e)}'
+        }, status=500) 
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def pdf_download_view(request, filename):
+    """
+    专门的PDF文件下载视图，解决Google浏览器下载问题
+    """
+    try:
+        from django.http import FileResponse, Http404
+        from django.conf import settings
+        import os
+        
+        # 构建文件路径
+        file_path = os.path.join(settings.MEDIA_ROOT, 'converted', filename)
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            raise Http404("文件不存在")
+        
+        # 获取文件大小
+        file_size = os.path.getsize(file_path)
+        
+        # 确定MIME类型
+        mime_types = {
+            '.pdf': 'application/pdf',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            '.doc': 'application/msword',
+            '.txt': 'text/plain',
+            '.zip': 'application/zip',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg'
+        }
+        
+        file_ext = os.path.splitext(filename)[1].lower()
+        content_type = mime_types.get(file_ext, 'application/octet-stream')
+        
+        # 打开文件并创建响应
+        file_handle = open(file_path, 'rb')
+        response = FileResponse(file_handle, content_type=content_type)
+        
+        # 设置下载头信息
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = file_size
+        
+        # 添加缓存控制头，防止浏览器缓存
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        # 添加CORS头，允许跨域下载
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Content-Disposition'
+        
+        return response
+            
+    except Exception as e:
+        logger.error(f"PDF下载视图错误: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'下载失败: {str(e)}'
         }, status=500) 

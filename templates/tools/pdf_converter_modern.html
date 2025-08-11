@@ -2191,6 +2191,12 @@ let selectedFile = null;
 
 // 数字动画函数
 function animateNumber(element, target, duration = 2000) {
+  // 安全检查
+  if (!element || typeof target !== 'number' || isNaN(target)) {
+    console.warn('animateNumber: 无效的参数', { element, target });
+    return;
+  }
+  
   const start = 0;
   const increment = target / (duration / 16);
   let current = start;
@@ -2204,18 +2210,26 @@ function animateNumber(element, target, duration = 2000) {
     
     // 根据目标值类型选择显示格式
     if (typeof target === 'number') {
-      if (target >= 1000000) {
-        element.textContent = Math.floor(current).toLocaleString();
-      } else if (target >= 1000) {
-        element.textContent = Math.floor(current).toLocaleString();
-      } else if (target >= 1) {
-        element.textContent = Math.floor(current);
-      } else {
-        // 小数处理
-        element.textContent = current.toFixed(1);
+      try {
+        if (target >= 1000000) {
+          element.textContent = Math.floor(current).toLocaleString();
+        } else if (target >= 1000) {
+          element.textContent = Math.floor(current).toLocaleString();
+        } else if (target >= 1) {
+          element.textContent = Math.floor(current);
+        } else {
+          // 小数处理
+          element.textContent = current.toFixed(1);
+        }
+      } catch (error) {
+        console.warn('animateNumber: 设置textContent失败', error);
       }
     } else {
-      element.textContent = current.toFixed(1);
+      try {
+        element.textContent = current.toFixed(1);
+      } catch (error) {
+        console.warn('animateNumber: 设置textContent失败', error);
+      }
     }
   }, 16);
 }
@@ -2307,6 +2321,11 @@ function getTypeName(type) {
 
 // 生成输出文件名
 function getOutputFileName(originalFileName, conversionType) {
+  // 安全检查
+  if (!originalFileName || typeof originalFileName !== 'string') {
+    originalFileName = 'converted_file';
+  }
+  
   // 移除文件扩展名
   const nameWithoutExt = originalFileName.replace(/\.[^/.]+$/, "");
   
@@ -2904,38 +2923,48 @@ function loadConversionStats() {
         // 解析数值
         const totalConversions = parseInt(stats.total_conversions) || 0;
         const totalFiles = parseInt(stats.total_files) || 0;
-        const avgSpeed = parseFloat(stats.avg_speed.replace('s', '')) || 0.0;
-        const userSatisfaction = parseFloat(stats.user_satisfaction.replace('%', '')) || 0.0;
+        const avgSpeed = parseFloat((stats.avg_speed || '0s').replace('s', '')) || 0.0;
+        const userSatisfaction = parseFloat((stats.user_satisfaction || '0%').replace('%', '')) || 0.0;
         
-        // 启动数字动画
-        animateNumber(document.getElementById('totalConversions'), totalConversions);
-        animateNumber(document.getElementById('totalFiles'), totalFiles);
-        
-        // 特殊处理带单位的数值
+        // 启动数字动画，添加安全检查
+        const totalConversionsElement = document.getElementById('totalConversions');
+        const totalFilesElement = document.getElementById('totalFiles');
         const avgSpeedElement = document.getElementById('avgSpeed');
-        avgSpeedElement.textContent = avgSpeed.toFixed(1) + 's';
-        
         const userSatisfactionElement = document.getElementById('userSatisfaction');
-        userSatisfactionElement.textContent = userSatisfaction.toFixed(1) + '%';
+        
+        if (totalConversionsElement) animateNumber(totalConversionsElement, totalConversions);
+        if (totalFilesElement) animateNumber(totalFilesElement, totalFiles);
+        if (avgSpeedElement) avgSpeedElement.textContent = avgSpeed.toFixed(1) + 's';
+        if (userSatisfactionElement) userSatisfactionElement.textContent = userSatisfaction.toFixed(1) + '%';
         
         // 更新最近转换记录
         updateRecentConversions(data.recent_conversions);
       } else {
         console.error('加载统计数据失败:', data.error);
-        // 使用默认值
-        animateNumber(document.getElementById('totalConversions'), 0);
-        animateNumber(document.getElementById('totalFiles'), 0);
-        document.getElementById('avgSpeed').textContent = '0.0s';
-        document.getElementById('userSatisfaction').textContent = '0.0%';
+        // 使用默认值，添加安全检查
+        const totalConversionsElement = document.getElementById('totalConversions');
+        const totalFilesElement = document.getElementById('totalFiles');
+        const avgSpeedElement = document.getElementById('avgSpeed');
+        const userSatisfactionElement = document.getElementById('userSatisfaction');
+        
+        if (totalConversionsElement) animateNumber(totalConversionsElement, 0);
+        if (totalFilesElement) animateNumber(totalFilesElement, 0);
+        if (avgSpeedElement) avgSpeedElement.textContent = '0.0s';
+        if (userSatisfactionElement) userSatisfactionElement.textContent = '0.0%';
       }
     })
     .catch(error => {
       console.error('请求统计数据失败:', error);
-      // 使用默认值
-      animateNumber(document.getElementById('totalConversions'), 0);
-      animateNumber(document.getElementById('totalFiles'), 0);
-      document.getElementById('avgSpeed').textContent = '0.0s';
-      document.getElementById('userSatisfaction').textContent = '0.0%';
+      // 使用默认值，添加安全检查
+      const totalConversionsElement = document.getElementById('totalConversions');
+      const totalFilesElement = document.getElementById('totalFiles');
+      const avgSpeedElement = document.getElementById('avgSpeed');
+      const userSatisfactionElement = document.getElementById('userSatisfaction');
+      
+      if (totalConversionsElement) animateNumber(totalConversionsElement, 0);
+      if (totalFilesElement) animateNumber(totalFilesElement, 0);
+      if (avgSpeedElement) avgSpeedElement.textContent = '0.0s';
+      if (userSatisfactionElement) userSatisfactionElement.textContent = '0.0%';
     });
 }
 
@@ -2965,34 +2994,44 @@ function updateRecentConversions(recentData) {
   recentContainer.innerHTML = '';
   
   recentData.forEach(record => {
+    // 安全检查记录数据
+    if (!record || typeof record !== 'object') {
+      console.warn('跳过无效的记录数据:', record);
+      return;
+    }
+    
     const item = document.createElement('div');
     item.className = 'recent-item-modern';
     
-    // 根据转换类型选择图标
+    // 根据转换类型选择图标，添加安全检查
     let icon = 'fas fa-file-pdf';
-    if (record.conversion_type.includes('Word')) {
+    const conversionType = record.conversion_type || '';
+    if (conversionType.includes('Word')) {
       icon = 'fas fa-file-word';
-    } else if (record.conversion_type.includes('图片')) {
+    } else if (conversionType.includes('图片')) {
       icon = 'fas fa-image';
-    } else if (record.conversion_type.includes('文本')) {
+    } else if (conversionType.includes('文本')) {
       icon = 'fas fa-file-alt';
     }
     
     // 生成满意度评分HTML
     let ratingHtml = '';
-    if (record.satisfaction_rating) {
+    const satisfactionRating = record.satisfaction_rating;
+    const recordId = record.id;
+    
+    if (satisfactionRating && typeof satisfactionRating === 'number') {
       // 已有评分，显示星星
       ratingHtml = `
         <div class="rating-display" style="margin-top: 0.5rem;">
-          ${generateStarRating(record.satisfaction_rating, true)}
+          ${generateStarRating(satisfactionRating, true)}
         </div>
       `;
-    } else {
+    } else if (recordId) {
       // 无评分，显示评分按钮
       ratingHtml = `
         <div class="rating-section" style="margin-top: 0.5rem;">
           <div class="rating-label" style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-bottom: 0.25rem;">满意度评分:</div>
-          <div class="rating-stars" data-record-id="${record.id}">
+          <div class="rating-stars" data-record-id="${recordId}">
             ${generateStarRating(0, false)}
           </div>
         </div>
@@ -3004,9 +3043,9 @@ function updateRecentConversions(recentData) {
         <i class="${icon}"></i>
       </div>
       <div class="recent-info-modern">
-        <div class="recent-name-modern">${record.filename}</div>
-        <div class="recent-time-modern">${record.created_at} · ${record.conversion_type}</div>
-        <div class="recent-details-modern">${record.file_size} · ${record.conversion_time}</div>
+        <div class="recent-name-modern">${record.filename || '未知文件'}</div>
+        <div class="recent-time-modern">${record.created_at || ''} · ${record.conversion_type || '未知类型'}</div>
+        <div class="recent-details-modern">${record.file_size || ''} · ${record.conversion_time || ''}</div>
         ${ratingHtml}
       </div>
       <div class="recent-status-modern success">
@@ -3017,7 +3056,7 @@ function updateRecentConversions(recentData) {
     recentContainer.appendChild(item);
     
     // 为评分星星添加点击事件
-    if (!record.satisfaction_rating) {
+    if (!satisfactionRating && recordId) {
       const ratingStars = item.querySelector('.rating-stars');
       if (ratingStars) {
         ratingStars.addEventListener('click', function(e) {
@@ -3025,7 +3064,9 @@ function updateRecentConversions(recentData) {
           if (star) {
             const rating = parseInt(star.dataset.rating);
             const recordId = this.dataset.recordId;
-            submitRating(recordId, rating);
+            if (rating && recordId) {
+              submitRating(recordId, rating);
+            }
           }
         });
       }
@@ -3624,7 +3665,9 @@ function showConversionResult(data) {
     } else {
         // 显示文件下载结果
         const fileSize = data.file_size ? formatFileSize(data.file_size) : '';
-        const outputFileName = getOutputFileName(fileName, selectedType);
+        // 从API响应中获取转换类型，如果没有则使用selectedType
+        const conversionType = data.conversion_type || selectedType || 'unknown';
+        const outputFileName = getOutputFileName(fileName, conversionType);
         
         resultContent.innerHTML = `
             <div class="result-icon-modern">
@@ -3632,7 +3675,7 @@ function showConversionResult(data) {
             </div>
             <div class="result-title-modern">✅ 转换完成</div>
             <div class="result-description-modern">
-                ${selectedType === 'text-to-pdf' ? '文本内容' : `文件 <strong>${fileName}</strong>`} 已成功转换为 ${getTypeName(selectedType)} 格式
+                ${conversionType === 'text-to-pdf' ? '文本内容' : `文件 <strong>${fileName}</strong>`} 已成功转换为 ${getTypeName(conversionType)} 格式
                 ${fileSize ? `<br>文件大小: ${fileSize}` : ''}
                 <br><strong>输出文件名: ${outputFileName}</strong>
             </div>
@@ -3650,11 +3693,8 @@ function showConversionResult(data) {
         
         // 自动触发下载
         setTimeout(() => {
-            const downloadLink = document.getElementById('autoDownloadLink');
-            if (downloadLink) {
-                downloadLink.click();
-                showNotification(`文件 "${outputFileName}" 正在下载...`, 'info');
-            }
+            downloadFile(data.download_url, outputFileName);
+            showNotification(`文件 "${outputFileName}" 正在下载...`, 'info');
         }, 1000);
     }
     
@@ -3967,13 +4007,7 @@ function showBatchConversionResult(data) {
         setTimeout(() => {
             downloadLinks.forEach((link, index) => {
                 setTimeout(() => {
-                    const downloadElement = document.createElement('a');
-                    downloadElement.href = link.url;
-                    downloadElement.download = link.filename;
-                    downloadElement.style.display = 'none';
-                    document.body.appendChild(downloadElement);
-                    downloadElement.click();
-                    document.body.removeChild(downloadElement);
+                    downloadFile(link.url, link.filename);
                     showNotification(`正在下载: ${link.filename}`, 'info');
                 }, index * 1000); // 每个文件间隔1秒下载
             });
@@ -3998,5 +4032,51 @@ animationStyle.textContent = `
     }
 `;
 document.head.appendChild(animationStyle);
+
+// 可靠的下载函数
+function downloadFile(url, filename) {
+    console.log(`开始下载: ${url}`);
+    
+    // 方法1: 使用fetch下载
+    fetch(url)
+        .then(response => {
+            console.log('Download response status:', response.status);
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error(`HTTP ${response.status}`);
+        })
+        .then(blob => {
+            console.log('Download blob size:', blob.size);
+            
+            // 创建下载链接
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+            
+            console.log(`下载成功: ${filename}`);
+        })
+        .catch(error => {
+            console.error(`下载失败: ${error.message}`);
+            
+            // 方法2: 备用下载方法
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`使用备用方法下载: ${filename}`);
+        });
+}
 </script>
 {% endblock %} 

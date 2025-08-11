@@ -155,6 +155,18 @@
     transform: translateY(-2px);
 }
 
+.heart-btn-tertiary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.heart-btn-tertiary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
 .heart-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -245,6 +257,278 @@
         width: 100%;
     }
 }
+
+/* 数字匹配模态框样式 */
+.number-match-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+}
+
+.number-match-modal {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    color: white;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.number-match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 1rem;
+}
+
+.number-match-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.number-match-content {
+    text-align: center;
+}
+
+.number-match-content p {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.number-input-container {
+    margin-bottom: 1.5rem;
+}
+
+.number-input {
+    width: 200px;
+    height: 50px;
+    font-size: 1.5rem;
+    text-align: center;
+    border: none;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+    margin-bottom: 1rem;
+}
+
+.number-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.number-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.number-match-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.match-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: white;
+}
+
+.match-btn.primary {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.match-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+}
+
+.match-btn.secondary {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.match-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.match-status {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.success-message {
+    text-align: center;
+}
+
+.success-message h3 {
+    margin-bottom: 0.5rem;
+    color: #4CAF50;
+}
+
+.success-message p {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.match-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    text-decoration: none;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.waiting-message {
+    text-align: center;
+    color: #FF9800;
+}
+
+.waiting-message h3 {
+    margin-bottom: 0.5rem;
+}
+
+.waiting-message p {
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.error-message {
+    color: #f44336;
+    text-align: center;
+    font-weight: bold;
+}
+
+.info-message {
+    color: #2196F3;
+    text-align: center;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .number-match-modal {
+        padding: 1.5rem;
+        width: 95%;
+    }
+    
+    .number-match-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .number-input {
+        width: 150px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+    
+    .number-match-buttons {
+        flex-direction: column;
+    }
+    
+    .match-actions {
+        flex-direction: column;
+    }
+}
 </style>
 {% endblock %}
 
@@ -272,11 +556,17 @@
                 <i class="fas fa-times"></i>
                 取消匹配
             </button>
+            <button class="heart-btn heart-btn-tertiary" onclick="goToNumberMatch()">
+                <i class="fas fa-key"></i>
+                密码搜寻
+            </button>
             <a href="{% url 'home' %}" class="heart-btn heart-btn-secondary">
                 <i class="fas fa-home"></i>
                 返回首页
             </a>
         </div>
+        
+
     </div>
 </div>
 
@@ -286,6 +576,8 @@ let roomId = null;
 let statusCheckInterval = null;
 let countdownInterval = null;
 let expireTimeout = null;
+let clickCount = 0;
+let clickTimer = null;
 
 async function startHeartLink() {
     try {
@@ -363,8 +655,12 @@ async function startHeartLink() {
                 setTimeout(() => {
                     window.location.href = data.redirect_url;
                 }, 2000);
+            } else if (data.error && data.error.includes('您已有一个正在等待匹配的心动链接请求')) {
+                // 用户已有pending请求，显示取消选项
+                showNotification('您已有一个等待中的匹配请求，请先取消当前请求', 'warning');
+                showCancelOption();
             } else {
-                throw new Error(data.message || '匹配请求失败');
+                throw new Error(data.error || data.message || '匹配请求失败');
             }
         }
         
@@ -390,18 +686,12 @@ async function startHeartLink() {
 
 async function cancelHeartLink() {
     try {
-        if (!currentRequestId) {
-            resetUI();
-            return;
-        }
-        
         const response = await fetch('/tools/api/heart_link/cancel/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCSRFToken()
-            },
-            body: JSON.stringify({ request_id: currentRequestId })
+            }
         });
         
         // 检查响应类型
@@ -626,6 +916,31 @@ function handleReconnect(matchedUser) {
     }
 }
 
+function showCancelOption() {
+    const startBtn = document.getElementById('start-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const statusText = document.getElementById('status-text');
+    const statusDescription = document.getElementById('status-description');
+    
+    // 显示取消选项
+    if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<i class="fas fa-clock"></i> 等待中...';
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.style.display = 'inline-flex';
+    }
+    
+    if (statusText) {
+        statusText.textContent = '您有一个等待中的匹配请求';
+    }
+    
+    if (statusDescription) {
+        statusDescription.textContent = '请点击"取消匹配"按钮取消当前请求，然后重新开始';
+    }
+}
+
 function resetUI() {
     const startBtn = document.getElementById('start-btn');
     const cancelBtn = document.getElementById('cancel-btn');
@@ -740,8 +1055,20 @@ function showNotification(message, type = 'info') {
 
 // 页面加载时检查是否有未完成的匹配请求
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('页面加载完成，初始化秘密点击功能'); // 调试信息
+    
     // 检查用户是否有活跃的聊天室
     checkActiveChatRoom();
+    
+    // 添加点击事件监听器
+    document.addEventListener('click', handleSecretClick);
+    
+    // 添加一个隐藏的调试提示
+    setTimeout(() => {
+        console.log('💡 提示：在页面任意位置点击4次可以触发秘密功能');
+    }, 2000);
+    
+    console.log('测试按钮已添加到页面右上角');
 });
 
 async function rejectReconnect() {
@@ -810,6 +1137,213 @@ async function checkActiveChatRoom() {
     } catch (error) {
         console.error('检查活跃聊天室失败:', error);
     }
+}
+
+// 处理秘密点击事件
+function handleSecretClick(event) {
+    console.log('点击事件触发，当前计数:', clickCount); // 调试信息
+    
+    // 清除之前的计时器
+    if (clickTimer) {
+        clearTimeout(clickTimer);
+    }
+    
+    // 增加点击计数
+    clickCount++;
+    console.log('点击计数增加到:', clickCount); // 调试信息
+    
+    // 设置新的计时器，3秒后重置计数
+    clickTimer = setTimeout(() => {
+        console.log('计时器重置，计数清零'); // 调试信息
+        clickCount = 0;
+    }, 3000);
+    
+    // 如果点击了4次，显示数字匹配页面
+    if (clickCount === 4) {
+        console.log('触发4次点击，显示数字匹配模态框'); // 调试信息
+        clickCount = 0; // 重置计数
+        showNumberMatchModal();
+    }
+}
+
+// 显示数字匹配模态框
+function showNumberMatchModal() {
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.id = 'number-match-modal';
+    modal.innerHTML = `
+        <div class="number-match-overlay">
+            <div class="number-match-modal">
+                <div class="number-match-header">
+                    <h2>🔢 数字匹配</h2>
+                    <button class="modal-close" onclick="closeNumberMatchModal()">×</button>
+                </div>
+                <div class="number-match-content">
+                    <p>输入4位数字，找到相同数字的人开始聊天</p>
+                    <div class="number-input-container">
+                        <input type="text" 
+                               class="number-input" 
+                               id="secretNumberInput" 
+                               placeholder="0000" 
+                               maxlength="4" 
+                               pattern="[0-9]{4}"
+                               autocomplete="off">
+                    </div>
+                    <div class="number-match-buttons">
+                        <button class="match-btn primary" onclick="startSecretMatch()">
+                            <i class="fas fa-search"></i> 开始匹配
+                        </button>
+                        <button class="match-btn secondary" onclick="closeNumberMatchModal()">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                    </div>
+                    <div class="match-status" id="secretMatchStatus" style="display: none;">
+                        <div id="secretMatchContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 添加样式
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(modal);
+    
+    // 聚焦到输入框
+    setTimeout(() => {
+        const input = document.getElementById('secretNumberInput');
+        if (input) {
+            input.focus();
+        }
+    }, 100);
+    
+    // 添加回车键监听
+    document.getElementById('secretNumberInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            startSecretMatch();
+        }
+    });
+}
+
+// 关闭数字匹配模态框
+function closeNumberMatchModal() {
+    const modal = document.getElementById('number-match-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// 开始秘密匹配
+async function startSecretMatch() {
+    const numberInput = document.getElementById('secretNumberInput');
+    const statusDiv = document.getElementById('secretMatchStatus');
+    const contentDiv = document.getElementById('secretMatchContent');
+    
+    const number = numberInput.value.trim();
+    
+    // 验证输入
+    if (!number || number.length !== 4 || !/^\d{4}$/.test(number)) {
+        contentDiv.innerHTML = '<div class="error-message">请输入4位数字</div>';
+        statusDiv.style.display = 'block';
+        return;
+    }
+    
+    // 显示等待状态
+    contentDiv.innerHTML = '<div class="waiting-message">正在匹配数字 ' + number + '...</div>';
+    statusDiv.style.display = 'block';
+    
+    try {
+        const response = await fetch('/tools/api/number-match/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ number: number })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.matched) {
+                // 匹配成功
+                contentDiv.innerHTML = `
+                    <div class="success-message">
+                        <h3>🎉 匹配成功！</h3>
+                        <p>您与 ${data.matched_user.display_name} 开始聊天</p>
+                        <div class="match-actions">
+                            <a href="/tools/chat/enhanced/${data.room_id}/" class="action-btn primary">
+                                💬 开始聊天
+                            </a>
+                            <a href="/tools/video-chat/${data.room_id}/" class="action-btn secondary">
+                                📹 视频通话
+                            </a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 等待匹配
+                contentDiv.innerHTML = `
+                    <div class="waiting-message">
+                        <h3>⏳ 等待匹配</h3>
+                        <p>正在等待输入 ${number} 的用户...</p>
+                        <button class="cancel-btn" onclick="cancelSecretMatch()">
+                            <i class="fas fa-times"></i> 取消匹配
+                        </button>
+                    </div>
+                `;
+            }
+        } else {
+            contentDiv.innerHTML = '<div class="error-message">' + data.error + '</div>';
+        }
+    } catch (error) {
+        console.error('秘密匹配失败:', error);
+        contentDiv.innerHTML = '<div class="error-message">匹配失败，请重试</div>';
+    }
+}
+
+// 取消秘密匹配
+async function cancelSecretMatch() {
+    try {
+        const response = await fetch('/tools/api/number-match/cancel/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('secretMatchContent').innerHTML = '<div class="info-message">已取消匹配</div>';
+        } else {
+            document.getElementById('secretMatchContent').innerHTML = '<div class="error-message">' + data.error + '</div>';
+        }
+    } catch (error) {
+        console.error('取消秘密匹配失败:', error);
+        document.getElementById('secretMatchContent').innerHTML = '<div class="error-message">取消失败，请重试</div>';
+    }
+}
+
+
+
+// 跳转到密码匹配页面
+function goToNumberMatch() {
+    console.log('跳转到密码匹配页面');
+    window.location.href = '/tools/number-match/';
 }
 </script>
 {% endblock %} 

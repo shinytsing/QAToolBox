@@ -57,39 +57,42 @@ class HeartLinkMatcher:
     
     def find_best_match(self, current_user, current_request):
         """找到最佳匹配对象"""
-        # 使用更简单的匹配逻辑，避免复杂的锁操作
-        # 首先尝试找到一个可用的匹配对象
-        available_request = HeartLinkRequest.objects.filter(
+        # 优先匹配等待时间较长的用户
+        # 计算当前用户的等待时间
+        current_wait_time = timezone.now() - current_request.created_at
+        
+        # 查找可用的匹配对象，按等待时间排序
+        available_requests = HeartLinkRequest.objects.filter(
             status='pending',
             requester__is_staff=False,
             requester__is_superuser=False,
             requester__is_active=True,
         ).exclude(
             Q(requester=current_user)
-        ).first()
+        ).order_by('created_at')  # 优先匹配等待时间最长的
         
-        if not available_request:
+        if not available_requests.exists():
             return None
         
-        # 使用乐观锁：尝试更新状态
-        try:
-            # 尝试将对方请求标记为匹配中，避免被其他线程抢走
-            updated = HeartLinkRequest.objects.filter(
-                id=available_request.id,
-                status='pending'
-            ).update(status='matching')
-            
-            if updated == 0:
-                # 如果更新失败，说明已经被其他线程抢走了
-                return None
-            
-            # 重新获取更新后的对象
-            available_request.refresh_from_db()
-            return available_request
-            
-        except Exception as e:
-            print(f"匹配过程中出错: {str(e)}")
-            return None
+        # 尝试匹配等待时间最长的用户
+        for available_request in available_requests:
+            try:
+                # 使用乐观锁：尝试更新状态
+                updated = HeartLinkRequest.objects.filter(
+                    id=available_request.id,
+                    status='pending'
+                ).update(status='matching')
+                
+                if updated > 0:
+                    # 更新成功，重新获取对象
+                    available_request.refresh_from_db()
+                    return available_request
+                    
+            except Exception as e:
+                print(f"匹配过程中出错: {str(e)}")
+                continue
+        
+        return None
     
     def create_match(self, user1, user2):
         """创建匹配"""

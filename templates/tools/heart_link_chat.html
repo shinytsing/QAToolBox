@@ -371,6 +371,8 @@
     padding: 0.5rem;
     border-radius: 50%;
     transition: all 0.3s ease;
+    pointer-events: auto;
+    user-select: none;
 }
 
 .toolbar-btn:hover {
@@ -405,6 +407,8 @@
     display: none;
     backdrop-filter: blur(20px);
     z-index: 1000;
+    min-width: 300px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .emoji-grid {
@@ -628,7 +632,7 @@
         <div class="chat-input-wrapper">
             <div style="position: relative;">
                 <div class="chat-toolbar">
-                    <button class="toolbar-btn" onclick="toggleEmojiPicker()" title="表情">
+                    <button class="toolbar-btn" title="表情" id="emoji-btn" type="button">
                         <i class="fas fa-smile"></i>
                     </button>
                     <button class="toolbar-btn" onclick="document.getElementById('image-upload').click()" title="发送图片">
@@ -641,7 +645,7 @@
                         <i class="fas fa-paperclip"></i>
                     </button>
                 </div>
-                <div class="emoji-picker" id="emoji-picker">
+                <div class="emoji-picker" id="emoji-picker" style="display: none;">
                     <div class="emoji-grid">
                         <button class="emoji-item" onclick="insertEmoji('😊')">😊</button>
                         <button class="emoji-item" onclick="insertEmoji('😄')">😄</button>
@@ -721,6 +725,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 定期标记消息为已读
     setInterval(markMessagesAsRead, 5000);
+    
+    // 测试表情按钮功能
+    const emojiBtn = document.getElementById('emoji-btn');
+    if (emojiBtn) {
+        console.log('Emoji button found:', emojiBtn);
+        
+        // 移除可能存在的旧事件监听器
+        emojiBtn.removeEventListener('click', handleEmojiClick);
+        
+        // 添加新的事件监听器
+        emojiBtn.addEventListener('click', handleEmojiClick);
+        
+        // 测试按钮是否可点击
+        emojiBtn.style.pointerEvents = 'auto';
+        emojiBtn.style.cursor = 'pointer';
+        
+        console.log('Emoji button event listener added');
+    } else {
+        console.error('Emoji button not found!');
+    }
+    
+    // 表情按钮点击处理函数
+    function handleEmojiClick(e) {
+        console.log('Emoji button clicked!', e);
+        e.preventDefault();
+        e.stopPropagation();
+        toggleEmojiPicker();
+    }
 });
 
 function loadMessages() {
@@ -892,9 +924,14 @@ function handleKeyDown(event) {
         event.preventDefault();
         event.stopPropagation(); // 阻止事件冒泡
         
-        // 双重检查防止重复发送
+        // 三重检查防止重复发送
         if (!sendCooldown && !document.getElementById('send-btn').disabled) {
-            sendMessage();
+            // 添加额外的防重复检查
+            const input = document.getElementById('chat-input');
+            const content = input.value.trim();
+            if (content) {
+                sendMessage();
+            }
         }
         return false; // 防止重复触发
     }
@@ -988,8 +1025,26 @@ function updateLocalMessageStatus() {
 }
 
 function toggleEmojiPicker() {
+    console.log('toggleEmojiPicker called'); // 调试日志
     const picker = document.getElementById('emoji-picker');
-    picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+    if (!picker) {
+        console.error('Emoji picker not found!');
+        return;
+    }
+    
+    const currentDisplay = picker.style.display;
+    console.log('Current display:', currentDisplay); // 调试日志
+    
+    // 检查当前状态并切换
+    if (currentDisplay === 'none' || currentDisplay === '') {
+        picker.style.display = 'block';
+        console.log('Showing emoji picker');
+    } else {
+        picker.style.display = 'none';
+        console.log('Hiding emoji picker');
+    }
+    
+    console.log('New display:', picker.style.display); // 调试日志
 }
 
 function insertEmoji(emoji) {
@@ -1301,7 +1356,7 @@ window.addEventListener('beforeunload', function() {
 // 点击其他地方隐藏表情选择器
 document.addEventListener('click', function(event) {
     const picker = document.getElementById('emoji-picker');
-    const emojiBtn = event.target.closest('.emoji-btn');
+    const emojiBtn = event.target.closest('.toolbar-btn');
     
     if (!emojiBtn && picker.style.display === 'block') {
         picker.style.display = 'none';

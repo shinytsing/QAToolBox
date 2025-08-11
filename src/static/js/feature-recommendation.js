@@ -3,7 +3,11 @@
  * 处理推荐弹窗显示、用户交互和数据通信
  */
 
-class FeatureRecommendation {
+// 确保在正确的上下文中运行
+(function() {
+    'use strict';
+    
+    class FeatureRecommendation {
     constructor() {
         this.baseUrl = '/tools/api';
         this.currentRecommendations = [];
@@ -352,19 +356,22 @@ class FeatureDiscovery {
     }
 }
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-    // 初始化推荐系统
-    window.featureRecommendation = new FeatureRecommendation();
-    window.featureDiscovery = new FeatureDiscovery();
-    
-    // 添加调试方法到全局（仅在开发环境）
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        window.showRecommendation = () => window.featureRecommendation.showRecommendationManually();
-    }
-});
+
 
 // 导出类供其他模块使用
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { FeatureRecommendation, FeatureDiscovery };
 }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化推荐系统
+        window.featureRecommendation = new FeatureRecommendation();
+        window.featureDiscovery = new FeatureDiscovery();
+        
+        // 添加调试方法到全局（仅在开发环境）
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            window.showRecommendation = () => window.featureRecommendation.showRecommendationManually();
+        }
+    });
+})();

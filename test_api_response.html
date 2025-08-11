@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API响应测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 API响应测试</h1>
+        <p>此页面用于测试PDF转换API的响应，检查download_url是否正确设置</p>
+        
+        <div class="test-section">
+            <h3>📄 PDF转Word测试</h3>
+            <input type="file" id="pdfFile" accept=".pdf">
+            <button onclick="testPdfToWord()">测试PDF转Word</button>
+            <div id="pdfToWordLog" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 Word转PDF测试</h3>
+            <input type="file" id="wordFile" accept=".doc,.docx">
+            <button onclick="testWordToPdf()">测试Word转PDF</button>
+            <div id="wordToPdfLog" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 文本转PDF测试</h3>
+            <textarea id="textContent" placeholder="输入要转换的文本..." rows="4" style="width: 100%; margin: 10px 0;"></textarea>
+            <button onclick="testTextToPdf()">测试文本转PDF</button>
+            <div id="textToPdfLog" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 调试信息</h3>
+            <button onclick="clearLogs()">清除日志</button>
+            <button onclick="testDownloadUrl()">测试下载URL</button>
+        </div>
+    </div>
+
+    <script>
+        function getCSRFToken() {
+            const name = 'csrftoken';
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function addLog(logId, message, type = 'info') {
+            const logArea = document.getElementById(logId);
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logArea.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span>\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        async function testPdfToWord() {
+            const fileInput = document.getElementById('pdfFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                addLog('pdfToWordLog', '请选择PDF文件', 'error');
+                return;
+            }
+            
+            addLog('pdfToWordLog', `开始测试PDF转Word: ${file.name}`);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'pdf-to-word');
+            
+            try {
+                const response = await fetch('/tools/api/pdf-converter/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                const data = await response.json();
+                addLog('pdfToWordLog', `API响应状态: ${response.status}`);
+                addLog('pdfToWordLog', `响应数据: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.success) {
+                    addLog('pdfToWordLog', `✅ 转换成功！`, 'success');
+                    addLog('pdfToWordLog', `下载URL: ${data.download_url || 'undefined'}`);
+                    addLog('pdfToWordLog', `文件名: ${data.filename || 'undefined'}`);
+                    addLog('pdfToWordLog', `转换类型: ${data.conversion_type || 'undefined'}`);
+                    
+                    if (data.download_url) {
+                        addLog('pdfToWordLog', '✅ download_url已设置', 'success');
+                    } else {
+                        addLog('pdfToWordLog', '❌ download_url未设置', 'error');
+                    }
+                } else {
+                    addLog('pdfToWordLog', `❌ 转换失败: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog('pdfToWordLog', `❌ 请求错误: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testWordToPdf() {
+            const fileInput = document.getElementById('wordFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                addLog('wordToPdfLog', '请选择Word文件', 'error');
+                return;
+            }
+            
+            addLog('wordToPdfLog', `开始测试Word转PDF: ${file.name}`);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'word-to-pdf');
+            
+            try {
+                const response = await fetch('/tools/api/pdf-converter/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                const data = await response.json();
+                addLog('wordToPdfLog', `API响应状态: ${response.status}`);
+                addLog('wordToPdfLog', `响应数据: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.success) {
+                    addLog('wordToPdfLog', `✅ 转换成功！`, 'success');
+                    addLog('wordToPdfLog', `下载URL: ${data.download_url || 'undefined'}`);
+                    addLog('wordToPdfLog', `文件名: ${data.filename || 'undefined'}`);
+                    addLog('wordToPdfLog', `转换类型: ${data.conversion_type || 'undefined'}`);
+                    
+                    if (data.download_url) {
+                        addLog('wordToPdfLog', '✅ download_url已设置', 'success');
+                    } else {
+                        addLog('wordToPdfLog', '❌ download_url未设置', 'error');
+                    }
+                } else {
+                    addLog('wordToPdfLog', `❌ 转换失败: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog('wordToPdfLog', `❌ 请求错误: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testTextToPdf() {
+            const textContent = document.getElementById('textContent').value.trim();
+            
+            if (!textContent) {
+                addLog('textToPdfLog', '请输入文本内容', 'error');
+                return;
+            }
+            
+            addLog('textToPdfLog', `开始测试文本转PDF`);
+            
+            const formData = new FormData();
+            formData.append('text_content', textContent);
+            formData.append('type', 'text-to-pdf');
+            
+            try {
+                const response = await fetch('/tools/api/pdf-converter/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+                
+                const data = await response.json();
+                addLog('textToPdfLog', `API响应状态: ${response.status}`);
+                addLog('textToPdfLog', `响应数据: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.success) {
+                    addLog('textToPdfLog', `✅ 转换成功！`, 'success');
+                    addLog('textToPdfLog', `下载URL: ${data.download_url || 'undefined'}`);
+                    addLog('textToPdfLog', `文件名: ${data.filename || 'undefined'}`);
+                    addLog('textToPdfLog', `转换类型: ${data.conversion_type || 'undefined'}`);
+                    
+                    if (data.download_url) {
+                        addLog('textToPdfLog', '✅ download_url已设置', 'success');
+                    } else {
+                        addLog('textToPdfLog', '❌ download_url未设置', 'error');
+                    }
+                } else {
+                    addLog('textToPdfLog', `❌ 转换失败: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog('textToPdfLog', `❌ 请求错误: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('pdfToWordLog').innerHTML = '';
+            document.getElementById('wordToPdfLog').innerHTML = '';
+            document.getElementById('textToPdfLog').innerHTML = '';
+        }
+        
+        function testDownloadUrl() {
+            const testUrl = '/tools/api/pdf-converter/download/test_file.pdf/';
+            addLog('pdfToWordLog', `测试下载URL: ${testUrl}`);
+            
+            fetch(testUrl)
+                .then(response => {
+                    addLog('pdfToWordLog', `下载URL响应状态: ${response.status}`);
+                    if (response.status === 404) {
+                        addLog('pdfToWordLog', '❌ 下载URL返回404，说明路由配置正确但文件不存在', 'error');
+                    } else if (response.status === 200) {
+                        addLog('pdfToWordLog', '✅ 下载URL可访问', 'success');
+                    } else {
+                        addLog('pdfToWordLog', `下载URL响应: ${response.status}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog('pdfToWordLog', `❌ 下载URL测试失败: ${error.message}`, 'error');
+                });
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('pdfToWordLog', 'PDF转Word测试准备就绪');
+            addLog('wordToPdfLog', 'Word转PDF测试准备就绪');
+            addLog('textToPdfLog', '文本转PDF测试准备就绪');
+        });
+    </script>
+</body>
+</html>

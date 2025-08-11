@@ -4,6 +4,9 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+import random
+import json
+from django.utils import timezone
 
 # 功能推荐系统页面视图函数
 @login_required
@@ -110,7 +113,15 @@ def pdf_converter_api(request):
 @login_required
 def pdf_converter_status_api(request):
     """PDF转换器状态API"""
-    return JsonResponse({'success': True, 'status': 'ready'})
+    try:
+        # 导入真正的PDF转换器状态检查函数
+        from .pdf_converter_api import pdf_converter_status
+        return pdf_converter_status(request)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'状态检查失败: {str(e)}'
+        }, status=500)
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -186,11 +197,94 @@ def tarot_daily_energy_api(request):
 
 # 食物随机选择器相关API
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["POST"])
 @login_required
 def food_randomizer_pure_random_api(request):
-    """纯随机食物选择API"""
-    return JsonResponse({'success': True, 'food': {}})
+    """纯随机食物选择API - 使用真实数据"""
+    try:
+        data = json.loads(request.body)
+        animation_duration = data.get('animation_duration', 3000)
+        
+        # 从所有活跃食物中完全随机选择
+        from apps.tools.models import FoodItem, FoodRandomizationSession, FoodHistory
+        available_foods = FoodItem.objects.filter(is_active=True)
+        
+        if not available_foods.exists():
+            return JsonResponse({
+                'success': False,
+                'error': '没有可用的食物数据'
+            })
+        
+        # 随机选择一个食物
+        import random
+        selected_food = random.choice(available_foods)
+        
+        # 获取备选食物（完全随机）
+        alternative_foods = list(FoodItem.objects.filter(
+            is_active=True
+        ).exclude(id=selected_food.id).order_by('?')[:5])
+        
+        # 创建随机选择会话记录
+        session = FoodRandomizationSession.objects.create(
+            user=request.user,
+            meal_type='mixed',
+            cuisine_preference='mixed',
+            status='completed',
+            animation_duration=animation_duration,
+            selected_food=selected_food,
+            alternative_foods=[food.id for food in alternative_foods],
+            completed_at=timezone.now()
+        )
+        
+        # 创建历史记录
+        FoodHistory.objects.create(
+            user=request.user,
+            food_item=selected_food,
+            meal_type='mixed',
+            session=session
+        )
+        
+        # 构建响应数据
+        response_data = {
+            'success': True,
+            'session_id': session.id,
+            'selected_food': {
+                'id': selected_food.id,
+                'name': selected_food.name,
+                'description': selected_food.description,
+                'image_url': selected_food.image_url,
+                'cuisine': selected_food.get_cuisine_display(),
+                'difficulty': selected_food.get_difficulty_display(),
+                'cooking_time': selected_food.cooking_time,
+                'ingredients': selected_food.ingredients,
+                'tags': selected_food.tags,
+                'meal_types': selected_food.meal_types,
+                'recipe_url': selected_food.recipe_url,
+                'popularity_score': selected_food.popularity_score
+            },
+            'alternative_foods': [
+                {
+                    'id': food.id,
+                    'name': food.name,
+                    'description': food.description,
+                    'image_url': food.image_url,
+                    'cuisine': food.get_cuisine_display(),
+                    'difficulty': food.get_difficulty_display(),
+                    'cooking_time': food.cooking_time
+                }
+                for food in alternative_foods
+            ],
+            'message': f'纯随机为您选择了 {selected_food.name}'
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"纯随机食物选择失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'纯随机选择失败: {str(e)}'
+        })
 
 @csrf_exempt
 @require_http_methods(["GET"])

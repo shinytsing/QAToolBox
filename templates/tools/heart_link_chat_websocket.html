@@ -628,7 +628,7 @@
         <div class="chat-input-wrapper">
             <div style="position: relative;">
                 <div class="chat-toolbar">
-                    <button class="toolbar-btn" onclick="toggleEmojiPicker()" title="表情">
+                    <button class="toolbar-btn" title="表情" id="emoji-btn">
                         <i class="fas fa-smile"></i>
                     </button>
                     <button class="toolbar-btn" onclick="document.getElementById('image-upload').click()" title="发送图片">
@@ -641,7 +641,7 @@
                         <i class="fas fa-paperclip"></i>
                     </button>
                 </div>
-                <div class="emoji-picker" id="emoji-picker">
+                <div class="emoji-picker" id="emoji-picker" style="display: none;">
                     <div class="emoji-grid">
                         <button class="emoji-item" onclick="insertEmoji('😊')">😊</button>
                         <button class="emoji-item" onclick="insertEmoji('😄')">😄</button>
@@ -678,7 +678,7 @@
                 onkeydown="handleKeyDown(event)"
                 oninput="autoResize(this)"
             ></textarea>
-            <button class="chat-send-btn" onclick="sendMessage()" id="send-btn">
+            <button class="chat-send-btn" id="send-btn">
                 <i class="fas fa-paper-plane"></i>
             </button>
         </div>
@@ -719,9 +719,90 @@ document.addEventListener('DOMContentLoaded', function() {
     // 定期更新在线状态
     setInterval(() => updateOnlineStatus('online'), 30000);
     
-    // 定期标记消息为已读
-    setInterval(markMessagesAsRead, 5000);
+    // 定期标记消息为已读（更频繁）
+    setInterval(() => {
+        // 检查是否有未读消息
+        const unreadMessages = document.querySelectorAll('.message.other .message-status');
+        let hasUnread = false;
+        unreadMessages.forEach(statusElement => {
+            if (statusElement.textContent === '未读') {
+                hasUnread = true;
+            }
+        });
+        
+        if (hasUnread) {
+            console.log('Found unread messages, marking as read');
+            markMessagesAsRead();
+        }
+    }, 2000);
+    
+    // 初始化表情按钮功能
+    const emojiBtn = document.getElementById('emoji-btn');
+    if (emojiBtn) {
+        console.log('Emoji button found:', emojiBtn);
+        
+        // 移除可能存在的旧事件监听器
+        emojiBtn.removeEventListener('click', handleEmojiClick);
+        
+        // 添加新的事件监听器
+        emojiBtn.addEventListener('click', handleEmojiClick);
+        
+        // 确保按钮可点击
+        emojiBtn.style.pointerEvents = 'auto';
+        emojiBtn.style.cursor = 'pointer';
+        
+        console.log('Emoji button event listener added');
+    } else {
+        console.error('Emoji button not found!');
+    }
+    
+    // 初始化发送按钮功能
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        console.log('Send button found:', sendBtn);
+        
+        // 移除可能存在的旧事件监听器
+        sendBtn.removeEventListener('click', handleSendClick);
+        
+        // 添加新的事件监听器
+        sendBtn.addEventListener('click', handleSendClick);
+        
+        console.log('Send button event listener added');
+    } else {
+        console.error('Send button not found!');
+    }
 });
+
+// 表情按钮点击处理函数
+function handleEmojiClick(e) {
+    console.log('Emoji button clicked!', e);
+    e.preventDefault();
+    e.stopPropagation();
+    toggleEmojiPicker();
+}
+
+// 发送按钮点击处理函数
+function handleSendClick(e) {
+    console.log('Send button clicked!', e);
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // 检查冷却状态
+    if (sendCooldown) {
+        console.log('Send button blocked by cooldown');
+        return;
+    }
+    
+    // 检查按钮状态
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn.disabled) {
+        console.log('Send button blocked by disabled state');
+        return;
+    }
+    
+    console.log('Sending message via button click');
+    sendMessage();
+}
 
 function loadMessages() {
     fetch(`/tools/api/chat/${roomId}/messages/`)
@@ -729,6 +810,8 @@ function loadMessages() {
         .then(data => {
             if (data.success && data.messages) {
                 displayMessages(data.messages);
+                // 立即标记消息为已读
+                markMessagesAsRead();
             } else if (data.room_ended) {
                 // 聊天室已结束，显示提示并禁用输入
                 showRoomEndedMessage();
@@ -753,6 +836,9 @@ function displayMessages(messages) {
         noMessages.remove();
     }
     
+    // 更新现有消息的已读状态
+    updateExistingMessageStatus(messages);
+    
     // 显示新消息
     messages.forEach(message => {
         if (message.id > lastMessageId) {
@@ -760,6 +846,31 @@ function displayMessages(messages) {
             lastMessageId = Math.max(lastMessageId, message.id);
         }
     });
+}
+
+// 更新现有消息的已读状态
+function updateExistingMessageStatus(messages) {
+    let hasUpdates = false;
+    
+    messages.forEach(message => {
+        const existingMessage = document.querySelector(`[data-message-id="${message.id}"]`);
+        if (existingMessage) {
+            const statusElement = existingMessage.querySelector('.message-status');
+            if (statusElement && !message.is_own) {
+                // 更新已读状态
+                if (message.is_read && statusElement.textContent === '未读') {
+                    statusElement.textContent = '已读';
+                    statusElement.style.color = '#4CAF50';
+                    console.log(`Updated message ${message.id} status to read`);
+                    hasUpdates = true;
+                }
+            }
+        }
+    });
+    
+    if (hasUpdates) {
+        console.log('Updated existing message read status');
+    }
 }
 
 function addMessageToChat(message) {
@@ -820,20 +931,29 @@ function addMessageToChat(message) {
 }
 
 function sendMessage() {
+    console.log('sendMessage called, sendCooldown:', sendCooldown);
+    
+    // 检查冷却状态
     if (sendCooldown) {
+        console.log('Message blocked by cooldown');
         return;
     }
     
     const input = document.getElementById('chat-input');
     const content = input.value.trim();
     
-    if (!content) return;
+    if (!content) {
+        console.log('Message blocked: empty content');
+        return;
+    }
     
-    // 立即设置发送冷却，防止重复发送
+    // 立即设置冷却，防止重复发送
     setSendCooldown(1000);
     
     const sendBtn = document.getElementById('send-btn');
     sendBtn.disabled = true;
+    
+    console.log('Sending message:', content);
     
     fetch(`/tools/api/chat/${roomId}/send/`, {
         method: 'POST',
@@ -872,6 +992,7 @@ function sendMessage() {
 }
 
 function setSendCooldown(duration) {
+    console.log('Setting send cooldown for', duration, 'ms');
     sendCooldown = true;
     const cooldownElement = document.getElementById('send-cooldown');
     cooldownElement.textContent = '发送冷却中...';
@@ -884,19 +1005,42 @@ function setSendCooldown(duration) {
     sendCooldownTimer = setTimeout(() => {
         sendCooldown = false;
         cooldownElement.textContent = '';
+        console.log('Send cooldown expired');
     }, duration);
 }
 
 function handleKeyDown(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        event.stopPropagation(); // 阻止事件冒泡
+        event.stopPropagation();
         
-        // 双重检查防止重复发送
-        if (!sendCooldown && !document.getElementById('send-btn').disabled) {
-            sendMessage();
+        console.log('Enter key pressed, sendCooldown:', sendCooldown);
+        
+        // 检查冷却状态
+        if (sendCooldown) {
+            console.log('Enter blocked by cooldown');
+            return false;
         }
-        return false; // 防止重复触发
+        
+        // 检查按钮状态
+        const sendBtn = document.getElementById('send-btn');
+        if (sendBtn.disabled) {
+            console.log('Enter blocked by disabled button');
+            return false;
+        }
+        
+        // 检查内容
+        const input = document.getElementById('chat-input');
+        const content = input.value.trim();
+        if (!content) {
+            console.log('Enter blocked: empty content');
+            return false;
+        }
+        
+        console.log('Sending message via Enter key');
+        sendMessage();
+        
+        return false;
     }
 }
 
@@ -936,8 +1080,13 @@ function markMessagesAsRead() {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.marked_count > 0) {
+            console.log(`Marked ${data.marked_count} messages as read`);
             // 更新本地消息状态
             updateLocalMessageStatus();
+            // 重新加载消息以获取最新的已读状态
+            setTimeout(() => {
+                loadMessages();
+            }, 500);
         }
     })
     .catch(error => console.error('Error marking messages as read:', error));
@@ -979,12 +1128,37 @@ function disableChatInput() {
 function updateLocalMessageStatus() {
     // 更新本地消息的已读状态显示
     const messages = document.querySelectorAll('.message.other .message-status');
+    let hasUpdates = false;
+    
     messages.forEach(statusElement => {
         if (statusElement.textContent === '未读') {
             statusElement.textContent = '已读';
             statusElement.style.color = '#4CAF50';
+            hasUpdates = true;
         }
     });
+    
+    if (hasUpdates) {
+        console.log('Updated local message status to read');
+    }
+}
+
+// 改进的已读状态更新函数
+function updateMessageReadStatus() {
+    // 获取所有未读消息
+    const unreadMessages = document.querySelectorAll('.message.other .message-status');
+    let hasUnread = false;
+    
+    unreadMessages.forEach(statusElement => {
+        if (statusElement.textContent === '未读') {
+            hasUnread = true;
+        }
+    });
+    
+    // 如果有未读消息，标记为已读
+    if (hasUnread) {
+        markMessagesAsRead();
+    }
 }
 
 function toggleEmojiPicker() {

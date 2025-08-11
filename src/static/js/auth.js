@@ -3,7 +3,11 @@
  * 处理登录、登出、token管理等功能
  */
 
-// 用户登出函数
+// 确保在正确的上下文中运行
+(function() {
+    'use strict';
+    
+    // 用户登出函数
 async function logoutUser() {
     try {
         // 清除所有本地存储的token和用户数据
@@ -280,3 +284,4 @@ window.AuthUtils = {
     getCookie,
     showNotification
 };
+})();

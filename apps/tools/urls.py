@@ -7,7 +7,7 @@ from .views import (
     fortune_analyzer, web_crawler, self_analysis, storyboard, 
     fitness_center, training_plan_editor, life_diary, life_diary_progressive, 
     emo_diary, creative_writer, meditation_guide, peace_meditation_view, music_healing,
-    heart_link, heart_link_chat, douyin_analyzer, triple_awakening_dashboard, copilot_page,
+    heart_link, heart_link_chat, chat_enhanced, douyin_analyzer, triple_awakening_dashboard, copilot_page,
     desire_dashboard, vanity_os_dashboard, vanity_rewards, sponsor_hall_of_fame,
     based_dev_avatar, vanity_todo_list, travel_guide, fitness_community,
     fitness_profile, fitness_tools, get_vanity_wealth_api, add_sin_points_api, music_api,
@@ -23,8 +23,12 @@ from .views import (
     create_heart_link_request_api, cancel_heart_link_request_api, check_heart_link_status_api,
     cleanup_heart_link_api,
     # 聊天相关API
-    get_chat_messages_api, send_message_api, send_image_api, send_audio_api, send_file_api,
+    get_chat_messages_api, send_message_api, send_image_api, send_audio_api, send_file_api, send_video_api,
     delete_message_api, mark_messages_read_api, update_online_status_api, get_online_users_api,
+               # 用户资料相关API
+           get_user_profile_api, get_chat_room_participants_api,
+           # 数字匹配API
+           number_match_api, cancel_number_match_api,
     # Desire相关API
     get_desire_dashboard_api, add_desire_api, check_desire_fulfillment_api, generate_ai_image_api,
     get_desire_progress_api, get_fulfillment_history_api, get_desire_todos_api, add_desire_todo_api,
@@ -54,13 +58,18 @@ from .views import (
     record_exhaustion_audio_api, create_exhaustion_proof_api, create_copilot_collaboration_api,
     # 生活日记相关API
     life_diary_api, emo_diary_api, creative_writer_api, self_analysis_api, storyboard_api,
-    # 添加缺失的页面视图函数导入
-    tarot_reading_view, tarot_diary_view, meetsomeone_dashboard_view,
+               # 添加缺失的页面视图函数导入
+           tarot_reading_view, tarot_diary_view, meetsomeone_dashboard_view,
+           chat_entrance_view, heart_link_test_view, click_test_view, number_match_view, video_chat_view,
     meetsomeone_timeline_view, meetsomeone_graph_view,
     # 功能推荐系统API视图函数
     feature_recommendations_api, feature_list_api, recommendation_stats_api, resolve_url_api,
     # 打卡相关API
-    get_checkin_calendar_api
+    get_checkin_calendar_api,
+    # 食物随机选择器相关API
+    start_food_randomization_api, pause_food_randomization_api, rate_food_api,
+    # 食物随机选择器页面视图函数
+    food_randomizer
 )
 from .missing_views import (
     # 功能推荐系统页面视图函数
@@ -78,7 +87,7 @@ from .missing_views import (
     # 健身相关API
     follow_fitness_user_api, get_fitness_achievements_api, share_achievement_api,
     # PDF转换器相关API
-    pdf_converter_api, pdf_converter_status_api, pdf_converter_stats_api, pdf_converter_rating_api,
+    pdf_converter_api, pdf_converter_status_api, pdf_converter_rating_api,
     # 签到相关API
     checkin_add_api, checkin_delete_api_simple, checkin_delete_api,
     # 塔罗牌相关API
@@ -101,7 +110,7 @@ from .missing_views import (
     # Photos相关API
     api_photos
 )
-from .pdf_converter_api import pdf_converter_batch  # 添加PDF转换器批量API导入
+from .pdf_converter_api import pdf_converter_batch, pdf_download_view, pdf_converter_stats_api  # 添加PDF转换器批量API、下载视图和统计API导入
 from django.shortcuts import render
 
 # Mode主页面视图函数
@@ -186,7 +195,13 @@ urlpatterns = [
     path('peace_meditation/', peace_meditation_view, name='peace_meditation'),
     path('music_healing/', music_healing, name='music_healing'),
     path('heart_link/', heart_link, name='heart_link'),
+    path('heart_link/test/', heart_link_test_view, name='heart_link_test'), # 测试页面（无需登录）
+    path('click-test/', click_test_view, name='click_test'), # 点击测试页面（无需登录）
     path('heart_link/chat/<str:room_id>/', heart_link_chat, name='heart_link_chat'),
+    path('chat/enhanced/<str:room_id>/', chat_enhanced, name='chat_enhanced'),
+    path('chat/', chat_entrance_view, name='chat_entrance'), # 聊天入口页面
+    path('number-match/', number_match_view, name='number_match'), # 数字匹配页面
+    path('video-chat/<str:room_id>/', video_chat_view, name='video_chat'), # 视频对话页面
     path('douyin_analyzer/', douyin_analyzer, name='douyin_analyzer'),
     path('triple_awakening/', triple_awakening_dashboard, name='triple_awakening_dashboard'),
     path('copilot/', copilot_page, name='copilot_page'),
@@ -197,6 +212,7 @@ urlpatterns = [
     path('based_dev_avatar/', based_dev_avatar, name='based_dev_avatar'),
     path('vanity_todo_list/', vanity_todo_list, name='vanity_todo_list'),
     path('travel_guide/', travel_guide, name='travel_guide'),
+    path('food_randomizer/', food_randomizer, name='food_randomizer'),
     path('fitness/', fitness_center, name='fitness'),  # 添加fitness主页面
     path('fitness/community/', fitness_community, name='fitness_community'),
     path('fitness/profile/', fitness_profile, name='fitness_profile'),
@@ -225,8 +241,8 @@ urlpatterns = [
     path('api/resolve_url/', resolve_url_api, name='resolve_url_api'),
     path('api/feature_list/', feature_list_api, name='feature_list_api'),
     path('api/recommendation_stats/', recommendation_stats_api, name='recommendation_stats_api'),
-    path('api/achievements/', lambda request: JsonResponse({'success': True, 'achievements': []}), name='achievements_api'),
-    path('api/deepseek/', lambda request: JsonResponse({'success': True, 'response': ''}), name='deepseek_api'),
+    path('api/achievements/', achievements_api, name='achievements_api'),
+    path('api/deepseek/', deepseek_api, name='deepseek_api'),
     
     # 旅游攻略API
     path('api/travel_guide/', travel_guide_api, name='travel_guide_api'),
@@ -248,7 +264,7 @@ urlpatterns = [
     # BOSS直聘相关API
     path('api/boss/qr_screenshot/', generate_boss_qr_code_api, name='generate_boss_qr_code_api'),
     path('api/boss/login_page_url/', get_boss_login_page_url_api, name='get_boss_login_page_url_api'),
-    path('api/boss/login_page_screenshot/', lambda request: JsonResponse({'success': True, 'screenshot_url': ''}), name='get_boss_login_page_screenshot_api'),
+    path('api/boss/login_page_screenshot/', get_boss_login_page_screenshot_api, name='get_boss_login_page_screenshot_api'),
     path('api/boss/user_token/', get_boss_user_token_api, name='get_boss_user_token_api'),
     path('api/boss/check_login_selenium/', check_boss_login_status_selenium_api, name='check_boss_login_status_selenium_api'),
     path('api/boss/logout/', boss_logout_api, name='boss_logout_api'),
@@ -257,8 +273,8 @@ urlpatterns = [
     path('api/boss/crawler_status/', get_crawler_status_api, name='get_crawler_status_api'),
     
     # 求职相关API
-    path('api/job_search/create_request/', lambda request: JsonResponse({'success': True, 'request_id': ''}), name='create_job_search_request_api'),
-    path('api/job_search/requests/', lambda request: JsonResponse({'success': True, 'requests': []}), name='get_job_search_requests_api'),
+    path('api/job_search/create_request/', create_job_search_request_api, name='create_job_search_request_api'),
+    path('api/job_search/requests/', get_job_search_requests_api, name='get_job_search_requests_api'),
     path('api/job_search/applications/', get_job_applications_api, name='get_job_applications_api'),
     path('api/job_search/profile/', get_job_profile_api, name='get_job_profile_api'),
     path('api/job_search/profile/save/', save_job_profile_api, name='save_job_profile_api'),
@@ -278,11 +294,16 @@ urlpatterns = [
     path('api/chat/<str:room_id>/send/', send_message_api, name='send_message_api'),
     path('api/chat/<str:room_id>/send-image/', send_image_api, name='send_image_api'),
     path('api/chat/<str:room_id>/send-audio/', send_audio_api, name='send_audio_api'),
-    path('api/chat/<str:room_id>/send-file/', send_file_api, name='send_file_api'),
+               path('api/chat/<str:room_id>/send-file/', send_file_api, name='send_file_api'),
+           path('api/chat/<str:room_id>/send-video/', send_video_api, name='send_video_api'),
     path('api/chat/<str:room_id>/delete-message/<int:message_id>/', delete_message_api, name='delete_message_api'),
-    path('api/chat/<str:room_id>/mark-read/', mark_messages_read_api, name='mark_messages_read_api'),
-    path('api/chat/online-status/', update_online_status_api, name='update_online_status_api'),
+    path('api/chat/<str:room_id>/mark_read/', mark_messages_read_api, name='mark_messages_read_api'),
+    path('api/chat/online_status/', update_online_status_api, name='update_online_status_api'),
     path('api/chat/<str:room_id>/online_users/', get_online_users_api, name='get_online_users_api'),
+    path('api/chat/<str:room_id>/participants/', get_chat_room_participants_api, name='get_chat_room_participants_api'),
+    
+    # 用户资料相关API路由
+    path('api/user/<int:user_id>/profile/', get_user_profile_api, name='get_user_profile_api'),
     
     # Desire相关API路由
     path('api/desire_dashboard/', get_desire_dashboard_api, name='get_desire_dashboard_api'),
@@ -302,8 +323,8 @@ urlpatterns = [
     path('api/vanity_tasks/', get_vanity_tasks_api, name='get_vanity_tasks_api'),
     path('api/vanity_tasks/add/', add_vanity_task_api, name='add_vanity_task_api'),
     path('api/vanity_tasks/complete/', complete_vanity_task_api, name='complete_vanity_task_api'),
-    path('api/vanity_tasks/stats/', lambda request: JsonResponse({'success': True, 'stats': {}}), name='get_vanity_tasks_stats_api'),
-    path('api/vanity_tasks/delete/', lambda request: JsonResponse({'success': True}), name='delete_vanity_task_api'),
+    path('api/vanity_tasks/stats/', get_vanity_tasks_stats_api, name='get_vanity_tasks_stats_api'),
+    path('api/vanity_tasks/delete/', delete_vanity_task_api, name='delete_vanity_task_api'),
     path('api/sponsors/', get_sponsors_api, name='get_sponsors_api'),
     path('api/sponsors/add/', add_sponsor_api, name='add_sponsor_api'),
     
@@ -330,9 +351,9 @@ urlpatterns = [
     
     # Fitness相关API路由
     path('api/fitness/', fitness_api, name='fitness_api'),
-    path('api/fitness_community/follow/', lambda request: JsonResponse({'success': True}), name='follow_fitness_user_api'),
-    path('api/fitness_community/achievements/', lambda request: JsonResponse({'success': True, 'achievements': []}), name='get_fitness_achievements_api'),
-    path('api/fitness_community/share_achievement/', lambda request: JsonResponse({'success': True}), name='share_achievement_api'),
+    path('api/fitness_community/follow/', follow_fitness_user_api, name='follow_fitness_user_api'),
+    path('api/fitness_community/achievements/', get_fitness_achievements_api, name='get_fitness_achievements_api'),
+    path('api/fitness_community/share_achievement/', share_achievement_api, name='share_achievement_api'),
     path('api/fitness_community/profile/', get_fitness_user_profile_api, name='get_fitness_user_profile_api'),
     
     # Mode相关API路由
@@ -366,65 +387,69 @@ urlpatterns = [
     path('api/self-analysis/', self_analysis_api, name='self_analysis_api'),
     
     # PDF Converter相关API路由
-    path('api/pdf-converter/', lambda request: JsonResponse({'success': True, 'message': 'PDF转换功能'}), name='pdf_converter_api'),
-    path('api/pdf-converter/status/', lambda request: JsonResponse({'success': True, 'status': 'ready'}), name='pdf_converter_status'),
-    path('api/pdf-converter/stats/', lambda request: JsonResponse({'success': True, 'stats': {}}), name='pdf_converter_stats_api'),
-    path('api/pdf-converter/rating/', lambda request: JsonResponse({'success': True}), name='pdf_converter_rating_api'),
+    path('api/pdf-converter/', pdf_converter_api, name='pdf_converter_api'),
+    path('api/pdf-converter/status/', pdf_converter_status_api, name='pdf_converter_status'),
+    path('api/pdf-converter/stats/', pdf_converter_stats_api, name='pdf_converter_stats_api'),
+    path('api/pdf-converter/rating/', pdf_converter_rating_api, name='pdf_converter_rating_api'),
     path('api/pdf-converter/batch/', pdf_converter_batch, name='pdf_converter_batch'),
+    path('api/pdf-converter/download/<str:filename>/', pdf_download_view, name='pdf_download_view'),
     
-    # 临时API路由（使用lambda函数，后续需要实现具体函数）
     # 签到相关API
     path('api/checkin/calendar/', get_checkin_calendar_api, name='checkin_calendar_api'),
-    path('api/checkin/add/', lambda request: JsonResponse({'success': True}), name='checkin_add_api'),
-    path('api/checkin/delete/', lambda request: JsonResponse({'success': True}), name='checkin_delete_api_simple'),  # 添加不带参数的版本
-    path('api/checkin/delete/<int:checkin_id>/', lambda request, checkin_id: JsonResponse({'success': True}), name='checkin_delete_api'),
+    
+    # 数字匹配API
+    path('api/number-match/', number_match_api, name='number_match_api'),
+    path('api/number-match/cancel/', cancel_number_match_api, name='cancel_number_match_api'),
+    path('api/checkin/add/', checkin_add_api, name='checkin_add_api'),
+    path('api/checkin/delete/', checkin_delete_api_simple, name='checkin_delete_api_simple'),  # 添加不带参数的版本
+    path('api/checkin/delete/<int:checkin_id>/', checkin_delete_api, name='checkin_delete_api'),
     
     # 塔罗牌相关API
-    path('api/tarot/initialize-data/', lambda request: JsonResponse({'success': True, 'initialized': True}), name='initialize_tarot_data_api'),
-    path('api/tarot/spreads/', lambda request: JsonResponse({'success': True, 'spreads': []}), name='tarot_spreads_api'),
-    path('api/tarot/create-reading/', lambda request: JsonResponse({'success': True, 'reading': {}}), name='tarot_create_reading_api'),
-    path('api/tarot/readings/', lambda request: JsonResponse({'success': True, 'readings': []}), name='tarot_readings_api'),
-    path('api/tarot/daily-energy/', lambda request: JsonResponse({'success': True, 'energy': {}}), name='tarot_daily_energy_api'),
+    path('api/tarot/initialize-data/', initialize_tarot_data_api, name='initialize_tarot_data_api'),
+    path('api/tarot/spreads/', tarot_spreads_api, name='tarot_spreads_api'),
+    path('api/tarot/create-reading/', tarot_create_reading_api, name='tarot_create_reading_api'),
+    path('api/tarot/readings/', tarot_readings_api, name='tarot_readings_api'),
+    path('api/tarot/daily-energy/', tarot_daily_energy_api, name='tarot_daily_energy_api'),
     
     # 冥想音频API
     path('api/meditation-audio/', meditation_audio_api, name='meditation_audio_api'),
     
     # 食物随机选择器API
-    path('api/food-randomizer/pure-random/', lambda request: JsonResponse({'success': True, 'food': {}}), name='food_randomizer_pure_random_api'),
-    path('api/food-randomizer/statistics/', lambda request: JsonResponse({'success': True, 'statistics': {}}), name='food_randomizer_statistics_api'),
-    path('api/food-randomizer/history/', lambda request: JsonResponse({'success': True, 'history': []}), name='food_randomizer_history_api'),
+    path('api/food-randomizer/pure-random/', food_randomizer_pure_random_api, name='food_randomizer_pure_random_api'),
+    path('api/food-randomizer/statistics/', food_randomizer_statistics_api, name='food_randomizer_statistics_api'),
+    path('api/food-randomizer/history/', food_randomizer_history_api, name='food_randomizer_history_api'),
     
     # Food相关API路由
-    path('api/food-randomizer/start/', lambda request: JsonResponse({'success': True, 'message': '开始随机选择'}), name='start_food_randomization_api'),
-    path('api/food-randomizer/pause/', lambda request: JsonResponse({'success': True, 'message': '暂停随机选择'}), name='pause_food_randomization_api'),
-    path('api/food-randomizer/rate/', lambda request: JsonResponse({'success': True}), name='rate_food_api'),
-    path('api/foods/', lambda request: JsonResponse({'success': True, 'foods': []}), name='api_foods'),
-    path('api/food-photo-bindings/', lambda request: JsonResponse({'success': True, 'bindings': []}), name='api_food_photo_bindings'),
-    path('api/food-photo-bindings/save/', lambda request: JsonResponse({'success': True}), name='api_save_food_photo_bindings'),
+    path('api/food-randomizer/start/', start_food_randomization_api, name='start_food_randomization_api'),
+    path('api/food-randomizer/pause/', pause_food_randomization_api, name='pause_food_randomization_api'),
+    path('api/food-randomizer/rate/', rate_food_api, name='rate_food_api'),
+    path('api/foods/', api_foods, name='api_foods'),
+    path('api/food-photo-bindings/', api_food_photo_bindings, name='api_food_photo_bindings'),
+    path('api/food-photo-bindings/save/', api_save_food_photo_bindings, name='api_save_food_photo_bindings'),
     
     # MeeSomeone相关API路由
-    path('api/meetsomeone/dashboard-stats/', lambda request: JsonResponse({'success': True, 'stats': {}}), name='get_dashboard_stats_api'),
-    path('api/meetsomeone/relationship-tags/', lambda request: JsonResponse({'success': True, 'tags': []}), name='get_relationship_tags_api'),
-    path('api/meetsomeone/person-profiles/', lambda request: JsonResponse({'success': True, 'profiles': []}), name='get_person_profiles_api'),
-    path('api/meetsomeone/person-profiles/create/', lambda request: JsonResponse({'success': True}), name='create_person_profile_api'),
-    path('api/meetsomeone/interactions/', lambda request: JsonResponse({'success': True, 'interactions': []}), name='get_interactions_api'),
-    path('api/meetsomeone/interactions/create/', lambda request: JsonResponse({'success': True}), name='create_interaction_api'),
-    path('api/meetsomeone/moments/create/', lambda request: JsonResponse({'success': True}), name='create_important_moment_api'),
-    path('api/meetsomeone/timeline/', lambda request: JsonResponse({'success': True, 'timeline': []}), name='get_timeline_data_api'),
-    path('api/meetsomeone/graph/', lambda request: JsonResponse({'success': True, 'graph': {}}), name='get_graph_data_api'),
+    path('api/meetsomeone/dashboard-stats/', get_dashboard_stats_api, name='get_dashboard_stats_api'),
+    path('api/meetsomeone/relationship-tags/', get_relationship_tags_api, name='get_relationship_tags_api'),
+    path('api/meetsomeone/person-profiles/', get_person_profiles_api, name='get_person_profiles_api'),
+    path('api/meetsomeone/person-profiles/create/', create_person_profile_api, name='create_person_profile_api'),
+    path('api/meetsomeone/interactions/', get_interactions_api, name='get_interactions_api'),
+    path('api/meetsomeone/interactions/create/', create_interaction_api, name='create_interaction_api'),
+    path('api/meetsomeone/moments/create/', create_important_moment_api, name='create_important_moment_api'),
+    path('api/meetsomeone/timeline/', get_timeline_data_api, name='get_timeline_data_api'),
+    path('api/meetsomeone/graph/', get_graph_data_api, name='get_graph_data_api'),
     
     # Food Image Crawler相关API路由
-    path('api/food-image-crawler/', lambda request: JsonResponse({'success': True, 'message': '食物图片爬虫功能'}), name='food_image_crawler_api'),
+    path('api/food-image-crawler/', food_image_crawler_api, name='food_image_crawler_api'),
     
     # Food List相关API路由
-    path('api/food-list/', lambda request: JsonResponse({'success': True, 'foods': []}), name='get_food_list_api'),
+    path('api/food-list/', get_food_list_api, name='get_food_list_api'),
     
     # Food Image Compare相关API路由
-    path('api/compare-food-images/', lambda request: JsonResponse({'success': True, 'comparison': {}}), name='compare_food_images_api'),
+    path('api/compare-food-images/', compare_food_images_api, name='compare_food_images_api'),
     
     # Food Image Update相关API路由
-    path('api/update-food-image/', lambda request: JsonResponse({'success': True}), name='update_food_image_api'),
+    path('api/update-food-image/', update_food_image_api, name='update_food_image_api'),
     
     # Photos相关API路由
-    path('api/photos/', lambda request: JsonResponse({'success': True, 'photos': []}), name='api_photos'),
+    path('api/photos/', api_photos, name='api_photos'),
 ]

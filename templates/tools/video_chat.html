@@ -1,0 +1,662 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}视频对话 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.video-chat-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    color: white;
+}
+
+.chat-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.chat-title {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.chat-subtitle {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.video-container {
+    position: relative;
+    background: rgba(0,0,0,0.3);
+    border-radius: 15px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+}
+
+.video-element {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+}
+
+.video-label {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+.controls-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.control-button {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-button:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.control-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.control-button.active {
+    background: rgba(40,167,69,0.3);
+    border-color: rgba(40,167,69,0.5);
+}
+
+.control-button.danger {
+    background: rgba(220,53,69,0.3);
+    border-color: rgba(220,53,69,0.5);
+}
+
+.control-button.danger:hover {
+    background: rgba(220,53,69,0.4);
+}
+
+.status-message {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.status-waiting {
+    background: rgba(255,193,7,0.2);
+    border: 1px solid rgba(255,193,7,0.3);
+}
+
+.status-success {
+    background: rgba(40,167,69,0.2);
+    border: 1px solid rgba(40,167,69,0.3);
+}
+
+.status-error {
+    background: rgba(220,53,69,0.2);
+    border: 1px solid rgba(220,53,69,0.3);
+}
+
+.chat-info {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.chat-info h3 {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.connection-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.status-online {
+    background: #28a745;
+    box-shadow: 0 0 10px rgba(40,167,69,0.5);
+}
+
+.status-offline {
+    background: #dc3545;
+}
+
+.status-connecting {
+    background: #ffc107;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.settings-panel {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.settings-panel h3 {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.setting-group {
+    margin-bottom: 15px;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.setting-group select,
+.setting-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+.setting-group select option {
+    background: #333;
+    color: white;
+}
+
+.setting-group input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+@media (max-width: 768px) {
+    .video-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .controls-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .control-button {
+        width: 100%;
+        max-width: 200px;
+        justify-content: center;
+    }
+    
+    .chat-title {
+        font-size: 2em;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="video-chat-container">
+    <div class="chat-header">
+        <h1 class="chat-title">📹 视频对话</h1>
+        <p class="chat-subtitle">与 {{ other_user.display_name }} 进行实时视频通话</p>
+    </div>
+    
+    <div class="video-grid">
+        <div class="video-container">
+            <video id="localVideo" class="video-element" autoplay muted playsinline></video>
+            <div class="video-label">我 ({{ user.username }})</div>
+        </div>
+        <div class="video-container">
+            <video id="remoteVideo" class="video-element" autoplay playsinline></video>
+            <div class="video-label">{{ other_user.display_name }}</div>
+        </div>
+    </div>
+    
+    <div class="controls-container">
+        <button id="startButton" class="control-button" onclick="startVideoChat()">
+            <i class="fas fa-video"></i> 开始视频
+        </button>
+        <button id="stopButton" class="control-button danger" onclick="stopVideoChat()" style="display: none;">
+            <i class="fas fa-stop"></i> 结束通话
+        </button>
+        <button id="muteButton" class="control-button" onclick="toggleMute()" style="display: none;">
+            <i class="fas fa-microphone"></i> 静音
+        </button>
+        <button id="videoButton" class="control-button" onclick="toggleVideo()" style="display: none;">
+            <i class="fas fa-video"></i> 关闭视频
+        </button>
+        <button id="screenShareButton" class="control-button" onclick="toggleScreenShare()" style="display: none;">
+            <i class="fas fa-desktop"></i> 屏幕共享
+        </button>
+    </div>
+    
+    <div class="status-message" id="statusMessage" style="display: none;">
+        <div id="statusContent"></div>
+    </div>
+    
+    <div class="chat-info">
+        <h3>📋 通话信息</h3>
+        <div class="connection-status">
+            <div>
+                <span class="status-indicator" id="connectionStatus"></span>
+                <span id="connectionText">未连接</span>
+            </div>
+            <div id="callDuration">00:00</div>
+        </div>
+        <p><strong>房间ID:</strong> {{ room_id }}</p>
+        <p><strong>参与者:</strong> {{ user.username }} ↔ {{ other_user.display_name }}</p>
+    </div>
+    
+    <div class="settings-panel">
+        <h3>⚙️ 设置</h3>
+        <div class="setting-group">
+            <label for="cameraSelect">摄像头:</label>
+            <select id="cameraSelect">
+                <option value="">选择摄像头...</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label for="microphoneSelect">麦克风:</label>
+            <select id="microphoneSelect">
+                <option value="">选择麦克风...</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label for="speakerSelect">扬声器:</label>
+            <select id="speakerSelect">
+                <option value="">选择扬声器...</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+let localStream = null;
+let remoteStream = null;
+let peerConnection = null;
+let socket = null;
+let isMuted = false;
+let isVideoOff = false;
+let isScreenSharing = false;
+let callStartTime = null;
+let callDurationInterval = null;
+
+const configuration = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+// 初始化页面
+document.addEventListener('DOMContentLoaded', function() {
+    loadDeviceOptions();
+    updateConnectionStatus('offline');
+});
+
+// 加载设备选项
+async function loadDeviceOptions() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        
+        const cameraSelect = document.getElementById('cameraSelect');
+        const microphoneSelect = document.getElementById('microphoneSelect');
+        const speakerSelect = document.getElementById('speakerSelect');
+        
+        // 清空现有选项
+        cameraSelect.innerHTML = '<option value="">选择摄像头...</option>';
+        microphoneSelect.innerHTML = '<option value="">选择麦克风...</option>';
+        speakerSelect.innerHTML = '<option value="">选择扬声器...</option>';
+        
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `${device.kind} ${device.deviceId.slice(0, 8)}`;
+            
+            if (device.kind === 'videoinput') {
+                cameraSelect.appendChild(option.cloneNode(true));
+            } else if (device.kind === 'audioinput') {
+                microphoneSelect.appendChild(option.cloneNode(true));
+            } else if (device.kind === 'audiooutput') {
+                speakerSelect.appendChild(option.cloneNode(true));
+            }
+        });
+        
+        // 设置默认设备
+        if (cameraSelect.options.length > 1) cameraSelect.selectedIndex = 1;
+        if (microphoneSelect.options.length > 1) microphoneSelect.selectedIndex = 1;
+        if (speakerSelect.options.length > 1) speakerSelect.selectedIndex = 1;
+        
+    } catch (error) {
+        console.error('加载设备选项失败:', error);
+        showStatus('无法访问设备列表', 'error');
+    }
+}
+
+// 开始视频通话
+async function startVideoChat() {
+    try {
+        showStatus('正在初始化视频通话...', 'waiting');
+        updateConnectionStatus('connecting');
+        
+        // 获取用户媒体
+        const constraints = {
+            video: {
+                deviceId: document.getElementById('cameraSelect').value ? 
+                    { exact: document.getElementById('cameraSelect').value } : undefined
+            },
+            audio: {
+                deviceId: document.getElementById('microphoneSelect').value ? 
+                    { exact: document.getElementById('microphoneSelect').value } : undefined
+            }
+        };
+        
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('localVideo').srcObject = localStream;
+        
+        // 初始化WebRTC连接
+        await initializeWebRTC();
+        
+        // 显示控制按钮
+        document.getElementById('startButton').style.display = 'none';
+        document.getElementById('stopButton').style.display = 'inline-flex';
+        document.getElementById('muteButton').style.display = 'inline-flex';
+        document.getElementById('videoButton').style.display = 'inline-flex';
+        document.getElementById('screenShareButton').style.display = 'inline-flex';
+        
+        showStatus('视频通话已开始', 'success');
+        updateConnectionStatus('online');
+        startCallTimer();
+        
+    } catch (error) {
+        console.error('启动视频通话失败:', error);
+        showStatus(`启动失败: ${error.message}`, 'error');
+        updateConnectionStatus('offline');
+    }
+}
+
+// 初始化WebRTC连接
+async function initializeWebRTC() {
+    peerConnection = new RTCPeerConnection(configuration);
+    
+    // 添加本地流
+    localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+    });
+    
+    // 处理远程流
+    peerConnection.ontrack = (event) => {
+        remoteStream = event.streams[0];
+        document.getElementById('remoteVideo').srcObject = remoteStream;
+    };
+    
+    // 处理ICE候选
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+            // 通过WebSocket发送ICE候选
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'ice_candidate',
+                    candidate: event.candidate,
+                    room_id: '{{ room_id }}'
+                }));
+            }
+        }
+    };
+    
+    // 创建并发送offer
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    
+    // 通过WebSocket发送offer
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'video_offer',
+            offer: offer,
+            room_id: '{{ room_id }}'
+        }));
+    }
+}
+
+// 结束视频通话
+function stopVideoChat() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
+    
+    // 重置UI
+    document.getElementById('localVideo').srcObject = null;
+    document.getElementById('remoteVideo').srcObject = null;
+    document.getElementById('startButton').style.display = 'inline-flex';
+    document.getElementById('stopButton').style.display = 'none';
+    document.getElementById('muteButton').style.display = 'none';
+    document.getElementById('videoButton').style.display = 'none';
+    document.getElementById('screenShareButton').style.display = 'none';
+    
+    showStatus('视频通话已结束', 'error');
+    updateConnectionStatus('offline');
+    stopCallTimer();
+}
+
+// 切换静音
+function toggleMute() {
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+            audioTrack.enabled = !audioTrack.enabled;
+            isMuted = !audioTrack.enabled;
+            
+            const muteButton = document.getElementById('muteButton');
+            if (isMuted) {
+                muteButton.innerHTML = '<i class="fas fa-microphone-slash"></i> 取消静音';
+                muteButton.classList.add('active');
+            } else {
+                muteButton.innerHTML = '<i class="fas fa-microphone"></i> 静音';
+                muteButton.classList.remove('active');
+            }
+        }
+    }
+}
+
+// 切换视频
+function toggleVideo() {
+    if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+            videoTrack.enabled = !videoTrack.enabled;
+            isVideoOff = !videoTrack.enabled;
+            
+            const videoButton = document.getElementById('videoButton');
+            if (isVideoOff) {
+                videoButton.innerHTML = '<i class="fas fa-video-slash"></i> 开启视频';
+                videoButton.classList.add('active');
+            } else {
+                videoButton.innerHTML = '<i class="fas fa-video"></i> 关闭视频';
+                videoButton.classList.remove('active');
+            }
+        }
+    }
+}
+
+// 切换屏幕共享
+async function toggleScreenShare() {
+    try {
+        if (!isScreenSharing) {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: true,
+                audio: true
+            });
+            
+            const videoTrack = screenStream.getVideoTracks()[0];
+            const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            
+            if (sender) {
+                sender.replaceTrack(videoTrack);
+                document.getElementById('localVideo').srcObject = screenStream;
+                isScreenSharing = true;
+                
+                const screenShareButton = document.getElementById('screenShareButton');
+                screenShareButton.innerHTML = '<i class="fas fa-stop"></i> 停止共享';
+                screenShareButton.classList.add('active');
+            }
+        } else {
+            // 停止屏幕共享，恢复摄像头
+            const videoTrack = localStream.getVideoTracks()[0];
+            const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            
+            if (sender) {
+                sender.replaceTrack(videoTrack);
+                document.getElementById('localVideo').srcObject = localStream;
+                isScreenSharing = false;
+                
+                const screenShareButton = document.getElementById('screenShareButton');
+                screenShareButton.innerHTML = '<i class="fas fa-desktop"></i> 屏幕共享';
+                screenShareButton.classList.remove('active');
+            }
+        }
+    } catch (error) {
+        console.error('屏幕共享失败:', error);
+        showStatus('屏幕共享失败', 'error');
+    }
+}
+
+// 显示状态消息
+function showStatus(message, type) {
+    const statusMessage = document.getElementById('statusMessage');
+    const statusContent = document.getElementById('statusContent');
+    
+    statusMessage.className = `status-message status-${type}`;
+    statusContent.innerHTML = message;
+    statusMessage.style.display = 'block';
+    
+    // 3秒后自动隐藏成功消息
+    if (type === 'success') {
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// 更新连接状态
+function updateConnectionStatus(status) {
+    const statusIndicator = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('connectionText');
+    
+    statusIndicator.className = `status-indicator status-${status}`;
+    
+    switch (status) {
+        case 'online':
+            statusText.textContent = '已连接';
+            break;
+        case 'connecting':
+            statusText.textContent = '连接中...';
+            break;
+        case 'offline':
+            statusText.textContent = '未连接';
+            break;
+    }
+}
+
+// 开始通话计时
+function startCallTimer() {
+    callStartTime = Date.now();
+    callDurationInterval = setInterval(updateCallDuration, 1000);
+}
+
+// 停止通话计时
+function stopCallTimer() {
+    if (callDurationInterval) {
+        clearInterval(callDurationInterval);
+        callDurationInterval = null;
+    }
+    document.getElementById('callDuration').textContent = '00:00';
+}
+
+// 更新通话时长
+function updateCallDuration() {
+    if (callStartTime) {
+        const duration = Math.floor((Date.now() - callStartTime) / 1000);
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        document.getElementById('callDuration').textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+// 页面卸载时清理资源
+window.addEventListener('beforeunload', function() {
+    stopVideoChat();
+});
+</script>
+{% endblock %}

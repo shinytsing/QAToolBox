@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}聊天入口 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.entrance-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+    color: white;
+}
+
+.entrance-title {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.entrance-subtitle {
+    font-size: 1.2em;
+    margin-bottom: 40px;
+    opacity: 0.9;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.option-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+}
+
+.option-card:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.option-icon {
+    font-size: 3em;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.option-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.option-description {
+    font-size: 1em;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+.features-list {
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 15px;
+    margin-top: 30px;
+    backdrop-filter: blur(10px);
+    text-align: left;
+}
+
+.features-list h3 {
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
+.features-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.features-list li {
+    margin: 10px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.features-list li:before {
+    content: "✨";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.direct-chat-section {
+    background: rgba(255,255,255,0.1);
+    padding: 25px;
+    border-radius: 15px;
+    margin-top: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.direct-chat-section h3 {
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
+.room-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+    justify-content: center;
+}
+
+.room-input {
+    flex: 1;
+    max-width: 300px;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 1em;
+    backdrop-filter: blur(10px);
+}
+
+.room-input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.room-input:focus {
+    outline: none;
+    background: rgba(255,255,255,0.3);
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+.join-btn {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-size: 1em;
+}
+
+.join-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+    .entrance-container {
+        margin: 20px;
+        padding: 30px;
+    }
+    
+    .entrance-title {
+        font-size: 2em;
+    }
+    
+    .options-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .room-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .room-input {
+        max-width: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="entrance-container">
+    <h1 class="entrance-title">💬 聊天中心</h1>
+    <p class="entrance-subtitle">选择您喜欢的聊天方式</p>
+    
+    <div class="options-grid">
+        <a href="/tools/number-match/" class="option-card">
+            <span class="option-icon">🔢</span>
+            <div class="option-title">数字匹配</div>
+            <div class="option-description">
+                输入4位数字，找到相同数字的人开始聊天。神秘而有趣的匹配方式，让每次相遇都充满惊喜。
+            </div>
+        </a>
+        
+        <a href="/tools/chat/enhanced/test-room/" class="option-card">
+            <span class="option-icon">💬</span>
+            <div class="option-title">直接聊天</div>
+            <div class="option-description">
+                直接进入聊天室，支持文本、表情、图片、语音、文件、视频等多种消息类型。
+            </div>
+        </a>
+    </div>
+    
+    <div class="direct-chat-section">
+        <h3>🎯 直接进入指定聊天室</h3>
+        <div class="room-input-group">
+            <input type="text" 
+                   class="room-input" 
+                   id="roomIdInput" 
+                   placeholder="输入聊天室ID" 
+                   autocomplete="off">
+            <button class="join-btn" onclick="joinRoom()">
+                <i class="fas fa-sign-in-alt"></i> 加入
+            </button>
+        </div>
+        <p style="font-size: 0.9em; opacity: 0.8; margin-top: 10px;">
+            如果您有聊天室ID，可以直接输入进入
+        </p>
+    </div>
+    
+    <div class="features-list">
+        <h3>🌟 功能特色</h3>
+        <ul>
+            <li><strong>实时聊天</strong> - 基于WebSocket的实时消息传递</li>
+            <li><strong>多媒体支持</strong> - 文本、表情、图片、语音、文件、视频</li>
+            <li><strong>视频通话</strong> - 高质量WebRTC视频对话</li>
+            <li><strong>用户资料</strong> - 显示头像、昵称、标签等信息</li>
+            <li><strong>数字匹配</strong> - 独特的4位数字匹配机制</li>
+            <li><strong>私密安全</strong> - 只有匹配用户才能访问聊天室</li>
+            <li><strong>响应式设计</strong> - 支持手机、平板、电脑多端使用</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function joinRoom() {
+    const roomId = document.getElementById('roomIdInput').value.trim();
+    
+    if (!roomId) {
+        alert('请输入聊天室ID');
+        return;
+    }
+    
+    // 验证房间ID格式（简单验证）
+    if (roomId.length < 3) {
+        alert('聊天室ID至少需要3个字符');
+        return;
+    }
+    
+    // 跳转到聊天页面
+    window.location.href = `/tools/chat/enhanced/${roomId}/`;
+}
+
+// 回车键快速加入
+document.getElementById('roomIdInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        joinRoom();
+    }
+});
+
+// 页面加载时聚焦到输入框
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('roomIdInput').focus();
+});
+</script>
+{% endblock %}

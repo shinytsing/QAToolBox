@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 import json
 import os
 import requests
+import random
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db import models
@@ -97,6 +98,14 @@ from .models import (
 from .models import (
     FoodRandomizer, FoodItem, FoodRandomizationSession, FoodHistory
 )
+
+# 用户资料相关导入
+from django.contrib.auth.models import User
+from apps.users.models import Profile, UserMembership, UserTheme
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 @login_required
 def test_case_generator(request):
@@ -269,12 +278,95 @@ def heart_link_chat(request, room_id):
         return redirect('heart_link')
     
     context = {
+        'room_id': room_id,
         'chat_room': chat_room,
         'other_user': chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
     }
     
-    # 使用WebSocket版本的聊天页面
-    return render(request, 'tools/heart_link_chat_websocket.html', context)
+    # 使用新的WebSocket版本的聊天页面
+    return render(request, 'tools/heart_link_chat_websocket_new.html', context)
+
+@login_required
+def chat_entrance_view(request):
+    """聊天入口页面"""
+    return render(request, 'tools/chat_entrance.html')
+
+def heart_link_test_view(request):
+    """心动链接测试页面（无需登录）"""
+    return render(request, 'tools/heart_link_test.html')
+
+def click_test_view(request):
+    """点击测试页面（无需登录）"""
+    return render(request, 'tools/click_test_standalone.html')
+
+@login_required
+def number_match_view(request):
+    """数字匹配页面"""
+    return render(request, 'tools/number_match.html')
+
+@login_required
+def video_chat_view(request, room_id):
+    """视频对话页面"""
+    try:
+        # 获取聊天室
+        chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 检查用户是否是聊天室的参与者
+        if request.user not in [chat_room.user1, chat_room.user2]:
+            return JsonResponse({
+                'success': False,
+                'error': '您没有权限访问此聊天室'
+            }, status=403)
+        
+        # 获取对方用户信息
+        other_user = chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
+        other_user_profile = get_user_profile_data(other_user)
+        
+        context = {
+            'room_id': room_id,
+            'other_user': other_user_profile,
+            'chat_room': chat_room
+        }
+        
+        return render(request, 'tools/video_chat.html', context)
+        
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '聊天室不存在'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'访问视频对话失败: {str(e)}'
+        }, status=500)
+
+@login_required
+def chat_enhanced(request, room_id):
+    """增强聊天页面 - 展示用户头像、昵称、信息和标签"""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    try:
+        chat_room = ChatRoom.objects.get(room_id=room_id)
+        # 检查用户是否是聊天室的参与者
+        participants = [chat_room.user1]
+        if chat_room.user2:
+            participants.append(chat_room.user2)
+        
+        if request.user not in participants:
+            return redirect('heart_link')
+    except ChatRoom.DoesNotExist:
+        return redirect('heart_link')
+    
+    context = {
+        'room_id': room_id,
+        'chat_room': chat_room,
+        'other_user': chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
+    }
+    
+    # 使用增强的聊天页面
+    return render(request, 'tools/chat_enhanced.html', context)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -2083,29 +2175,33 @@ def disconnect_inactive_users():
     active_rooms = ChatRoom.objects.filter(status='active')
     
     for room in active_rooms:
+        # 检查聊天室是否刚创建（5分钟内不结束）
+        if timezone.now() - room.created_at < timedelta(minutes=5):
+            continue
+            
         # 检查房间中的用户是否都活跃（更宽松的条件）
-        # 只有在两个用户都超过20分钟不活跃时才结束聊天室
+        # 只有在两个用户都超过30分钟不活跃时才结束聊天室
         user1_inactive = False
         user2_inactive = False
         
-        # 检查用户1是否超过20分钟不活跃
+        # 检查用户1是否超过30分钟不活跃
         try:
             online_status1 = UserOnlineStatus.objects.filter(user=room.user1).first()
             if online_status1 and online_status1.last_seen:
-                user1_inactive = timezone.now() - online_status1.last_seen > timedelta(minutes=20)
+                user1_inactive = timezone.now() - online_status1.last_seen > timedelta(minutes=30)
             elif room.user1.last_login:
-                user1_inactive = timezone.now() - room.user1.last_login > timedelta(minutes=30)
+                user1_inactive = timezone.now() - room.user1.last_login > timedelta(minutes=45)
         except:
             pass
         
-        # 检查用户2是否超过20分钟不活跃
+        # 检查用户2是否超过30分钟不活跃
         if room.user2:
             try:
                 online_status2 = UserOnlineStatus.objects.filter(user=room.user2).first()
                 if online_status2 and online_status2.last_seen:
-                    user2_inactive = timezone.now() - online_status2.last_seen > timedelta(minutes=20)
+                    user2_inactive = timezone.now() - online_status2.last_seen > timedelta(minutes=30)
                 elif room.user2.last_login:
-                    user2_inactive = timezone.now() - room.user2.last_login > timedelta(minutes=30)
+                    user2_inactive = timezone.now() - room.user2.last_login > timedelta(minutes=45)
             except:
                 pass
         
@@ -2143,8 +2239,10 @@ def create_heart_link_request_api(request):
     
     if request.method == 'POST':
         try:
-            # 清理过期的请求
-            cleanup_expired_heart_link_requests()
+            # 减少清理频率，只在必要时清理（10%的概率）
+            import random
+            if random.random() < 0.1:
+                cleanup_expired_heart_link_requests()
             
             # 检查用户是否已有待处理的请求
             existing_request = HeartLinkRequest.objects.filter(
@@ -2185,8 +2283,9 @@ def create_heart_link_request_api(request):
             # 使用智能匹配服务
             from apps.tools.services.heart_link_matcher import matcher
             
-            # 清理过期请求
-            matcher.cleanup_expired_requests()
+            # 清理过期请求（减少频率）
+            if random.random() < 0.1:
+                matcher.cleanup_expired_requests()
             
             # 尝试智能匹配
             chat_room, matched_user = matcher.match_users(request.user, heart_link_request)
@@ -2240,21 +2339,26 @@ def cancel_heart_link_request_api(request):
     
     if request.method == 'POST':
         try:
-            heart_link_request = HeartLinkRequest.objects.get(
+            # 查找用户的所有pending请求
+            pending_requests = HeartLinkRequest.objects.filter(
                 requester=request.user,
                 status='pending'
             )
-            heart_link_request.status = 'cancelled'
-            heart_link_request.save()
+            
+            if not pending_requests.exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': '没有找到待处理的请求'
+                }, status=404, content_type='application/json', headers=response_headers)
+            
+            # 取消所有pending请求
+            cancelled_count = pending_requests.update(status='cancelled')
+            
             return JsonResponse({
                 'success': True,
-                'message': '已取消匹配请求'
+                'message': f'已取消 {cancelled_count} 个匹配请求'
             }, content_type='application/json', headers=response_headers)
-        except HeartLinkRequest.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'error': '没有找到待处理的请求'
-            }, status=404, content_type='application/json', headers=response_headers)
+            
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -2291,8 +2395,8 @@ def check_heart_link_status_api(request):
         from datetime import timedelta
         import random
         
-        # 只有10%的概率执行清理，减少数据库压力
-        if random.random() < 0.1:
+        # 只有5%的概率执行清理，进一步减少数据库压力和避免影响等待用户
+        if random.random() < 0.05:
             expired_requests = HeartLinkRequest.objects.filter(
                 status='pending',
                 created_at__lt=timezone.now() - timedelta(minutes=10)
@@ -2315,15 +2419,55 @@ def check_heart_link_status_api(request):
         
         # 检查pending状态的请求是否已过期（更宽松的检查）
         if heart_link_request.status == 'pending':
-            # 只有在请求确实超过10分钟时才标记为过期
-            if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
-                heart_link_request.status = 'expired'
-                heart_link_request.save()
-                return JsonResponse({
+            # 检查用户是否活跃，如果活跃则自动续期
+            try:
+                online_status = UserOnlineStatus.objects.filter(user=request.user).first()
+                is_user_active = False
+                
+                if online_status and online_status.last_seen:
+                    # 如果用户5分钟内活跃，自动续期
+                    if timezone.now() - online_status.last_seen < timedelta(minutes=5):
+                        is_user_active = True
+                        # 自动续期：更新创建时间（延长5分钟）
+                        heart_link_request.created_at = timezone.now() - timedelta(minutes=5)
+                        heart_link_request.save()
+                
+                # 检查是否需要显示过期警告
+                from apps.tools.services.heart_link_notification import notification_service
+                warning_message = None
+                if notification_service.should_show_warning(heart_link_request):
+                    warning_message = notification_service.get_expiry_warning_message(heart_link_request)
+                
+                # 只有在请求确实超过15分钟且用户不活跃时才标记为过期
+                if timezone.now() - heart_link_request.created_at > timedelta(minutes=15):
+                    heart_link_request.status = 'expired'
+                    heart_link_request.save()
+                    return JsonResponse({
+                        'success': True,
+                        'status': 'expired',
+                        'message': '匹配请求已过期'
+                    }, content_type='application/json', headers=response_headers)
+                
+                # 返回pending状态，包含警告信息
+                response_data = {
                     'success': True,
-                    'status': 'expired',
-                    'message': '匹配请求已过期'
-                }, content_type='application/json', headers=response_headers)
+                    'status': 'pending',
+                    'message': '正在等待匹配...'
+                }
+                if warning_message:
+                    response_data['warning'] = warning_message
+                return JsonResponse(response_data, content_type='application/json', headers=response_headers)
+                    
+            except Exception as e:
+                # 如果检查失败，使用原来的10分钟过期逻辑
+                if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
+                    heart_link_request.status = 'expired'
+                    heart_link_request.save()
+                    return JsonResponse({
+                        'success': True,
+                        'status': 'expired',
+                        'message': '匹配请求已过期'
+                    }, content_type='application/json', headers=response_headers)
         
         # 检查已匹配的请求是否应该过期（更宽松的条件）
         if heart_link_request.status == 'matched' and heart_link_request.chat_room:
@@ -2549,12 +2693,17 @@ def get_chat_messages_api(request, room_id):
         # 格式化消息
         message_list = []
         for message in messages:
+            # 处理文件URL，确保返回完整的URL路径
+            file_url = message.file_url
+            if file_url and not file_url.startswith('http') and not file_url.startswith('/'):
+                file_url = f'/media/{file_url}'
+            
             message_list.append({
                 'id': message.id,
                 'sender': message.sender.username,
                 'content': message.content,
                 'message_type': message.message_type,
-                'file_url': message.file_url,
+                'file_url': file_url,
                 'created_at': message.created_at.isoformat(),
                 'is_own': message.sender == request.user,
                 'is_read': message.is_read
@@ -2727,10 +2876,35 @@ def update_online_status_api(request):
                     # 如果房间不存在，记录错误但不影响在线状态更新
                     pass
             
-            UserOnlineStatus.objects.update_or_create(
-                user=request.user,
-                defaults=update_data
-            )
+            # 添加重试逻辑处理数据库锁
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    UserOnlineStatus.objects.update_or_create(
+                        user=request.user,
+                        defaults=update_data
+                    )
+                    break  # 成功则跳出循环
+                except Exception as db_error:
+                    retry_count += 1
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    
+                    # 如果是数据库锁错误且还有重试次数
+                    if 'database is locked' in str(db_error) and retry_count < max_retries:
+                        logger.warning(f'数据库锁错误，重试第{retry_count}次: {str(db_error)}')
+                        import time
+                        time.sleep(0.1 * retry_count)  # 递增延迟
+                        continue
+                    else:
+                        # 其他错误或重试次数用完
+                        logger.error(f'更新在线状态失败: {str(db_error)}', exc_info=True)
+                        return JsonResponse({
+                            'success': False,
+                            'error': '服务器内部错误，请稍后重试'
+                        }, status=500, content_type='application/json', headers=response_headers)
             
             return JsonResponse({
                 'success': True,
@@ -4090,6 +4264,14 @@ def send_image_api(request, room_id):
         # 获取聊天室
         chat_room = ChatRoom.objects.get(room_id=room_id)
         
+        # 检查聊天室状态
+        if chat_room.status == 'ended':
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室已结束，无法发送消息',
+                'room_ended': True
+            }, status=410, content_type='application/json', headers=response_headers)
+        
         # 检查用户是否是聊天室的参与者
         if request.user not in [chat_room.user1, chat_room.user2]:
             return JsonResponse({
@@ -4403,6 +4585,112 @@ def send_file_api(request, room_id):
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
+def send_video_api(request, room_id):
+    """发送视频消息API"""
+    response_headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False,
+            'error': '请先登录',
+            'redirect_url': '/users/login/'
+        }, status=401, content_type='application/json', headers=response_headers)
+    
+    try:
+        # 获取聊天室
+        chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 检查用户是否是聊天室的参与者
+        if request.user not in [chat_room.user1, chat_room.user2]:
+            return JsonResponse({
+                'success': False,
+                'error': '您没有权限在此聊天室发送消息'
+            }, status=403, content_type='application/json', headers=response_headers)
+        
+        # 获取上传的视频文件
+        if 'file' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': '请选择要发送的视频文件'
+            }, status=400, content_type='application/json', headers=response_headers)
+        
+        video_file = request.FILES['file']
+        
+        # 检查文件大小（50MB限制）
+        if video_file.size > 50 * 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'error': '视频文件大小不能超过50MB'
+            }, status=400, content_type='application/json', headers=response_headers)
+        
+        # 检查文件类型
+        allowed_types = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm']
+        if video_file.content_type not in allowed_types:
+            return JsonResponse({
+                'success': False,
+                'error': '不支持的视频格式，请上传MP4、AVI、MOV、WMV、FLV或WebM格式'
+            }, status=400, content_type='application/json', headers=response_headers)
+        
+        # 生成文件名
+        original_filename = video_file.name
+        file_extension = os.path.splitext(original_filename)[1]
+        filename = f"chat_videos/{uuid.uuid4()}{file_extension}"
+        
+        # 创建消息
+        message = ChatMessage.objects.create(
+            room=chat_room,
+            sender=request.user,
+            message_type='video',
+            content=original_filename,
+            file_url=filename
+        )
+        
+        # 保存视频文件到媒体目录
+        media_path = os.path.join(settings.MEDIA_ROOT, filename)
+        os.makedirs(os.path.dirname(media_path), exist_ok=True)
+        
+        with open(media_path, 'wb') as f:
+            for chunk in video_file.chunks():
+                f.write(chunk)
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'sender': message.sender.username,
+                'content': message.content,
+                'message_type': message.message_type,
+                'file_url': f'/media/{filename}',
+                'created_at': message.created_at.isoformat(),
+                'is_own': True
+            },
+            'upload_info': {
+                'file_name': original_filename,
+                'file_size': f'{video_file.size / (1024*1024):.1f}MB',
+                'file_type': '视频',
+                'upload_time': message.created_at.strftime('%H:%M:%S')
+            }
+        }, content_type='application/json', headers=response_headers)
+        
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '聊天室不存在'
+        }, status=404, content_type='application/json', headers=response_headers)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'发送视频失败: {str(e)}'
+        }, status=500, content_type='application/json', headers=response_headers)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
 def delete_message_api(request, room_id, message_id):
     """删除消息API"""
     response_headers = {
@@ -4439,12 +4727,12 @@ def delete_message_api(request, room_id, message_id):
                 'error': '只能删除自己发送的消息'
             }, status=403, content_type='application/json', headers=response_headers)
         
-        # 检查消息时间（只能删除2分钟内的消息）
+        # 检查消息时间（只能删除5分钟内的消息）
         time_diff = timezone.now() - message.created_at
-        if time_diff.total_seconds() > 120:  # 2分钟
+        if time_diff.total_seconds() > 300:  # 5分钟
             return JsonResponse({
                 'success': False,
-                'error': '只能删除2分钟内的消息'
+                'error': '只能删除5分钟内的消息'
             }, status=400, content_type='application/json', headers=response_headers)
         
         # 删除消息
@@ -7531,50 +7819,58 @@ def start_food_randomization_api(request):
         dietary_restrictions = data.get('dietary_restrictions', [])
         animation_duration = data.get('animation_duration', 3000)
         
-        # 构建查询条件
-        query_conditions = {'is_active': True}
+        # 构建查询条件 - 使用SQLite兼容的查询方式
+        available_foods = FoodItem.objects.filter(is_active=True)
         
         # 根据餐种筛选
         if meal_type and meal_type != 'mixed':
-            query_conditions['meal_types__contains'] = [meal_type]
+            # 使用Python过滤而不是数据库查询
+            available_foods = [food for food in available_foods if meal_type in food.meal_types]
         
         # 根据菜系偏好筛选
         if cuisine_preference and cuisine_preference != 'mixed':
-            query_conditions['cuisine'] = cuisine_preference
+            available_foods = [food for food in available_foods if food.cuisine == cuisine_preference]
         
         # 根据心情和价格范围调整筛选条件
         if mood == 'happy':
             # 开心时倾向于选择受欢迎的食物
-            query_conditions['popularity_score__gte'] = 0.5
+            available_foods = [food for food in available_foods if food.popularity_score >= 0.5]
         elif mood == 'sad':
             # 难过时倾向于选择安慰食物
-            query_conditions['tags__contains'] = ['comfort']
+            available_foods = [food for food in available_foods if 'comfort' in food.tags]
         elif mood == 'tired':
             # 疲惫时倾向于选择简单易做的食物
-            query_conditions['difficulty'] = 'easy'
+            available_foods = [food for food in available_foods if food.difficulty == 'easy']
         
         # 根据价格范围筛选
         if price_range == 'low':
             # 低价位，选择简单易做的食物
-            query_conditions['difficulty'] = 'easy'
+            available_foods = [food for food in available_foods if food.difficulty == 'easy']
         elif price_range == 'high':
             # 高价位，选择高级食物
-            query_conditions['tags__contains'] = ['premium']
+            available_foods = [food for food in available_foods if 'premium' in food.tags]
         
         # 根据饮食禁忌筛选
         if dietary_restrictions:
-            # 这里可以根据具体的饮食禁忌进行筛选
-            # 暂时跳过这个筛选条件
-            pass
+            for restriction in dietary_restrictions:
+                if restriction == 'no_spicy':
+                    # 不吃辣
+                    available_foods = [food for food in available_foods if 'spicy' not in food.tags]
+                elif restriction == 'vegetarian':
+                    # 素食
+                    available_foods = [food for food in available_foods if 'vegetarian' in food.tags]
+                elif restriction == 'no_seafood':
+                    # 不吃海鲜
+                    available_foods = [food for food in available_foods if 'seafood' not in food.tags]
+                elif restriction == 'no_pork':
+                    # 不吃猪肉
+                    available_foods = [food for food in available_foods if 'pork' not in food.tags]
         
-        # 查询符合条件的食物
-        available_foods = FoodItem.objects.filter(**query_conditions)
-        
-        if not available_foods.exists():
+        if not available_foods:
             # 如果没有找到符合条件的食物，放宽条件
-            available_foods = FoodItem.objects.filter(is_active=True)
+            available_foods = list(FoodItem.objects.filter(is_active=True))
         
-        if not available_foods.exists():
+        if not available_foods:
             return JsonResponse({
                 'success': False,
                 'error': '没有找到合适的食物'
@@ -7584,17 +7880,18 @@ def start_food_randomization_api(request):
         selected_food = random.choice(available_foods)
         
         # 获取备选食物（同菜系或同餐种的其他食物）
-        alternative_conditions = {
-            'is_active': True,
-            'id__ne': selected_food.id
-        }
+        alternative_foods = []
+        all_foods = list(FoodItem.objects.filter(is_active=True).exclude(id=selected_food.id))
         
         if selected_food.cuisine != 'mixed':
-            alternative_conditions['cuisine'] = selected_food.cuisine
+            # 同菜系的食物
+            alternative_foods = [food for food in all_foods if food.cuisine == selected_food.cuisine]
         else:
-            alternative_conditions['meal_types__overlap'] = selected_food.meal_types
+            # 同餐种的食物
+            alternative_foods = [food for food in all_foods if any(meal_type in food.meal_types for meal_type in selected_food.meal_types)]
         
-        alternative_foods = list(FoodItem.objects.filter(**alternative_conditions)[:5])
+        # 限制数量
+        alternative_foods = alternative_foods[:5]
         
         # 创建随机选择会话记录
         session = FoodRandomizationSession.objects.create(
@@ -7613,8 +7910,7 @@ def start_food_randomization_api(request):
             user=request.user,
             food_item=selected_food,
             meal_type=meal_type,
-            cuisine_preference=cuisine_preference,
-            session_id=session.id
+            session=session
         )
         
         # 构建响应数据
@@ -7720,8 +8016,7 @@ def pure_random_food_api(request):
             user=request.user,
             food_item=selected_food,
             meal_type='mixed',
-            cuisine_preference='mixed',
-            session_id=session.id
+            session=session
         )
         
         # 构建响应数据
@@ -7789,9 +8084,9 @@ def get_food_history_api(request):
                 'meal_type': record.get_meal_type_display(),
                 'selected_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 'rating': record.rating if hasattr(record, 'rating') else None,
-                'comment': record.comment if hasattr(record, 'comment') else '',
-                'is_cooked': record.is_cooked if hasattr(record, 'is_cooked') else False,
-                'session_id': record.session_id
+                'comment': record.feedback if hasattr(record, 'feedback') else '',
+                'is_cooked': record.was_cooked if hasattr(record, 'was_cooked') else False,
+                'session_id': record.session.id if record.session else None
             })
         
         return JsonResponse({
@@ -7833,7 +8128,7 @@ def rate_food_api(request):
         if session_id:
             history_record = FoodHistory.objects.filter(
                 user=request.user,
-                session_id=session_id
+                session__id=session_id
             ).first()
         elif food_id:
             history_record = FoodHistory.objects.filter(
@@ -7846,9 +8141,9 @@ def rate_food_api(request):
             if rating is not None:
                 history_record.rating = rating
             if comment:
-                history_record.comment = comment
+                history_record.feedback = comment
             if is_cooked is not None:
-                history_record.is_cooked = is_cooked
+                history_record.was_cooked = is_cooked
             history_record.save()
             
             # 更新食物的受欢迎度评分
@@ -7874,8 +8169,8 @@ def rate_food_api(request):
                 'updated_record': {
                     'id': history_record.id,
                     'rating': history_record.rating,
-                    'comment': history_record.comment,
-                    'is_cooked': history_record.is_cooked
+                    'comment': history_record.feedback,
+                    'is_cooked': history_record.was_cooked
                 }
             })
         else:
@@ -7891,6 +8186,174 @@ def rate_food_api(request):
             'error': f'评价保存失败: {str(e)}'
         })
 
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_checkin_calendar_api(request):
+    """获取打卡日历数据"""
+    try:
+        # 原有的函数体内容
+        pass
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+# 用户资料相关API
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_user_profile_api(request, user_id):
+    """获取用户资料信息"""
+    try:
+        user = get_object_or_404(User, id=user_id)
+        profile = Profile.objects.filter(user=user).first()
+        membership = UserMembership.objects.filter(user=user).first()
+        theme = UserTheme.objects.filter(user=user).first()
+        
+        # 获取用户标签（基于用户行为和偏好）
+        tags = []
+        
+        # 基于会员类型添加标签
+        if membership and membership.membership_type != 'free':
+            tags.append(f'💎 {membership.get_membership_type_display()}')
+        
+        # 基于主题模式添加标签
+        if theme:
+            mode_emojis = {
+                'work': '💻',
+                'life': '🌱',
+                'training': '💪',
+                'emo': '🎭'
+            }
+            tags.append(f"{mode_emojis.get(theme.mode, '🎯')} {theme.get_mode_display()}")
+        
+        # 基于用户活跃度添加标签
+        if user.is_staff:
+            tags.append('👑 管理员')
+        
+        # 基于注册时间添加标签
+        days_since_joined = (timezone.now() - user.date_joined).days
+        if days_since_joined > 365:
+            tags.append('🎂 老用户')
+        elif days_since_joined > 30:
+            tags.append('🌟 活跃用户')
+        else:
+            tags.append('🆕 新用户')
+        
+        data = {
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'date_joined': user.date_joined.isoformat(),
+            'last_login': user.last_login.isoformat() if user.last_login else None,
+            'is_staff': user.is_staff,
+            'is_active': user.is_active,
+            'avatar_url': profile.avatar.url if profile and profile.avatar else None,
+            'bio': profile.bio if profile else '',
+            'phone': profile.phone if profile else '',
+            'membership_type': membership.get_membership_type_display() if membership else '免费用户',
+            'theme_mode': theme.get_mode_display() if theme else '默认模式',
+            'tags': tags,
+            'is_online': False,  # 将在WebSocket中更新
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'data': data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_chat_room_participants_api(request, room_id):
+    """获取聊天室参与者信息"""
+    try:
+        room = get_object_or_404(ChatRoom, room_id=room_id)
+        
+        participants = []
+        
+        # 获取用户1信息
+        user1_data = get_user_profile_data(room.user1)
+        participants.append(user1_data)
+        
+        # 获取用户2信息（如果存在）
+        if room.user2:
+            user2_data = get_user_profile_data(room.user2)
+            participants.append(user2_data)
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'room_id': room_id,
+                'participants': participants,
+                'status': room.get_status_display(),
+                'created_at': room.created_at.isoformat()
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+def get_user_profile_data(user):
+    """获取用户资料数据的辅助函数"""
+    profile = Profile.objects.filter(user=user).first()
+    membership = UserMembership.objects.filter(user=user).first()
+    theme = UserTheme.objects.filter(user=user).first()
+    
+    # 获取用户标签
+    tags = []
+    
+    if membership and membership.membership_type != 'free':
+        tags.append(f'💎 {membership.get_membership_type_display()}')
+    
+    if theme:
+        mode_emojis = {
+            'work': '💻',
+            'life': '🌱',
+            'training': '💪',
+            'emo': '🎭'
+        }
+        tags.append(f"{mode_emojis.get(theme.mode, '🎯')} {theme.get_mode_display()}")
+    
+    if user.is_staff:
+        tags.append('👑 管理员')
+    
+    days_since_joined = (timezone.now() - user.date_joined).days
+    if days_since_joined > 365:
+        tags.append('🎂 老用户')
+    elif days_since_joined > 30:
+        tags.append('🌟 活跃用户')
+    else:
+        tags.append('🆕 新用户')
+    
+    return {
+        'id': user.id,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'display_name': f"{user.first_name} {user.last_name}".strip() or user.username,
+        'avatar_url': profile.avatar.url if profile and profile.avatar else None,
+        'bio': profile.bio if profile else '',
+        'membership_type': membership.get_membership_type_display() if membership else '免费用户',
+        'theme_mode': theme.get_mode_display() if theme else '默认模式',
+        'tags': tags,
+        'is_online': False,  # 将在WebSocket中更新
+    }
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -7979,9 +8442,146 @@ def get_checkin_calendar_api(request):
             },
             'monthly_stats': monthly_stats
         })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'获取打卡日历失败: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def number_match_api(request):
+    """数字匹配API - 用户输入四个数字匹配相同数字的人"""
+    response_headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False,
+            'error': '请先登录',
+            'redirect_url': '/users/login/'
+        }, status=401, content_type='application/json', headers=response_headers)
+    
+    try:
+        data = json.loads(request.body)
+        input_number = data.get('number', '').strip()
+        
+        # 验证输入
+        if not input_number or len(input_number) != 4 or not input_number.isdigit():
+            return JsonResponse({
+                'success': False,
+                'error': '请输入4位数字'
+            }, status=400, content_type='application/json', headers=response_headers)
+        
+        # 检查用户是否已经在匹配中
+        existing_match = UserOnlineStatus.objects.filter(
+            user=request.user,
+            is_online=True,
+            match_number__isnull=False
+        ).first()
+        
+        if existing_match:
+            return JsonResponse({
+                'success': False,
+                'error': '您已经在匹配中，请先取消当前匹配'
+            }, status=400, content_type='application/json', headers=response_headers)
+        
+        # 查找是否有其他用户输入了相同的数字
+        matching_user = UserOnlineStatus.objects.filter(
+            match_number=input_number,
+            is_online=True,
+            user__is_active=True
+        ).exclude(user=request.user).first()
+        
+        if matching_user:
+            # 找到匹配，创建聊天室
+            chat_room = ChatRoom.objects.create(
+                room_id=f"match-{uuid.uuid4()}",
+                user1=request.user,
+                user2=matching_user.user,
+                created_at=timezone.now()
+            )
+            
+            # 清除匹配状态
+            UserOnlineStatus.objects.filter(
+                user__in=[request.user, matching_user.user]
+            ).update(match_number=None)
+            
+            return JsonResponse({
+                'success': True,
+                'matched': True,
+                'room_id': chat_room.room_id,
+                'matched_user': {
+                    'username': matching_user.user.username,
+                    'display_name': get_user_profile_data(matching_user.user)['display_name']
+                },
+                'message': f'匹配成功！您与 {matching_user.user.username} 开始聊天'
+            }, content_type='application/json', headers=response_headers)
+        else:
+            # 没有找到匹配，记录当前用户的匹配数字
+            UserOnlineStatus.objects.update_or_create(
+                user=request.user,
+                defaults={
+                    'is_online': True,
+                    'match_number': input_number,
+                    'last_seen': timezone.now()
+                }
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'matched': False,
+                'message': f'正在等待输入 {input_number} 的用户...'
+            }, content_type='application/json', headers=response_headers)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': '无效的JSON数据'
+        }, status=400, content_type='application/json', headers=response_headers)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'匹配失败: {str(e)}'
+        }, status=500, content_type='application/json', headers=response_headers)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def cancel_number_match_api(request):
+    """取消数字匹配API"""
+    response_headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False,
+            'error': '请先登录',
+            'redirect_url': '/users/login/'
+        }, status=401, content_type='application/json', headers=response_headers)
+    
+    try:
+        # 清除用户的匹配状态
+        UserOnlineStatus.objects.filter(
+            user=request.user
+        ).update(match_number=None)
+        
+        return JsonResponse({
+            'success': True,
+            'message': '已取消匹配'
+        }, content_type='application/json', headers=response_headers)
         
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'error': str(e)
-        }, status=500)
+            'error': f'取消匹配失败: {str(e)}'
+        }, status=500, content_type='application/json', headers=response_headers)

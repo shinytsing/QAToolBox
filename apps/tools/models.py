@@ -413,6 +413,8 @@ class ChatMessage(models.Model):
         ('image', '图片'),
         ('file', '文件'),
         ('emoji', '表情'),
+        ('video', '视频'),
+        ('audio', '语音'),
     ]
     
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages', verbose_name='聊天室')
@@ -445,6 +447,8 @@ class UserOnlineStatus(models.Model):
     last_seen = models.DateTimeField(auto_now=True, verbose_name='最后在线时间')
     is_typing = models.BooleanField(default=False, verbose_name='是否正在输入')
     current_room = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, null=True, blank=True, related_name='online_users', verbose_name='当前房间')
+    is_online = models.BooleanField(default=False, verbose_name='是否在线')
+    match_number = models.CharField(max_length=4, null=True, blank=True, verbose_name='匹配数字')
     
     class Meta:
         verbose_name = '用户在线状态'

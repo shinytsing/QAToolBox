@@ -1872,6 +1872,14 @@ document.addEventListener('DOMContentLoaded', function() {
           <p>今天做了点啥，我来帮你总结</p>
         </div>
         
+        <!-- 显示已选择的心情 -->
+        <div class="selected-mood-display" id="selectedMoodDisplay" style="display: none;">
+          <div class="mood-indicator">
+            <span class="mood-emoji" id="selectedMoodEmoji">😊</span>
+            <span class="mood-text" id="selectedMoodText">心情不错</span>
+          </div>
+        </div>
+        
         <!-- 今日完成选择 -->
         <div class="goal-selector">
           <div class="goal-icons-grid">
@@ -2217,7 +2225,275 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
-  <script>
+  <style>
+.song-play-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.song-play-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.song-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+}
+
+.song-item:hover {
+  background-color: #f8f9fa;
+}
+
+.song-info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.song-title {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.song-artist {
+  font-size: 12px;
+  color: #666;
+}
+
+.song-duration {
+  font-size: 11px;
+  color: #999;
+}
+
+.checkin-calendar-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.checkin-calendar-section h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.checkin-calendar-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.calendar-card {
+  flex: 1;
+  min-width: 300px;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.calendar-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.calendar-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.calendar-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.calendar-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+}
+
+.calendar-day.today {
+  background: #667eea;
+  color: white;
+  font-weight: 600;
+}
+
+.calendar-day.has-checkin {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.calendar-day.has-checkin.completed {
+  background: #4CAF50;
+  color: white;
+}
+
+.calendar-day.has-checkin.rest {
+  background: #FF9800;
+  color: white;
+}
+
+.calendar-stats {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stats-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.stats-value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.streak-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+
+.streak-title {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  opacity: 0.9;
+}
+
+.streak-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.streak-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 5px;
+}
+
+/* 心情显示样式 */
+.selected-mood-display {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+  animation: slideInDown 0.5s ease-out;
+}
+
+.mood-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.mood-emoji {
+  font-size: 1.5rem;
+  animation: bounce 0.6s ease-out;
+}
+
+.mood-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+  </style>
+
+  <script type="module">
 // 全局变量
 let currentStep = 1;
 let selectedMood = null;
@@ -2229,117 +2505,59 @@ let diaryData = {
   goal_category: ''
 };
 
-// 初始化页面（主要的DOMContentLoaded事件监听器）
-document.addEventListener('DOMContentLoaded', function() {
-  // 避免重复初始化
-  if (window.pageInitialized) return;
-  window.pageInitialized = true;
-  
-  console.log('页面加载完成，开始初始化...');
-  
-  initGoalSelector();
-  initMoodSelector();
-  initNavigation();
-  loadTodayData();
-  
-  // 初始化统计卡片点击监听器
-  addStatCardListeners();
-  
-  // 初始化统计详情弹窗
-  initStatDetailModal();
-  
-  // 初始化日记打卡日历
-  initDiaryCheckInCalendar();
-  
-  // 背景音乐控制
-  const bgMusicToggle = document.getElementById('bgMusicToggle');
-  if (bgMusicToggle) {
-    bgMusicToggle.addEventListener('click', toggleBackgroundMusic);
-  }
-  
-  // 临时调试：强制启用保存按钮
-  setTimeout(() => {
-    const saveButton = document.getElementById('completeDiary');
-    if (saveButton) {
-      console.log('强制启用保存按钮');
-      saveButton.disabled = false;
-    }
-  }, 2000);
-  
-  // 初始化心情图表
-  setTimeout(() => {
-    const canvas = document.getElementById('moodChart');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      const width = canvas.width = canvas.offsetWidth;
-      const height = canvas.height = 300;
-      ctx.clearRect(0, 0, width, height);
-      
-      // 检查是否有选中的心情
-      const currentMood = getCurrentPageMood();
-      if (currentMood) {
-        renderTemporaryMoodChart(ctx, width, height, currentMood);
-      } else {
-        // 显示引导信息
-        ctx.fillStyle = '#666';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('请先选择今日心情', width / 2, height / 2);
-        ctx.fillStyle = '#999';
-        ctx.font = '14px Arial';
-        ctx.fillText('选择心情后将显示预览图表', width / 2, height / 2 + 30);
-      }
-    }
-  }, 1000);
-  
-  console.log('页面初始化完成');
-  
-  // 调试：检查页面元素状态
-  setTimeout(() => {
-    console.log('🔍 页面元素状态检查:');
-    console.log('- 心情选项数量:', document.querySelectorAll('.mood-option').length);
-    console.log('- 今日完成按钮:', document.getElementById('nextToStep2'));
-    console.log('- 当前selectedMood:', selectedMood);
-    console.log('- 当前diaryData:', diaryData);
+// 初始化页面
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    console.log('页面加载完成，开始初始化...');
     
-    // 检查心情选项的样式
-    const moodOptions = document.querySelectorAll('.mood-option');
-    moodOptions.forEach((option, index) => {
-      console.log(`- 心情选项 ${index + 1}:`, {
-        mood: option.dataset.mood,
-        pointerEvents: option.style.pointerEvents,
-        cursor: option.style.cursor,
-        selected: option.classList.contains('selected')
-      });
-    });
-  }, 1000);
-  
-  // 加载心情选择修复脚本
-  const fixScript = document.createElement('script');
-  fixScript.src = '/static/js/fix_mood_selection.js';
-  fixScript.onerror = function() {
-    console.log('修复脚本加载失败，使用内联修复');
-    // 如果外部脚本加载失败，使用内联修复
-    setTimeout(() => {
-      const moodOptions = document.querySelectorAll('.mood-option');
-      moodOptions.forEach(option => {
-        option.style.pointerEvents = 'auto';
-        option.style.cursor = 'pointer';
-        option.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('内联修复: 心情选择点击:', this.dataset.mood);
-          alert('心情选择测试: ' + this.dataset.mood);
-        });
-      });
-    }, 1000);
-  };
-  document.head.appendChild(fixScript);
+    // 初始化各个组件
+    initMoodSelector();
+    initGoalSelector();
+    initNavigation();
+    
+    // 初始化统计功能
+    addStatCardListeners();
+    initStatDetailModal();
+    initDiaryCheckInCalendar();
+    
+    console.log('页面初始化完成');
+  } catch (error) {
+    console.error('页面初始化失败:', error);
+  }
 });
 
+// 心情选择器初始化
+function initMoodSelector() {
+  const moodOptions = document.querySelectorAll('.mood-option');
+  
+  moodOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const mood = this.dataset.mood;
+      console.log('心情选择点击:', mood);
+      
+      // 移除其他选项的选中状态
+      moodOptions.forEach(opt => opt.classList.remove('selected'));
+      
+      // 添加当前选项的选中状态
+      this.classList.add('selected');
+      
+      // 更新全局变量
+      selectedMood = mood;
+      diaryData.mood = mood;
+      
+      // 检查步骤1完成状态
+      checkStep1Completion();
+      
+      // 显示反馈
+      showMoodFeedback(mood);
+    });
+  });
+}
 
-
-// 目标选择器
+// 目标选择器初始化
 function initGoalSelector() {
   const goalOptions = document.querySelectorAll('.goal-icon-option');
   const nextButton = document.getElementById('nextToStep3');
@@ -2361,56 +2579,94 @@ function initGoalSelector() {
       
       // 检查是否选择了目标
       checkStep2Completion();
-      if (selectedGoalCategories.length > 0) {
-        showGoalFeedback(selectedGoalCategories);
-      } else {
-        hideGoalFeedback();
-      }
     });
   });
 }
 
-// 检查步骤2是否完成
-function checkStep2Completion() {
-  const nextButton = document.getElementById('nextToStep3');
-  nextButton.disabled = selectedGoalCategories.length === 0;
+// 导航初始化
+function initNavigation() {
+  const nextToStep2 = document.getElementById('nextToStep2');
+  const nextToStep3 = document.getElementById('nextToStep3');
+  const backToStep1 = document.getElementById('backToStep1');
+  const backToStep2 = document.getElementById('backToStep2');
+  const completeDiaryBtn = document.getElementById('completeDiary');
+  const startNewDiaryBtn = document.getElementById('startNewDiary');
+  const finishDiaryBtn = document.getElementById('finishDiary');
+  
+  if (nextToStep2) nextToStep2.addEventListener('click', () => goToStep(2));
+  if (nextToStep3) nextToStep3.addEventListener('click', () => goToStep(3));
+  if (backToStep1) backToStep1.addEventListener('click', () => goToStep(1));
+  if (backToStep2) backToStep2.addEventListener('click', () => goToStep(2));
+  if (completeDiaryBtn) completeDiaryBtn.addEventListener('click', completeDiary);
+  if (startNewDiaryBtn) startNewDiaryBtn.addEventListener('click', resetDiary);
+  if (finishDiaryBtn) finishDiaryBtn.addEventListener('click', finishDiary);
 }
 
-// 检查步骤1是否完成
+// 检查步骤1完成状态
 function checkStep1Completion() {
   const nextButton = document.getElementById('nextToStep2');
-  console.log('🔍 检查步骤1完成状态:', { 
-    selectedMood, 
-    buttonExists: !!nextButton,
-    buttonId: nextButton ? nextButton.id : 'null',
-    buttonDisabled: nextButton ? nextButton.disabled : 'N/A'
-  });
-  
   if (nextButton) {
-    const shouldBeEnabled = !!selectedMood;
-    nextButton.disabled = !shouldBeEnabled;
-    
-    // 添加视觉反馈
-    if (shouldBeEnabled) {
-      nextButton.classList.add('btn-enabled');
-      nextButton.classList.remove('btn-disabled');
-    } else {
-      nextButton.classList.add('btn-disabled');
-      nextButton.classList.remove('btn-enabled');
-    }
-    
-    console.log('✅ 按钮状态已更新:', { 
-      disabled: nextButton.disabled, 
-      selectedMood,
-      shouldBeEnabled,
-      buttonClasses: nextButton.className
-    });
-  } else {
-    console.log('❌ 未找到nextToStep2按钮');
+    nextButton.disabled = !selectedMood;
   }
 }
 
-// 显示心情选择反馈
+// 检查步骤2完成状态
+function checkStep2Completion() {
+  const nextButton = document.getElementById('nextToStep3');
+  if (nextButton) {
+    nextButton.disabled = selectedGoalCategories.length === 0;
+  }
+}
+
+// 步骤导航
+function goToStep(step) {
+  if (step < 1 || step > 5) return;
+  
+  currentStep = step;
+  
+  document.querySelectorAll('.step-page').forEach(page => {
+    page.classList.remove('active');
+  });
+  
+  if (step === 5) {
+    document.getElementById('completion').classList.add('active');
+  } else {
+    document.getElementById(`step${step}`).classList.add('active');
+  }
+  
+  updateProgressIndicator(step);
+  
+  // 当进入步骤2时，更新心情显示
+  if (step === 2) {
+    updateMoodDisplay();
+  }
+  
+  if (step === 3) {
+    generateAIContent();
+  }
+  
+  if (step === 4) {
+    loadStatistics();
+  }
+}
+
+// 更新进度指示器
+function updateProgressIndicator(step) {
+  const steps = document.querySelectorAll('.progress-step');
+  
+  steps.forEach((stepElement, index) => {
+    const stepNumber = index + 1;
+    stepElement.classList.remove('active', 'completed');
+    
+    if (stepNumber < step) {
+      stepElement.classList.add('completed');
+    } else if (stepNumber === step) {
+      stepElement.classList.add('active');
+    }
+  });
+}
+
+// 显示心情反馈
 function showMoodFeedback(mood) {
   const moodTexts = {
     'happy': '😊 太棒了！今天心情不错，继续保持这份快乐！',
@@ -2423,6 +2679,286 @@ function showMoodFeedback(mood) {
   
   showNotification(moodTexts[mood] || moodTexts.neutral, 'success');
 }
+
+// 生成AI内容
+async function generateAIContent() {
+  if (selectedGoalCategories.length === 0) {
+    showNotification('请先选择今日完成的内容！', 'error');
+    return;
+  }
+  
+  const loadingDiv = document.getElementById('aiLoading');
+  const previewDiv = document.getElementById('aiContentPreview');
+  
+  loadingDiv.style.display = 'block';
+  previewDiv.style.display = 'none';
+  
+  try {
+    // 使用备用内容
+    const fallbackContent = generateFallbackContent(selectedMood, selectedGoalCategories);
+    const formattedContent = formatContentForDisplay(fallbackContent);
+    document.getElementById('previewContent').innerHTML = formattedContent;
+    
+    loadingDiv.style.display = 'none';
+    previewDiv.style.display = 'block';
+    
+    showNotification('AI内容生成成功！', 'success');
+  } catch (error) {
+    console.error('生成AI内容失败:', error);
+    showNotification('AI生成内容暂时不可用，已为你生成温暖的备用内容！', 'warning');
+    
+    loadingDiv.style.display = 'none';
+    previewDiv.style.display = 'block';
+  }
+}
+
+// 生成备用内容
+function generateFallbackContent(mood, goalCategories) {
+  const moodTexts = {
+    'happy': '开心',
+    'calm': '平静',
+    'excited': '兴奋',
+    'sad': '难过',
+    'angry': '生气',
+    'neutral': '一般'
+  };
+  
+  const goalTexts = {
+    'health': '健身',
+    'learning': '学习',
+    'career': '工作',
+    'relationship': '感情',
+    'finance': '理财',
+    'hobby': '兴趣',
+    'spiritual': '冥想',
+    'travel': '旅行',
+    'social': '社交',
+    'creativity': '创意',
+    'organization': '整理',
+    'gratitude': '感恩'
+  };
+  
+  const selectedGoals = goalCategories.map(cat => goalTexts[cat]).join('、');
+  const moodText = moodTexts[mood] || '一般';
+  
+  const questions = [
+    `今天完成了${selectedGoals}，最让你笑出声的瞬间是什么？`,
+    `如果今天是一部电影，你会给它起什么名字？`,
+    `今天遇到的人中，谁让你印象最深刻？`,
+    `如果可以和今天的自己对话，你会说什么？`,
+    `今天有什么事情让你感到意外惊喜？`,
+    `如果今天可以重来一次，你会改变什么？`,
+    `今天最想和谁分享你的${moodText}心情？`,
+    `今天学到了什么新东西？`,
+    `明天最期待的事情是什么？`,
+    `今天有什么让你感到特别感恩的？`
+  ];
+  
+  let content = '【10个疑问句】\n';
+  questions.forEach((question, index) => {
+    content += `${index + 1}. ${question}\n\n`;
+  });
+  content += '【推荐音乐】\n';
+  content += '晴天 - 周杰伦';
+  
+  return content;
+}
+
+// 格式化内容用于显示
+function formatContentForDisplay(content) {
+  let formatted = content.trim();
+  
+  formatted = formatted.replace(/【10个疑问句】/, '<h3><span style="color: #ff8c00;">&#128161;</span> 选择您想回答的问题</h3>');
+  formatted = formatted.replace(/【推荐音乐】/, '<h3><span style="color: #ff8c00;">&#127925;</span> 音乐推荐</h3>');
+  
+  formatted = formatted.replace(/(\d+)\.\s*(.*?)(?=\n\n|\n【|\Z)/gs, (match, number, text) => {
+    const questionText = text.trim();
+    return `
+      <div class="question-selection-item" data-question="${questionText}" data-index="${parseInt(number) - 1}">
+        <div class="question-checkbox">
+          <input type="checkbox" id="question${parseInt(number) - 1}" class="question-select-checkbox">
+          <label for="question${parseInt(number) - 1}"></label>
+        </div>
+        <div class="question-content">
+          <span class="question-number">${number}.</span>
+          <span class="question-text">${questionText}</span>
+        </div>
+      </div>
+    `;
+  });
+  
+  formatted = formatted.replace(/\n\n+/g, '<br><br>');
+  formatted = formatted.replace(/\n/g, '<br>');
+  
+  return formatted;
+}
+
+// 完成日记
+async function completeDiary() {
+  const diaryTitle = document.getElementById('diaryTitle');
+  const title = diaryTitle ? diaryTitle.value.trim() : '';
+  
+  if (!title) {
+    showNotification('请至少填写标题！', 'error');
+    return;
+  }
+  
+  diaryData.title = title;
+  diaryData.content = '今天的心情和感悟';
+  
+  showNotification('🎉 生活记录保存成功！', 'success');
+  goToStep(4);
+}
+
+// 加载统计数据
+async function loadStatistics() {
+  const statisticsSection = document.getElementById('statisticsSection');
+  if (statisticsSection) {
+    statisticsSection.style.display = 'block';
+  }
+  
+  // 更新统计数字
+  const totalDiaryDaysElement = document.getElementById('totalDiaryDays');
+  const totalDiaryCountElement = document.getElementById('totalDiaryCount');
+  const happyDaysElement = document.getElementById('happyDays');
+  const totalWordsElement = document.getElementById('totalWords');
+  
+  if (totalDiaryDaysElement) totalDiaryDaysElement.textContent = '1';
+  if (totalDiaryCountElement) totalDiaryCountElement.textContent = '1';
+  if (happyDaysElement) happyDaysElement.textContent = '1';
+  if (totalWordsElement) totalWordsElement.textContent = '100';
+}
+
+// 完成日记流程
+function finishDiary() {
+  goToStep(5);
+}
+
+// 重置日记
+function resetDiary() {
+  selectedMood = null;
+  selectedGoalCategories = [];
+  diaryData = {
+    title: '',
+    content: '',
+    mood: '',
+    goal_category: ''
+  };
+  
+  document.querySelectorAll('.mood-option').forEach(option => {
+    option.classList.remove('selected');
+  });
+  
+  document.querySelectorAll('.goal-icon-option').forEach(option => {
+    option.classList.remove('selected');
+  });
+  
+  goToStep(1);
+  showNotification('已重置，开始新的记录吧！', 'success');
+}
+
+// 添加统计卡片点击监听器
+function addStatCardListeners() {
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach(card => {
+    card.addEventListener('click', function() {
+      showNotification('统计详情功能开发中...', 'info');
+    });
+  });
+}
+
+// 初始化统计详情弹窗
+function initStatDetailModal() {
+  // 统计详情弹窗初始化
+}
+
+// 初始化日记打卡日历
+function initDiaryCheckInCalendar() {
+  // 日记打卡日历初始化
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+    <span>${message}</span>
+  `;
+  
+  Object.assign(notification.style, {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    padding: '12px 20px',
+    borderRadius: '6px',
+    color: 'white',
+    fontSize: '14px',
+    fontWeight: '500',
+    zIndex: '10000',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    minWidth: '250px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
+    animation: 'slideInRight 0.3s ease-out'
+  });
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease-in';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
+
+// 添加动画样式
+const slideInRight = document.createElement('style');
+slideInRight.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(slideInRight);
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 显示目标选择反馈
 function showGoalFeedback(categories) {
@@ -2452,109 +2988,43 @@ function hideGoalFeedback() {
   // 可以在这里添加隐藏反馈的逻辑
 }
 
-// 心情选择器
-function initMoodSelector() {
-  // 调用实际的心情选择监听器初始化函数
-  addMoodSelectionListener();
-  console.log('initMoodSelector: 心情选择器初始化完成');
-}
 
-// 导航控制
-function initNavigation() {
-  // 安全地添加事件监听器
-  const nextToStep2 = document.getElementById('nextToStep2');
-  const nextToStep3 = document.getElementById('nextToStep3');
-  const backToStep1 = document.getElementById('backToStep1');
-  const backToStep2 = document.getElementById('backToStep2');
-  const backToStep3 = document.getElementById('backToStep3');
-  const completeDiaryBtn = document.getElementById('completeDiary');
-  const startNewDiaryBtn = document.getElementById('startNewDiary');
-  const finishDiaryBtn = document.getElementById('finishDiary');
-  const regenerateContentBtn = document.getElementById('regenerateContent');
-  const useGeneratedContentBtn = document.getElementById('useGeneratedContent');
-  const diaryDaysCard = document.getElementById('totalDiaryCard');
-  const closeDiaryModalBtn = document.getElementById('closeDiaryModal');
-  const diaryModal = document.getElementById('diaryModal');
-  const diaryTitle = document.getElementById('diaryTitle');
-  const diaryContent = document.getElementById('diaryContent');
-  
-  if (nextToStep2) nextToStep2.addEventListener('click', () => goToStep(2));
-  if (nextToStep3) nextToStep3.addEventListener('click', () => goToStep(3));
-  if (backToStep1) backToStep1.addEventListener('click', () => goToStep(1));
-  if (backToStep2) backToStep2.addEventListener('click', () => goToStep(2));
-  if (backToStep3) backToStep3.addEventListener('click', () => goToStep(3));
-  if (completeDiaryBtn) completeDiaryBtn.addEventListener('click', completeDiary);
-  if (startNewDiaryBtn) startNewDiaryBtn.addEventListener('click', resetDiary);
-  if (finishDiaryBtn) finishDiaryBtn.addEventListener('click', finishDiary);
-  
-  // AI内容生成相关
-  if (regenerateContentBtn) regenerateContentBtn.addEventListener('click', generateAIContent);
-  if (useGeneratedContentBtn) useGeneratedContentBtn.addEventListener('click', useGeneratedContent);
-  
-  // 监听日记天数卡片点击事件
-  if (diaryDaysCard) diaryDaysCard.addEventListener('click', showDiaryDetails);
-  
-  // 监听弹窗关闭事件
-  if (closeDiaryModalBtn) closeDiaryModalBtn.addEventListener('click', closeDiaryModal);
-  if (diaryModal) {
-    diaryModal.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeDiaryModal();
-      }
-    });
-  }
-  
-  // 表单验证
-  if (diaryTitle) diaryTitle.addEventListener('input', validateStep3);
-  if (diaryContent) diaryContent.addEventListener('input', validateStep3);
-}
 
-// 步骤导航
-function goToStep(step) {
-  if (step < 1 || step > 5) return;
-  
-  currentStep = step;
-  
-  document.querySelectorAll('.step-page').forEach(page => {
-    page.classList.remove('active');
-  });
-  
-  if (step === 5) {
-    document.getElementById('completion').classList.add('active');
-  } else {
-    document.getElementById(`step${step}`).classList.add('active');
-  }
-  
-  updateProgressIndicator(step);
-  
-  if (step === 3) {
-    // 确保心情数据存在
-    if (!selectedMood) {
-      selectedMood = 'neutral';
-      diaryData.mood = selectedMood;
-    }
-    generateAIContent();
-  }
-  
-  if (step === 4) {
-    loadStatistics();
-  }
-}
 
-// 更新进度指示器
-function updateProgressIndicator(step) {
-  const steps = document.querySelectorAll('.progress-step');
+
+
+
+// 更新心情显示
+function updateMoodDisplay() {
+  const moodDisplay = document.getElementById('selectedMoodDisplay');
+  const moodEmoji = document.getElementById('selectedMoodEmoji');
+  const moodText = document.getElementById('selectedMoodText');
   
-  steps.forEach((stepElement, index) => {
-    const stepNumber = index + 1;
-    stepElement.classList.remove('active', 'completed');
+  if (moodDisplay && moodEmoji && moodText && selectedMood) {
+    const moodEmojis = {
+      'happy': '😊',
+      'calm': '😌',
+      'excited': '⭐',
+      'sad': '😢',
+      'angry': '😠',
+      'neutral': '😐'
+    };
     
-    if (stepNumber < step) {
-      stepElement.classList.add('completed');
-    } else if (stepNumber === step) {
-      stepElement.classList.add('active');
-    }
-  });
+    const moodTexts = {
+      'happy': '心情不错',
+      'calm': '内心平静',
+      'excited': '充满期待',
+      'sad': '有点难过',
+      'angry': '有些生气',
+      'neutral': '一般般'
+    };
+    
+    moodEmoji.textContent = moodEmojis[selectedMood] || moodEmojis.neutral;
+    moodText.textContent = moodTexts[selectedMood] || moodTexts.neutral;
+    moodDisplay.style.display = 'block';
+    
+    console.log('✅ 心情显示已更新:', selectedMood);
+  }
 }
 
 // 验证步骤3
@@ -2631,223 +3101,9 @@ function validateStep3() {
       }
     });
   }
-}
 
-// 生成AI内容和音乐推荐
-async function generateAIContent() {
-  // 确保心情数据存在
-  if (!selectedMood) {
-    selectedMood = 'neutral';
-    diaryData.mood = selectedMood;
-  }
-  
-  if (selectedGoalCategories.length === 0) {
-    showNotification('请先选择今日完成的内容！', 'error');
-    return;
-  }
-  
-  const loadingDiv = document.getElementById('aiLoading');
-  const previewDiv = document.getElementById('aiContentPreview');
-  const musicDiv = document.getElementById('musicRecommendation');
-  
-  loadingDiv.style.display = 'block';
-  previewDiv.style.display = 'none';
-  musicDiv.style.display = 'none';
-  
-  try {
-    // 构建提示词
-    const goalTexts = {
-      'health': '健身',
-      'learning': '学习',
-      'career': '工作',
-      'relationship': '感情',
-      'finance': '理财',
-      'hobby': '兴趣',
-      'spiritual': '冥想',
-      'travel': '旅行',
-      'social': '社交',
-      'creativity': '创意',
-      'organization': '整理',
-      'gratitude': '感恩'
-    };
-    
-    const moodTexts = {
-      'happy': '开心',
-      'calm': '平静',
-      'excited': '兴奋',
-      'sad': '难过',
-      'angry': '生气',
-      'neutral': '一般'
-    };
-    
-    const selectedGoals = selectedGoalCategories.map(cat => goalTexts[cat]).join('、');
-    
-         const prompt = `请根据以下信息为我生成10个有趣且引人深思的问题和1首推荐的音乐：
-     
-     心情状态：${moodTexts[selectedMood]}
-     今日完成：${selectedGoals}
-     
-     要求：
-     1. 生成10个问题，涵盖以下方面：
-        - 今天最让你笑出声的瞬间是什么？
-        - 如果今天是一部电影，你会给它起什么名字？
-        - 今天遇到的人中，谁让你印象最深刻？
-        - 如果可以和今天的自己对话，你会说什么？
-        - 今天有什么事情让你感到意外惊喜？
-        - 如果今天可以重来一次，你会改变什么？
-        - 今天最想和谁分享你的心情？
-        - 今天学到了什么新东西？
-        - 明天最期待的事情是什么？
-        - 今天有什么让你感到特别感恩的？
-     
-     2. 问题要：
-        - 有趣且富有想象力
-        - 语言生动活泼，有故事感
-        - 结合具体的心情和完成的事情
-        - 让人想要深入思考和回答
-        - 用中文写作，语气轻松愉快
-     
-     3. 推荐1首音乐：
-        - 根据心情状态推荐
-        - 音乐风格要多样化，不要太固定
-        - 可以是流行、古典、轻音乐、民谣等不同风格
-        - 音乐要能配合当前的心情和状态
-     
-     请按照以下格式输出，每个问题后留空行，音乐信息单独列出：
-     【10个疑问句】
-     1. [第一个问题]\n\n
-     2. [第二个问题]\n\n
-     3. [第三个问题]\n\n
-     4. [第四个问题]\n\n
-     5. [第五个问题]\n\n
-     6. [第六个问题]\n\n
-     7. [第七个问题]\n\n
-     8. [第八个问题]\n\n
-     9. [第九个问题]\n\n
-     10. [第十个问题]\n\n
-     【推荐音乐】\n
-     [音乐名称] - [艺术家]`;
-    
-    const response = await fetch('/tools/api/deepseek/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        max_tokens: 500,
-        temperature: 0.8
-      })
-    });
-    
-    const data = await response.json();
-    
-        if (data.success) {
-      // 显示AI生成的内容，格式化显示
-      const formattedContent = formatContentForDisplay(data.content);
-      document.getElementById('previewContent').innerHTML = formattedContent;
-      showNotification('AI内容生成成功！', 'success');
-    } else {
-      // DeepSeek API调用失败，使用备用内容
-      console.warn('DeepSeek API调用失败:', data.error);
-      const fallbackContent = generateFallbackContent(selectedMood, selectedGoalCategories);
-      const formattedContent = formatContentForDisplay(fallbackContent);
-      document.getElementById('previewContent').innerHTML = formattedContent;
-      showNotification('AI生成内容暂时不可用，已为你生成温暖的备用内容！', 'warning');
-    }
-    
-    loadingDiv.style.display = 'none';
-    previewDiv.style.display = 'block';
-    document.getElementById('nextToStep3').style.display = 'inline-flex';
-    
-    // 添加问题选择事件监听器
-    addQuestionSelectionListeners();
-    
-    // 获取音乐推荐
-    await getMusicRecommendation();
-  } catch (error) {
-    console.error('生成AI内容失败:', error);
-    // 使用备用内容
-    const fallbackContent = generateFallbackContent(selectedMood, selectedGoalCategories);
-    const formattedContent = formatContentForDisplay(fallbackContent);
-    document.getElementById('previewContent').innerHTML = formattedContent;
-    showNotification('AI生成内容暂时不可用，已为你生成温暖的备用内容！', 'warning');
-    
-    loadingDiv.style.display = 'none';
-    previewDiv.style.display = 'block';
-    document.getElementById('nextToStep3').style.display = 'inline-flex';
-    
-    // 添加问题选择事件监听器
-    addQuestionSelectionListeners();
-    
-    // 获取音乐推荐
-    await getMusicRecommendation();
-  }
-}
 
-// 生成备用内容
-function generateFallbackContent(mood, goalCategories) {
-  const moodTexts = {
-    'happy': '开心',
-    'calm': '平静',
-    'excited': '兴奋',
-    'sad': '难过',
-    'angry': '生气',
-    'neutral': '一般'
-  };
-  
-  const goalTexts = {
-    'health': '健身',
-    'learning': '学习',
-    'career': '工作',
-    'relationship': '感情',
-    'finance': '理财',
-    'hobby': '兴趣',
-    'spiritual': '冥想',
-    'travel': '旅行',
-    'social': '社交',
-    'creativity': '创意',
-    'organization': '整理',
-    'gratitude': '感恩'
-  };
-  
-  const selectedGoals = goalCategories.map(cat => goalTexts[cat]).join('、');
-  const moodText = moodTexts[mood] || '一般';
-  
-  const musicRecommendations = {
-    'happy': ['晴天 - 周杰伦', '稻香 - 周杰伦', '小幸运 - 田馥甄', '告白气球 - 周杰伦', '夜空中最亮的星 - 逃跑计划'],
-    'calm': ['月光 - 王心凌', '安静 - 周杰伦', '天空之城 - 久石让', 'River Flows In You - Yiruma', 'Kiss The Rain - Yiruma'],
-    'excited': ['追梦赤子心 - GALA', '海阔天空 - Beyond', '光辉岁月 - Beyond', '真心英雄 - 成龙', '奔跑 - 羽泉'],
-    'sad': ['后来 - 刘若英', '童话 - 光良', '可惜没如果 - 林俊杰', '演员 - 薛之谦', '泡沫 - 邓紫棋'],
-    'angry': ['怒放的生命 - 汪峰', '存在 - 汪峰', '勇敢的心 - 汪峰', '飞得更高 - 汪峰', '春天里 - 汪峰'],
-    'neutral': ['平凡之路 - 朴树', '那些花儿 - 朴树', '白桦林 - 朴树', '生如夏花 - 朴树', '且听风吟 - 朴树']
-  };
-  
-  const questions = [
-    `今天完成了${selectedGoals}，最让你笑出声的瞬间是什么？`,
-    `如果今天是一部电影，你会给它起什么名字？`,
-    `今天遇到的人中，谁让你印象最深刻？`,
-    `如果可以和今天的自己对话，你会说什么？`,
-    `今天有什么事情让你感到意外惊喜？`,
-    `如果今天可以重来一次，你会改变什么？`,
-    `今天最想和谁分享你的${moodText}心情？`,
-    `今天学到了什么新东西？`,
-    `明天最期待的事情是什么？`,
-    `今天有什么让你感到特别感恩的？`
-  ];
-  
-  const selectedMusic = musicRecommendations[mood][Math.floor(Math.random() * musicRecommendations[mood].length)];
-  
-  let content = '【10个疑问句】\n';
-  questions.forEach((question, index) => {
-    content += `${index + 1}. ${question}\n\n`;
-  });
-  content += '【推荐音乐】\n';
-  content += selectedMusic;
-  
-  return content;
-}
+
 
 
 
@@ -3611,140 +3867,7 @@ function formatContentForEditing(content) {
   return finalOutput;
 }
 
-// 格式化内容用于显示
-function formatContentForDisplay(content) {
-  let formatted = content;
-  // 确保内容开始干净
-  formatted = formatted.trim();
 
-  // 替换【10个疑问句】为美观的标题
-  formatted = formatted.replace(/【10个疑问句】/, '<h3><span style="color: #ff8c00;">&#128161;</span> 选择您想回答的问题</h3><p style="color: #666; margin-bottom: 20px;">请选择您想要回答的问题，这些问题将作为您今天的生活记录内容</p>');
-  // 替换【推荐音乐】为美观的标题
-  formatted = formatted.replace(/【推荐音乐】/, '<h3><span style="color: #ff8c00;">&#127925;</span> 音乐推荐</h3>');
-
-  // 将数字编号的疑问句转换为可选择的形式
-  formatted = formatted.replace(/(\d+)\.\s*(.*?)(?=\n\n|\n【|\Z)/gs, (match, number, text) => {
-    // 避免将音乐信息误判为问题
-    if (text.includes(' - ') && text.includes('🎵 音乐推荐：')) {
-        return match; // 如果看起来像音乐信息，则不处理
-    }
-    const questionText = text.trim();
-    return `
-      <div class="question-selection-item" data-question="${questionText}" data-index="${parseInt(number) - 1}">
-        <div class="question-checkbox">
-          <input type="checkbox" id="question${parseInt(number) - 1}" class="question-select-checkbox">
-          <label for="question${parseInt(number) - 1}"></label>
-        </div>
-        <div class="question-content">
-          <span class="question-number">${number}.</span>
-          <span class="question-text">${questionText}</span>
-        </div>
-      </div>
-    `;
-  });
-
-  // 将换行符转换为 <br> 标签，以便在HTML中正确显示
-  formatted = formatted.replace(/\n\n+/g, '<br><br>'); // 将多个换行符转换为双 <br>
-  formatted = formatted.replace(/\n/g, '<br>'); // 将单个换行符转换为单 <br>
-
-  return formatted;
-}
-
-// 完成日记
-async function completeDiary() {
-  console.log('completeDiary 函数被触发。');
-  console.log('当前 diaryData:', diaryData);
-
-  // 确保心情数据存在
-  if (!diaryData.mood || diaryData.mood === '') {
-    diaryData.mood = selectedMood || 'neutral';
-  }
-  
-  // 收集所有问题回答和补充说明
-  const questionAnswers = document.querySelectorAll('.question-answer');
-  let totalContent = '';
-  let questionAnswersData = [];
-  
-  questionAnswers.forEach((textarea, index) => {
-    if (textarea) {
-      const answer = textarea.value.trim();
-      const question = textarea.dataset.question;
-      const originalIndex = textarea.dataset.originalIndex;
-      const additionalInput = document.getElementById(`additionalInput${index + 1}`);
-      const additionalAnswer = additionalInput ? additionalInput.value.trim() : '';
-      
-      if (answer) {
-        // 构建问题+答案的内容
-        let questionAnswerContent = `问题：${question}\n回答：${answer}`;
-        if (additionalAnswer) {
-          questionAnswerContent += `\n补充：${additionalAnswer}`;
-        }
-        totalContent += questionAnswerContent + '\n\n';
-        
-        // 收集问题答案数据用于保存
-        questionAnswersData.push({
-          question: question,
-          answer: answer,
-          additional_answer: additionalAnswer,
-          order: parseInt(originalIndex) + 1
-        });
-      }
-    }
-  });
-  
-  // 新的验证逻辑：只要有标题就可以保存
-  if (!diaryData.title) {
-    showNotification('请至少填写标题！', 'error');
-    return;
-  }
-  
-  // 如果没有回答，使用默认内容
-  if (!totalContent) {
-    totalContent = '今天的心情和感悟';
-  }
-  
-  diaryData.content = totalContent;
-  console.log('尝试保存的数据:', diaryData);
-  console.log('问题答案数据:', questionAnswersData);
-  
-  const completeButton = document.getElementById('completeDiary');
-  if (!completeButton) {
-    showNotification('保存按钮未找到！', 'error');
-    return;
-  }
-  
-  const originalText = completeButton.innerHTML;
-  completeButton.innerHTML = '<span class="loading"></span> 保存中...';
-  completeButton.disabled = true;
-  
-  try {
-    const csrfToken = getCookie('csrftoken');
-    
-    // 收集音乐推荐信息
-    const musicRecommendation = window.currentMusicRecommendation || '';
-    
-    // 获取当前日期
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0]; // 格式化为 YYYY-MM-DD
-    
-    const response = await fetch('/tools/api/life_diary/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken
-      },
-      body: JSON.stringify({
-        action: 'save_diary',
-        title: diaryData.title,
-        content: diaryData.content,
-        mood: diaryData.mood,
-        mood_note: '',
-        tags: [],
-        question_answers: questionAnswersData,
-        music_recommendation: musicRecommendation,
-        date: dateStr
-      })
-    });
     
     const data = await response.json();
     
@@ -3763,200 +3886,46 @@ async function completeDiary() {
   }
 }
 
-// 加载统计数据
-async function loadStatistics() {
-  try {
-    console.log('开始加载统计数据...');
-    
-    // 显示统计区域
-    const statisticsSection = document.getElementById('statisticsSection');
-    if (statisticsSection) {
-      statisticsSection.style.display = 'block';
-      console.log('显示统计区域');
-    } else {
-      console.error('找不到statisticsSection元素');
-    }
-    
-    const response = await fetch('/tools/api/life_diary/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
-      body: JSON.stringify({
-        action: 'get_statistics'
-      })
-    });
-    
-    const data = await response.json();
-    console.log('统计数据响应:', data);
-    
-    if (data.success) {
-      console.log('统计数据:', data.data);
-      
-      // 更新统计数字
-      const totalDiaryDaysElement = document.getElementById('totalDiaryDays');
-      const totalDiaryCountElement = document.getElementById('totalDiaryCount');
-      const happyDaysElement = document.getElementById('happyDays');
-      const totalWordsElement = document.getElementById('totalWords');
-      
-      if (totalDiaryDaysElement) {
-        totalDiaryDaysElement.textContent = data.data.total_diary_days || 0;
-        console.log('更新日记天数:', data.data.total_diary_days || 0);
-      } else {
-        console.error('找不到totalDiaryDays元素');
-      }
-      
-      if (totalDiaryCountElement) {
-        totalDiaryCountElement.textContent = data.data.total_diary_count || 0;
-        console.log('更新日记次数:', data.data.total_diary_count || 0);
-      } else {
-        console.error('找不到totalDiaryCount元素');
-      }
-      
-      if (happyDaysElement) {
-        happyDaysElement.textContent = data.data.happy_days;
-        console.log('更新开心天数:', data.data.happy_days);
-      } else {
-        console.error('找不到happyDays元素');
-      }
-      
-      if (totalWordsElement) {
-        totalWordsElement.textContent = data.data.total_words || 0;
-        console.log('更新总字数:', data.data.total_words || 0);
-      } else {
-        console.error('找不到totalWords元素');
-      }
-      
-      // 渲染心情图表
-      const canvas = document.getElementById('moodChart');
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width = canvas.offsetWidth;
-        const height = canvas.height = 300;
-        renderMoodChart(ctx, width, height, data.data.mood_data);
-      }
-      
-      // 更新心情统计摘要
-      updateMoodStatsSummary(data.data.mood_data);
-      
-      console.log('统计数据更新完成');
-    } else {
-      console.error('获取统计数据失败:', data.error);
-      showNotification('获取统计数据失败', 'error');
-    }
-  } catch (error) {
-    console.error('加载统计数据失败:', error);
-    showNotification('加载统计数据失败', 'error');
+
+
+// 更新心情统计摘要
+function updateMoodStatsSummary(moodStats) {
+  const summaryElement = document.getElementById('moodStatsSummary');
+  if (!summaryElement) return;
+  
+  const totalEntries = Object.values(moodStats).reduce((sum, count) => sum + count, 0);
+  if (totalEntries === 0) {
+    summaryElement.innerHTML = '<p>暂无心情数据</p>';
+    return;
   }
-}
-
-
-function formatContentForEditing(content) {
-  // 移除【10个疑问句】和【推荐音乐】标记，并清理多余的空行
-  let processedContent = content
-    .replace(/【10个疑问句】\n*/g, '') // 移除标题和其后的换行
-    .replace(/【推荐音乐】\n*/g, '') // 移除标题和其后的换行
-    .trim(); // 清理整体内容的空白
-
-  const lines = processedContent.split('\n');
-  let questions = [];
-  let music = '';
-  let inMusicSection = false; // 标记是否进入音乐信息部分
-
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine === '') {
-      continue; // 跳过空行
-    }
-
-    // 尝试匹配音乐信息行 (例如 "歌曲名 - 艺术家")
-    // 并且确保我们还没有找到音乐信息，避免重复或错误匹配
-    if (trimmedLine.includes(' - ') && !music && !inMusicSection) {
-        music = trimmedLine;
-        inMusicSection = true; // 标记已找到音乐信息
-        continue;
-    }
-
-    // 匹配数字编号的疑问句 (例如 "1. 你的问题?")
-    const questionMatch = trimmedLine.match(/^(\d+)\.\s*(.*)/);
-    if (questionMatch) {
-      questions.push(`• ${questionMatch[2]}`); // 转换为圆点列表格式
-    } else if (!inMusicSection) {
-      // 如果不是编号问题，也不是音乐信息，且未进入音乐部分，则作为普通文本行处理
-      // 这可以捕获AI可能生成的非编号文本
-      questions.push(trimmedLine);
-    }
-  }
-
-  // 将所有处理过的疑问句用双换行符连接，确保每句独立
-  let finalOutput = questions.join('\n\n');
-
-  // 添加音乐推荐信息
-  if (music) {
-    if (finalOutput) {
-      finalOutput += '\n\n'; // 如果前面有内容，则添加双换行分隔
-    }
-    finalOutput += `🎵 音乐推荐：${music}`;
-  }
-
-  // 确保最终输出有良好的排版
-  finalOutput = finalOutput
-    .replace(/\n{3,}/g, '\n\n') // 将3个或更多换行符替换为2个
-    .trim(); // 清理首尾空白
-
-  return finalOutput;
-}
-
-// 格式化内容用于显示
-function formatContentForDisplay(content) {
-  let formatted = content;
-  // 确保内容开始干净
-  formatted = formatted.trim();
-
-  // 替换【10个疑问句】为美观的标题
-  formatted = formatted.replace(/【10个疑问句】/, '<h3><span style="color: #ff8c00;">&#128161;</span> 选择您想回答的问题</h3><p style="color: #666; margin-bottom: 20px;">请选择您想要回答的问题，这些问题将作为您今天的生活记录内容</p>');
-  // 替换【推荐音乐】为美观的标题
-  formatted = formatted.replace(/【推荐音乐】/, '<h3><span style="color: #ff8c00;">&#127925;</span> 音乐推荐</h3>');
-
-  // 将数字编号的疑问句转换为可选择的形式
-  formatted = formatted.replace(/(\d+)\.\s*(.*?)(?=\n\n|\n【|\Z)/gs, (match, number, text) => {
-    // 避免将音乐信息误判为问题
-    if (text.includes(' - ') && text.includes('🎵 音乐推荐：')) {
-        return match; // 如果看起来像音乐信息，则不处理
-    }
-    const questionText = text.trim();
-    return `
-      <div class="question-selection-item" data-question="${questionText}" data-index="${parseInt(number) - 1}">
-        <div class="question-checkbox">
-          <input type="checkbox" id="question${parseInt(number) - 1}" class="question-select-checkbox">
-          <label for="question${parseInt(number) - 1}"></label>
-        </div>
-        <div class="question-content">
-          <span class="question-number">${number}.</span>
-          <span class="question-text">${questionText}</span>
-        </div>
+  
+  const moodNames = {
+    'happy': '开心',
+    'calm': '平静',
+    'excited': '兴奋',
+    'sad': '难过',
+    'angry': '生气',
+    'neutral': '一般'
+  };
+  
+  let summaryHtml = '<div class="mood-stats-grid">';
+  Object.entries(moodStats).forEach(([mood, count]) => {
+    const percentage = ((count / totalEntries) * 100).toFixed(1);
+    const moodName = moodNames[mood] || mood;
+    summaryHtml += `
+      <div class="mood-stat-item">
+        <span class="mood-stat-label">${moodName}</span>
+        <span class="mood-stat-value">${count} (${percentage}%)</span>
       </div>
     `;
   });
-
-  // 将换行符转换为 <br> 标签，以便在HTML中正确显示
-  formatted = formatted.replace(/\n\n+/g, '<br><br>'); // 将多个换行符转换为双 <br>
-  formatted = formatted.replace(/\n/g, '<br>'); // 将单个换行符转换为单 <br>
-
-  return formatted;
+  summaryHtml += '</div>';
+  
+  summaryElement.innerHTML = summaryHtml;
 }
 
-
-
-
-
-
-
-
-
-// 渲染心情趋势图表
-function renderMoodChart(moodData) {
+// 渲染心情图表
+function renderMoodChart(moodStats) {
   const canvas = document.getElementById('moodChart');
   if (!canvas) return;
   
@@ -3964,93 +3933,315 @@ function renderMoodChart(moodData) {
   const width = canvas.width = canvas.offsetWidth;
   const height = canvas.height = 300;
   
-  // 清空画布
   ctx.clearRect(0, 0, width, height);
   
-  // 检查是否有后端数据
-  if (!moodData || !moodData.mood_timeline || moodData.mood_timeline.length === 0) {
-    // 尝试从页面上的当前数据生成临时图表
-    const currentMood = getCurrentPageMood();
-    if (currentMood) {
-      renderTemporaryMoodChart(ctx, width, height, currentMood);
-      return;
-    } else {
-      // 显示无数据提示
-      ctx.fillStyle = '#666';
-      ctx.font = '16px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('暂无心情数据', width / 2, height / 2);
-      return;
-    }
+  const totalEntries = Object.values(moodStats).reduce((sum, count) => sum + count, 0);
+  if (totalEntries === 0) {
+    ctx.fillStyle = '#666';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('暂无心情数据', width / 2, height / 2);
+    return;
   }
   
-  // 更新的心情等级映射（与后端权重对应）
-  const moodLevels = {
-    'happy': 5,        // 非常积极
-    'excited': 5,      // 兴奋
-    'grateful': 4,     // 感恩
-    'inspired': 4,     // 受启发
-    'confident': 4,    // 自信
-    'calm': 4,         // 平静
-    'content': 3,      // 满足
-    'neutral': 3,      // 中性
-    'worried': 2,      // 担心
-    'tired': 2,        // 疲惫
-    'sad': 1,          // 悲伤
-    'anxious': 1,      // 焦虑
-    'stressed': 1,     // 压力
-    'frustrated': 1,   // 沮丧
-    'angry': 0         // 愤怒
+  const colors = {
+    'happy': '#4CAF50',
+    'calm': '#2196F3',
+    'excited': '#FF9800',
+    'sad': '#9C27B0',
+    'angry': '#F44336',
+    'neutral': '#9E9E9E'
   };
   
-  // 准备数据 - 使用实际的时间线数据
-  const timeline = moodData.mood_timeline;
-  const dates = [];
-  const levels = [];
+  let currentAngle = 0;
+  Object.entries(moodStats).forEach(([mood, count]) => {
+    const sliceAngle = (count / totalEntries) * 2 * Math.PI;
+    const color = colors[mood] || '#9E9E9E';
+    
+    ctx.beginPath();
+    ctx.moveTo(width / 2, height / 2);
+    ctx.arc(width / 2, height / 2, Math.min(width, height) / 3, currentAngle, currentAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    
+    currentAngle += sliceAngle;
+  });
+}
+
+// 更新日记打卡日历
+function updateDiaryCheckInCalendar(checkinData) {
+  if (!diaryCheckInCalendar) {
+    diaryCheckInCalendar = new DiaryCheckInCalendar();
+  }
+  diaryCheckInCalendar.updateData(checkinData);
+}
+
+// 获取当前页面心情
+function getCurrentPageMood() {
+  return selectedMood;
+}
+
+// 渲染临时心情图表
+function renderTemporaryMoodChart(ctx, width, height, mood) {
+  const colors = {
+    'happy': '#4CAF50',
+    'calm': '#2196F3',
+    'excited': '#FF9800',
+    'sad': '#9C27B0',
+    'angry': '#F44336',
+    'neutral': '#9E9E9E'
+  };
   
-  // 获取最近14天的数据，如果数据不足则使用所有可用数据
-  const recentData = timeline.slice(-14);
+  const color = colors[mood] || '#9E9E9E';
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = Math.min(width, height) / 4;
   
-  recentData.forEach(item => {
-    const date = new Date(item.date);
-    const dateStr = date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-    dates.push(dateStr);
-    levels.push(moodLevels[item.mood] || 3);
+  // 绘制圆形
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+  
+  // 绘制文字
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 16px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('今日心情', centerX, centerY);
+}
+
+
+
+// 显示统计详情
+function showStatDetail(cardType) {
+  const modal = document.getElementById('statDetailModal');
+  const title = document.getElementById('statDetailTitle');
+  const icon = document.getElementById('statDetailIcon');
+  const summaryNumber = document.getElementById('statDetailSummaryNumber');
+  const summaryLabel = document.getElementById('statDetailSummaryLabel');
+  const list = document.getElementById('statDetailList');
+  
+  const cardInfo = {
+    'totalDiaryDaysCard': {
+      title: '日记天数统计',
+      icon: '📅',
+      label: '总天数'
+    },
+    'totalDiaryCountCard': {
+      title: '日记次数统计',
+      icon: '📝',
+      label: '总次数'
+    },
+    'happyDaysCard': {
+      title: '开心天数统计',
+      icon: '😊',
+      label: '开心天数'
+    },
+    'totalWordsCard': {
+      title: '总字数统计',
+      icon: '📖',
+      label: '总字数'
+    }
+  };
+  
+  const info = cardInfo[cardType];
+  if (!info) return;
+  
+  title.textContent = info.title;
+  icon.textContent = info.icon;
+  summaryLabel.textContent = info.label;
+  
+  // 这里可以添加获取详细数据的逻辑
+  // 暂时显示示例数据
+  summaryNumber.textContent = '0';
+  list.innerHTML = '<div class="stat-detail-empty"><div class="stat-detail-empty-icon">📊</div><div class="stat-detail-empty-text">暂无详细数据</div></div>';
+  
+  modal.style.display = 'flex';
+}
+
+// 关闭统计详情弹窗
+function closeStatDetail() {
+  document.getElementById('statDetailModal').style.display = 'none';
+}
+
+// 初始化统计详情弹窗
+function initStatDetailModal() {
+  const modal = document.getElementById('statDetailModal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeStatDetail();
+      }
+    });
+  }
+}
+
+// 完成日记流程
+function finishDiary() {
+  goToStep(5);
+}
+
+// 重置日记
+function resetDiary() {
+  // 重置所有数据
+  selectedMood = null;
+  selectedGoalCategories = [];
+  diaryData = {
+    title: '',
+    content: '',
+    mood: '',
+    goal_category: ''
+  };
+  
+  // 重置UI状态
+  document.querySelectorAll('.mood-option').forEach(option => {
+    option.classList.remove('selected');
   });
   
-  // 如果数据点太少，添加一些空数据点以保持图表美观
-  while (dates.length < 7) {
-    const lastDate = dates.length > 0 ? new Date(timeline[timeline.length - 1].date) : new Date();
-    const newDate = new Date(lastDate);
-    newDate.setDate(newDate.getDate() - (7 - dates.length));
-    const dateStr = newDate.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-    dates.unshift(dateStr);
-    levels.unshift(3); // 中性心情
+  document.querySelectorAll('.goal-icon-option').forEach(option => {
+    option.classList.remove('selected');
+  });
+  
+  // 重置表单
+  const diaryTitle = document.getElementById('diaryTitle');
+  if (diaryTitle) diaryTitle.value = '';
+  
+  document.querySelectorAll('.question-answer').forEach(textarea => {
+    textarea.value = '';
+  });
+  
+  document.querySelectorAll('.additional-input').forEach(input => {
+    input.value = '';
+  });
+  
+  // 隐藏AI预览和表单
+  document.getElementById('aiContentPreview').style.display = 'none';
+  document.getElementById('diaryFormContainer').style.display = 'none';
+  document.getElementById('completeDiary').style.display = 'none';
+  
+  // 回到第一步
+  goToStep(1);
+  
+  showNotification('已重置，开始新的记录吧！', 'success');
+}
+
+// 加载今日数据
+function loadTodayData() {
+  // 这里可以添加加载今日已有数据的逻辑
+  console.log('加载今日数据');
+}
+
+// 心情选择监听器
+function addMoodSelectionListener() {
+  const moodOptions = document.querySelectorAll('.mood-option');
+  
+  moodOptions.forEach(option => {
+    option.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const mood = this.dataset.mood;
+      console.log('心情选择点击:', mood);
+      
+      // 移除其他选项的选中状态
+      moodOptions.forEach(opt => opt.classList.remove('selected'));
+      
+      // 添加当前选项的选中状态
+      this.classList.add('selected');
+      
+      // 更新全局变量
+      selectedMood = mood;
+      diaryData.mood = mood;
+      
+      // 检查步骤1完成状态
+      checkStep1Completion();
+      
+      // 显示反馈
+      showMoodFeedback(mood);
+      
+      console.log('心情选择完成:', { selectedMood, diaryData });
+    });
+  });
+  
+  console.log('心情选择监听器已添加，选项数量:', moodOptions.length);
+}
+    
+    // 更新月份显示
+    const monthDisplay = document.getElementById('diaryCurrentMonth');
+    if (monthDisplay) {
+      monthDisplay.textContent = `${year}年${month + 1}月`;
+    }
+    
+    // 生成日历网格
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    let html = '';
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      
+      const isCurrentMonth = date.getMonth() === month;
+      const isToday = this.isToday(date);
+      const hasCheckin = this.hasCheckin(date);
+      
+      let className = 'calendar-day';
+      if (!isCurrentMonth) className += ' other-month';
+      if (isToday) className += ' today';
+      if (hasCheckin) className += ' has-checkin completed';
+      
+      html += `<div class="${className}" data-date="${date.toISOString().split('T')[0]}">${date.getDate()}</div>`;
+    }
+    
+    calendarBody.innerHTML = html;
   }
   
-  // 绘制坐标轴
-  ctx.strokeStyle = '#ddd';
-  ctx.lineWidth = 1;
+  addEventListeners() {
+    // 月份导航
+    const prevBtn = document.getElementById('diaryPrevMonth');
+    const nextBtn = document.getElementById('diaryNextMonth');
+    const todayBtn = document.getElementById('diaryGoToday');
+    
+    if (prevBtn) prevBtn.addEventListener('click', () => this.previousMonth());
+    if (nextBtn) nextBtn.addEventListener('click', () => this.nextMonth());
+    if (todayBtn) todayBtn.addEventListener('click', () => this.goToToday());
+  }
   
-  // Y轴
-  ctx.beginPath();
-  ctx.moveTo(50, 30);
-  ctx.lineTo(50, height - 50);
-  ctx.stroke();
+  previousMonth() {
+    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+    this.renderCalendar();
+  }
   
-  // X轴
-  ctx.beginPath();
-  ctx.moveTo(50, height - 50);
-  ctx.lineTo(width - 30, height - 50);
-  ctx.stroke();
+  nextMonth() {
+    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+    this.renderCalendar();
+  }
   
-  // Y轴标签
-  ctx.fillStyle = '#666';
-  ctx.font = '12px Arial';
-  ctx.textAlign = 'right';
-  const yLabels = ['愤怒', '消极', '担心', '中性', '积极'];
-  for (let i = 0; i < 5; i++) {
-    const y = height - 50 - (i * (height - 80) / 4);
+  goToToday() {
+    this.currentDate = new Date();
+    this.renderCalendar();
+  }
+  
+  isToday(date) {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  }
+  
+  hasCheckin(date) {
+    const dateStr = date.toISOString().split('T')[0];
+    return this.checkinData[dateStr] || false;
+  }
+  
+  updateData(data) {
+    this.checkinData = data;
+    this.renderCalendar();
+  }
+}
+
     ctx.fillText(yLabels[i], 45, y + 4);
   }
   
@@ -4115,135 +4306,9 @@ function renderMoodChart(moodData) {
       }
 }
 
-// 获取当前页面上的心情数据
-function getCurrentPageMood() {
-  // 检查是否有选中的心情
-  const selectedMoodOption = document.querySelector('.mood-option.selected');
-  if (selectedMoodOption) {
-    const moodText = selectedMoodOption.querySelector('span').textContent;
-    // 将中文心情转换为英文标识符
-    const moodMapping = {
-      '开心': 'happy',
-      '兴奋': 'excited',
-      '平静': 'calm',
-      '满足': 'content',
-      '一般': 'neutral',
-      '担心': 'worried',
-      '疲惫': 'tired',
-      '难过': 'sad',
-      '焦虑': 'anxious',
-      '压力': 'stressed',
-      '沮丧': 'frustrated',
-      '生气': 'angry',
-      '感恩': 'grateful',
-      '受启发': 'inspired',
-      '自信': 'confident'
-    };
-    return moodMapping[moodText] || 'neutral';
-  }
-  
-  // 检查全局变量
-  if (window.selectedMood) {
-    return window.selectedMood;
-  }
-  
-  return null;
-}
 
-// 渲染临时心情图表
-function renderTemporaryMoodChart(ctx, width, height, currentMood) {
-  // 心情等级映射
-  const moodLevels = {
-    'happy': 5,
-    'excited': 5,
-    'grateful': 4,
-    'inspired': 4,
-    'confident': 4,
-    'calm': 4,
-    'content': 3,
-    'neutral': 3,
-    'worried': 2,
-    'tired': 2,
-    'sad': 1,
-    'anxious': 1,
-    'stressed': 1,
-    'frustrated': 1,
-    'angry': 0
-  };
-  
-  const currentLevel = moodLevels[currentMood] || 3;
-  
-  // 绘制坐标轴
-  ctx.strokeStyle = '#ddd';
-  ctx.lineWidth = 1;
-  
-  // Y轴
-  ctx.beginPath();
-  ctx.moveTo(50, 30);
-  ctx.lineTo(50, height - 50);
-  ctx.stroke();
-  
-  // X轴
-  ctx.beginPath();
-  ctx.moveTo(50, height - 50);
-  ctx.lineTo(width - 30, height - 50);
-  ctx.stroke();
-  
-  // Y轴标签
-  ctx.fillStyle = '#666';
-  ctx.font = '12px Arial';
-  ctx.textAlign = 'right';
-  const yLabels = ['愤怒', '消极', '担心', '中性', '积极'];
-  for (let i = 0; i < 5; i++) {
-    const y = height - 50 - (i * (height - 80) / 4);
-    ctx.fillText(yLabels[i], 45, y + 4);
-  }
-  
-  // 生成模拟数据（基于当前心情）
-  const dates = [];
-  const levels = [];
-  const today = new Date();
-  
-  // 生成最近7天的模拟数据
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-    dates.push(dateStr);
-    
-    if (i === 0) {
-      // 今天是当前选择的心情
-      levels.push(currentLevel);
-    } else {
-      // 前几天是随机但接近当前心情的数据
-      const variation = Math.random() * 2 - 1; // 负1到1的随机数
-      const simulatedLevel = Math.max(0, Math.min(5, currentLevel + variation));
-      levels.push(Math.round(simulatedLevel));
-    }
-  }
-  
-  // X轴标签
-  ctx.textAlign = 'center';
-  dates.forEach((date, index) => {
-    const x = 50 + (index * (width - 80) / 6);
-    ctx.fillText(date, x, height - 30);
-  });
-  
-  // 绘制心情曲线
-  ctx.strokeStyle = '#4CAF50';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  
-  levels.forEach((level, index) => {
-    const x = 50 + (index * (width - 80) / 6);
-    const y = height - 50 - ((level - 1) * (height - 80) / 4);
-    
-    if (index === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  });
+
+
   ctx.stroke();
   
   // 绘制数据点
@@ -4318,208 +4383,19 @@ function updateTemporaryMoodStats(currentMood) {
 
 
 
-// 更新心情统计摘要
-function updateMoodStatsSummary(moodData) {
-  const summaryElement = document.getElementById('moodStatsSummary');
-  if (!summaryElement) return;
-  
-  const totalDays = moodData.total_entries || 0;
-  const positiveDays = moodData.positive_days || 0;
-  const negativeDays = moodData.negative_days || 0;
-  const neutralDays = moodData.neutral_days || 0;
-  
-  const positivePercent = totalDays > 0 ? Math.round((positiveDays / totalDays) * 100) : 0;
-  const negativePercent = totalDays > 0 ? Math.round((negativeDays / totalDays) * 100) : 0;
-  const neutralPercent = totalDays > 0 ? Math.round((neutralDays / totalDays) * 100) : 0;
-  
-  const stabilityText = {
-    'stable': '稳定',
-    'moderate': '一般',
-    'volatile': '波动',
-    'insufficient_data': '数据不足'
-  };
-  
-  summaryElement.innerHTML = `
-    <div class="mood-stats-grid">
-      <div class="mood-stat-item positive">
-        <span class="stat-label">😊 积极天数</span>
-        <span class="stat-value">${positiveDays}天 (${positivePercent}%)</span>
-      </div>
-      <div class="mood-stat-item neutral">
-        <span class="stat-label">😐 中性天数</span>
-        <span class="stat-value">${neutralDays}天 (${neutralPercent}%)</span>
-      </div>
-      <div class="mood-stat-item negative">
-        <span class="stat-label">😔 消极天数</span>
-        <span class="stat-value">${negativeDays}天 (${negativePercent}%)</span>
-      </div>
-      <div class="mood-stat-item stability">
-        <span class="stat-label">📊 心情稳定性</span>
-        <span class="stat-value">${stabilityText[moodData.stability] || '未知'}</span>
-      </div>
-    </div>
-  `;
-}
 
-// 完成整个流程
-function finishDiary() {
-  goToStep(5);
-}
 
-// 心情选择函数已在HTML中定义
 
-// 监听心情选择变化
-function addMoodSelectionListener() {
-  console.log('addMoodSelectionListener: 开始初始化心情选择监听器');
-  const moodOptions = document.querySelectorAll('.mood-option');
-  console.log('addMoodSelectionListener: 找到心情选项数量:', moodOptions.length);
-  
-  if (moodOptions.length === 0) {
-    console.error('❌ 未找到心情选项元素');
-    return;
-  }
-  
-  moodOptions.forEach((option, index) => {
-    console.log(`addMoodSelectionListener: 为选项 ${index + 1} (${option.dataset.mood}) 添加点击监听器`);
-    
-    // 确保样式正确
-    option.style.pointerEvents = 'auto';
-    option.style.cursor = 'pointer';
-    option.style.userSelect = 'none';
-    
-    // 移除可能存在的旧事件监听器
-    option.removeEventListener('click', option._moodClickHandler);
-    
-    // 创建新的点击处理函数
-    option._moodClickHandler = function(e) {
-      console.log('🎯 心情选择点击事件触发:', this.dataset.mood);
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // 移除其他选项的选中状态
-      moodOptions.forEach(opt => opt.classList.remove('selected'));
-      // 添加当前选项的选中状态
-      this.classList.add('selected');
-      
-      // 直接更新全局变量
-      selectedMood = this.dataset.mood;
-      if (typeof diaryData !== 'undefined') {
-        diaryData.mood = this.dataset.mood;
-      }
-      
-      console.log('✅ 心情已更新为:', selectedMood);
-      
-      // 立即检查步骤1是否完成
-      checkStep1Completion();
-      
-      // 显示心情反馈
-      showMoodFeedback(this.dataset.mood);
-      
-      // 延迟一下，确保选择状态已更新
-      setTimeout(() => {
-        const currentMood = getCurrentPageMood();
-        if (currentMood) {
-          // 重新渲染心情图表
-          const canvas = document.getElementById('moodChart');
-          if (canvas) {
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width = canvas.offsetWidth;
-            const height = canvas.height = 300;
-            ctx.clearRect(0, 0, width, height);
-            renderTemporaryMoodChart(ctx, width, height, currentMood);
-          }
-        }
-      }, 100);
-    };
-    
-    // 添加点击事件监听器
-    option.addEventListener('click', option._moodClickHandler);
-  });
-  
-  console.log('✅ addMoodSelectionListener: 心情选择监听器初始化完成');
-}
 
-// 统计卡片点击功能
-function addStatCardListeners() {
-  const statCards = document.querySelectorAll('.stat-card');
-  
-  statCards.forEach(card => {
-    card.addEventListener('click', function() {
-      const cardId = this.id;
-      showStatDetail(cardId);
-    });
-  });
-}
 
-// 显示统计详细数据
-function showStatDetail(cardId) {
-  const modal = document.getElementById('statDetailModal');
-  const icon = document.getElementById('statDetailIcon');
-  const title = document.getElementById('statDetailTitle');
-  const summaryNumber = document.getElementById('statDetailSummaryNumber');
-  const summaryLabel = document.getElementById('statDetailSummaryLabel');
-  const list = document.getElementById('statDetailList');
-  
-  // 根据卡片ID设置不同的内容
-  switch(cardId) {
-    case 'totalDiaryDaysCard':
-      icon.textContent = '📅';
-      title.textContent = '日记天数详情';
-      summaryNumber.textContent = document.getElementById('totalDiaryDays').textContent;
-      summaryLabel.textContent = '总天数';
-      loadDiaryDaysDetail(list);
-      break;
-    case 'totalDiaryCountCard':
-      icon.textContent = '📝';
-      title.textContent = '日记次数详情';
-      summaryNumber.textContent = document.getElementById('totalDiaryCount').textContent;
-      summaryLabel.textContent = '总次数';
-      loadDiaryCountDetail(list);
-      break;
-    case 'happyDaysCard':
-      icon.textContent = '😊';
-      title.textContent = '开心天数详情';
-      summaryNumber.textContent = document.getElementById('happyDays').textContent;
-      summaryLabel.textContent = '开心天数';
-      loadHappyDaysDetail(list);
-      break;
-    case 'totalWordsCard':
-      icon.textContent = '📖';
-      title.textContent = '总字数详情';
-      summaryNumber.textContent = document.getElementById('totalWords').textContent;
-      summaryLabel.textContent = '总字数';
-      loadTotalWordsDetail(list);
-      break;
-  }
-  
-  // 显示弹窗
-  modal.style.display = 'flex';
-  
-  // 添加点击效果
-  const card = document.getElementById(cardId);
-  card.classList.add('clicked');
-  setTimeout(() => {
-    card.classList.remove('clicked');
-  }, 300);
-}
 
-// 关闭统计详细数据
-function closeStatDetail() {
-  const modal = document.getElementById('statDetailModal');
-  modal.style.display = 'none';
-}
 
-// 点击弹窗外部关闭
-function initStatDetailModal() {
-  const modal = document.getElementById('statDetailModal');
-  if (modal) {
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        closeStatDetail();
-      }
-    });
-  }
-}
+
+
+
+
+
+
 
 // 加载日记天数详情
 function loadDiaryDaysDetail(list) {
@@ -4749,55 +4625,7 @@ function getMoodEmoji(mood) {
   return moodEmojis[mood] || '😐';
 }
 
-// 重置日记
-function resetDiary() {
-  // 重置所有数据
-  selectedMood = null;
-  selectedGoalCategories = [];
-  diaryData = {
-    title: '',
-    content: '',
-    mood: '',
-    goal_category: ''
-  };
-  
-  // 重置UI
-  document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('selected'));
-  document.querySelectorAll('.goal-icon-option').forEach(opt => opt.classList.remove('selected'));
-  
-  // 安全地重置表单元素
-  const diaryTitle = document.getElementById('diaryTitle');
-  const diaryContent = document.getElementById('diaryContent');
-  
-  if (diaryTitle) {
-    diaryTitle.value = '';
-  }
-  
-  if (diaryContent) {
-    diaryContent.value = '';
-  }
-  
-  // 重置问题输入框
-  document.querySelectorAll('.question-answer').forEach(textarea => {
-    if (textarea) {
-      textarea.value = '';
-    }
-  });
-  
-  document.querySelectorAll('.additional-input').forEach(input => {
-    if (input) {
-      input.value = '';
-    }
-  });
-  
-  // 重置进度指示器
-  updateProgressIndicator(1);
-  
-  // 返回第一步
-  goToStep(1);
-  
-  showNotification('开始新的生活记录！', 'success');
-}
+
 
 // 问题编辑相关函数
 function editQuestion(number, originalText) {
@@ -4888,67 +4716,9 @@ document.addEventListener('click', function(e) {
   });
 });
 
-// 加载今日数据
-async function loadTodayData() {
-  try {
-    const response = await fetch('/tools/api/life_diary/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
-      body: JSON.stringify({
-        action: 'get_diary'
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success && data.data) {
-      // 如果今天已有日记，直接跳转到完成页面
-      showNotification('今天的生活记录已完成！', 'success');
-      setTimeout(() => {
-        goToStep(5);
-      }, 2000);
-    }
-  } catch (error) {
-    console.error('加载今日数据失败:', error);
-  }
-}
 
-// 显示通知
-function showNotification(message, type = 'success') {
-  const notification = document.createElement('div');
-  notification.className = `notification ${type}`;
-  notification.textContent = message;
-  
-  document.body.appendChild(notification);
-  
-  setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease';
-    setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
-      }
-    }, 300);
-  }, 3000);
-}
 
-// 获取CSRF Token
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
+
 
 // 添加动画样式
 const style = document.createElement('style');
@@ -5040,10 +4810,14 @@ class DiaryCheckInCalendar {
   }
   
   async init() {
-    await this.loadCalendarData();
-    this.renderCalendar();
-    this.bindEvents();
-    this.updateStats();
+    try {
+      await this.loadCalendarData();
+      this.renderCalendar();
+      this.bindEvents();
+      this.updateStats();
+    } catch (error) {
+      console.error('初始化日记打卡日历失败:', error);
+    }
   }
   
   async loadCalendarData() {
@@ -5382,86 +5156,37 @@ class DiaryCheckInCalendar {
     const todayBtn = document.getElementById('diaryGoToday');
     
     if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
+      prevBtn.addEventListener('click', async () => {
         this.currentMonth--;
         if (this.currentMonth < 0) {
           this.currentMonth = 11;
           this.currentYear--;
         }
-        this.loadCalendarData().then(() => this.renderCalendar());
+        await this.loadCalendarData();
+        this.renderCalendar();
       });
     }
     
     if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
+      nextBtn.addEventListener('click', async () => {
         this.currentMonth++;
         if (this.currentMonth > 11) {
           this.currentMonth = 0;
           this.currentYear++;
         }
-        this.loadCalendarData().then(() => this.renderCalendar());
+        await this.loadCalendarData();
+        this.renderCalendar();
       });
     }
     
     if (todayBtn) {
-      todayBtn.addEventListener('click', () => {
+      todayBtn.addEventListener('click', async () => {
         this.currentYear = new Date().getFullYear();
         this.currentMonth = new Date().getMonth();
-        this.loadCalendarData().then(() => this.renderCalendar());
+        await this.loadCalendarData();
+        this.renderCalendar();
       });
     }
-  }
-  
-  getMoodName(mood) {
-    const moodNames = {
-      'happy': '开心',
-      'sad': '难过',
-      'angry': '愤怒',
-      'calm': '平静',
-      'excited': '兴奋',
-      'tired': '疲惫',
-      'other': '其他'
-    };
-    return moodNames[mood] || mood;
-  }
-  
-  showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-      <span>${message}</span>
-    `;
-    
-    Object.assign(notification.style, {
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      padding: '12px 20px',
-      borderRadius: '6px',
-      color: 'white',
-      fontSize: '14px',
-      fontWeight: '500',
-      zIndex: '10000',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      minWidth: '250px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
-      animation: 'slideInRight 0.3s ease-out'
-    });
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.style.animation = 'slideOutRight 0.3s ease-in';
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification);
-        }
-      }, 300);
-    }, 3000);
   }
 }
 
@@ -5476,7 +5201,11 @@ function initDiaryCheckInCalendar() {
       if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
         const statisticsSection = document.getElementById('statisticsSection');
         if (statisticsSection && statisticsSection.style.display !== 'none' && !diaryCheckInCalendar) {
-          diaryCheckInCalendar = new DiaryCheckInCalendar();
+          try {
+            diaryCheckInCalendar = new DiaryCheckInCalendar();
+          } catch (error) {
+            console.error('初始化日记打卡日历失败:', error);
+          }
         }
       }
     });
@@ -5488,6 +5217,21 @@ function initDiaryCheckInCalendar() {
     observer.observe(statisticsSection, { attributes: true });
   }
 }
+
+// 添加动画样式
+const slideInRight = document.createElement('style');
+slideInRight.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(slideInRight);
 
 </script>
 

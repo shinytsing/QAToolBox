@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心动链接点击测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .click-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .click-counter {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .click-area {
+            width: 300px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            font-size: 3rem;
+        }
+        
+        .click-area:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .click-area:active {
+            transform: scale(0.95);
+        }
+        
+        .debug-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .success-message {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>💕 心动链接点击测试</h1>
+        
+        <div class="click-info">
+            <div class="click-counter" id="clickCounter">点击次数: 0</div>
+            <p>在下方区域点击4次，3秒内完成</p>
+        </div>
+        
+        <div class="click-area" id="clickArea">
+            💕
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            🎉 成功！您触发了秘密功能！
+        </div>
+        
+        <div class="debug-info">
+            <h3>调试信息：</h3>
+            <div id="debugLog"></div>
+        </div>
+    </div>
+
+    <script>
+        let clickCount = 0;
+        let clickTimer = null;
+        
+        function log(message) {
+            const debugLog = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            console.log(message);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            log('页面加载完成，初始化点击功能');
+        });
+        
+        document.getElementById('clickArea').addEventListener('click', function(event) {
+            log('点击事件触发');
+            
+            // 清除之前的计时器
+            if (clickTimer) {
+                clearTimeout(clickTimer);
+                log('清除之前的计时器');
+            }
+            
+            // 增加点击计数
+            clickCount++;
+            document.getElementById('clickCounter').textContent = `点击次数: ${clickCount}`;
+            log(`点击计数增加到: ${clickCount}`);
+            
+            // 设置新的计时器，3秒后重置计数
+            clickTimer = setTimeout(() => {
+                log('计时器重置，计数清零');
+                clickCount = 0;
+                document.getElementById('clickCounter').textContent = `点击次数: ${clickCount}`;
+            }, 3000);
+            
+            // 如果点击了4次，显示成功消息
+            if (clickCount === 4) {
+                log('触发4次点击，显示成功消息');
+                clickCount = 0;
+                document.getElementById('clickCounter').textContent = `点击次数: ${clickCount}`;
+                document.getElementById('successMessage').style.display = 'block';
+                
+                // 3秒后隐藏成功消息
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 3000);
+            }
+        });
+        
+        // 测试全局点击事件
+        document.addEventListener('click', function(event) {
+            log(`全局点击事件: ${event.target.tagName}`);
+        });
+    </script>
+</body>
+</html>

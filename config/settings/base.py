@@ -99,7 +99,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'wsgi.application'
 
 # Channels配置
-ASGI_APPLICATION = 'routing.application'
+ASGI_APPLICATION = 'asgi.application'
 
 # Channel Layers配置（使用内存后端，生产环境建议使用Redis）
 CHANNEL_LAYERS = {
@@ -284,4 +284,5 @@ os.makedirs(os.path.join(MEDIA_ROOT, 'avatars'), exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'tool_previews'), exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'tool_outputs'), exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'ai_links/icons'), exist_ok=True)
+os.makedirs(os.path.join(MEDIA_ROOT, 'chat_images'), exist_ok=True)  # 添加聊天图片目录
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)

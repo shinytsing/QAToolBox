@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF转换器测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #ffd700;
+        }
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left: 4px solid #00ff00;
+        }
+        .error {
+            border-left: 4px solid #ff0000;
+        }
+        .info {
+            border-left: 4px solid #00ffff;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            font-family: monospace;
+        }
+        .download-link {
+            display: inline-block;
+            background: linear-gradient(45deg, #00b894, #00a085);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .download-link:hover {
+            background: linear-gradient(45deg, #00a085, #008f75);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 PDF转换引擎测试页面</h1>
+        
+        <div class="test-section">
+            <h3>1️⃣ 测试API状态</h3>
+            <button onclick="testApiStatus()">检查API状态</button>
+            <div id="status-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2️⃣ 测试文本转PDF</h3>
+            <textarea id="text-content" placeholder="输入要转换的文本内容...">这是一个测试文本。
+This is a test text.
+包含中文和英文内容。
+Contains both Chinese and English content.
+用于测试PDF转换功能。
+For testing PDF conversion functionality.</textarea>
+            <button onclick="testTextToPdf()">文本转PDF</button>
+            <div id="text-to-pdf-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3️⃣ 测试PDF转文本</h3>
+            <input type="file" id="pdf-file" accept=".pdf">
+            <button onclick="testPdfToText()">PDF转文本</button>
+            <div id="pdf-to-text-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4️⃣ 测试图片转PDF</h3>
+            <input type="file" id="image-file" accept=".jpg,.jpeg,.png,.gif,.bmp">
+            <button onclick="testImageToPdf()">图片转PDF</button>
+            <div id="image-to-pdf-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5️⃣ 测试PDF转图片</h3>
+            <input type="file" id="pdf-for-image" accept=".pdf">
+            <button onclick="testPdfToImage()">PDF转图片</button>
+            <div id="pdf-to-image-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>6️⃣ 测试Word转PDF</h3>
+            <input type="file" id="word-file" accept=".doc,.docx">
+            <button onclick="testWordToPdf()">Word转PDF</button>
+            <div id="word-to-pdf-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>7️⃣ 测试PDF转Word</h3>
+            <input type="file" id="pdf-for-word" accept=".pdf">
+            <button onclick="testPdfToWord()">PDF转Word</button>
+            <div id="pdf-to-word-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/tools/api/pdf-converter';
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+        
+        function showError(elementId, error) {
+            showResult(elementId, `❌ 错误: ${error}`, 'error');
+        }
+        
+        function showSuccess(elementId, message) {
+            showResult(elementId, `✅ ${message}`, 'success');
+        }
+        
+        function showInfo(elementId, message) {
+            showResult(elementId, `ℹ️ ${message}`, 'info');
+        }
+        
+        async function testApiStatus() {
+            showInfo('status-result', '正在检查API状态...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/status/`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const features = data.features;
+                    let statusText = 'API状态正常\n\n功能支持情况:\n';
+                    
+                    for (const [feature, supported] of Object.entries(features)) {
+                        if (typeof supported === 'boolean') {
+                            statusText += `${feature}: ${supported ? '✅' : '❌'}\n`;
+                        }
+                    }
+                    
+                    showSuccess('status-result', statusText);
+                } else {
+                    showError('status-result', data.error || '未知错误');
+                }
+            } catch (error) {
+                showError('status-result', error.message);
+            }
+        }
+        
+        async function testTextToPdf() {
+            const textContent = document.getElementById('text-content').value.trim();
+            if (!textContent) {
+                showError('text-to-pdf-result', '请输入文本内容');
+                return;
+            }
+            
+            showInfo('text-to-pdf-result', '正在转换文本为PDF...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('type', 'text-to-pdf');
+                formData.append('text_content', textContent);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadUrl = `http://localhost:8000${data.download_url}`;
+                    const resultText = `转换成功!\n文件名: ${data.filename}\n下载链接: ${downloadUrl}`;
+                    
+                    showSuccess('text-to-pdf-result', resultText);
+                    
+                    // 添加下载链接
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.className = 'download-link';
+                    downloadLink.textContent = '下载PDF文件';
+                    downloadLink.target = '_blank';
+                    
+                    const resultDiv = document.getElementById('text-to-pdf-result');
+                    resultDiv.appendChild(document.createElement('br'));
+                    resultDiv.appendChild(downloadLink);
+                } else {
+                    showError('text-to-pdf-result', data.error || '转换失败');
+                }
+            } catch (error) {
+                showError('text-to-pdf-result', error.message);
+            }
+        }
+        
+        async function testPdfToText() {
+            const fileInput = document.getElementById('pdf-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('pdf-to-text-result', '请选择PDF文件');
+                return;
+            }
+            
+            showInfo('pdf-to-text-result', '正在转换PDF为文本...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('type', 'pdf-to-text');
+                formData.append('file', file);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadUrl = `http://localhost:8000${data.download_url}`;
+                    const resultText = `转换成功!\n文件名: ${data.filename}\n下载链接: ${downloadUrl}`;
+                    
+                    showSuccess('pdf-to-text-result', resultText);
+                    
+                    // 添加下载链接
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.className = 'download-link';
+                    downloadLink.textContent = '下载文本文件';
+                    downloadLink.target = '_blank';
+                    
+                    const resultDiv = document.getElementById('pdf-to-text-result');
+                    resultDiv.appendChild(document.createElement('br'));
+                    resultDiv.appendChild(downloadLink);
+                } else {
+                    showError('pdf-to-text-result', data.error || '转换失败');
+                }
+            } catch (error) {
+                showError('pdf-to-text-result', error.message);
+            }
+        }
+        
+        async function testImageToPdf() {
+            const fileInput = document.getElementById('image-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('image-to-pdf-result', '请选择图片文件');
+                return;
+            }
+            
+            showInfo('image-to-pdf-result', '正在转换图片为PDF...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('type', 'image-to-pdf');
+                formData.append('file', file);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadUrl = `http://localhost:8000${data.download_url}`;
+                    const resultText = `转换成功!\n文件名: ${data.filename}\n下载链接: ${downloadUrl}`;
+                    
+                    showSuccess('image-to-pdf-result', resultText);
+                    
+                    // 添加下载链接
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.className = 'download-link';
+                    downloadLink.textContent = '下载PDF文件';
+                    downloadLink.target = '_blank';
+                    
+                    const resultDiv = document.getElementById('image-to-pdf-result');
+                    resultDiv.appendChild(document.createElement('br'));
+                    resultDiv.appendChild(downloadLink);
+                } else {
+                    showError('image-to-pdf-result', data.error || '转换失败');
+                }
+            } catch (error) {
+                showError('image-to-pdf-result', error.message);
+            }
+        }
+        
+        async function testPdfToImage() {
+            const fileInput = document.getElementById('pdf-for-image');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('pdf-to-image-result', '请选择PDF文件');
+                return;
+            }
+            
+            showInfo('pdf-to-image-result', '正在转换PDF为图片...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('type', 'pdf-to-image');
+                formData.append('file', file);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadUrl = `http://localhost:8000${data.download_url}`;
+                    const resultText = `转换成功!\n文件名: ${data.filename}\n总页数: ${data.total_pages}\n下载链接: ${downloadUrl}`;
+                    
+                    showSuccess('pdf-to-image-result', resultText);
+                    
+                    // 添加下载链接
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.className = 'download-link';
+                    downloadLink.textContent = '下载图片ZIP文件';
+                    downloadLink.target = '_blank';
+                    
+                    const resultDiv = document.getElementById('pdf-to-image-result');
+                    resultDiv.appendChild(document.createElement('br'));
+                    resultDiv.appendChild(downloadLink);
+                } else {
+                    showError('pdf-to-image-result', data.error || '转换失败');
+                }
+            } catch (error) {
+                showError('pdf-to-image-result', error.message);
+            }
+        }
+        
+        async function testWordToPdf() {
+            const fileInput = document.getElementById('word-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('word-to-pdf-result', '请选择Word文件');
+                return;
+            }
+            
+            showInfo('word-to-pdf-result', '正在转换Word为PDF...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('type', 'word-to-pdf');
+                formData.append('file', file);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadUrl = `http://localhost:8000${data.download_url}`;
+                    const resultText = `转换成功!\n文件名: ${data.filename}\n下载链接: ${downloadUrl}`;
+                    
+                    showSuccess('word-to-pdf-result', resultText);
+                    
+                    // 添加下载链接
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.className = 'download-link';
+                    downloadLink.textContent = '下载PDF文件';
+                    downloadLink.target = '_blank';
+                    
+                    const resultDiv = document.getElementById('word-to-pdf-result');
+                    resultDiv.appendChild(document.createElement('br'));
+                    resultDiv.appendChild(downloadLink);
+                } else {
+                    showError('word-to-pdf-result', data.error || '转换失败');
+                }
+            } catch (error) {
+                showError('word-to-pdf-result', error.message);
+            }
+        }
+        
+        async function testPdfToWord() {
+            const fileInput = document.getElementById('pdf-for-word');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('pdf-to-word-result', '请选择PDF文件');
+                return;
+            }
+            
+            showInfo('pdf-to-word-result', '正在转换PDF为Word...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('type', 'pdf-to-word');
+                formData.append('file', file);
+                
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const downloadUrl = `http://localhost:8000${data.download_url}`;
+                    const resultText = `转换成功!\n文件名: ${data.filename}\n下载链接: ${downloadUrl}`;
+                    
+                    showSuccess('pdf-to-word-result', resultText);
+                    
+                    // 添加下载链接
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = downloadUrl;
+                    downloadLink.className = 'download-link';
+                    downloadLink.textContent = '下载Word文件';
+                    downloadLink.target = '_blank';
+                    
+                    const resultDiv = document.getElementById('pdf-to-word-result');
+                    resultDiv.appendChild(document.createElement('br'));
+                    resultDiv.appendChild(downloadLink);
+                } else {
+                    showError('pdf-to-word-result', data.error || '转换失败');
+                }
+            } catch (error) {
+                showError('pdf-to-word-result', error.message);
+            }
+        }
+        
+        // 页面加载时自动检查API状态
+        window.onload = function() {
+            testApiStatus();
+        };
+    </script>
+</body>
+</html>

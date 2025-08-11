@@ -15,8 +15,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            'timeout': 20,
-        }
+            'timeout': 30,  # 增加超时时间
+            'check_same_thread': False,  # 允许多线程访问
+        },
+        'ATOMIC_REQUESTS': False,  # 禁用自动事务以提高并发性能
     }
 }
 
