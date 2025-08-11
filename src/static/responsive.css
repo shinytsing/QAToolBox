@@ -1,0 +1,629 @@
+/* 响应式设计 - 移动端和PC端兼容 */
+
+/* 基础响应式设置 */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+    
+    /* 容器适配 */
+    .container, .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    /* 导航栏移动端优化 */
+    .navbar {
+        padding: 0.3rem 0.8rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.6rem 0.8rem;
+        border-bottom: 0.5px solid rgba(255,255,255,0.1);
+    }
+    
+    /* 卡片移动端优化 */
+    .card {
+        margin-bottom: 1rem;
+        border-radius: 12px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    /* 按钮移动端优化 */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        margin: 0.25rem;
+        min-height: 44px; /* 触摸友好 */
+    }
+    
+    .btn-lg {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+    }
+    
+    /* 表单移动端优化 */
+    .form-control {
+        font-size: 16px; /* 防止iOS缩放 */
+        font-weight: 500;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 0.75rem;
+        border-radius: 8px;
+        color: #2c3e50;
+        line-height: 1.6;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    /* 模态框移动端优化 */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    /* 表格移动端优化 */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table {
+        font-size: 0.9rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+    }
+    
+    /* 工具卡片移动端优化 */
+    .tool-card {
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .tool-card .card-body {
+        padding: 1rem;
+    }
+    
+    .tool-card .card-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .tool-card .card-text {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* 齿轮动画移动端优化 */
+    .gear-container {
+        transform: scale(0.8);
+        margin: 1rem 0;
+    }
+    
+    .gear {
+        width: 60px;
+        height: 60px;
+        margin: 0.5rem;
+    }
+    
+    /* 主题切换移动端优化 */
+    .theme-dots {
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    .theme-dot {
+        width: 12px;
+        height: 12px;
+        margin: 0 0.25rem;
+    }
+    
+    /* 聊天界面移动端优化 */
+    .chat-container {
+        height: calc(100vh - 120px);
+    }
+    
+    .chat-messages {
+        padding: 0.5rem;
+    }
+    
+    .chat-input-container {
+        padding: 0.5rem;
+    }
+    
+    .chat-input {
+        border-radius: 20px;
+        padding: 0.75rem 1rem;
+    }
+    
+    /* 侧边栏移动端优化 */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 80%;
+        max-width: 300px;
+        height: 100vh;
+        z-index: 1050;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    .sidebar-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+        display: none;
+    }
+    
+    .sidebar-backdrop.show {
+        display: block;
+    }
+    
+    /* 移动端菜单按钮 */
+    .mobile-menu-btn {
+        display: block;
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1060;
+        background: rgba(0,0,0,0.8);
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .desktop-menu {
+        display: none;
+    }
+}
+
+/* 平板端优化 */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container {
+        max-width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    
+    .gear-container {
+        transform: scale(0.9);
+    }
+    
+    .tool-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mobile-menu-btn {
+        display: none;
+    }
+    
+    .desktop-menu {
+        display: block;
+    }
+}
+
+/* PC端优化 */
+@media (min-width: 1025px) {
+    .container {
+        max-width: 1200px;
+    }
+    
+    .gear-container {
+        transform: scale(1);
+    }
+    
+    .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-menu-btn {
+        display: none;
+    }
+    
+    .desktop-menu {
+        display: block;
+    }
+    
+    /* PC端悬停效果 */
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+}
+
+/* 超宽屏优化 */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1400px;
+    }
+    
+    .gear-container {
+        transform: scale(1.1);
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 触摸设备特定样式 */
+    .btn {
+        min-height: 48px;
+        padding: 0.875rem 1.75rem;
+    }
+    
+    .form-control {
+        min-height: 48px;
+        font-weight: 500;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #2c3e50;
+        line-height: 1.6;
+    }
+    
+    /* 增加触摸目标大小 */
+    .nav-link,
+    .dropdown-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* 禁用悬停效果 */
+    .btn:hover,
+    .card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* 高分辨率屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .gear {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .form-control {
+        background-color: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+        font-weight: 500;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #718096;
+        border-color: #a0aec0;
+    }
+}
+
+/* 减少动画（用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .gear {
+        animation: none;
+    }
+    
+    .emotion-wave {
+        animation: none;
+    }
+    
+    .particle {
+        animation: none;
+    }
+}
+
+/* 可访问性优化 */
+@media (prefers-contrast: high) {
+    .btn {
+        border-width: 2px;
+    }
+    
+    .card {
+        border-width: 2px;
+    }
+    
+    .form-control {
+        border-width: 2px;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar,
+    .sidebar,
+    .mobile-menu-btn,
+    .btn {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000;
+        box-shadow: none;
+        break-inside: avoid;
+    }
+    
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+}
+
+/* 工具特定响应式样式 */
+.tool-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.tool-header {
+    padding: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+}
+
+.tool-content {
+    flex: 1;
+    padding: 1rem;
+}
+
+.tool-footer {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* 聊天工具响应式 */
+.chat-tool {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.chat-header {
+    flex-shrink: 0;
+    padding: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.chat-input-area {
+    flex-shrink: 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* 表单工具响应式 */
+.form-tool {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* 数据展示工具响应式 */
+.data-tool {
+    overflow-x: auto;
+}
+
+.data-table {
+    min-width: 600px;
+}
+
+/* 文件上传工具响应式 */
+.upload-tool {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 3rem 1rem;
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.upload-area.dragover {
+    border-color: #667eea;
+    background: #e8f0ff;
+}
+
+/* 进度条响应式 */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+.progress-bar {
+    border-radius: 4px;
+}
+
+/* 通知响应式 */
+.alert {
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.alert-dismissible {
+    padding-right: 3rem;
+}
+
+/* 加载动画响应式 */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* 空状态响应式 */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* 错误页面响应式 */
+.error-page {
+    text-align: center;
+    padding: 3rem 1rem;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.error-code {
+    font-size: 6rem;
+    font-weight: bold;
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* 成功页面响应式 */
+.success-page {
+    text-align: center;
+    padding: 3rem 1rem;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #28a745;
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+} 

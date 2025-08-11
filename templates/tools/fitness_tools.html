@@ -1,0 +1,754 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}健身工具 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.tools-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.tools-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.tools-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.tools-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.tool-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color, #667eea);
+}
+
+.tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.tool-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.tool-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.tool-icon.calculator { background: #667eea; }
+.tool-icon.tracker { background: #28a745; }
+.tool-icon.planner { background: #ffc107; }
+.tool-icon.analyzer { background: #dc3545; }
+.tool-icon.timer { background: #17a2b8; }
+.tool-icon.nutrition { background: #fd7e14; }
+
+.tool-info h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 5px 0;
+}
+
+.tool-info p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.tool-description {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.tool-features {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 25px;
+}
+
+.tool-features li {
+    padding: 8px 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tool-features li i {
+    color: var(--primary-color, #667eea);
+    font-size: 14px;
+}
+
+.tool-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.tool-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tool-btn.primary {
+    background: var(--primary-color, #667eea);
+    color: white;
+}
+
+.tool-btn.primary:hover {
+    background: var(--primary-dark, #5a6fd8);
+    transform: translateY(-2px);
+}
+
+.tool-btn.secondary {
+    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.tool-btn.secondary:hover {
+    background: #e9ecef;
+}
+
+.quick-tools {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 40px;
+}
+
+.quick-tools h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+}
+
+.quick-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.quick-tool {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.quick-tool:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color, #667eea);
+}
+
+.quick-tool-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin: 0 auto 15px;
+}
+
+.quick-tool-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.quick-tool-desc {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.stats-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stats-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.stats-header h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.stats-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin: 0 auto 10px;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .tools-container {
+        padding: 20px 15px;
+    }
+    
+    .tools-header h1 {
+        font-size: 2rem;
+    }
+    
+    .tools-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .tool-card {
+        padding: 20px;
+    }
+    
+    .tool-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .tool-actions {
+        flex-direction: column;
+    }
+    
+    .quick-tools-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .tool-card,
+    .quick-tool,
+    .stats-section {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .tool-info h3 {
+        color: #e2e8f0;
+    }
+    
+    .tool-description {
+        color: #a0aec0;
+    }
+    
+    .tool-features li {
+        color: #a0aec0;
+    }
+    
+    .tool-btn.secondary {
+        background: #4a5568;
+        color: #e2e8f0;
+        border-color: #718096;
+    }
+    
+    .tool-btn.secondary:hover {
+        background: #2d3748;
+    }
+    
+    .quick-tools {
+        background: #2d3748;
+    }
+    
+    .quick-tools h2 {
+        color: #e2e8f0;
+    }
+    
+    .quick-tool {
+        background: #4a5568;
+        border-color: #718096;
+    }
+    
+    .quick-tool-title {
+        color: #e2e8f0;
+    }
+    
+    .quick-tool-desc {
+        color: #a0aec0;
+    }
+    
+    .stats-header h2 {
+        color: #e2e8f0;
+    }
+    
+    .stats-header p {
+        color: #a0aec0;
+    }
+    
+    .stat-card {
+        background: #4a5568;
+    }
+    
+    .stat-value {
+        color: #e2e8f0;
+    }
+    
+    .stat-label {
+        color: #a0aec0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tools-container">
+    <div class="tools-header">
+        <h1>健身工具</h1>
+        <p>专业的健身工具集合，助您科学健身，高效达成目标</p>
+    </div>
+    
+    <div class="tools-grid">
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon calculator">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="tool-info">
+                    <h3>BMI计算器</h3>
+                    <p>身体质量指数计算</p>
+                </div>
+            </div>
+            <div class="tool-description">
+                快速计算您的BMI指数，了解身体状况，制定合适的健身计划。
+            </div>
+            <ul class="tool-features">
+                <li><i class="fas fa-check"></i> 精确的BMI计算</li>
+                <li><i class="fas fa-check"></i> 健康状态评估</li>
+                <li><i class="fas fa-check"></i> 个性化建议</li>
+            </ul>
+            <div class="tool-actions">
+                <button class="tool-btn primary" onclick="openBMICalculator()">
+                    <i class="fas fa-calculator"></i>
+                    开始计算
+                </button>
+                <button class="tool-btn secondary" onclick="learnMore('bmi')">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon tracker">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="tool-info">
+                    <h3>训练追踪器</h3>
+                    <p>记录训练进度</p>
+                </div>
+            </div>
+            <div class="tool-description">
+                详细记录每次训练的数据，追踪进步情况，分析训练效果。
+            </div>
+            <ul class="tool-features">
+                <li><i class="fas fa-check"></i> 训练数据记录</li>
+                <li><i class="fas fa-check"></i> 进度可视化</li>
+                <li><i class="fas fa-check"></i> 数据分析报告</li>
+            </ul>
+            <div class="tool-actions">
+                <button class="tool-btn primary" onclick="openWorkoutTracker()">
+                    <i class="fas fa-chart-line"></i>
+                    开始追踪
+                </button>
+                <button class="tool-btn secondary" onclick="learnMore('tracker')">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon planner">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="tool-info">
+                    <h3>训练计划器</h3>
+                    <p>制定个性化计划</p>
+                </div>
+            </div>
+            <div class="tool-description">
+                根据您的目标和身体状况，制定科学的训练计划，合理安排训练强度。
+            </div>
+            <ul class="tool-features">
+                <li><i class="fas fa-check"></i> 个性化计划</li>
+                <li><i class="fas fa-check"></i> 智能推荐</li>
+                <li><i class="fas fa-check"></i> 进度调整</li>
+            </ul>
+            <div class="tool-actions">
+                <button class="tool-btn primary" onclick="openWorkoutPlanner()">
+                    <i class="fas fa-calendar-alt"></i>
+                    制定计划
+                </button>
+                <button class="tool-btn secondary" onclick="learnMore('planner')">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon analyzer">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="tool-info">
+                    <h3>身体成分分析</h3>
+                    <p>全面身体评估</p>
+                </div>
+            </div>
+            <div class="tool-description">
+                分析身体成分比例，了解肌肉量、脂肪量等关键指标，科学评估健身效果。
+            </div>
+            <ul class="tool-features">
+                <li><i class="fas fa-check"></i> 身体成分分析</li>
+                <li><i class="fas fa-check"></i> 健康风险评估</li>
+                <li><i class="fas fa-check"></i> 改善建议</li>
+            </ul>
+            <div class="tool-actions">
+                <button class="tool-btn primary" onclick="openBodyAnalyzer()">
+                    <i class="fas fa-chart-bar"></i>
+                    开始分析
+                </button>
+                <button class="tool-btn secondary" onclick="learnMore('analyzer')">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon timer">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <div class="tool-info">
+                    <h3>训练计时器</h3>
+                    <p>精确训练时间</p>
+                </div>
+            </div>
+            <div class="tool-description">
+                专业的训练计时器，支持多种训练模式，帮助您控制训练节奏和强度。
+            </div>
+            <ul class="tool-features">
+                <li><i class="fas fa-check"></i> 多种计时模式</li>
+                <li><i class="fas fa-check"></i> 休息提醒</li>
+                <li><i class="fas fa-check"></i> 训练记录</li>
+            </ul>
+            <div class="tool-actions">
+                <button class="tool-btn primary" onclick="openWorkoutTimer()">
+                    <i class="fas fa-stopwatch"></i>
+                    开始计时
+                </button>
+                <button class="tool-btn secondary" onclick="learnMore('timer')">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+        
+        <div class="tool-card">
+            <div class="tool-header">
+                <div class="tool-icon nutrition">
+                    <i class="fas fa-apple-alt"></i>
+                </div>
+                <div class="tool-info">
+                    <h3>营养计算器</h3>
+                    <p>科学营养搭配</p>
+                </div>
+            </div>
+            <div class="tool-description">
+                计算每日所需热量和营养素，制定合理的饮食计划，配合训练效果。
+            </div>
+            <ul class="tool-features">
+                <li><i class="fas fa-check"></i> 热量需求计算</li>
+                <li><i class="fas fa-check"></i> 营养素分析</li>
+                <li><i class="fas fa-check"></i> 饮食建议</li>
+            </ul>
+            <div class="tool-actions">
+                <button class="tool-btn primary" onclick="openNutritionCalculator()">
+                    <i class="fas fa-apple-alt"></i>
+                    开始计算
+                </button>
+                <button class="tool-btn secondary" onclick="learnMore('nutrition')">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="quick-tools">
+        <h2>快速工具</h2>
+        <div class="quick-tools-grid">
+            <div class="quick-tool" onclick="openQuickTool('heart-rate')">
+                <div class="quick-tool-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="quick-tool-title">心率计算</div>
+                <div class="quick-tool-desc">计算目标心率区间</div>
+            </div>
+            <div class="quick-tool" onclick="openQuickTool('calories')">
+                <div class="quick-tool-icon">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="quick-tool-title">卡路里计算</div>
+                <div class="quick-tool-desc">计算运动消耗热量</div>
+            </div>
+            <div class="quick-tool" onclick="openQuickTool('protein')">
+                <div class="quick-tool-icon">
+                    <i class="fas fa-drumstick-bite"></i>
+                </div>
+                <div class="quick-tool-title">蛋白质计算</div>
+                <div class="quick-tool-desc">计算蛋白质需求</div>
+            </div>
+            <div class="quick-tool" onclick="openQuickTool('water')">
+                <div class="quick-tool-icon">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="quick-tool-title">水分计算</div>
+                <div class="quick-tool-desc">计算每日饮水量</div>
+            </div>
+            <div class="quick-tool" onclick="openQuickTool('reps')">
+                <div class="quick-tool-icon">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <div class="quick-tool-title">RM计算器</div>
+                <div class="quick-tool-desc">计算最大重复次数</div>
+            </div>
+            <div class="quick-tool" onclick="openQuickTool('pace')">
+                <div class="quick-tool-icon">
+                    <i class="fas fa-running"></i>
+                </div>
+                <div class="quick-tool-title">配速计算</div>
+                <div class="quick-tool-desc">计算跑步配速</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stats-section">
+        <div class="stats-header">
+            <h2>使用统计</h2>
+            <p>看看其他用户如何使用这些工具</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ total_users|default:"15,234" }}</div>
+                <div class="stat-label">活跃用户</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="stat-value">{{ total_calculations|default:"89,567" }}</div>
+                <div class="stat-label">计算次数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-value">{{ total_workouts|default:"234,890" }}</div>
+                <div class="stat-label">训练记录</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-value">{{ avg_rating|default:"4.8" }}</div>
+                <div class="stat-label">平均评分</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 打开BMI计算器
+function openBMICalculator() {
+    alert('BMI计算器功能开发中...');
+    // 这里可以跳转到具体的计算器页面
+}
+
+// 打开训练追踪器
+function openWorkoutTracker() {
+    alert('训练追踪器功能开发中...');
+}
+
+// 打开训练计划器
+function openWorkoutPlanner() {
+    alert('训练计划器功能开发中...');
+}
+
+// 打开身体成分分析
+function openBodyAnalyzer() {
+    alert('身体成分分析功能开发中...');
+}
+
+// 打开训练计时器
+function openWorkoutTimer() {
+    alert('训练计时器功能开发中...');
+}
+
+// 打开营养计算器
+function openNutritionCalculator() {
+    alert('营养计算器功能开发中...');
+}
+
+// 了解更多功能
+function learnMore(tool) {
+    const toolNames = {
+        'bmi': 'BMI计算器',
+        'tracker': '训练追踪器',
+        'planner': '训练计划器',
+        'analyzer': '身体成分分析',
+        'timer': '训练计时器',
+        'nutrition': '营养计算器'
+    };
+    
+    alert(`${toolNames[tool]}的详细功能介绍开发中...`);
+}
+
+// 打开快速工具
+function openQuickTool(tool) {
+    const toolNames = {
+        'heart-rate': '心率计算器',
+        'calories': '卡路里计算器',
+        'protein': '蛋白质计算器',
+        'water': '水分计算器',
+        'reps': 'RM计算器',
+        'pace': '配速计算器'
+    };
+    
+    alert(`${toolNames[tool]}功能开发中...`);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('健身工具页面加载完成');
+    
+    // 可以在这里添加一些初始化逻辑，比如加载统计数据
+});
+</script>
+{% endblock %}
+

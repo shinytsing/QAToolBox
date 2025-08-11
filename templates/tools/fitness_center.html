@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block tool_title_inner %}健身中心 - 狂暴模式{% endblock %}
-{% block tool_title_display %}健身中心 - 狂暴模式{% endblock %}
+{% block tool_title_inner %}FitMatrix - 健身矩阵{% endblock %}
+{% block tool_title_display %}FitMatrix - 健身矩阵{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="fitness-container">
 
 
@@ -51,7 +52,7 @@
         </div>
         <div class="shortcut-item">
           <span class="shortcut-key">Alt + F</span>
-          <span class="shortcut-desc">健身中心</span>
+          <span class="shortcut-desc">FitMatrix</span>
         </div>
         <div class="shortcut-item">
           <span class="shortcut-key">Alt + C</span>
@@ -104,9 +105,9 @@
   <div class="fitness-header">
     <div class="fitness-title">
       <i class="fas fa-dumbbell"></i>
-      <span data-zh="健身中心" data-en="Fitness Center">健身中心</span>
+      <span data-zh="FitMatrix" data-en="FitMatrix">FitMatrix</span>
     </div>
-    <div class="fitness-subtitle" data-zh="突破极限，挑战自我" data-en="Break limits, challenge yourself">突破极限，挑战自我</div>
+    <div class="fitness-subtitle" data-zh="智能健身矩阵，重塑身体边界" data-en="Intelligent Fitness Matrix, Reshape Physical Boundaries">智能健身矩阵，重塑身体边界</div>
   </div>
 
   <!-- 主要功能区域 -->
@@ -117,36 +118,63 @@
         <div class="fitness-card-header">
           <i class="fas fa-calendar-alt"></i>
           <h3 data-zh="训练计划" data-en="Training Plan">训练计划</h3>
+          <button class="edit-plan-btn" onclick="openPlanEditor()" data-zh="编辑计划" data-en="Edit Plan">
+            <i class="fas fa-edit"></i> 编辑计划
+          </button>
         </div>
         <div class="fitness-card-content">
-          <div class="workout-plan">
-            <div class="plan-day active" data-day="1">
-              <span data-zh="周一" data-en="Mon">周一</span>
-              <span class="plan-type" data-zh="力量训练" data-en="Strength">力量训练</span>
+          <div class="current-plan-preview">
+            <div class="plan-info">
+              <h4>当前计划：增肌分化训练</h4>
+              <p>5天分化 • 胸背肩腿臂循环</p>
             </div>
-            <div class="plan-day" data-day="2">
-              <span data-zh="周二" data-en="Tue">周二</span>
-              <span class="plan-type" data-zh="有氧训练" data-en="Cardio">有氧训练</span>
+            <div class="workout-plan">
+              <div class="plan-day active" data-day="1">
+                <span data-zh="周一" data-en="Mon">周一</span>
+                <span class="plan-type" data-zh="胸部" data-en="Chest">胸部</span>
+                <span class="plan-exercises">4个动作</span>
+              </div>
+              <div class="plan-day" data-day="2">
+                <span data-zh="周二" data-en="Tue">周二</span>
+                <span class="plan-type" data-zh="背部" data-en="Back">背部</span>
+                <span class="plan-exercises">5个动作</span>
+              </div>
+              <div class="plan-day" data-day="3">
+                <span data-zh="周三" data-en="Wed">周三</span>
+                <span class="plan-type" data-zh="休息" data-en="Rest">休息</span>
+                <span class="plan-exercises">恢复日</span>
+              </div>
+              <div class="plan-day" data-day="4">
+                <span data-zh="周四" data-en="Thu">周四</span>
+                <span class="plan-type" data-zh="肩部" data-en="Shoulders">肩部</span>
+                <span class="plan-exercises">4个动作</span>
+              </div>
+              <div class="plan-day" data-day="5">
+                <span data-zh="周五" data-en="Fri">周五</span>
+                <span class="plan-type" data-zh="腿部" data-en="Legs">腿部</span>
+                <span class="plan-exercises">5个动作</span>
+              </div>
+              <div class="plan-day" data-day="6">
+                <span data-zh="周六" data-en="Sat">周六</span>
+                <span class="plan-type" data-zh="手臂" data-en="Arms">手臂</span>
+                <span class="plan-exercises">4个动作</span>
+              </div>
+              <div class="plan-day" data-day="7">
+                <span data-zh="周日" data-en="Sun">周日</span>
+                <span class="plan-type" data-zh="休息" data-en="Rest">休息</span>
+                <span class="plan-exercises">恢复日</span>
+              </div>
             </div>
-            <div class="plan-day" data-day="3">
-              <span data-zh="周三" data-en="Wed">周三</span>
-              <span class="plan-type" data-zh="休息日" data-en="Rest">休息日</span>
-            </div>
-            <div class="plan-day" data-day="4">
-              <span data-zh="周四" data-en="Thu">周四</span>
-              <span class="plan-type" data-zh="力量训练" data-en="Strength">力量训练</span>
-            </div>
-            <div class="plan-day" data-day="5">
-              <span data-zh="周五" data-en="Fri">周五</span>
-              <span class="plan-type" data-zh="有氧训练" data-en="Cardio">有氧训练</span>
-            </div>
-            <div class="plan-day" data-day="6">
-              <span data-zh="周六" data-en="Sat">周六</span>
-              <span class="plan-type" data-zh="高强度训练" data-en="HIIT">高强度训练</span>
-            </div>
-            <div class="plan-day" data-day="7">
-              <span data-zh="周日" data-en="Sun">周日</span>
-              <span class="plan-type" data-zh="休息日" data-en="Rest">休息日</span>
+            <div class="plan-actions">
+              <button class="action-btn primary" onclick="openPlanEditor()">
+                <i class="fas fa-plus"></i> 创建新计划
+              </button>
+              <button class="action-btn secondary" onclick="openPlanLibrary()">
+                <i class="fas fa-book"></i> 计划库
+              </button>
+              <button class="action-btn secondary" onclick="openPlanTemplates()">
+                <i class="fas fa-star"></i> 模板推荐
+              </button>
             </div>
           </div>
         </div>
@@ -161,6 +189,11 @@
         <div class="fitness-card-content">
           <div class="timer-display">
             <div class="timer-time" id="timerDisplay">00:00</div>
+            <div class="timer-input">
+              <label for="timerSeconds" data-zh="输入秒数:" data-en="Enter seconds:">输入秒数:</label>
+              <input type="number" id="timerSeconds" placeholder="例如: 300" min="1" max="7200">
+              <button id="setTimer" data-zh="设置" data-en="Set">设置</button>
+            </div>
             <div class="timer-controls">
               <button class="timer-btn" id="startTimer" data-zh="开始" data-en="Start">开始</button>
               <button class="timer-btn" id="pauseTimer" data-zh="暂停" data-en="Pause">暂停</button>
@@ -175,33 +208,7 @@
         </div>
       </div>
 
-      <!-- 运动记录 -->
-      <div class="fitness-card">
-        <div class="fitness-card-header">
-          <i class="fas fa-chart-line"></i>
-          <h3 data-zh="运动记录" data-en="Workout Log">运动记录</h3>
-        </div>
-        <div class="fitness-card-content">
-          <div class="workout-log">
-            <div class="log-entry">
-              <div class="log-date">2024-01-15</div>
-              <div class="log-workout" data-zh="力量训练" data-en="Strength Training">力量训练</div>
-              <div class="log-duration">45分钟</div>
-            </div>
-            <div class="log-entry">
-              <div class="log-date">2024-01-14</div>
-              <div class="log-workout" data-zh="有氧训练" data-en="Cardio">有氧训练</div>
-              <div class="log-duration">30分钟</div>
-            </div>
-            <div class="log-entry">
-              <div class="log-date">2024-01-13</div>
-              <div class="log-workout" data-zh="高强度训练" data-en="HIIT">高强度训练</div>
-              <div class="log-duration">20分钟</div>
-            </div>
-          </div>
-          <button class="add-log-btn" data-zh="添加记录" data-en="Add Log">添加记录</button>
-        </div>
-      </div>
+
 
       <!-- 营养计算器 -->
       <div class="fitness-card">
@@ -272,6 +279,69 @@
         </div>
       </div>
 
+      <!-- 打卡日历 -->
+      <div class="fitness-card checkin-calendar-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-calendar-check"></i>
+          <h3 data-zh="打卡日历" data-en="Check-in Calendar">打卡日历</h3>
+        </div>
+        <div class="fitness-card-content">
+          <div class="checkin-calendar-container">
+            <!-- 日历导航 -->
+            <div class="calendar-nav">
+              <button class="nav-btn" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+              <div class="current-month" id="currentMonth">2024年1月</div>
+              <button class="nav-btn" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+              <button class="nav-btn today-btn" id="goToday">今天</button>
+            </div>
+            
+            <!-- 连续打卡信息 -->
+            <div class="streak-info">
+              <div class="streak-item">
+                <i class="fas fa-fire"></i>
+                <span>连续 <span id="currentStreak">0</span> 天</span>
+              </div>
+              <div class="streak-item">
+                <i class="fas fa-trophy"></i>
+                <span>最长 <span id="longestStreak">0</span> 天</span>
+              </div>
+            </div>
+            
+            <!-- 日历网格 -->
+            <div class="calendar-grid">
+              <div class="calendar-header">
+                <div>日</div>
+                <div>一</div>
+                <div>二</div>
+                <div>三</div>
+                <div>四</div>
+                <div>五</div>
+                <div>六</div>
+              </div>
+              <div class="calendar-body" id="calendarBody">
+                <!-- 日历日期将通过JavaScript动态生成 -->
+              </div>
+            </div>
+            
+            <!-- 月度统计 -->
+            <div class="monthly-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="completionRate">0%</div>
+                <div class="stat-label">完成率</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="totalDuration">0</div>
+                <div class="stat-label">总时长(分钟)</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="completedDays">0</div>
+                <div class="stat-label">完成天数</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 成就系统 -->
       <div class="fitness-card">
         <div class="fitness-card-header">
@@ -279,27 +349,107 @@
           <h3 data-zh="成就系统" data-en="Achievements">成就系统</h3>
         </div>
         <div class="fitness-card-content">
-          <div class="achievements">
-            <div class="achievement unlocked">
-              <i class="fas fa-fire"></i>
-              <div class="achievement-info">
-                <div class="achievement-title" data-zh="初出茅庐" data-en="Beginner">初出茅庐</div>
-                <div class="achievement-desc" data-zh="完成第一次训练" data-en="Complete first workout">完成第一次训练</div>
+          <div class="achievements" id="achievementsContainer">
+            <div class="loading-message">正在加载成就数据...</div>
+          </div>
+          <div class="achievement-stats" id="achievementStats">
+            <div class="stat-item">
+              <span class="stat-label">已获得成就:</span>
+              <span class="stat-value" id="achievementCount">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">连续打卡:</span>
+              <span class="stat-value" id="currentStreakStat">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">总计打卡:</span>
+              <span class="stat-value" id="totalCheckinsStat">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 健身社区 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-users"></i>
+          <h3 data-zh="健身社区" data-en="Fitness Community">健身社区</h3>
+          <button class="community-btn" onclick="openFitnessCommunity()" data-zh="进入社区" data-en="Join Community">
+            <i class="fas fa-arrow-right"></i> 进入社区
+          </button>
+        </div>
+        <div class="fitness-card-content">
+          <div class="community-preview">
+            <div class="community-stats">
+              <div class="stat-item">
+                <div class="stat-value" id="communityMembers">0</div>
+                <div class="stat-label">社区成员</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="communityPosts">0</div>
+                <div class="stat-label">今日动态</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="communityLikes">0</div>
+                <div class="stat-label">今日点赞</div>
               </div>
             </div>
-            <div class="achievement unlocked">
+            <div class="community-features">
+              <div class="feature-item">
+                <i class="fas fa-share-alt"></i>
+                <span>分享训练成果</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-trophy"></i>
+                <span>展示成就徽章</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-users"></i>
+                <span>关注健身达人</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-comments"></i>
+                <span>交流训练心得</span>
+              </div>
+            </div>
+            <div class="community-actions">
+              <button class="action-btn primary" onclick="openFitnessCommunity()">
+                <i class="fas fa-users"></i> 浏览社区
+              </button>
+              <button class="action-btn secondary" onclick="openFitnessProfile()">
+                <i class="fas fa-user"></i> 个人档案
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 健身工具 -->
+      <div class="fitness-card">
+        <div class="fitness-card-header">
+          <i class="fas fa-tools"></i>
+          <h3 data-zh="健身工具" data-en="Fitness Tools">健身工具</h3>
+          <button class="tools-btn" onclick="openFitnessTools()" data-zh="更多工具" data-en="More Tools">
+            <i class="fas fa-arrow-right"></i> 更多工具
+          </button>
+        </div>
+        <div class="fitness-card-content">
+          <div class="tools-grid">
+            <div class="tool-item" onclick="openFitnessTools()">
+              <i class="fas fa-stopwatch"></i>
+              <span>训练计时器</span>
+            </div>
+            <div class="tool-item" onclick="openFitnessTools()">
+              <i class="fas fa-calculator"></i>
+              <span>营养计算器</span>
+            </div>
+            <div class="tool-item" onclick="openFitnessTools()">
+              <i class="fas fa-chart-line"></i>
+              <span>进度追踪</span>
+            </div>
+            <div class="tool-item" onclick="openFitnessTools()">
               <i class="fas fa-dumbbell"></i>
-              <div class="achievement-info">
-                <div class="achievement-title" data-zh="力量觉醒" data-en="Power Awakened">力量觉醒</div>
-                <div class="achievement-desc" data-zh="完成10次力量训练" data-en="Complete 10 strength workouts">完成10次力量训练</div>
-              </div>
-            </div>
-            <div class="achievement locked">
-              <i class="fas fa-running"></i>
-              <div class="achievement-info">
-                <div class="achievement-title" data-zh="马拉松选手" data-en="Marathon Runner">马拉松选手</div>
-                <div class="achievement-desc" data-zh="累计跑步100公里" data-en="Run 100km total">累计跑步100公里</div>
-              </div>
+              <span>动作库</span>
             </div>
           </div>
         </div>
@@ -429,6 +579,110 @@
 .plan-type {
   font-size: 0.9rem;
   opacity: 0.8;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+/* 新增的训练计划样式 */
+.current-plan-preview {
+  width: 100%;
+}
+
+.plan-info {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.plan-info h4 {
+  color: var(--rage-primary, #ff6b35);
+  margin: 0 0 5px 0;
+  font-size: 1.1rem;
+}
+
+.plan-info p {
+  color: var(--rage-text-muted, #a8a8a8);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.edit-plan-btn {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.edit-plan-btn:hover {
+  background: var(--rage-secondary, #ff5722);
+  transform: translateY(-2px);
+}
+
+.fitness-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-exercises {
+  font-size: 0.8rem;
+  color: var(--rage-text-muted, #a8a8a8);
+  font-style: italic;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.action-btn.primary {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  background: var(--rage-secondary, #ff5722);
+  transform: translateY(-2px);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--rage-text, #e6e6e6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* 计时器样式 */
@@ -716,6 +970,96 @@
 .achievement-desc {
   color: var(--rage-text-muted, #a8a8a8);
   font-size: 0.9rem;
+}
+
+.achievement-progress {
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.achievement-progress-bar {
+  height: 100%;
+  background: var(--rage-primary, #ff6b35);
+  transition: width 0.3s ease;
+}
+
+.achievement-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--rage-text-muted, #a8a8a8);
+}
+
+.loading-message {
+  text-align: center;
+  color: var(--rage-text-muted, #a8a8a8);
+  padding: 20px;
+}
+
+.achievement-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  color: var(--rage-text-muted, #a8a8a8);
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  color: var(--rage-primary, #ff6b35);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.timer-input {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.timer-input label {
+  display: block;
+  color: var(--rage-text-muted, #a8a8a8);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.timer-input input {
+  width: 120px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--rage-text, #e6e6e6);
+  text-align: center;
+  margin-right: 10px;
+}
+
+.timer-input button {
+  padding: 8px 16px;
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.timer-input button:hover {
+  background: var(--rage-secondary, #ff5722);
 }
 
 
@@ -1015,6 +1359,530 @@
   opacity: 1;
   visibility: visible;
 }
+
+/* 打卡日历样式 */
+.checkin-calendar-container {
+  padding: 20px;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.nav-btn {
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  border: none;
+  color: #000;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+}
+
+.today-btn {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+}
+
+.current-month {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--rage-primary, #ff6b35);
+  text-align: center;
+  flex: 1;
+}
+
+.streak-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.streak-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--rage-primary, #ff6b35);
+  font-weight: bold;
+}
+
+.streak-item i {
+  font-size: 1.2rem;
+  animation: flame 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes flame {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+.calendar-grid {
+  margin-bottom: 20px;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.calendar-header > div {
+  text-align: center;
+  font-weight: bold;
+  color: var(--rage-primary, #ff6b35);
+  padding: 10px;
+  font-size: 0.9rem;
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+}
+
+.calendar-day:hover {
+  background: rgba(255, 107, 53, 0.2);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.calendar-day.other-month {
+  opacity: 0.3;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.calendar-day.today {
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  color: #000;
+  border-color: var(--rage-primary, #ff6b35);
+  box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+}
+
+.calendar-day.completed {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border-color: #28a745;
+}
+
+.calendar-day.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.8rem;
+  color: white;
+}
+
+.calendar-day.rest {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  color: white;
+  border-color: #6c757d;
+}
+
+.calendar-day.rest::after {
+  content: '😴';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.8rem;
+}
+
+.monthly-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--rage-text-muted, #a8a8a8);
+}
+
+/* 打卡模态框样式 */
+.checkin-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.checkin-modal-content {
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%));
+  border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: white;
+}
+
+.checkin-modal-content h3 {
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--rage-text-muted, #a8a8a8);
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--rage-primary, #ff6b35);
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 训练部位选择样式 */
+.training-parts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.checkbox-label:hover {
+  border-color: var(--rage-primary, #ff6b35);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.checkbox-label input[type="checkbox"]:checked + span {
+  color: var(--rage-primary, #ff6b35);
+  font-weight: 600;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--rage-primary, #ff6b35);
+}
+
+/* 星级评分样式 */
+.rating-container {
+  margin-top: 8px;
+}
+
+.star-rating {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 2px;
+}
+
+.star-rating input[type="radio"] {
+  display: none;
+}
+
+.star-rating label {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input[type="radio"]:checked ~ label {
+  color: #ffd700;
+}
+
+.star-rating input[type="radio"]:checked ~ label {
+  color: #ffd700;
+}
+
+.checkin-detail {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.checkin-detail p {
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.checkin-detail strong {
+  color: var(--rage-primary, #ff6b35);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-cancel,
+.btn-submit,
+.btn-edit,
+.btn-delete {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-submit,
+.btn-edit {
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  color: #000;
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.btn-cancel:hover,
+.btn-submit:hover,
+.btn-edit:hover,
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .calendar-nav {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+  
+  .current-month {
+    font-size: 1rem;
+    order: -1;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .streak-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .monthly-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .checkin-modal-content {
+    padding: 20px;
+    margin: 20px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+.community-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.community-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.community-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.feature-item i {
+  color: var(--rage-primary, #ff6b35);
+  font-size: 1.2rem;
+}
+
+.feature-item span {
+  color: var(--rage-text, #e6e6e6);
+  font-size: 0.9rem;
+}
+
+.community-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* 健身工具样式 */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.tool-item {
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.tool-item:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--rage-primary, #ff6b35);
+}
+
+.tool-item i {
+  font-size: 2rem;
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.tool-item span {
+  font-size: 0.9rem;
+  color: var(--rage-text, #e6e6e6);
+  font-weight: 600;
+}
+
+/* 按钮样式 */
+.community-btn,
+.tools-btn {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.community-btn:hover,
+.tools-btn:hover {
+  background: var(--rage-secondary, #ff5722);
+  transform: translateY(-2px);
+}
 </style>
 
 <script>
@@ -1030,11 +1898,11 @@ document.addEventListener('keydown', function(e) {
     switch(e.key) {
       case '1':
         e.preventDefault();
-        window.location.href = '/tools/life-diary/';
+        window.location.href = '/tools/life_diary/';
         break;
       case '2':
         e.preventDefault();
-        window.location.href = '/tools/creative-writer/';
+        window.location.href = '/tools/creative_writer/';
         break;
       case '3':
         e.preventDefault();
@@ -1042,7 +1910,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case '4':
         e.preventDefault();
-        window.location.href = '/tools/emo-diary/';
+        window.location.href = '/tools/emo_diary/';
         break;
     }
   }
@@ -1052,11 +1920,11 @@ document.addEventListener('keydown', function(e) {
     switch(e.key.toLowerCase()) {
       case 'e':
         e.preventDefault();
-        window.location.href = '/tools/emo-diary/';
+        window.location.href = '/tools/emo_diary/';
         break;
       case 'l':
         e.preventDefault();
-        window.location.href = '/tools/life-diary/';
+        window.location.href = '/tools/life_diary/';
         break;
       case 'f':
         e.preventDefault();
@@ -1064,27 +1932,27 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'c':
         e.preventDefault();
-        window.location.href = '/tools/creative-writer/';
+        window.location.href = '/tools/creative_writer/';
         break;
       case 'p':
         e.preventDefault();
-        window.location.href = '/tools/pdf-converter/';
+        window.location.href = '/tools/pdf_converter/';
         break;
       case 'r':
         e.preventDefault();
-        // window.location.href = '/tools/redbook-generator/'; // 已隐藏
+        // window.location.href = '/tools/redbook_generator/'; // 已隐藏
         break;
       case 't':
         e.preventDefault();
-        window.location.href = '/tools/test-case-generator/';
+        window.location.href = '/tools/test_case_generator/';
         break;
       case 'w':
         e.preventDefault();
-        window.location.href = '/tools/web-crawler/';
+        window.location.href = '/tools/web_crawler/';
         break;
       case 's':
         e.preventDefault();
-        window.location.href = '/tools/self-analysis/';
+        window.location.href = '/tools/self_analysis/';
         break;
       case 'b':
         e.preventDefault();
@@ -1092,15 +1960,15 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'm':
         e.preventDefault();
-        window.location.href = '/tools/music-healing/';
+        window.location.href = '/tools/music_healing/';
         break;
       case 'd':
         e.preventDefault();
-        window.location.href = '/tools/meditation-guide/';
+        window.location.href = '/tools/meditation_guide/';
         break;
       case 'a':
         e.preventDefault();
-        window.location.href = '/tools/fortune-analyzer/';
+        window.location.href = '/tools/fortune_analyzer/';
         break;
     }
   }
@@ -1158,11 +2026,31 @@ let timerInterval;
 let timeLeft = 0;
 let isRunning = false;
 
+// 设置计时器按钮事件
+document.getElementById('setTimer').addEventListener('click', function() {
+  const seconds = parseInt(document.getElementById('timerSeconds').value);
+  if (seconds && seconds > 0 && seconds <= 7200) {
+    timeLeft = seconds;
+    updateTimerDisplay();
+    document.getElementById('startTimer').textContent = '开始';
+    if (isRunning) {
+      isRunning = false;
+      clearInterval(timerInterval);
+    }
+  } else {
+    alert('请输入1-7200之间的秒数');
+  }
+});
+
 document.getElementById('startTimer').addEventListener('click', function() {
   if (!isRunning && timeLeft > 0) {
     isRunning = true;
     timerInterval = setInterval(updateTimer, 1000);
     this.textContent = '暂停';
+  } else if (isRunning) {
+    isRunning = false;
+    clearInterval(timerInterval);
+    this.textContent = '继续';
   }
 });
 
@@ -1234,9 +2122,749 @@ document.querySelectorAll('.video-item').forEach(item => {
   });
 });
 
-// 添加记录按钮
-document.querySelector('.add-log-btn').addEventListener('click', function() {
-  alert('添加运动记录功能即将推出！');
+// 打卡日历功能
+class CheckInCalendar {
+  constructor() {
+    this.currentDate = new Date();
+    this.currentYear = this.currentDate.getFullYear();
+    this.currentMonth = this.currentDate.getMonth();
+    this.calendarData = {};
+    this.streak = { current: 0, longest: 0 };
+    this.monthlyStats = {};
+    
+    this.init();
+  }
+  
+  async init() {
+    await this.loadCalendarData();
+    this.renderCalendar();
+    this.bindEvents();
+    this.updateStats();
+    await this.loadAchievements();
+  }
+  
+  async loadCalendarData() {
+    try {
+      const response = await fetch(`/tools/api/checkin/calendar/?type=fitness&year=${this.currentYear}&month=${this.currentMonth + 1}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        this.calendarData = data.calendar_data;
+        this.streak = data.streak;
+        this.monthlyStats = data.monthly_stats;
+      }
+    } catch (error) {
+      console.error('加载日历数据失败:', error);
+    }
+  }
+  
+  renderCalendar() {
+    const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+    const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const calendarBody = document.getElementById('calendarBody');
+    calendarBody.innerHTML = '';
+    
+    // 更新月份显示
+    document.getElementById('currentMonth').textContent = 
+      `${this.currentYear}年${this.currentMonth + 1}月`;
+    
+    // 更新连续打卡信息
+    document.getElementById('currentStreak').textContent = this.streak.current;
+    document.getElementById('longestStreak').textContent = this.streak.longest;
+    
+    // 生成日历网格
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const isCurrentMonth = date.getMonth() === this.currentMonth;
+      const isToday = date.toDateString() === new Date().toDateString();
+      const checkinData = this.calendarData[dateStr];
+      
+      if (!isCurrentMonth) {
+        dayElement.classList.add('other-month');
+      }
+      
+      if (isToday) {
+        dayElement.classList.add('today');
+      }
+      
+      if (checkinData) {
+        dayElement.classList.add('has-checkin');
+        if (checkinData.status === 'completed') {
+          dayElement.classList.add('completed');
+        } else if (checkinData.status === 'rest') {
+          dayElement.classList.add('rest');
+        }
+      }
+      
+      dayElement.textContent = date.getDate();
+      dayElement.setAttribute('data-date', dateStr);
+      
+      dayElement.addEventListener('click', () => this.handleDayClick(dateStr, checkinData));
+      
+      calendarBody.appendChild(dayElement);
+    }
+  }
+  
+  async handleDayClick(dateStr, checkinData) {
+    const clickedDate = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 检查是否为未来日期
+    if (clickedDate > today) {
+      this.showNotification('不能为未来日期打卡', 'error');
+      return;
+    }
+    
+    if (checkinData) {
+      // 显示打卡详情
+      this.showCheckinDetail(dateStr, checkinData);
+    } else {
+      // 检查是否为过去的日期
+      if (clickedDate < today) {
+        // 显示二次确认对话框
+        this.showPastDateConfirmation(dateStr);
+      } else {
+        // 今天的日期，直接显示打卡表单
+        this.showCheckinForm(dateStr);
+      }
+    }
+  }
+
+  showPastDateConfirmation(dateStr) {
+    const confirmation = `
+      <div class="checkin-modal">
+        <div class="checkin-modal-content">
+          <h3>确认补打卡</h3>
+          <div class="confirmation-message">
+            <i class="fas fa-exclamation-triangle" style="color: #ff6b35; font-size: 2rem; margin-bottom: 15px;"></i>
+            <p>您正在为 <strong>${dateStr}</strong> 补打卡，这是一个过去的日期。</p>
+            <p>请确认您确实在这一天进行了健身活动。</p>
+          </div>
+          <div class="form-actions">
+            <button class="btn-cancel">取消</button>
+            <button class="btn-confirm">确认补打卡</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', confirmation);
+    
+    const modal = document.querySelector('.checkin-modal');
+    
+    modal.querySelector('.btn-cancel').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modal.querySelector('.btn-confirm').addEventListener('click', () => {
+      modal.remove();
+      this.showCheckinForm(dateStr);
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+      <span>${message}</span>
+    `;
+    
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 20px',
+      borderRadius: '6px',
+      color: 'white',
+      fontSize: '14px',
+      fontWeight: '500',
+      zIndex: '10000',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      minWidth: '250px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
+      animation: 'slideInRight 0.3s ease-out'
+    });
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  }
+  
+  showCheckinForm(dateStr) {
+    const form = `
+      <div class="checkin-modal">
+        <div class="checkin-modal-content">
+          <h3>添加健身打卡 - ${dateStr}</h3>
+          <form id="checkinForm">
+            <div class="form-group">
+              <label>运动类型</label>
+              <select name="workout_type" required>
+                <option value="strength">力量训练</option>
+                <option value="cardio">有氧训练</option>
+                <option value="yoga">瑜伽</option>
+                <option value="hiit">高强度间歇</option>
+                <option value="flexibility">柔韧性训练</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>💪 训练部位</label>
+              <div class="training-parts-container">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="胸"> 胸
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="背"> 背
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="腿"> 腿
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="肩"> 肩
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="手臂"> 手臂
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="核心"> 核心
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="training_parts" value="全身"> 全身
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>持续时间（分钟）</label>
+              <input type="number" name="duration" min="1" max="300" required>
+            </div>
+            <div class="form-group">
+              <label>强度</label>
+              <select name="intensity" required>
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>🔥 感受评分</label>
+              <div class="rating-container">
+                <div class="star-rating">
+                  <input type="radio" name="feeling_rating" value="1" id="star1">
+                  <label for="star1">⭐</label>
+                  <input type="radio" name="feeling_rating" value="2" id="star2">
+                  <label for="star2">⭐</label>
+                  <input type="radio" name="feeling_rating" value="3" id="star3">
+                  <label for="star3">⭐</label>
+                  <input type="radio" name="feeling_rating" value="4" id="star4">
+                  <label for="star4">⭐</label>
+                  <input type="radio" name="feeling_rating" value="5" id="star5">
+                  <label for="star5">⭐</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>备注</label>
+              <textarea name="notes" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" name="is_shared_to_community" value="true">
+                📢 一键分享到社区
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-cancel">取消</button>
+              <button type="submit" class="btn-submit">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', form);
+    
+    const modal = document.querySelector('.checkin-modal');
+    const formElement = document.getElementById('checkinForm');
+    
+    formElement.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitCheckin(dateStr, formElement);
+    });
+    
+    modal.querySelector('.btn-cancel').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  showCheckinDetail(dateStr, checkinData) {
+    const detail = `
+      <div class="checkin-modal">
+        <div class="checkin-modal-content">
+          <h3>打卡详情 - ${dateStr}</h3>
+          <div class="checkin-detail">
+            <p><strong>状态:</strong> ${checkinData.status === 'completed' ? '已完成' : '休息日'}</p>
+            ${checkinData.detail ? `
+              <p><strong>运动类型:</strong> ${this.getWorkoutTypeName(checkinData.detail.workout_type)}</p>
+              <p><strong>持续时间:</strong> ${checkinData.detail.duration} 分钟</p>
+              <p><strong>强度:</strong> ${this.getIntensityName(checkinData.detail.intensity)}</p>
+              <p><strong>备注:</strong> ${checkinData.detail.notes || '无'}</p>
+            ` : ''}
+          </div>
+          <div class="form-actions">
+            <button class="btn-edit">编辑</button>
+            <button class="btn-delete">删除</button>
+            <button class="btn-cancel">关闭</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', detail);
+    
+    const modal = document.querySelector('.checkin-modal');
+    
+    modal.querySelector('.btn-cancel').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modal.querySelector('.btn-delete').addEventListener('click', () => {
+      if (confirm('确定要删除这条打卡记录吗？')) {
+        this.deleteCheckin(dateStr);
+        modal.remove();
+      }
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  async submitCheckin(dateStr, form) {
+    const formData = new FormData(form);
+    
+    // 获取训练部位（多选）
+    const trainingParts = [];
+    form.querySelectorAll('input[name="training_parts"]:checked').forEach(checkbox => {
+      trainingParts.push(checkbox.value);
+    });
+    
+    // 获取感受评分
+    const feelingRating = form.querySelector('input[name="feeling_rating"]:checked');
+    const rating = feelingRating ? parseInt(feelingRating.value) : null;
+    
+    // 获取是否分享到社区
+    const isSharedToCommunity = form.querySelector('input[name="is_shared_to_community"]').checked;
+    
+    const data = {
+      type: 'fitness',
+      date: dateStr,
+      status: 'completed',
+      detail: {
+        workout_type: formData.get('workout_type'),
+        duration: parseInt(formData.get('duration')),
+        intensity: formData.get('intensity'),
+        training_parts: trainingParts,
+        feeling_rating: rating,
+        is_shared_to_community: isSharedToCommunity,
+        notes: formData.get('notes')
+      }
+    };
+    
+    try {
+      const response = await fetch('/tools/api/checkin/add/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // 如果选择分享到社区，创建社区帖子
+        if (isSharedToCommunity) {
+          await this.createCommunityPost(dateStr, data.detail);
+        }
+        
+        await this.loadCalendarData();
+        this.renderCalendar();
+        this.updateStats();
+        document.querySelector('.checkin-modal').remove();
+        alert('打卡成功！');
+      } else {
+        alert('打卡失败: ' + result.error);
+      }
+    } catch (error) {
+      console.error('提交打卡失败:', error);
+      alert('打卡失败，请重试');
+    }
+  }
+  
+  async createCommunityPost(dateStr, detailData) {
+    try {
+      const workoutTypeNames = {
+        'strength': '力量训练',
+        'cardio': '有氧训练',
+        'yoga': '瑜伽',
+        'hiit': '高强度间歇',
+        'flexibility': '柔韧性训练',
+        'other': '其他'
+      };
+      
+      const intensityNames = {
+        'low': '低强度',
+        'medium': '中等强度',
+        'high': '高强度'
+      };
+      
+      const title = `今日健身打卡 - ${workoutTypeNames[detailData.workout_type]}`;
+      const content = `💪 训练部位：${detailData.training_parts.join('、') || '全身'}
+🔥 感受：${'⭐'.repeat(detailData.feeling_rating || 0)}
+⏱️ 时长：${detailData.duration}分钟
+💪 强度：${intensityNames[detailData.intensity]}
+📝 备注：${detailData.notes || '无'}
+
+继续加油！💪`;
+      
+      const response = await fetch('/tools/api/fitness_community/create-post/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+          post_type: 'checkin',
+          title: title,
+          content: content,
+          training_parts: detailData.training_parts,
+          difficulty_level: detailData.intensity === 'high' ? 'advanced' : detailData.intensity === 'medium' ? 'intermediate' : 'beginner',
+          tags: ['健身打卡', workoutTypeNames[detailData.workout_type]]
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        alert('已成功分享到社区！');
+      }
+    } catch (error) {
+      console.error('创建社区帖子失败:', error);
+      alert('分享到社区失败，但打卡已保存');
+    }
+  }
+  
+  async deleteCheckin(dateStr) {
+    try {
+      const response = await fetch(`/tools/api/checkin/delete/${this.getCheckinId(dateStr)}/`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        await this.loadCalendarData();
+        this.renderCalendar();
+        this.updateStats();
+        alert('删除成功');
+      } else {
+        alert('删除失败: ' + result.error);
+      }
+    } catch (error) {
+      console.error('删除打卡失败:', error);
+      alert('删除失败，请重试');
+    }
+  }
+  
+  getCheckinId(dateStr) {
+    // 这里需要根据实际情况获取checkin_id
+    return 1; // 临时返回
+  }
+  
+  getWorkoutTypeName(type) {
+    const types = {
+      'strength': '力量训练',
+      'cardio': '有氧训练',
+      'yoga': '瑜伽',
+      'hiit': '高强度间歇',
+      'flexibility': '柔韧性训练',
+      'other': '其他'
+    };
+    return types[type] || type;
+  }
+  
+  getIntensityName(intensity) {
+    const intensities = {
+      'low': '低',
+      'medium': '中',
+      'high': '高'
+    };
+    return intensities[intensity] || intensity;
+  }
+  
+  updateStats() {
+    document.getElementById('completionRate').textContent = 
+      `${this.monthlyStats.completion_rate || 0}%`;
+    document.getElementById('totalDuration').textContent = 
+      this.monthlyStats.total_duration || 0;
+    document.getElementById('completedDays').textContent = 
+      this.monthlyStats.completed_days || 0;
+  }
+  
+  bindEvents() {
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      this.currentMonth--;
+      if (this.currentMonth < 0) {
+        this.currentMonth = 11;
+        this.currentYear--;
+      }
+      this.loadCalendarData().then(() => this.renderCalendar());
+    });
+    
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      this.currentMonth++;
+      if (this.currentMonth > 11) {
+        this.currentMonth = 0;
+        this.currentYear++;
+      }
+      this.loadCalendarData().then(() => this.renderCalendar());
+    });
+    
+    document.getElementById('goToday').addEventListener('click', () => {
+      this.currentDate = new Date();
+      this.currentYear = this.currentDate.getFullYear();
+      this.currentMonth = this.currentDate.getMonth();
+      this.loadCalendarData().then(() => this.renderCalendar());
+    });
+  }
+  
+  async loadAchievements() {
+    try {
+      const response = await fetch('/tools/api/achievements/?type=fitness');
+      const data = await response.json();
+      
+      if (data.success) {
+        this.renderAchievements(data.achievements);
+        this.updateAchievementStats(data.stats);
+      } else {
+        console.error('加载成就失败:', data.error);
+        this.showAchievementError();
+      }
+    } catch (error) {
+      console.error('加载成就数据失败:', error);
+      this.showAchievementError();
+    }
+  }
+  
+  renderAchievements(achievements) {
+    const container = document.getElementById('achievementsContainer');
+    if (!container) return;
+    
+    if (achievements.length === 0) {
+      container.innerHTML = `
+        <div class="loading-message">
+          暂无成就数据，完成您的第一次打卡来获得成就吧！
+        </div>
+      `;
+      return;
+    }
+    
+    const achievementHTML = achievements.map(achievement => {
+      const statusClass = achievement.is_achieved ? 'unlocked' : 'locked';
+      const progressBar = achievement.is_achieved ? '' : `
+        <div class="achievement-progress">
+          <div class="achievement-progress-bar" style="width: ${achievement.progress}%"></div>
+        </div>
+      `;
+      const meta = achievement.is_achieved ? 
+        `<div class="achievement-meta">已获得</div>` : 
+        `<div class="achievement-meta">${achievement.current}/${achievement.target}</div>`;
+      
+      return `
+        <div class="achievement ${statusClass}">
+          <i class="${achievement.icon}"></i>
+          <div class="achievement-info">
+            <div class="achievement-title">${achievement.title}</div>
+            <div class="achievement-desc">${achievement.description}</div>
+            ${progressBar}
+          </div>
+          ${meta}
+        </div>
+      `;
+    }).join('');
+    
+    container.innerHTML = achievementHTML;
+  }
+  
+  updateAchievementStats(stats) {
+    const elements = {
+      achievementCount: document.getElementById('achievementCount'),
+      currentStreakStat: document.getElementById('currentStreakStat'),
+      totalCheckinsStat: document.getElementById('totalCheckinsStat')
+    };
+    
+    if (elements.achievementCount) {
+      elements.achievementCount.textContent = stats.achievement_count;
+    }
+    if (elements.currentStreakStat) {
+      elements.currentStreakStat.textContent = stats.current_streak;
+    }
+    if (elements.totalCheckinsStat) {
+      elements.totalCheckinsStat.textContent = stats.total_checkins;
+    }
+  }
+  
+  showAchievementError() {
+    const container = document.getElementById('achievementsContainer');
+    if (container) {
+      container.innerHTML = `
+        <div class="loading-message" style="color: #ff6b6b;">
+          加载成就数据失败，请稍后重试
+        </div>
+      `;
+    }
+  }
+}
+
+// 初始化打卡日历
+document.addEventListener('DOMContentLoaded', function() {
+  new CheckInCalendar();
 });
+
+// 训练计划编辑器相关函数
+function openPlanEditor() {
+  window.location.href = '/tools/fitness/plan-editor/';
+}
+
+function openPlanLibrary() {
+  alert('计划库功能即将推出！');
+}
+
+function openPlanTemplates() {
+  alert('模板推荐功能即将推出！');
+}
+
+// 页面加载完成后的其他初始化
+
+// 添加动画和样式
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  /* 确认对话框样式 */
+  .confirmation-message {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+  }
+  
+  .confirmation-message p {
+    margin: 10px 0;
+    color: #856404;
+    line-height: 1.5;
+  }
+  
+  .confirmation-message strong {
+    color: #ff6b35;
+  }
+  
+  .btn-confirm {
+    background: #ff6b35;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-confirm:hover {
+    background: #e55a2b;
+    transform: translateY(-2px);
+  }
+  
+  /* 通知样式 */
+  .notification {
+    animation: slideInRight 0.3s ease-out;
+  }
+  
+  .notification.notification-error {
+    background-color: #f44336;
+  }
+  
+  .notification.notification-success {
+    background-color: #4CAF50;
+  }
+  
+  .notification.notification-info {
+    background-color: #2196F3;
+  }
+`;
+document.head.appendChild(style);
+
+// 进入社区功能
+function openFitnessCommunity() {
+  window.location.href = '/tools/fitness/community/';
+}
+
+// 个人档案功能
+function openFitnessProfile() {
+  window.location.href = '/tools/fitness/profile/';
+}
+
+// 更多工具功能
+function openFitnessTools() {
+  window.location.href = '/tools/fitness/tools/';
+}
 </script>
 {% endblock %} 

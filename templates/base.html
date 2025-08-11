@@ -6,6 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
+    {% if request.META.HTTP_X_LOGOUT_SUCCESS %}
+    <meta name="clear-storage" content="true">
+    {% endif %}
     <title>{% block title %}ModeShift{% endblock %}</title>
     
     <!-- Favicon -->
@@ -16,9 +19,24 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- 本地字体回退方案，避免Google Fonts加载失败 -->
+    <style>
+        /* 字体回退方案 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        code, pre {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        }
+        /* 确保字体加载失败时页面仍能正常显示 */
+        .font-fallback {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+        }
+    </style>
     <link id="dynamic-theme-css" rel="stylesheet" href="{% static 'geek.css' %}">
+    <link rel="stylesheet" href="{% static 'responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/feature-recommendation.css' %}">
     {% block extra_css %}{% endblock %}
 
     <style>
@@ -69,19 +87,24 @@
 
         /* 主题徽章样式 */
         .theme-badge {
-            display: inline-block;
-            margin-left: 8px;
-            padding: 3px 8px;
-            font-size: 0.75em;
-            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+            padding: 2px 8px;
+            font-size: 0.65em;
+            font-weight: 600;
             text-transform: uppercase;
-            border-radius: 12px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
             color: #fff;
-            letter-spacing: 0.5px;
-            animation: themePulse 2s ease-in-out infinite;
+            letter-spacing: 0.2px;
+            animation: themePulse 3s ease-in-out infinite;
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
         }
 
         .theme-badge::before {
@@ -97,6 +120,12 @@
 
         .theme-badge:hover::before {
             left: 100%;
+        }
+        
+        .theme-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 15px rgba(102, 126, 234, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
         }
         
         @keyframes themePulse {
@@ -163,6 +192,37 @@
         .theme-switch:hover {
             background: rgba(255, 255, 255, 0.1) !important;
             transform: translateX(5px);
+        }
+        
+        /* 下拉菜单项悬停效果 */
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            transform: translateX(3px) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        /* 登出按钮特殊悬停效果 */
+        .dropdown-item[href*="logout"]:hover {
+            background: rgba(255, 107, 107, 0.2) !important;
+            color: #ff8e8e !important;
+        }
+        
+        /* 设置按钮悬停效果 */
+        #settingsDropdown:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        /* 设置按钮图标旋转动画 */
+        #settingsDropdown:hover i {
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         .theme-switch.active {
@@ -1017,6 +1077,15 @@
         .nav-link {
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-nav-link {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
         }
         .nav-link::after {
             content: '';
@@ -1155,7 +1224,7 @@
     </style>
 </head>
 
-<body>
+<body data-user-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}">
     <!-- 页面加载动画 -->
     <div class="page-loader" id="pageLoader">
         <div class="loader-content">
@@ -1219,17 +1288,30 @@
     </div>
     {% endif %}
 
+    <!-- 移动端菜单按钮 -->
+    <button class="mobile-menu-btn d-lg-none" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- 侧边栏背景 -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    
     <header>
         <nav class="navbar navbar-expand-lg navbar-light">
+            <!-- 品牌Logo区域 -->
             <a class="navbar-brand" href="{% url 'home' %}">
                 <i class="fas fa-cogs"></i> ModeShift
                 <div id="theme-subtitle" class="theme-subtitle" data-translate="专注技术，追求卓越">专注技术，追求卓越</div>
             </a>
+            
+            <!-- 移动端菜单按钮 -->
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse">
+            <!-- 导航菜单区域 -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- 主导航菜单 -->
                 <ul class="navbar-nav mr-auto">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
@@ -1237,103 +1319,81 @@
                             <i class="fas fa-tools"></i> <span data-translate="工具集">工具集</span>
                         </a>
                     </li>
-                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showSuggestions(); return false;">
                             <i class="fas fa-lightbulb"></i> <span data-translate="我的建议">我的建议</span>
                         </a>
                     </li>
-
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息">
                             <i class="fas fa-info-circle"></i> <span data-translate="关于">关于</span>
                         </a>
                     </li>
-                    {% if user.is_authenticated and user.role.is_admin %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="color: #FFD700 !important; font-weight: bold;">
-                            <i class="fas fa-shield-alt"></i> 管理控制台
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息">
+                            <i class="fas fa-info-circle"></i> <span data-translate="关于">关于</span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="adminDropdown" style="background: rgba(0,0,0,0.95); border: 1px solid #FFD700; min-width: 220px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-                            <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid #FFD700; font-weight: bold; padding: 8px 16px;">管理控制台</h6>
-                            <a class="dropdown-item" href="{% url 'admin_dashboard' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-tachometer-alt text-success"></i> 仪表板
-                            </a>
-                            <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
-                            <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">系统管理</h6>
-                            <a class="dropdown-item" href="{% url 'admin_announcements' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-bullhorn text-primary"></i> 公告管理
-                            </a>
-                            <a class="dropdown-item" href="{% url 'admin_suggestions' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-lightbulb text-warning"></i> 建议管理
-                            </a>
-                            <a class="dropdown-item" href="{% url 'admin_feedback' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-comments text-info"></i> 反馈管理
-                            </a>
-                            <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
-                            <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">用户管理</h6>
-                            <a class="dropdown-item" href="{% url 'admin_user_management' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-users-cog text-primary"></i> 用户管理
-                            </a>
-                            <a class="dropdown-item" href="{% url 'admin_user_monitoring' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-chart-line text-info"></i> 用户监控
-                            </a>
-                            <a class="dropdown-item" href="{% url 'admin_user_logs' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                <i class="fas fa-history text-warning"></i> 操作日志
-                            </a>
-                        </div>
                     </li>
                     {% endif %}
                 </ul>
 
+                <!-- 右侧用户区域 -->
                 <div class="nav-buttons">
                     {% if user.is_authenticated %}
-                        <div class="dropdown" style="margin-right: 15px;">
-                            <span class="nav-link text-white" style="cursor: pointer; display: flex; align-items: center; gap: 8px;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <img id="user-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.3);">
+                        <!-- 用户头像和下拉菜单 -->
+                        <div class="dropdown user-dropdown-container">
+                                                        <span class="nav-link text-white user-nav-link" style="cursor: pointer;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img id="user-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" class="user-avatar">
                                 <span id="username-display">{{ user.username }}</span>
                                 <span id="theme-badge" class="theme-badge">极客</span>
                             </span>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown" style="background: rgba(0,0,0,0.95); border: 1px solid #333; min-width: 200px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown" style="background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.1); min-width: 220px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-radius: 12px; backdrop-filter: blur(15px); margin-top: 8px;">
                                 <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">账户设置</h6>
-                                <a class="dropdown-item" href="#" id="edit-avatar-btn" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-user-circle"></i> 编辑头像
+                                <a class="dropdown-item" href="#" id="edit-avatar-btn" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-user-circle" style="margin-right: 8px; width: 16px; text-align: center;"></i> 编辑头像
                                 </a>
-                                <a class="dropdown-item" href="{% url 'profile' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-user-edit"></i> 个人资料
+                                <a class="dropdown-item" href="{% url 'profile' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-user-edit" style="margin-right: 8px; width: 16px; text-align: center;"></i> 个人资料
                                 </a>
-                                <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
-                                <h6 class="dropdown-header" style="color: #667eea; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">界面模式</h6>
-                            <div class="dropdown-item" style="color: #999; font-size: 11px; padding: 5px 16px; text-align: center; border-bottom: 1px solid #333;">
-                                <i class="fas fa-keyboard"></i> 快捷键: Ctrl+1/2/3/4
+                                <a class="dropdown-item" href="{% url 'version_history' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-history" style="margin-right: 8px; width: 16px; text-align: center;"></i> 版本迭代记录
+                                </a>
+                                <a class="dropdown-item" href="{% url 'help_page' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-question-circle" style="margin-right: 8px; width: 16px; text-align: center;"></i> 帮助中心
+                                </a>
+                                <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
+                                <h6 class="dropdown-header" style="color: #667eea; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">界面模式</h6>
+                            <div class="dropdown-item" style="color: rgba(255,255,255,0.6); font-size: 0.75rem; padding: 8px 16px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-style: italic;">
+                                <i class="fas fa-keyboard" style="margin-right: 6px;"></i> 快捷键: Ctrl+1/2/3/4
                             </div>
-                                <a class="dropdown-item theme-switch" href="#" data-mode="life" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-palette" style="color: #ff0080;"></i> 生活模式
+                                <a class="dropdown-item theme-switch" href="#" data-mode="life" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-palette" style="color: #ff0080; margin-right: 8px; width: 16px; text-align: center;"></i> 生活模式
                                 </a>
-                                <a class="dropdown-item theme-switch" href="#" data-mode="work" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-laptop-code" style="color: #667eea;"></i> 极客模式
+                                <a class="dropdown-item theme-switch" href="#" data-mode="work" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-laptop-code" style="color: #667eea; margin-right: 8px; width: 16px; text-align: center;"></i> 极客模式
                                 </a>
-                                <a class="dropdown-item theme-switch" href="#" data-mode="training" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-dumbbell" style="color: #ff0000;"></i> 狂暴模式
+                                <a class="dropdown-item theme-switch" href="#" data-mode="training" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-dumbbell" style="color: #ff0000; margin-right: 8px; width: 16px; text-align: center;"></i> 狂暴模式
                                 </a>
-                                <a class="dropdown-item theme-switch" href="#" data-mode="emo" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-heart-broken" style="color: #667eea;"></i> Emo模式
+                                <a class="dropdown-item theme-switch" href="#" data-mode="emo" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-heart-broken" style="color: #667eea; margin-right: 8px; width: 16px; text-align: center;"></i> Emo模式
                                 </a>
                                 {% if user.role.is_admin %}
-                                    <div class="dropdown-divider" style="border-color: #333; margin: 4px 0;"></div>
-                                    <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">快速管理</h6>
-                                    <a class="dropdown-item" href="{% url 'admin_dashboard' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                        <i class="fas fa-tachometer-alt text-success"></i> 仪表板
+                                    <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
+                                    <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">快速管理</h6>
+                                    <a class="dropdown-item" href="{% url 'admin_dashboard' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                        <i class="fas fa-tachometer-alt text-success" style="margin-right: 8px; width: 16px; text-align: center;"></i> 仪表板
                                     </a>
-                                    <a class="dropdown-item" href="{% url 'admin_announcements' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                        <i class="fas fa-bullhorn text-primary"></i> 公告管理
+                                    <a class="dropdown-item" href="{% url 'admin_announcements' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                        <i class="fas fa-bullhorn text-primary" style="margin-right: 8px; width: 16px; text-align: center;"></i> 公告管理
                                     </a>
-                                    <a class="dropdown-item" href="{% url 'admin_suggestions' %}" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                        <i class="fas fa-lightbulb text-warning"></i> 建议管理
+                                    <a class="dropdown-item" href="{% url 'admin_suggestions' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                        <i class="fas fa-lightbulb text-warning" style="margin-right: 8px; width: 16px; text-align: center;"></i> 建议管理
                                     </a>
                                 {% endif %}
-                                <a class="dropdown-item" href="{% url 'logout' %}" onclick="stopMedia()" style="color: #fff; padding: 8px 16px; transition: background-color 0.2s;">
-                                    <i class="fas fa-sign-out-alt"></i> <span data-translate="登出">登出</span>
+                                <a class="dropdown-item logout-btn" href="#" onclick="stopMedia(); logoutUser(); return false;" style="color: #ff6b6b; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <i class="fas fa-sign-out-alt" style="margin-right: 8px; width: 16px; text-align: center;"></i> <span data-translate="登出">登出</span>
                                 </a>
                             </div>
                         </div>
@@ -1348,10 +1408,10 @@
                     
                     <!-- 设置按钮移到右上角 -->
                     <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="settingsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-cog"></i>
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" id="settingsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="border-radius: 8px; padding: 0.4rem 0.6rem; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                            <i class="fas fa-cog" style="font-size: 0.8rem;"></i>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="settingsDropdown" style="background: rgba(0,0,0,0.9); border: 1px solid #333; min-width: 200px;">
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="settingsDropdown" style="background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.1); min-width: 200px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-radius: 12px; backdrop-filter: blur(15px); margin-top: 8px;">
                             <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333;" data-translate="音乐控制">音乐控制</h6>
                             <a class="dropdown-item" href="#" onclick="toggleMusic(); return false;" style="color: white;">
                                 <i class="fas fa-music"></i> <span data-translate="播放/暂停音乐">播放/暂停音乐</span>
@@ -1468,18 +1528,233 @@
             100% { transform: translateX(100%); }
         }
         
+        /* 改进的文件上传样式 */
+        .geek-file-upload {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .geek-file-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 231, 0.3);
+        }
+        
+        .geek-file-upload .upload-text {
+            color: #ffffff !important;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+        
+        .geek-file-upload .upload-hint {
+            color: #cccccc !important;
+            text-shadow: 0 0 3px rgba(204, 204, 204, 0.3);
+        }
+        
+        .geek-file-upload .upload-icon {
+            color: #00ffe7 !important;
+            text-shadow: 0 0 10px rgba(0, 255, 231, 0.5);
+        }
+        
+        /* 大按钮样式 */
+        .large-upload-btn:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 12px 30px rgba(0, 255, 231, 0.4) !important;
+            border-color: rgba(0, 255, 231, 0.8) !important;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(0, 255, 231, 0.2) 100%) !important;
+        }
+        
+        .large-upload-btn:hover .upload-icon {
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+        }
+        
+        /* 文件上传区域动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        #filePreviewArea {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* 文件预览项动画 */
+        #imagePreviewContainer > div,
+        #videoPreviewContainer > div {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Tab切换动画 */
+        #tab-content-existing,
+        #tab-content-new {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Tab按钮悬停效果 */
+        #tab-existing:hover,
+        #tab-new:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);
+        }
+        
+        /* 文件预览区域样式 */
+        #filePreviewArea {
+            background: linear-gradient(135deg, rgba(26,31,46,0.8) 0%, rgba(0,255,231,0.05) 100%);
+            border: 1px solid rgba(0, 255, 231, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        /* 图片预览样式 */
+        #imagePreviewContainer img {
+            transition: all 0.3s ease;
+        }
+        
+        #imagePreviewContainer img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 255, 231, 0.4);
+        }
+        
+        /* 视频预览样式 */
+        #videoPreviewContainer video {
+            transition: all 0.3s ease;
+        }
+        
+        #videoPreviewContainer video:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+        }
+        
+        /* 删除按钮样式 */
+        .file-remove-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .file-remove-btn:hover {
+            background: rgba(255, 0, 0, 1) !important;
+            transform: scale(1.1);
+        }
+        
+        /* 文件列表项样式 */
+        #fileListContainer > div {
+            transition: all 0.3s ease;
+        }
+        
+        #fileListContainer > div:hover {
+            background: rgba(0, 255, 231, 0.1) !important;
+            border-color: rgba(0, 255, 231, 0.5) !important;
+        }
 
     </style>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+    <!-- CDN回退处理 -->
+    <script>
+        // 简单的CDN回退处理
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查Bootstrap CSS是否加载失败
+            const bootstrapLinks = document.querySelectorAll('link[href*="bootstrap"]');
+            if (bootstrapLinks.length === 0) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css';
+                link.onerror = function() {
+                    this.href = 'https://unpkg.com/bootstrap@4.5.2/dist/css/bootstrap.min.css';
+                };
+                document.head.appendChild(link);
+            }
+            
+            // 检查Font Awesome是否加载失败
+            const faLinks = document.querySelectorAll('link[href*="font-awesome"]');
+            if (faLinks.length === 0) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css';
+                link.onerror = function() {
+                    this.href = 'https://unpkg.com/@fortawesome/fontawesome-free@5.15.4/css/all.min.css';
+                };
+                document.head.appendChild(link);
+            }
+            
+            // 检查JavaScript依赖 - 确保正确的加载顺序
+            function loadScript(src, fallbackSrc, callback) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onerror = function() {
+                    this.src = fallbackSrc;
+                };
+                script.onload = callback;
+                document.head.appendChild(script);
+            }
+            
+            // 按顺序加载依赖
+            if (!window.jQuery) {
+                loadScript(
+                    'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js',
+                    'https://unpkg.com/jquery@3.5.1/dist/jquery.slim.min.js',
+                    function() {
+                        // jQuery加载完成后加载Popper
+                        if (!window.Popper) {
+                            loadScript(
+                                'https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js',
+                                'https://unpkg.com/@popperjs/core@2.9.2/dist/umd/popper.min.js',
+                                function() {
+                                    // Popper加载完成后加载Bootstrap
+                                    if (!window.bootstrap) {
+                                        loadScript(
+                                            'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                                            'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                                        );
+                                    }
+                                }
+                            );
+                        } else if (!window.bootstrap) {
+                            // 如果Popper已存在，直接加载Bootstrap
+                            loadScript(
+                                'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                                'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                            );
+                        }
+                    }
+                );
+            } else if (!window.Popper) {
+                // 如果jQuery已存在，加载Popper
+                loadScript(
+                    'https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js',
+                    'https://unpkg.com/@popperjs/core@2.9.2/dist/umd/popper.min.js',
+                    function() {
+                        if (!window.bootstrap) {
+                            loadScript(
+                                'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                                'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                            );
+                        }
+                    }
+                );
+            } else if (!window.bootstrap) {
+                // 如果jQuery和Popper都已存在，只加载Bootstrap
+                loadScript(
+                    'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                    'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                );
+            }
+        });
+    </script>
 
     <script>
         // 网易云音乐配置
         let currentSong = null;
         let isMusicPlaying = false;
         let musicInfoVisible = false;
+        
+        // 主题音乐配置
+        const themeMusic = {
+            'life': '/static/audio/friday.mp3',
+            'work': '/static/audio/keshi - 2 soon.flac',
+            'training': '/static/audio/Eternxlkz - SLAY!.flac',
+            'emo': '/static/audio/keshi - 2 soon.flac'
+        };
         
         // 不同模式对应的歌单
         const modePlaylists = {
@@ -1503,8 +1778,6 @@
             // 滚动性能优化
             initScrollOptimization();
         };
-    
-
     
     // 隐藏信息计数器
     let hiddenInfoClickCount = 0;
@@ -1602,21 +1875,7 @@
                         </div>
                     </div>
                     
-                    <!-- 技能标签 -->
-                    <div style="text-align: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
-                        <h4 style="color: white; margin-bottom: 15px; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
-                            <i class="fas fa-code" style="margin-right: 8px;"></i> 技术栈
-                        </h4>
-                        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
-                            <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">Python</span>
-                            <span style="background: linear-gradient(135deg, #764ba2, #667eea); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(118, 75, 162, 0.3);">Django</span>
-                            <span style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(240, 147, 251, 0.3);">JavaScript</span>
-                            <span style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);">CSS3</span>
-                            <span style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(67, 233, 123, 0.3);">测试</span>
-                            <span style="background: linear-gradient(135deg, #fa709a, #fee140); color: white; padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 8px rgba(250, 112, 154, 0.3);">自动化</span>
-                        </div>
-                    </div>
-                    
+
                     <!-- AI Link -->
                     <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);">
                         <h4 style="color: white; margin-bottom: 15px; font-size: 16px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
@@ -1689,27 +1948,27 @@
         }, { passive: true }); // 使用passive监听器提高性能
     }
     
-    // 暂停所有动画
-    function pauseAnimations() {
-        const animatedElements = document.querySelectorAll('*');
-        animatedElements.forEach(element => {
-            const style = window.getComputedStyle(element);
-            if (style.animationName !== 'none') {
-                element.style.animationPlayState = 'paused';
-            }
-        });
-    }
-    
-    // 恢复所有动画
-    function resumeAnimations() {
-        const animatedElements = document.querySelectorAll('*');
-        animatedElements.forEach(element => {
-            const style = window.getComputedStyle(element);
-            if (style.animationName !== 'none') {
-                element.style.animationPlayState = 'running';
-            }
-        });
-    }
+            // 暂停所有动画
+        function pauseAnimations() {
+            const animatedElements = document.querySelectorAll('*');
+            animatedElements.forEach(element => {
+                const computedStyle = window.getComputedStyle(element);
+                if (computedStyle.animationName !== 'none') {
+                    element.style.animationPlayState = 'paused';
+                }
+            });
+        }
+        
+        // 恢复所有动画
+        function resumeAnimations() {
+            const animatedElements = document.querySelectorAll('*');
+            animatedElements.forEach(element => {
+                const computedStyle = window.getComputedStyle(element);
+                if (computedStyle.animationName !== 'none') {
+                    element.style.animationPlayState = 'running';
+                }
+            });
+        }
         
         // 公告相关函数
         function loadAnnouncements() {
@@ -1764,6 +2023,26 @@
                 overlay.classList.remove('active');
             }
         }
+        
+        // 添加点击黑幕关闭公告的功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('announcement-overlay');
+            if (overlay) {
+                // 点击黑幕关闭公告
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        closeAnnouncement();
+                    }
+                });
+                
+                // 支持ESC键关闭
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                        closeAnnouncement();
+                    }
+                });
+            }
+        });
         // 简化的音乐控制函数
         function toggleMusic() {
             var audio = document.getElementById('theme-music');
@@ -1823,6 +2102,68 @@
             }, 3000);
         }
         
+        // 显示上传详细信息
+        function showUploadDetails(uploadInfo) {
+            // 移除之前的详细提示
+            const existingDetails = document.querySelector('.upload-details-toast');
+            if (existingDetails) {
+                existingDetails.remove();
+            }
+            
+            // 创建详细提示
+            const detailsToast = document.createElement('div');
+            detailsToast.className = 'upload-details-toast';
+            detailsToast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #00ffe7 0%, #00b8a9 100%);
+                color: #0a0e17;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 255, 231, 0.3);
+                z-index: 10001;
+                max-width: 350px;
+                font-family: 'JetBrains Mono', monospace;
+                border: 1px solid rgba(0, 255, 231, 0.3);
+            `;
+            
+            let fileDetailsHtml = '';
+            uploadInfo.file_details.forEach(file => {
+                const icon = file.type === 'image' ? '🖼️' : '🎥';
+                fileDetailsHtml += `
+                    <div style="margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+                        <div style="font-weight: 600;">${icon} ${file.name}</div>
+                        <div style="font-size: 12px; opacity: 0.8;">大小: ${file.size}</div>
+                    </div>
+                `;
+            });
+            
+            detailsToast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-weight: 700; font-size: 14px;">
+                        📁 上传详情
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #0a0e17; opacity: 0.7;">&times;</button>
+                </div>
+                <div style="font-size: 12px; margin-bottom: 10px;">
+                    共上传 ${uploadInfo.total_files} 个文件 | 时间: ${uploadInfo.upload_time}
+                </div>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${fileDetailsHtml}
+                </div>
+            `;
+            
+            document.body.appendChild(detailsToast);
+            
+            // 5秒后自动移除
+            setTimeout(() => {
+                if (detailsToast.parentElement) {
+                    detailsToast.remove();
+                }
+            }, 5000);
+        }
+        
         // 音乐初始化
         window.addEventListener('load', function() {
             var audio = document.getElementById('theme-music');
@@ -1850,13 +2191,20 @@
                                     <h3 style="color: #00ffe7; margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-shadow: 0 0 10px rgba(0, 255, 231, 0.5);">
                                         <i class="fas fa-lightbulb" style="color: #00ffe7; margin-right: 10px;"></i> 我的建议
                                     </h3>
-                                    <button onclick="closeSuggestions()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #00ffe7; transition: all 0.3s ease; padding: 5px; border-radius: 5px;">&times;</button>
                                 </div>
                                 
-                                <div style="margin-bottom: 25px;">
-                                    <h5 style="color: #00ffe7; font-family: 'JetBrains Mono', monospace; font-weight: 600; margin-bottom: 15px; text-shadow: 0 0 5px rgba(0, 255, 231, 0.3);">
-                                        <i class="fas fa-code" style="margin-right: 8px;"></i> 现有建议
-                                    </h5>
+                                <!-- Tab导航 -->
+                                <div style="display: flex; margin-bottom: 25px; border-bottom: 1px solid rgba(0, 255, 231, 0.2);">
+                                    <button id="tab-existing" onclick="switchTab('existing')" style="flex: 1; background: linear-gradient(135deg, #00ffe7 0%, #667eea 100%); color: #000; border: none; padding: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; border-radius: 8px 8px 0 0; margin-right: 2px;">
+                                        <i class="fas fa-list" style="margin-right: 8px;"></i> 现有建议
+                                    </button>
+                                    <button id="tab-new" onclick="switchTab('new')" style="flex: 1; background: rgba(26,31,46,0.8); color: #00ffe7; border: 1px solid rgba(0, 255, 231, 0.3); padding: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; border-radius: 8px 8px 0 0; margin-left: 2px;">
+                                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> 添加新建议
+                                    </button>
+                                </div>
+                                
+                                <!-- 现有建议Tab -->
+                                <div id="tab-content-existing" style="display: block;">
                                     <div id="existingSuggestions">`;
                     
                     if (data.suggestions && data.suggestions.length > 0) {
@@ -1935,10 +2283,8 @@
                                     </div>
                                 </div>
                                 
-                                <div style="margin-bottom: 25px;">
-                                    <h5 style="color: #00ffe7; font-family: 'JetBrains Mono', monospace; font-weight: 600; margin-bottom: 15px; text-shadow: 0 0 5px rgba(0, 255, 231, 0.3);">
-                                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i> 添加新建议
-                                    </h5>
+                                <!-- 添加新建议Tab -->
+                                <div id="tab-content-new" style="display: none;">
                                     <div style="margin-bottom: 15px;">
                                         <input type="text" id="suggestionTitle" placeholder="建议标题..." style="width: 100%; padding: 12px; background: rgba(26,31,46,0.8); border: 1px solid rgba(0, 255, 231, 0.3); border-radius: 8px; margin-bottom: 12px; color: #e6e6e6; font-family: 'JetBrains Mono', monospace; transition: all 0.3s ease;">
                                         <select id="suggestionType" style="width: 100%; padding: 12px; background: rgba(26,31,46,0.8); border: 1px solid rgba(0, 255, 231, 0.3); border-radius: 8px; margin-bottom: 12px; color: #e6e6e6; font-family: 'JetBrains Mono', monospace; transition: all 0.3s ease;">
@@ -1951,30 +2297,30 @@
                                         
                                         <!-- 文件上传区域 -->
                                         <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, rgba(26,31,46,0.6) 0%, rgba(0,255,231,0.05) 100%); border: 1px solid rgba(0, 255, 231, 0.2); border-radius: 10px;">
-                                            <h6 style="color: #00ffe7; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
-                                                <i class="fas fa-paperclip" style="margin-right: 8px;"></i> 添加附件（可选）
+                                            <h6 style="color: #ffffff; margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 600; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);">
+                                                <i class="fas fa-paperclip" style="margin-right: 8px; color: #00ffe7;"></i> 添加附件（可选）
                                             </h6>
-                                            <div style="margin-bottom: 12px;">
-                                                <label style="display: block; margin-bottom: 6px; color: #667eea; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-                                                    <i class="fas fa-image" style="margin-right: 5px;"></i> 图片文件 (JPG, PNG, GIF, WebP)
-                                                </label>
-                                                <div class="geek-file-upload" onclick="document.getElementById('suggestionImages').click()">
-                                                    <i class="fas fa-image upload-icon"></i>
-                                                    <div class="upload-text">点击选择图片文件</div>
-                                                    <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式</div>
+                                            <div style="margin-bottom: 20px;">
+                                                <div class="geek-file-upload large-upload-btn" onclick="document.getElementById('suggestionImages').click()" style="height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(0, 255, 231, 0.1) 100%); border: 2px dashed rgba(102, 126, 234, 0.5); border-radius: 12px; cursor: pointer; transition: all 0.3s ease;">
+                                                    <i class="fas fa-image upload-icon" style="font-size: 1.5rem; color: #667eea; margin-bottom: 5px;"></i>
+                                                    <div style="text-align: center;">
+                                                        <div style="font-size: 11px; color: #667eea; font-family: 'JetBrains Mono', monospace; margin-bottom: 2px;">点击上传图片</div>
+                                                        <div style="font-size: 9px; color: #667eea; font-family: 'JetBrains Mono', monospace;">最多3张图片</div>
+                                                    </div>
                                                     <input type="file" id="suggestionImages" multiple accept=".jpg,.jpeg,.png,.gif,.webp" style="display: none;">
                                                 </div>
+                                                <div id="imageStatus" style="text-align: center; margin-top: 5px; font-size: 11px; color: #667eea; font-family: 'JetBrains Mono', monospace;"></div>
                                             </div>
-                                            <div style="margin-bottom: 12px;">
-                                                <label style="display: block; margin-bottom: 6px; color: #764ba2; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
-                                                    <i class="fas fa-video" style="margin-right: 5px;"></i> 视频文件 (MP4, AVI, MOV, WMV, FLV, WebM)
-                                                </label>
-                                                <div class="geek-file-upload" onclick="document.getElementById('suggestionVideos').click()">
-                                                    <i class="fas fa-video upload-icon"></i>
-                                                    <div class="upload-text">点击选择视频文件</div>
-                                                    <div class="upload-hint">支持 MP4、AVI、MOV、WMV、FLV、WebM 格式</div>
+                                            <div style="margin-bottom: 20px;">
+                                                <div class="geek-file-upload large-upload-btn" onclick="document.getElementById('suggestionVideos').click()" style="height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(118, 75, 162, 0.2) 0%, rgba(0, 255, 231, 0.1) 100%); border: 2px dashed rgba(118, 75, 162, 0.5); border-radius: 12px; cursor: pointer; transition: all 0.3s ease;">
+                                                    <i class="fas fa-video upload-icon" style="font-size: 1.5rem; color: #764ba2; margin-bottom: 5px;"></i>
+                                                    <div style="text-align: center;">
+                                                        <div style="font-size: 11px; color: #764ba2; font-family: 'JetBrains Mono', monospace; margin-bottom: 2px;">点击上传视频</div>
+                                                        <div style="font-size: 9px; color: #764ba2; font-family: 'JetBrains Mono', monospace;">最多1个视频</div>
+                                                    </div>
                                                     <input type="file" id="suggestionVideos" multiple accept=".mp4,.avi,.mov,.wmv,.flv,.webm" style="display: none;">
                                                 </div>
+                                                <div id="videoStatus" style="text-align: center; margin-top: 5px; font-size: 11px; color: #764ba2; font-family: 'JetBrains Mono', monospace;"></div>
                                             </div>
                                             <div id="uploadProgress" style="display: none; margin-top: 12px;">
                                                 <div style="background: rgba(26,31,46,0.8); border-radius: 8px; height: 24px; overflow: hidden; border: 1px solid rgba(0, 255, 231, 0.3);">
@@ -1982,24 +2328,38 @@
                                                 </div>
                                                 <small style="color: #00ffe7; font-family: 'JetBrains Mono', monospace; margin-top: 5px; display: block;">上传中... <span id="progressText">0%</span></small>
                                             </div>
+                                            
+                                            <!-- 文件预览区域 -->
+                                            <div id="filePreviewArea" style="margin-top: 12px; display: none;">
+                                                <h6 style="color: #ffffff; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 13px;">
+                                                    <i class="fas fa-eye" style="margin-right: 5px; color: #00ffe7;"></i> 文件预览
+                                                    <span id="fileCount" style="color: #00ffe7; font-size: 11px; margin-left: 10px;"></span>
+                                                </h6>
+                                                <div id="imagePreviewContainer" style="margin-bottom: 10px;"></div>
+                                                <div id="videoPreviewContainer" style="margin-bottom: 10px;"></div>
+                                                <div id="fileListContainer" style="margin-bottom: 10px;"></div>
+                                            </div>
+                                            
                                             <div id="uploadedFiles" style="margin-top: 12px;"></div>
+                                        </div>
+                                        
+                                        <div style="text-align: center; margin-top: 20px;">
+                                            <button onclick="submitSuggestion()" style="background: linear-gradient(135deg, #00ffe7 0%, #667eea 100%); color: #000; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-right: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);">
+                                                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> 提交建议
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <div style="text-align: center; margin-top: 20px;">
-                                    <button onclick="submitSuggestion()" style="background: linear-gradient(135deg, #00ffe7 0%, #667eea 100%); color: #000; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-right: 15px; font-family: 'JetBrains Mono', monospace; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);">
-                                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> 提交建议
-                                    </button>
-                                    <button onclick="closeSuggestions()" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);">
-                                        <i class="fas fa-times" style="margin-right: 8px;"></i> 关闭
-                                    </button>
-                                </div>
+
                             </div>
                         </div>
                     `;
                     
                     document.body.insertAdjacentHTML('beforeend', suggestionsHtml);
+                    
+                    // 重新绑定文件上传事件
+                    bindFileUploadEvents();
                 })
                 .catch(error => {
                     console.error('获取建议失败:', error);
@@ -2015,8 +2375,46 @@
             }
         }
         
-        // 添加极客风格的输入框焦点效果
-        document.addEventListener('DOMContentLoaded', function() {
+        // 添加ESC键关闭功能
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const suggestions = document.querySelector('div[style*="z-index: 10000"]');
+                if (suggestions) {
+                    suggestions.remove();
+                }
+            }
+        });
+        
+        // Tab切换功能
+        function switchTab(tabName) {
+            // 隐藏所有tab内容
+            document.getElementById('tab-content-existing').style.display = 'none';
+            document.getElementById('tab-content-new').style.display = 'none';
+            
+            // 重置所有tab按钮样式
+            document.getElementById('tab-existing').style.background = 'rgba(26,31,46,0.8)';
+            document.getElementById('tab-existing').style.color = '#00ffe7';
+            document.getElementById('tab-existing').style.border = '1px solid rgba(0, 255, 231, 0.3)';
+            document.getElementById('tab-new').style.background = 'rgba(26,31,46,0.8)';
+            document.getElementById('tab-new').style.color = '#00ffe7';
+            document.getElementById('tab-new').style.border = '1px solid rgba(0, 255, 231, 0.3)';
+            
+            // 显示选中的tab内容
+            if (tabName === 'existing') {
+                document.getElementById('tab-content-existing').style.display = 'block';
+                document.getElementById('tab-existing').style.background = 'linear-gradient(135deg, #00ffe7 0%, #667eea 100%)';
+                document.getElementById('tab-existing').style.color = '#000';
+                document.getElementById('tab-existing').style.border = 'none';
+            } else if (tabName === 'new') {
+                document.getElementById('tab-content-new').style.display = 'block';
+                document.getElementById('tab-new').style.background = 'linear-gradient(135deg, #00ffe7 0%, #667eea 100%)';
+                document.getElementById('tab-new').style.color = '#000';
+                document.getElementById('tab-new').style.border = 'none';
+            }
+        }
+        
+        // 文件上传事件绑定函数
+        function bindFileUploadEvents() {
             // 为建议界面的输入框添加焦点效果
             document.addEventListener('focusin', function(e) {
                 if (e.target.matches('#suggestionTitle, #suggestionType, #newSuggestion, #suggestionImages, #suggestionVideos')) {
@@ -2062,6 +2460,17 @@
                     
                     const files = e.dataTransfer.files;
                     if (files.length > 0) {
+                        // 文件数量限制检查
+                        let maxFiles = 3; // 默认图片限制
+                        if (fileInput.id === 'suggestionVideos') {
+                            maxFiles = 1; // 视频限制为1个
+                        }
+                        
+                        if (files.length > maxFiles) {
+                            showNotification(`最多只能选择${maxFiles}个文件`, 'error');
+                            return;
+                        }
+                        
                         fileInput.files = files;
                         fileInput.dispatchEvent(new Event('change'));
                     }
@@ -2070,23 +2479,52 @@
                 // 文件选择事件
                 fileInput.addEventListener('change', function() {
                     const area = this.closest('.geek-upload-area, .geek-file-upload');
+                    
+                    // 文件数量限制检查
+                    let maxFiles = 3; // 默认图片限制
+                    if (this.id === 'suggestionVideos') {
+                        maxFiles = 1; // 视频限制为1个
+                    }
+                    
+                    if (this.files.length > maxFiles) {
+                        showNotification(`最多只能选择${maxFiles}个文件`, 'error');
+                        this.value = ''; // 清空选择
+                        return;
+                    }
+                    
                     if (this.files.length > 0) {
                         area.classList.add('has-file');
                         
-                        // 更新上传区域的文本
-                        const uploadText = area.querySelector('.upload-text');
-                        if (uploadText) {
-                            if (this.files.length === 1) {
-                                uploadText.textContent = `已选择: ${this.files[0].name}`;
-                            } else {
-                                uploadText.textContent = `已选择 ${this.files.length} 个文件`;
-                            }
+                        // 更新状态显示
+                        const fileType = this.id === 'suggestionImages' ? '图片' : '视频';
+                        const statusElement = document.getElementById(this.id === 'suggestionImages' ? 'imageStatus' : 'videoStatus');
+                        if (statusElement) {
+                            statusElement.textContent = `已选择 ${this.files.length} 个${fileType}文件`;
+                            statusElement.style.color = '#00ffe7';
                         }
+                        
+                        // 显示上传成功提示
+                        showNotification(`成功选择${this.files.length}个${fileType}文件`, 'success');
+                        
+                        // 显示所有文件的预览
+                        showAllFilesPreview();
                     } else {
                         area.classList.remove('has-file');
-                        const uploadText = area.querySelector('.upload-text');
-                        if (uploadText) {
-                            uploadText.textContent = uploadText.getAttribute('data-original-text') || '点击选择文件';
+                        
+                        // 清空状态显示
+                        const statusElement = document.getElementById(this.id === 'suggestionImages' ? 'imageStatus' : 'videoStatus');
+                        if (statusElement) {
+                            statusElement.textContent = '';
+                        }
+                        
+                        // 检查是否还有其他文件，如果没有则隐藏预览
+                        const imageFiles = document.getElementById('suggestionImages').files;
+                        const videoFiles = document.getElementById('suggestionVideos').files;
+                        if (imageFiles.length === 0 && videoFiles.length === 0) {
+                            hideFilePreview();
+                        } else {
+                            // 重新显示预览
+                            showAllFilesPreview();
                         }
                     }
                 });
@@ -2110,7 +2548,380 @@
                     }
                 }
             });
+        }
+        
+        // 添加极客风格的输入框焦点效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化时绑定事件
+            bindFileUploadEvents();
         });
+        
+        // 显示所有文件的预览
+        function showAllFilesPreview() {
+            const imageFiles = document.getElementById('suggestionImages').files;
+            const videoFiles = document.getElementById('suggestionVideos').files;
+            showFilePreview([], 'all');
+        }
+        
+        // 文件预览功能
+        function showFilePreview(files, inputId) {
+            console.log('开始预览文件:', files.length, '个文件');
+            
+            const previewArea = document.getElementById('filePreviewArea');
+            const imageContainer = document.getElementById('imagePreviewContainer');
+            const videoContainer = document.getElementById('videoPreviewContainer');
+            const fileListContainer = document.getElementById('fileListContainer');
+            
+            // 检查元素是否存在
+            if (!previewArea || !imageContainer || !videoContainer || !fileListContainer) {
+                console.error('预览区域元素未找到');
+                return;
+            }
+            
+            // 显示预览区域
+            previewArea.style.display = 'block';
+            
+            // 获取所有已选择的文件
+            const imageFiles = document.getElementById('suggestionImages').files;
+            const videoFiles = document.getElementById('suggestionVideos').files;
+            
+            // 清空之前的预览
+            imageContainer.innerHTML = '';
+            videoContainer.innerHTML = '';
+            fileListContainer.innerHTML = '';
+            
+            let hasImages = false;
+            let hasVideos = false;
+            let hasOtherFiles = false;
+            
+            // 处理图片文件
+            if (imageFiles.length > 0) {
+                hasImages = true;
+                Array.from(imageFiles).forEach((file, index) => {
+                    const fileType = file.type;
+                    console.log('处理图片文件:', file.name, '类型:', fileType, '大小:', file.size);
+                    
+                    if (fileType.startsWith('image/')) {
+                        console.log('检测到图片文件:', file.name);
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            console.log('图片加载成功:', file.name);
+                            const imgDiv = document.createElement('div');
+                            imgDiv.style.cssText = `
+                                display: inline-block;
+                                margin: 5px;
+                                position: relative;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                border: 2px solid rgba(0, 255, 231, 0.3);
+                                background: rgba(26,31,46,0.8);
+                            `;
+                            
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.cssText = `
+                                width: 120px;
+                                height: 120px;
+                                object-fit: cover;
+                                display: block;
+                            `;
+                            
+                            // 添加图片加载错误处理
+                            img.onerror = function() {
+                                console.error('图片加载失败:', file.name);
+                                imgDiv.style.borderColor = 'rgba(255, 0, 0, 0.5)';
+                            };
+                            
+                            const removeBtn = document.createElement('button');
+                            removeBtn.innerHTML = '×';
+                            removeBtn.className = 'file-remove-btn';
+                            removeBtn.style.cssText = `
+                                position: absolute;
+                                top: 5px;
+                                right: 5px;
+                                background: rgba(255, 0, 0, 0.8);
+                                color: white;
+                                border: none;
+                                border-radius: 50%;
+                                width: 20px;
+                                height: 20px;
+                                cursor: pointer;
+                                font-size: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            `;
+                            removeBtn.onclick = function() {
+                                imgDiv.remove();
+                                removeFileFromInput('suggestionImages', index);
+                            };
+                            
+                            const fileName = document.createElement('div');
+                            fileName.textContent = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+                            fileName.style.cssText = `
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                background: rgba(0, 0, 0, 0.7);
+                                color: white;
+                                padding: 2px 5px;
+                                font-size: 10px;
+                                text-align: center;
+                            `;
+                            
+                            imgDiv.appendChild(img);
+                            imgDiv.appendChild(removeBtn);
+                            imgDiv.appendChild(fileName);
+                            imageContainer.appendChild(imgDiv);
+                            console.log('图片预览已添加到容器');
+                        };
+                        
+                        reader.onerror = function() {
+                            console.error('图片读取失败:', file.name);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // 处理视频文件
+            if (videoFiles.length > 0) {
+                hasVideos = true;
+                Array.from(videoFiles).forEach((file, index) => {
+                    const fileType = file.type;
+                    console.log('处理视频文件:', file.name, '类型:', fileType, '大小:', file.size);
+                    
+                    if (fileType.startsWith('video/')) {
+                        console.log('检测到视频文件:', file.name);
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            console.log('视频加载成功:', file.name);
+                            const videoDiv = document.createElement('div');
+                            videoDiv.style.cssText = `
+                                display: inline-block;
+                                margin: 5px;
+                                position: relative;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                border: 2px solid rgba(118, 75, 162, 0.3);
+                                background: rgba(26,31,46,0.8);
+                            `;
+                            
+                            const video = document.createElement('video');
+                            video.src = e.target.result;
+                            video.style.cssText = `
+                                width: 200px;
+                                height: 120px;
+                                object-fit: cover;
+                                display: block;
+                            `;
+                            video.controls = true;
+                            
+                            // 添加视频加载错误处理
+                            video.onerror = function() {
+                                console.error('视频加载失败:', file.name);
+                                videoDiv.style.borderColor = 'rgba(255, 0, 0, 0.5)';
+                            };
+                            
+                            const removeBtn = document.createElement('button');
+                            removeBtn.innerHTML = '×';
+                            removeBtn.className = 'file-remove-btn';
+                            removeBtn.style.cssText = `
+                                position: absolute;
+                                top: 5px;
+                                right: 5px;
+                                background: rgba(255, 0, 0, 0.8);
+                                color: white;
+                                border: none;
+                                border-radius: 50%;
+                                width: 20px;
+                                height: 20px;
+                                cursor: pointer;
+                                font-size: 12px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            `;
+                            removeBtn.onclick = function() {
+                                videoDiv.remove();
+                                removeFileFromInput('suggestionVideos', index);
+                            };
+                            
+                            const fileName = document.createElement('div');
+                            fileName.textContent = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+                            fileName.style.cssText = `
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                right: 0;
+                                background: rgba(0, 0, 0, 0.7);
+                                color: white;
+                                padding: 2px 5px;
+                                font-size: 10px;
+                                text-align: center;
+                            `;
+                            
+                            videoDiv.appendChild(video);
+                            videoDiv.appendChild(removeBtn);
+                            videoDiv.appendChild(fileName);
+                            videoContainer.appendChild(videoDiv);
+                            console.log('视频预览已添加到容器');
+                        };
+                        
+                        reader.onerror = function() {
+                            console.error('视频读取失败:', file.name);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+
+            
+            // 显示预览区域
+            console.log('预览统计 - 图片:', hasImages, '视频:', hasVideos, '其他:', hasOtherFiles);
+            
+            if (hasImages || hasVideos || hasOtherFiles) {
+                previewArea.style.display = 'block';
+                
+                // 更新文件计数显示
+                const fileCountElement = document.getElementById('fileCount');
+                if (fileCountElement) {
+                    const totalFiles = imageFiles.length + videoFiles.length;
+                    fileCountElement.textContent = `(共${totalFiles}个文件)`;
+                }
+                
+                // 添加标题
+                if (hasImages) {
+                    const imageTitle = document.createElement('div');
+                    imageTitle.textContent = `图片预览 (${imageContainer.children.length}张)`;
+                    imageTitle.style.cssText = `
+                        color: #00ffe7;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                        font-size: 12px;
+                        font-family: 'JetBrains Mono', monospace;
+                    `;
+                    imageContainer.insertBefore(imageTitle, imageContainer.firstChild);
+                }
+                
+                if (hasVideos) {
+                    const videoTitle = document.createElement('div');
+                    videoTitle.textContent = `视频预览 (${videoContainer.children.length}个)`;
+                    videoTitle.style.cssText = `
+                        color: #764ba2;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                        font-size: 12px;
+                        font-family: 'JetBrains Mono', monospace;
+                    `;
+                    videoContainer.insertBefore(videoTitle, videoContainer.firstChild);
+                }
+                
+                if (hasOtherFiles) {
+                    const fileTitle = document.createElement('div');
+                    fileTitle.textContent = '其他文件';
+                    fileTitle.style.cssText = `
+                        color: #667eea;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                        font-size: 12px;
+                        font-family: 'JetBrains Mono', monospace;
+                    `;
+                    fileListContainer.insertBefore(fileTitle, fileListContainer.firstChild);
+                }
+            }
+        }
+        
+        function hideFilePreview() {
+            const previewArea = document.getElementById('filePreviewArea');
+            if (previewArea) {
+                previewArea.style.display = 'none';
+            }
+        }
+        
+        function removeFileFromInput(inputId, removeIndex) {
+            const fileInput = document.getElementById(inputId);
+            const dt = new DataTransfer();
+            const currentFiles = Array.from(fileInput.files);
+            
+            // 重新创建文件列表，排除要删除的文件
+            currentFiles.forEach((file, index) => {
+                if (index !== removeIndex) {
+                    dt.items.add(file);
+                }
+            });
+            
+            fileInput.files = dt.files;
+            
+            // 更新状态显示
+            const fileType = inputId === 'suggestionImages' ? '图片' : '视频';
+            const statusElement = document.getElementById(inputId === 'suggestionImages' ? 'imageStatus' : 'videoStatus');
+            if (statusElement) {
+                if (dt.files.length === 0) {
+                    statusElement.textContent = '';
+                } else {
+                    statusElement.textContent = `已选择 ${dt.files.length} 个${fileType}文件`;
+                    statusElement.style.color = '#00ffe7';
+                }
+            }
+            
+            // 如果没有文件了，隐藏预览区域
+            if (dt.files.length === 0) {
+                // 检查是否还有其他文件
+                const imageFiles = document.getElementById('suggestionImages').files;
+                const videoFiles = document.getElementById('suggestionVideos').files;
+                if (imageFiles.length === 0 && videoFiles.length === 0) {
+                    hideFilePreview();
+                } else {
+                    // 重新显示预览
+                    showAllFilesPreview();
+                }
+            } else {
+                // 重新显示预览
+                showAllFilesPreview();
+            }
+        }
+        
+        function updateFileInput(inputId, removeIndex) {
+            const fileInput = document.getElementById(inputId);
+            const dt = new DataTransfer();
+            const currentFiles = Array.from(fileInput.files);
+            
+            // 重新创建文件列表，排除要删除的文件
+            currentFiles.forEach((file, index) => {
+                if (index !== removeIndex) {
+                    dt.items.add(file);
+                }
+            });
+            
+            fileInput.files = dt.files;
+            
+            // 如果没有文件了，隐藏预览区域
+            if (dt.files.length === 0) {
+                // 检查是否还有其他文件
+                const imageFiles = document.getElementById('suggestionImages').files;
+                const videoFiles = document.getElementById('suggestionVideos').files;
+                if (imageFiles.length === 0 && videoFiles.length === 0) {
+                    hideFilePreview();
+                } else {
+                    // 重新显示预览
+                    showAllFilesPreview();
+                }
+            } else {
+                // 重新显示预览
+                showAllFilesPreview();
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
         
         // 提交建议
         async function submitSuggestion() {
@@ -2170,6 +2981,11 @@
                         uploadedImages = uploadData.files.filter(f => f.type === 'image');
                         uploadedVideos = uploadData.files.filter(f => f.type === 'video');
                         showNotification(uploadData.message, 'success');
+                        
+                        // 显示详细的上传信息
+                        if (uploadData.upload_info) {
+                            showUploadDetails(uploadData.upload_info);
+                        }
                     } else {
                         showNotification('文件上传失败: ' + uploadData.error, 'error');
                         return;
@@ -2408,11 +3224,12 @@
                 setTimeout(function() {
                     var currentPath = window.location.pathname;
                     var pathToTheme = {
-                        '/tools/life/': 'life',
+                        '/tools/life_mode/': 'life',
                         '/tools/work/': 'work',
                         '/tools/cyberpunk/': 'cyberpunk',
                         '/tools/training/': 'training',
-                        '/tools/emo/': 'emo'
+                        '/tools/emo/': 'emo',
+                        '/tools/emo_diary/': 'emo'
                     };
                     
                     var expectedTheme = pathToTheme[currentPath];
@@ -2756,11 +3573,11 @@
         
         // 主题与页面对应关系
         const themePageMapping = {
-            'life': '/tools/life/',
-            'work': '/tools/work/',
-            'cyberpunk': '/tools/cyberpunk/',
-            'training': '/tools/training/',
-            'emo': '/tools/emo/'
+            'life': '/tools/life_mode/',
+'work': '/tools/work_mode/',
+'cyberpunk': '/tools/cyberpunk_mode/',
+'training': '/tools/training_mode/',
+            'emo': '/tools/emo_mode/'
         };
         
         // 获取当前页面路径
@@ -2995,12 +3812,12 @@
                 
                 // 主题切换成功，跳转到对应mode的主页面
                 setTimeout(() => {
-                    const themePages = {
-                        'life': '/tools/life/',
-                        'work': '/tools/work/',
-                        'training': '/tools/training/',
-                        'emo': '/tools/emo/'
-                    };
+                        const themePages = {
+      'life': '/tools/life_mode/',
+      'work': '/tools/work_mode/',
+      'training': '/tools/training_mode/',
+      'emo': '/tools/emo_mode/'
+    };
                     const targetPage = themePages[theme] || '/';
                     window.location.href = targetPage;
                 }, 800); // 延迟800ms让用户看到成功提示
@@ -3019,12 +3836,12 @@
             {% if user.is_authenticated %}
                 const currentTheme = localStorage.getItem('currentTheme') || 'work';
                 const themePages = {
-                    'life': '/tools/life/',
-                    'work': '/tools/work/',
-                    'training': '/tools/training/',
-                    'emo': '/tools/emo/'
+                    'life': '/tools/life_mode/',
+                    'work': '/tools/work_mode/',
+                    'training': '/tools/training_mode/',
+                    'emo': '/tools/emo_mode/'
                 };
-                const targetPage = themePages[currentTheme] || '/tools/work/';
+                const targetPage = themePages[currentTheme] || '/tools/work_mode/';
                 window.location.href = targetPage;
             {% else %}
                 // 用户未登录，跳转到登录页面
@@ -3075,7 +3892,7 @@
         
         async function nextSong() {
             try {
-                const response = await fetch('/tools/api/next-song/', {
+                const response = await fetch('/tools/api/next_song/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3631,12 +4448,13 @@
             return cookieValue;
         }
         
-        // 里世界入口逻辑 - 点击头像四次进入
+        // 头像点击功能 - 查看头像和里世界入口
         document.addEventListener('DOMContentLoaded', function() {
             const userAvatar = document.getElementById('user-avatar');
             if (userAvatar) {
                 let clickCount = 0;
                 let clickTimer = null;
+                let avatarPopup = null;
                 
                 userAvatar.addEventListener('click', function(e) {
                     // 阻止事件冒泡，避免触发下拉菜单
@@ -3660,8 +4478,12 @@
                         this.style.transform = 'scale(1)';
                     }, 200);
                     
-                    // 第四次点击进入里世界
-                    if (clickCount === 4) {
+                    // 第一次点击显示头像弹窗
+                    if (clickCount === 1) {
+                        showAvatarPopup(this.src, e);
+                    }
+                    // 第二十次点击进入里世界
+                    else if (clickCount === 20) {
                         // 重置计数
                         clickCount = 0;
                         clearTimeout(clickTimer);
@@ -3672,12 +4494,51 @@
                         
                         setTimeout(() => {
                             // 跳转到里世界页面
-                            window.location.href = '/tools/vanity-os/';
+                            window.location.href = '/tools/vanity_os/';
                         }, 1000);
+                    }
+                });
+                
+                // 显示头像弹窗
+                function showAvatarPopup(avatarSrc, event) {
+                    // 移除之前的弹窗
+                    if (avatarPopup) {
+                        document.body.removeChild(avatarPopup);
+                    }
+                    
+                    // 创建弹窗
+                    avatarPopup = document.createElement('div');
+                    avatarPopup.className = 'avatar-popup';
+                    avatarPopup.innerHTML = `<img src="${avatarSrc}" alt="头像">`;
+                    
+                    // 设置弹窗位置（在点击位置附近）
+                    const rect = event.target.getBoundingClientRect();
+                    avatarPopup.style.left = (rect.left + rect.width + 10) + 'px';
+                    avatarPopup.style.top = (rect.top - 50) + 'px';
+                    
+                    // 添加到页面
+                    document.body.appendChild(avatarPopup);
+                    
+                    // 3秒后自动消失
+                    setTimeout(() => {
+                        if (avatarPopup && avatarPopup.parentNode) {
+                            avatarPopup.parentNode.removeChild(avatarPopup);
+                            avatarPopup = null;
+                        }
+                    }, 3000);
+                }
+                
+                // 点击其他地方关闭弹窗
+                document.addEventListener('click', function(e) {
+                    if (avatarPopup && !avatarPopup.contains(e.target) && e.target !== userAvatar) {
+                        avatarPopup.parentNode.removeChild(avatarPopup);
+                        avatarPopup = null;
                     }
                 });
             }
         });
+        
+        // 改进的文件上传样式
         
         // 赛博哥特故障艺术切换功能
         document.addEventListener('DOMContentLoaded', function() {
@@ -3762,8 +4623,176 @@
                 }
             };
         });
+        
+
+        
+
+        
+        // 导航栏优化功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+            const navbar = document.querySelector('.navbar-collapse');
+            const navbarElement = document.querySelector('.navbar');
+            
+            // 导航栏滚动效果
+            function handleNavbarScroll() {
+                if (window.scrollY > 50) {
+                    navbarElement.classList.add('scrolled');
+                } else {
+                    navbarElement.classList.remove('scrolled');
+                }
+            }
+            
+            // 监听滚动事件
+            window.addEventListener('scroll', handleNavbarScroll);
+            
+            // 导航链接激活状态
+            function setActiveNavLink() {
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.nav-link');
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === currentPath || 
+                        (currentPath === '/' && link.getAttribute('href') === '{% url "home" %}')) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            
+            // 设置当前页面激活状态
+            setActiveNavLink();
+            
+            // 下拉菜单优化 - 改为点击显示
+            const dropdowns = document.querySelectorAll('.dropdown');
+            dropdowns.forEach(dropdown => {
+                const toggle = dropdown.querySelector('.dropdown-toggle, .user-nav-link');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                
+                if (toggle && menu) {
+                    // 点击切换显示/隐藏
+                    toggle.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // 关闭其他打开的下拉菜单
+                        dropdowns.forEach(otherDropdown => {
+                            if (otherDropdown !== dropdown) {
+                                otherDropdown.classList.remove('show');
+                                const otherMenu = otherDropdown.querySelector('.dropdown-menu');
+                                if (otherMenu) {
+                                    otherMenu.classList.remove('show');
+                                }
+                            }
+                        });
+                        
+                        // 切换当前下拉菜单
+                        dropdown.classList.toggle('show');
+                        menu.classList.toggle('show');
+                    });
+                }
+            });
+            
+            // 点击页面其他地方关闭下拉菜单
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.dropdown')) {
+                    dropdowns.forEach(dropdown => {
+                        dropdown.classList.remove('show');
+                        const menu = dropdown.querySelector('.dropdown-menu');
+                        if (menu) {
+                            menu.classList.remove('show');
+                        }
+                    });
+                }
+            });
+            
+            if (mobileMenuBtn && navbar) {
+                // 移动端菜单按钮点击事件
+                mobileMenuBtn.addEventListener('click', function() {
+                    navbar.classList.toggle('show');
+                    sidebarBackdrop.classList.toggle('show');
+                    document.body.style.overflow = navbar.classList.contains('show') ? 'hidden' : '';
+                    
+                    // 添加按钮动画
+                    const icon = mobileMenuBtn.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = navbar.classList.contains('show') ? 'rotate(90deg)' : 'rotate(0deg)';
+                    }
+                });
+                
+                // 背景点击关闭菜单
+                sidebarBackdrop.addEventListener('click', function() {
+                    navbar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                    document.body.style.overflow = '';
+                    
+                    // 重置按钮动画
+                    const icon = mobileMenuBtn.querySelector('i');
+                    if (icon) {
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+                
+                // 菜单项点击后关闭菜单
+                const navLinks = navbar.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth <= 768) {
+                            navbar.classList.remove('show');
+                            sidebarBackdrop.classList.remove('show');
+                            document.body.style.overflow = '';
+                            
+                            // 重置按钮动画
+                            const icon = mobileMenuBtn.querySelector('i');
+                            if (icon) {
+                                icon.style.transform = 'rotate(0deg)';
+                            }
+                        }
+                    });
+                });
+                
+                // 窗口大小改变时处理菜单状态
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768) {
+                        navbar.classList.remove('show');
+                        sidebarBackdrop.classList.remove('show');
+                        document.body.style.overflow = '';
+                        
+                        // 重置按钮动画
+                        const icon = mobileMenuBtn.querySelector('i');
+                        if (icon) {
+                            icon.style.transform = 'rotate(0deg)';
+                        }
+                    }
+                });
+            }
+            
+            // 键盘快捷键支持
+            document.addEventListener('keydown', function(e) {
+                // ESC键关闭移动端菜单
+                if (e.key === 'Escape' && navbar && navbar.classList.contains('show')) {
+                    navbar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+                
+                // Ctrl+M 切换移动端菜单
+                if (e.ctrlKey && e.key === 'm' && mobileMenuBtn) {
+                    e.preventDefault();
+                    mobileMenuBtn.click();
+                }
+            });
+        });
     </script>
     
+    <!-- 用户认证相关JavaScript -->
+    <script src="{% static 'js/auth.js' %}"></script>
+    <script src="{% static 'js/feature-recommendation.js' %}"></script>
+    
     {% block extra_js %}{% endblock %}
+    
+    <!-- 全局分享按钮 -->
+    {% include 'tools/share_button.html' %}
 </body>
 </html>

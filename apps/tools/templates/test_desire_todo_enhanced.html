@@ -104,7 +104,7 @@
         <li><span class="highlight">✓</span> 实时统计更新</li>
       </div>
       
-      <a href="/tools/based-dev-avatar/" class="test-btn">进入反程序员形象</a>
+      <a href="/tools/based_dev_avatar/" class="test-btn">进入反程序员形象</a>
     </div>
 
     <!-- 欲望代办测试 -->
@@ -161,7 +161,7 @@
 <script>
 function testAPIs() {
   // 测试反程序员形象API
-  fetch('/tools/api/based-dev-avatar/get/')
+  fetch('/tools/api/based_dev_avatar/get/')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
@@ -173,7 +173,7 @@ function testAPIs() {
     });
   
   // 测试欲望代办API
-  fetch('/tools/api/desire-todos/stats/')
+  fetch('/tools/api/desire_todos/stats/')
     .then(response => response.json())
     .then(data => {
       if (data.success) {

@@ -9,7 +9,7 @@
     <div class="profile-card">
         <div class="profile-header">
             <div class="profile-avatar">
-                <img id="profile-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea;">
+                <img id="profile-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 3px solid #667eea;">
             </div>
             <div class="profile-info">
                 <h2 class="profile-name">{{ user.first_name|default:user.username }}</h2>

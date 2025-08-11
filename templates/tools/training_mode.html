@@ -6,7 +6,9 @@
 
 {% block extra_css %}
 <style>
-/* 狂暴模式点击计数器 */
+
+
+/* 训练模式点击计数器 */
 .training-mode-click-counter {
   position: fixed;
   top: 20px;
@@ -490,6 +492,8 @@
 {% endblock %}
 
 {% block content %}
+
+
 <!-- 点击计数器 -->
 <div class="training-mode-click-counter" id="clickCounter">
   <div>点击次数: <span id="clickCount">0</span>/4</div>
@@ -522,15 +526,15 @@
   </div>
 
   <!-- 欲望仪表盘显示 -->
-  <div id="desireDisplay" class="desire-display" style="display: none;">
+  <!-- <div id="desireDisplay" class="desire-display" style="display: none;">
     <div class="desire-bar">[当前欲望浓度] ███████░░░ 73%</div>
     <div class="desire-item">▸ 想要玛莎拉蒂: ★★★☆☆</div>
     <div class="desire-item">▸ 想要被网红注目: ★★☆☆☆</div>
     <div class="desire-item">▸ 想要三天不写代码: ★★★★★</div>
-  </div>
+  </div> -->
 
   <div class="rage-tools-grid">
-    <div class="training-card" onclick="window.location.href='/tools/fitness/'">
+    <div class="training-card" onclick="window.location.href='{% url 'fitness' %}'">
       <div class="training-icon">
         <i class="fas fa-dumbbell"></i>
       </div>
@@ -538,7 +542,15 @@
       <p class="training-description">高强度训练计划，突破体能极限，挑战身体潜能</p>
     </div>
 
-    <div class="training-card" onclick="window.location.href='/tools/triple-awakening/'">
+    <div class="training-card" onclick="window.location.href='{% url 'guitar_training' %}'">
+      <div class="training-icon">
+        <i class="fas fa-guitar"></i>
+      </div>
+      <h3 class="training-title">不摇就滚</h3>
+      <p class="training-description">吉他训练系统，智能调音器、和弦训练、节奏工坊</p>
+    </div>
+
+    <!-- <div class="training-card" onclick="window.location.href='/tools/triple_awakening/'">
       <div class="training-icon">
         <i class="fas fa-brain"></i>
       </div>
@@ -600,12 +612,13 @@
       </div>
       <h3 class="training-title">欲望兑现</h3>
       <p class="training-description">完成任务生成AI欲望兑现图</p>
-    </div>
+    </div> -->
   </div>
 </div>
 
 <script>
 // 代码训练功能
+/*
 function startCodeWorkout() {
   const workoutType = prompt('选择训练类型:\n1. 引体向上(原生JS)\n2. 平板支撑(拒绝AI)\n3. 深蹲(重构函数)\n4. 俯卧撑(手写算法)\n5. 波比跳(调试代码)');
   
@@ -621,7 +634,7 @@ function startCodeWorkout() {
     refactored_functions: Math.floor(Math.random() * 5) + 1
   };
   
-  fetch('/tools/api/triple-awakening/code-workout/', {
+  fetch('/tools/api/triple_awakening/code-workout/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -640,10 +653,12 @@ function startCodeWorkout() {
     }
   });
 }
+*/
 
 // 每日挑战功能
+/*
 function startDailyChallenge() {
-  fetch('/tools/api/triple-awakening/workout-dashboard/')
+  fetch('/tools/api/triple_awakening/workout-dashboard/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -651,10 +666,12 @@ function startDailyChallenge() {
     }
   });
 }
+*/
 
 // 痛苦货币展示
+/*
 function showPainCurrency() {
-  fetch('/tools/api/triple-awakening/pain-currency/')
+  fetch('/tools/api/triple_awakening/pain-currency/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -667,13 +684,17 @@ function showPainCurrency() {
     }
   });
 }
+*/
 
 // 显示欲望仪表盘
+/*
 function showDesireDashboard() {
-  window.location.href = '/tools/desire-dashboard/';
+  window.location.href = '/tools/desire_dashboard/';
 }
+*/
 
 // 切换欲望显示
+/*
 function toggleDesireDisplay() {
   const display = document.getElementById('desireDisplay');
   if (display.style.display === 'none') {
@@ -683,10 +704,12 @@ function toggleDesireDisplay() {
     display.style.display = 'none';
   }
 }
+*/
 
 // 加载欲望数据
+/*
 function loadDesireData() {
-  fetch('/tools/api/desire-dashboard/')
+  fetch('/tools/api/desire_dashboard/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -694,8 +717,10 @@ function loadDesireData() {
     }
   });
 }
+*/
 
 // 更新欲望显示
+/*
 function updateDesireDisplay(data) {
   const display = document.getElementById('desireDisplay');
   const level = data.dashboard.current_desire_level;
@@ -712,8 +737,10 @@ function updateDesireDisplay(data) {
   
   display.textContent = displayText;
 }
+*/
 
 // 欲望兑现功能
+/*
 function fulfillDesire() {
   const taskType = prompt('选择任务类型:\n1. 写100行代码\n2. 完成高强度训练\n3. 重构函数\n4. 完成项目');
   
@@ -732,10 +759,12 @@ function fulfillDesire() {
   
   checkDesireFulfillment(selectedType, selectedDetails);
 }
+*/
 
 // 检查欲望满足
+/*
 function checkDesireFulfillment(taskType, taskDetails) {
-  fetch('/tools/api/desire-dashboard/check-fulfillment/', {
+  fetch('/tools/api/desire_dashboard/check-fulfillment/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -760,10 +789,12 @@ function checkDesireFulfillment(taskType, taskDetails) {
     }
   });
 }
+*/
 
 // 生成欲望兑现图片
+/*
 function generateDesireImage(fulfillmentId, desireTitle) {
-  fetch('/tools/api/desire-dashboard/generate-image/', {
+  fetch('/tools/api/desire_dashboard/generate-image/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -782,6 +813,7 @@ function generateDesireImage(fulfillmentId, desireTitle) {
     }
   });
 }
+*/
 
 // 获取CSRF Token
 function getCookie(name) {
@@ -800,6 +832,7 @@ function getCookie(name) {
 }
 
 // 页面加载时初始化欲望显示
+/*
 document.addEventListener('DOMContentLoaded', function() {
   // 延迟显示欲望仪表盘，增加神秘感
   setTimeout(() => {
@@ -808,6 +841,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDesireData();
   }, 2000);
 });
+*/
 
 // 狂暴模式点击计数器
 let trainingModeClickCount = 0;

@@ -1,0 +1,720 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ target_user.username }} 的功能访问权限 - QAToolBox{% endblock %}
+
+{% block content %}
+<style>
+/* 修复蒙层问题 - 完全解决黑色遮罩覆盖问题 */
+.modal-backdrop {
+    z-index: 1040 !important;
+    pointer-events: none !important; /* 允许点击穿透到下层 */
+}
+
+.modal-backdrop.show {
+    opacity: 0.5 !important;
+    pointer-events: none !important; /* 防止遮罩阻止点击 */
+}
+
+.modal {
+    z-index: 1050 !important;
+    pointer-events: auto !important; /* 确保模态框本身可以点击 */
+}
+
+.modal-dialog {
+    margin: 1.75rem auto !important;
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保对话框可以点击 */
+}
+
+.modal-content {
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保内容区域可以点击 */
+    position: relative !important;
+    z-index: 1051 !important; /* 确保在遮罩之上 */
+}
+
+/* 确保所有交互元素都可以点击 */
+button, a, input, select, textarea {
+    position: relative !important;
+    z-index: 3 !important;
+    pointer-events: auto !important;
+}
+
+/* 用户功能访问管理样式 */
+.user-feature-management {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px 0;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.management-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.user-info-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-access-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feature-access-table th {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.feature-access-table td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+}
+
+.feature-access-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.access-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.access-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #4CAF50;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-enabled { background: #d4edda; color: #155724; }
+.status-disabled { background: #f8d7da; color: #721c24; }
+.status-maintenance { background: #fff3cd; color: #856404; }
+.status-beta { background: #d1ecf1; color: #0c5460; }
+
+.visibility-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.visibility-public { background: #d4edda; color: #155724; }
+.visibility-registered { background: #d1ecf1; color: #0c5460; }
+.visibility-vip { background: #fff3cd; color: #856404; }
+.visibility-admin { background: #f8d7da; color: #721c24; }
+.visibility-hidden { background: #e2e3e5; color: #495057; }
+
+.user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #667eea;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-details h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.user-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.stat-label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.batch-controls {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.modern-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 5px;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-success-modern {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.btn-danger-modern {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    color: inherit;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    display: none;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<div class="user-feature-management">
+    <div class="container-fluid">
+        <!-- 页面头部 -->
+        <div class="management-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 style="color: #2c3e50; font-weight: 700; margin-bottom: 10px;">
+                        <i class="fas fa-user-cog"></i> 用户功能访问权限管理
+                    </h1>
+                    <p style="color: #7f8c8d; font-size: 1.1rem; margin-bottom: 0;">
+                        管理 {{ target_user.username }} 的功能访问权限
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'admin_feature_management' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> 返回功能管理
+                    </a>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-tachometer-alt"></i> 仪表盘
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户信息卡片 -->
+        <div class="user-info-card">
+            <div class="user-info">
+                <img src="/static/img/default-avatar.svg" alt="用户头像" class="user-avatar">
+                <div class="user-details">
+                    <h3>{{ target_user.username }}</h3>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-envelope"></i> {{ target_user.email|default:"未设置邮箱" }}
+                    </p>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-calendar-alt"></i> 注册时间：{{ target_user.date_joined|date:"Y年m月d日" }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="user-stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalFeatures">{{ features.count }}</div>
+                    <div class="stat-label">总功能数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="enabledFeatures">0</div>
+                    <div class="stat-label">已启用</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="disabledFeatures">0</div>
+                    <div class="stat-label">已禁用</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="inheritedFeatures">0</div>
+                    <div class="stat-label">继承默认</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量操作控件 -->
+        <div class="batch-controls">
+            <h5 class="mb-3">
+                <i class="fas fa-tools"></i> 批量操作
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="modern-btn btn-success-modern" onclick="batchEnableSelected()">
+                    <i class="fas fa-check"></i> 启用选中
+                </button>
+                <button class="modern-btn btn-danger-modern" onclick="batchDisableSelected()">
+                    <i class="fas fa-times"></i> 禁用选中
+                </button>
+                <button class="modern-btn btn-primary-modern" onclick="resetToDefault()">
+                    <i class="fas fa-undo"></i> 重置为默认
+                </button>
+                <button class="modern-btn btn-primary-modern" onclick="toggleSelectAll()">
+                    <i class="fas fa-check-square"></i> 全选/取消
+                </button>
+            </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <p>正在加载功能列表...</p>
+        </div>
+
+        <!-- 功能访问表格 -->
+        <div class="table-responsive">
+            <table class="feature-access-table" id="featureTable">
+                <thead>
+                    <tr>
+                        <th width="40">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        </th>
+                        <th>功能名称</th>
+                        <th>功能标识</th>
+                        <th>状态</th>
+                        <th>可见性</th>
+                        <th>用户访问权限</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="featureTableBody">
+                    {% for feature in features %}
+                    <tr data-feature-id="{{ feature.id }}">
+                        <td>
+                            <input type="checkbox" class="feature-checkbox" value="{{ feature.id }}">
+                        </td>
+                        <td>
+                            <div>
+                                <i class="{{ feature.icon }}"></i>
+                                <strong>{{ feature.feature_name }}</strong>
+                            </div>
+                            <small class="text-muted">{{ feature.description|default:"无描述" }}</small>
+                        </td>
+                        <td><code>{{ feature.feature_key }}</code></td>
+                        <td>
+                            <span class="status-badge status-{{ feature.status }}">
+                                {{ feature.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="visibility-badge visibility-{{ feature.visibility }}">
+                                {{ feature.get_visibility_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <label class="access-toggle">
+                                <input type="checkbox" 
+                                       data-feature-id="{{ feature.id }}"
+                                       data-user-id="{{ target_user.id }}"
+                                       onchange="toggleUserAccess(this)"
+                                       {% for access in user_accesses %}
+                                           {% if access.feature.id == feature.id and access.is_enabled %}checked{% endif %}
+                                       {% endfor %}>
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="viewFeatureDetails({{ feature.id }})">
+                                <i class="fas fa-info"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 通知容器 -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="notificationToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-bell text-primary"></i>
+            <strong class="me-auto ms-2">系统通知</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="notificationMessage"></div>
+    </div>
+</div>
+
+<script>
+let currentUserId = {{ target_user.id }};
+let selectedFeatures = [];
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    updateStats();
+});
+
+// 切换用户访问权限
+function toggleUserAccess(checkbox) {
+    const featureId = checkbox.dataset.featureId;
+    const userId = checkbox.dataset.userId;
+    const isEnabled = checkbox.checked;
+    
+    // 显示加载状态
+    checkbox.disabled = true;
+    
+    fetch('/content/api/admin/user-features/update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            feature_id: featureId,
+            is_enabled: isEnabled
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('权限更新成功', 'success');
+            updateStats();
+        } else {
+            showError(data.error);
+            // 恢复复选框状态
+            checkbox.checked = !isEnabled;
+        }
+    })
+    .catch(error => {
+        console.error('更新失败:', error);
+        showError('更新失败，请稍后重试');
+        checkbox.checked = !isEnabled;
+    })
+    .finally(() => {
+        checkbox.disabled = false;
+    });
+}
+
+// 批量启用选中功能
+function batchEnableSelected() {
+    const selected = getSelectedFeatures();
+    if (selected.length === 0) {
+        showError('请先选择要操作的功能');
+        return;
+    }
+    
+    if (!confirm(`确定要启用选中的 ${selected.length} 个功能吗？`)) return;
+    
+    batchUpdateAccess(selected, 'enable', '启用');
+}
+
+// 批量禁用选中功能
+function batchDisableSelected() {
+    const selected = getSelectedFeatures();
+    if (selected.length === 0) {
+        showError('请先选择要操作的功能');
+        return;
+    }
+    
+    if (!confirm(`确定要禁用选中的 ${selected.length} 个功能吗？`)) return;
+    
+    batchUpdateAccess(selected, 'disable', '禁用');
+}
+
+// 批量更新访问权限
+function batchUpdateAccess(featureIds, action, actionName) {
+    fetch('/content/api/admin/user-features/batch-update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            user_ids: [currentUserId],
+            feature_ids: featureIds,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // 更新UI
+            featureIds.forEach(featureId => {
+                const toggle = document.querySelector(`input[data-feature-id="${featureId}"]`);
+                if (toggle) {
+                    toggle.checked = action === 'enable';
+                }
+            });
+            updateStats();
+            clearSelection();
+        } else {
+            showError(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('批量操作失败:', error);
+        showError(`批量${actionName}失败`);
+    });
+}
+
+// 重置为默认设置
+function resetToDefault() {
+    if (!confirm('确定要重置所有功能为默认设置吗？这将清除所有自定义权限设置。')) return;
+    
+    // 这里可以实现重置逻辑
+    showNotification('功能即将实现', 'info');
+}
+
+// 获取选中的功能ID
+function getSelectedFeatures() {
+    return Array.from(document.querySelectorAll('.feature-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+// 切换全选
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.feature-checkbox');
+    
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateSelection();
+}
+
+// 更新选择状态
+function updateSelection() {
+    selectedFeatures = getSelectedFeatures();
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.feature-checkbox');
+    
+    if (selectedFeatures.length === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selectedFeatures.length === checkboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+    }
+}
+
+// 清空选择
+function clearSelection() {
+    document.querySelectorAll('.feature-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateSelection();
+}
+
+// 更新统计信息
+function updateStats() {
+    const toggles = document.querySelectorAll('input[data-feature-id]');
+    let enabled = 0;
+    let disabled = 0;
+    let inherited = 0;
+    
+    toggles.forEach(toggle => {
+        if (toggle.checked) {
+            enabled++;
+        } else {
+            // 简化判断，这里假设未启用的都是禁用或继承
+            disabled++;
+        }
+    });
+    
+    document.getElementById('enabledFeatures').textContent = enabled;
+    document.getElementById('disabledFeatures').textContent = disabled;
+    document.getElementById('inheritedFeatures').textContent = toggles.length - enabled - disabled;
+}
+
+// 查看功能详情
+function viewFeatureDetails(featureId) {
+    // 这里可以实现功能详情查看
+    showNotification('功能详情查看即将实现', 'info');
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const toast = document.getElementById('notificationToast');
+    const messageElement = document.getElementById('notificationMessage');
+    
+    messageElement.textContent = message;
+    toast.className = `toast ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}`;
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// 显示错误
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+// 获取CSRF Token
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 为功能选择框添加事件监听
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('feature-checkbox')) {
+        updateSelection();
+    }
+});
+
+// 修复蒙层问题的JavaScript代码
+document.addEventListener('DOMContentLoaded', function() {
+    // 监听所有模态框的隐藏事件
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // 强制移除所有蒙层
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            
+            // 恢复页面滚动
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // 确保模态框在最上层
+            this.style.zIndex = '1050';
+            
+            // 确保背景遮罩设置正确
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.style.zIndex = '1040';
+                backdrop.style.pointerEvents = 'none';
+            });
+        });
+    });
+    
+    // 点击遮罩关闭模态框
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-backdrop')) {
+            const activeModal = document.querySelector('.modal.show');
+            if (activeModal) {
+                const modal = bootstrap.Modal.getInstance(activeModal);
+                if (modal) modal.hide();
+            }
+        }
+    });
+    
+    // 确保页面加载时没有残留的蒙层
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+
+// 添加全局错误处理，防止JavaScript错误导致蒙层卡住
+window.addEventListener('error', function() {
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+</script>
+{% endblock %}

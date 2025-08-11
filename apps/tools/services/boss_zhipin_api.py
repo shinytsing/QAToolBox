@@ -8,18 +8,24 @@ from io import BytesIO
 from typing import Dict, Optional, List
 from django.conf import settings
 from django.core.cache import cache
+from .boss_zhipin_selenium import BossZhipinSeleniumService
 
 
 class BossZhipinAPI:
     """Boss直聘API服务类 - 支持扫码登录和发送联系请求"""
     
-    def __init__(self):
+    def __init__(self, use_selenium=False):
         self.base_url = "https://www.zhipin.com"
         self.api_url = "https://www.zhipin.com/wapi"
         self.session = requests.Session()
         self.is_logged_in = False
         self.user_token = None
         self.cookies = {}
+        self.use_selenium = use_selenium
+        
+        # 初始化Selenium服务
+        if self.use_selenium:
+            self.selenium_service = BossZhipinSeleniumService(headless=True)
         
         # 设置默认请求头
         self.session.headers.update({
@@ -39,70 +45,143 @@ class BossZhipinAPI:
             'sec-ch-ua-platform': '"macOS"'
         })
     
-    def generate_qr_code(self) -> Dict:
+    def generate_qr_code(self, user_id: int = None) -> Dict:
         """生成Boss直聘登录二维码"""
-        try:
-            # 获取二维码登录URL
-            qr_url = f"{self.base_url}/wapi/zpgeek/qrcode/get.json"
-            
-            response = self.session.get(qr_url)
-            if response.status_code != 200:
+        # 如果启用了Selenium且提供了用户ID，优先使用Selenium
+        if self.use_selenium and user_id:
+            return self.generate_qr_code_with_selenium(user_id)
+        
+        # 尝试多个可能的API端点
+        api_endpoints = [
+            f"{self.base_url}/wapi/zppassport/qrcode/get.json",
+            f"{self.base_url}/wapi/zpgeek/qrcode/get.json",
+            f"{self.base_url}/api/qrcode/get",
+            f"{self.base_url}/api/user/qrcode",
+            f"{self.base_url}/api/zpgeek/qrcode/get.json"
+        ]
+        
+        for qr_url in api_endpoints:
+            try:
+                print(f"正在尝试请求Boss直聘二维码: {qr_url}")
+                
+                response = self.session.get(qr_url, timeout=10)
+                print(f"Boss直聘二维码响应状态: {response.status_code}")
+                
+                if response.status_code == 404:
+                    print(f"端点 {qr_url} 不存在，尝试下一个...")
+                    continue
+                
+                if response.status_code != 200:
+                    print(f"Boss直聘二维码请求失败: {response.status_code}")
+                    continue
+                
+                try:
+                    data = response.json()
+                except json.JSONDecodeError as e:
+                    print(f"Boss直聘二维码响应JSON解析失败: {e}")
+                    # 检查是否是HTML页面（说明API端点已更改）
+                    if '<html>' in response.text.lower():
+                        print(f"端点 {qr_url} 返回HTML页面，API可能已更改")
+                        continue
+                    else:
+                        continue
+                
+                print(f"Boss直聘二维码响应数据: {data}")
+                
+                # 检查不同的响应格式
+                if data.get('code') == 0:
+                    qr_data = data.get('zpData', {})
+                elif data.get('success') is True:
+                    qr_data = data.get('data', {})
+                elif data.get('status') == 'success':
+                    qr_data = data.get('data', {})
+                else:
+                    error_msg = data.get('message', data.get('error', '获取二维码失败'))
+                    print(f"Boss直聘二维码API错误: {error_msg}")
+                    continue
+                
+                qr_code_url = qr_data.get('qrCodeUrl') or qr_data.get('qr_code_url') or qr_data.get('url')
+                qr_code_id = qr_data.get('qrCodeId') or qr_data.get('qr_code_id') or qr_data.get('id')
+                
+                if not qr_code_url or not qr_code_id:
+                    print(f"Boss直聘二维码数据不完整: qr_code_url={qr_code_url}, qr_code_id={qr_code_id}")
+                    continue
+                
+                # 生成二维码图片
+                qr = qrcode.QRCode(version=1, box_size=10, border=5)
+                qr.add_data(qr_code_url)
+                qr.make(fit=True)
+                
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                # 转换为base64
+                buffer = BytesIO()
+                img.save(buffer, format='PNG')
+                img_str = base64.b64encode(buffer.getvalue()).decode()
+                
+                print(f"Boss直聘二维码生成成功: qr_code_id={qr_code_id}")
+                
                 return {
-                    'success': False,
-                    'message': '获取二维码失败'
+                    'success': True,
+                    'qr_code_image': f"data:image/png;base64,{img_str}",
+                    'qr_code_url': qr_code_url,
+                    'qr_code_id': qr_code_id,
+                    'message': '请使用Boss直聘APP扫描二维码登录'
                 }
-            
-            data = response.json()
-            if data.get('code') != 0:
-                return {
-                    'success': False,
-                    'message': data.get('message', '获取二维码失败')
-                }
-            
-            qr_data = data.get('zpData', {})
-            qr_code_url = qr_data.get('qrCodeUrl')
-            qr_code_id = qr_data.get('qrCodeId')
-            
-            if not qr_code_url or not qr_code_id:
-                return {
-                    'success': False,
-                    'message': '二维码数据不完整'
-                }
-            
-            # 生成二维码图片
-            qr = qrcode.QRCode(version=1, box_size=10, border=5)
-            qr.add_data(qr_code_url)
-            qr.make(fit=True)
-            
-            img = qr.make_image(fill_color="black", back_color="white")
-            
-            # 转换为base64
-            buffer = BytesIO()
-            img.save(buffer, format='PNG')
-            img_str = base64.b64encode(buffer.getvalue()).decode()
-            
-            return {
-                'success': True,
-                'qr_code_image': f"data:image/png;base64,{img_str}",
-                'qr_code_url': qr_code_url,
-                'qr_code_id': qr_code_id,
-                'message': '请使用Boss直聘APP扫描二维码登录'
+                
+            except requests.exceptions.Timeout:
+                print(f"端点 {qr_url} 请求超时")
+                continue
+            except requests.exceptions.RequestException as e:
+                print(f"端点 {qr_url} 网络请求失败: {e}")
+                continue
+            except Exception as e:
+                print(f"端点 {qr_url} 处理异常: {e}")
+                continue
+        
+        # 所有端点都失败，返回错误信息
+        print("所有BOSS直聘二维码API端点都失败")
+        return {
+            'success': False,
+            'message': 'BOSS直聘API需要特殊认证参数，暂时无法直接获取二维码。请直接访问BOSS直聘登录页面进行登录。',
+            'fallback_url': 'https://www.zhipin.com/web/user/?ka=header-login',
+            'api_info': {
+                'scan_endpoint': '/wapi/zppassport/qrcode/scan',
+                'note': '二维码扫描API可用，但生成API需要特殊认证'
             }
-            
-        except Exception as e:
-            return {
-                'success': False,
-                'message': f'生成二维码失败: {str(e)}'
-            }
+        }
     
     def check_qr_login_status(self, qr_code_id: str) -> Dict:
         """检查二维码登录状态"""
         try:
-            check_url = f"{self.base_url}/wapi/zpgeek/qrcode/check.json"
+            # 尝试新的API端点
+            check_url = f"{self.base_url}/wapi/zppassport/qrcode/scan"
             params = {
-                'qrCodeId': qr_code_id,
+                'uuid': qr_code_id,
                 '_': int(time.time() * 1000)
             }
+            
+            print(f"正在检查二维码状态: {check_url}?uuid={qr_code_id}")
+            
+            response = self.session.get(check_url, params=params, timeout=10)
+            print(f"二维码状态检查响应: {response.status_code}")
+            
+            if response.status_code != 200:
+                # 如果新端点失败，尝试旧端点
+                check_url = f"{self.base_url}/wapi/zpgeek/qrcode/check.json"
+                params = {
+                    'qrCodeId': qr_code_id,
+                    '_': int(time.time() * 1000)
+                }
+                print(f"尝试旧端点: {check_url}")
+                response = self.session.get(check_url, params=params, timeout=10)
+                print(f"旧端点响应: {response.status_code}")
+                
+                if response.status_code != 200:
+                    return {
+                        'success': False,
+                        'message': '检查登录状态失败'
+                    }
             
             response = self.session.get(check_url, params=params)
             if response.status_code != 200:
@@ -411,4 +490,135 @@ class BossZhipinAPI:
             'is_logged_in': self.is_logged_in,
             'user_token': self.user_token is not None,
             'cookies_count': len(self.cookies)
-        } 
+        }
+    
+    # Selenium相关方法
+    def generate_qr_code_with_selenium(self, user_id: int) -> Dict:
+        """使用Selenium生成二维码"""
+        try:
+            if not self.use_selenium:
+                return {
+                    'success': False,
+                    'message': 'Selenium功能未启用'
+                }
+            
+            # 使用Selenium获取登录页面截图作为二维码替代方案
+            # 由于Boss直聘的二维码API需要特殊认证，我们使用登录页面截图
+            login_url = f"{self.base_url}/web/user/?ka=header-login"
+            
+            # 初始化WebDriver
+            if not self.selenium_service._init_driver():
+                return {
+                    'success': False,
+                    'message': 'WebDriver初始化失败'
+                }
+            
+            try:
+                # 访问登录页面
+                self.selenium_service.driver.get(login_url)
+                time.sleep(3)
+                
+                # 等待二维码元素出现
+                qr_selectors = [
+                    '.qrcode-img',
+                    '.qr-code img',
+                    '.login-qr img',
+                    '.qrcode img',
+                    '[data-testid="qrcode"]',
+                    '.login-container img'
+                ]
+                
+                qr_element = None
+                for selector in qr_selectors:
+                    try:
+                        qr_element = self.selenium_service._wait_for_element(selector, timeout=5)
+                        if qr_element:
+                            break
+                    except Exception:
+                        continue
+                
+                if qr_element:
+                    # 获取二维码图片
+                    qr_src = qr_element.get_attribute('src')
+                    if qr_src:
+                        return {
+                            'success': True,
+                            'qr_code_image': qr_src,
+                            'qr_code_url': qr_src,
+                            'qr_code_id': f'selenium_qr_{user_id}_{int(time.time())}',
+                            'message': '请使用Boss直聘APP扫描二维码登录',
+                            'method': 'selenium_screenshot'
+                        }
+                
+                # 如果没有找到二维码元素，返回登录页面截图
+                screenshot = self.selenium_service.driver.get_screenshot_as_base64()
+                
+                return {
+                    'success': True,
+                    'qr_code_image': f"data:image/png;base64,{screenshot}",
+                    'qr_code_url': login_url,
+                    'qr_code_id': f'selenium_login_{user_id}_{int(time.time())}',
+                    'message': '请访问登录页面进行扫码登录',
+                    'method': 'selenium_login_page'
+                }
+                
+            finally:
+                # 关闭WebDriver
+                self.selenium_service._close_driver()
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'生成二维码失败: {str(e)}'
+            }
+    
+    def get_login_page_url(self, user_id: int) -> Dict:
+        """获取Boss直聘登录页面URL用于iframe嵌入"""
+        try:
+            if not self.use_selenium:
+                return {
+                    'success': False,
+                    'message': 'Selenium功能未启用'
+                }
+            
+            return self.selenium_service.get_login_page_url(user_id)
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'获取登录页面URL失败: {str(e)}'
+            }
+    
+    def check_login_status_with_selenium(self, user_id: int) -> Dict:
+        """使用Selenium检查登录状态"""
+        try:
+            if not self.use_selenium:
+                return {
+                    'success': False,
+                    'message': 'Selenium功能未启用'
+                }
+            
+            return self.selenium_service.check_login_status(user_id)
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'检查登录状态失败: {str(e)}'
+            }
+    
+    def get_user_token_with_selenium(self, user_id: int) -> Dict:
+        """使用Selenium获取用户token"""
+        try:
+            if not self.use_selenium:
+                return {
+                    'success': False,
+                    'message': 'Selenium功能未启用'
+                }
+            
+            return self.selenium_service.get_user_token(user_id)
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'获取用户token失败: {str(e)}'
+            } 

@@ -465,7 +465,7 @@ function updateSkillsDisplay() {
 // 加载资料
 async function loadProfile() {
     try {
-        const response = await fetch('/tools/api/job-search/profile/');
+        const response = await fetch('/tools/api/job_search/profile/');
         const result = await response.json();
         
         if (result.success && result.data) {
@@ -529,7 +529,7 @@ async function saveProfile() {
     };
     
     try {
-        const response = await fetch('/tools/api/job-search/profile/save/', {
+        const response = await fetch('/tools/api/job_search/profile/save/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -558,7 +558,7 @@ async function saveProfile() {
 // 加载统计信息
 async function loadStatistics() {
     try {
-        const response = await fetch('/tools/api/job-search/statistics/');
+        const response = await fetch('/tools/api/job_search/statistics/');
         const result = await response.json();
         
         if (result.success) {

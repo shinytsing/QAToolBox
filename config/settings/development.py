@@ -34,10 +34,15 @@ LOGGING['loggers']['apps.tools']['level'] = 'INFO'
 LOGGING['loggers']['apps.users']['level'] = 'INFO'
 LOGGING['handlers']['console']['level'] = 'WARNING'
 
-# 开发环境禁用缓存
+# 开发环境使用本地内存缓存（支持验证码功能）
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
     }
 }
 

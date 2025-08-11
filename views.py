@@ -36,6 +36,14 @@ def welcome_view(request):
 def theme_demo_view(request):
     return render(request, 'theme_demo.html')
 
+def version_history_view(request):
+    """版本迭代记录页面"""
+    return render(request, 'version_history.html')
+
+def help_page_view(request):
+    """帮助中心页面"""
+    return render(request, 'tools/help_page.html')
+
 def custom_static_serve(request, path):
     """自定义静态文件服务，禁用缓存"""
     response = serve(request, path, document_root=settings.STATIC_ROOT)

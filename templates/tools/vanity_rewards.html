@@ -168,9 +168,9 @@
 
     <!-- 导航链接 -->
     <div class="nav-links">
-      <a href="/tools/vanity-os/" class="nav-link">🏠 返回主页</a>
-      <a href="/tools/sponsor-hall-of-fame/" class="nav-link">👑 金主荣耀墙</a>
-      <a href="/tools/vanity-todo-list/" class="nav-link">📝 欲望待办</a>
+      
+      <a href="/tools/sponsor_hall_of_fame/" class="nav-link">👑 金主荣耀墙</a>
+      <a href="/tools/vanity_todo_list/" class="nav-link">📝 欲望待办</a>
     </div>
   </div>
 </div>
@@ -679,7 +679,7 @@ function loadPointsHistory() {
 
 // 添加罪恶积分
 function addSinPoints(actionType, points, metadata) {
-  fetch('/tools/api/sin-points/add/', {
+  fetch('/tools/api/sin_points/add/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

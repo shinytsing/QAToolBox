@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新AI链接测试 - QAToolBox</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .success-message {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .new-links {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .link-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .link-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .link-url {
+            color: #81C784;
+            margin-bottom: 5px;
+        }
+        
+        .link-description {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .test-buttons {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .category-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 新AI链接添加成功</h1>
+        
+        <div class="success-message">
+            <h2>✅ 成功添加了两个新的AI友情链接</h2>
+            <p>Viggle AI 和 MiniMax 已成功添加到AI友情链接系统中</p>
+        </div>
+        
+        <div class="new-links">
+            <h3>📝 新添加的AI链接</h3>
+            
+            <div class="link-item">
+                <div class="link-name">
+                    Viggle AI
+                    <span class="category-badge">图片</span>
+                </div>
+                <div class="link-url">https://viggle.ai/home</div>
+                <div class="link-description">AI视频生成工具，创建动态视频内容</div>
+            </div>
+            
+            <div class="link-item">
+                <div class="link-name">
+                    MiniMax
+                    <span class="category-badge">其他</span>
+                </div>
+                <div class="link-url">https://www.minimaxi.com/</div>
+                <div class="link-description">全栈自研的新一代AI模型矩阵，包含文本、视频、音频等多种AI能力</div>
+            </div>
+        </div>
+        
+        <div class="new-links">
+            <h3>🔧 技术实现详情</h3>
+            <ul>
+                <li>✅ 更新了管理命令 `create_ai_links.py`</li>
+                <li>✅ 更新了API端点 `views.py`</li>
+                <li>✅ 更新了数据库初始化脚本 `setup_database.py`</li>
+                <li>✅ 自动获取了网站图标（MiniMax成功，Viggle AI使用Google图标服务）</li>
+                <li>✅ 分类管理：Viggle AI归类为"图片"，MiniMax归类为"其他"</li>
+            </ul>
+        </div>
+        
+        <div class="test-buttons">
+            <a href="http://localhost:8000/content/ai-links/" target="_blank" class="test-button">
+                🌐 查看AI友情链接页面
+            </a>
+            <a href="http://localhost:8000/admin/" target="_blank" class="test-button">
+                ⚙️ 管理界面
+            </a>
+            <a href="http://localhost:8000/" target="_blank" class="test-button">
+                🏠 返回主页
+            </a>
+        </div>
+    </div>
+</body>
+</html> 

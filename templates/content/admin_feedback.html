@@ -4,6 +4,51 @@
 {% block title %}反馈管理 - 管理员{% endblock %}
 
 {% block content %}
+<style>
+/* 修复蒙层问题 - 完全解决黑色遮罩覆盖问题 */
+.modal-backdrop {
+    z-index: 1040 !important;
+    pointer-events: none !important; /* 允许点击穿透到下层 */
+}
+
+.modal-backdrop.show {
+    opacity: 0.5 !important;
+    pointer-events: none !important; /* 防止遮罩阻止点击 */
+}
+
+.modal {
+    z-index: 1050 !important;
+    pointer-events: auto !important; /* 确保模态框本身可以点击 */
+}
+
+.modal-dialog {
+    margin: 1.75rem auto !important;
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保对话框可以点击 */
+}
+
+.modal-content {
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保内容区域可以点击 */
+    position: relative !important;
+    z-index: 1051 !important; /* 确保在遮罩之上 */
+}
+
+/* 确保所有交互元素都可以点击 */
+button, a, input, select, textarea {
+    position: relative !important;
+    z-index: 3 !important;
+    pointer-events: auto !important;
+}
+
+/* 确保页面内容区域可以点击 */
+.container {
+    position: relative !important;
+    z-index: 1 !important;
+}
+</style>
 <div class="container mt-4">
     <div class="row">
         <div class="col-12">
@@ -55,7 +100,7 @@
                                         <td>
                                             {% if feedback.user %}
                                                 <div class="d-flex align-items-center">
-                                                    <img src="{% if feedback.user.profile.avatar %}{{ feedback.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
+                                                    <img src="{% if feedback.user.profile.avatar %}{{ feedback.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 40px; height: 40px; border-radius: 4px; min-width: 40px; min-height: 40px; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
                                                     <span>{{ feedback.user.username }}</span>
                                                 </div>
                                             {% else %}
@@ -86,14 +131,12 @@
 </div>
 
 <!-- 反馈详情模态框 -->
-<div class="modal fade" id="feedbackModal" tabindex="-1">
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">反馈详情</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <h5 class="modal-title" id="feedbackModalLabel">反馈详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="feedbackDetail"></div>
@@ -114,38 +157,38 @@ function showFeedbackDetail(feedbackId) {
                     <div class="row">
                         <div class="col-12">
                             <h6>反馈类型</h6>
-                            <p class="border-bottom pb-2">${feedback.feedback_type}</p>
+                            <p class="border-bottom pb-2">${feedback.feedback_type || '未指定'}</p>
                             
                             <h6>反馈内容</h6>
-                            <p class="border-bottom pb-2">${feedback.content}</p>
+                            <p class="border-bottom pb-2">${feedback.content || '无内容'}</p>
                             
                             <div class="row">
                                 <div class="col-md-4">
                                     <h6>类型</h6>
-                                    <p>${feedback.feedback_type}</p>
+                                    <p>${feedback.feedback_type || '未指定'}</p>
                                 </div>
                                 <div class="col-md-4">
                                     <h6>状态</h6>
-                                    <p>${feedback.status}</p>
+                                    <p>${feedback.status || '待处理'}</p>
                                 </div>
                                 <div class="col-md-4">
                                     <h6>提交者</h6>
-                                    <p>${feedback.user_name}</p>
+                                    <p>${feedback.user_name || '匿名用户'}</p>
                                 </div>
                             </div>
                             
                             <div class="row">
                                 <div class="col-md-6">
                                     <h6>提交时间</h6>
-                                    <p>${feedback.created_at}</p>
+                                    <p>${feedback.created_at || '未知'}</p>
                                 </div>
                                 <div class="col-md-6">
                                     <h6>当前状态</h6>
                                     <select id="statusSelect" class="form-control">
-                                        <option value="pending" ${feedback.status === '待处理' ? 'selected' : ''}>待处理</option>
-                                        <option value="processing" ${feedback.status === '处理中' ? 'selected' : ''}>处理中</option>
-                                        <option value="resolved" ${feedback.status === '已解决' ? 'selected' : ''}>已解决</option>
-                                        <option value="closed" ${feedback.status === '已关闭' ? 'selected' : ''}>已关闭</option>
+                                        <option value="pending" ${feedback.status === 'pending' ? 'selected' : ''}>待处理</option>
+                                        <option value="processing" ${feedback.status === 'processing' ? 'selected' : ''}>处理中</option>
+                                        <option value="resolved" ${feedback.status === 'resolved' ? 'selected' : ''}>已解决</option>
+                                        <option value="closed" ${feedback.status === 'closed' ? 'selected' : ''}>已关闭</option>
                                     </select>
                                 </div>
                             </div>
@@ -162,7 +205,10 @@ function showFeedbackDetail(feedbackId) {
                     </div>
                 `;
                 document.getElementById('feedbackDetail').innerHTML = detailHtml;
-                $('#feedbackModal').modal('show');
+                
+                // 使用Bootstrap 5的模态框API
+                const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+                modal.show();
             }
         })
         .catch(error => {
@@ -174,6 +220,11 @@ function showFeedbackDetail(feedbackId) {
 function saveReply(feedbackId) {
     const response = document.getElementById('adminResponse').value;
     const status = document.getElementById('statusSelect').value;
+    
+    if (!response.trim()) {
+        alert('请输入回复内容');
+        return;
+    }
     
     fetch('/content/api/admin/reply-feedback/', {
         method: 'POST',
@@ -191,15 +242,20 @@ function saveReply(feedbackId) {
     .then(data => {
         if (data.success) {
             alert('回复已保存');
-            $('#feedbackModal').modal('hide');
-            location.reload(); // 刷新页面
+            // 使用Bootstrap 5的模态框API关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('feedbackModal'));
+            modal.hide();
+            // 刷新页面
+            setTimeout(() => {
+                location.reload();
+            }, 500);
         } else {
             alert(data.error || '保存失败');
         }
     })
     .catch(error => {
         console.error('保存回复失败:', error);
-        alert('保存失败');
+        alert('保存失败，请检查网络连接');
     });
 }
 
@@ -218,5 +274,53 @@ function getCSRFToken() {
     }
     return cookieValue;
 }
+
+// 修复蒙层问题的JavaScript代码
+document.addEventListener('DOMContentLoaded', function() {
+    // 监听所有模态框的隐藏事件
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // 强制移除所有蒙层
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            
+            // 恢复页面滚动
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // 确保模态框在最上层
+            this.style.zIndex = '1050';
+            
+            // 确保背景遮罩设置正确
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.style.zIndex = '1040';
+                backdrop.style.pointerEvents = 'none';
+            });
+        });
+    });
+    
+    // 点击遮罩关闭模态框
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-backdrop')) {
+            const activeModal = document.querySelector('.modal.show');
+            if (activeModal) {
+                const modal = bootstrap.Modal.getInstance(activeModal);
+                if (modal) modal.hide();
+            }
+        }
+    });
+    
+    // 确保页面加载时没有残留的蒙层
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+
+// 添加全局错误处理，防止JavaScript错误导致蒙层卡住
+window.addEventListener('error', function() {
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
 </script>
 {% endblock %} 

@@ -100,7 +100,7 @@
                                     <td>
                                         {% if activity.user %}
                                             <div class="d-flex align-items-center">
-                                                <img src="{% if activity.user.profile.avatar %}{{ activity.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
+                                                <img src="{% if activity.user.profile.avatar %}{{ activity.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 40px; height: 40px; border-radius: 4px; min-width: 40px; min-height: 40px; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
                                                 <strong>{{ activity.user.username }}</strong>
                                             </div>
                                         {% else %}
@@ -202,7 +202,7 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="{% if session.user.profile.avatar %}{{ session.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
+                                            <img src="{% if session.user.profile.avatar %}{{ session.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 40px; height: 40px; border-radius: 4px; min-width: 40px; min-height: 40px; object-fit: cover; border: 1px solid #ddd; margin-right: 8px;">
                                             <strong>{{ session.user.username }}</strong>
                                         </div>
                                     </td>

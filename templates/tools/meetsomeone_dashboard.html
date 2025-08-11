@@ -1,0 +1,1136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}MeeSomeone 人际档案{% endblock %}
+{% block tool_title_display %}MeeSomeone 人际档案{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'emo.css' %}">
+<style>
+/* MeeSomeone 专属样式 */
+.meetsomeone-container {
+  min-height: 100vh;
+  background: var(--emo-bg);
+  padding: 2rem;
+  font-family: var(--emo-font);
+}
+
+.meetsomeone-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.meetsomeone-title {
+  color: var(--emo-primary);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(156, 39, 176, 0.3);
+}
+
+.meetsomeone-subtitle {
+  color: var(--emo-text-muted);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--emo-shadow-hover);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--emo-primary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--emo-text-muted);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-card {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+}
+
+.section-title {
+  color: var(--emo-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-emo {
+  background: var(--emo-gradient);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: var(--emo-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+}
+
+.btn-emo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+}
+
+.btn-emo-secondary {
+  background: transparent;
+  color: var(--emo-primary);
+  border: 2px solid var(--emo-primary);
+}
+
+.btn-emo-secondary:hover {
+  background: var(--emo-primary);
+  color: white;
+}
+
+.interaction-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--emo-radius);
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.interaction-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(5px);
+}
+
+.interaction-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--emo-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.interaction-content {
+  flex: 1;
+}
+
+.interaction-title {
+  font-weight: 600;
+  color: var(--emo-text);
+  margin-bottom: 0.3rem;
+}
+
+.interaction-meta {
+  color: var(--emo-text-muted);
+  font-size: 0.9rem;
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(233, 30, 99, 0.1);
+  border-left: 4px solid var(--emo-accent);
+  border-radius: 0 var(--emo-radius) var(--emo-radius) 0;
+  margin-bottom: 1rem;
+}
+
+.reminder-icon {
+  color: var(--emo-accent);
+  font-size: 1.5rem;
+}
+
+.reminder-content {
+  flex: 1;
+}
+
+.reminder-title {
+  font-weight: 600;
+  color: var(--emo-text);
+  margin-bottom: 0.3rem;
+}
+
+.reminder-date {
+  color: var(--emo-accent);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--emo-text-muted);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--emo-text-muted);
+}
+
+.loading i {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .meetsomeone-container {
+    padding: 1rem;
+  }
+  
+  .meetsomeone-title {
+    font-size: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+
+/* 模态框样式 */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--emo-card-bg);
+  border-radius: var(--emo-radius-lg);
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--emo-border);
+}
+
+.modal-title {
+  color: var(--emo-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--emo-text-muted);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: var(--emo-accent);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  color: var(--emo-text);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--emo-text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--emo-primary);
+  box-shadow: 0 0 10px rgba(156, 39, 176, 0.2);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tag-item {
+  padding: 0.5rem 1rem;
+  background: rgba(156, 39, 176, 0.1);
+  border: 1px solid var(--emo-border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.tag-item:hover {
+  background: rgba(156, 39, 176, 0.2);
+}
+
+.tag-item.selected {
+  background: var(--emo-primary);
+  color: white;
+  border-color: var(--emo-primary);
+}
+
+.importance-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.star-btn:hover,
+.star-btn.active {
+  color: #ffd700;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="meetsomeone-container emo-theme">
+  <div class="meetsomeone-header">
+    <h1 class="meetsomeone-title">
+      <i class="fas fa-users"></i> MeeSomeone
+    </h1>
+    <p class="meetsomeone-subtitle">💜 记录生命中的每一个重要连接</p>
+  </div>
+
+  <!-- 统计数据 -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="loading">
+      <i class="fas fa-spinner"></i>
+      <p>加载统计数据中...</p>
+    </div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="action-buttons">
+    <button class="btn-emo" onclick="openCreatePersonModal()">
+      <i class="fas fa-user-plus"></i> 新建档案
+    </button>
+    <button class="btn-emo" onclick="openCreateInteractionModal()">
+      <i class="fas fa-comments"></i> 记录互动
+    </button>
+    <button class="btn-emo" onclick="openCreateMomentModal()">
+      <i class="fas fa-star"></i> 重要时刻
+    </button>
+    <button class="btn-emo btn-emo-secondary" onclick="window.location.href='{% url 'meetsomeone_timeline' %}'">
+      <i class="fas fa-clock"></i> 时光轴
+    </button>
+    <button class="btn-emo btn-emo-secondary" onclick="window.location.href='{% url 'meetsomeone_graph' %}'">
+      <i class="fas fa-project-diagram"></i> 关系图谱
+    </button>
+  </div>
+
+  <!-- 主要内容区域 -->
+  <div class="main-content">
+    <!-- 左侧：最近互动 -->
+    <div class="section-card">
+      <h2 class="section-title">
+        <i class="fas fa-clock"></i> 最近互动
+      </h2>
+      <div id="recentInteractions">
+        <div class="loading">
+          <i class="fas fa-spinner"></i>
+          <p>加载互动记录中...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：待办提醒 -->
+    <div class="section-card">
+      <h2 class="section-title">
+        <i class="fas fa-bell"></i> 待办提醒
+      </h2>
+      <div id="pendingReminders">
+        <div class="loading">
+          <i class="fas fa-spinner"></i>
+          <p>加载提醒事项中...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 创建人物档案模态框 -->
+<div id="createPersonModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">创建人物档案</h3>
+      <button class="close-btn" onclick="closeCreatePersonModal()">&times;</button>
+    </div>
+    <form id="createPersonForm">
+      <div class="form-group">
+        <label class="form-label" for="personName">姓名 *</label>
+        <input type="text" id="personName" class="form-input" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="personNickname">昵称/备注名</label>
+        <input type="text" id="personNickname" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="personImportance">重要程度</label>
+        <div class="importance-selector">
+          <button type="button" class="star-btn" data-value="1">⭐</button>
+          <button type="button" class="star-btn" data-value="2">⭐</button>
+          <button type="button" class="star-btn" data-value="3">⭐</button>
+          <button type="button" class="star-btn" data-value="4">⭐</button>
+          <button type="button" class="star-btn" data-value="5">⭐</button>
+        </div>
+        <input type="hidden" id="personImportance" value="3">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">关系标签</label>
+        <div id="relationshipTags" class="tag-selector">
+          <!-- 标签将在这里动态加载 -->
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="firstMetDate">认识日期</label>
+        <input type="date" id="firstMetDate" class="form-input">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="firstMetLocation">认识场景</label>
+        <input type="text" id="firstMetLocation" class="form-input" placeholder="如：公司、学校、朋友聚会等">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="personOccupation">职业</label>
+        <input type="text" id="personOccupation" class="form-input">
+      </div>
+      
+      <div class="action-buttons">
+        <button type="submit" class="btn-emo">
+          <i class="fas fa-save"></i> 创建档案
+        </button>
+        <button type="button" class="btn-emo btn-emo-secondary" onclick="closeCreatePersonModal()">
+          <i class="fas fa-times"></i> 取消
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 创建互动记录模态框 -->
+<div id="createInteractionModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">记录互动</h3>
+      <button class="close-btn" onclick="closeCreateInteractionModal()">&times;</button>
+    </div>
+    <form id="createInteractionForm">
+      <div class="form-group">
+        <label class="form-label" for="interactionPerson">选择人物 *</label>
+        <select id="interactionPerson" class="form-input form-select" required>
+          <option value="">请选择...</option>
+          <!-- 人物选项将在这里动态加载 -->
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="interactionTitle">标题/摘要 *</label>
+        <input type="text" id="interactionTitle" class="form-input" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="interactionType">互动类型</label>
+        <select id="interactionType" class="form-input form-select">
+          <option value="meeting">见面</option>
+          <option value="phone_call">电话</option>
+          <option value="video_call">视频通话</option>
+          <option value="message">消息聊天</option>
+          <option value="email">邮件</option>
+          <option value="social_media">社交媒体</option>
+          <option value="event">共同活动</option>
+          <option value="gift">送礼/收礼</option>
+          <option value="help">互相帮助</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="interactionDate">日期 *</label>
+        <input type="date" id="interactionDate" class="form-input" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="interactionContent">详细内容 *</label>
+        <textarea id="interactionContent" class="form-input form-textarea" required placeholder="描述这次互动的具体内容..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="interactionMood">当时心情</label>
+        <select id="interactionMood" class="form-input form-select">
+          <option value="">请选择...</option>
+          <option value="very_happy">非常开心 😄</option>
+          <option value="happy">开心 😊</option>
+          <option value="neutral">一般 😐</option>
+          <option value="disappointed">失望 😞</option>
+          <option value="sad">难过 😢</option>
+          <option value="angry">生气 😠</option>
+          <option value="confused">困惑 😕</option>
+          <option value="excited">兴奋 🤩</option>
+          <option value="nervous">紧张 😰</option>
+          <option value="grateful">感激 🙏</option>
+        </select>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="submit" class="btn-emo">
+          <i class="fas fa-save"></i> 保存记录
+        </button>
+        <button type="button" class="btn-emo btn-emo-secondary" onclick="closeCreateInteractionModal()">
+          <i class="fas fa-times"></i> 取消
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 创建重要时刻模态框 -->
+<div id="createMomentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">记录重要时刻</h3>
+      <button class="close-btn" onclick="closeCreateMomentModal()">&times;</button>
+    </div>
+    <form id="createMomentForm">
+      <div class="form-group">
+        <label class="form-label" for="momentPerson">相关人物 *</label>
+        <select id="momentPerson" class="form-input form-select" required>
+          <option value="">请选择...</option>
+          <!-- 人物选项将在这里动态加载 -->
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="momentTitle">时刻标题 *</label>
+        <input type="text" id="momentTitle" class="form-input" required placeholder="如：第一次见面、生日聚会、重要谈话等">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="momentType">时刻类型</label>
+        <select id="momentType" class="form-input form-select">
+          <option value="milestone">重要里程碑</option>
+          <option value="first_time">第一次</option>
+          <option value="achievement">成就时刻</option>
+          <option value="memorable">难忘经历</option>
+          <option value="turning_point">转折点</option>
+          <option value="special_day">特殊日子</option>
+          <option value="conflict">冲突事件</option>
+          <option value="reconciliation">和解时刻</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="momentDate">发生日期 *</label>
+        <input type="date" id="momentDate" class="form-input" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="momentLocation">发生地点</label>
+        <input type="text" id="momentLocation" class="form-input" placeholder="如：家中、办公室、咖啡厅等">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="momentDescription">详细描述 *</label>
+        <textarea id="momentDescription" class="form-input form-textarea" required placeholder="详细描述这个重要时刻..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="emotionalImpact">情感影响</label>
+        <select id="emotionalImpact" class="form-input form-select">
+          <option value="very_positive">非常积极 😄</option>
+          <option value="positive">积极 😊</option>
+          <option value="neutral">中性 😐</option>
+          <option value="negative">消极 😞</option>
+          <option value="very_negative">非常消极 😢</option>
+          <option value="mixed">复杂 😕</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="personalReflection">个人反思</label>
+        <textarea id="personalReflection" class="form-input form-textarea" placeholder="这个时刻对你意味着什么？你的感想和思考..."></textarea>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="submit" class="btn-emo">
+          <i class="fas fa-save"></i> 保存时刻
+        </button>
+        <button type="button" class="btn-emo btn-emo-secondary" onclick="closeCreateMomentModal()">
+          <i class="fas fa-times"></i> 取消
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// 全局变量
+let selectedTags = new Set();
+let personProfiles = [];
+let relationshipTags = [];
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+  loadDashboardData();
+  loadRelationshipTags();
+  initStarSelector();
+  initCurrentDate();
+});
+
+// 加载仪表盘数据
+async function loadDashboardData() {
+  try {
+    const response = await fetch('/tools/api/meetsomeone/dashboard-stats/');
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      displayStats(data.data.stats);
+      displayRecentInteractions(data.data.recent_interactions);
+      displayPendingReminders(data.data.pending_reminders);
+    } else {
+      showError('加载数据失败: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Error loading dashboard data:', error);
+    showError('网络错误，请稍后重试');
+  }
+}
+
+// 显示统计数据
+function displayStats(stats) {
+  const statsGrid = document.getElementById('statsGrid');
+  statsGrid.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-number">${stats.total_people}</div>
+      <div class="stat-label">人物档案</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${stats.total_interactions}</div>
+      <div class="stat-label">互动记录</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${stats.active_relationships}</div>
+      <div class="stat-label">活跃关系</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${stats.total_moments}</div>
+      <div class="stat-label">重要时刻</div>
+    </div>
+  `;
+}
+
+// 显示最近互动
+function displayRecentInteractions(interactions) {
+  const container = document.getElementById('recentInteractions');
+  
+  if (interactions.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-comments"></i>
+        <p>还没有互动记录<br>开始创建你的第一条记录吧！</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = interactions.map(interaction => `
+    <div class="interaction-item">
+      <div class="interaction-avatar">
+        ${interaction.person_name.charAt(0)}
+      </div>
+      <div class="interaction-content">
+        <div class="interaction-title">${interaction.title}</div>
+        <div class="interaction-meta">
+          ${interaction.person_name} • ${interaction.date} • ${interaction.interaction_type} ${interaction.mood_emoji}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 显示待办提醒
+function displayPendingReminders(reminders) {
+  const container = document.getElementById('pendingReminders');
+  
+  if (reminders.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-bell"></i>
+        <p>暂无待办提醒</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = reminders.map(reminder => `
+    <div class="reminder-item">
+      <div class="reminder-icon">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div class="reminder-content">
+        <div class="reminder-title">${reminder.title}</div>
+        <div class="reminder-date">${reminder.person_name} • ${reminder.reminder_date}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 加载关系标签
+async function loadRelationshipTags() {
+  try {
+    const response = await fetch('/tools/api/meetsomeone/relationship-tags/');
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      relationshipTags = data.data;
+      displayRelationshipTags();
+    }
+  } catch (error) {
+    console.error('Error loading relationship tags:', error);
+  }
+}
+
+// 显示关系标签
+function displayRelationshipTags() {
+  const container = document.getElementById('relationshipTags');
+  container.innerHTML = relationshipTags.map(tag => `
+    <div class="tag-item" data-tag-id="${tag.id}" style="border-color: ${tag.color}" onclick="toggleTag(${tag.id})">
+      ${tag.name}
+    </div>
+  `).join('');
+}
+
+// 切换标签选择
+function toggleTag(tagId) {
+  const tagElement = document.querySelector(`[data-tag-id="${tagId}"]`);
+  
+  if (selectedTags.has(tagId)) {
+    selectedTags.delete(tagId);
+    tagElement.classList.remove('selected');
+  } else {
+    selectedTags.add(tagId);
+    tagElement.classList.add('selected');
+  }
+}
+
+// 初始化星级选择器
+function initStarSelector() {
+  const starButtons = document.querySelectorAll('.star-btn');
+  
+  starButtons.forEach((btn, index) => {
+    btn.addEventListener('click', function() {
+      const value = parseInt(this.dataset.value);
+      document.getElementById('personImportance').value = value;
+      
+      // 更新星级显示
+      starButtons.forEach((star, i) => {
+        star.classList.toggle('active', i < value);
+      });
+    });
+  });
+  
+  // 设置默认值
+  const defaultValue = 3;
+  starButtons.forEach((star, i) => {
+    star.classList.toggle('active', i < defaultValue);
+  });
+}
+
+// 初始化当前日期
+function initCurrentDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('interactionDate').value = today;
+}
+
+// 打开创建人物档案模态框
+function openCreatePersonModal() {
+  document.getElementById('createPersonModal').style.display = 'block';
+  loadPersonProfiles(); // 为互动记录准备数据
+}
+
+// 关闭创建人物档案模态框
+function closeCreatePersonModal() {
+  document.getElementById('createPersonModal').style.display = 'none';
+  document.getElementById('createPersonForm').reset();
+  selectedTags.clear();
+  document.querySelectorAll('.tag-item').forEach(tag => tag.classList.remove('selected'));
+  
+  // 重置星级
+  const starButtons = document.querySelectorAll('.star-btn');
+  starButtons.forEach((star, i) => {
+    star.classList.toggle('active', i < 3);
+  });
+  document.getElementById('personImportance').value = 3;
+}
+
+// 打开创建互动记录模态框
+function openCreateInteractionModal() {
+  document.getElementById('createInteractionModal').style.display = 'block';
+  loadPersonProfiles();
+}
+
+// 关闭创建互动记录模态框
+function closeCreateInteractionModal() {
+  document.getElementById('createInteractionModal').style.display = 'none';
+  document.getElementById('createInteractionForm').reset();
+  initCurrentDate();
+}
+
+// 打开创建重要时刻模态框
+function openCreateMomentModal() {
+  document.getElementById('createMomentModal').style.display = 'block';
+  loadPersonProfiles();
+  populateMomentPersonSelect();
+  initCurrentDate();
+}
+
+// 关闭创建重要时刻模态框
+function closeCreateMomentModal() {
+  document.getElementById('createMomentModal').style.display = 'none';
+  document.getElementById('createMomentForm').reset();
+}
+
+// 填充重要时刻人物选择下拉框
+function populateMomentPersonSelect() {
+  const select = document.getElementById('momentPerson');
+  
+  if (personProfiles.length === 0) {
+    select.innerHTML = '<option value="">请先创建人物档案</option>';
+    return;
+  }
+  
+  select.innerHTML = `
+    <option value="">请选择...</option>
+    ${personProfiles.map(person => `
+      <option value="${person.id}">${person.name}${person.nickname ? ` (${person.nickname})` : ''}</option>
+    `).join('')}
+  `;
+}
+
+// 加载人物档案列表
+async function loadPersonProfiles() {
+  try {
+    const response = await fetch('/tools/api/meetsomeone/person-profiles/?page_size=100');
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      personProfiles = data.data.profiles;
+      populatePersonSelect();
+    }
+  } catch (error) {
+    console.error('Error loading person profiles:', error);
+  }
+}
+
+// 填充人物选择下拉框
+function populatePersonSelect() {
+  const select = document.getElementById('interactionPerson');
+  const currentOptions = select.innerHTML;
+  
+  if (personProfiles.length === 0) {
+    select.innerHTML = `
+      <option value="">请先创建人物档案</option>
+    `;
+    return;
+  }
+  
+  select.innerHTML = `
+    <option value="">请选择...</option>
+    ${personProfiles.map(person => `
+      <option value="${person.id}">${person.name}${person.nickname ? ` (${person.nickname})` : ''}</option>
+    `).join('')}
+  `;
+}
+
+// 创建人物档案表单提交
+document.getElementById('createPersonForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    name: document.getElementById('personName').value.trim(),
+    nickname: document.getElementById('personNickname').value.trim(),
+    importance_level: parseInt(document.getElementById('personImportance').value),
+    first_met_date: document.getElementById('firstMetDate').value || null,
+    first_met_location: document.getElementById('firstMetLocation').value.trim(),
+    occupation: document.getElementById('personOccupation').value.trim(),
+    relationship_tag_ids: Array.from(selectedTags)
+  };
+  
+  try {
+    const response = await fetch('/tools/api/meetsomeone/person-profiles/create/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      showSuccess('人物档案创建成功！');
+      closeCreatePersonModal();
+      loadDashboardData(); // 刷新页面数据
+    } else {
+      showError(data.message);
+    }
+  } catch (error) {
+    console.error('Error creating person profile:', error);
+    showError('创建失败，请稍后重试');
+  }
+});
+
+// 创建互动记录表单提交
+document.getElementById('createInteractionForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    person_id: parseInt(document.getElementById('interactionPerson').value),
+    title: document.getElementById('interactionTitle').value.trim(),
+    interaction_type: document.getElementById('interactionType').value,
+    date: document.getElementById('interactionDate').value,
+    content: document.getElementById('interactionContent').value.trim(),
+    mood: document.getElementById('interactionMood').value || null
+  };
+  
+  try {
+    const response = await fetch('/tools/api/meetsomeone/interactions/create/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      showSuccess('互动记录创建成功！');
+      closeCreateInteractionModal();
+      loadDashboardData(); // 刷新页面数据
+    } else {
+      showError(data.message);
+    }
+  } catch (error) {
+    console.error('Error creating interaction:', error);
+    showError('创建失败，请稍后重试');
+  }
+});
+
+// 创建重要时刻表单提交
+document.getElementById('createMomentForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const formData = {
+    person_id: parseInt(document.getElementById('momentPerson').value),
+    title: document.getElementById('momentTitle').value.trim(),
+    moment_type: document.getElementById('momentType').value,
+    date: document.getElementById('momentDate').value,
+    location: document.getElementById('momentLocation').value.trim(),
+    description: document.getElementById('momentDescription').value.trim(),
+    emotional_impact: document.getElementById('emotionalImpact').value,
+    personal_reflection: document.getElementById('personalReflection').value.trim()
+  };
+  
+  try {
+    const response = await fetch('/tools/api/meetsomeone/moments/create/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      showSuccess('重要时刻记录成功！');
+      closeCreateMomentModal();
+      loadDashboardData(); // 刷新页面数据
+    } else {
+      showError(data.message);
+    }
+  } catch (error) {
+    console.error('Error creating important moment:', error);
+    showError('创建失败，请稍后重试');
+  }
+});
+
+// 工具函数
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function showSuccess(message) {
+  // 这里可以实现一个成功提示组件
+  alert(message);
+}
+
+function showError(message) {
+  // 这里可以实现一个错误提示组件
+  alert(message);
+}
+
+// 点击模态框外部关闭
+window.addEventListener('click', function(event) {
+  const createPersonModal = document.getElementById('createPersonModal');
+  const createInteractionModal = document.getElementById('createInteractionModal');
+  const createMomentModal = document.getElementById('createMomentModal');
+  
+  if (event.target === createPersonModal) {
+    closeCreatePersonModal();
+  }
+  if (event.target === createInteractionModal) {
+    closeCreateInteractionModal();
+  }
+  if (event.target === createMomentModal) {
+    closeCreateMomentModal();
+  }
+});
+</script>
+{% endblock %}

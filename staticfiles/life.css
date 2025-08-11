@@ -192,13 +192,32 @@ body.life-theme::before {
 .life-navbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--life-border);
+  border-bottom: 0.5px solid var(--life-border);
 }
 
 .life-navbar .nav-link {
   color: var(--life-text);
   font-weight: 500;
   transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.life-navbar .nav-link i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.life-navbar .nav-link span {
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .life-navbar .nav-link:hover {

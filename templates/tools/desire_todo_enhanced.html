@@ -755,7 +755,7 @@ class DesireTodoSystem {
   
   async loadTodos() {
     try {
-      const response = await fetch('/tools/api/desire-todos/');
+      const response = await fetch('/tools/api/desire_todos/');
       const data = await response.json();
       
       if (data.success) {
@@ -769,7 +769,7 @@ class DesireTodoSystem {
   
   async loadStats() {
     try {
-      const response = await fetch('/tools/api/desire-todos/stats/');
+      const response = await fetch('/tools/api/desire_todos/stats/');
       const data = await response.json();
       
       if (data.success) {
@@ -806,7 +806,7 @@ class DesireTodoSystem {
     const reward = document.getElementById('todoReward').value;
     
     try {
-      const response = await fetch('/tools/api/desire-todos/add/', {
+      const response = await fetch('/tools/api/desire_todos/add/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -903,7 +903,7 @@ class DesireTodoSystem {
   
   async completeTodo(todoId) {
     try {
-      const response = await fetch('/tools/api/desire-todos/complete/', {
+      const response = await fetch('/tools/api/desire_todos/complete/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -936,7 +936,7 @@ class DesireTodoSystem {
     if (!confirm('确定要删除这个代办吗？')) return;
     
     try {
-      const response = await fetch('/tools/api/desire-todos/delete/', {
+      const response = await fetch('/tools/api/desire_todos/delete/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,12 +1,5 @@
 
-import matplotlib
-matplotlib.use('Agg')  # 设置后端为Agg
-import random
-import string
 import re
-import matplotlib.pyplot as plt
-from django.http import HttpResponse
-import numpy as np
 from django.contrib import messages
 from django.contrib.auth import authenticate, login,logout
 from django.contrib.auth.decorators import login_required
@@ -26,9 +19,11 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 from .forms import UserRegistrationForm, UserLoginForm, ProfileEditForm
-from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile, UserTheme
+from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile, UserTheme, UserActivityLog, UserSessionStats
 from apps.content.views import admin_required
 from django.template.defaulttags import register
+
+from .services.progressive_captcha_service import ProgressiveCaptchaService
 
 # 注册模板过滤器
 @register.filter
@@ -119,29 +114,7 @@ def register_view(request):
 
     return render(request, 'users/register.html')
 
-def login_view(request):
-    form = LoginForm(request.POST or None)  # 如果是GET请求，表单将为None
 
-    if request.method == 'POST':
-        captcha_response = request.POST.get('captcha')  # 获取用户输入的验证码
-
-        # 验证验证码
-        if captcha_response != request.session.get('captcha'):
-            messages.error(request, '验证码不正确，请重新输入。', extra_tags='captcha')
-        elif form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-
-            if user is not None:
-                login(request, user)
-                return redirect('home')  # 登录成功后重定向到主页
-            else:
-                messages.error(request, "用户名或密码不正确。")
-        else:
-            messages.error(request, "请检查输入的内容。")
-
-    return render(request, 'users/login.html', {'form': form})
 
 def logout_view(request):
     if request.user.is_authenticated:
@@ -151,35 +124,7 @@ def logout_view(request):
         messages.warning(request, "请先登录。")  # 添加没有登录时的提示
     return redirect('home')  # 重定向到首页或其他指定页面
 
-# 在这里定义生成验证码的视图
-def generate_captcha(request):
-    # 生成随机验证码
-    captcha_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-    # 创建验证码图像
-    fig = plt.figure(figsize=(3, 1), dpi=100)
-    plt.text(0.5, 0.5, captcha_text, fontsize=40, ha='center', va='center', color='black', fontweight='bold')
-
-    # 添加干扰线
-    for _ in range(5):  # 添加5条干扰线
-        x_values = np.random.rand(2)
-        y_values = np.random.rand(2)
-        plt.plot(x_values, y_values, color='red', linewidth=1, alpha=0.5)
-
-    # 设置背景颜色为淡色
-    fig.patch.set_facecolor('#f0f0f0')
-
-    # 隐藏坐标轴
-    plt.axis('off')
-
-    # 将验证码文本存储在会话中
-    request.session['captcha'] = captcha_text
-
-    # 保存验证码图像到内存
-    response = HttpResponse(content_type='image/png')
-    plt.savefig(response, format='png')  # 保存图像到响应
-    plt.close(fig)  # 关闭图像以释放内存
-    return response
 
 
 
@@ -205,12 +150,18 @@ def user_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        captcha = request.POST.get('captcha')
-        stored_captcha = request.session.get('captcha', '')
         
-        if captcha.lower() != stored_captcha.lower():
-            messages.error(request, '验证码错误')
+        # 检查验证码验证状态（支持新旧两种验证码）
+        click_verified = request.session.get('click_captcha_verified', False)
+        progressive_verified = request.session.get('progressive_captcha_verified', False)
+        
+        if not (click_verified or progressive_verified):
+            messages.error(request, '请先完成验证码验证')
             return render(request, 'users/login.html')
+        
+        # 清除验证状态，防止重复使用
+        request.session.pop('click_captcha_verified', None)
+        request.session.pop('progressive_captcha_verified', None)
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
@@ -248,9 +199,13 @@ def user_login(request):
 
 def user_logout(request):
     if request.user.is_authenticated:
+        user_id = request.user.id
+        
         # 记录登出活动
         try:
             from .models import UserActivityLog, UserSessionStats
+            from django.core.cache import cache
+            
             x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
             if x_forwarded_for:
                 ip = x_forwarded_for.split(',')[0]
@@ -277,12 +232,39 @@ def user_logout(request):
                 active_session.session_end = timezone.now()
                 active_session.duration = int((active_session.session_end - active_session.session_start).total_seconds())
                 active_session.save()
+                
+            # 清除用户相关的缓存token和数据
+            cache_keys_to_clear = [
+                f'boss_user_token_{user_id}',  # Boss直聘登录token
+                f'user_profile_{user_id}',     # 用户配置缓存
+                f'user_theme_{user_id}',       # 用户主题缓存
+                f'user_session_{user_id}',     # 用户会话缓存
+            ]
+            
+            for cache_key in cache_keys_to_clear:
+                try:
+                    cache.delete(cache_key)
+                except Exception as cache_error:
+                    print(f"清除缓存失败 {cache_key}: {cache_error}")
+                    
         except Exception as e:
             print(f"记录登出活动失败: {e}")
     
+    # 获取当前会话键，以便在前端清除
+    session_key = request.session.session_key
+    
+    # Django内置登出（清除session和认证状态）
     logout(request)
-    messages.success(request, '您已成功登出')
-    return redirect('home')
+    
+    # 添加登出成功消息
+    messages.success(request, '您已成功登出，所有认证信息已清除')
+    
+    # 创建响应并添加自定义头，通知前端清除token
+    response = redirect('home')
+    response['X-Logout-Success'] = 'true'
+    response['X-Clear-Storage'] = 'true'
+    
+    return response
 
 @login_required
 def profile_view(request):
@@ -937,24 +919,101 @@ def upload_avatar(request):
                 'message': f'获取用户资料失败: {str(e)}'
             }, status=500)
         
-        # 直接使用Django的文件上传机制
-        import os
-        from django.conf import settings
-        
-        # 生成文件名
-        file_extension = os.path.splitext(avatar_file.name)[1]
-        if not file_extension:
-            file_extension = '.jpg'
-        
-        filename = f'avatar_{request.user.id}_{int(timezone.now().timestamp())}{file_extension}'
-        
-        # 使用Django的FileField保存
+        # 图片处理：压缩和调整大小
         try:
+            from PIL import Image
+            import io
+            import os
+            from django.conf import settings
+            from django.core.files.base import ContentFile
+            
+            # 打开图片
+            img = Image.open(avatar_file)
+            
+            # 转换为RGB模式（如果是RGBA，去除透明通道）
+            if img.mode in ('RGBA', 'LA', 'P'):
+                # 创建白色背景
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # 计算新的尺寸（强制正方形）
+            target_size = (40, 40)  # 目标尺寸40x40像素
+            
+            # 计算缩放比例，取宽高的最大值
+            width, height = img.size
+            scale = max(target_size[0] / width, target_size[1] / height)
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            
+            # 先缩放到能包含目标尺寸的大小
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
+            # 然后裁剪成正方形
+            left = (new_width - target_size[0]) // 2
+            top = (new_height - target_size[1]) // 2
+            right = left + target_size[0]
+            bottom = top + target_size[1]
+            
+            # 裁剪成正方形
+            img = img.crop((left, top, right, bottom))
+            
+            # 保存压缩后的图片到内存
+            output = io.BytesIO()
+            
+            # 根据原始文件类型选择保存格式
+            file_extension = os.path.splitext(avatar_file.name)[1].lower()
+            if file_extension in ['.jpg', '.jpeg']:
+                img.save(output, format='JPEG', quality=85, optimize=True)
+                content_type = 'image/jpeg'
+                file_extension = '.jpg'
+            elif file_extension == '.png':
+                img.save(output, format='PNG', optimize=True)
+                content_type = 'image/png'
+            elif file_extension == '.webp':
+                img.save(output, format='WEBP', quality=85, optimize=True)
+                content_type = 'image/webp'
+            else:
+                # 默认保存为JPEG
+                img.save(output, format='JPEG', quality=85, optimize=True)
+                content_type = 'image/jpeg'
+                file_extension = '.jpg'
+            
+            output.seek(0)
+            
+            # 生成文件名
+            filename = f'avatar_{request.user.id}_{int(timezone.now().timestamp())}{file_extension}'
+            
+            # 创建ContentFile对象
+            content_file = ContentFile(output.getvalue(), filename)
+            
+            # 保存到用户资料
+            profile.avatar.save(filename, content_file, save=True)
+            
+            # 关闭图片对象
+            img.close()
+            output.close()
+            
+        except ImportError:
+            # 如果没有Pillow库，使用原始文件
+            import os
+            from django.conf import settings
+            
+            file_extension = os.path.splitext(avatar_file.name)[1]
+            if not file_extension:
+                file_extension = '.jpg'
+            
+            filename = f'avatar_{request.user.id}_{int(timezone.now().timestamp())}{file_extension}'
             profile.avatar.save(filename, avatar_file, save=True)
+            
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'message': f'头像保存失败: {str(e)}'
+                'message': f'图片处理失败: {str(e)}'
             }, status=500)
         
         # 记录用户操作
@@ -987,3 +1046,156 @@ def upload_avatar(request):
 def avatar_test_view(request):
     """头像上传测试页面"""
     return render(request, 'avatar_test.html')
+
+
+# 点击验证码相关视图
+
+
+
+# 渐进式验证码相关视图
+def generate_progressive_captcha(request):
+    """生成渐进式验证码"""
+    try:
+        captcha_service = ProgressiveCaptchaService()
+        session_key = request.session.session_key
+        
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+        
+        result = captcha_service.generate_captcha(session_key)
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'生成验证码失败: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+def verify_progressive_captcha(request):
+    """验证渐进式验证码"""
+    try:
+        data = json.loads(request.body)
+        captcha_id = data.get('captcha_id')
+        captcha_type = data.get('captcha_type')
+        user_input = data.get('user_input')
+        
+        if not all([captcha_id, captcha_type, user_input is not None]):
+            return JsonResponse({
+                'success': False,
+                'message': '缺少必要的验证参数'
+            })
+        
+        captcha_service = ProgressiveCaptchaService()
+        session_key = request.session.session_key
+        
+        if not session_key:
+            return JsonResponse({
+                'success': False,
+                'message': '会话无效，请刷新页面'
+            })
+        
+        result = captcha_service.verify_captcha(session_key, captcha_id, captcha_type, user_input)
+        
+        # 如果验证成功，在session中标记
+        if result.get('success'):
+            request.session['progressive_captcha_verified'] = True
+        
+        return JsonResponse(result)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'message': '请求数据格式错误'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'验证失败: {str(e)}'
+        }, status=500)
+
+# 用户登出API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def user_logout_api(request):
+    """用户登出API - 清除所有认证信息和token"""
+    try:
+        user_id = request.user.id
+        
+        # 记录登出活动
+        try:
+            from .models import UserActivityLog, UserSessionStats
+            from django.core.cache import cache
+            
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+            
+            UserActivityLog.objects.create(
+                user=request.user,
+                activity_type='logout',
+                ip_address=ip,
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                details={
+                    'logout_method': 'api'
+                }
+            )
+            
+            # 结束活跃会话
+            active_sessions = UserSessionStats.objects.filter(
+                user=request.user,
+                is_active=True
+            )
+            
+            for session in active_sessions:
+                session.is_active = False
+                session.session_end = timezone.now()
+                session.duration = int((session.session_end - session.session_start).total_seconds())
+                session.save()
+                
+            # 清除用户相关的缓存token和数据
+            cache_keys_to_clear = [
+                f'boss_user_token_{user_id}',       # Boss直聘登录token
+                f'user_profile_{user_id}',          # 用户配置缓存
+                f'user_theme_{user_id}',            # 用户主题缓存
+                f'user_session_{user_id}',          # 用户会话缓存
+                f'boss_login_status_{user_id}',     # Boss登录状态缓存
+                f'user_preferences_{user_id}',      # 用户偏好设置缓存
+            ]
+            
+            for cache_key in cache_keys_to_clear:
+                try:
+                    cache.delete(cache_key)
+                except Exception as cache_error:
+                    print(f"清除缓存失败 {cache_key}: {cache_error}")
+                    
+        except Exception as e:
+            print(f"API登出记录失败: {e}")
+        
+        # Django内置登出
+        logout(request)
+        
+        return JsonResponse({
+            'success': True,
+            'message': '登出成功，所有认证信息已清除',
+            'clear_storage': True,  # 通知前端清除本地存储
+            'redirect_url': '/'
+        }, content_type='application/json')
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'登出失败: {str(e)}'
+        }, status=500, content_type='application/json')
+
+
+# 登出功能测试页面
+@login_required
+def test_logout_view(request):
+    """登出功能测试页面"""
+    return render(request, 'test_logout.html')

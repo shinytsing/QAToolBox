@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>塔罗牌功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>塔罗牌功能测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 获取牌阵列表</h2>
+        <button class="test-button" onclick="testGetSpreads()">测试获取牌阵</button>
+        <div id="spreadsResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 创建占卜记录</h2>
+        <button class="test-button" onclick="testCreateReading()">测试创建占卜</button>
+        <div id="createReadingResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 获取用户占卜记录</h2>
+        <button class="test-button" onclick="testGetUserReadings()">测试获取记录</button>
+        <div id="userReadingsResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. 获取每日能量</h2>
+        <button class="test-button" onclick="testGetDailyEnergy()">测试每日能量</button>
+        <div id="dailyEnergyResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. 访问塔罗牌页面</h2>
+        <a href="/tools/tarot/reading/" class="test-button" style="text-decoration: none; display: inline-block;">访问塔罗占卜页面</a>
+        <a href="/tools/tarot/diary/" class="test-button" style="text-decoration: none; display: inline-block;">访问塔罗日记页面</a>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function testGetSpreads() {
+            const resultDiv = document.getElementById('spreadsResult');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/tarot/spreads/');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `成功获取 ${data.spreads.length} 个牌阵:\n` + 
+                        data.spreads.map(spread => 
+                            `- ${spread.name} (${spread.spread_type}, ${spread.card_count}张牌)`
+                        ).join('\n');
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `失败: ${data.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testCreateReading() {
+            const resultDiv = document.getElementById('createReadingResult');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/tarot/create-reading/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        spread_id: 1, // 使用第一个牌阵
+                        reading_type: 'custom',
+                        question: '测试问题：我的未来会怎样？',
+                        mood_before: '平静'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `占卜创建成功!\n` +
+                        `牌阵: ${data.reading.spread_name}\n` +
+                        `问题: ${data.reading.question}\n` +
+                        `抽到 ${data.reading.drawn_cards.length} 张牌\n` +
+                        `AI解读: ${data.reading.ai_interpretation.substring(0, 100)}...`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `失败: ${data.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testGetUserReadings() {
+            const resultDiv = document.getElementById('userReadingsResult');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/tarot/readings/');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `成功获取 ${data.readings.length} 条占卜记录:\n` + 
+                        data.readings.map(reading => 
+                            `- ${reading.spread_name} (${reading.reading_type}): ${reading.question}`
+                        ).join('\n');
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `失败: ${data.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testGetDailyEnergy() {
+            const resultDiv = document.getElementById('dailyEnergyResult');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/tarot/daily-energy/');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `每日能量获取成功!\n` +
+                        `日期: ${data.energy.date}\n` +
+                        `能量等级: ${data.energy.energy_level}\n` +
+                        `描述: ${data.energy.description}\n` +
+                        `建议: ${data.energy.suggestions}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `失败: ${data.message}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `错误: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

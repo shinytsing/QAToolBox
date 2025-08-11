@@ -6,6 +6,8 @@
 
 {% block extra_css %}
 <style>
+
+
 /* 生活模式点击计数器 */
 .life-mode-click-counter {
   position: fixed;
@@ -559,11 +561,11 @@ function goToLifeDiary() {
         }
         
         // 跳转到生活日记页面
-        window.location.href = '/tools/life-diary-progressive/';
+        window.location.href = '/tools/life_diary_progressive/';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/life-diary-progressive/', '_self');
+        window.open('/tools/life_diary_progressive/', '_self');
     }
 }
 
@@ -582,11 +584,11 @@ function goToRedbookGenerator() {
         }
         
         // 跳转到小红书生成器页面
-        window.location.href = '/tools/redbook-generator/';
+        window.location.href = '/tools/redbook_generator/';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/redbook-generator/', '_self');
+        window.open('/tools/redbook_generator/', '_self');
     }
 }
 */
@@ -606,11 +608,11 @@ function goToMeditationGuide() {
         }
         
         // 跳转到冥想指导页面
-        window.location.href = '/tools/meditation-guide/';
+        window.location.href = '/tools/meditation_guide/';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/meditation-guide/', '_self');
+        window.open('/tools/meditation_guide/', '_self');
     }
 }
 
@@ -629,11 +631,11 @@ function goToHeartLink() {
         }
         
         // 跳转到心动链接页面
-        window.location.href = '/tools/heart-link/';
+        window.location.href = '/tools/heart_link/';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/heart-link/', '_self');
+        window.open('/tools/heart_link/', '_self');
     }
 }
 
@@ -652,15 +654,16 @@ function goToTravelGuide() {
         }
         
         // 跳转到旅游攻略页面
-        window.location.href = '/tools/travel-guide/';
+        window.location.href = '/tools/travel_guide/';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/travel-guide/', '_self');
+        window.open('/tools/travel_guide/', '_self');
     }
 }
 
-// 自动求职机按钮点击处理函数
+// 自动求职机按钮点击处理函数 - 已隐藏
+/*
 function goToJobSearchMachine() {
     console.log('点击自动求职机按钮');
     
@@ -675,11 +678,35 @@ function goToJobSearchMachine() {
         }
         
         // 跳转到自动求职机页面
-        window.location.href = '/tools/job-search-machine/';
+        window.location.href = '/tools/job_search_machine/';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/job-search-machine/', '_self');
+        window.open('/tools/job_search_machine/', '_self');
+    }
+}
+*/
+
+// 食物随机选择器按钮点击处理函数
+function goToFoodRandomizer() {
+    console.log('点击食物随机选择器按钮');
+    
+    try {
+        // 添加点击反馈
+        const button = event.target;
+        if (button) {
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // 跳转到食物随机选择器页面
+        window.location.href = '/tools/food_randomizer/';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/food_randomizer/', '_self');
     }
 }
 
@@ -869,49 +896,20 @@ function deactivateHappinessMode() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('生活模式页面加载完成');
     
-    // 为所有按钮添加事件监听器和调试信息
+    // 为所有卡片添加事件监听器和调试信息
     const cards = document.querySelectorAll('.training-card');
     cards.forEach((card, index) => {
-        const button = card.querySelector('.training-btn');
-        if (button) {
-            console.log(`按钮 ${index + 1} 找到:`, button.textContent.trim());
-            
-            // 添加鼠标悬停效果
-            button.addEventListener('mouseenter', function() {
-                this.style.cursor = 'pointer';
-            });
-            
-            // 确保按钮可点击
-            button.style.pointerEvents = 'auto';
-            button.style.userSelect = 'none';
-        } else {
-            console.error(`按钮 ${index + 1} 未找到`);
-        }
-    });
-    
-    // 特别检查爆款文案按钮 - 已隐藏
-    /*
-    const redbookCard = document.querySelector('.training-card:nth-child(2)');
-    const redbookButton = redbookCard ? redbookCard.querySelector('.training-btn') : null;
-    
-    if (redbookButton) {
-        console.log('爆款文案按钮找到:', redbookButton);
-        
-        // 添加额外的点击事件监听器作为备用
-        redbookButton.addEventListener('click', function(e) {
-            console.log('爆款文案按钮被点击（备用监听器）');
-            e.stopPropagation();
-            goToRedbookGenerator();
-        });
+        console.log(`卡片 ${index + 1} 找到:`, card.querySelector('.training-title')?.textContent.trim());
         
         // 添加鼠标悬停效果
-        redbookButton.addEventListener('mouseenter', function() {
+        card.addEventListener('mouseenter', function() {
             this.style.cursor = 'pointer';
         });
-    } else {
-        console.error('爆款文案按钮未找到');
-    }
-    */
+        
+        // 确保卡片可点击
+        card.style.pointerEvents = 'auto';
+        card.style.userSelect = 'none';
+    });
     
     // 添加页面点击调试
     document.addEventListener('click', function(e) {
@@ -930,6 +928,8 @@ document.addEventListener('DOMContentLoaded', function() {
 {% endblock %}
 
 {% block content %}
+
+
 <!-- 点击计数器 -->
 <div class="life-mode-click-counter" id="clickCounter">
   <div>点击次数: <span id="clickCount">0</span>/4</div>
@@ -969,7 +969,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-pray"></i>
       </div>
       <h3 class="training-title">冥想指导</h3>
-      <p class="training-description">放松身心，静心冥想，寻找内心平静</p>
+              <p class="training-description">find my peace</p>
     </div>
 
     <div class="training-card" onclick="goToHeartLink()">
@@ -985,15 +985,25 @@ document.addEventListener('DOMContentLoaded', function() {
         <i class="fas fa-plane"></i>
       </div>
       <h3 class="training-title">WanderAI 旅游攻略</h3>
-      <p class="training-description">输入任何地名，获取个性化旅行建议，包含必去景点、美食推荐、交通指南等</p>
+                      <p class="training-description">高情商：交给AI，我是p人</p>
     </div>
 
+    <!-- 自动求职机功能已隐藏
     <div class="training-card" onclick="goToJobSearchMachine()">
       <div class="training-icon">
         <i class="fas fa-briefcase"></i>
       </div>
       <h3 class="training-title">自动求职机</h3>
       <p class="training-description">输入职位要求和期望薪资，让AI自动为您投递简历到Boss直聘</p>
+    </div>
+    -->
+
+    <div class="training-card" onclick="goToFoodRandomizer()">
+      <div class="training-icon">
+        <i class="fas fa-utensils"></i>
+      </div>
+                          <h3 class="training-title">中午吃什么</h3>
+                    <p class="training-description">我其实一直有三个问题</p>
     </div>
   </div>
 </div>

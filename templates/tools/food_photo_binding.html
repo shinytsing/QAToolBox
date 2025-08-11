@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>食物照片绑定管理 - QAToolBox</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 修复蒙层问题 - 完全解决黑色遮罩覆盖问题 */
+        .modal-backdrop {
+            z-index: 1040 !important;
+            pointer-events: none !important; /* 允许点击穿透到下层 */
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.5 !important;
+            pointer-events: none !important; /* 防止遮罩阻止点击 */
+        }
+
+        .modal {
+            z-index: 1050 !important;
+            pointer-events: auto !important; /* 确保模态框本身可以点击 */
+        }
+
+        .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-height: calc(100vh - 3.5rem) !important;
+            overflow-y: auto !important;
+            pointer-events: auto !important; /* 确保对话框可以点击 */
+        }
+
+        .modal-content {
+            max-height: calc(100vh - 3.5rem) !important;
+            overflow-y: auto !important;
+            pointer-events: auto !important; /* 确保内容区域可以点击 */
+            position: relative !important;
+            z-index: 1051 !important; /* 确保在遮罩之上 */
+        }
+
+        /* 确保所有交互元素都可以点击 */
+        button, a, input, select, textarea {
+            position: relative !important;
+            z-index: 3 !important;
+            pointer-events: auto !important;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            position: relative !important;
+            z-index: 1 !important;
+        }
+        
+        .container-fluid {
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .panel h4 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        /* 食物列表样式 */
+        .food-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        
+        .food-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: move;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .food-item:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+        }
+        
+        .food-item.dragging {
+            opacity: 0.7;
+            transform: rotate(2deg);
+        }
+        
+        .food-item.bound {
+            background: #e8f5e8;
+            border-color: #4caf50;
+        }
+        
+        .food-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .food-cuisine {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .food-tags {
+            font-size: 0.8em;
+            color: #999;
+        }
+        
+        .bound-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #4caf50;
+            font-size: 1.2em;
+        }
+        
+        /* 照片网格样式 */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+        }
+        
+        /* 分页样式 */
+        .pagination-wrapper {
+            margin-top: 15px;
+            padding: 15px 0;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .pagination-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .page-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .page-size-selector select {
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .page-jump {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .page-jump input {
+            width: 60px;
+            text-align: center;
+            border-radius: 15px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            font-size: 0.9em;
+        }
+        
+        .quick-search {
+            margin-bottom: 10px;
+        }
+        
+        .search-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 5px 12px;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .photo-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 3px dashed #ddd;
+            transition: all 0.3s ease;
+            aspect-ratio: 1;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .photo-item:hover {
+            border-color: #2196f3;
+            transform: scale(1.02);
+        }
+        
+        .photo-item.drag-over {
+            border-color: #4caf50;
+            background: #e8f5e8;
+            border-style: solid;
+        }
+        
+        .photo-item.has-binding {
+            border-color: #4caf50;
+            border-style: solid;
+        }
+        
+        .photo-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 7px 7px 0 0;
+        }
+        
+        .photo-name {
+            padding: 8px;
+            font-size: 0.8em;
+            text-align: center;
+            color: #666;
+            background: rgba(255, 255, 255, 0.9);
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .binding-info {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+        
+        .remove-binding {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 0.8em;
+            display: none;
+        }
+        
+        .photo-item:hover .remove-binding {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 绑定面板样式 */
+        .binding-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .binding-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .binding-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .binding-photo {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+        
+        .binding-details {
+            flex-grow: 1;
+        }
+        
+        .binding-food-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .binding-photo-name {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        /* 操作按钮样式 */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn-action {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+        
+        .btn-export {
+            background: linear-gradient(45deg, #2196f3, #1976d2);
+            color: white;
+        }
+        
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        /* 搜索框样式 */
+        .search-box {
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            border-radius: 25px;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            width: 100%;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+        }
+        
+        /* 统计信息样式 */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
+            }
+            
+            .panel {
+                height: auto;
+                max-height: 400px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 提示消息样式 */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            color: white;
+        }
+        
+        .alert-warning {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        .alert-info {
+            background: linear-gradient(45deg, #2196f3, #1976d2);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2><i class="fas fa-link"></i> 食物照片绑定管理</h2>
+                    <p class="mb-0 text-muted">拖拽食物项目到对应的照片上进行绑定</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalFoods">0</div>
+                            <div class="stat-label">食物总数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalPhotos">0</div>
+                            <div class="stat-label">照片总数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="boundItems">0</div>
+                            <div class="stat-label">已绑定</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 消息提示区域 -->
+        <div id="messageArea"></div>
+        
+        <!-- 主要内容区域 -->
+        <div class="row">
+            <!-- 食物列表面板 -->
+            <div class="col-md-4">
+                <div class="panel">
+                    <h4><i class="fas fa-utensils"></i> 食物列表</h4>
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="foodSearch" placeholder="搜索食物...">
+                    </div>
+                    <div class="food-list" id="foodList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 照片网格面板 -->
+            <div class="col-md-8">
+                <div class="panel">
+                    <h4><i class="fas fa-images"></i> 照片库</h4>
+                    
+                    <!-- 搜索和筛选 -->
+                    <div class="quick-search">
+                        <input type="text" class="search-input" id="photoSearch" placeholder="搜索照片名称...">
+                    </div>
+                    
+                    <div class="search-filters">
+                        <button class="filter-btn active" data-filter="all" onclick="filterPhotos('all')">
+                            <i class="fas fa-list"></i> 全部
+                        </button>
+                        <button class="filter-btn" data-filter="bound" onclick="filterPhotos('bound')">
+                            <i class="fas fa-link"></i> 已绑定
+                        </button>
+                        <button class="filter-btn" data-filter="unbound" onclick="filterPhotos('unbound')">
+                            <i class="fas fa-unlink"></i> 未绑定
+                        </button>
+                        <button class="filter-btn" data-filter="jpg" onclick="filterPhotos('jpg')">
+                            <i class="fas fa-image"></i> JPG
+                        </button>
+                        <button class="filter-btn" data-filter="png" onclick="filterPhotos('png')">
+                            <i class="fas fa-image"></i> PNG
+                        </button>
+                    </div>
+                    
+                    <!-- 照片网格 -->
+                    <div class="photo-grid" id="photoGrid">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 分页控件 -->
+                    <div class="pagination-wrapper" id="paginationWrapper" style="display: none;">
+                        <div class="pagination-info">
+                            <div class="page-size-selector">
+                                <span>每页显示：</span>
+                                <select id="pageSize" onchange="changePageSize()">
+                                    <option value="20">20</option>
+                                    <option value="50" selected>50</option>
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                </select>
+                                <span>张图片</span>
+                            </div>
+                            <div id="pageInfo">
+                                显示 1-50 / 共 150 张图片
+                            </div>
+                        </div>
+                        
+                        <div class="pagination-controls">
+                            <button class="pagination-btn" id="firstPageBtn" onclick="goToPage(1)">
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                            <button class="pagination-btn" id="prevPageBtn" onclick="goToPage(currentPage - 1)">
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+                            
+                            <div id="pageNumbers"></div>
+                            
+                            <button class="pagination-btn" id="nextPageBtn" onclick="goToPage(currentPage + 1)">
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+                            <button class="pagination-btn" id="lastPageBtn" onclick="goToPage(totalPages)">
+                                <i class="fas fa-angle-double-right"></i>
+                            </button>
+                            
+                            <div class="page-jump">
+                                <span>跳转：</span>
+                                <input type="number" id="jumpToPage" min="1" placeholder="页码">
+                                <button class="pagination-btn" onclick="jumpToPage()">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 绑定关系面板 -->
+        <div class="binding-panel">
+            <h4><i class="fas fa-list"></i> 当前绑定关系</h4>
+            <div class="binding-list" id="bindingList">
+                <!-- 绑定关系将在这里显示 -->
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="btn-action btn-save" onclick="saveBindings()">
+                    <i class="fas fa-save"></i> 保存绑定
+                </button>
+                <button class="btn-action btn-reset" onclick="resetBindings()">
+                    <i class="fas fa-undo"></i> 重置所有
+                </button>
+                <button class="btn-action btn-export" onclick="exportBindings()">
+                    <i class="fas fa-download"></i> 导出数据
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let foods = [];
+        let photos = [];
+        let bindings = new Map(); // food_id -> photo_name
+        let draggedFood = null;
+        
+        // 分页相关变量
+        let currentPage = 1;
+        let pageSize = 50;
+        let totalPages = 1;
+        let filteredPhotos = [];
+        let currentFilter = 'all';
+        let searchTerm = '';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFoods();
+            loadPhotos();
+            loadExistingBindings();
+            setupEventListeners();
+        });
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索功能
+            document.getElementById('foodSearch').addEventListener('input', filterFoods);
+            
+            // 照片搜索功能
+            document.getElementById('photoSearch').addEventListener('input', function(e) {
+                searchTerm = e.target.value.trim();
+                currentPage = 1; // 重置到第一页
+                applyFilters();
+            });
+            
+            // 键盘快捷键支持
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'f':
+                            e.preventDefault();
+                            document.getElementById('photoSearch').focus();
+                            break;
+                    }
+                }
+                
+                // 分页快捷键
+                if (e.key === 'ArrowLeft' && e.altKey) {
+                    e.preventDefault();
+                    if (currentPage > 1) goToPage(currentPage - 1);
+                } else if (e.key === 'ArrowRight' && e.altKey) {
+                    e.preventDefault();
+                    if (currentPage < totalPages) goToPage(currentPage + 1);
+                }
+            });
+            
+            // 跳转页码输入框回车键支持
+            document.getElementById('jumpToPage').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    jumpToPage();
+                }
+            });
+        }
+        
+        // 加载食物数据
+        async function loadFoods() {
+            try {
+                const response = await fetch('/tools/api/foods/');
+                if (response.ok) {
+                    foods = await response.json();
+                    renderFoods();
+                    updateStats();
+                } else {
+                    showMessage('加载食物数据失败', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading foods:', error);
+                showMessage('网络错误，请检查连接', 'warning');
+            }
+        }
+        
+        // 加载照片数据
+        async function loadPhotos() {
+            try {
+                const response = await fetch('/tools/api/photos/');
+                if (response.ok) {
+                    photos = await response.json();
+                    // 初始化筛选数组
+                    filteredPhotos = [...photos];
+                    renderPhotos();
+                    updateStats();
+                } else {
+                    showMessage('加载照片数据失败', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading photos:', error);
+                showMessage('网络错误，请检查连接', 'warning');
+            }
+        }
+        
+        // 加载现有绑定关系
+        async function loadExistingBindings() {
+            try {
+                const response = await fetch('/tools/api/food-photo-bindings/');
+                if (response.ok) {
+                    const existingBindings = await response.json();
+                    existingBindings.forEach(binding => {
+                        bindings.set(binding.food_id, binding.photo_name);
+                    });
+                    updateBindingDisplay();
+                    updateStats();
+                }
+            } catch (error) {
+                console.error('Error loading bindings:', error);
+            }
+        }
+        
+        // 渲染食物列表
+        function renderFoods(filteredFoods = null) {
+            const foodList = document.getElementById('foodList');
+            const foodsToRender = filteredFoods || foods;
+            
+            if (foodsToRender.length === 0) {
+                foodList.innerHTML = '<div class="text-center text-muted">暂无食物数据</div>';
+                return;
+            }
+            
+            foodList.innerHTML = foodsToRender.map(food => `
+                <div class="food-item ${bindings.has(food.id) ? 'bound' : ''}" 
+                     draggable="true" 
+                     data-food-id="${food.id}"
+                     ondragstart="handleFoodDragStart(event, ${food.id})"
+                     ondragend="handleFoodDragEnd(event)">
+                    ${bindings.has(food.id) ? '<i class="fas fa-check bound-indicator"></i>' : ''}
+                    <div class="food-name">${food.name}</div>
+                    <div class="food-cuisine">菜系: ${getCuisineDisplay(food.cuisine)}</div>
+                    <div class="food-tags">标签: ${food.tags ? food.tags.join(', ') : '无'}</div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染照片网格
+        // 渲染照片网格（支持分页）
+        function renderPhotos() {
+            const photoGrid = document.getElementById('photoGrid');
+            
+            if (filteredPhotos.length === 0) {
+                photoGrid.innerHTML = '<div class="text-center text-muted p-4">暂无照片数据</div>';
+                document.getElementById('paginationWrapper').style.display = 'none';
+                return;
+            }
+            
+            // 计算分页
+            totalPages = Math.ceil(filteredPhotos.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filteredPhotos.length);
+            const currentPagePhotos = filteredPhotos.slice(startIndex, endIndex);
+            
+            // 渲染当前页照片
+            photoGrid.innerHTML = currentPagePhotos.map(photo => {
+                const boundFood = getBoundFood(photo.name);
+                return `
+                    <div class="photo-item ${boundFood ? 'has-binding' : ''}" 
+                         data-photo-name="${photo.name}"
+                         ondrop="handlePhotoDrop(event, '${photo.name}')"
+                         ondragover="handlePhotoDragOver(event)"
+                         ondragleave="handlePhotoDragLeave(event)">
+                        ${boundFood ? `<button class="remove-binding" onclick="removeBinding('${photo.name}')"><i class="fas fa-times"></i></button>` : ''}
+                        ${boundFood ? '<div class="binding-info"><i class="fas fa-check"></i></div>' : ''}
+                        <img src="${photo.url}" alt="${photo.name}" class="photo-img" onerror="this.src='/static/img/food/default-food.svg'">
+                        <div class="photo-name">${photo.display_name}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 更新分页控件
+            updatePaginationControls();
+        }
+        
+        // 更新分页控件
+        function updatePaginationControls() {
+            const paginationWrapper = document.getElementById('paginationWrapper');
+            const pageInfo = document.getElementById('pageInfo');
+            const pageNumbers = document.getElementById('pageNumbers');
+            const jumpToPage = document.getElementById('jumpToPage');
+            
+            if (filteredPhotos.length === 0) {
+                paginationWrapper.style.display = 'none';
+                return;
+            }
+            
+            paginationWrapper.style.display = 'block';
+            
+            // 更新页面信息
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, filteredPhotos.length);
+            pageInfo.textContent = `显示 ${startIndex}-${endIndex} / 共 ${filteredPhotos.length} 张图片`;
+            
+            // 更新页码按钮
+            const maxVisiblePages = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            let pageNumbersHTML = '';
+            for (let i = startPage; i <= endPage; i++) {
+                pageNumbersHTML += `
+                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" 
+                            onclick="goToPage(${i})">${i}</button>
+                `;
+            }
+            pageNumbers.innerHTML = pageNumbersHTML;
+            
+            // 更新导航按钮状态
+            document.getElementById('firstPageBtn').disabled = currentPage === 1;
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+            document.getElementById('lastPageBtn').disabled = currentPage === totalPages;
+            
+            // 更新跳转页码输入框
+            jumpToPage.max = totalPages;
+            jumpToPage.placeholder = `1-${totalPages}`;
+        }
+        
+        // 跳转到指定页面
+        function goToPage(page) {
+            if (page < 1 || page > totalPages || page === currentPage) return;
+            currentPage = page;
+            renderPhotos();
+        }
+        
+        // 页码跳转
+        function jumpToPage() {
+            const jumpInput = document.getElementById('jumpToPage');
+            const page = parseInt(jumpInput.value);
+            if (page >= 1 && page <= totalPages) {
+                goToPage(page);
+                jumpInput.value = '';
+            }
+        }
+        
+        // 改变每页显示数量
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value);
+            currentPage = 1; // 重置到第一页
+            renderPhotos();
+        }
+        
+        // 筛选照片
+        function filterPhotos(filter) {
+            currentFilter = filter;
+            currentPage = 1; // 重置到第一页
+            
+            // 更新筛选按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+            
+            applyFilters();
+        }
+        
+        // 应用筛选和搜索
+        function applyFilters() {
+            filteredPhotos = photos.filter(photo => {
+                // 搜索筛选
+                if (searchTerm && !photo.name.toLowerCase().includes(searchTerm.toLowerCase()) 
+                    && !photo.display_name.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    return false;
+                }
+                
+                // 状态筛选
+                if (currentFilter === 'bound') {
+                    return getBoundFood(photo.name) !== null;
+                } else if (currentFilter === 'unbound') {
+                    return getBoundFood(photo.name) === null;
+                } else if (currentFilter === 'jpg') {
+                    return photo.name.toLowerCase().endsWith('.jpg') || photo.name.toLowerCase().endsWith('.jpeg');
+                } else if (currentFilter === 'png') {
+                    return photo.name.toLowerCase().endsWith('.png');
+                }
+                
+                return true; // 'all' filter
+            });
+            
+            renderPhotos();
+        }
+        
+        // 拖拽开始
+        function handleFoodDragStart(event, foodId) {
+            draggedFood = foods.find(f => f.id === foodId);
+            event.dataTransfer.effectAllowed = 'move';
+            event.target.classList.add('dragging');
+        }
+        
+        // 拖拽结束
+        function handleFoodDragEnd(event) {
+            event.target.classList.remove('dragging');
+            draggedFood = null;
+        }
+        
+        // 照片拖拽悬停
+        function handlePhotoDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            event.currentTarget.classList.add('drag-over');
+        }
+        
+        // 照片拖拽离开
+        function handlePhotoDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+        
+        // 照片放置
+        function handlePhotoDrop(event, photoName) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            
+            if (!draggedFood) return;
+            
+            // 检查是否已有绑定
+            const existingBinding = getBoundFood(photoName);
+            if (existingBinding && existingBinding.id !== draggedFood.id) {
+                if (!confirm(`照片 "${photoName}" 已绑定到 "${existingBinding.name}"，是否要替换？`)) {
+                    return;
+                }
+                // 移除旧绑定
+                bindings.delete(existingBinding.id);
+            }
+            
+            // 移除该食物的旧绑定（如果有）
+            for (let [foodId, oldPhotoName] of bindings.entries()) {
+                if (foodId === draggedFood.id) {
+                    bindings.delete(foodId);
+                    break;
+                }
+            }
+            
+            // 创建新绑定
+            bindings.set(draggedFood.id, photoName);
+            
+            // 更新显示
+            renderFoods();
+            renderPhotos();
+            updateBindingDisplay();
+            updateStats();
+            
+            showMessage(`成功绑定 "${draggedFood.name}" 到 "${photoName}"`, 'success');
+        }
+        
+        // 移除绑定
+        function removeBinding(photoName) {
+            const foodId = [...bindings.entries()].find(([_, photo]) => photo === photoName)?.[0];
+            if (foodId) {
+                bindings.delete(parseInt(foodId));
+                renderFoods();
+                renderPhotos();
+                updateBindingDisplay();
+                updateStats();
+                showMessage('绑定已移除', 'info');
+            }
+        }
+        
+        // 获取绑定到照片的食物
+        function getBoundFood(photoName) {
+            for (let [foodId, boundPhotoName] of bindings.entries()) {
+                if (boundPhotoName === photoName) {
+                    return foods.find(f => f.id === foodId);
+                }
+            }
+            return null;
+        }
+        
+        // 更新绑定关系显示
+        function updateBindingDisplay() {
+            const bindingList = document.getElementById('bindingList');
+            
+            if (bindings.size === 0) {
+                bindingList.innerHTML = '<div class="text-center text-muted">暂无绑定关系</div>';
+                return;
+            }
+            
+            const bindingItems = [];
+            for (let [foodId, photoName] of bindings.entries()) {
+                const food = foods.find(f => f.id === foodId);
+                const photo = photos.find(p => p.name === photoName);
+                if (food && photo) {
+                    bindingItems.push({food, photo});
+                }
+            }
+            
+            bindingList.innerHTML = bindingItems.map(item => `
+                <div class="binding-item">
+                    <img src="${item.photo.url}" alt="${item.photo.name}" class="binding-photo">
+                    <div class="binding-details">
+                        <div class="binding-food-name">${item.food.name}</div>
+                        <div class="binding-photo-name">${item.photo.display_name}</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeBinding('${item.photo.name}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalFoods').textContent = foods.length;
+            document.getElementById('totalPhotos').textContent = photos.length;
+            document.getElementById('boundItems').textContent = bindings.size;
+            
+            // 更新分页后的照片显示信息
+            if (filteredPhotos.length > 0) {
+                const startIndex = (currentPage - 1) * pageSize + 1;
+                const endIndex = Math.min(currentPage * pageSize, filteredPhotos.length);
+                const pageInfo = document.getElementById('pageInfo');
+                if (pageInfo) {
+                    pageInfo.textContent = `显示 ${startIndex}-${endIndex} / 共 ${filteredPhotos.length} 张图片`;
+                }
+            }
+        }
+        
+        // 搜索过滤食物
+        function filterFoods() {
+            const query = document.getElementById('foodSearch').value.toLowerCase();
+            const filtered = foods.filter(food => 
+                food.name.toLowerCase().includes(query) ||
+                food.cuisine.toLowerCase().includes(query) ||
+                (food.tags && food.tags.some(tag => tag.toLowerCase().includes(query)))
+            );
+            renderFoods(filtered);
+        }
+        
+        // 搜索过滤照片
+        function filterPhotos() {
+            const query = document.getElementById('photoSearch').value.toLowerCase();
+            const filtered = photos.filter(photo => 
+                photo.name.toLowerCase().includes(query) ||
+                photo.display_name.toLowerCase().includes(query)
+            );
+            renderPhotos(filtered);
+        }
+        
+        // 保存绑定关系
+        async function saveBindings() {
+            try {
+                const bindingData = [];
+                for (let [foodId, photoName] of bindings.entries()) {
+                    bindingData.push({
+                        food_id: foodId,
+                        photo_name: photoName
+                    });
+                }
+                
+                const response = await fetch('/tools/api/food-photo-bindings/save/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({bindings: bindingData})
+                });
+                
+                if (response.ok) {
+                    showMessage('绑定关系保存成功！', 'success');
+                } else {
+                    showMessage('保存失败，请重试', 'warning');
+                }
+            } catch (error) {
+                console.error('Error saving bindings:', error);
+                showMessage('网络错误，请检查连接', 'warning');
+            }
+        }
+        
+        // 重置所有绑定
+        function resetBindings() {
+            if (confirm('确定要重置所有绑定关系吗？此操作不可撤销。')) {
+                bindings.clear();
+                renderFoods();
+                renderPhotos();
+                updateBindingDisplay();
+                updateStats();
+                showMessage('所有绑定关系已重置', 'info');
+            }
+        }
+        
+        // 导出绑定数据
+        function exportBindings() {
+            const data = [];
+            for (let [foodId, photoName] of bindings.entries()) {
+                const food = foods.find(f => f.id === foodId);
+                const photo = photos.find(p => p.name === photoName);
+                if (food && photo) {
+                    data.push({
+                        food_id: foodId,
+                        food_name: food.name,
+                        food_cuisine: food.cuisine,
+                        photo_name: photoName,
+                        photo_url: photo.url
+                    });
+                }
+            }
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'food_photo_bindings.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showMessage('绑定数据已导出', 'success');
+        }
+        
+        // 获取菜系显示名称
+        function getCuisineDisplay(cuisine) {
+            const cuisineMap = {
+                'chinese': '中餐',
+                'western': '西餐',
+                'japanese': '日料',
+                'korean': '韩料',
+                'thai': '泰餐',
+                'indian': '印度菜',
+                'italian': '意大利菜',
+                'french': '法餐',
+                'mexican': '墨西哥菜',
+                'mixed': '混合'
+            };
+            return cuisineMap[cuisine] || cuisine;
+        }
+        
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            messageArea.appendChild(alertDiv);
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+        
+        // 获取CSRF令牌
+        function getCsrfToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        // 修复蒙层问题的JavaScript代码
+        document.addEventListener('DOMContentLoaded', function() {
+            // 监听所有模态框的隐藏事件
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('hidden.bs.modal', function() {
+                    // 强制移除所有蒙层
+                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                    document.body.classList.remove('modal-open');
+                    
+                    // 恢复页面滚动
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                });
+                
+                modal.addEventListener('shown.bs.modal', function() {
+                    // 确保模态框在最上层
+                    this.style.zIndex = '1050';
+                    
+                    // 确保背景遮罩设置正确
+                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                        backdrop.style.zIndex = '1040';
+                        backdrop.style.pointerEvents = 'none';
+                    });
+                });
+            });
+            
+            // 点击遮罩关闭模态框
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal-backdrop')) {
+                    const activeModal = document.querySelector('.modal.show');
+                    if (activeModal) {
+                        const modal = bootstrap.Modal.getInstance(activeModal);
+                        if (modal) modal.hide();
+                    }
+                }
+            });
+            
+            // 确保页面加载时没有残留的蒙层
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+        });
+
+        // 添加全局错误处理，防止JavaScript错误导致蒙层卡住
+        window.addEventListener('error', function() {
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+        });
+    </script>
+</body>
+</html>

@@ -2,12 +2,15 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('register/', views.register, name='register'),
+    path('register/', views.register_view, name='register'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
-    path('generate-captcha/', views.generate_captcha, name='generate_captcha'),
+
+
+    path('generate-progressive-captcha/', views.generate_progressive_captcha, name='generate_progressive_captcha'),
+    path('verify-progressive-captcha/', views.verify_progressive_captcha, name='verify_progressive_captcha'),
     
     # 管理员用户管理
     path('admin/users/', views.admin_user_management, name='admin_user_management'),
@@ -32,4 +35,10 @@ urlpatterns = [
     
     # 头像上传测试页面
     path('avatar_test/', views.avatar_test_view, name='avatar_test'),
+    
+    # 用户认证API
+    path('api/logout/', views.user_logout_api, name='user_logout_api'),
+    
+    # 测试页面
+    path('test-logout/', views.test_logout_view, name='test_logout'),
 ]

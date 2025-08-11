@@ -134,7 +134,7 @@ body.modern-theme {
 .modern-navbar {
   background: rgba(10, 10, 10, 0.8);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--modern-border);
+  border-bottom: 0.5px solid var(--modern-border);
 }
 
 .modern-input {

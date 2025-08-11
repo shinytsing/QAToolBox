@@ -456,7 +456,7 @@ function startAnalysis() {
     }, 500);
     
     // 发送分析请求
-    fetch('/tools/api/douyin-analysis/', {
+    fetch('/tools/api/douyin_analysis/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -491,7 +491,7 @@ function startAnalysis() {
 }
 
 function loadAnalysisResults(analysisId) {
-    fetch(`/tools/api/douyin-analysis/result/?analysis_id=${analysisId}`)
+    fetch(`/tools/api/douyin_analysis/result/?analysis_id=${analysisId}`)
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -512,6 +512,11 @@ function displayResults(analysis) {
     
     // 重置按钮状态
     resetAnalyzeButton();
+    
+    // 检查是否为演示数据并显示提示
+    if (analysis.error_message && analysis.error_message.includes('演示数据')) {
+        showDemoDataNotice(analysis.error_message);
+    }
     
     // 显示统计数据
     const statsGrid = document.getElementById('statsGrid');
@@ -587,7 +592,7 @@ function generateProductPreview() {
         </div>
     `;
     
-    fetch('/tools/api/douyin-analysis/preview/', {
+    fetch('/tools/api/douyin_analysis/preview/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -649,6 +654,43 @@ function showMessage(message, type) {
     setTimeout(() => {
         messageDiv.remove();
     }, 5000);
+}
+
+function showDemoDataNotice(message) {
+    const noticeDiv = document.createElement('div');
+    noticeDiv.className = 'demo-notice';
+    noticeDiv.innerHTML = `
+        <div class="demo-notice-content">
+            <i class="fas fa-info-circle"></i>
+            <div class="demo-text">
+                <strong>演示模式</strong>
+                <p>${message}</p>
+                <small>由于抖音反爬虫限制，当前显示为功能演示数据</small>
+            </div>
+            <button class="retry-btn" onclick="retryAnalysis()">
+                <i class="fas fa-redo"></i> 重试获取真实数据
+            </button>
+        </div>
+    `;
+    
+    const resultsSection = document.getElementById('resultsSection');
+    resultsSection.insertBefore(noticeDiv, resultsSection.firstChild);
+}
+
+function retryAnalysis() {
+    // 移除演示数据提示
+    const demoNotice = document.querySelector('.demo-notice');
+    if (demoNotice) {
+        demoNotice.remove();
+    }
+    
+    // 重新开始分析
+    const urlInput = document.getElementById('up主Url');
+    if (urlInput.value.trim()) {
+        analyzeUp主();
+    } else {
+        showMessage('请输入UP主URL', 'error');
+    }
 }
 
 function getCookie(name) {

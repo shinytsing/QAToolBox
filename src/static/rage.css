@@ -257,7 +257,7 @@ body.rage-theme::before {
 .rage-navbar {
   background: rgba(26, 26, 26, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 2px solid var(--rage-border);
+  border-bottom: 0.5px solid var(--rage-border);
 }
 
 .rage-navbar .nav-link {
@@ -266,6 +266,25 @@ body.rage-theme::before {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.rage-navbar .nav-link i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.rage-navbar .nav-link span {
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .rage-navbar .nav-link:hover {

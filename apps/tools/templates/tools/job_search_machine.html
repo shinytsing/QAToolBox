@@ -5,973 +5,546 @@
 
 {% block extra_css %}
 <style>
-.job-search-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    color: white;
-}
-
-.job-search-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-.job-search-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.job-search-header p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
-.job-search-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 40px;
-}
-
-.job-form-card, .job-status-card, .boss-login-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.login-status-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    margin-bottom: 15px;
-}
-
-.status-text {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.status-text.logged-in {
-    color: #4CAF50;
-}
-
-#qrCodeImage img {
-    max-width: 200px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.card-title {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    text-align: center;
-    color: #fff;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.form-control {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: #4CAF50;
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
-}
-
-.form-control::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.btn-primary {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    margin-top: 10px;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(45deg, #45a049, #4CAF50);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-}
-
-.btn-secondary {
-    background: linear-gradient(45deg, #2196F3, #1976D2);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-right: 10px;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(45deg, #1976D2, #2196F3);
-    transform: translateY(-1px);
-}
-
-.status-item {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-left: 4px solid #4CAF50;
-}
-
-.status-item.pending {
-    border-left-color: #FF9800;
-}
-
-.status-item.processing {
-    border-left-color: #2196F3;
-}
-
-.status-item.completed {
-    border-left-color: #4CAF50;
-}
-
-.status-item.failed {
-    border-left-color: #f44336;
-}
-
-.status-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.status-title {
-    font-weight: 600;
-    font-size: 16px;
-}
-
-.status-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.status-badge.pending {
-    background: #FF9800;
-    color: white;
-}
-
-.status-badge.processing {
-    background: #2196F3;
-    color: white;
-}
-
-.status-badge.completed {
-    background: #4CAF50;
-    color: white;
-}
-
-.status-badge.failed {
-    background: #f44336;
-    color: white;
-}
-
-.status-details {
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    transition: width 0.3s ease;
-}
-
-.job-applications {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.application-item {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-.application-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.application-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
-}
-
-.application-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 5px;
-}
-
-.application-company {
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-.application-meta {
-    display: flex;
-    gap: 20px;
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-.match-score {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.application-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-success {
-    background: #4CAF50;
-    color: white;
-}
-
-.btn-info {
-    background: #2196F3;
-    color: white;
-}
-
-.btn-warning {
-    background: #FF9800;
-    color: white;
-}
-
-.btn-danger {
-    background: #f44336;
-    color: white;
-}
-
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.alert {
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px solid;
-}
-
-.alert-success {
-    background: rgba(76, 175, 80, 0.2);
-    border-color: #4CAF50;
-    color: #4CAF50;
-}
-
-.alert-error {
-    background: rgba(244, 67, 54, 0.2);
-    border-color: #f44336;
-    color: #f44336;
-}
-
-.alert-info {
-    background: rgba(33, 150, 243, 0.2);
-    border-color: #2196F3;
-    color: #2196F3;
-}
-
-@media (max-width: 768px) {
-    .job-search-grid {
-        grid-template-columns: 1fr;
+    .login-container {
+        display: none;
+        margin: 20px 0;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
     }
     
-    .job-search-header h1 {
-        font-size: 2rem;
+    .login-iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+        background: #f9f9f9;
     }
     
-    .application-header {
-        flex-direction: column;
+    .login-controls {
+        background: #f8f9fa;
+        padding: 15px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
         gap: 10px;
+        align-items: center;
     }
     
-    .application-meta {
-        flex-wrap: wrap;
+    .btn-embedded {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
-}
+    
+    .btn-embedded:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .login-status {
+        margin-left: auto;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .status-success {
+        color: #28a745;
+    }
+    
+    .status-error {
+        color: #dc3545;
+    }
+    
+    .token-info {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        display: none;
+    }
+    
+    .login-header {
+        background: #f8f9fa;
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .login-header h5 {
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .login-tips {
+        background: #f8f9fa;
+        padding: 15px;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    .login-tips .alert {
+        margin-bottom: 0;
+    }
+    
+    .login-tips ul {
+        padding-left: 20px;
+    }
+    
+    .login-tips li {
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="job-search-container">
-    <div class="job-search-header">
-        <h1>🤖 自动求职机</h1>
-        <p>输入职位要求和期望薪资，让AI自动为您投递简历到Boss直聘</p>
-    </div>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-robot"></i> 自动求职机
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Boss直聘登录状态 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fab fa-boss"></i> Boss直聘登录状态
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="bossLoginStatus">
+                                        <p class="text-muted">未登录</p>
+                                        <button id="checkLoginBtn" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-sync-alt"></i> 检查登录状态
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-key"></i> Token状态
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="tokenStatus">
+                                        <p class="text-muted">未获取</p>
+                                        <button id="getTokenBtn" class="btn btn-success btn-sm" disabled>
+                                            <i class="fas fa-download"></i> 获取Token
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    <!-- Boss直聘登录状态 -->
-    <div class="boss-login-card" style="margin-bottom: 30px;">
-        <h3 class="card-title">🔐 Boss直聘登录</h3>
-        <div id="bossLoginStatus">
-            <div class="login-status-item">
-                <span class="status-text">未登录</span>
-                <button class="btn-secondary" onclick="generateQRCode()">扫码登录</button>
+                    <!-- 登录方式选择 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-sign-in-alt"></i> Boss直聘登录
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center p-4">
+                                        <div class="mb-3">
+                                            <i class="fas fa-window-maximize fa-3x text-primary"></i>
+                                        </div>
+                                        <h5>📱 嵌入式登录</h5>
+                                        <p class="text-muted">在页面中直接登录Boss直聘，更安全可靠</p>
+                                        <button id="embeddedLoginBtn" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-window-maximize"></i> 开始登录
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 嵌入式登录容器 -->
+                    <div id="embeddedLoginContainer" class="login-container">
+                        <div class="login-header">
+                            <h5><i class="fas fa-info-circle"></i> 登录说明</h5>
+                            <p class="text-muted">请在下方iframe中完成Boss直聘登录，登录完成后点击"检查登录状态"按钮</p>
+                        </div>
+                        <iframe id="bossLoginFrame" class="login-iframe" src="about:blank"></iframe>
+                        <div class="login-controls">
+                            <button class="btn-embedded" onclick="checkLoginStatus()">
+                                <i class="fas fa-sync-alt"></i> 检查登录状态
+                            </button>
+                            <button class="btn-embedded" onclick="getUserToken()">
+                                <i class="fas fa-key"></i> 获取Token
+                            </button>
+                            <button class="btn-secondary" onclick="hideEmbeddedLogin()">
+                                <i class="fas fa-times"></i> 关闭
+                            </button>
+                            <span id="loginStatusText" class="login-status">准备登录...</span>
+                        </div>
+                        <div class="login-tips">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-lightbulb"></i> 登录提示：</h6>
+                                <ul class="mb-0">
+                                    <li>如果iframe无法正常显示，请尝试刷新页面</li>
+                                    <li>登录完成后，请等待几秒钟再点击"检查登录状态"</li>
+                                    <li>如果登录失败，请检查网络连接和验证码</li>
+                                    <li>建议使用手机号+验证码方式登录，更稳定</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token信息显示 -->
+                    <div id="tokenInfo" class="token-info"></div>
+
+
+
+                    <!-- 求职配置表单 -->
+                    <div id="jobConfigForm" style="display: none;">
+                        <hr>
+                        <h4><i class="fas fa-cog"></i> 求职配置</h4>
+                        <form id="jobSearchForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="jobTitle">期望职位</label>
+                                        <input type="text" class="form-control" id="jobTitle" name="jobTitle" placeholder="如：Python开发工程师" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="location">工作地点</label>
+                                        <input type="text" class="form-control" id="location" name="location" placeholder="如：北京" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="minSalary">最低薪资（K）</label>
+                                        <input type="number" class="form-control" id="minSalary" name="minSalary" min="1" max="100" value="10" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="maxSalary">最高薪资（K）</label>
+                                        <input type="number" class="form-control" id="maxSalary" name="maxSalary" min="1" max="200" value="30" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="experienceLevel">工作经验</label>
+                                        <select class="form-control" id="experienceLevel" name="experienceLevel" required>
+                                            <option value="fresh">应届生</option>
+                                            <option value="1-3" selected>1-3年</option>
+                                            <option value="3-5">3-5年</option>
+                                            <option value="5-10">5-10年</option>
+                                            <option value="10+">10年以上</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="maxApplications">最大投递数量</label>
+                                        <input type="number" class="form-control" id="maxApplications" name="maxApplications" min="1" max="100" value="20" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="keywords">关键词（用逗号分隔）</label>
+                                <input type="text" class="form-control" id="keywords" name="keywords" placeholder="如：Python,Django,Flask">
+                            </div>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-rocket"></i> 开始自动求职
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <!-- 二维码显示区域 -->
-        <div id="qrCodeContainer" style="display: none; text-align: center; margin-top: 20px;">
-            <div id="qrCodeImage"></div>
-            <p style="margin-top: 10px; font-size: 14px; opacity: 0.8;">请使用Boss直聘APP扫描二维码登录</p>
-            <div id="qrCodeStatus" style="margin-top: 10px; font-size: 14px; color: #FF9800;"></div>
-        </div>
-    </div>
-
-    <div class="job-search-grid">
-        <!-- 求职请求表单 -->
-        <div class="job-form-card">
-            <h3 class="card-title">📝 创建求职请求</h3>
-            <form id="jobSearchForm">
-                <div class="form-group">
-                    <label for="jobTitle">职位名称 *</label>
-                    <input type="text" id="jobTitle" class="form-control" placeholder="如：Python开发工程师" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="location">工作地点 *</label>
-                    <input type="text" id="location" class="form-control" placeholder="如：北京、上海、深圳" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="minSalary">最低薪资 (K/月) *</label>
-                    <input type="number" id="minSalary" class="form-control" placeholder="如：15" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="maxSalary">最高薪资 (K/月) *</label>
-                    <input type="number" id="maxSalary" class="form-control" placeholder="如：30" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="jobType">工作类型</label>
-                    <select id="jobType" class="form-control">
-                        <option value="full_time">全职</option>
-                        <option value="part_time">兼职</option>
-                        <option value="internship">实习</option>
-                        <option value="freelance">自由职业</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="experienceLevel">经验要求</label>
-                    <select id="experienceLevel" class="form-control">
-                        <option value="fresh">应届生</option>
-                        <option value="1-3" selected>1-3年</option>
-                        <option value="3-5">3-5年</option>
-                        <option value="5-10">5-10年</option>
-                        <option value="10+">10年以上</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="keywords">关键词 (用逗号分隔)</label>
-                    <input type="text" id="keywords" class="form-control" placeholder="如：Python,Django,MySQL">
-                </div>
-                
-                <div class="form-group">
-                    <label for="maxApplications">最大投递数量</label>
-                    <input type="number" id="maxApplications" class="form-control" value="50" min="1" max="100">
-                </div>
-                
-                <div class="form-group">
-                    <label for="applicationInterval">投递间隔 (秒)</label>
-                    <input type="number" id="applicationInterval" class="form-control" value="30" min="10" max="60">
-                </div>
-                
-                <button type="submit" class="btn-primary" id="createRequestBtn">
-                    <span id="createRequestText">🚀 创建求职请求</span>
-                    <span id="createRequestLoading" class="loading-spinner" style="display: none;"></span>
-                </button>
-            </form>
-        </div>
-
-        <!-- 求职状态 -->
-        <div class="job-status-card">
-            <h3 class="card-title">📊 求职状态</h3>
-            <div id="jobStatusList">
-                <p style="text-align: center; opacity: 0.7;">暂无求职请求</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 申请记录 -->
-    <div class="job-applications">
-        <h3 class="card-title">📋 申请记录</h3>
-        <div id="applicationsList">
-            <p style="text-align: center; opacity: 0.7;">暂无申请记录</p>
-        </div>
     </div>
 </div>
 
-<!-- 状态更新模态框 -->
-<div id="statusModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>更新申请状态</h3>
-        <select id="statusSelect" class="form-control">
-            <option value="applied">已投递</option>
-            <option value="viewed">已查看</option>
-            <option value="contacted">已联系</option>
-            <option value="interview">面试邀请</option>
-            <option value="rejected">已拒绝</option>
-            <option value="accepted">已录用</option>
-        </select>
-        <div style="margin-top: 20px;">
-            <button class="btn-primary" onclick="updateApplicationStatus()">更新状态</button>
-            <button class="btn-secondary" onclick="closeStatusModal()">取消</button>
-        </div>
-    </div>
-</div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
 <script>
-let currentApplicationId = null;
-
-// 页面加载时获取数据
-document.addEventListener('DOMContentLoaded', function() {
-    loadJobRequests();
-    loadApplications();
-    checkBossLoginStatus();
-});
-
-// Boss直聘登录相关函数
-let qrCodeCheckInterval = null;
-
-// 检查Boss直聘登录状态
-async function checkBossLoginStatus() {
-    try {
-        const response = await fetch('/tools/api/boss/login-status/');
-        const result = await response.json();
-        
-        if (result.success) {
-            updateBossLoginStatus(result.is_logged_in, result.user_info);
-        }
-    } catch (error) {
-        console.error('检查登录状态失败:', error);
-    }
-}
-
-// 更新Boss直聘登录状态显示
-function updateBossLoginStatus(isLoggedIn, userInfo = null) {
-    const statusContainer = document.getElementById('bossLoginStatus');
-    
-    if (isLoggedIn) {
-        statusContainer.innerHTML = `
-            <div class="login-status-item">
-                <div>
-                    <span class="status-text logged-in">已登录</span>
-                    ${userInfo ? `<div style="font-size: 14px; opacity: 0.8; margin-top: 5px;">${userInfo.name || '用户'}</div>` : ''}
-                </div>
-                <button class="btn-secondary" onclick="bossLogout()">退出登录</button>
-            </div>
-        `;
-    } else {
-        statusContainer.innerHTML = `
-            <div class="login-status-item">
-                <span class="status-text">未登录</span>
-                <button class="btn-secondary" onclick="generateQRCode()">扫码登录</button>
-            </div>
-        `;
-    }
-}
-
-// 生成二维码
-async function generateQRCode() {
-    try {
-        const response = await fetch('/tools/api/boss/qr-code/');
-        const result = await response.json();
-        
-        if (result.success) {
-            // 显示二维码
-            const qrContainer = document.getElementById('qrCodeContainer');
-            const qrImage = document.getElementById('qrCodeImage');
-            const qrStatus = document.getElementById('qrCodeStatus');
-            
-            qrImage.innerHTML = `<img src="${result.qr_code_image}" alt="Boss直聘登录二维码">`;
-            qrStatus.textContent = '等待扫码...';
-            qrContainer.style.display = 'block';
-            
-            // 开始轮询检查登录状态
-            startQRCodeCheck();
-        } else {
-            showAlert(result.message, 'error');
-        }
-    } catch (error) {
-        showAlert('生成二维码失败，请重试', 'error');
-    }
-}
-
-// 开始轮询检查二维码登录状态
-function startQRCodeCheck() {
-    if (qrCodeCheckInterval) {
-        clearInterval(qrCodeCheckInterval);
-    }
-    
-    qrCodeCheckInterval = setInterval(async () => {
-        try {
-            const response = await fetch('/tools/api/boss/check-login/');
-            const result = await response.json();
-            
-            if (result.success) {
-                const qrStatus = document.getElementById('qrCodeStatus');
-                qrStatus.textContent = result.message;
-                
-                if (result.status === 'SUCCESS') {
-                    // 登录成功
-                    clearInterval(qrCodeCheckInterval);
-                    qrCodeCheckInterval = null;
-                    
-                    // 隐藏二维码
-                    document.getElementById('qrCodeContainer').style.display = 'none';
-                    
-                    // 更新登录状态
-                    updateBossLoginStatus(true, result.user_info);
-                    
-                    showAlert('Boss直聘登录成功！', 'success');
-                } else if (result.status === 'EXPIRED') {
-                    // 二维码过期
-                    clearInterval(qrCodeCheckInterval);
-                    qrCodeCheckInterval = null;
-                    qrStatus.textContent = '二维码已过期，请重新生成';
-                }
-            }
-        } catch (error) {
-            console.error('检查登录状态失败:', error);
-        }
-    }, 2000); // 每2秒检查一次
-}
-
-// Boss直聘退出登录
-async function bossLogout() {
-    try {
-        const response = await fetch('/tools/api/boss/logout/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            updateBossLoginStatus(false);
-            showAlert('已退出登录', 'success');
-        } else {
-            showAlert(result.message, 'error');
-        }
-    } catch (error) {
-        showAlert('退出登录失败，请重试', 'error');
-    }
-}
-
-// 创建求职请求
-document.getElementById('jobSearchForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    // 检查Boss直聘登录状态
-    const loginResponse = await fetch('/tools/api/boss/login-status/');
-    const loginResult = await loginResponse.json();
-    
-    if (!loginResult.success || !loginResult.is_logged_in) {
-        showAlert('请先登录Boss直聘', 'error');
-        return;
-    }
-    
-    const formData = {
-        job_title: document.getElementById('jobTitle').value,
-        location: document.getElementById('location').value,
-        min_salary: document.getElementById('minSalary').value,
-        max_salary: document.getElementById('maxSalary').value,
-        job_type: document.getElementById('jobType').value,
-        experience_level: document.getElementById('experienceLevel').value,
-        keywords: document.getElementById('keywords').value.split(',').map(k => k.trim()).filter(k => k),
-        max_applications: parseInt(document.getElementById('maxApplications').value),
-        application_interval: parseInt(document.getElementById('applicationInterval').value)
-    };
-    
-    createJobRequest(formData);
-});
-
-// 创建求职请求API调用
-async function createJobRequest(data) {
-    const btn = document.getElementById('createRequestBtn');
-    const text = document.getElementById('createRequestText');
-    const loading = document.getElementById('createRequestLoading');
-    
-    btn.disabled = true;
-    text.style.display = 'none';
-    loading.style.display = 'inline-block';
-    
-    try {
-        const response = await fetch('/tools/api/job-search/create-request/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showAlert('求职请求创建成功！', 'success');
-            document.getElementById('jobSearchForm').reset();
-            loadJobRequests();
-            
-            // 询问是否立即开始求职
-            if (confirm('是否立即开始自动求职？')) {
-                startJobSearch(result.request_id);
-            }
-        } else {
-            showAlert(result.message, 'error');
-        }
-    } catch (error) {
-        showAlert('创建请求失败，请重试', 'error');
-    } finally {
-        btn.disabled = false;
-        text.style.display = 'inline';
-        loading.style.display = 'none';
-    }
-}
-
-// 开始自动求职
-async function startJobSearch(requestId) {
-    try {
-        const response = await fetch('/tools/api/job-search/start/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ request_id: requestId })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showAlert(result.message, 'success');
-            loadJobRequests();
-            loadApplications();
-        } else {
-            showAlert(result.message, 'error');
-        }
-    } catch (error) {
-        showAlert('开始求职失败，请重试', 'error');
-    }
-}
-
-// 加载求职请求列表
-async function loadJobRequests() {
-    try {
-        const response = await fetch('/tools/api/job-search/requests/');
-        const result = await response.json();
-        
-        if (result.success) {
-            displayJobRequests(result.data);
-        }
-    } catch (error) {
-        console.error('加载求职请求失败:', error);
-    }
-}
-
-// 显示求职请求列表
-function displayJobRequests(requests) {
-    const container = document.getElementById('jobStatusList');
-    
-    if (requests.length === 0) {
-        container.innerHTML = '<p style="text-align: center; opacity: 0.7;">暂无求职请求</p>';
-        return;
-    }
-    
-    container.innerHTML = requests.map(request => `
-        <div class="status-item ${request.status}">
-            <div class="status-header">
-                <div>
-                    <div class="status-title">${request.job_title}</div>
-                    <div class="status-details">${request.location} | ${request.salary_range}</div>
-                </div>
-                <span class="status-badge ${request.status}">${getStatusText(request.status)}</span>
-            </div>
-            <div class="status-details">
-                找到职位: ${request.total_jobs_found} | 投递简历: ${request.total_applications_sent}
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: ${request.progress_percentage}%"></div>
-            </div>
-            <div class="status-details">
-                成功率: ${request.success_rate.toFixed(1)}% | 创建时间: ${request.created_at}
-            </div>
-            ${request.status === 'pending' ? `
-                <button class="btn-secondary" onclick="startJobSearch(${request.id})">开始求职</button>
-            ` : ''}
-        </div>
-    `).join('');
-}
-
-// 加载申请记录
-async function loadApplications() {
-    try {
-        const response = await fetch('/tools/api/job-search/applications/');
-        const result = await response.json();
-        
-        if (result.success) {
-            displayApplications(result.data);
-        }
-    } catch (error) {
-        console.error('加载申请记录失败:', error);
-    }
-}
-
-// 显示申请记录
-function displayApplications(applications) {
-    const container = document.getElementById('applicationsList');
-    
-    if (applications.length === 0) {
-        container.innerHTML = '<p style="text-align: center; opacity: 0.7;">暂无申请记录</p>';
-        return;
-    }
-    
-    container.innerHTML = applications.map(app => `
-        <div class="application-item">
-            <div class="application-header">
-                <div>
-                    <div class="application-title">${app.job_title}</div>
-                    <div class="application-company">${app.company_name}</div>
-                </div>
-                <div class="match-score">匹配度 ${app.match_score}%</div>
-            </div>
-            <div class="application-meta">
-                <span>📍 ${app.location}</span>
-                <span>💰 ${app.salary_range}</span>
-                <span>📅 ${app.application_time}</span>
-                <span class="status-badge ${app.status}">${getStatusText(app.status)}</span>
-            </div>
-            <div class="application-actions">
-                <button class="btn-sm btn-info" onclick="window.open('${app.job_url}', '_blank')">查看职位</button>
-                <button class="btn-sm btn-warning" onclick="openStatusModal(${app.id})">更新状态</button>
-                <button class="btn-sm btn-success" onclick="addNotes(${app.id})">添加备注</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// 获取状态文本
-function getStatusText(status) {
-    const statusMap = {
-        'pending': '等待中',
-        'processing': '处理中',
-        'completed': '已完成',
-        'failed': '失败',
-        'applied': '已投递',
-        'viewed': '已查看',
-        'contacted': '已联系',
-        'interview': '面试邀请',
-        'rejected': '已拒绝',
-        'accepted': '已录用'
-    };
-    return statusMap[status] || status;
-}
-
-// 打开状态更新模态框
-function openStatusModal(applicationId) {
-    currentApplicationId = applicationId;
-    document.getElementById('statusModal').style.display = 'block';
-}
-
-// 关闭状态更新模态框
-function closeStatusModal() {
-    document.getElementById('statusModal').style.display = 'none';
-    currentApplicationId = null;
-}
-
-// 更新申请状态
-async function updateApplicationStatus() {
-    if (!currentApplicationId) return;
-    
-    const status = document.getElementById('statusSelect').value;
-    
-    try {
-        const response = await fetch('/tools/api/job-search/application/update-status/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                application_id: currentApplicationId,
-                status: status
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showAlert('状态更新成功', 'success');
-            closeStatusModal();
-            loadApplications();
-        } else {
-            showAlert(result.message, 'error');
-        }
-    } catch (error) {
-        showAlert('更新状态失败，请重试', 'error');
-    }
-}
-
-// 添加备注
-function addNotes(applicationId) {
-    const notes = prompt('请输入备注信息：');
-    if (notes === null) return;
-    
-    fetch('/tools/api/job-search/application/add-notes/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({
-            application_id: applicationId,
-            notes: notes
-        })
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showAlert('备注添加成功', 'success');
-            loadApplications();
-        } else {
-            showAlert(result.message, 'error');
-        }
-    })
-    .catch(error => {
-        showAlert('添加备注失败，请重试', 'error');
-    });
-}
+let loginCheckInterval = null;
 
 // 显示提示信息
-function showAlert(message, type) {
+function showAlert(message, type = 'info') {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
-    
-    const container = document.querySelector('.job-search-container');
-    container.insertBefore(alertDiv, container.firstChild);
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.card-body').firstChild);
     
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
 }
 
-// 获取CSRF Token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+// 嵌入式登录功能
+function showEmbeddedLogin() {
+    document.getElementById('embeddedLoginContainer').style.display = 'block';
+    loadLoginPage();
 }
+
+function hideEmbeddedLogin() {
+    document.getElementById('embeddedLoginContainer').style.display = 'none';
+}
+
+async function loadLoginPage() {
+    try {
+        document.getElementById('loginStatusText').textContent = '正在加载登录页面...';
+        
+        const response = await fetch('/tools/api/boss/login_page_url/');
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById('bossLoginFrame').src = result.login_url;
+            document.getElementById('loginStatusText').textContent = '登录页面已加载，请在iframe中完成登录';
+            showAlert('登录页面加载成功！请在iframe中完成登录', 'success');
+            
+            // 监听iframe加载完成事件
+            const iframe = document.getElementById('bossLoginFrame');
+            iframe.onload = function() {
+                console.log('Boss直聘登录页面加载完成');
+                document.getElementById('loginStatusText').textContent = '页面已加载，请开始登录';
+            };
+            
+            // 监听iframe错误事件
+            iframe.onerror = function() {
+                console.error('Boss直聘登录页面加载失败');
+                document.getElementById('loginStatusText').textContent = '页面加载失败';
+                showAlert('登录页面加载失败，请刷新重试', 'error');
+            };
+            
+        } else {
+            document.getElementById('loginStatusText').textContent = '加载失败';
+            showAlert(result.message || '加载登录页面失败', 'error');
+        }
+    } catch (error) {
+        console.error('加载登录页面失败:', error);
+        document.getElementById('loginStatusText').textContent = '加载失败';
+        showAlert('加载登录页面失败: ' + error.message, 'error');
+    }
+}
+
+async function checkLoginStatus() {
+    try {
+        document.getElementById('loginStatusText').textContent = '正在检查登录状态...';
+        
+        // 显示加载动画
+        const statusText = document.getElementById('loginStatusText');
+        statusText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在检查登录状态...';
+        
+        const response = await fetch('/tools/api/boss/check_login_selenium/');
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.is_logged_in) {
+                statusText.innerHTML = '<i class="fas fa-check-circle"></i> 已登录';
+                statusText.className = 'login-status status-success';
+                updateBossLoginStatus(true, result.user_info);
+                showAlert('登录成功！', 'success');
+                
+                // 自动隐藏登录容器
+                setTimeout(() => {
+                    hideEmbeddedLogin();
+                }, 2000);
+                
+            } else {
+                statusText.innerHTML = '<i class="fas fa-times-circle"></i> 未登录';
+                statusText.className = 'login-status status-error';
+                
+                // 提供更详细的提示信息
+                let tipMessage = '用户尚未登录，请在iframe中完成登录';
+                if (result.page_title && result.page_title.includes('登录')) {
+                    tipMessage = '请完成登录表单并提交';
+                } else if (result.current_url && result.current_url.includes('login')) {
+                    tipMessage = '请完成登录流程';
+                }
+                
+                showAlert(tipMessage, 'info');
+            }
+        } else {
+            statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 检查失败';
+            statusText.className = 'login-status status-error';
+            
+            // 根据错误类型提供不同的提示
+            let errorMessage = result.message || '检查登录状态失败';
+            if (errorMessage.includes('WebDriver')) {
+                errorMessage = '浏览器服务暂时不可用，请稍后重试';
+            } else if (errorMessage.includes('网络')) {
+                errorMessage = '网络连接异常，请检查网络后重试';
+            }
+            
+            showAlert(errorMessage, 'error');
+        }
+    } catch (error) {
+        console.error('检查登录状态失败:', error);
+        const statusText = document.getElementById('loginStatusText');
+        statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 检查失败';
+        statusText.className = 'login-status status-error';
+        
+        let errorMessage = '检查登录状态失败: ' + error.message;
+        if (error.message.includes('fetch')) {
+            errorMessage = '网络请求失败，请检查网络连接';
+        }
+        
+        showAlert(errorMessage, 'error');
+    }
+}
+
+async function getUserToken() {
+    try {
+        document.getElementById('loginStatusText').textContent = '正在获取Token...';
+        
+        const response = await fetch('/tools/api/boss/user_token/');
+        const result = await response.json();
+        
+        if (result.success && result.is_logged_in) {
+            document.getElementById('loginStatusText').textContent = 'Token已获取';
+            document.getElementById('loginStatusText').className = 'login-status status-success';
+            
+            // 显示token信息
+            const tokenInfo = document.getElementById('tokenInfo');
+            tokenInfo.textContent = JSON.stringify(result, null, 2);
+            tokenInfo.style.display = 'block';
+            
+            updateTokenStatus(true);
+            showAlert('Token获取成功！可用于后续求职请求', 'success');
+        } else {
+            document.getElementById('loginStatusText').textContent = '获取失败';
+            showAlert(result.message || '获取Token失败，请先登录', 'error');
+        }
+    } catch (error) {
+        console.error('获取Token失败:', error);
+        document.getElementById('loginStatusText').textContent = '获取失败';
+        showAlert('获取Token失败: ' + error.message, 'error');
+    }
+}
+
+
+
+// 更新Boss登录状态
+function updateBossLoginStatus(isLoggedIn, userInfo = {}) {
+    const statusDiv = document.getElementById('bossLoginStatus');
+    if (isLoggedIn) {
+        statusDiv.innerHTML = `
+            <p class="text-success"><i class="fas fa-check-circle"></i> 已登录</p>
+            <p class="text-muted small">用户: ${userInfo.username || '未知用户'}</p>
+            <button class="btn btn-success btn-sm" onclick="getUserToken()">
+                <i class="fas fa-key"></i> 获取Token
+            </button>
+        `;
+        document.getElementById('getTokenBtn').disabled = false;
+        document.getElementById('jobConfigForm').style.display = 'block';
+    } else {
+        statusDiv.innerHTML = `
+            <p class="text-muted">未登录</p>
+            <button class="btn btn-primary btn-sm" onclick="checkLoginStatus()">
+                <i class="fas fa-sync-alt"></i> 检查登录状态
+            </button>
+        `;
+        document.getElementById('getTokenBtn').disabled = true;
+        document.getElementById('jobConfigForm').style.display = 'none';
+    }
+}
+
+// 更新Token状态
+function updateTokenStatus(hasToken) {
+    const statusDiv = document.getElementById('tokenStatus');
+    if (hasToken) {
+        statusDiv.innerHTML = `
+            <p class="text-success"><i class="fas fa-check-circle"></i> Token已获取</p>
+            <button class="btn btn-info btn-sm" onclick="showTokenInfo()">
+                <i class="fas fa-eye"></i> 查看Token
+            </button>
+        `;
+    } else {
+        statusDiv.innerHTML = `
+            <p class="text-muted">未获取</p>
+            <button class="btn btn-success btn-sm" onclick="getUserToken()" disabled>
+                <i class="fas fa-download"></i> 获取Token
+            </button>
+        `;
+    }
+}
+
+// 显示Token信息
+function showTokenInfo() {
+    const tokenInfo = document.getElementById('tokenInfo');
+    if (tokenInfo.style.display === 'none') {
+        tokenInfo.style.display = 'block';
+    } else {
+        tokenInfo.style.display = 'none';
+    }
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 绑定按钮事件
+    document.getElementById('embeddedLoginBtn').addEventListener('click', showEmbeddedLogin);
+    document.getElementById('checkLoginBtn').addEventListener('click', checkLoginStatus);
+    document.getElementById('getTokenBtn').addEventListener('click', getUserToken);
+    
+    // 检查初始登录状态
+    checkLoginStatus();
+    
+    // 添加自动重试机制
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    // 监听登录状态检查失败，自动重试
+    window.addEventListener('loginCheckFailed', function() {
+        if (retryCount < maxRetries) {
+            retryCount++;
+            console.log(`登录检查失败，第${retryCount}次重试...`);
+            setTimeout(() => {
+                checkLoginStatus();
+            }, 2000 * retryCount); // 递增延迟
+        }
+    });
+    
+    console.log('自动求职机已初始化，支持嵌入式登录');
+});
 </script>
 {% endblock %} 

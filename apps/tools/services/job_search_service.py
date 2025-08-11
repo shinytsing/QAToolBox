@@ -13,21 +13,42 @@ from .boss_zhipin_api import BossZhipinAPI
 class JobSearchService:
     """求职服务主类"""
     
-    def __init__(self):
-        self.boss_api = BossZhipinAPI()
+    def __init__(self, use_selenium=True):
+        self.boss_api = BossZhipinAPI(use_selenium=use_selenium)
     
     def generate_qr_code(self, user_id: int) -> Dict:
         """生成Boss直聘登录二维码"""
         try:
-            result = self.boss_api.generate_qr_code()
+            # 检查是否已有有效的二维码
+            cache_key = f'boss_qr_code_{user_id}'
+            existing_qr = cache.get(cache_key)
+            
+            if existing_qr:
+                # 检查二维码是否还在有效期内（5分钟内）
+                if time.time() - existing_qr.get('created_at', 0) < 300:
+                    return {
+                        'success': True,
+                        'qr_code_image': existing_qr.get('qr_code_image'),
+                        'qr_code_url': existing_qr.get('qr_code_url'),
+                        'qr_code_id': existing_qr.get('qr_code_id'),
+                        'message': '使用现有二维码',
+                        'is_cached': True
+                    }
+            
+            # 生成新的二维码
+            result = self.boss_api.generate_qr_code(user_id)
             if result.get('success'):
                 # 将二维码信息缓存到Redis，设置过期时间为5分钟
-                cache_key = f'boss_qr_code_{user_id}'
-                cache.set(cache_key, {
+                cache_data = {
                     'qr_code_id': result['qr_code_id'],
                     'qr_code_url': result['qr_code_url'],
+                    'qr_code_image': result['qr_code_image'],
                     'created_at': time.time()
-                }, 300)  # 5分钟过期
+                }
+                cache.set(cache_key, cache_data, 300)  # 5分钟过期
+                
+                # 添加缓存标识
+                result['is_cached'] = False
             
             return result
         except Exception as e:
@@ -112,6 +133,48 @@ class JobSearchService:
             return {
                 'success': False,
                 'message': f'退出登录失败: {str(e)}'
+            }
+    
+    # Selenium相关方法
+    def get_login_page_url(self, user_id: int) -> Dict:
+        """获取Boss直聘登录页面URL用于iframe嵌入"""
+        try:
+            return self.boss_api.get_login_page_url(user_id)
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'获取登录页面URL失败: {str(e)}'
+            }
+    
+    def check_login_status_with_selenium(self, user_id: int) -> Dict:
+        """使用Selenium检查登录状态"""
+        try:
+            result = self.boss_api.check_login_status_with_selenium(user_id)
+            
+            if result.get('success') and result.get('is_logged_in'):
+                # 登录成功，保存登录状态到用户缓存
+                login_cache_key = f'boss_login_{user_id}'
+                cache.set(login_cache_key, {
+                    'is_logged_in': True,
+                    'login_time': time.time(),
+                    'login_method': 'selenium'
+                }, 3600)  # 1小时过期
+            
+            return result
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'检查登录状态失败: {str(e)}'
+            }
+    
+    def get_user_token_with_selenium(self, user_id: int) -> Dict:
+        """获取用户token"""
+        try:
+            return self.boss_api.get_user_token_with_selenium(user_id)
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'获取用户token失败: {str(e)}'
             }
     
     def create_job_search_request(self, user, **kwargs) -> JobSearchRequest:

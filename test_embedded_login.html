@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss直聘嵌入式登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .login-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .login-iframe {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            height: 500px;
+            width: 100%;
+            background: #f9f9f9;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Boss直聘嵌入式登录测试</h1>
+            <p>测试在iframe中直接登录Boss直聘并获取token</p>
+        </div>
+        
+        <div class="content">
+            <div class="login-section">
+                <div>
+                    <h3>📱 Boss直聘登录页面</h3>
+                    <iframe id="bossLoginFrame" class="login-iframe" src="about:blank"></iframe>
+                </div>
+                
+                <div class="controls">
+                    <h3>🎮 控制面板</h3>
+                    
+                    <button class="btn btn-primary" onclick="loadLoginPage()">
+                        🔗 加载登录页面
+                    </button>
+                    
+                    <button class="btn btn-primary" onclick="checkLoginStatus()">
+                        🔍 检查登录状态
+                    </button>
+                    
+                    <button class="btn btn-success" onclick="getUserToken()">
+                        🔑 获取用户Token
+                    </button>
+                    
+                    <div class="alert" id="alert"></div>
+                    
+                    <div class="status">
+                        <h4>📊 状态信息</h4>
+                        <div class="status-item">
+                            <span>登录状态:</span>
+                            <span id="loginStatus">未检查</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Token状态:</span>
+                            <span id="tokenStatus">未获取</span>
+                        </div>
+                        <div class="status-item">
+                            <span>用户信息:</span>
+                            <span id="userInfo">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 显示提示信息
+        function showAlert(message, type = 'info') {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 更新状态显示
+        function updateStatus(field, value, isSuccess = false) {
+            const element = document.getElementById(field);
+            element.textContent = value;
+            element.style.color = isSuccess ? '#28a745' : '#6c757d';
+            element.style.fontWeight = isSuccess ? '600' : 'normal';
+        }
+        
+        // 加载登录页面
+        async function loadLoginPage() {
+            try {
+                updateStatus('loginStatus', '正在获取登录页面...');
+                
+                const response = await fetch('/tools/api/boss/login-page-url/');
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('bossLoginFrame').src = result.login_url;
+                    updateStatus('loginStatus', '登录页面已加载', true);
+                    showAlert('登录页面加载成功！请在iframe中完成登录', 'success');
+                } else {
+                    updateStatus('loginStatus', '加载失败', false);
+                    showAlert(result.message || '加载登录页面失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载登录页面失败:', error);
+                updateStatus('loginStatus', '加载失败', false);
+                showAlert('加载登录页面失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 检查登录状态
+        async function checkLoginStatus() {
+            try {
+                updateStatus('loginStatus', '正在检查登录状态...');
+                
+                const response = await fetch('/tools/api/boss/check-login-selenium/');
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.is_logged_in) {
+                        updateStatus('loginStatus', '已登录', true);
+                        updateStatus('userInfo', result.user_info?.username || '已登录用户');
+                        showAlert('登录状态检查成功！用户已登录', 'success');
+                    } else {
+                        updateStatus('loginStatus', '未登录', false);
+                        updateStatus('userInfo', '-');
+                        showAlert('用户尚未登录，请在iframe中完成登录', 'info');
+                    }
+                } else {
+                    updateStatus('loginStatus', '检查失败', false);
+                    showAlert(result.message || '检查登录状态失败', 'error');
+                }
+            } catch (error) {
+                console.error('检查登录状态失败:', error);
+                updateStatus('loginStatus', '检查失败', false);
+                showAlert('检查登录状态失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 获取用户token
+        async function getUserToken() {
+            try {
+                updateStatus('tokenStatus', '正在获取Token...');
+                
+                const response = await fetch('/tools/api/boss/user-token/');
+                const result = await response.json();
+                
+                if (result.success && result.is_logged_in) {
+                    updateStatus('tokenStatus', 'Token已获取', true);
+                    showAlert('Token获取成功！可用于后续求职请求', 'success');
+                    console.log('Token信息:', result);
+                } else {
+                    updateStatus('tokenStatus', '获取失败', false);
+                    showAlert(result.message || '获取Token失败，请先登录', 'error');
+                }
+            } catch (error) {
+                console.error('获取Token失败:', error);
+                updateStatus('tokenStatus', '获取失败', false);
+                showAlert('获取Token失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 页面加载完成后自动加载登录页面
+        window.addEventListener('load', function() {
+            showAlert('欢迎使用Boss直聘嵌入式登录！点击"加载登录页面"开始', 'info');
+        });
+    </script>
+</body>
+</html> 

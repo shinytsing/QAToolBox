@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -10,17 +10,57 @@ import json
 import os
 import requests
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import models
 import uuid
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.core.cache import cache
 import time
+
+# 管理员权限检查函数
+def is_admin(user):
+    """检查用户是否为管理员"""
+    try:
+        return user.role.role == 'admin'
+    except:
+        return False
+
+# 管理员权限装饰器
+def admin_required(view_func):
+    """管理员权限装饰器"""
+    decorated_view = user_passes_test(is_admin, login_url='/users/login/')(view_func)
+    return decorated_view
 
 from .models import LifeDiaryEntry, LifeStatistics, LifeGoal, LifeGoalProgress
 from .models import ChatRoom, HeartLinkRequest, UserOnlineStatus, ChatMessage
+
+def validate_budget_range(budget_min, budget_max):
+    """验证预算范围的合法性"""
+    try:
+        budget_min = int(budget_min) if budget_min else 0
+        budget_max = int(budget_max) if budget_max else 0
+    except (ValueError, TypeError):
+        return "预算必须为有效数字"
+    
+    if budget_min <= 0 or budget_max <= 0:
+        return "预算必须大于0"
+    
+    if budget_min >= budget_max:
+        return "最低预算必须小于最高预算"
+    
+    if budget_min < 500:
+        return "最低预算不能低于500元"
+    
+    if budget_max > 100000:
+        return "最高预算不能超过100000元"
+    
+    if budget_max - budget_min < 500:
+        return "预算范围差距至少需要500元"
+    
+    return None  # 验证通过
 
 # 三重觉醒改造计划API
 from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProcessor
@@ -42,15 +82,28 @@ from .models import (
 # 旅游攻略相关模型导入
 from .models import TravelGuide
 
-# 自动求职机相关模型导入
-from .models import JobSearchRequest, JobApplication, JobSearchProfile, JobSearchStatistics
-from .services.job_search_service import JobSearchService
+# 自动求职机相关模型导入 - 已隐藏
+# from .models import JobSearchRequest, JobApplication, JobSearchProfile, JobSearchStatistics
+# from .services.job_search_service import JobSearchService
+
+# 塔罗牌相关导入
+from .services.tarot_service import TarotService, TarotVisualizationService
+from .models import (
+    TarotCard, TarotSpread, TarotReading, TarotDiary, 
+    TarotEnergyCalendar, TarotCommunity, TarotCommunityComment
+)
+
+# 食物随机选择器相关导入
+from .models import (
+    FoodRandomizer, FoodItem, FoodRandomizationSession, FoodHistory
+)
 
 @login_required
 def test_case_generator(request):
     """测试用例生成器页面"""
     return render(request, 'tools/test_case_generator.html')
 
+@login_required
 def redbook_generator(request):
     """小红书文案生成器页面"""
     return render(request, 'tools/redbook_generator.html')
@@ -86,8 +139,13 @@ def storyboard(request):
 
 @login_required
 def fitness_center(request):
-    """健身中心页面"""
+    """FitMatrix健身矩阵页面"""
     return render(request, 'tools/fitness_center.html')
+
+@login_required
+def training_plan_editor(request):
+    """训练计划编辑器页面"""
+    return render(request, 'tools/training_plan_editor.html')
 
 @login_required
 def life_diary(request):
@@ -176,6 +234,11 @@ def meditation_guide(request):
     return render(request, 'tools/meditation_guide.html')
 
 @login_required
+def peace_meditation_view(request):
+    """和平冥想页面"""
+    return render(request, 'tools/peace_meditation.html')
+
+@login_required
 def music_healing(request):
     """音乐疗愈页面"""
     return render(request, 'tools/music_healing.html')
@@ -196,7 +259,11 @@ def heart_link_chat(request, room_id):
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
         # 检查用户是否是聊天室的参与者
-        if request.user not in chat_room.participants:
+        participants = [chat_room.user1]
+        if chat_room.user2:
+            participants.append(chat_room.user2)
+        
+        if request.user not in participants:
             return redirect('heart_link')
     except ChatRoom.DoesNotExist:
         return redirect('heart_link')
@@ -205,7 +272,9 @@ def heart_link_chat(request, room_id):
         'chat_room': chat_room,
         'other_user': chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
     }
-    return render(request, 'tools/heart_link_chat.html', context)
+    
+    # 使用WebSocket版本的聊天页面
+    return render(request, 'tools/heart_link_chat_websocket.html', context)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -953,6 +1022,7 @@ def save_life_diary(request, data):
         tags = data.get('tags', [])
         question_answers = data.get('question_answers', [])
         music_recommendation = data.get('music_recommendation', '').strip()
+        date_str = data.get('date', '')  # 获取日期参数
         
         # 数据验证
         if not title:
@@ -974,11 +1044,20 @@ def save_life_diary(request, data):
             tags = []
         tags = [tag.strip() for tag in tags if tag.strip()][:10]  # 限制最多10个标签
         
+        # 处理日期
+        if date_str:
+            try:
+                from datetime import datetime
+                diary_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': '日期格式无效，请使用YYYY-MM-DD格式'}, content_type='application/json')
+        else:
+            diary_date = timezone.now().date()
+        
         # 创建新的日记记录
-        today = timezone.now().date()
         diary_entry = LifeDiaryEntry.objects.create(
             user=request.user,
-            date=today,
+            date=diary_date,
             title=title,
             content=content,
             mood=mood,
@@ -1889,7 +1968,7 @@ def creative_writer_api(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def fitness_api(request):
-    """健身中心API"""
+    """FitMatrix健身矩阵API"""
     try:
         data = json.loads(request.body)
         action = data.get('action', '')
@@ -2207,16 +2286,20 @@ def check_heart_link_status_api(request):
         }, status=401, content_type='application/json', headers=response_headers)
     
     try:
-        # 只在必要时清理过期请求，避免过度清理
+        # 减少过期清理的频率，只在必要时清理
         # 清理超过10分钟的pending请求（只清理真正过期的）
         from datetime import timedelta
-        expired_requests = HeartLinkRequest.objects.filter(
-            status='pending',
-            created_at__lt=timezone.now() - timedelta(minutes=10)
-        )
-        for request in expired_requests:
-            request.status = 'expired'
-            request.save()
+        import random
+        
+        # 只有10%的概率执行清理，减少数据库压力
+        if random.random() < 0.1:
+            expired_requests = HeartLinkRequest.objects.filter(
+                status='pending',
+                created_at__lt=timezone.now() - timedelta(minutes=10)
+            )
+            for request in expired_requests:
+                request.status = 'expired'
+                request.save()
         
         # 查找用户的最新请求（包括所有状态）
         heart_link_request = HeartLinkRequest.objects.filter(
@@ -2360,7 +2443,11 @@ def cleanup_heart_link_api(request):
                     chat_room = ChatRoom.objects.get(room_id=room_id)
                     
                     # 检查用户是否是聊天室的参与者
-                    if request.user not in [chat_room.user1, chat_room.user2]:
+                    participants = [chat_room.user1]
+                    if chat_room.user2:
+                        participants.append(chat_room.user2)
+                    
+                    if request.user not in participants:
                         return JsonResponse({
                             'success': False,
                             'error': '您没有权限结束此聊天室'
@@ -2446,7 +2533,11 @@ def get_chat_messages_api(request, room_id):
             }, status=410, content_type='application/json', headers=response_headers)
         
         # 检查用户是否是聊天室的参与者
-        if request.user not in [chat_room.user1, chat_room.user2]:
+        participants = [chat_room.user1]
+        if chat_room.user2:
+            participants.append(chat_room.user2)
+        
+        if request.user not in participants:
             return JsonResponse({
                 'success': False,
                 'error': '您没有权限访问此聊天室'
@@ -2519,7 +2610,11 @@ def send_message_api(request, room_id):
                 }, status=410, content_type='application/json', headers=response_headers)
             
             # 检查用户是否是聊天室的参与者
-            if request.user not in [chat_room.user1, chat_room.user2]:
+            participants = [chat_room.user1]
+            if chat_room.user2:
+                participants.append(chat_room.user2)
+            
+            if request.user not in participants:
                 return JsonResponse({
                     'success': False,
                     'error': '您没有权限在此聊天室发送消息'
@@ -2618,12 +2713,23 @@ def update_online_status_api(request):
             room_id = data.get('room_id', '')
             
             # 更新用户在线状态
+            update_data = {
+                'last_seen': timezone.now(),
+                'status': status
+            }
+            
+            # 如果提供了room_id，更新当前房间
+            if room_id:
+                try:
+                    chat_room = ChatRoom.objects.get(room_id=room_id)
+                    update_data['current_room'] = chat_room
+                except ChatRoom.DoesNotExist:
+                    # 如果房间不存在，记录错误但不影响在线状态更新
+                    pass
+            
             UserOnlineStatus.objects.update_or_create(
                 user=request.user,
-                defaults={
-                    'last_seen': timezone.now(),
-                    'status': status
-                }
+                defaults=update_data
             )
             
             return JsonResponse({
@@ -2631,10 +2737,18 @@ def update_online_status_api(request):
                 'message': '在线状态已更新'
             }, content_type='application/json', headers=response_headers)
             
-        except Exception as e:
+        except json.JSONDecodeError as e:
             return JsonResponse({
                 'success': False,
-                'error': f'更新在线状态失败: {str(e)}'
+                'error': '无效的JSON数据格式'
+            }, status=400, content_type='application/json', headers=response_headers)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'更新在线状态失败: {str(e)}', exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': '服务器内部错误，请稍后重试'
             }, status=500, content_type='application/json', headers=response_headers)
     
     return JsonResponse({
@@ -2666,7 +2780,11 @@ def get_online_users_api(request, room_id):
         chat_room = ChatRoom.objects.get(room_id=room_id)
         
         # 检查用户是否是聊天室的参与者
-        if request.user not in [chat_room.user1, chat_room.user2]:
+        participants = [chat_room.user1]
+        if chat_room.user2:
+            participants.append(chat_room.user2)
+        
+        if request.user not in participants:
             return JsonResponse({
                 'success': False,
                 'error': '您没有权限访问此聊天室'
@@ -2816,11 +2934,12 @@ def douyin_analysis_api(request):
                 'error': '请输入UP主主页URL'
             }, content_type='application/json')
         
-        # 验证URL格式
-        if 'douyin.com' not in up主_url:
+        # 验证URL格式 - 支持多种抖音URL格式
+        valid_domains = ['douyin.com', 'v.douyin.com']
+        if not any(domain in up主_url for domain in valid_domains):
             return JsonResponse({
                 'success': False,
-                'error': '请输入有效的抖音UP主主页URL'
+                'error': '请输入有效的抖音URL（支持v.douyin.com短链接和douyin.com主页链接）'
             }, content_type='application/json')
         
         # 导入分析服务
@@ -2996,57 +3115,7 @@ def get_douyin_analysis_list_api(request):
             'error': f'获取分析列表时出错: {str(e)}'
         }, content_type='application/json')
 
-@csrf_exempt
-@require_http_methods(["GET"])
-def test_heart_link_api(request):
-    """测试心动链接功能API"""
-    try:
-        # 检查用户认证
-        if not request.user.is_authenticated:
-            return JsonResponse({
-                'success': False,
-                'error': '请先登录'
-            }, status=401, content_type='application/json')
-        
-        # 获取统计数据
-        total_requests = HeartLinkRequest.objects.count()
-        pending_requests = HeartLinkRequest.objects.filter(status='pending').count()
-        matched_requests = HeartLinkRequest.objects.filter(status='matched').count()
-        expired_requests = HeartLinkRequest.objects.filter(status='expired').count()
-        
-        # 获取用户自己的请求
-        user_requests = HeartLinkRequest.objects.filter(requester=request.user).order_by('-created_at')
-        user_request_count = user_requests.count()
-        latest_request = user_requests.first()
-        
-        # 检查是否有其他等待中的用户
-        other_pending_users = HeartLinkRequest.objects.filter(
-            status='pending'
-        ).exclude(requester=request.user).count()
-        
-        return JsonResponse({
-            'success': True,
-            'data': {
-                'total_requests': total_requests,
-                'pending_requests': pending_requests,
-                'matched_requests': matched_requests,
-                'expired_requests': expired_requests,
-                'user_request_count': user_request_count,
-                'other_pending_users': other_pending_users,
-                'latest_request': {
-                    'id': latest_request.id if latest_request else None,
-                    'status': latest_request.status if latest_request else None,
-                    'created_at': latest_request.created_at.strftime('%Y-%m-%d %H:%M:%S') if latest_request else None,
-                    'is_expired': latest_request.is_expired if latest_request else None
-                } if latest_request else None
-            }
-        }, content_type='application/json')
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': f'测试失败: {str(e)}'
-        }, status=500, content_type='application/json')
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -3597,9 +3666,8 @@ def get_fulfillment_history_api(request):
 
 # VanityOS 欲望驱动的开发者激励系统视图
 
-@login_required
 def vanity_os_dashboard(request):
-    """VanityOS 主仪表盘页面"""
+    """VanityOS 主仪表盘页面 - 里世界入口（公开访问）"""
     return render(request, 'tools/vanity_os_dashboard.html')
 
 
@@ -3627,30 +3695,27 @@ def vanity_todo_list(request):
     return render(request, 'tools/vanity_todo_list.html')
 
 
-@login_required
-def test_desire_todo_enhanced_view(request):
-    """欲望代办和反程序员形象测试页面"""
-    return render(request, 'test_desire_todo_enhanced.html')
-
-
-def test_desire_todo_public_view(request):
-    """欲望代办和反程序员形象测试页面（公开）"""
-    return render(request, 'test_desire_todo_enhanced.html')
-
-
-def test_api_public_view(request):
-    """API测试页面（公开）"""
-    return render(request, 'test_api_public.html')
 
 
 # VanityOS API 视图
 
 @csrf_exempt
 @require_http_methods(["GET"])
-@login_required
 def get_vanity_wealth_api(request):
-    """获取虚拟财富API"""
+    """获取虚拟财富API（公开访问）"""
     try:
+        # 如果没有登录用户，返回演示数据
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': True,
+                'virtual_wealth': 1250.50,
+                'code_lines': 125050,
+                'page_views': 50000,
+                'donations': 100.00,
+                'car_progress': 0.25,  # 玛莎拉蒂进度
+                'last_updated': timezone.now().strftime('%Y-%m-%d %H:%M')
+            })
+        
         user = request.user
         wealth, created = VanityWealth.objects.get_or_create(user=user)
         
@@ -3676,9 +3741,8 @@ def get_vanity_wealth_api(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-@login_required
 def add_sin_points_api(request):
-    """添加罪恶积分API"""
+    """添加罪恶积分API（公开访问）"""
     try:
         data = json.loads(request.body)
         action_type = data.get('action_type')
@@ -3689,6 +3753,16 @@ def add_sin_points_api(request):
             return JsonResponse({
                 'success': False,
                 'error': '行为类型不能为空'
+            })
+        
+        # 如果没有登录用户，返回演示响应
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': True,
+                'points_earned': points,
+                'total_points': 150,
+                'virtual_wealth': 1350.50,
+                'message': '演示模式：积分已记录'
             })
         
         user = request.user
@@ -4097,6 +4171,12 @@ def send_image_api(request, room_id):
                     'file_url': f'/media/{filename}',
                     'created_at': message.created_at.isoformat(),
                     'is_own': True
+                },
+                'upload_info': {
+                    'file_name': image_file.name,
+                    'file_size': f'{image_file.size / 1024:.1f}KB',
+                    'file_type': '图片',
+                    'upload_time': message.created_at.strftime('%H:%M:%S')
                 }
             }, content_type='application/json', headers=response_headers)
             
@@ -4201,6 +4281,12 @@ def send_audio_api(request, room_id):
                 'file_url': f'/media/{filename}',
                 'created_at': message.created_at.isoformat(),
                 'is_own': True
+            },
+            'upload_info': {
+                'file_name': audio_file.name,
+                'file_size': f'{audio_file.size / 1024:.1f}KB',
+                'file_type': '音频',
+                'upload_time': message.created_at.strftime('%H:%M:%S')
             }
         }, content_type='application/json', headers=response_headers)
         
@@ -4293,6 +4379,12 @@ def send_file_api(request, room_id):
                 'file_url': f'/media/{filename}',
                 'created_at': message.created_at.isoformat(),
                 'is_own': True
+            },
+            'upload_info': {
+                'file_name': original_filename,
+                'file_size': f'{file_obj.size / 1024:.1f}KB',
+                'file_type': '文件',
+                'upload_time': message.created_at.strftime('%H:%M:%S')
             }
         }, content_type='application/json', headers=response_headers)
         
@@ -4856,56 +4948,170 @@ def travel_guide(request):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def travel_guide_api(request):
-    """旅游攻略API"""
+@require_http_methods(["GET"])
+def check_local_travel_data_api(request):
+    """检测本地旅游数据API"""
     try:
+        destination = request.GET.get('destination', '').strip()
+        
+        if not destination:
+            return JsonResponse({
+                'has_local_data': False,
+                'message': '请输入目的地'
+            })
+        
+        # 检查是否有本地数据
+        from .services.enhanced_travel_service_v2 import MultiAPITravelService
+        
+        try:
+            service = MultiAPITravelService()
+            has_local_data = destination in service.real_travel_data
+            
+            return JsonResponse({
+                'has_local_data': has_local_data,
+                'destination': destination,
+                'message': f'{"有" if has_local_data else "没有"}本地数据'
+            })
+            
+        except Exception as e:
+            print(f"检测本地数据失败: {e}")
+            return JsonResponse({
+                'has_local_data': False,
+                'message': '检测失败，默认显示标准模式'
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'has_local_data': False,
+            'message': f'检测失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def travel_guide_api(request):
+    """旅游攻略API - 优先使用本地数据，否则使用DeepSeek功能"""
+    try:
+        # 检查用户是否已登录
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': '请先登录后再使用此功能'
+            }, status=401)
+        
         data = json.loads(request.body)
         destination = data.get('destination', '').strip()
         travel_style = data.get('travel_style', 'general')
-        budget_range = data.get('budget_range', 'medium')
+        budget_min = data.get('budget_min', 3000)  # 预算最小值
+        budget_max = data.get('budget_max', 8000)  # 预算最大值
+        budget_amount = data.get('budget_amount', 5000)  # 新增具体预算金额（平均值）
+        budget_range = data.get('budget_range', 'medium')  # 保留分类，用于兼容
         travel_duration = data.get('travel_duration', '3-5天')
         interests = data.get('interests', [])
+        fast_mode = data.get('fast_mode', False)  # 新增快速模式选项
+        
+        # 后端预算范围校验
+        validation_error = validate_budget_range(budget_min, budget_max)
+        if validation_error:
+            return JsonResponse({'error': validation_error}, status=400)
         
         if not destination:
             return JsonResponse({'error': '请输入目的地'}, status=400)
         
         # 生成旅游攻略内容
-        guide_content = generate_travel_guide(
-            destination, travel_style, budget_range, 
-            travel_duration, interests
-        )
-        
-        # 过滤掉TravelGuide模型中不存在的字段
-        valid_fields = {
-            'must_visit_attractions', 'food_recommendations', 'transportation_guide',
-            'hidden_gems', 'weather_info', 'best_time_to_visit', 'budget_estimate', 'travel_tips',
-            'detailed_guide', 'daily_schedule', 'activity_timeline', 'cost_breakdown'
-        }
-        filtered_content = {k: v for k, v in guide_content.items() if k in valid_fields}
-        
-        # 保存到数据库
-        travel_guide = TravelGuide.objects.create(
-            user=request.user,
-            destination=destination,
-            travel_style=travel_style,
-            budget_range=budget_range,
-            travel_duration=travel_duration,
-            interests=interests,
-            **filtered_content
-        )
-        
-        return JsonResponse({
-            'success': True,
-            'guide_id': travel_guide.id,
-            'guide': {
+        try:
+            # 使用新的多API服务 - 延迟创建实例以避免启动时的API调用
+            from .services.enhanced_travel_service_v2 import MultiAPITravelService
+            
+            # 只在需要时创建服务实例
+            service = None
+            try:
+                service = MultiAPITravelService()
+                
+                # 检查是否有本地数据
+                has_local_data = destination in service.real_travel_data
+                
+                # 如果有本地数据，优先使用本地数据
+                if has_local_data:
+                    print(f"✅ {destination}有本地数据，使用本地数据生成攻略")
+                    guide_content = service.get_travel_guide_with_local_data(
+                        destination=destination,
+                        travel_style=travel_style,
+                        budget_min=budget_min,
+                        budget_max=budget_max,
+                        budget_amount=budget_amount,
+                        budget_range=budget_range,
+                        travel_duration=travel_duration,
+                        interests=interests,
+                        fast_mode=fast_mode
+                    )
+                else:
+                    print(f"❌ {destination}没有本地数据，使用DeepSeek功能")
+                    guide_content = service.get_travel_guide(
+                        destination=destination,
+                        travel_style=travel_style,
+                        budget_min=budget_min,
+                        budget_max=budget_max,
+                        budget_amount=budget_amount,
+                        budget_range=budget_range,
+                        travel_duration=travel_duration,
+                        interests=interests,
+                        fast_mode=fast_mode
+                    )
+                    
+            except Exception as service_error:
+                # 如果服务创建失败，使用备用方案
+                print(f"旅游服务创建失败，使用备用方案: {service_error}")
+                guide_content = {
+                    'must_visit_attractions': [],
+                    'food_recommendations': [],
+                    'transportation_guide': '暂无交通信息',
+                    'hidden_gems': [],
+                    'weather_info': {},
+                    'best_time_to_visit': '全年适合',
+                    'budget_estimate': {},
+                    'travel_tips': ['请稍后重试'],
+                    'detailed_guide': '服务暂时不可用，请稍后重试',
+                    'daily_schedule': [],
+                    'activity_timeline': [],
+                    'cost_breakdown': {}
+                }
+            
+            # 过滤掉TravelGuide模型中不存在的字段
+            valid_fields = {
+                'must_visit_attractions', 'food_recommendations', 'transportation_guide',
+                'hidden_gems', 'weather_info', 'destination_info', 'currency_info', 'timezone_info',
+                'best_time_to_visit', 'budget_estimate', 'travel_tips',
+                'detailed_guide', 'daily_schedule', 'activity_timeline', 'cost_breakdown'
+            }
+            filtered_content = {k: v for k, v in guide_content.items() if k in valid_fields}
+            
+            # 保存到数据库
+            travel_guide = TravelGuide.objects.create(
+                user=request.user,
+                destination=destination,
+                travel_style=travel_style,
+                budget_min=budget_min,
+                budget_max=budget_max,
+                budget_amount=budget_amount,
+                budget_range=budget_range,
+                travel_duration=travel_duration,
+                interests=interests,
+                **filtered_content
+            )
+            
+            # 构建响应数据
+            response_data = {
+                'id': travel_guide.id,
                 'destination': travel_guide.destination,
                 'must_visit_attractions': travel_guide.must_visit_attractions,
                 'food_recommendations': travel_guide.food_recommendations,
                 'transportation_guide': travel_guide.transportation_guide,
                 'hidden_gems': travel_guide.hidden_gems,
                 'weather_info': travel_guide.weather_info,
+                'destination_info': travel_guide.destination_info,
+                'currency_info': travel_guide.currency_info,
+                'timezone_info': travel_guide.timezone_info,
                 'best_time_to_visit': travel_guide.best_time_to_visit,
                 'budget_estimate': travel_guide.budget_estimate,
                 'travel_tips': travel_guide.travel_tips,
@@ -4915,7 +5121,36 @@ def travel_guide_api(request):
                 'cost_breakdown': travel_guide.cost_breakdown,
                 'created_at': travel_guide.created_at.strftime('%Y-%m-%d %H:%M'),
             }
-        })
+            
+            # 添加缓存和API信息
+            if hasattr(guide_content, 'get'):
+                response_data.update({
+                    'is_cached': guide_content.get('is_cached', False),
+                    'api_used': guide_content.get('api_used', 'unknown'),
+                    'generation_time': guide_content.get('generation_time', 0),
+                    'generation_mode': guide_content.get('generation_mode', 'standard'),
+                    'data_quality_score': guide_content.get('data_quality_score', 0.0),
+                    'usage_count': guide_content.get('usage_count', 0),
+                    'cached_at': guide_content.get('cached_at'),
+                    'expires_at': guide_content.get('expires_at'),
+                    'data_source': 'local' if has_local_data else 'deepseek'
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'guide_id': travel_guide.id,
+                'guide': response_data
+            })
+        except Exception as e:
+            error_message = str(e)
+            if "无法获取有效的旅游数据" in error_message or "API" in error_message:
+                return JsonResponse({
+                    'error': '服务暂时不可用，请稍后重试。错误详情：' + error_message
+                }, status=503)  # 503 Service Unavailable
+            else:
+                return JsonResponse({
+                    'error': '生成攻略失败：' + error_message
+                }, status=500)
         
     except json.JSONDecodeError:
         return JsonResponse({'error': '无效的JSON数据'}, status=400)
@@ -4934,18 +5169,28 @@ def get_travel_guides_api(request):
         guides_data = []
         
         for guide in guides:
-            guides_data.append({
-                'id': guide.id,
-                'destination': guide.destination,
-                'travel_style': guide.travel_style,
-                'budget_range': guide.budget_range,
-                'travel_duration': guide.travel_duration,
-                'attractions_count': guide.get_attractions_count(),
-                'food_count': guide.get_food_count(),
-                'hidden_gems_count': guide.get_hidden_gems_count(),
-                'is_favorite': guide.is_favorite,
-                'created_at': guide.created_at.strftime('%Y-%m-%d %H:%M'),
-            })
+            try:
+                # 安全地获取计数，避免None值错误
+                attractions_count = len(guide.must_visit_attractions) if guide.must_visit_attractions else 0
+                food_count = len(guide.food_recommendations) if guide.food_recommendations else 0
+                hidden_gems_count = len(guide.hidden_gems) if guide.hidden_gems else 0
+                
+                guides_data.append({
+                    'id': guide.id,
+                    'destination': guide.destination,
+                    'travel_style': guide.travel_style,
+                    'budget_range': guide.budget_range,
+                    'travel_duration': guide.travel_duration,
+                    'attractions_count': attractions_count,
+                    'food_count': food_count,
+                    'hidden_gems_count': hidden_gems_count,
+                    'is_favorite': guide.is_favorite,
+                    'created_at': guide.created_at.strftime('%Y-%m-%d %H:%M'),
+                })
+            except Exception as guide_error:
+                print(f"处理攻略 {guide.id} 时出错: {str(guide_error)}")
+                # 跳过有问题的攻略，继续处理其他攻略
+                continue
         
         return JsonResponse({
             'success': True,
@@ -4954,6 +5199,8 @@ def get_travel_guides_api(request):
         
     except Exception as e:
         print(f"获取旅游攻略列表失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': f'获取攻略列表失败: {str(e)}'}, status=500)
 
 
@@ -5039,6 +5286,9 @@ def delete_travel_guide_api(request, guide_id):
 @login_required
 def export_travel_guide_api(request, guide_id):
     """导出旅游攻略为PDF"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         # 检查guide_id是否有效
         if not guide_id or str(guide_id) == 'undefined':
@@ -5061,171 +5311,33 @@ def export_travel_guide_api(request, guide_id):
                 'error': '攻略ID格式错误'
             }, status=400)
         
-        # 生成格式化的攻略内容
+        # 格式化攻略内容
         formatted_content = format_travel_guide_for_export(guide)
         
-        # 生成PDF文件
-        try:
-            from reportlab.lib.pagesizes import A4
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.units import inch
-            from reportlab.lib import colors
-            from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.ttfonts import TTFont
-            import os
-            import tempfile
-            
-            # 创建临时PDF文件
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-                pdf_path = tmp_file.name
-            
-            # 创建PDF文档
-            doc = SimpleDocTemplate(pdf_path, pagesize=A4)
-            story = []
-            
-            # 获取样式
-            styles = getSampleStyleSheet()
-            title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=18,
-                spaceAfter=30,
-                alignment=1,  # 居中
-                textColor=colors.darkblue
-            )
-            
-            heading_style = ParagraphStyle(
-                'CustomHeading',
-                parent=styles['Heading2'],
-                fontSize=14,
-                spaceAfter=12,
-                spaceBefore=20,
-                textColor=colors.darkgreen
-            )
-            
-            normal_style = styles['Normal']
-            
-            # 添加标题
-            story.append(Paragraph(f"🗺️ {guide.destination}旅游攻略", title_style))
-            story.append(Spacer(1, 20))
-            
-            # 添加基本信息
-            story.append(Paragraph("📍 基本信息", heading_style))
-            info_data = [
-                ['目的地', guide.destination],
-                ['旅行风格', guide.travel_style],
-                ['预算范围', guide.budget_range],
-                ['旅行时长', guide.travel_duration],
-                ['兴趣偏好', ', '.join(guide.interests) if guide.interests else '无']
-            ]
-            
-            info_table = Table(info_data, colWidths=[2*inch, 4*inch])
-            info_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            story.append(info_table)
-            story.append(Spacer(1, 20))
-            
-            # 添加每日行程
-            if guide.daily_schedule:
-                story.append(Paragraph("🗓️ 每日行程安排", heading_style))
-                for day_schedule in guide.daily_schedule:
-                    day_title = f"第{day_schedule.get('day', '')}天"
-                    story.append(Paragraph(day_title, heading_style))
-                    
-                    # 收集当天所有活动
-                    all_activities = []
-                    for time_slot in ['morning', 'afternoon', 'evening', 'night']:
-                        for activity in day_schedule.get(time_slot, []):
-                            all_activities.append([
-                                activity.get('time', ''),
-                                activity.get('activity', ''),
-                                activity.get('location', ''),
-                                activity.get('cost', '')
-                            ])
-                    
-                    if all_activities:
-                        activity_table = Table(all_activities, colWidths=[1*inch, 2.5*inch, 1.5*inch, 1*inch])
-                        activity_table.setStyle(TableStyle([
-                            ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-                            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                            ('FONTSIZE', (0, 0), (-1, -1), 9),
-                            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                            ('GRID', (0, 0), (-1, -1), 1, colors.grey)
-                        ]))
-                        story.append(activity_table)
-                    
-                    if day_schedule.get('accommodation'):
-                        story.append(Paragraph(f"🏨 住宿: {day_schedule['accommodation']}", normal_style))
-                    
-                    story.append(Spacer(1, 10))
-            
-            # 添加其他信息
-            if guide.must_visit_attractions:
-                story.append(Paragraph("🎯 必去景点", heading_style))
-                for i, attraction in enumerate(guide.must_visit_attractions, 1):
-                    if isinstance(attraction, dict):
-                        story.append(Paragraph(f"{i}. {attraction.get('name', '')} - {attraction.get('description', '')}", normal_style))
-                    else:
-                        story.append(Paragraph(f"{i}. {attraction}", normal_style))
-                story.append(Spacer(1, 15))
-            
-            if guide.food_recommendations:
-                story.append(Paragraph("🍜 美食推荐", heading_style))
-                for i, food in enumerate(guide.food_recommendations, 1):
-                    if isinstance(food, dict):
-                        story.append(Paragraph(f"{i}. {food.get('name', '')} - {food.get('specialty', '')}", normal_style))
-                    else:
-                        story.append(Paragraph(f"{i}. {food}", normal_style))
-                story.append(Spacer(1, 15))
-            
-            if guide.travel_tips:
-                story.append(Paragraph("💡 旅行贴士", heading_style))
-                for i, tip in enumerate(guide.travel_tips, 1):
-                    story.append(Paragraph(f"{i}. {tip}", normal_style))
-                story.append(Spacer(1, 15))
-            
-            # 生成PDF
-            doc.build(story)
-            
-            # 读取生成的PDF文件
-            with open(pdf_path, 'rb') as pdf_file:
-                pdf_content = pdf_file.read()
-            
-            # 删除临时文件
-            os.unlink(pdf_path)
-            
-            # 创建HTTP响应
-            from django.http import HttpResponse
-            response = HttpResponse(pdf_content, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="{guide.destination}_旅游攻略.pdf"'
-            
-            # 标记为已导出
-            guide.is_exported = True
-            guide.save()
-            
-            return response
-            
-        except ImportError:
-            # 如果没有安装reportlab，返回文本格式
+        # 检查内容是否为空
+        if not formatted_content or len(formatted_content.strip()) < 50:
             return JsonResponse({
-                'success': True,
-                'message': '攻略导出成功（文本格式）',
-                'guide_id': guide_id,
-                'formatted_content': formatted_content
-            })
+                'success': False,
+                'error': '攻略内容为空或数据不完整，请重新生成攻略'
+            }, status=400)
+        
+        # 尝试使用多种PDF生成方式
+        pdf_content = None
+        
+        # 直接返回格式化的文本内容，提供更好的用户体验
+        logger.info("✅ 返回格式化的文本内容")
+        return JsonResponse({
+            'success': True,
+            'message': '攻略转换成功！已导出为txt格式',
+            'formatted_content': formatted_content,
+            'format': 'txt',
+            'filename': f"{guide.destination}_旅游攻略_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        })
+        
+
         
     except Exception as e:
-        print(f"导出攻略失败: {str(e)}")
+        logger.error(f"导出攻略失败: {e}")
         return JsonResponse({
             'success': False,
             'error': f'导出失败: {str(e)}'
@@ -5233,321 +5345,728 @@ def export_travel_guide_api(request, guide_id):
 
 
 def format_travel_guide_for_export(guide):
-    """格式化旅游攻略用于导出"""
+    """格式化旅游攻略用于导出 - 增强版"""
     content = []
     
-    # 标题
-    content.append(f"🗺️{guide.destination}旅游攻略")
-    content.append("=" * 50)
-    
-    # 基本信息
-    content.append(f"📍目的地: {guide.destination}")
-    content.append(f"🎯旅行风格: {guide.travel_style}")
-    content.append(f"💰预算范围: {guide.budget_range}")
-    content.append(f"⏰旅行时长: {guide.travel_duration}")
-    content.append(f"🎨兴趣偏好: {', '.join(guide.interests) if guide.interests else '无'}")
-    content.append("")
-    
-    # 路线规划
-    if guide.daily_schedule:
-        content.append("🚥路线规划")
-        for day_schedule in guide.daily_schedule:
-            day_activities = []
-            if day_schedule.get('morning'):
-                day_activities.extend([activity.get('activity', '') for activity in day_schedule['morning']])
-            if day_schedule.get('afternoon'):
-                day_activities.extend([activity.get('activity', '') for activity in day_schedule['afternoon']])
-            if day_schedule.get('evening'):
-                day_activities.extend([activity.get('activity', '') for activity in day_schedule['evening']])
-            
-            if day_activities:
-                content.append(f"🚥Day{day_schedule.get('day', '')}: {'—'.join(day_activities)}")
+    try:
+        # 标题
+        destination = getattr(guide, 'destination', '未知目的地')
+        content.append(f"🗺️ {destination} 旅游攻略")
+        content.append("=" * 60)
         content.append("")
-    
-    # 住宿推荐
-    if hasattr(guide, 'accommodation_data') and guide.accommodation_data:
-        content.append("🏠住宿推荐")
-        for hotel in guide.accommodation_data.get('hotels', []):
-            content.append(f"📍{hotel.get('name', '')}")
-            content.append(f"推荐理由: {hotel.get('recommendation', '')}")
+        
+        # 基本信息
+        content.append("📋 基本信息")
+        content.append("-" * 30)
+        content.append(f"📍 目的地: {destination}")
+        content.append(f"🎯 旅行风格: {getattr(guide, 'travel_style', '未指定')}")
+        content.append(f"💰 预算范围: {getattr(guide, 'budget_range', '未指定')}")
+        content.append(f"⏰ 旅行时长: {getattr(guide, 'travel_duration', '未指定')}")
+        
+        interests = getattr(guide, 'interests', [])
+        if interests and isinstance(interests, list) and len(interests) > 0:
+            content.append(f"🎨 兴趣偏好: {', '.join(interests)}")
+        else:
+            content.append("🎨 兴趣偏好: 无")
+        content.append("")
+        
+        # 最佳旅行时间
+        best_time = getattr(guide, 'best_time_to_visit', None)
+        if best_time:
+            content.append("📅 最佳旅行时间")
+            content.append("-" * 30)
+            content.append(str(best_time))
             content.append("")
-    
-    # 必去景点
-    if guide.must_visit_attractions:
-        content.append("🎯必去景点")
-        for i, attraction in enumerate(guide.must_visit_attractions, 1):
-            if isinstance(attraction, dict):
-                content.append(f"{i}. {attraction.get('name', '')} - {attraction.get('description', '')}")
-            else:
-                content.append(f"{i}. {attraction}")
-        content.append("")
-    
-    # 美食推荐
-    if guide.food_recommendations:
-        content.append("🍜美食推荐")
-        for i, food in enumerate(guide.food_recommendations, 1):
-            if isinstance(food, dict):
-                content.append(f"{i}. {food.get('name', '')} - {food.get('specialty', '')}")
-            else:
-                content.append(f"{i}. {food}")
-        content.append("")
-    
-    # 交通指南
-    if guide.transportation_guide:
-        content.append("🚗交通指南")
-        if isinstance(guide.transportation_guide, dict):
-            for key, value in guide.transportation_guide.items():
-                content.append(f"• {key}: {value}")
-        content.append("")
-    
-    # 预算估算
-    if guide.budget_estimate:
-        content.append("💰预算估算")
-        if isinstance(guide.budget_estimate, dict):
-            for budget_type, amount in guide.budget_estimate.items():
-                content.append(f"• {budget_type}: {amount}")
-        content.append("")
-    
-    # 旅行贴士
-    if guide.travel_tips:
-        content.append("💡旅行贴士")
-        for i, tip in enumerate(guide.travel_tips, 1):
-            content.append(f"{i}. {tip}")
-        content.append("")
-    
-    # 最佳旅行时间
-    if guide.best_time_to_visit:
-        content.append("📅最佳旅行时间")
-        content.append(guide.best_time_to_visit)
-        content.append("")
-    
-    # 费用明细
-    if guide.cost_breakdown:
-        content.append("💸费用明细")
-        cost_data = guide.cost_breakdown
-        if isinstance(cost_data, dict):
-            total_cost = cost_data.get('total_cost', 0)
-            content.append(f"总费用: {total_cost}元")
-            
-            for category, details in cost_data.items():
-                if category != 'total_cost' and isinstance(details, dict):
-                    content.append(f"• {details.get('description', category)}: {details.get('total_cost', 0)}元")
-        content.append("")
+        
+        # 天气信息
+        weather_info = getattr(guide, 'weather_info', None)
+        if weather_info:
+            content.append("🌤️ 天气信息")
+            content.append("-" * 30)
+            try:
+                if isinstance(weather_info, dict):
+                    for season, info in weather_info.items():
+                        content.append(f"• {season}: {info}")
+                else:
+                    content.append(str(weather_info))
+            except:
+                content.append(str(weather_info))
+            content.append("")
+        
+        # 必去景点
+        attractions = getattr(guide, 'must_visit_attractions', None)
+        if attractions:
+            content.append("🎯 必去景点")
+            content.append("-" * 30)
+            try:
+                if isinstance(attractions, list):
+                    for i, attraction in enumerate(attractions, 1):
+                        if isinstance(attraction, dict):
+                            name = attraction.get('name', '')
+                            description = attraction.get('description', '')
+                            ticket_price = attraction.get('ticket_price', '')
+                            open_time = attraction.get('open_time', '')
+                            
+                            content.append(f"{i}. {name}")
+                            if description:
+                                content.append(f"   描述: {description}")
+                            if ticket_price:
+                                content.append(f"   门票: {ticket_price}")
+                            if open_time:
+                                content.append(f"   开放时间: {open_time}")
+                            content.append("")
+                        else:
+                            content.append(f"{i}. {str(attraction)}")
+                else:
+                    content.append(str(attractions))
+            except Exception as e:
+                content.append("景点数据解析错误")
+            content.append("")
+        
+        # 美食推荐
+        foods = getattr(guide, 'food_recommendations', None)
+        if foods:
+            content.append("🍜 美食推荐")
+            content.append("-" * 30)
+            try:
+                if isinstance(foods, list):
+                    for i, food in enumerate(foods, 1):
+                        if isinstance(food, dict):
+                            name = food.get('name', '')
+                            specialty = food.get('specialty', '')
+                            price_range = food.get('price_range', '')
+                            recommendation = food.get('recommendation', '')
+                            
+                            content.append(f"{i}. {name}")
+                            if specialty:
+                                content.append(f"   特色: {specialty}")
+                            if price_range:
+                                content.append(f"   价格: {price_range}")
+                            if recommendation:
+                                content.append(f"   推荐理由: {recommendation}")
+                            content.append("")
+                        else:
+                            content.append(f"{i}. {str(food)}")
+                else:
+                    content.append(str(foods))
+            except Exception as e:
+                content.append("美食数据解析错误")
+            content.append("")
+        
+        # 每日行程
+        daily_schedule = getattr(guide, 'daily_schedule', None)
+        if daily_schedule:
+            content.append("🚥 每日行程")
+            content.append("-" * 30)
+            try:
+                if isinstance(daily_schedule, list):
+                    for i, day_schedule in enumerate(daily_schedule, 1):
+                        content.append(f"第{i}天:")
+                        
+                        if isinstance(day_schedule, dict):
+                            # 早晨
+                            morning = day_schedule.get('morning', [])
+                            if morning:
+                                content.append("   🌅 早晨:")
+                                if isinstance(morning, list):
+                                    for activity in morning:
+                                        if isinstance(activity, dict):
+                                            activity_name = activity.get('activity', '')
+                                            location = activity.get('location', '')
+                                            time = activity.get('time', '')
+                                            cost = activity.get('cost', '')
+                                            
+                                            content.append(f"     • {activity_name}")
+                                            if location:
+                                                content.append(f"       地点: {location}")
+                                            if time:
+                                                content.append(f"       时间: {time}")
+                                            if cost:
+                                                content.append(f"       费用: {cost}")
+                                        else:
+                                            content.append(f"     • {str(activity)}")
+                                else:
+                                    content.append(f"     • {str(morning)}")
+                            
+                            # 下午
+                            afternoon = day_schedule.get('afternoon', [])
+                            if afternoon:
+                                content.append("   ☀️ 下午:")
+                                if isinstance(afternoon, list):
+                                    for activity in afternoon:
+                                        if isinstance(activity, dict):
+                                            activity_name = activity.get('activity', '')
+                                            location = activity.get('location', '')
+                                            time = activity.get('time', '')
+                                            cost = activity.get('cost', '')
+                                            
+                                            content.append(f"     • {activity_name}")
+                                            if location:
+                                                content.append(f"       地点: {location}")
+                                            if time:
+                                                content.append(f"       时间: {time}")
+                                            if cost:
+                                                content.append(f"       费用: {cost}")
+                                        else:
+                                            content.append(f"     • {str(activity)}")
+                                else:
+                                    content.append(f"     • {str(afternoon)}")
+                            
+                            # 晚上
+                            evening = day_schedule.get('evening', [])
+                            if evening:
+                                content.append("   🌙 晚上:")
+                                if isinstance(evening, list):
+                                    for activity in evening:
+                                        if isinstance(activity, dict):
+                                            activity_name = activity.get('activity', '')
+                                            location = activity.get('location', '')
+                                            time = activity.get('time', '')
+                                            cost = activity.get('cost', '')
+                                            
+                                            content.append(f"     • {activity_name}")
+                                            if location:
+                                                content.append(f"       地点: {location}")
+                                            if time:
+                                                content.append(f"       时间: {time}")
+                                            if cost:
+                                                content.append(f"       费用: {cost}")
+                                        else:
+                                            content.append(f"     • {str(activity)}")
+                                else:
+                                    content.append(f"     • {str(evening)}")
+                        else:
+                            content.append(f"   {str(day_schedule)}")
+                        content.append("")
+                else:
+                    content.append(str(daily_schedule))
+            except Exception as e:
+                content.append("行程数据解析错误")
+            content.append("")
+        
+        # 交通指南
+        transport = getattr(guide, 'transportation_guide', None)
+        if transport:
+            content.append("🚗 交通指南")
+            content.append("-" * 30)
+            try:
+                if isinstance(transport, dict):
+                    for key, value in transport.items():
+                        content.append(f"• {key}: {value}")
+                else:
+                    content.append(str(transport))
+            except Exception as e:
+                content.append("交通数据解析错误")
+            content.append("")
+        
+        # 预算估算
+        budget = getattr(guide, 'budget_estimate', None)
+        if budget:
+            content.append("💰 预算估算")
+            content.append("-" * 30)
+            try:
+                if isinstance(budget, dict):
+                    for budget_type, amount in budget.items():
+                        content.append(f"• {budget_type}: {amount}")
+                else:
+                    content.append(str(budget))
+            except Exception as e:
+                content.append("预算数据解析错误")
+            content.append("")
+        
+        # 费用明细
+        cost_breakdown = getattr(guide, 'cost_breakdown', None)
+        if cost_breakdown:
+            content.append("💸 费用明细")
+            content.append("-" * 30)
+            try:
+                if isinstance(cost_breakdown, dict):
+                    total_cost = cost_breakdown.get('total_cost', 0)
+                    content.append(f"总费用: ¥{total_cost}")
+                    content.append("")
+                    
+                    for category, details in cost_breakdown.items():
+                        if category != 'total_cost':
+                            if isinstance(details, dict):
+                                description = details.get('description', category)
+                                cost = details.get('total_cost', 0)
+                                daily_cost = details.get('daily_cost', 0)
+                                
+                                content.append(f"• {description}: ¥{cost}")
+                                if daily_cost:
+                                    content.append(f"  日均: ¥{daily_cost}")
+                            else:
+                                content.append(f"• {category}: {details}")
+                else:
+                    content.append(str(cost_breakdown))
+            except Exception as e:
+                content.append("费用数据解析错误")
+            content.append("")
+        
+        # 隐藏玩法
+        hidden_gems = getattr(guide, 'hidden_gems', None)
+        if hidden_gems:
+            content.append("💎 隐藏玩法")
+            content.append("-" * 30)
+            try:
+                if isinstance(hidden_gems, list):
+                    for i, gem in enumerate(hidden_gems, 1):
+                        content.append(f"{i}. {str(gem)}")
+                else:
+                    content.append(str(hidden_gems))
+            except Exception as e:
+                content.append("隐藏玩法数据解析错误")
+            content.append("")
+        
+        # 旅行贴士
+        tips = getattr(guide, 'travel_tips', None)
+        if tips:
+            content.append("💡 旅行贴士")
+            content.append("-" * 30)
+            try:
+                if isinstance(tips, list):
+                    for i, tip in enumerate(tips, 1):
+                        content.append(f"{i}. {str(tip)}")
+                else:
+                    content.append(str(tips))
+            except Exception as e:
+                content.append("贴士数据解析错误")
+            content.append("")
+        
+        # 详细攻略
+        detailed_guide = getattr(guide, 'detailed_guide', None)
+        if detailed_guide:
+            content.append("📖 详细攻略")
+            content.append("-" * 30)
+            content.append(str(detailed_guide))
+            content.append("")
+        
+        # 生成时间
+        content.append("=" * 60)
+        content.append(f"📅 生成时间: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}")
+        content.append("🎯 由 WanderAI 智能旅游攻略系统生成")
+        
+    except Exception as e:
+        # 如果出现任何错误，返回基本信息
+        content = [
+            f"🗺️ {getattr(guide, 'destination', '未知目的地')} 旅游攻略",
+            "=" * 60,
+            "",
+            "📋 基本信息",
+            "-" * 30,
+            f"📍 目的地: {getattr(guide, 'destination', '未知目的地')}",
+            f"🎯 旅行风格: {getattr(guide, 'travel_style', '未指定')}",
+            f"💰 预算范围: {getattr(guide, 'budget_range', '未指定')}",
+            f"⏰ 旅行时长: {getattr(guide, 'travel_duration', '未指定')}",
+            "",
+            "⚠️ 数据解析出现错误，请重新生成攻略。",
+            "",
+            "=" * 60,
+            f"📅 生成时间: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}",
+            "🎯 由 WanderAI 智能旅游攻略系统生成"
+        ]
     
     return "\n".join(content)
 
 
-def generate_travel_guide(destination, travel_style, budget_range, travel_duration, interests):
-    """生成旅游攻略内容"""
+
+
+
+
+
+
+def generate_travel_guide(destination, travel_style, budget_min, budget_max, budget_amount, budget_range, travel_duration, interests):
+    """生成旅游攻略内容 - 使用DeepSeek API真实数据"""
     try:
-        # 导入旅游数据服务
-        from .services.travel_data_service import TravelDataService
+        print(f"🔍 开始为{destination}生成DeepSeek真实旅游攻略...")
         
-        # 创建数据服务实例
-        travel_service = TravelDataService()
-        
-        # 获取真实旅游数据
-        guide_data = travel_service.get_travel_guide_data(
-            destination=destination,
-            travel_style=travel_style,
-            budget_range=budget_range,
-            travel_duration=travel_duration,
-            interests=interests or []
-        )
-        
-        return guide_data
-        
-    except Exception as e:
-        print(f"获取旅游数据失败: {e}")
-        
-        # 如果获取真实数据失败，返回基础模拟数据
-        return {
-            'must_visit_attractions': [
-                f"{destination}著名景点1",
-                f"{destination}著名景点2", 
-                f"{destination}著名景点3",
-                f"{destination}著名景点4",
-                f"{destination}著名景点5"
-            ],
-            'food_recommendations': [
-                f"{destination}特色美食1",
-                f"{destination}特色美食2",
-                f"{destination}特色美食3",
-                f"{destination}特色美食4"
-            ],
-            'transportation_guide': {
-                "飞机": f"从主要城市可直飞{destination}",
-                "火车": f"可乘坐高铁或普通列车到达{destination}",
-                "汽车": f"可乘坐长途汽车到达{destination}",
-                "市内交通": "地铁、公交、出租车都很方便"
-            },
-            'hidden_gems': [
-                f"{destination}小众景点1",
-                f"{destination}小众景点2",
-                f"{destination}小众景点3"
-            ],
-            'weather_info': {
-                "春季": "温度适宜，适合户外活动",
-                "夏季": "天气炎热，注意防晒",
-                "秋季": "天高气爽，是旅游的好时节",
-                "冬季": "天气寒冷，注意保暖"
-            },
-            'best_time_to_visit': f"建议在春秋季节前往{destination}，天气适宜，景色优美。",
-            'budget_estimate': {
-                "经济型": "人均2000-3000元",
-                "舒适型": "人均4000-6000元", 
-                "豪华型": "人均8000-12000元"
-            },
-            'travel_tips': [
-                "建议提前预订酒店和机票",
-                "准备防晒和雨具",
-                "注意当地风俗习惯",
-                "保管好随身物品",
-                "建议购买旅游保险"
-            ]
-        }
-
-
-# ==================== 自动求职机相关视图 ====================
-
-@login_required
-def job_search_machine(request):
-    """自动求职机页面"""
-    return render(request, 'tools/job_search_machine.html')
-
-
-@login_required
-def job_search_profile(request):
-    """求职者资料页面"""
-    return render(request, 'tools/job_search_profile.html')
-
-
-@login_required
-def job_search_dashboard(request):
-    """求职仪表盘页面"""
-    return render(request, 'tools/job_search_dashboard.html')
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def create_job_search_request_api(request):
-    """创建求职请求API"""
-    try:
-        data = json.loads(request.body)
-        
-        # 验证必填字段
-        required_fields = ['job_title', 'location', 'min_salary', 'max_salary']
-        for field in required_fields:
-            if not data.get(field):
-                return JsonResponse({
-                    'success': False,
-                    'message': f'请填写{field}字段'
-                })
-        
-        # 创建求职请求
-        job_service = JobSearchService()
-        job_request = job_service.create_job_search_request(
-            user=request.user,
-            job_title=data['job_title'],
-            location=data['location'],
-            min_salary=int(data['min_salary']),
-            max_salary=int(data['max_salary']),
-            job_type=data.get('job_type', 'full_time'),
-            experience_level=data.get('experience_level', '1-3'),
-            keywords=data.get('keywords', []),
-            company_size=data.get('company_size', ''),
-            industry=data.get('industry', ''),
-            education_level=data.get('education_level', ''),
-            auto_apply=data.get('auto_apply', True),
-            max_applications=int(data.get('max_applications', 50)),
-            application_interval=int(data.get('application_interval', 30))
-        )
-        
-        return JsonResponse({
-            'success': True,
-            'message': '求职请求创建成功',
-            'request_id': job_request.id
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'创建求职请求失败: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def start_job_search_api(request):
-    """开始自动求职API"""
-    try:
-        data = json.loads(request.body)
-        request_id = data.get('request_id')
-        
-        if not request_id:
-            return JsonResponse({
-                'success': False,
-                'message': '请提供求职请求ID'
-            })
-        
-        # 获取求职请求
+        # 使用真实数据旅游服务
         try:
-            job_request = JobSearchRequest.objects.get(id=request_id, user=request.user)
-        except JobSearchRequest.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'message': '求职请求不存在'
-            })
-        
-        # 开始自动求职
-        job_service = JobSearchService()
-        result = job_service.start_auto_job_search(job_request)
-        
-        return JsonResponse(result)
+            from .services.real_data_travel_service import RealDataTravelService
+            real_data_service = RealDataTravelService()
+            
+            # 获取真实旅游攻略数据
+            guide_data = real_data_service.get_real_travel_guide(
+                destination=destination,
+                travel_style=travel_style,
+                budget_min=budget_min,
+                budget_max=budget_max,
+                budget_amount=budget_amount,
+                budget_range=budget_range,
+                travel_duration=travel_duration,
+                interests=interests or []
+            )
+            
+            print("✅ DeepSeek真实旅游攻略生成完成！")
+            return guide_data
+            
+        except ImportError:
+            print("⚠️ 真实数据旅游服务不可用，使用增强版服务...")
+            # 回退到增强版服务
+            try:
+                from .services.enhanced_travel_service import EnhancedTravelService
+                enhanced_service = EnhancedTravelService()
+                
+                guide_data = enhanced_service.get_real_travel_guide(
+                    destination=destination,
+                    travel_style=travel_style,
+                    budget_min=budget_min,
+                    budget_max=budget_max,
+                    budget_amount=budget_amount,
+                    budget_range=budget_range,
+                    travel_duration=travel_duration,
+                    interests=interests or []
+                )
+                
+                print("✅ 增强版旅游攻略生成完成！")
+                return guide_data
+                
+            except ImportError:
+                print("⚠️ 增强版旅游服务不可用，使用原版服务...")
+                # 回退到原版服务
+                from .services.travel_data_service import TravelDataService
+                travel_service = TravelDataService()
+                
+                base_data = travel_service.get_travel_guide_data(
+                    destination=destination,
+                    travel_style=travel_style,
+                    budget_min=budget_min,
+                    budget_max=budget_max,
+                    budget_amount=budget_amount,
+                    budget_range=budget_range,
+                    travel_duration=travel_duration,
+                    interests=interests or []
+                )
+                
+                # 尝试使用DeepSeek API生成增强内容
+                try:
+                    print(f"🤖 尝试使用DeepSeek API为{destination}生成增强内容...")
+                    deepseek_content = generate_travel_guide_with_deepseek(
+                        destination, travel_style, budget_min, budget_max, budget_amount, budget_range, travel_duration, interests
+                    )
+                    
+                    if deepseek_content:
+                        print("✅ DeepSeek API生成成功，解析并合并数据...")
+                        parsed_deepseek_data = parse_deepseek_travel_guide(deepseek_content, destination)
+                        
+                        guide_data = {
+                            **base_data,
+                            **parsed_deepseek_data,
+                            'detailed_guide': deepseek_content,
+                        }
+                    else:
+                        print("⚠️ DeepSeek API生成失败，使用基础数据...")
+                        guide_data = base_data
+                        
+                except Exception as deepseek_error:
+                    print(f"⚠️ DeepSeek API不可用，使用基础数据: {deepseek_error}")
+                    guide_data = base_data
+                
+                return guide_data
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'开始自动求职失败: {str(e)}'
-        })
+        print(f"❌ 生成旅游攻略失败: {e}")
+        raise Exception(f"无法获取{destination}的旅游数据: {str(e)}")
 
 
-@csrf_exempt
-@require_http_methods(["GET"])
-@login_required
-def get_job_search_requests_api(request):
-    """获取求职请求列表API"""
+def parse_deepseek_travel_guide(content, destination):
+    """解析DeepSeek生成的旅游攻略内容，提取结构化数据"""
     try:
-        requests = JobSearchRequest.objects.filter(user=request.user).order_by('-created_at')
+        parsed_data = {
+            'destination': destination,
+            'must_visit_attractions': [],
+            'food_recommendations': [],
+            'transportation_guide': {},
+            'travel_tips': [],
+            'budget_estimate': {},
+            'best_time_to_visit': '',
+            'daily_schedule': [],
+            'cost_breakdown': {}
+        }
         
-        requests_data = []
-        for req in requests:
-            requests_data.append({
-                'id': req.id,
-                'job_title': req.job_title,
-                'location': req.location,
-                'salary_range': req.get_salary_range(),
-                'status': req.status,
-                'total_jobs_found': req.total_jobs_found,
-                'total_applications_sent': req.total_applications_sent,
-                'success_rate': req.success_rate,
-                'progress_percentage': req.get_progress_percentage(),
-                'created_at': req.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'completed_at': req.completed_at.strftime('%Y-%m-%d %H:%M:%S') if req.completed_at else None
-            })
+        # 简单的文本解析逻辑
+        lines = content.split('\n')
+        current_section = None
         
-        return JsonResponse({
-            'success': True,
-            'data': requests_data
-        })
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # 检测章节标题
+            if '景点' in line or '必去' in line:
+                current_section = 'attractions'
+            elif '美食' in line or '餐厅' in line:
+                current_section = 'food'
+            elif '交通' in line:
+                current_section = 'transport'
+            elif '贴士' in line or '注意事项' in line:
+                current_section = 'tips'
+            elif '预算' in line or '费用' in line:
+                current_section = 'budget'
+            elif '时间' in line or '季节' in line:
+                current_section = 'time'
+            elif '行程' in line or '安排' in line:
+                current_section = 'schedule'
+            elif line.startswith(('•', '-', '1.', '2.', '3.', '4.', '5.')):
+                # 提取列表项
+                item = line.replace('•', '').replace('-', '').strip()
+                if item and len(item) > 3:  # 过滤太短的项目
+                    if current_section == 'attractions':
+                        parsed_data['must_visit_attractions'].append(item)
+                    elif current_section == 'food':
+                        parsed_data['food_recommendations'].append(item)
+                    elif current_section == 'tips':
+                        parsed_data['travel_tips'].append(item)
+            elif current_section == 'time' and len(line) > 10:
+                parsed_data['best_time_to_visit'] = line
+            elif current_section == 'transport' and ':' in line:
+                # 提取交通信息
+                parts = line.split(':', 1)
+                if len(parts) == 2:
+                    key = parts[0].strip()
+                    value = parts[1].strip()
+                    parsed_data['transportation_guide'][key] = value
+        
+        # 确保至少有一些数据
+        if not parsed_data['must_visit_attractions']:
+            parsed_data['must_visit_attractions'] = [f"{destination}著名景点"]
+        if not parsed_data['food_recommendations']:
+            parsed_data['food_recommendations'] = [f"{destination}特色美食"]
+        if not parsed_data['travel_tips']:
+            parsed_data['travel_tips'] = [f"建议提前了解{destination}的天气情况"]
+        
+        return parsed_data
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'获取求职请求失败: {str(e)}'
-        })
+        print(f"解析DeepSeek内容失败: {e}")
+        return {}
+
+
+def generate_travel_guide_with_deepseek(destination, travel_style, budget_min, budget_max, budget_amount, budget_range, travel_duration, interests):
+    """使用DeepSeek API生成旅游攻略"""
+    try:
+        # 构建更详细的提示词
+        interests_text = "、".join(interests) if interests else "通用"
+        
+        # 根据旅行风格调整提示词
+        style_prompts = {
+            'cultural': '文化探索型，重点关注历史遗迹、博物馆、当地文化体验',
+            'adventure': '冒险刺激型，重点关注户外活动、极限运动、自然探索',
+            'relaxation': '休闲放松型，重点关注温泉、度假村、慢节奏体验',
+            'foodie': '美食探索型，重点关注当地特色餐厅、美食街、烹饪体验',
+            'shopping': '购物娱乐型，重点关注购物中心、特色市场、娱乐场所',
+            'photography': '摄影记录型，重点关注风景优美的地方、最佳拍摄时间',
+            'general': '综合体验型，平衡各种旅游元素'
+        }
+        
+        style_desc = style_prompts.get(travel_style, '综合体验型')
+        
+        # 根据预算范围调整提示词
+        avg_budget = (budget_min + budget_max) // 2
+        if avg_budget < 3000:
+            budget_desc = f'经济型预算({budget_min}-{budget_max}元)，重点关注性价比高的选择，住宿选择青年旅社或经济型酒店，餐饮以当地小吃和平价餐厅为主'
+        elif avg_budget < 8000:
+            budget_desc = f'舒适型预算({budget_min}-{budget_max}元)，平衡价格和质量，住宿选择商务酒店或精品民宿，餐饮可以体验一些当地特色餐厅'
+        elif avg_budget < 15000:
+            budget_desc = f'豪华型预算({budget_min}-{budget_max}元)，追求品质体验，住宿选择豪华酒店或度假村，餐饮可以尝试高级餐厅和米其林推荐'
+        else:
+            budget_desc = f'奢华型预算({budget_min}-{budget_max}元)，追求顶级体验，住宿选择五星级酒店或奢华度假村，餐饮以米其林星级餐厅为主'
+        
+        prompt = f"""请为{destination}生成一份详细、真实、实用的旅游攻略。
+
+旅行要求：
+- 目的地：{destination}
+- 旅行风格：{style_desc}
+- 预算范围：{budget_desc}
+- 旅行时长：{travel_duration}
+- 兴趣偏好：{interests_text}
+
+请严格按照以下格式生成内容：
+
+## 🏛️ 必去景点推荐
+1. [景点名称] - [门票价格] - [开放时间] - [交通方式] - [推荐理由]
+2. [景点名称] - [门票价格] - [开放时间] - [交通方式] - [推荐理由]
+...
+
+## 🍜 美食推荐
+1. [餐厅名称] - [特色菜品] - [价格区间] - [地址] - [推荐理由]
+2. [餐厅名称] - [特色菜品] - [价格区间] - [地址] - [推荐理由]
+...
+
+## 🚗 交通指南
+- 机场/火车站到市区：[具体交通方式和费用]
+- 市内交通：[地铁、公交、出租车等信息]
+- 景点间交通：[具体路线和费用]
+
+## 🏨 住宿推荐
+- 经济型：[酒店名称和价格]
+- 中档型：[酒店名称和价格]
+- 高端型：[酒店名称和价格]
+
+## 📅 每日行程安排
+根据{travel_duration}制定详细行程，包含具体时间安排
+
+## 💰 预算明细
+- 住宿费用：[具体金额]
+- 餐饮费用：[具体金额]
+- 交通费用：[具体金额]
+- 门票费用：[具体金额]
+- 其他费用：[具体金额]
+- 总预算：[具体金额]
+
+## 💡 实用贴士
+1. [具体贴士内容]
+2. [具体贴士内容]
+...
+
+## 🏮 文化背景
+[当地特色、习俗、语言等文化信息]
+
+请确保所有信息真实可靠，价格信息准确，避免虚假信息。内容要详细实用，便于游客参考。"""
+
+        # 使用现有的DeepSeekClient
+        from .utils import DeepSeekClient
+        
+        try:
+            deepseek = DeepSeekClient()
+            content = deepseek.generate_content(prompt)
+            if content and len(content) > 100:  # 确保内容足够详细
+                print(f"✅ DeepSeek API生成成功，内容长度: {len(content)}字符")
+                return content
+            else:
+                print("⚠️ DeepSeek API生成的内容过短")
+                return None
+        except ValueError as api_key_error:
+            if "API密钥未配置" in str(api_key_error):
+                print("⚠️ DeepSeek API密钥未配置，跳过AI增强功能")
+                return None
+            else:
+                print(f"❌ DeepSeekClient配置错误: {api_key_error}")
+                return None
+        except requests.exceptions.HTTPError as http_error:
+            if http_error.response.status_code == 401:
+                print("⚠️ DeepSeek API认证失败 (401)，请检查API密钥是否正确")
+                return None
+            elif http_error.response.status_code == 429:
+                print("⚠️ DeepSeek API请求频率超限 (429)，请稍后重试")
+                return None
+            else:
+                print(f"❌ DeepSeek API HTTP错误: {http_error.response.status_code}")
+                return None
+        except requests.exceptions.Timeout:
+            print("⚠️ DeepSeek API请求超时，跳过AI增强功能")
+            return None
+        except requests.exceptions.ConnectionError:
+            print("⚠️ DeepSeek API连接失败，跳过AI增强功能")
+            return None
+        except Exception as deepseek_error:
+            print(f"❌ DeepSeekClient调用失败: {deepseek_error}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ DeepSeek API调用异常: {e}")
+        return None
+
+
+# ==================== 自动求职机相关视图 - 已隐藏 ====================
+
+# @login_required
+# def job_search_machine(request):
+#     """自动求职机页面"""
+#     return render(request, 'tools/job_search_machine.html')
+
+
+# @login_required
+# def job_search_profile(request):
+#     """求职者资料页面"""
+#     return render(request, 'tools/job_search_profile.html')
+
+
+# @login_required
+# def job_search_dashboard(request):
+#     """求职仪表盘页面"""
+#     return render(request, 'tools/job_search_dashboard.html')
+
+
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# @login_required
+# def create_job_search_request_api(request):
+#     """创建求职请求API"""
+#     try:
+#         data = json.loads(request.body)
+#         
+#         # 验证必填字段
+#         required_fields = ['job_title', 'location', 'min_salary', 'max_salary']
+#         for field in required_fields:
+#             if not data.get(field):
+#                 return JsonResponse({
+#                     'success': False,
+#                     'message': f'请填写{field}字段'
+#                 })
+#         
+#         # 创建求职请求
+#         job_service = JobSearchService()
+#         job_request = job_service.create_job_search_request(
+#             user=request.user,
+#             job_title=data['job_title'],
+#             location=data['location'],
+#             min_salary=int(data['min_salary']),
+#             max_salary=int(data['max_salary']),
+#             job_type=data.get('job_type', 'full_time'),
+#             experience_level=data.get('experience_level', '1-3'),
+#             keywords=data.get('keywords', []),
+#             company_size=data.get('company_size', ''),
+#             industry=data.get('industry', ''),
+#             education_level=data.get('education_level', ''),
+#             auto_apply=data.get('auto_apply', True),
+#             max_applications=int(data.get('max_applications', 50)),
+#             application_interval=int(data.get('application_interval', 30))
+#         )
+#         
+#         return JsonResponse({
+#             'success': True,
+#             'message': '求职请求创建成功',
+#             'request_id': job_request.id
+#         })
+#         
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'message': f'创建求职请求失败: {str(e)}'
+#         })
+
+
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# @login_required
+# def start_job_search_api(request):
+#     """开始自动求职API"""
+#     try:
+#         data = json.loads(request.body)
+#         request_id = data.get('request_id')
+#         
+#         if not request_id:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': '请提供求职请求ID'
+#             })
+#         
+#         # 获取求职请求
+#         try:
+#             job_request = JobSearchRequest.objects.get(id=request_id, user=request.user)
+#         except JobSearchRequest.DoesNotExist:
+#             return JsonResponse({
+#                 'success': False,
+#                 'message': '求职请求不存在'
+#             })
+#         
+#         # 开始自动求职
+#         job_service = JobSearchService()
+#         result = job_service.start_auto_job_search(job_request)
+#         
+#         return JsonResponse(result)
 
 
 @csrf_exempt
@@ -5800,83 +6319,25 @@ def add_application_notes_api(request):
         })
 
 
-def generate_travel_guide(destination, travel_style, budget_range, travel_duration, interests):
-    """生成旅游攻略内容"""
-    try:
-        # 导入旅游数据服务
-        from .services.travel_data_service import TravelDataService
-        
-        # 创建数据服务实例
-        travel_service = TravelDataService()
-        
-        # 获取真实旅游数据
-        guide_data = travel_service.get_travel_guide_data(
-            destination=destination,
-            travel_style=travel_style,
-            budget_range=budget_range,
-            travel_duration=travel_duration,
-            interests=interests or []
-        )
-        
-        return guide_data
-        
-    except Exception as e:
-        print(f"获取旅游数据失败: {e}")
-        
-        # 如果获取真实数据失败，返回基础模拟数据
-        return {
-            'must_visit_attractions': [
-                f"{destination}著名景点1",
-                f"{destination}著名景点2", 
-                f"{destination}著名景点3",
-                f"{destination}著名景点4",
-                f"{destination}著名景点5"
-            ],
-            'food_recommendations': [
-                f"{destination}特色美食1",
-                f"{destination}特色美食2",
-                f"{destination}特色美食3",
-                f"{destination}特色美食4"
-            ],
-            'transportation_guide': {
-                "飞机": f"从主要城市可直飞{destination}",
-                "火车": f"可乘坐高铁或普通列车到达{destination}",
-                "汽车": f"可乘坐长途汽车到达{destination}",
-                "市内交通": "地铁、公交、出租车都很方便"
-            },
-            'hidden_gems': [
-                f"{destination}小众景点1",
-                f"{destination}小众景点2",
-                f"{destination}小众景点3"
-            ],
-            'weather_info': {
-                "春季": "温度适宜，适合户外活动",
-                "夏季": "天气炎热，注意防晒",
-                "秋季": "天高气爽，是旅游的好时节",
-                "冬季": "天气寒冷，注意保暖"
-            },
-            'best_time_to_visit': f"建议在春秋季节前往{destination}，天气适宜，景色优美。",
-            'budget_estimate': {
-                "经济型": "人均2000-3000元",
-                "舒适型": "人均4000-6000元", 
-                "豪华型": "人均8000-12000元"
-            },
-            'travel_tips': [
-                "建议提前预订酒店和机票",
-                "准备防晒和雨具",
-                "注意当地风俗习惯",
-                "保管好随身物品",
-                "建议购买旅游保险"
-            ]
-        }
-
-
 @csrf_exempt
 @require_http_methods(["GET"])
 @login_required
 def generate_boss_qr_code_api(request):
     """生成Boss直聘登录二维码API"""
     try:
+        # 简单的频率限制：每个用户每分钟最多生成3次二维码
+        cache_key = f'boss_qr_rate_limit_{request.user.id}'
+        request_count = cache.get(cache_key, 0)
+        
+        if request_count >= 3:
+            return JsonResponse({
+                'success': False,
+                'message': '请求过于频繁，请稍后再试'
+            })
+        
+        # 增加请求计数
+        cache.set(cache_key, request_count + 1, 60)  # 1分钟过期
+        
         job_service = JobSearchService()
         result = job_service.generate_qr_code(request.user.id)
         
@@ -5892,11 +6353,94 @@ def generate_boss_qr_code_api(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 @login_required
+def get_boss_login_page_url_api(request):
+    """获取Boss直聘登录页面URL API"""
+    try:
+        # 频率限制检查
+        cache_key = f'boss_login_url_rate_limit_{request.user.id}'
+        request_count = cache.get(cache_key, 0)
+        if request_count >= 5:
+            return JsonResponse({
+                'success': False,
+                'message': '请求过于频繁，请稍后再试'
+            })
+        cache.set(cache_key, request_count + 1, 60)
+        
+        job_service = JobSearchService()
+        result = job_service.get_login_page_url(request.user.id)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取登录页面URL失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_boss_user_token_api(request):
+    """获取Boss直聘用户token API"""
+    try:
+        # 频率限制检查
+        cache_key = f'boss_token_rate_limit_{request.user.id}'
+        request_count = cache.get(cache_key, 0)
+        if request_count >= 3:
+            return JsonResponse({
+                'success': False,
+                'message': '请求过于频繁，请稍后再试'
+            })
+        cache.set(cache_key, request_count + 1, 60)
+        
+        job_service = JobSearchService()
+        result = job_service.get_user_token_with_selenium(request.user.id)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取用户token失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
 def check_boss_login_status_api(request):
     """检查Boss直聘登录状态API"""
     try:
         job_service = JobSearchService()
         result = job_service.check_qr_login_status(request.user.id)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'检查登录状态失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def check_boss_login_status_selenium_api(request):
+    """使用Selenium检查Boss直聘登录状态API"""
+    try:
+        # 简单的频率限制：每个用户每分钟最多检查3次
+        cache_key = f'boss_login_check_rate_limit_{request.user.id}'
+        request_count = cache.get(cache_key, 0)
+        
+        if request_count >= 3:
+            return JsonResponse({
+                'success': False,
+                'message': '请求过于频繁，请稍后再试'
+            })
+        
+        # 增加请求计数
+        cache.set(cache_key, request_count + 1, 60)  # 1分钟过期
+        
+        job_service = JobSearchService()
+        result = job_service.check_login_status_with_selenium(request.user.id)
         
         return JsonResponse(result)
         
@@ -5980,3 +6524,1464 @@ def send_contact_request_api(request):
         })
 
 
+# 爬虫管理相关API
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def start_crawler_api(request):
+    """启动爬虫任务API"""
+    try:
+        data = json.loads(request.body)
+        subscription_id = data.get('subscription_id')  # 可选，指定订阅ID
+        
+        from apps.tools.services.social_media_crawler import crawler_manager
+        
+        # 启动爬虫任务
+        result = crawler_manager.start_crawler_for_user(request.user, subscription_id)
+        
+        return JsonResponse(result, content_type='application/json')
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'启动爬虫任务失败: {str(e)}',
+            'updates_count': 0
+        }, status=500, content_type='application/json')
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_crawler_status_api(request):
+    """获取爬虫状态API"""
+    try:
+        from apps.tools.services.social_media_crawler import crawler_manager
+        
+        # 获取爬虫状态
+        status = crawler_manager.get_user_crawler_status(request.user)
+        
+        return JsonResponse(status, content_type='application/json')
+        
+    except Exception as e:
+        return JsonResponse({
+            'has_subscriptions': False,
+            'message': f'获取状态失败: {str(e)}'
+        }, status=500, content_type='application/json')
+
+# 健身社区相关视图函数
+@login_required
+def fitness_community(request):
+    """健身社区页面"""
+    return render(request, 'tools/fitness_community.html')
+
+@login_required
+def fitness_profile(request):
+    """健身个人档案页面"""
+    return render(request, 'tools/fitness_profile.html')
+
+@login_required
+def fitness_tools(request):
+    """健身工具页面"""
+    return render(request, 'tools/fitness_tools.html')
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_fitness_community_posts_api(request):
+    """获取健身社区帖子API"""
+    try:
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 10))
+        post_type = request.GET.get('post_type', '')
+        user_id = request.GET.get('user_id', '')
+        
+        posts = FitnessCommunityPost.objects.filter(
+            is_deleted=False,
+            is_public=True
+        ).select_related('user', 'related_checkin')
+        
+        # 过滤帖子类型
+        if post_type:
+            posts = posts.filter(post_type=post_type)
+        
+        # 过滤用户
+        if user_id:
+            posts = posts.filter(user_id=user_id)
+        
+        # 分页
+        total_count = posts.count()
+        posts = posts[(page - 1) * page_size:page * page_size]
+        
+        posts_data = []
+        for post in posts:
+            # 获取用户档案
+            try:
+                profile = FitnessUserProfile.objects.get(user=post.user)
+                user_display_name = profile.get_display_name()
+                user_avatar = profile.avatar.url if profile.avatar else None
+            except FitnessUserProfile.DoesNotExist:
+                user_display_name = post.user.username
+                user_avatar = None
+            
+            # 检查当前用户是否点赞
+            is_liked = FitnessCommunityLike.objects.filter(
+                user=request.user,
+                post=post
+            ).exists()
+            
+            posts_data.append({
+                'id': post.id,
+                'post_type': post.post_type,
+                'title': post.title,
+                'content': post.content,
+                'tags': post.tags,
+                'training_parts': post.training_parts,
+                'difficulty_level': post.difficulty_level,
+                'likes_count': post.likes_count,
+                'comments_count': post.comments_count,
+                'shares_count': post.shares_count,
+                'views_count': post.views_count,
+                'is_liked': is_liked,
+                'is_featured': post.is_featured,
+                'created_at': post.created_at.isoformat(),
+                'user': {
+                    'id': post.user.id,
+                    'username': post.user.username,
+                    'display_name': user_display_name,
+                    'avatar': user_avatar
+                },
+                'related_checkin': {
+                    'id': post.related_checkin.id,
+                    'date': post.related_checkin.date.isoformat(),
+                    'workout_type': post.related_checkin.detail.workout_type if post.related_checkin.detail else None,
+                    'duration': post.related_checkin.detail.duration if post.related_checkin.detail else None,
+                    'training_parts': post.related_checkin.detail.training_parts if post.related_checkin.detail else [],
+                    'feeling_rating': post.related_checkin.detail.feeling_rating if post.related_checkin.detail else None,
+                } if post.related_checkin else None
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'posts': posts_data,
+            'total_count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'has_next': page * page_size < total_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def create_fitness_community_post_api(request):
+    """创建健身社区帖子API"""
+    try:
+        data = json.loads(request.body)
+        post_type = data.get('post_type')
+        title = data.get('title')
+        content = data.get('content')
+        tags = data.get('tags', [])
+        training_parts = data.get('training_parts', [])
+        difficulty_level = data.get('difficulty_level')
+        related_checkin_id = data.get('related_checkin_id')
+        
+        if not post_type or not title or not content:
+            return JsonResponse({
+                'success': False,
+                'error': '帖子类型、标题和内容不能为空'
+            }, status=400)
+        
+        # 创建帖子
+        post_data = {
+            'user': request.user,
+            'post_type': post_type,
+            'title': title,
+            'content': content,
+            'tags': tags,
+            'training_parts': training_parts,
+            'difficulty_level': difficulty_level
+        }
+        
+        if related_checkin_id:
+            try:
+                checkin = CheckInCalendar.objects.get(
+                    id=related_checkin_id,
+                    user=request.user
+                )
+                post_data['related_checkin'] = checkin
+            except CheckInCalendar.DoesNotExist:
+                pass
+        
+        post = FitnessCommunityPost.objects.create(**post_data)
+        
+        return JsonResponse({
+            'success': True,
+            'post_id': post.id,
+            'message': '帖子发布成功'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def like_fitness_post_api(request):
+    """点赞健身帖子API"""
+    try:
+        data = json.loads(request.body)
+        post_id = data.get('post_id')
+        comment_id = data.get('comment_id')
+        
+        if not post_id and not comment_id:
+            return JsonResponse({
+                'success': False,
+                'error': '帖子ID或评论ID不能为空'
+            }, status=400)
+        
+        if post_id:
+            try:
+                post = FitnessCommunityPost.objects.get(id=post_id)
+                like, created = FitnessCommunityLike.objects.get_or_create(
+                    user=request.user,
+                    post=post
+                )
+                
+                if created:
+                    post.likes_count += 1
+                    post.save()
+                    action = 'liked'
+                else:
+                    like.delete()
+                    post.likes_count = max(0, post.likes_count - 1)
+                    post.save()
+                    action = 'unliked'
+                
+                return JsonResponse({
+                    'success': True,
+                    'action': action,
+                    'likes_count': post.likes_count
+                })
+                
+            except FitnessCommunityPost.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': '帖子不存在'
+                }, status=404)
+        
+        elif comment_id:
+            try:
+                comment = FitnessCommunityComment.objects.get(id=comment_id)
+                like, created = FitnessCommunityLike.objects.get_or_create(
+                    user=request.user,
+                    comment=comment
+                )
+                
+                if created:
+                    comment.likes_count += 1
+                    comment.save()
+                    action = 'liked'
+                else:
+                    like.delete()
+                    comment.likes_count = max(0, comment.likes_count - 1)
+                    comment.save()
+                    action = 'unliked'
+                
+                return JsonResponse({
+                    'success': True,
+                    'action': action,
+                    'likes_count': comment.likes_count
+                })
+                
+            except FitnessCommunityComment.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': '评论不存在'
+                }, status=404)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def comment_fitness_post_api(request):
+    """评论健身帖子API"""
+    try:
+        data = json.loads(request.body)
+        post_id = data.get('post_id')
+        content = data.get('content')
+        parent_comment_id = data.get('parent_comment_id')
+        
+        if not post_id or not content:
+            return JsonResponse({
+                'success': False,
+                'error': '帖子ID和评论内容不能为空'
+            }, status=400)
+        
+        try:
+            post = FitnessCommunityPost.objects.get(id=post_id)
+        except FitnessCommunityPost.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '帖子不存在'
+            }, status=404)
+        
+        comment_data = {
+            'post': post,
+            'user': request.user,
+            'content': content
+        }
+        
+        if parent_comment_id:
+            try:
+                parent_comment = FitnessCommunityComment.objects.get(id=parent_comment_id)
+                comment_data['parent_comment'] = parent_comment
+            except FitnessCommunityComment.DoesNotExist:
+                pass
+        
+        comment = FitnessCommunityComment.objects.create(**comment_data)
+        
+        # 更新帖子评论数
+        post.comments_count += 1
+        post.save()
+        
+        return JsonResponse({
+            'success': True,
+            'comment_id': comment.id,
+            'message': '评论发布成功'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_fitness_user_profile_api(request):
+    """获取健身用户档案API"""
+    try:
+        user_id = request.GET.get('user_id', request.user.id)
+        
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '用户不存在'
+            }, status=404)
+        
+        # 获取或创建用户档案
+        profile, created = FitnessUserProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'nickname': user.username,
+                'fitness_level': 'beginner',
+                'primary_goals': ['增肌', '减脂'],
+                'favorite_workouts': ['力量训练']
+            }
+        )
+        
+        # 更新统计数据
+        profile.update_stats()
+        
+        # 获取用户成就
+        achievements = UserFitnessAchievement.objects.filter(
+            user=user
+        ).select_related('achievement').order_by('-earned_at')
+        
+        achievements_data = []
+        for user_achievement in achievements:
+            achievements_data.append({
+                'id': user_achievement.achievement.id,
+                'name': user_achievement.achievement.name,
+                'description': user_achievement.achievement.description,
+                'level': user_achievement.achievement.level,
+                'icon': user_achievement.achievement.icon,
+                'color': user_achievement.achievement.color,
+                'earned_at': user_achievement.earned_at.isoformat(),
+                'is_shared': user_achievement.is_shared
+            })
+        
+        # 获取关注关系
+        is_following = False
+        if user_id != request.user.id:
+            is_following = FitnessFollow.objects.filter(
+                follower=request.user,
+                following=user
+            ).exists()
+        
+        profile_data = {
+            'user_id': user.id,
+            'username': user.username,
+            'nickname': profile.nickname,
+            'avatar': profile.avatar.url if profile.avatar else None,
+            'bio': profile.bio,
+            'fitness_level': profile.fitness_level,
+            'primary_goals': profile.primary_goals,
+            'favorite_workouts': profile.favorite_workouts,
+            'total_workouts': profile.total_workouts,
+            'total_duration': profile.total_duration,
+            'current_streak': profile.current_streak,
+            'longest_streak': profile.longest_streak,
+            'is_public_profile': profile.is_public_profile,
+            'achievements': achievements_data,
+            'is_following': is_following,
+            'created_at': profile.created_at.isoformat()
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'profile': profile_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def follow_fitness_user_api(request):
+    """关注健身用户API"""
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        
+        if not user_id:
+            return JsonResponse({
+                'success': False,
+                'error': '用户ID不能为空'
+            }, status=400)
+        
+        if int(user_id) == request.user.id:
+            return JsonResponse({
+                'success': False,
+                'error': '不能关注自己'
+            }, status=400)
+        
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '用户不存在'
+            }, status=404)
+        
+        follow, created = FitnessFollow.objects.get_or_create(
+            follower=request.user,
+            following=target_user
+        )
+        
+        if created:
+            action = 'followed'
+        else:
+            follow.delete()
+            action = 'unfollowed'
+        
+        return JsonResponse({
+            'success': True,
+            'action': action
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_fitness_achievements_api(request):
+    """获取健身成就API"""
+    try:
+        user_id = request.GET.get('user_id', request.user.id)
+        
+        # 获取所有成就
+        achievements = FitnessAchievement.objects.all().order_by('level', 'achievement_type', 'name')
+        
+        # 获取用户已获得的成就
+        user_achievements = UserFitnessAchievement.objects.filter(
+            user_id=user_id
+        ).values_list('achievement_id', flat=True)
+        
+        achievements_data = []
+        for achievement in achievements:
+            is_achieved = achievement.id in user_achievements
+            progress = 0
+            
+            if is_achieved:
+                progress = 100
+            else:
+                # 计算进度（这里需要根据具体条件计算）
+                progress = 0  # 暂时设为0，后续可以根据具体条件计算
+            
+            achievements_data.append({
+                'id': achievement.id,
+                'name': achievement.name,
+                'description': achievement.description,
+                'achievement_type': achievement.achievement_type,
+                'level': achievement.level,
+                'icon': achievement.icon,
+                'color': achievement.color,
+                'is_achieved': is_achieved,
+                'progress': progress,
+                'unlock_condition': achievement.unlock_condition
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'achievements': achievements_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def share_achievement_api(request):
+    """分享成就API"""
+    try:
+        data = json.loads(request.body)
+        achievement_id = data.get('achievement_id')
+        
+        if not achievement_id:
+            return JsonResponse({
+                'success': False,
+                'error': '成就ID不能为空'
+            }, status=400)
+        
+        try:
+            user_achievement = UserFitnessAchievement.objects.get(
+                user=request.user,
+                achievement_id=achievement_id
+            )
+        except UserFitnessAchievement.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '成就不存在'
+            }, status=404)
+        
+        # 标记为已分享
+        user_achievement.is_shared = True
+        user_achievement.save()
+        
+        # 创建社区帖子
+        achievement = user_achievement.achievement
+        post = FitnessCommunityPost.objects.create(
+            user=request.user,
+            post_type='achievement',
+            title=f'🎉 获得成就：{achievement.name}',
+            content=f'我刚刚获得了{achievement.get_level_display()}成就「{achievement.name}」！\n\n{achievement.description}\n\n继续加油！💪',
+            tags=['成就分享', achievement.achievement_type, achievement.level],
+            difficulty_level='beginner'  # 成就分享默认初级
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '成就分享成功',
+            'post_id': post.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+# 中优先级：添加缺失的页面视图函数
+@login_required
+def tarot_reading_view(request):
+    """塔罗牌占卜页面"""
+    return render(request, 'tools/tarot_reading.html')
+
+@login_required
+def tarot_diary_view(request):
+    """塔罗牌日记页面"""
+    return render(request, 'tools/tarot_diary.html')
+
+@login_required
+def meetsomeone_dashboard_view(request):
+    """遇见某人主页面"""
+    return render(request, 'tools/meetsomeone_dashboard.html')
+
+@login_required
+def meetsomeone_timeline_view(request):
+    """遇见某人时间线页面"""
+    return render(request, 'tools/meetsomeone_timeline.html')
+
+@login_required
+def meetsomeone_graph_view(request):
+    """遇见某人图表页面"""
+    return render(request, 'tools/meetsomeone_graph.html')
+
+# ===== 功能推荐系统API视图 =====
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def feature_recommendations_api(request):
+    """功能推荐API - 支持GET获取推荐和POST记录行为"""
+    try:
+        if request.method == "GET":
+            # GET请求：获取功能推荐
+            from .services.feature_recommendation_engine import FeatureRecommendationEngine
+            
+            # 检查用户是否已登录
+            if not request.user.is_authenticated:
+                return JsonResponse({
+                    'success': True,
+                    'data': [],
+                    'algorithm': 'smart',
+                    'count': 0
+                })
+            
+            # 获取查询参数
+            algorithm = request.GET.get('algorithm', 'smart')
+            limit = int(request.GET.get('limit', 6))
+            force_show = request.GET.get('force_show', 'false').lower() == 'true'
+            
+            # 创建推荐引擎实例
+            engine = FeatureRecommendationEngine()
+            
+            # 获取用户上下文信息
+            context = {
+                'ip_address': request.META.get('REMOTE_ADDR'),
+                'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+            }
+            
+            # 获取推荐
+            recommendations = engine.get_recommendations_for_user(
+                user=request.user,
+                limit=limit,
+                context=context
+            )
+            
+            # 格式化推荐数据
+            formatted_recommendations = []
+            for rec in recommendations:
+                feature = rec.get('feature')  # 推荐引擎返回的是字典，包含feature键
+                if feature:
+                    # 获取推荐理由
+                    reason = rec.get('reason', '为您推荐一个实用功能')
+                    
+                    # 获取功能类别显示名称
+                    category_display = feature.get_category_display()
+                    
+                    formatted_recommendations.append({
+                        'id': feature.id,
+                        'name': feature.name,
+                        'description': feature.description,
+                        'category': feature.category,
+                        'category_display': category_display,
+                        'icon_class': feature.icon_class,
+                        'icon_color': feature.icon_color,
+                        'url_name': feature.url_name,
+                        'recommendation_weight': feature.recommendation_weight,
+                        'popularity_score': feature.popularity_score,
+                        'recommendation_reason': reason,
+                    })
+            
+            return JsonResponse({
+                'success': True,
+                'data': formatted_recommendations,
+                'algorithm': algorithm,
+                'count': len(formatted_recommendations)
+            })
+        
+        elif request.method == "POST":
+            # POST请求：记录推荐行为
+            # 检查用户是否已登录
+            if not request.user.is_authenticated:
+                return JsonResponse({
+                    'success': False,
+                    'error': '用户未登录'
+                }, status=401)
+            
+            data = json.loads(request.body)
+            feature_id = data.get('feature_id')
+            action = data.get('action', 'shown')
+            session_id = data.get('session_id', '')
+            
+            if not feature_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': '缺少功能ID'
+                }, status=400)
+            
+            from .models import Feature, FeatureRecommendation
+            
+            try:
+                feature = Feature.objects.get(id=feature_id)
+            except Feature.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': '功能不存在'
+                }, status=404)
+            
+            # 记录推荐行为
+            recommendation = FeatureRecommendation.objects.create(
+                user=request.user,
+                feature=feature,
+                session_id=session_id,
+                action=action,
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                action_time=timezone.now() if action != 'shown' else None
+            )
+            
+            # 如果是点击行为，更新功能使用统计
+            if action == 'clicked':
+                feature.increment_usage()
+                recommendation.action_time = timezone.now()
+                recommendation.save(update_fields=['action_time'])
+            
+            return JsonResponse({
+                'success': True,
+                'message': '推荐行为记录成功',
+                'action': action,
+                'feature_id': feature_id
+            })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def feature_list_api(request):
+    """获取功能列表API"""
+    try:
+        from .models import Feature
+        
+        # 获取查询参数
+        category = request.GET.get('category')
+        search = request.GET.get('search', '')
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 20))
+        
+        # 构建查询
+        queryset = Feature.objects.filter(is_active=True, is_public=True)
+        
+        if category:
+            queryset = queryset.filter(category=category)
+        
+        if search:
+            queryset = queryset.filter(
+                models.Q(name__icontains=search) |
+                models.Q(description__icontains=search)
+            )
+        
+        # 分页
+        total_count = queryset.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+        features = queryset[start:end]
+        
+        # 格式化数据
+        formatted_features = []
+        for feature in features:
+            formatted_features.append({
+                'id': feature.id,
+                'name': feature.name,
+                'description': feature.description,
+                'category': feature.category,
+                'feature_type': feature.feature_type,
+                'icon_class': feature.icon_class,
+                'icon_color': feature.icon_color,
+                'url_name': feature.url_name,
+                'recommendation_weight': feature.recommendation_weight,
+                'popularity_score': feature.popularity_score,
+                'require_login': feature.require_login,
+                'require_membership': feature.require_membership,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'features': formatted_features,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total_count': total_count,
+                'total_pages': (total_count + page_size - 1) // page_size
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def recommendation_stats_api(request):
+    """获取推荐统计API"""
+    try:
+        from .models import FeatureRecommendation
+        from django.db.models import Count, Q
+        from datetime import datetime, timedelta
+        
+        # 获取查询参数
+        days = int(request.GET.get('days', 30))
+        since_date = timezone.now() - timedelta(days=days)
+        
+        # 获取统计数据
+        stats = FeatureRecommendation.objects.filter(
+            user=request.user,
+            created_at__gte=since_date
+        ).aggregate(
+            total_shown=Count('id', filter=Q(action='shown')),
+            total_clicked=Count('id', filter=Q(action='clicked')),
+            total_dismissed=Count('id', filter=Q(action='dismissed')),
+            total_not_interested=Count('id', filter=Q(action='not_interested'))
+        )
+        
+        # 计算点击率
+        total_shown = stats['total_shown'] or 0
+        total_clicked = stats['total_clicked'] or 0
+        click_rate = (total_clicked / total_shown * 100) if total_shown > 0 else 0
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'period_days': days,
+                'total_shown': total_shown,
+                'total_clicked': total_clicked,
+                'total_dismissed': stats['total_dismissed'] or 0,
+                'total_not_interested': stats['total_not_interested'] or 0,
+                'click_rate': round(click_rate, 2)
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def resolve_url_api(request):
+    """URL解析API - 根据url_name解析到实际URL"""
+    try:
+        url_name = request.GET.get('url_name')
+        if not url_name:
+            return JsonResponse({
+                'success': False,
+                'error': '缺少url_name参数'
+            }, status=400)
+        
+        from .models import Feature
+        
+        try:
+            feature = Feature.objects.filter(url_name=url_name).first()
+            if not feature:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'功能不存在: {url_name}'
+                }, status=404)
+            
+            # 构建功能页面URL
+            feature_url = f'/tools/{url_name}/'
+            
+            return JsonResponse({
+                'success': True,
+                'url': feature_url,
+                'feature_name': feature.name,
+                'url_name': url_name
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'查询功能时出错: {str(e)}'
+            }, status=500)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@login_required
+def meditation_audio_api(request):
+    """冥想音频API"""
+    if request.method == 'GET':
+        try:
+            action = request.GET.get('action', 'random')
+            category = request.GET.get('category', '')
+            keyword = request.GET.get('keyword', '')
+            
+            # 导入冥想音频服务
+            from .services.meditation_audio_service import meditation_audio_service
+            
+            if action == 'categories':
+                # 获取所有音效类别
+                categories = meditation_audio_service.get_all_categories()
+                return JsonResponse({
+                    'success': True,
+                    'data': categories
+                }, content_type='application/json')
+            
+            elif action == 'random':
+                # 获取随机音效
+                if category:
+                    # 获取指定类别的随机音效
+                    sound = meditation_audio_service.get_meditation_sound(category)
+                else:
+                    # 获取完全随机的音效
+                    sound = meditation_audio_service.get_random_meditation_sound()
+                
+                if sound:
+                    return JsonResponse({
+                        'success': True,
+                        'data': sound
+                    }, content_type='application/json')
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': '获取音效失败'
+                    }, content_type='application/json')
+            
+            elif action == 'search':
+                # 搜索音效
+                if keyword:
+                    sounds = meditation_audio_service.search_meditation_sounds(keyword)
+                    return JsonResponse({
+                        'success': True,
+                        'data': sounds
+                    }, content_type='application/json')
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': '搜索关键词不能为空'
+                    }, content_type='application/json')
+            
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': '不支持的操作'
+                }, content_type='application/json')
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'服务器错误: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': '不支持的请求方法'
+    }, content_type='application/json')
+
+
+@login_required
+def food_randomizer(request):
+    """食物随机选择器页面"""
+    return render(request, 'tools/food_randomizer.html')
+
+
+# 食物随机选择器API函数
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def start_food_randomization_api(request):
+    """开始食物随机选择API - 使用真实数据"""
+    try:
+        data = json.loads(request.body)
+        meal_type = data.get('meal_type', '')
+        cuisine_preference = data.get('cuisine_preference', '')
+        mood = data.get('mood', '')
+        price_range = data.get('price_range', '')
+        dietary_restrictions = data.get('dietary_restrictions', [])
+        animation_duration = data.get('animation_duration', 3000)
+        
+        # 构建查询条件
+        query_conditions = {'is_active': True}
+        
+        # 根据餐种筛选
+        if meal_type and meal_type != 'mixed':
+            query_conditions['meal_types__contains'] = [meal_type]
+        
+        # 根据菜系偏好筛选
+        if cuisine_preference and cuisine_preference != 'mixed':
+            query_conditions['cuisine'] = cuisine_preference
+        
+        # 根据心情和价格范围调整筛选条件
+        if mood == 'happy':
+            # 开心时倾向于选择受欢迎的食物
+            query_conditions['popularity_score__gte'] = 0.5
+        elif mood == 'sad':
+            # 难过时倾向于选择安慰食物
+            query_conditions['tags__contains'] = ['comfort']
+        elif mood == 'tired':
+            # 疲惫时倾向于选择简单易做的食物
+            query_conditions['difficulty'] = 'easy'
+        
+        # 根据价格范围筛选
+        if price_range == 'low':
+            # 低价位，选择简单易做的食物
+            query_conditions['difficulty'] = 'easy'
+        elif price_range == 'high':
+            # 高价位，选择高级食物
+            query_conditions['tags__contains'] = ['premium']
+        
+        # 根据饮食禁忌筛选
+        if dietary_restrictions:
+            # 这里可以根据具体的饮食禁忌进行筛选
+            # 暂时跳过这个筛选条件
+            pass
+        
+        # 查询符合条件的食物
+        available_foods = FoodItem.objects.filter(**query_conditions)
+        
+        if not available_foods.exists():
+            # 如果没有找到符合条件的食物，放宽条件
+            available_foods = FoodItem.objects.filter(is_active=True)
+        
+        if not available_foods.exists():
+            return JsonResponse({
+                'success': False,
+                'error': '没有找到合适的食物'
+            })
+        
+        # 随机选择一个食物
+        selected_food = random.choice(available_foods)
+        
+        # 获取备选食物（同菜系或同餐种的其他食物）
+        alternative_conditions = {
+            'is_active': True,
+            'id__ne': selected_food.id
+        }
+        
+        if selected_food.cuisine != 'mixed':
+            alternative_conditions['cuisine'] = selected_food.cuisine
+        else:
+            alternative_conditions['meal_types__overlap'] = selected_food.meal_types
+        
+        alternative_foods = list(FoodItem.objects.filter(**alternative_conditions)[:5])
+        
+        # 创建随机选择会话记录
+        session = FoodRandomizationSession.objects.create(
+            user=request.user,
+            meal_type=meal_type,
+            cuisine_preference=cuisine_preference,
+            status='completed',
+            animation_duration=animation_duration,
+            selected_food=selected_food,
+            alternative_foods=[food.id for food in alternative_foods],
+            completed_at=timezone.now()
+        )
+        
+        # 创建历史记录
+        FoodHistory.objects.create(
+            user=request.user,
+            food_item=selected_food,
+            meal_type=meal_type,
+            cuisine_preference=cuisine_preference,
+            session_id=session.id
+        )
+        
+        # 构建响应数据
+        response_data = {
+            'success': True,
+            'session_id': session.id,
+            'selected_food': {
+                'id': selected_food.id,
+                'name': selected_food.name,
+                'description': selected_food.description,
+                'image_url': selected_food.image_url,
+                'cuisine': selected_food.get_cuisine_display(),
+                'difficulty': selected_food.get_difficulty_display(),
+                'cooking_time': selected_food.cooking_time,
+                'ingredients': selected_food.ingredients,
+                'tags': selected_food.tags,
+                'meal_types': selected_food.meal_types,
+                'recipe_url': selected_food.recipe_url,
+                'popularity_score': selected_food.popularity_score
+            },
+            'alternative_foods': [
+                {
+                    'id': food.id,
+                    'name': food.name,
+                    'description': food.description,
+                    'image_url': food.image_url,
+                    'cuisine': food.get_cuisine_display(),
+                    'difficulty': food.get_difficulty_display(),
+                    'cooking_time': food.cooking_time
+                }
+                for food in alternative_foods
+            ],
+            'message': f'为您推荐了 {selected_food.name}'
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"食物随机选择失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'随机选择失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def pause_food_randomization_api(request):
+    """暂停食物随机选择API"""
+    try:
+        return JsonResponse({
+            'success': True,
+            'message': '暂停随机选择'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def pure_random_food_api(request):
+    """纯随机食物选择API - 使用真实数据"""
+    try:
+        data = json.loads(request.body)
+        animation_duration = data.get('animation_duration', 3000)
+        
+        # 从所有活跃食物中完全随机选择
+        available_foods = FoodItem.objects.filter(is_active=True)
+        
+        if not available_foods.exists():
+            return JsonResponse({
+                'success': False,
+                'error': '没有可用的食物数据'
+            })
+        
+        # 随机选择一个食物
+        selected_food = random.choice(available_foods)
+        
+        # 获取备选食物（完全随机）
+        alternative_foods = list(FoodItem.objects.filter(
+            is_active=True
+        ).exclude(id=selected_food.id).order_by('?')[:5])
+        
+        # 创建随机选择会话记录
+        session = FoodRandomizationSession.objects.create(
+            user=request.user,
+            meal_type='mixed',
+            cuisine_preference='mixed',
+            status='completed',
+            animation_duration=animation_duration,
+            selected_food=selected_food,
+            alternative_foods=[food.id for food in alternative_foods],
+            completed_at=timezone.now()
+        )
+        
+        # 创建历史记录
+        FoodHistory.objects.create(
+            user=request.user,
+            food_item=selected_food,
+            meal_type='mixed',
+            cuisine_preference='mixed',
+            session_id=session.id
+        )
+        
+        # 构建响应数据
+        response_data = {
+            'success': True,
+            'session_id': session.id,
+            'selected_food': {
+                'id': selected_food.id,
+                'name': selected_food.name,
+                'description': selected_food.description,
+                'image_url': selected_food.image_url,
+                'cuisine': selected_food.get_cuisine_display(),
+                'difficulty': selected_food.get_difficulty_display(),
+                'cooking_time': selected_food.cooking_time,
+                'ingredients': selected_food.ingredients,
+                'tags': selected_food.tags,
+                'meal_types': selected_food.meal_types,
+                'recipe_url': selected_food.recipe_url,
+                'popularity_score': selected_food.popularity_score
+            },
+            'alternative_foods': [
+                {
+                    'id': food.id,
+                    'name': food.name,
+                    'description': food.description,
+                    'image_url': food.image_url,
+                    'cuisine': food.get_cuisine_display(),
+                    'difficulty': food.get_difficulty_display(),
+                    'cooking_time': food.cooking_time
+                }
+                for food in alternative_foods
+            ],
+            'message': f'纯随机为您选择了 {selected_food.name}'
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"纯随机食物选择失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'纯随机选择失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_food_history_api(request):
+    """获取食物历史记录API - 使用真实数据"""
+    try:
+        # 获取用户的历史记录，按时间倒序排列
+        history_records = FoodHistory.objects.filter(
+            user=request.user
+        ).select_related('food_item').order_by('-created_at')[:20]  # 最近20条记录
+        
+        history_data = []
+        for record in history_records:
+            history_data.append({
+                'id': record.id,
+                'food_name': record.food_item.name,
+                'food_description': record.food_item.description,
+                'food_image_url': record.food_item.image_url,
+                'cuisine': record.food_item.get_cuisine_display(),
+                'meal_type': record.get_meal_type_display(),
+                'selected_at': record.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'rating': record.rating if hasattr(record, 'rating') else None,
+                'comment': record.comment if hasattr(record, 'comment') else '',
+                'is_cooked': record.is_cooked if hasattr(record, 'is_cooked') else False,
+                'session_id': record.session_id
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'history': history_data,
+            'total_count': len(history_data)
+        })
+        
+    except Exception as e:
+        print(f"获取食物历史记录失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'获取历史记录失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def rate_food_api(request):
+    """评价食物API - 使用真实数据"""
+    try:
+        data = json.loads(request.body)
+        food_id = data.get('food_id')
+        rating = data.get('rating')
+        comment = data.get('comment', '')
+        is_cooked = data.get('is_cooked', False)
+        session_id = data.get('session_id')
+        
+        # 验证评分范围
+        if rating is not None and (rating < 1 or rating > 5):
+            return JsonResponse({
+                'success': False,
+                'error': '评分必须在1-5之间'
+            })
+        
+        # 查找对应的历史记录
+        history_record = None
+        if session_id:
+            history_record = FoodHistory.objects.filter(
+                user=request.user,
+                session_id=session_id
+            ).first()
+        elif food_id:
+            history_record = FoodHistory.objects.filter(
+                user=request.user,
+                food_item_id=food_id
+            ).order_by('-created_at').first()
+        
+        if history_record:
+            # 更新历史记录
+            if rating is not None:
+                history_record.rating = rating
+            if comment:
+                history_record.comment = comment
+            if is_cooked is not None:
+                history_record.is_cooked = is_cooked
+            history_record.save()
+            
+            # 更新食物的受欢迎度评分
+            if rating is not None and food_id:
+                try:
+                    food_item = FoodItem.objects.get(id=food_id)
+                    # 计算新的受欢迎度评分（简单平均）
+                    all_ratings = FoodHistory.objects.filter(
+                        food_item=food_item,
+                        rating__isnull=False
+                    ).values_list('rating', flat=True)
+                    
+                    if all_ratings:
+                        avg_rating = sum(all_ratings) / len(all_ratings)
+                        food_item.popularity_score = avg_rating / 5.0  # 转换为0-1范围
+                        food_item.save()
+                except FoodItem.DoesNotExist:
+                    pass
+            
+            return JsonResponse({
+                'success': True,
+                'message': '评价保存成功',
+                'updated_record': {
+                    'id': history_record.id,
+                    'rating': history_record.rating,
+                    'comment': history_record.comment,
+                    'is_cooked': history_record.is_cooked
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': '未找到对应的历史记录'
+            })
+        
+    except Exception as e:
+        print(f"评价食物失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'评价保存失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_checkin_calendar_api(request):
+    """获取打卡日历数据"""
+    try:
+        from .models import CheckInCalendar
+        
+        checkin_type = request.GET.get('type', 'diary')
+        year = int(request.GET.get('year', datetime.now().year))
+        month = int(request.GET.get('month', datetime.now().month))
+        
+        # 获取指定月份的数据
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+        
+        # 从数据库获取打卡数据
+        checkins = CheckInCalendar.objects.filter(
+            user=request.user,
+            calendar_type=checkin_type,
+            date__range=[start_date.date(), end_date.date()]
+        ).select_related('detail')
+        
+        # 构建日历数据
+        calendar_data = {}
+        for checkin in checkins:
+            date_str = checkin.date.strftime('%Y-%m-%d')
+            calendar_data[date_str] = {
+                'id': checkin.id,
+                'status': checkin.status,
+                'mood': getattr(checkin.detail, 'mood', None) if hasattr(checkin, 'detail') else None,
+                'note': getattr(checkin.detail, 'note', '') if hasattr(checkin, 'detail') else ''
+            }
+        
+        # 计算连续打卡
+        current_streak = 0
+        longest_streak = 0
+        temp_streak = 0
+        
+        # 获取所有打卡记录，按日期排序
+        all_checkins = CheckInCalendar.objects.filter(
+            user=request.user,
+            calendar_type=checkin_type
+        ).order_by('date')
+        
+        if all_checkins.exists():
+            last_checkin_date = None
+            for checkin in all_checkins:
+                if last_checkin_date is None:
+                    temp_streak = 1
+                elif (checkin.date - last_checkin_date).days == 1:
+                    temp_streak += 1
+                else:
+                    temp_streak = 1
+                
+                longest_streak = max(longest_streak, temp_streak)
+                last_checkin_date = checkin.date
+            
+            # 计算当前连续打卡
+            today = datetime.now().date()
+            if last_checkin_date == today:
+                current_streak = temp_streak
+            elif (today - last_checkin_date).days == 1:
+                current_streak = temp_streak
+            else:
+                current_streak = 0
+        
+        # 月度统计
+        monthly_stats = {
+            'total_days': len(calendar_data),
+            'completed_days': len([c for c in calendar_data.values() if c['status'] == 'completed']),
+            'rest_days': len([c for c in calendar_data.values() if c['status'] == 'rest']),
+            'missed_days': (end_date.date() - start_date.date()).days + 1 - len(calendar_data)
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'calendar_data': calendar_data,
+            'streak': {
+                'current': current_streak,
+                'longest': longest_streak
+            },
+            'monthly_stats': monthly_stats
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

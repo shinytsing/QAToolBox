@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载仪表盘数据
 async function loadDashboardData() {
     try {
-        const response = await fetch('/tools/api/job-search/statistics/');
+        const response = await fetch('/tools/api/job_search/statistics/');
         const result = await response.json();
         
         if (result.success) {
@@ -509,7 +509,7 @@ function updateDashboardStats(data) {
 // 加载最近申请记录
 async function loadRecentApplications() {
     try {
-        const response = await fetch('/tools/api/job-search/applications/');
+        const response = await fetch('/tools/api/job_search/applications/');
         const result = await response.json();
         
         if (result.success) {

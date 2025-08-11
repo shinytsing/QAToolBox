@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF转换器满意度评分测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .test-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #00d4ff;
+        }
+        
+        .recent-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .recent-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,212,255,0.2);
+        }
+        
+        .recent-icon {
+            font-size: 1.5rem;
+            color: #00d4ff;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .recent-info {
+            flex: 1;
+        }
+        
+        .recent-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .recent-time {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .recent-details {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 0.1rem;
+        }
+        
+        .rating-stars {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .rating-stars .star {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-right: 2px;
+            font-size: 0.9rem;
+        }
+        
+        .rating-stars .star:hover {
+            transform: scale(1.1);
+            color: #ffd700 !important;
+        }
+        
+        .rating-stars .star:hover ~ .star {
+            color: rgba(255,255,255,0.3) !important;
+        }
+        
+        .rating-stars .star-readonly {
+            cursor: default;
+        }
+        
+        .rating-display {
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .rating-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-top: 0.5rem;
+        }
+        
+        .rating-label {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 0.25rem;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: rgba(0,255,0,0.1);
+            border: 1px solid rgba(0,255,0,0.3);
+            color: #00ff00;
+        }
+        
+        .status.error {
+            background: rgba(255,0,0,0.1);
+            border: 1px solid rgba(255,0,0,0.3);
+            color: #ff6b6b;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,212,255,0.3);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PDF转换器满意度评分测试</h1>
+        <p>测试满意度评分功能的实现效果</p>
+        
+        <div class="test-section">
+            <div class="test-title">测试1: 已有评分的记录</div>
+            <div class="recent-item">
+                <div class="recent-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="recent-info">
+                    <div class="recent-name">document.pdf</div>
+                    <div class="recent-time">08-05 18:44 · PDF转Word</div>
+                    <div class="recent-details">2.0 MB · 3.2s</div>
+                    <div class="rating-display">
+                        <i class="fas fa-star star-readonly" style="color: #ffd700; margin-right: 2px; font-size: 0.9rem;"></i>
+                        <i class="fas fa-star star-readonly" style="color: #ffd700; margin-right: 2px; font-size: 0.9rem;"></i>
+                        <i class="fas fa-star star-readonly" style="color: #ffd700; margin-right: 2px; font-size: 0.9rem;"></i>
+                        <i class="fas fa-star star-readonly" style="color: #ffd700; margin-right: 2px; font-size: 0.9rem;"></i>
+                        <i class="fas fa-star star-readonly" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                    </div>
+                </div>
+                <div style="color: #00ff00;">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">测试2: 无评分的记录（可点击评分）</div>
+            <div class="recent-item">
+                <div class="recent-icon">
+                    <i class="fas fa-file-word"></i>
+                </div>
+                <div class="recent-info">
+                    <div class="recent-name">report.docx</div>
+                    <div class="recent-time">08-05 18:30 · Word转PDF</div>
+                    <div class="recent-details">1.5 MB · 2.1s</div>
+                    <div class="rating-section">
+                        <div class="rating-label">满意度评分:</div>
+                        <div class="rating-stars" data-record-id="123">
+                            <i class="fas fa-star star" data-rating="1" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="2" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="3" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="4" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="5" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #00ff00;">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">测试3: 不同转换类型的记录</div>
+            <div class="recent-item">
+                <div class="recent-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="recent-info">
+                    <div class="recent-name">photos.jpg</div>
+                    <div class="recent-time">08-05 18:20 · 图片转PDF</div>
+                    <div class="recent-details">4.9 MB · 4.8s</div>
+                    <div class="rating-section">
+                        <div class="rating-label">满意度评分:</div>
+                        <div class="rating-stars" data-record-id="456">
+                            <i class="fas fa-star star" data-rating="1" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="2" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="3" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="4" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                            <i class="fas fa-star star" data-rating="5" style="color: rgba(255,255,255,0.3); margin-right: 2px; font-size: 0.9rem;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #00ff00;">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">功能测试</div>
+            <button class="btn" onclick="testRatingSubmission()">测试评分提交</button>
+            <button class="btn" onclick="testStarGeneration()">测试星星生成</button>
+            <button class="btn" onclick="testCSRFToken()">测试CSRF Token</button>
+            <div id="testStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // 生成星星评分HTML
+        function generateStarRating(rating, readonly = false) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                const isFilled = i <= rating;
+                const starClass = readonly ? 'star-readonly' : 'star';
+                const starColor = isFilled ? '#ffd700' : 'rgba(255,255,255,0.3)';
+                stars += `<i class="fas fa-star ${starClass}" data-rating="${i}" style="color: ${starColor}; cursor: ${readonly ? 'default' : 'pointer'}; margin-right: 2px; font-size: 0.9rem;"></i>`;
+            }
+            return stars;
+        }
+        
+        // 提交满意度评分
+        function submitRating(recordId, rating) {
+            console.log(`提交评分: 记录ID=${recordId}, 评分=${rating}`);
+            
+            // 模拟API调用
+            setTimeout(() => {
+                showStatus(`评分提交成功！记录ID: ${recordId}, 评分: ${rating}`, 'success');
+                
+                // 更新星星显示
+                const ratingStars = document.querySelector(`[data-record-id="${recordId}"]`);
+                if (ratingStars) {
+                    ratingStars.innerHTML = generateStarRating(rating, true);
+                    ratingStars.classList.add('rated');
+                }
+            }, 1000);
+        }
+        
+        // 获取CSRF Token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // 显示状态信息
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 3000);
+        }
+        
+        // 测试评分提交
+        function testRatingSubmission() {
+            showStatus('测试评分提交功能...', 'success');
+            submitRating('123', 4);
+        }
+        
+        // 测试星星生成
+        function testStarGeneration() {
+            const testDiv = document.createElement('div');
+            testDiv.innerHTML = generateStarRating(3, false);
+            showStatus(`生成3星评分: ${testDiv.innerHTML}`, 'success');
+        }
+        
+        // 测试CSRF Token
+        function testCSRFToken() {
+            const token = getCookie('csrftoken');
+            if (token) {
+                showStatus(`CSRF Token获取成功: ${token.substring(0, 10)}...`, 'success');
+            } else {
+                showStatus('CSRF Token获取失败', 'error');
+            }
+        }
+        
+        // 页面加载完成后绑定事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有评分星星添加点击事件
+            document.querySelectorAll('.rating-stars').forEach(ratingStars => {
+                ratingStars.addEventListener('click', function(e) {
+                    const star = e.target.closest('.star');
+                    if (star) {
+                        const rating = parseInt(star.dataset.rating);
+                        const recordId = this.dataset.recordId;
+                        submitRating(recordId, rating);
+                    }
+                });
+            });
+            
+            showStatus('页面加载完成，可以开始测试', 'success');
+        });
+    </script>
+</body>
+</html> 

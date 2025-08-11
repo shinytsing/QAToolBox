@@ -1,0 +1,833 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}健身社区 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.fitness-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.fitness-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.fitness-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.fitness-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.fitness-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 15px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.fitness-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.community-feed {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.feed-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.post-btn {
+    background: var(--primary-color, #667eea);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.post-btn:hover {
+    background: var(--primary-dark, #5a6fd8);
+    transform: translateY(-2px);
+}
+
+.post-form {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color, #667eea);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.post-submit {
+    background: var(--primary-color, #667eea);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.post-submit:hover {
+    background: var(--primary-dark, #5a6fd8);
+}
+
+.post-item {
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.3s ease;
+}
+
+.post-item:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.post-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.post-info {
+    flex: 1;
+}
+
+.post-author {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.post-time {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.post-content {
+    color: #333;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.post-image {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.post-actions-bar {
+    display: flex;
+    gap: 20px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 15px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    color: var(--primary-color, #667eea);
+}
+
+.action-btn.liked {
+    color: #e74c3c;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebar-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.rank {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.rank.gold { background: #ffd700; }
+.rank.silver { background: #c0c0c0; }
+.rank.bronze { background: #cd7f32; }
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.user-stats {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.challenge-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.challenge-item:last-child {
+    border-bottom: none;
+}
+
+.challenge-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 18px;
+}
+
+.challenge-info {
+    flex: 1;
+}
+
+.challenge-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.challenge-desc {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.challenge-progress {
+    width: 100%;
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary-color, #667eea);
+    transition: width 0.3s ease;
+}
+
+.join-btn {
+    background: var(--primary-color, #667eea);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.join-btn:hover {
+    background: var(--primary-dark, #5a6fd8);
+}
+
+.join-btn.joined {
+    background: #28a745;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .fitness-container {
+        padding: 20px 15px;
+    }
+    
+    .fitness-header h1 {
+        font-size: 2rem;
+    }
+    
+    .fitness-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .fitness-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .community-feed,
+    .sidebar-card {
+        padding: 20px;
+    }
+    
+    .feed-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .post-actions-bar {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .stat-card,
+    .community-feed,
+    .sidebar-card {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .stat-value {
+        color: #e2e8f0;
+    }
+    
+    .stat-label {
+        color: #a0aec0;
+    }
+    
+    .feed-title {
+        color: #e2e8f0;
+    }
+    
+    .post-form {
+        background: #4a5568;
+    }
+    
+    .form-group label {
+        color: #e2e8f0;
+    }
+    
+    .form-control {
+        background: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .post-item {
+        border-color: #4a5568;
+    }
+    
+    .post-author {
+        color: #e2e8f0;
+    }
+    
+    .post-content {
+        color: #e2e8f0;
+    }
+    
+    .post-actions-bar {
+        border-top-color: #4a5568;
+    }
+    
+    .sidebar-title {
+        color: #e2e8f0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .leaderboard-item {
+        border-bottom-color: #4a5568;
+    }
+    
+    .user-name {
+        color: #e2e8f0;
+    }
+    
+    .challenge-item {
+        border-bottom-color: #4a5568;
+    }
+    
+    .challenge-title {
+        color: #e2e8f0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fitness-container">
+    <div class="fitness-header">
+        <h1>健身社区</h1>
+        <p>与志同道合的健身爱好者分享经验，互相激励，共同进步</p>
+    </div>
+    
+    <div class="fitness-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">{{ total_members|default:"1,234" }}</div>
+            <div class="stat-label">社区成员</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-fire"></i>
+            </div>
+            <div class="stat-value">{{ total_workouts|default:"5,678" }}</div>
+            <div class="stat-label">总训练次数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div class="stat-value">{{ active_challenges|default:"12" }}</div>
+            <div class="stat-label">进行中挑战</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <div class="stat-value">{{ total_likes|default:"8,901" }}</div>
+            <div class="stat-label">总点赞数</div>
+        </div>
+    </div>
+    
+    <div class="fitness-content">
+        <div class="community-feed">
+            <div class="feed-header">
+                <h2 class="feed-title">社区动态</h2>
+                <button class="post-btn" onclick="showPostForm()">
+                    <i class="fas fa-plus"></i> 发布动态
+                </button>
+            </div>
+            
+            <div class="post-form" id="postForm" style="display: none;">
+                <div class="form-group">
+                    <label for="postContent">分享您的健身心得</label>
+                    <textarea class="form-control" id="postContent" rows="4" placeholder="今天完成了什么训练？有什么收获？"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="postImage">添加图片（可选）</label>
+                    <input type="file" class="form-control" id="postImage" accept="image/*">
+                </div>
+                <div class="post-actions">
+                    <button class="post-submit" onclick="submitPost()">
+                        <i class="fas fa-paper-plane"></i> 发布
+                    </button>
+                    <button class="action-btn" onclick="hidePostForm()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+            
+            <div class="post-item">
+                <div class="post-header">
+                    <div class="post-avatar">张</div>
+                    <div class="post-info">
+                        <div class="post-author">张健身</div>
+                        <div class="post-time">2小时前</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    今天完成了30分钟的HIIT训练，感觉超级棒！坚持了一个月，体重已经减了5公斤，继续加油！💪
+                </div>
+                <img src="{% static 'img/fitness/workout.jpg' %}" alt="训练照片" class="post-image" style="display: none;">
+                <div class="post-actions-bar">
+                    <button class="action-btn" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i>
+                        <span>24</span>
+                    </button>
+                    <button class="action-btn" onclick="showComments()">
+                        <i class="fas fa-comment"></i>
+                        <span>8</span>
+                    </button>
+                    <button class="action-btn" onclick="sharePost()">
+                        <i class="fas fa-share"></i>
+                        <span>分享</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="post-item">
+                <div class="post-header">
+                    <div class="post-avatar">李</div>
+                    <div class="post-info">
+                        <div class="post-author">李力量</div>
+                        <div class="post-time">5小时前</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    深蹲训练日！今天突破了个人记录，完成了150kg的深蹲，感谢教练的指导！🏋️‍♂️
+                </div>
+                <div class="post-actions-bar">
+                    <button class="action-btn liked" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i>
+                        <span>56</span>
+                    </button>
+                    <button class="action-btn" onclick="showComments()">
+                        <i class="fas fa-comment"></i>
+                        <span>15</span>
+                    </button>
+                    <button class="action-btn" onclick="sharePost()">
+                        <i class="fas fa-share"></i>
+                        <span>分享</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="post-item">
+                <div class="post-header">
+                    <div class="post-avatar">王</div>
+                    <div class="post-info">
+                        <div class="post-author">王瑜伽</div>
+                        <div class="post-time">1天前</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    完成了90分钟的瑜伽课程，身心都得到了放松。瑜伽不仅锻炼身体，更是一种生活态度。🧘‍♀️
+                </div>
+                <div class="post-actions-bar">
+                    <button class="action-btn" onclick="toggleLike(this)">
+                        <i class="fas fa-heart"></i>
+                        <span>32</span>
+                    </button>
+                    <button class="action-btn" onclick="showComments()">
+                        <i class="fas fa-comment"></i>
+                        <span>12</span>
+                    </button>
+                    <button class="action-btn" onclick="sharePost()">
+                        <i class="fas fa-share"></i>
+                        <span>分享</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">排行榜</h3>
+                <div class="leaderboard-item">
+                    <div class="rank gold">1</div>
+                    <div class="user-info">
+                        <div class="user-name">健身达人</div>
+                        <div class="user-stats">连续训练 30 天</div>
+                    </div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank silver">2</div>
+                    <div class="user-info">
+                        <div class="user-name">力量王者</div>
+                        <div class="user-stats">总训练 156 次</div>
+                    </div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank bronze">3</div>
+                    <div class="user-info">
+                        <div class="user-name">瑜伽女神</div>
+                        <div class="user-stats">累计时长 120h</div>
+                    </div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank">4</div>
+                    <div class="user-info">
+                        <div class="user-name">跑步健将</div>
+                        <div class="user-stats">总里程 500km</div>
+                    </div>
+                </div>
+                <div class="leaderboard-item">
+                    <div class="rank">5</div>
+                    <div class="user-info">
+                        <div class="user-name">健身新手</div>
+                        <div class="user-stats">连续训练 15 天</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-card">
+                <h3 class="sidebar-title">热门挑战</h3>
+                <div class="challenge-item">
+                    <div class="challenge-icon">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <div class="challenge-info">
+                        <div class="challenge-title">30天俯卧撑挑战</div>
+                        <div class="challenge-desc">每天增加5个俯卧撑</div>
+                        <div class="challenge-progress">
+                            <div class="progress-bar" style="width: 60%;"></div>
+                        </div>
+                    </div>
+                    <button class="join-btn joined">已参加</button>
+                </div>
+                <div class="challenge-item">
+                    <div class="challenge-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <div class="challenge-info">
+                        <div class="challenge-title">5公里跑步挑战</div>
+                        <div class="challenge-desc">一周内完成5公里跑步</div>
+                        <div class="challenge-progress">
+                            <div class="progress-bar" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                    <button class="join-btn">参加</button>
+                </div>
+                <div class="challenge-item">
+                    <div class="challenge-icon">
+                        <i class="fas fa-yoga"></i>
+                    </div>
+                    <div class="challenge-info">
+                        <div class="challenge-title">7天瑜伽挑战</div>
+                        <div class="challenge-desc">每天练习30分钟瑜伽</div>
+                        <div class="challenge-progress">
+                            <div class="progress-bar" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                    <button class="join-btn">参加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 显示/隐藏发布表单
+function showPostForm() {
+    document.getElementById('postForm').style.display = 'block';
+}
+
+function hidePostForm() {
+    document.getElementById('postForm').style.display = 'none';
+    document.getElementById('postContent').value = '';
+    document.getElementById('postImage').value = '';
+}
+
+// 提交动态
+function submitPost() {
+    const content = document.getElementById('postContent').value.trim();
+    if (!content) {
+        alert('请输入动态内容');
+        return;
+    }
+    
+    // 这里可以添加提交到后端的逻辑
+    console.log('发布动态:', content);
+    
+    // 模拟发布成功
+    alert('动态发布成功！');
+    hidePostForm();
+}
+
+// 点赞功能
+function toggleLike(button) {
+    const icon = button.querySelector('i');
+    const count = button.querySelector('span');
+    
+    if (button.classList.contains('liked')) {
+        button.classList.remove('liked');
+        icon.className = 'fas fa-heart';
+        count.textContent = parseInt(count.textContent) - 1;
+    } else {
+        button.classList.add('liked');
+        icon.className = 'fas fa-heart';
+        count.textContent = parseInt(count.textContent) + 1;
+    }
+}
+
+// 显示评论
+function showComments() {
+    alert('评论功能开发中...');
+}
+
+// 分享动态
+function sharePost() {
+    if (navigator.share) {
+        navigator.share({
+            title: '健身社区动态',
+            text: '来看看这个有趣的健身动态！',
+            url: window.location.href
+        });
+    } else {
+        alert('分享功能开发中...');
+    }
+}
+
+// 参加挑战
+function joinChallenge(button) {
+    if (button.classList.contains('joined')) {
+        button.classList.remove('joined');
+        button.textContent = '参加';
+    } else {
+        button.classList.add('joined');
+        button.textContent = '已参加';
+    }
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 为所有参加按钮添加事件监听
+    document.querySelectorAll('.join-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            joinChallenge(this);
+        });
+    });
+    
+    console.log('健身社区页面加载完成');
+});
+</script>
+{% endblock %}
+

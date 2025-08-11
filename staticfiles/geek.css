@@ -18,6 +18,20 @@
   --geek-font-sans: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   --geek-gradient: linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%);
   --geek-gradient-card: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%);
+  
+  /* 赛博哥特故障艺术变量 */
+  --cyber-glitch-offset: 2px;
+  --cyber-glitch-blur: 0.5px;
+  --cyber-glitch-duration: 0.3s;
+  --cyber-bg: #0a0a0a;
+  --cyber-primary: #ff0040;
+  --cyber-accent: #00ffff;
+  --cyber-secondary: #ffff00;
+  --cyber-text: #ffffff;
+  --cyber-text-muted: #888888;
+  --cyber-border: rgba(255, 0, 64, 0.3);
+  --cyber-shadow: 0 8px 32px rgba(255, 0, 64, 0.3);
+  --cyber-gradient: linear-gradient(135deg, #ff0040 0%, #00ffff 50%, #ffff00 100%);
 }
 
 body.geek-theme {
@@ -287,7 +301,7 @@ body.geek-theme::before {
 .geek-navbar {
   background: rgba(26, 31, 46, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--geek-border);
+  border-bottom: 0.5px solid var(--geek-border);
 }
 
 .geek-navbar .nav-link {
@@ -295,6 +309,25 @@ body.geek-theme::before {
   font-weight: 500;
   transition: all 0.3s ease;
   font-family: var(--geek-font-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.geek-navbar .nav-link i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.geek-navbar .nav-link span {
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .geek-navbar .nav-link:hover {

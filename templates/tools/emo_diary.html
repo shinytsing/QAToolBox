@@ -614,6 +614,11 @@
   font-family: var(--emo-font, 'Arial', sans-serif);
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
   font-style: italic;
+  transition: all 0.3s ease;
+  min-height: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .emo-diary-main {
@@ -784,7 +789,11 @@
   padding: 12px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
-  font-family: var(--emo-font, 'Arial', sans-serif);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #2c3e50;
   transition: border-color 0.3s ease;
 }
 
@@ -1318,11 +1327,11 @@ document.addEventListener('keydown', function(e) {
     switch(e.key.toLowerCase()) {
       case 'e':
         e.preventDefault();
-        window.location.href = '/tools/emo-diary/';
+        window.location.href = '/tools/emo_diary/';
         break;
       case 'l':
         e.preventDefault();
-        window.location.href = '/tools/life-diary/';
+        window.location.href = '/tools/life_diary/';
         break;
       case 'f':
         e.preventDefault();
@@ -1330,27 +1339,27 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'c':
         e.preventDefault();
-        window.location.href = '/tools/creative-writer/';
+        window.location.href = '/tools/creative_writer/';
         break;
       case 'p':
         e.preventDefault();
-        window.location.href = '/tools/pdf-converter/';
+        window.location.href = '/tools/pdf_converter/';
         break;
       case 'r':
         e.preventDefault();
-        // window.location.href = '/tools/redbook-generator/'; // 已隐藏
+        // window.location.href = '/tools/redbook_generator/'; // 已隐藏
         break;
       case 't':
         e.preventDefault();
-        window.location.href = '/tools/test-case-generator/';
+        window.location.href = '/tools/test_case_generator/';
         break;
       case 'w':
         e.preventDefault();
-        window.location.href = '/tools/web-crawler/';
+        window.location.href = '/tools/web_crawler/';
         break;
       case 's':
         e.preventDefault();
-        window.location.href = '/tools/self-analysis/';
+        window.location.href = '/tools/self_analysis/';
         break;
       case 'b':
         e.preventDefault();
@@ -1358,15 +1367,15 @@ document.addEventListener('keydown', function(e) {
         break;
       case 'm':
         e.preventDefault();
-        window.location.href = '/tools/music-healing/';
+        window.location.href = '/tools/music_healing/';
         break;
       case 'd':
         e.preventDefault();
-        window.location.href = '/tools/meditation-guide/';
+        window.location.href = '/tools/meditation_guide/';
         break;
       case 'a':
         e.preventDefault();
-        window.location.href = '/tools/fortune-analyzer/';
+        window.location.href = '/tools/fortune_analyzer/';
         break;
     }
   }
@@ -1585,6 +1594,14 @@ function applyThemeStyles(theme) {
       title: '情感日记',
       subtitle: '她说难过好过没感情',
       icon: '💔',
+      subtitles: [
+        '她说难过好过没感情',
+        '我只想要个答案',
+        '情感需要被看见',
+        '每一个情绪都值得被倾听',
+        '在黑暗中寻找光明',
+        '让心灵得到疗愈'
+      ],
       playlist: [
         { title: 'Keshi - 2 soon', artist: 'Emotional', file: 'keshi - 2 soon.flac' },
         { title: 'Eternxlkz - SLAY!', artist: 'Deep', file: 'Eternxlkz - SLAY!.flac' },
@@ -1655,6 +1672,13 @@ function applyThemeStyles(theme) {
   
   // 更新音乐播放列表
   updateMusicPlaylist(theme, config);
+  
+  // 如果是emo模式，启动副标题轮换
+  if (theme === 'emo') {
+    setTimeout(() => {
+      startSubtitleRotation();
+    }, 2000); // 等待主题切换动画完成后再启动轮换
+  }
   
   // 更新主题切换提示的文本
   const hintText = document.querySelector('.theme-switch-hint span');
@@ -1898,7 +1922,7 @@ document.getElementById('saveDiary').addEventListener('click', async function() 
   const emotion = selectedEmotion ? selectedEmotion.dataset.emotion : 'neutral';
   
   try {
-    const response = await fetch('/tools/api/emo-diary/', {
+    const response = await fetch('/tools/api/emo_diary/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2032,5 +2056,52 @@ document.querySelector('.get-support-btn').addEventListener('click', function() 
     : '支持功能即将推出！';
   alert(message);
 });
+
+// Emo模式副标题轮换功能
+let subtitleIndex = 0;
+let subtitleInterval;
+
+function startSubtitleRotation() {
+  const subtitleElement = document.querySelector('.emo-diary-subtitle');
+  if (!subtitleElement) return;
+  
+  const emoSubtitles = [
+    '她说难过好过没感情',
+    '我只想要个答案',
+    '情感需要被看见',
+    '每一个情绪都值得被倾听',
+    '在黑暗中寻找光明',
+    '让心灵得到疗愈'
+  ];
+  
+  // 清除之前的定时器
+  if (subtitleInterval) {
+    clearInterval(subtitleInterval);
+  }
+  
+  // 设置轮换间隔（每5秒轮换一次）
+  subtitleInterval = setInterval(() => {
+    subtitleElement.style.opacity = '0';
+    subtitleElement.style.transform = 'translateY(-10px)';
+    
+    setTimeout(() => {
+      subtitleIndex = (subtitleIndex + 1) % emoSubtitles.length;
+      subtitleElement.textContent = emoSubtitles[subtitleIndex];
+      subtitleElement.style.opacity = '1';
+      subtitleElement.style.transform = 'translateY(0)';
+    }, 300);
+  }, 5000);
+}
+
+// 页面加载完成后启动副标题轮换
+document.addEventListener('DOMContentLoaded', function() {
+  // 检查当前是否为emo模式
+  const container = document.querySelector('.emo-diary-container');
+  if (container && container.classList.contains('emo-container')) {
+    startSubtitleRotation();
+  }
+});
+
+
 </script>
 {% endblock %} 

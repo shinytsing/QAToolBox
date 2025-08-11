@@ -263,7 +263,7 @@ body.emo-theme::before {
 .emo-navbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(15px);
-  border-bottom: 1px solid var(--emo-border);
+  border-bottom: 0.5px solid var(--emo-border);
 }
 
 .emo-navbar .nav-link {
@@ -271,6 +271,25 @@ body.emo-theme::before {
   font-weight: 500;
   transition: all 0.3s ease;
   font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.emo-navbar .nav-link i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.emo-navbar .nav-link span {
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .emo-navbar .nav-link:hover {

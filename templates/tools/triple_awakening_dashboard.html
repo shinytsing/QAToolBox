@@ -575,7 +575,7 @@
       </p>
       
       <div class="action-buttons">
-        <button class="action-btn" onclick="window.location.href='/tools/copilot/'">
+        <button class="action-btn" onclick="window.location.href='{% url 'copilot_page' %}'">
           <i class="fas fa-eye"></i> 查看协作
         </button>
         <button class="action-btn secondary" onclick="createCollaboration()">
@@ -601,7 +601,7 @@ function startFitnessWorkout() {
     is_exhausted: Math.random() > 0.7
   };
   
-  fetch('/tools/api/triple-awakening/fitness-workout/', {
+  fetch('/tools/api/triple_awakening/fitness-workout/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -638,7 +638,7 @@ function recordExhaustion() {
           formData.append('audio', audioBlob);
           formData.append('workout_session_id', '1');
           
-          fetch('/tools/api/triple-awakening/record-audio/', {
+          fetch('/tools/api/triple_awakening/record-audio/', {
             method: 'POST',
             body: formData
           })
@@ -681,7 +681,7 @@ function startCodeWorkout() {
     is_exhausted: Math.random() > 0.7
   };
   
-  fetch('/tools/api/triple-awakening/code-workout/', {
+  fetch('/tools/api/triple_awakening/code-workout/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -702,7 +702,7 @@ function startCodeWorkout() {
 
 // 显示AI依赖度
 function showAIDependency() {
-  fetch('/tools/api/triple-awakening/ai-dependency/')
+  fetch('/tools/api/triple_awakening/ai-dependency/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -714,7 +714,7 @@ function showAIDependency() {
 
 // 显示痛苦货币
 function showPainCurrency() {
-  fetch('/tools/api/triple-awakening/pain-currency/')
+  fetch('/tools/api/triple_awakening/pain-currency/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -735,7 +735,7 @@ function createExhaustionProof() {
     workout_session_id: 1
   };
   
-  fetch('/tools/api/triple-awakening/exhaustion-proof/', {
+  fetch('/tools/api/triple_awakening/exhaustion-proof/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -755,7 +755,7 @@ function createExhaustionProof() {
 
 // 完成任务
 function completeTask(taskId) {
-  fetch('/tools/api/triple-awakening/complete-task/', {
+  fetch('/tools/api/triple_awakening/complete-task/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -793,7 +793,7 @@ function createCollaboration() {
     description: '展示从骨架到肌肉到神经系统的完整协作过程'
   };
   
-  fetch('/tools/api/triple-awakening/copilot-collaboration/', {
+  fetch('/tools/api/triple_awakening/copilot-collaboration/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

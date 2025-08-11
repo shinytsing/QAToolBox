@@ -65,10 +65,7 @@ class HeartLinkMatcher:
             requester__is_superuser=False,
             requester__is_active=True,
         ).exclude(
-            Q(requester=current_user) |
-            Q(requester__in=HeartLinkRequest.objects.filter(
-                status='matched'
-            ).values_list('requester', flat=True))
+            Q(requester=current_user)
         ).first()
         
         if not available_request:
@@ -112,6 +109,7 @@ class HeartLinkMatcher:
     def match_users(self, current_user, current_request):
         """执行用户匹配"""
         try:
+            # 使用更短的超时时间避免长时间锁定
             with transaction.atomic():
                 # 找到最佳匹配
                 best_match_request = self.find_best_match(current_user, current_request)
@@ -143,12 +141,17 @@ class HeartLinkMatcher:
                 return chat_room, best_match_request.requester
                 
         except Exception as e:
-            # 如果匹配失败，记录错误并清理状态
+            # 如果匹配失败，记录错误但不立即设为过期
             print(f"匹配失败: {str(e)}")
-            # 将当前请求状态设为过期
-            current_request.status = 'expired'
-            current_request.save()
-            return None, None
+            # 只有在特定错误情况下才设为过期
+            if "database is locked" in str(e).lower():
+                # 数据库锁定错误，保持pending状态，让用户重试
+                return None, None
+            else:
+                # 其他错误，设为过期
+                current_request.status = 'expired'
+                current_request.save()
+                return None, None
     
     def cleanup_expired_requests(self):
         """清理过期的请求"""

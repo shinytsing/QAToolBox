@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅游页面UI增强测试</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .feature-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+        }
+        
+        .demo-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, #ffffff 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .overview-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .overview-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overview-card:hover::before {
+            opacity: 1;
+        }
+        
+        .overview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .overview-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .overview-content h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        
+        .data-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .data-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .data-label {
+            font-weight: 600;
+            color: #4facfe;
+            margin-bottom: 0.25rem;
+        }
+        
+        .data-value {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+        
+        .attractions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .attraction-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .attraction-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .attraction-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .attraction-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .attraction-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+        
+        .attraction-type {
+            font-size: 0.9rem;
+            color: #4facfe;
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .attraction-desc {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .enhanced-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .enhanced-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #4facfe, #00f2fe);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .enhanced-section:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .enhanced-section:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+        
+        .enhanced-section h4 {
+            color: #4facfe;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+        }
+        
+        .enhanced-section h4::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 30px;
+            height: 2px;
+            background: linear-gradient(90deg, #4facfe, transparent);
+        }
+        
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .attractions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">旅游页面UI增强测试</h1>
+            <p class="subtitle">展示旅游攻略页面的UI增强效果</p>
+            
+            <!-- 功能特性展示 -->
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <div class="feature-title">目的地信息</div>
+                    <div class="feature-desc">国家、首都、时区、语言</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌤️</div>
+                    <div class="feature-title">实时天气</div>
+                    <div class="feature-desc">温度、天气状况、湿度</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💱</div>
+                    <div class="feature-title">汇率信息</div>
+                    <div class="feature-desc">主要货币汇率</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏛️</div>
+                    <div class="feature-title">景点详情</div>
+                    <div class="feature-desc">分类景点、详细描述</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏮</div>
+                    <div class="feature-title">文化信息</div>
+                    <div class="feature-desc">语言、货币、习俗</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💡</div>
+                    <div class="feature-title">实用贴士</div>
+                    <div class="feature-desc">根据目的地的实用建议</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 目的地概览演示 -->
+        <div class="demo-section">
+            <h2 class="demo-title">目的地信息概览</h2>
+            <div class="overview-grid">
+                <div class="overview-card">
+                    <div class="overview-icon">🌍</div>
+                    <div class="overview-content">
+                        <h4>目的地信息</h4>
+                        <div class="data-card">
+                            <div class="data-label">国家</div>
+                            <div class="data-value">中国</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">首都</div>
+                            <div class="data-value">北京</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">时区</div>
+                            <div class="data-value">Asia/Shanghai</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">语言</div>
+                            <div class="data-value">中文</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon">🌤️</div>
+                    <div class="overview-content">
+                        <h4>实时天气</h4>
+                        <div class="data-card">
+                            <div class="data-label">温度</div>
+                            <div class="data-value" style="font-size: 1.2rem; font-weight: 600; color: #f093fb;">25°C</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">天气状况</div>
+                            <div class="data-value">晴朗</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">湿度</div>
+                            <div class="data-value">65%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon">💱</div>
+                    <div class="overview-content">
+                        <h4>汇率信息</h4>
+                        <div class="data-card">
+                            <div class="data-label">美元 (USD)</div>
+                            <div class="data-value" style="color: #4facfe; font-weight: 600;">0.1389</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">欧元 (EUR)</div>
+                            <div class="data-value" style="color: #4facfe; font-weight: 600;">0.1278</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">日元 (JPY)</div>
+                            <div class="data-value" style="color: #4facfe; font-weight: 600;">20.85</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon">🕐</div>
+                    <div class="overview-content">
+                        <h4>时区信息</h4>
+                        <div class="data-card">
+                            <div class="data-label">时区</div>
+                            <div class="data-value">Asia/Shanghai</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">UTC偏移</div>
+                            <div class="data-value">+08:00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 景点详情演示 -->
+        <div class="demo-section">
+            <h2 class="demo-title">景点详情展示</h2>
+            <div class="attractions-grid">
+                <div class="attraction-card">
+                    <div class="attraction-name">故宫博物院</div>
+                    <div class="attraction-type">历史景点</div>
+                    <div class="attraction-desc">中国明清两代的皇家宫殿，世界上现存规模最大、保存最完整的木质结构古建筑群。</div>
+                </div>
+                <div class="attraction-card">
+                    <div class="attraction-name">天安门广场</div>
+                    <div class="attraction-type">文化景点</div>
+                    <div class="attraction-desc">世界上最大的城市广场之一，是北京的重要地标和旅游景点。</div>
+                </div>
+                <div class="attraction-card">
+                    <div class="attraction-name">颐和园</div>
+                    <div class="attraction-type">自然景点</div>
+                    <div class="attraction-desc">中国现存最大、保存最完整的皇家园林，被誉为"皇家园林博物馆"。</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 增强内容演示 -->
+        <div class="demo-section">
+            <h2 class="demo-title">增强内容展示</h2>
+            
+            <!-- 货币兑换建议 -->
+            <div class="enhanced-section">
+                <h4>💱 货币兑换建议</h4>
+                <div class="data-card">
+                    <div class="data-label">基础货币</div>
+                    <div class="data-value">CNY</div>
+                </div>
+                <h5>💱 实时汇率</h5>
+                <div class="data-card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>USD</span>
+                        <span style="color: #4facfe; font-weight: 600;">0.1389</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>EUR</span>
+                        <span style="color: #4facfe; font-weight: 600;">0.1278</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>JPY</span>
+                        <span style="color: #4facfe; font-weight: 600;">20.85</span>
+                    </div>
+                </div>
+                <h5>💡 兑换建议</h5>
+                <ul>
+                    <li>建议在银行或正规兑换点兑换货币</li>
+                    <li>保留一些现金以备不时之需</li>
+                    <li>注意汇率波动，选择合适的兑换时机</li>
+                </ul>
+            </div>
+            
+            <!-- 天气建议 -->
+            <div class="enhanced-section">
+                <h4>🌤️ 天气建议</h4>
+                <div class="data-card">
+                    <div class="data-label">🌤️ 当前天气</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+                        <div>
+                            <div class="data-label">温度</div>
+                            <div class="data-value" style="font-size: 1.2rem; font-weight: 600; color: #f093fb;">25°C</div>
+                        </div>
+                        <div>
+                            <div class="data-label">天气状况</div>
+                            <div class="data-value">晴朗</div>
+                        </div>
+                        <div>
+                            <div class="data-label">湿度</div>
+                            <div class="data-value">65%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-card">
+                    <div class="data-label">👕 穿衣建议</div>
+                    <div class="data-value">天气温暖，建议穿着轻便衣物，注意防晒</div>
+                </div>
+                <h5>🎯 活动建议</h5>
+                <ul>
+                    <li>适合户外活动和观光游览</li>
+                    <li>可以参观博物馆和室内景点</li>
+                    <li>建议在早晚时段进行户外活动</li>
+                </ul>
+            </div>
+            
+            <!-- 文化信息 -->
+            <div class="enhanced-section">
+                <h4>🏮 文化信息</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="data-card">
+                        <div class="data-label">🗣️ 语言</div>
+                        <div class="data-value">中文</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">💰 货币</div>
+                        <div class="data-value">CNY</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">🕐 时区</div>
+                        <div class="data-value">UTC+8</div>
+                    </div>
+                </div>
+                <h5>🏮 文化贴士</h5>
+                <ul>
+                    <li>尊重当地文化习俗</li>
+                    <li>注意着装得体</li>
+                    <li>学习基本的当地语言问候语</li>
+                    <li>了解当地的礼仪规范</li>
+                </ul>
+            </div>
+            
+            <!-- 实用贴士 -->
+            <div class="enhanced-section">
+                <h4>💡 实用贴士</h4>
+                <div class="tips-grid">
+                    <div class="data-card" style="position: relative;">
+                        <div style="position: absolute; top: -10px; left: -10px; background: #4facfe; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">
+                            1
+                        </div>
+                        <div class="data-value" style="margin-left: 20px;">建议提前预订酒店和景点门票</div>
+                    </div>
+                    <div class="data-card" style="position: relative;">
+                        <div style="position: absolute; top: -10px; left: -10px; background: #4facfe; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">
+                            2
+                        </div>
+                        <div class="data-value" style="margin-left: 20px;">准备一些常用药品和急救用品</div>
+                    </div>
+                    <div class="data-card" style="position: relative;">
+                        <div style="position: absolute; top: -10px; left: -10px; background: #4facfe; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">
+                            3
+                        </div>
+                        <div class="data-value" style="margin-left: 20px;">注意保管好随身物品和证件</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 紧急信息 -->
+            <div class="enhanced-section">
+                <h4>🚨 紧急信息</h4>
+                <h5>🚨 紧急电话</h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="data-card" style="border-left: 4px solid #f5576c;">
+                        <div class="data-label">报警</div>
+                        <div class="data-value" style="color: #f5576c; font-weight: 600; font-size: 1.1rem;">110</div>
+                    </div>
+                    <div class="data-card" style="border-left: 4px solid #f5576c;">
+                        <div class="data-label">急救</div>
+                        <div class="data-value" style="color: #f5576c; font-weight: 600; font-size: 1.1rem;">120</div>
+                    </div>
+                    <div class="data-card" style="border-left: 4px solid #f5576c;">
+                        <div class="data-label">消防</div>
+                        <div class="data-value" style="color: #f5576c; font-weight: 600; font-size: 1.1rem;">119</div>
+                    </div>
+                </div>
+                <h5>🏥 医院信息</h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="data-card">
+                        <div class="data-value">北京协和医院</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-value">北京大学第一医院</div>
+                    </div>
+                </div>
+                <h5>⚠️ 安全提示</h5>
+                <ul>
+                    <li>保管好随身物品，注意防盗</li>
+                    <li>遵守交通规则，注意安全</li>
+                    <li>遇到紧急情况及时报警求助</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

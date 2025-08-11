@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}帮助中心 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.help-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.help-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.help-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.help-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.help-search {
+    margin-bottom: 40px;
+}
+
+.search-box {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.search-input {
+    width: 100%;
+    padding: 15px 50px 15px 20px;
+    border: 2px solid #e1e5e9;
+    border-radius: 25px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: var(--primary-color, #667eea);
+}
+
+.search-button {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--primary-color, #667eea);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+    background: var(--primary-dark, #5a6fd8);
+}
+
+.help-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.help-section {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.help-section:hover {
+    transform: translateY(-5px);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    background: var(--primary-color, #667eea);
+}
+
+.section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.section-content {
+    color: #666;
+    line-height: 1.6;
+}
+
+.help-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.help-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.help-list li:last-child {
+    border-bottom: none;
+}
+
+.help-list i {
+    color: var(--primary-color, #667eea);
+    font-size: 14px;
+}
+
+.faq-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 40px;
+    margin-top: 50px;
+}
+
+.faq-section h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.faq-item {
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.faq-question {
+    padding: 20px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    color: #333;
+    transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+    background-color: #f8f9fa;
+}
+
+.faq-answer {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.faq-answer.show {
+    padding: 20px;
+    max-height: 200px;
+}
+
+.faq-toggle {
+    color: var(--primary-color, #667eea);
+    transition: transform 0.3s ease;
+}
+
+.faq-toggle.rotated {
+    transform: rotate(180deg);
+}
+
+.contact-section {
+    text-align: center;
+    margin-top: 50px;
+    padding: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.contact-section h2 {
+    margin-bottom: 20px;
+}
+
+.contact-info {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contact-item i {
+    font-size: 20px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .help-container {
+        padding: 20px 15px;
+    }
+    
+    .help-header h1 {
+        font-size: 2rem;
+    }
+    
+    .help-sections {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .help-section {
+        padding: 20px;
+    }
+    
+    .faq-section {
+        padding: 20px;
+    }
+    
+    .contact-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .help-section {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .section-title {
+        color: #e2e8f0;
+    }
+    
+    .section-content {
+        color: #a0aec0;
+    }
+    
+    .help-list li {
+        border-bottom-color: #4a5568;
+    }
+    
+    .faq-section {
+        background: #2d3748;
+    }
+    
+    .faq-section h2 {
+        color: #e2e8f0;
+    }
+    
+    .faq-item {
+        background: #4a5568;
+    }
+    
+    .faq-question {
+        background: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .faq-question:hover {
+        background-color: #2d3748;
+    }
+    
+    .faq-answer {
+        background: #2d3748;
+        color: #a0aec0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="help-container">
+    <div class="help-header">
+        <h1>帮助中心</h1>
+        <p>在这里找到您需要的所有帮助信息和使用指南</p>
+    </div>
+    
+    <div class="help-search">
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="搜索帮助内容..." id="helpSearch">
+            <button class="search-button" onclick="searchHelp()">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="help-sections">
+        <div class="help-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h3 class="section-title">快速开始</h3>
+            </div>
+            <div class="section-content">
+                <ul class="help-list">
+                    <li><i class="fas fa-check"></i> 注册账号并登录系统</li>
+                    <li><i class="fas fa-check"></i> 选择您喜欢的主题模式</li>
+                    <li><i class="fas fa-check"></i> 浏览并体验各种工具功能</li>
+                    <li><i class="fas fa-check"></i> 保存您的偏好设置</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <h3 class="section-title">功能指南</h3>
+            </div>
+            <div class="section-content">
+                <ul class="help-list">
+                    <li><i class="fas fa-file-pdf"></i> PDF转换器使用说明</li>
+                    <li><i class="fas fa-route"></i> 旅游攻略生成指南</li>
+                    <li><i class="fas fa-heart"></i> 心链接功能介绍</li>
+                    <li><i class="fas fa-dumbbell"></i> 健身计划编辑器</li>
+                    <li><i class="fas fa-music"></i> 音乐播放器使用</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <h3 class="section-title">设置与配置</h3>
+            </div>
+            <div class="section-content">
+                <ul class="help-list">
+                    <li><i class="fas fa-user"></i> 个人资料管理</li>
+                    <li><i class="fas fa-palette"></i> 主题模式切换</li>
+                    <li><i class="fas fa-bell"></i> 通知设置</li>
+                    <li><i class="fas fa-shield-alt"></i> 隐私与安全</li>
+                    <li><i class="fas fa-download"></i> 数据导出</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="help-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h3 class="section-title">常见问题</h3>
+            </div>
+            <div class="section-content">
+                <ul class="help-list">
+                    <li><i class="fas fa-question"></i> 忘记密码怎么办？</li>
+                    <li><i class="fas fa-question"></i> 如何恢复删除的数据？</li>
+                    <li><i class="fas fa-question"></i> 功能无法使用怎么办？</li>
+                    <li><i class="fas fa-question"></i> 如何联系客服？</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="faq-section">
+        <h2>常见问题解答</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>如何注册QAToolBox账号？</span>
+                <i class="fas fa-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                <p>点击页面右上角的"注册"按钮，填写您的邮箱、用户名和密码即可完成注册。注册后请及时验证邮箱地址。</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>忘记密码怎么办？</span>
+                <i class="fas fa-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                <p>在登录页面点击"忘记密码"，输入您的注册邮箱，系统会发送重置密码的链接到您的邮箱。</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>如何切换主题模式？</span>
+                <i class="fas fa-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                <p>点击页面右上角的主题切换按钮，可以选择极客模式、生活模式、狂暴模式、Emo模式等不同主题。</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>PDF转换器支持哪些格式？</span>
+                <i class="fas fa-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                <p>支持PDF转Word、Word转PDF、PDF转图片、图片转PDF等多种格式转换，文件大小限制为50MB。</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>如何导出我的数据？</span>
+                <i class="fas fa-chevron-down faq-toggle"></i>
+            </div>
+            <div class="faq-answer">
+                <p>在个人设置页面可以找到数据导出功能，支持导出日记、目标、统计数据等个人数据。</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="contact-section">
+        <h2>需要更多帮助？</h2>
+        <p>如果您没有找到需要的答案，请随时联系我们</p>
+        <div class="contact-info">
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <span>support@qatoolbox.com</span>
+            </div>
+            <div class="contact-item">
+                <i class="fab fa-weixin"></i>
+                <span>微信客服：QAToolBox</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-clock"></i>
+                <span>工作时间：9:00-18:00</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 搜索功能
+function searchHelp() {
+    const searchTerm = document.getElementById('helpSearch').value.toLowerCase();
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+        const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+        
+        if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+            item.style.display = 'block';
+            // 如果搜索到答案，自动展开
+            if (answer.includes(searchTerm)) {
+                const answerDiv = item.querySelector('.faq-answer');
+                const toggle = item.querySelector('.faq-toggle');
+                answerDiv.classList.add('show');
+                toggle.classList.add('rotated');
+            }
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// FAQ展开/收起
+function toggleFAQ(element) {
+    const answer = element.nextElementSibling;
+    const toggle = element.querySelector('.faq-toggle');
+    
+    if (answer.classList.contains('show')) {
+        answer.classList.remove('show');
+        toggle.classList.remove('rotated');
+    } else {
+        // 关闭其他展开的FAQ
+        document.querySelectorAll('.faq-answer.show').forEach(item => {
+            item.classList.remove('show');
+        });
+        document.querySelectorAll('.faq-toggle.rotated').forEach(item => {
+            item.classList.remove('rotated');
+        });
+        
+        // 展开当前FAQ
+        answer.classList.add('show');
+        toggle.classList.add('rotated');
+    }
+}
+
+// 回车键搜索
+document.getElementById('helpSearch').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchHelp();
+    }
+});
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 可以在这里添加一些初始化逻辑
+    console.log('帮助页面加载完成');
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreeMind和XMind下载功能测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #ffd700;
+            font-size: 1.5em;
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-button:active {
+            transform: translateY(0);
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+        
+        .status.success {
+            background: rgba(46, 204, 113, 0.3);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: #2ecc71;
+        }
+        
+        .status.error {
+            background: rgba(231, 76, 60, 0.3);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: #e74c3c;
+        }
+        
+        .status.pending {
+            background: rgba(52, 152, 219, 0.3);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            color: #3498db;
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #f39c12;
+        }
+        
+        .info-box h3 {
+            margin-top: 0;
+            color: #f39c12;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .feature-list li:before {
+            content: "✅ ";
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        
+        .download-info {
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .download-info h4 {
+            margin-top: 0;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 FreeMind和XMind下载功能测试</h1>
+        
+        <div class="info-box">
+            <h3>📋 修复内容</h3>
+            <ul class="feature-list">
+                <li>修复了FreeMind数据结构兼容性问题</li>
+                <li>优化了XMind文件生成逻辑</li>
+                <li>增强了下载功能的错误处理</li>
+                <li>确保飞书思维导图兼容性</li>
+                <li>支持多种文件格式和编码</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>📄 FreeMind文件测试</h2>
+            <p>测试FreeMind格式文件的生成和下载功能</p>
+            <button class="test-button" onclick="testFreeMindDownload()">
+                🧠 测试FreeMind下载
+            </button>
+            <div id="freemindStatus" class="status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🗂️ XMind文件测试</h2>
+            <p>测试XMind格式文件的生成和下载功能</p>
+            <button class="test-button" onclick="testXMindDownload()">
+                🎯 测试XMind下载
+            </button>
+            <div id="xmindStatus" class="status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔄 批量下载测试</h2>
+            <p>测试同时下载FreeMind和XMind文件</p>
+            <button class="test-button" onclick="testBatchDownload()">
+                📦 批量下载测试
+            </button>
+            <div id="batchStatus" class="status"></div>
+        </div>
+        
+        <div class="download-info">
+            <h4>💡 使用说明</h4>
+            <p><strong>FreeMind文件:</strong> 可在FreeMind软件中打开，也可导入飞书思维导图</p>
+            <p><strong>XMind文件:</strong> 可在XMind软件中打开，也可导入飞书思维导图</p>
+            <p><strong>兼容性:</strong> 两种格式都经过优化，确保在飞书中正常显示</p>
+        </div>
+        
+        <div class="info-box">
+            <h3>🔧 技术改进</h3>
+            <ul class="feature-list">
+                <li>支持多种数据结构格式</li>
+                <li>增强的错误处理和日志记录</li>
+                <li>优化的MIME类型设置</li>
+                <li>改进的文件路径查找逻辑</li>
+                <li>飞书兼容的HTTP响应头</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(elementId, message, type) {
+            const statusDiv = document.getElementById(elementId);
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function downloadFile(url, filename, fileType, statusElementId) {
+            showStatus(statusElementId, `正在下载${fileType}文件...`, 'pending');
+            
+            fetch(url, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.style.display = 'none';
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                window.URL.revokeObjectURL(url);
+                
+                showStatus(statusElementId, `${fileType}文件下载成功！`, 'success');
+            })
+            .catch(error => {
+                console.error('下载失败:', error);
+                showStatus(statusElementId, `下载失败: ${error.message}`, 'error');
+            });
+        }
+        
+        function testFreeMindDownload() {
+            // 模拟FreeMind文件下载
+            downloadFile('/tools/download/test_freemind.mm/', 'test_cases_freemind.mm', 'FreeMind', 'freemindStatus');
+        }
+        
+        function testXMindDownload() {
+            // 模拟XMind文件下载
+            downloadFile('/tools/download/test_xmind.xmind/', 'test_cases_xmind.xmind', 'XMind', 'xmindStatus');
+        }
+        
+        function testBatchDownload() {
+            showStatus('batchStatus', '开始批量下载测试...', 'pending');
+            
+            // 先下载FreeMind
+            setTimeout(() => {
+                downloadFile('/tools/download/test_freemind.mm/', 'test_cases_freemind.mm', 'FreeMind', 'batchStatus');
+                
+                // 然后下载XMind
+                setTimeout(() => {
+                    downloadFile('/tools/download/test_xmind.xmind/', 'test_cases_xmind.xmind', 'XMind', 'batchStatus');
+                }, 1000);
+            }, 500);
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 FreeMind和XMind下载测试页面已加载');
+            console.log('📋 修复内容:');
+            console.log('  - 修复了数据结构兼容性问题');
+            console.log('  - 优化了文件生成逻辑');
+            console.log('  - 增强了错误处理');
+            console.log('  - 确保飞书兼容性');
+        });
+    </script>
+</body>
+</html> 

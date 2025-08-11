@@ -456,7 +456,7 @@ body.cyberpunk-theme.glitch-level-3 .cyber-title {
 .cyber-navbar {
   background: rgba(26, 26, 26, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--cyber-border);
+  border-bottom: 0.5px solid var(--cyber-border);
 }
 
 .cyber-navbar .nav-link {
@@ -464,6 +464,25 @@ body.cyberpunk-theme.glitch-level-3 .cyber-title {
   font-weight: 500;
   transition: all 0.3s ease;
   font-family: var(--cyber-font-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+.cyber-navbar .nav-link i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.cyber-navbar .nav-link span {
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .cyber-navbar .nav-link:hover {

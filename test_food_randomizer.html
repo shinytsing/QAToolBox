@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食物随机选择器测试</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .result {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .link {
+            color: #4facfe;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ 食物随机选择器测试</h1>
+        
+        <div class="test-section">
+            <h2>功能链接</h2>
+            <a href="/tools/food-randomizer/" class="link" target="_blank">
+                🎲 访问食物随机选择器
+            </a>
+        </div>
+        
+        <div class="test-section">
+            <h2>API测试</h2>
+            <button class="test-button" onclick="testStartRandomization()">
+                🚀 测试开始随机选择API
+            </button>
+            <button class="test-button" onclick="testGetHistory()">
+                📋 测试获取历史记录API
+            </button>
+            <button class="test-button" onclick="testGetStatistics()">
+                📊 测试获取统计数据API
+            </button>
+            <div id="apiResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>数据库测试</h2>
+            <button class="test-button" onclick="testDatabase()">
+                🗄️ 测试数据库连接
+            </button>
+            <div id="dbResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>功能说明</h2>
+            <p>✅ 已实现的功能：</p>
+            <ul>
+                <li>🎯 餐种选择（早餐、午餐、晚餐、夜宵）</li>
+                <li>🌍 菜系偏好（中餐、西餐、日料、韩料、泰餐、混合）</li>
+                <li>🎲 随机选择动画效果</li>
+                <li>📸 食物详情展示（图片、描述、食材、难度等）</li>
+                <li>⭐ 评价系统（五星评分、反馈留言）</li>
+                <li>📋 历史记录管理</li>
+                <li>📊 统计数据展示</li>
+                <li>🎨 现代化UI设计</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function testStartRandomization() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/food-randomizer/start/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        meal_type: 'lunch',
+                        cuisine_preference: 'mixed',
+                        animation_duration: 3000
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = '开始随机选择API测试结果:\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'API测试失败: ' + error.message;
+            }
+        }
+        
+        async function testGetHistory() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/food-randomizer/history/?page=1&page_size=5');
+                const data = await response.json();
+                resultDiv.textContent = '获取历史记录API测试结果:\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'API测试失败: ' + error.message;
+            }
+        }
+        
+        async function testGetStatistics() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/tools/api/food-randomizer/statistics/');
+                const data = await response.json();
+                resultDiv.textContent = '获取统计数据API测试结果:\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'API测试失败: ' + error.message;
+            }
+        }
+        
+        async function testDatabase() {
+            const resultDiv = document.getElementById('dbResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '正在测试数据库连接...';
+            
+            try {
+                const response = await fetch('/tools/api/food-randomizer/statistics/');
+                if (response.ok) {
+                    resultDiv.textContent = '✅ 数据库连接正常！\n食物随机选择器功能已成功部署。';
+                } else {
+                    resultDiv.textContent = '❌ 数据库连接异常，请检查配置。';
+                }
+            } catch (error) {
+                resultDiv.textContent = '❌ 数据库测试失败: ' + error.message;
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

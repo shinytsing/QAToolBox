@@ -26,21 +26,24 @@ logger = logging.getLogger(__name__)
 class GenerateTestCasesAPI(APIView):
     permission_classes = [IsAuthenticated]
     # 增加批量生成的最大批次限制
-    MAX_BATCH_COUNT = 5
+    MAX_BATCH_COUNT = 10
 
-    # 优化后的默认提示词模板 - 平衡速度和质量
-    DEFAULT_PROMPT = """作为资深测试工程师，请根据以下产品需求生成核心测试用例：
+    # 优化后的默认提示词模板 - 确保用例数量充足，严禁省略，格式清晰
+    DEFAULT_PROMPT = """作为资深测试工程师，请根据以下产品需求生成完整的测试用例：
 
 ## 重要要求
 ⚠️ **绝对禁止使用"此处省略"、"等等"、"..."等任何形式的省略表述**
-⚠️ **生成核心功能的关键测试用例**
-⚠️ **优先保证质量和完整性，适度控制数量**
+⚠️ **必须生成足够数量的测试用例，不能因为长度限制而减少**
+⚠️ **优先保证完整性和数量，速度其次**
+⚠️ **每个用例都必须完整，不能中途截断**
+⚠️ **严格按照指定格式输出，不要乱**
 
 ## 测试用例要求
-1. **功能测试**：核心功能、主要业务流程
-2. **界面测试**：关键UI交互、用户体验
-3. **异常测试**：重要错误处理、边界条件
-4. **安全测试**：基本数据安全、权限控制
+1. **功能测试**：核心功能、主要业务流程、数据处理
+2. **界面测试**：关键UI交互、用户体验、页面跳转
+3. **异常测试**：重要错误处理、边界条件、异常流程
+4. **安全测试**：基本数据安全、权限控制、输入验证
+5. **性能测试**：基本性能指标、响应时间
 
 ## 用例结构（每个用例必须包含）
 - **用例ID**：TC-模块-序号（如：TC-登录-001）
@@ -50,22 +53,59 @@ class GenerateTestCasesAPI(APIView):
 - **测试步骤**：详细的操作步骤（1.2.3...）
 - **预期结果**：具体的验证点
 - **优先级**：P0/P1/P2（P0最高）
-- **测试类型**：功能/界面/异常/安全
+- **测试类型**：功能/界面/异常/安全/性能
 
-## 数量要求
-- **每个功能模块8-12个用例**
-- **总用例数量20-30个**
-- **用例分布：正向50% + 异常30% + 边界20%**
-- **重点覆盖核心功能和关键场景**
+## 数量要求（必须满足）
+- **每个功能模块至少8个用例，推荐10-15个**
+- **总用例数量至少50个，推荐55-60个**
+- **用例分布：正向60% + 异常25% + 边界15%**
+- **必须覆盖所有核心功能和关键场景**
+- **如果遇到token限制，请生成最重要的用例，确保完整性**
 
-## 输出格式
-- 使用Markdown格式
-- 按功能模块分类（## 模块名称）
-- 每个用例都要完整描述，不能有任何省略
+## 输出格式（严格按照此格式）
+```
+# 测试用例文档
+
+## 模块1：[模块名称]
+### TC-001：[用例标题]
+**测试场景**：[具体场景]
+**前置条件**：[系统状态和数据准备]
+**测试步骤**：
+1. [步骤1]
+2. [步骤2]
+3. [步骤3]
+**预期结果**：[具体验证点]
+**优先级**：P0/P1/P2
+**测试类型**：[功能/界面/异常/安全/性能]
+
+### TC-002：[用例标题]
+[同上格式]
+
+...（继续该模块的其他用例）
+
+## 模块2：[模块名称]
+### TC-XXX：[用例标题]
+[同上格式]
+
+...（继续其他模块）
+
+## 总结
+- 总用例数量：[数字]个
+- 功能模块数量：[数字]个
+- 测试覆盖情况：[覆盖的功能点]
+- 测试类型分布：[正向/异常/边界测试分布]
+```
+
+## 完整性保证
+- 每个用例必须包含完整的测试步骤
+- 预期结果必须具体可验证
+- 不能使用任何省略表述
+- 严格按照格式输出，不要乱
+- 最后必须有总结部分
 
 产品需求：{requirement}
 
-请生成完整、实用的测试用例，确保质量优先。
+请严格按照上述格式生成完整、充足的测试用例，确保数量和质量都满足要求。
 """
 
     def post(self, request):
@@ -337,8 +377,18 @@ class GenerateTestCasesAPI(APIView):
             root_topic.set("STYLE", "bubble")
             root_topic.set("COLOR", "#000000")  # 黑色根节点
 
+            # 处理不同的数据结构格式
+            structure_data = {}
+            if isinstance(test_cases, dict):
+                if "structure" in test_cases:
+                    # 原有的structure格式
+                    structure_data = test_cases["structure"]
+                else:
+                    # 直接的字典格式
+                    structure_data = test_cases
+            
             # 构建层级结构：场景（一级节点）-> 测试用例（二级节点）
-            for scene, cases in test_cases["structure"].items():
+            for scene, cases in structure_data.items():
                 if not scene or not cases:  # 跳过空场景或空用例
                     continue
 
@@ -349,25 +399,41 @@ class GenerateTestCasesAPI(APIView):
                 scene_node.set("STYLE", "fork")
 
                 # 测试用例节点
-                for case in cases:
-                    if case:  # 跳过空用例
-                        case_node = ET.SubElement(scene_node, "node")
-                        case_node.set("TEXT", self._escape_xml(case))
-                        case_node.set("COLOR", "#4682B4")  # 钢蓝色用例节点
-                        case_node.set("STYLE", "bullet")
+                if isinstance(cases, list):
+                    for case in cases:
+                        if case:  # 跳过空用例
+                            case_node = ET.SubElement(scene_node, "node")
+                            case_node.set("TEXT", self._escape_xml(case))
+                            case_node.set("COLOR", "#4682B4")  # 钢蓝色用例节点
+                            case_node.set("STYLE", "bullet")
+                elif isinstance(cases, str):
+                    # 如果是字符串，直接作为子节点
+                    case_node = ET.SubElement(scene_node, "node")
+                    case_node.set("TEXT", self._escape_xml(cases))
+                    case_node.set("COLOR", "#4682B4")
+                    case_node.set("STYLE", "bullet")
 
-            # 格式化XML
+            # 格式化XML - 优化飞书兼容性
             rough_string = ET.tostring(map_root, 'utf-8')
             reparsed = minidom.parseString(rough_string)
-            # 移除XML声明，避免飞书解析问题
-            pretty_xml = '\n'.join([line for line in reparsed.toprettyxml(indent="  ").split('\n') if line.strip()])
+            
+            # 生成标准FreeMind XML格式，确保飞书兼容
+            pretty_xml = reparsed.toprettyxml(indent="  ", encoding='utf-8').decode('utf-8')
+            
+            # 确保XML声明正确且包含UTF-8编码
+            if not pretty_xml.startswith('<?xml'):
+                pretty_xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + pretty_xml
+            elif 'encoding="UTF-8"' not in pretty_xml:
+                # 如果XML声明存在但没有UTF-8编码，替换它
+                pretty_xml = pretty_xml.replace('<?xml version="1.0"?>', '<?xml version="1.0" encoding="UTF-8"?>')
 
             return pretty_xml
 
         except Exception as e:
             logger.error(f"生成FreeMind XML失败: {str(e)}", exc_info=True)
             # 生成失败时返回基础XML结构
-            return """<map version="1.0.1">
+            return """<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0.1">
   <node TEXT="测试用例生成失败" STYLE="bubble" COLOR="#FF0000">
     <node TEXT="无法生成有效的测试用例结构" STYLE="bullet" COLOR="#FF0000"/>
   </node>
@@ -425,6 +491,13 @@ class GenerateTestCasesAPI(APIView):
                         last_case = current_section_topic.getSubTopics()[-1]
                         detail_topic = last_case.addSubTopic()
                         detail_topic.setTitle(detail_content)
+            
+            # 如果没有解析到内容，创建默认结构
+            if not root_topic.getSubTopics():
+                default_section = root_topic.addSubTopic()
+                default_section.setTitle("测试用例")
+                default_case = default_section.addSubTopic()
+                default_case.setTitle("请查看生成的测试用例内容")
             
             return workbook
             

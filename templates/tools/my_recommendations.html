@@ -1,0 +1,666 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}我的推荐 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recommendations-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .recommendations-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .recommendations-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .recommendations-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .current-recommendations {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .recommendation-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 4px solid #4facfe;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .recommendation-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.05), rgba(0, 242, 254, 0.05));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .recommendation-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .recommendation-card:hover::before {
+        opacity: 1;
+    }
+
+    .recommendation-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .recommendation-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .recommendation-info h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0 0 5px 0;
+    }
+
+    .recommendation-category {
+        font-size: 0.8rem;
+        color: #666;
+        padding: 2px 8px;
+        background: white;
+        border-radius: 10px;
+    }
+
+    .recommendation-description {
+        color: #555;
+        line-height: 1.5;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .recommendation-reason {
+        background: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #666;
+        border-left: 3px solid #4facfe;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .recommendation-actions {
+        display: flex;
+        gap: 10px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+
+    .btn-primary {
+        background: #4facfe;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2196f3;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #f1f3f4;
+        color: #666;
+    }
+
+    .btn-secondary:hover {
+        background: #e9ecef;
+        color: #333;
+    }
+
+    .history-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .history-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .history-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+    .history-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .history-info {
+        flex: 1;
+    }
+
+    .history-title {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 3px;
+    }
+
+    .history-meta {
+        font-size: 0.8rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .history-action {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .action-clicked {
+        background: #e8f5e8;
+        color: #4caf50;
+    }
+
+    .action-dismissed {
+        background: #fff3e0;
+        color: #ff9800;
+    }
+
+    .action-shown {
+        background: #e3f2fd;
+        color: #2196f3;
+    }
+
+    .refresh-btn {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+
+    .refresh-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 10px;
+        color: #999;
+    }
+
+    @media (max-width: 768px) {
+        .recommendations-container {
+            padding: 15px;
+        }
+
+        .recommendations-header h1 {
+            font-size: 2rem;
+        }
+
+        .recommendations-header p {
+            font-size: 1rem;
+        }
+
+        .stats-section {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .recommendations-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .recommendation-actions {
+            flex-direction: column;
+        }
+
+        .history-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recommendations-container">
+    <!-- 页面头部 -->
+    <div class="recommendations-header">
+        <h1><i class="fas fa-star"></i> 我的推荐</h1>
+        <p>基于您的使用习惯，为您精心推荐最合适的功能</p>
+    </div>
+
+    <!-- 统计数据 -->
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                <i class="fas fa-eye"></i>
+            </div>
+            <div class="stat-value">{{ stats.total_recommendations }}</div>
+            <div class="stat-label">总推荐次数</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;">
+                <i class="fas fa-mouse-pointer"></i>
+            </div>
+            <div class="stat-value">{{ stats.clicked_recommendations }}</div>
+            <div class="stat-label">已点击推荐</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white;">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="stat-value">{{ stats.click_through_rate|floatformat:1 }}%</div>
+            <div class="stat-label">点击率</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7); color: white;">
+                <i class="fas fa-thumbs-up"></i>
+            </div>
+            <div class="stat-value">{{ stats.dismissed_recommendations }}</div>
+            <div class="stat-label">已忽略推荐</div>
+        </div>
+    </div>
+
+    <!-- 当前推荐 -->
+    <div class="current-recommendations">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="section-title">
+                <i class="fas fa-magic"></i>
+                为您推荐
+            </h2>
+            <button class="refresh-btn" onclick="refreshRecommendations()">
+                <i class="fas fa-sync-alt"></i> 刷新推荐
+            </button>
+        </div>
+
+        <div id="recommendationsContainer">
+            <!-- 推荐内容将通过JavaScript动态加载 -->
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <h3>正在加载推荐...</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- 推荐历史 -->
+    <div class="history-section">
+        <h2 class="section-title">
+            <i class="fas fa-history"></i>
+            推荐历史
+        </h2>
+
+        <div class="history-list">
+            {% if recent_recommendations %}
+                {% for rec in recent_recommendations %}
+                <div class="history-item">
+                    <div class="history-icon" style="background-color: {{ rec.feature.icon_color }}20; color: {{ rec.feature.icon_color }}">
+                        <i class="{{ rec.feature.icon_class }}"></i>
+                    </div>
+                    <div class="history-info">
+                        <div class="history-title">{{ rec.feature.name }}</div>
+                        <div class="history-meta">
+                            <span><i class="fas fa-clock"></i> {{ rec.created_at|date:"Y-m-d H:i" }}</span>
+                            <span><i class="fas fa-robot"></i> {{ rec.recommendation_algorithm }}</span>
+                            {% if rec.recommendation_reason %}
+                            <span><i class="fas fa-lightbulb"></i> {{ rec.recommendation_reason }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="history-action action-{{ rec.action }}">
+                        {% if rec.action == 'clicked' %}
+                            已点击
+                        {% elif rec.action == 'dismissed' %}
+                            已忽略
+                        {% elif rec.action == 'not_interested' %}
+                            不感兴趣
+                        {% else %}
+                            已展示
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>暂无推荐历史</h3>
+                    <p>开始使用功能，我们将为您提供个性化推荐</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class MyRecommendations {
+    constructor() {
+        this.currentSessionId = null;
+        this.loadRecommendations();
+    }
+
+    async loadRecommendations() {
+        try {
+            const response = await fetch('/tools/api/feature_recommendations/?limit=6');
+            const data = await response.json();
+
+            if (data.success) {
+                this.renderRecommendations(data.recommendations);
+            } else {
+                this.showError('加载推荐失败: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error loading recommendations:', error);
+            this.showError('网络错误，请稍后重试');
+        }
+    }
+
+    renderRecommendations(recommendations) {
+        const container = document.getElementById('recommendationsContainer');
+        
+        if (recommendations.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-compass"></i>
+                    <h3>暂无新推荐</h3>
+                    <p>请稍后再来查看，或前往功能发现页面探索更多功能</p>
+                    <button class="refresh-btn" onclick="location.href='/tools/feature_discovery/'">
+                        <i class="fas fa-compass"></i> 功能发现
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        const recommendationsHTML = recommendations.map(rec => `
+            <div class="recommendation-card" data-feature-id="${rec.id}">
+                <div class="recommendation-header">
+                    <div class="recommendation-icon" style="background-color: ${rec.icon_color}20; color: ${rec.icon_color}">
+                        <i class="${rec.icon_class}"></i>
+                    </div>
+                    <div class="recommendation-info">
+                        <h4>${rec.name}</h4>
+                        <span class="recommendation-category">${rec.category_display}</span>
+                    </div>
+                </div>
+                <div class="recommendation-description">${rec.description}</div>
+                ${rec.recommendation_reason ? `<div class="recommendation-reason">💡 ${rec.recommendation_reason}</div>` : ''}
+                <div class="recommendation-actions">
+                    <button class="action-btn btn-primary" onclick="myRecommendations.openFeature('${rec.url_name}', ${rec.id})">
+                        <i class="fas fa-external-link-alt"></i> 试用
+                    </button>
+                    <button class="action-btn btn-secondary" onclick="myRecommendations.dismissRecommendation(${rec.id})">
+                        <i class="fas fa-times"></i> 忽略
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = `<div class="recommendations-grid">${recommendationsHTML}</div>`;
+    }
+
+    async openFeature(urlName, featureId) {
+        // 记录点击行为
+        await this.recordAction(featureId, 'clicked');
+        
+        // 使用Django URL反向解析
+        try {
+            const response = await fetch(`/tools/api/resolve_url/?url_name=${urlName}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.href = data.url;
+            } else {
+                // 降级处理：直接拼接URL（保持向后兼容）
+                window.location.href = `/tools/${urlName}/`;
+            }
+        } catch (error) {
+            console.error('URL解析失败:', error);
+            // 降级处理：直接拼接URL
+            window.location.href = `/tools/${urlName}/`;
+        }
+    }
+
+    async dismissRecommendation(featureId) {
+        // 记录忽略行为
+        await this.recordAction(featureId, 'dismissed');
+        
+        // 移除推荐卡片
+        const card = document.querySelector(`[data-feature-id="${featureId}"]`);
+        if (card) {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-100%)';
+            
+            setTimeout(() => {
+                card.remove();
+                
+                // 检查是否还有推荐
+                const remainingCards = document.querySelectorAll('.recommendation-card');
+                if (remainingCards.length === 0) {
+                    this.showEmptyRecommendations();
+                }
+            }, 300);
+        }
+    }
+
+    async recordAction(featureId, action) {
+        try {
+            await fetch('/tools/api/feature_recommendations/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken()
+                },
+                body: JSON.stringify({
+                    feature_id: featureId,
+                    action: action,
+                    session_id: this.currentSessionId
+                })
+            });
+        } catch (error) {
+            console.error('Error recording action:', error);
+        }
+    }
+
+    showEmptyRecommendations() {
+        const container = document.getElementById('recommendationsContainer');
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-check-circle" style="color: #4caf50;"></i>
+                <h3>推荐已处理完毕</h3>
+                <p>您已处理了所有推荐，请稍后再来查看新推荐</p>
+                <button class="refresh-btn" onclick="refreshRecommendations()">
+                    <i class="fas fa-sync-alt"></i> 刷新推荐
+                </button>
+            </div>
+        `;
+    }
+
+    showError(message) {
+        const container = document.getElementById('recommendationsContainer');
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle" style="color: #ff6b6b;"></i>
+                <h3>加载失败</h3>
+                <p>${message}</p>
+                <button class="refresh-btn" onclick="refreshRecommendations()">
+                    <i class="fas fa-sync-alt"></i> 重新加载
+                </button>
+            </div>
+        `;
+    }
+
+    getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    }
+}
+
+// 全局实例
+let myRecommendations;
+
+// 刷新推荐
+function refreshRecommendations() {
+    myRecommendations.loadRecommendations();
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    myRecommendations = new MyRecommendations();
+});
+</script>
+{% endblock %}

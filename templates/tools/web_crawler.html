@@ -1029,7 +1029,7 @@ function addSubscription() {
         check_frequency: parseInt(checkFrequency)
     };
     
-    fetch('/tools/api/social-subscription/add/', {
+    fetch('/tools/api/social_subscription/add/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1067,7 +1067,7 @@ function resetForm() {
 
 // 加载订阅列表
 function loadSubscriptions() {
-    fetch('/tools/api/social-subscription/list/')
+    fetch('/tools/api/social_subscription/list/')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -1128,7 +1128,7 @@ function renderSubscriptions() {
 function toggleSubscription(id, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'paused' : 'active';
     
-    fetch('/tools/api/social-subscription/update/', {
+    fetch('/tools/api/social_subscription/update/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1161,7 +1161,7 @@ function deleteSubscription(id) {
         return;
     }
     
-    fetch('/tools/api/social-subscription/update/', {
+    fetch('/tools/api/social_subscription/update/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1190,7 +1190,7 @@ function deleteSubscription(id) {
 
 // 加载通知列表
 function loadNotifications() {
-    fetch('/tools/api/social-subscription/notifications/')
+    fetch('/tools/api/social_subscription/notifications/')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -1251,7 +1251,7 @@ function filterNotifications(filter) {
 
 // 标记通知为已读
 function markAsRead(id) {
-    fetch('/tools/api/social-subscription/mark-read/', {
+    fetch('/tools/api/social_subscription/mark_read/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1275,7 +1275,7 @@ function markAsRead(id) {
 
 // 标记所有通知为已读
 function markAllAsRead() {
-    fetch('/tools/api/social-subscription/mark-read/', {
+    fetch('/tools/api/social_subscription/mark_read/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1300,7 +1300,7 @@ function markAllAsRead() {
 
 // 加载统计数据
 function loadStats() {
-    fetch('/tools/api/social-subscription/stats/')
+    fetch('/tools/api/social_subscription/stats/')
     .then(response => response.json())
     .then(data => {
         if (data.success) {

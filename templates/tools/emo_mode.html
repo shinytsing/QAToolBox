@@ -6,6 +6,8 @@
 
 {% block extra_css %}
 <style>
+
+
 .rage-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #7f8c8d 50%, #95a5a6 75%, #bdc3c7 100%);
@@ -258,6 +260,10 @@
   letter-spacing: 1px;
   animation: subtitleFloat 4s ease-in-out infinite;
   transition: all 0.3s ease;
+  min-height: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 躁动模式下的副标题样式 */
@@ -633,6 +639,9 @@
 
 {% block content %}
 <div class="rage-container" id="rageContainer">
+  <!-- 返回按钮 -->
+  
+
   <!-- 点击计数器提示 -->
   <div class="click-counter" id="clickCounter">
     点击次数: <span id="clickCount">0</span>
@@ -652,11 +661,11 @@
     <h1 class="rage-title">
       <i class="fas fa-music"></i> Emo模式
     </h1>
-    <p class="rage-subtitle">💜 她说难过好过没有感情</p>
+    <p class="rage-subtitle" id="emoSubtitle">💜 她说难过好过没有感情</p>
   </div>
 
   <div class="rage-tools-grid">
-    <div class="training-card" onclick="window.location.href='/tools/self-analysis/'">
+    <div class="training-card" onclick="window.location.href='{% url 'self_analysis' %}'">
       <div class="training-icon">
         <i class="fas fa-brain"></i>
       </div>
@@ -664,7 +673,7 @@
       <p class="training-description">深度情感探索，自我认知，情绪模式分析</p>
     </div>
 
-    <div class="training-card" onclick="window.location.href='/tools/storyboard/'">
+    <div class="training-card" onclick="window.location.href='{% url 'storyboard' %}'">
       <div class="training-icon">
         <i class="fas fa-film"></i>
       </div>
@@ -672,12 +681,36 @@
       <p class="training-description">快速生成故事板，可视化创意构思，提升项目效率</p>
     </div>
 
-    <div class="training-card" onclick="window.location.href='/tools/fortune-analyzer/'">
+    <div class="training-card" onclick="window.location.href='{% url 'fortune_analyzer' %}'">
       <div class="training-icon">
                         <i class="fas fa-star"></i>
       </div>
       <h3 class="training-title">命运解析</h3>
       <p class="training-description">探索内心世界，寻找情感答案，指引心灵方向</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='{% url 'tarot_reading' %}'">
+      <div class="training-icon">
+        <i class="fas fa-moon"></i>
+      </div>
+      <h3 class="training-title">灵境塔罗</h3>
+      <p class="training-description">神秘塔罗占卜，探索命运奥秘，寻找内心答案</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='{% url 'tarot_diary' %}'">
+      <div class="training-icon">
+        <i class="fas fa-book-open"></i>
+      </div>
+      <h3 class="training-title">塔罗日记</h3>
+      <p class="training-description">记录占卜体验，追踪内心成长，分享心灵感悟</p>
+    </div>
+
+            <div class="training-card" onclick="window.location.href='{% url 'meetsomeone_dashboard' %}'">
+      <div class="training-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <h3 class="training-title">人际档案</h3>
+      <p class="training-description">记录生命中的重要连接，珍藏每一份情感与回忆</p>
     </div>
 
     <!-- 心动链接已移动到生活模式 -->
@@ -799,6 +832,45 @@ document.addEventListener('DOMContentLoaded', function() {
       clickCounter.classList.remove('show');
     }, 3000);
   }, 1000);
+  
+  // 启动副标题轮换
+  startSubtitleRotation();
 });
+
+// Emo模式副标题轮换功能
+let subtitleIndex = 0;
+let subtitleInterval;
+
+function startSubtitleRotation() {
+  const subtitleElement = document.getElementById('emoSubtitle');
+  if (!subtitleElement) return;
+  
+  const emoSubtitles = [
+    '💜 她说难过好过没有感情',
+    '💜 我只想要个答案',
+    '💜 情感需要被看见',
+    '💜 每一个情绪都值得被倾听',
+    '💜 在黑暗中寻找光明',
+    '💜 让心灵得到疗愈'
+  ];
+  
+  // 清除之前的定时器
+  if (subtitleInterval) {
+    clearInterval(subtitleInterval);
+  }
+  
+  // 设置轮换间隔（每5秒轮换一次）
+  subtitleInterval = setInterval(() => {
+    subtitleElement.style.opacity = '0';
+    subtitleElement.style.transform = 'translateY(-10px)';
+    
+    setTimeout(() => {
+      subtitleIndex = (subtitleIndex + 1) % emoSubtitles.length;
+      subtitleElement.textContent = emoSubtitles[subtitleIndex];
+      subtitleElement.style.opacity = '1';
+      subtitleElement.style.transform = 'translateY(0)';
+    }, 300);
+  }, 5000);
+}
 </script>
 {% endblock %} 

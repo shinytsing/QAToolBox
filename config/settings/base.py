@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'django_filters',
     
+    # Channels支持
+    'channels',
+    
     # 自定义应用
     'apps.users',
     'apps.content',
@@ -94,6 +97,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'wsgi.application'
+
+# Channels配置
+ASGI_APPLICATION = 'routing.application'
+
+# Channel Layers配置（使用内存后端，生产环境建议使用Redis）
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 # Database
 DATABASES = {
@@ -137,6 +150,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'src/static',
+    BASE_DIR / 'static',  # 添加项目根目录下的static文件夹
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 

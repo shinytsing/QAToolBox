@@ -1,0 +1,468 @@
+/* 功能推荐弹窗样式 */
+
+.feature-recommendation-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.feature-recommendation-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.feature-recommendation-popup.closing {
+    opacity: 0;
+    transform: scale(0.9);
+}
+
+.popup-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.popup-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    max-width: 480px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.feature-recommendation-popup.show .popup-content {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.popup-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.popup-header .fas.fa-magic {
+    animation: sparkle 2s infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-5deg) scale(1.1); }
+    75% { transform: rotate(5deg) scale(1.1); }
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    font-size: 16px;
+}
+
+.close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.popup-body {
+    padding: 24px;
+}
+
+.feature-card {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.feature-icon {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feature-info {
+    flex: 1;
+}
+
+.feature-name {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.feature-description {
+    margin: 0 0 16px;
+    color: #4a5568;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.feature-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.feature-category {
+    display: inline-block;
+    background: #edf2f7;
+    color: #4a5568;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    width: fit-content;
+}
+
+.recommendation-reason {
+    color: #718096;
+    font-size: 13px;
+    font-style: italic;
+}
+
+.popup-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px 24px;
+    justify-content: flex-end;
+}
+
+.popup-footer .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.popup-footer .btn-secondary {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+.popup-footer .btn-secondary:hover {
+    background: #edf2f7;
+    transform: translateY(-1px);
+}
+
+.popup-footer .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.popup-footer .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.popup-tips {
+    padding: 12px 24px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.popup-tips small {
+    color: #718096;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .popup-content {
+        max-width: 95%;
+        margin: 20px;
+    }
+    
+    .feature-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+    
+    .feature-icon {
+        align-self: center;
+    }
+    
+    .popup-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .popup-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .popup-header {
+        padding: 20px 16px 16px;
+    }
+    
+    .popup-body {
+        padding: 20px 16px;
+    }
+    
+    .popup-footer {
+        padding: 16px;
+    }
+}
+
+/* 深色主题适配 */
+.dark-theme .feature-recommendation-popup .popup-content {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+.dark-theme .popup-header {
+    border-bottom-color: #4a5568;
+}
+
+.dark-theme .feature-name {
+    color: #e2e8f0;
+}
+
+.dark-theme .feature-description {
+    color: #a0aec0;
+}
+
+.dark-theme .feature-category {
+    background: #4a5568;
+    color: #e2e8f0;
+}
+
+.dark-theme .recommendation-reason {
+    color: #718096;
+}
+
+.dark-theme .popup-footer .btn-secondary {
+    background: #4a5568;
+    color: #e2e8f0;
+    border-color: #718096;
+}
+
+.dark-theme .popup-footer .btn-secondary:hover {
+    background: #718096;
+}
+
+.dark-theme .popup-tips {
+    background: #4a5568;
+    border-top-color: #718096;
+}
+
+.dark-theme .popup-tips small {
+    color: #a0aec0;
+}
+
+/* 加载动画 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.feature-recommendation-popup.show .popup-content {
+    animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 功能发现页面样式 */
+.feature-discovery-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.feature-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.feature-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.feature-item .feature-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.feature-item .feature-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+}
+
+.feature-item .feature-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+.feature-item .feature-description {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.feature-item .feature-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.feature-item .feature-category {
+    background: #edf2f7;
+    color: #4a5568;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.feature-item .feature-action {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.feature-item .feature-action:hover {
+    background: #5a67d8;
+    color: white;
+    text-decoration: none;
+}
+
+/* 筛选器样式 */
+.feature-filters {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+}
+
+/* 统计信息样式 */
+.recommendation-stats {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 16px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #4a5568;
+}

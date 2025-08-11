@@ -1,0 +1,563 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}塔罗日记{% endblock %}
+{% block tool_title_display %}塔罗日记{% endblock %}
+
+{% block extra_css %}
+<style>
+.tarot-diary-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #7f8c8d 50%, #95a5a6 75%, #bdc3c7 100%);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tarot-diary-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(44, 62, 80, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(52, 73, 94, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 60%, rgba(127, 140, 141, 0.2) 0%, transparent 50%);
+  z-index: -1;
+}
+
+.diary-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.diary-title {
+  font-size: 3rem;
+  font-weight: bold;
+  background: linear-gradient(45deg, #e74c3c, #f39c12, #f1c40f, #2ecc71, #3498db, #9b59b6);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.diary-subtitle {
+  font-size: 1.2rem;
+  color: #bdc3c7;
+  margin-top: 1rem;
+}
+
+.diary-section {
+  background: rgba(44, 62, 80, 0.8);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  color: #f39c12;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.diary-form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(52, 73, 94, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: #f39c12;
+  box-shadow: 0 0 10px rgba(243, 156, 18, 0.3);
+}
+
+.form-textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tag {
+  background: rgba(243, 156, 18, 0.3);
+  color: #f39c12;
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tag-remove {
+  cursor: pointer;
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.btn-diary {
+  background: linear-gradient(45deg, #e74c3c, #f39c12);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-diary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+}
+
+.diary-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.diary-item {
+  background: rgba(52, 73, 94, 0.9);
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.diary-item:hover {
+  transform: translateY(-2px);
+  border-color: #f39c12;
+  box-shadow: 0 10px 25px rgba(243, 156, 18, 0.2);
+}
+
+.diary-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.diary-title {
+  font-size: 1.3rem;
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.diary-date {
+  font-size: 0.9rem;
+  color: #95a5a6;
+}
+
+.diary-content {
+  color: #bdc3c7;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.diary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.diary-tag {
+  background: rgba(52, 73, 94, 0.8);
+  color: #f39c12;
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.diary-reading-info {
+  background: rgba(44, 62, 80, 0.5);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.reading-title {
+  font-size: 1rem;
+  color: #f39c12;
+  margin-bottom: 0.5rem;
+}
+
+.reading-question {
+  color: #bdc3c7;
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.reading-cards {
+  font-size: 0.9rem;
+  color: #95a5a6;
+}
+
+.public-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  background: rgba(52, 73, 94, 0.8);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: #f39c12;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active .toggle-slider {
+  transform: translateX(26px);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #95a5a6;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .tarot-diary-container {
+    padding: 1rem;
+  }
+  
+  .diary-title {
+    font-size: 2rem;
+  }
+  
+  .diary-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tarot-diary-container">
+  <div class="diary-header">
+    <h1 class="diary-title">塔罗日记</h1>
+    <p class="diary-subtitle">记录你的占卜体验，追踪内心的成长</p>
+  </div>
+
+  <!-- 创建日记 -->
+  <div class="diary-section">
+    <h2 class="section-title">创建新日记</h2>
+    <form class="diary-form" id="diaryForm">
+      <div class="form-group">
+        <label class="form-label">选择占卜记录</label>
+        <select class="form-select" id="readingSelect" required>
+          <option value="">请选择占卜记录...</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">日记标题</label>
+        <input type="text" class="form-input" id="diaryTitle" placeholder="为这次占卜体验起个标题..." required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">日记内容</label>
+        <textarea class="form-textarea" id="diaryContent" placeholder="记录你对这次占卜的感受、理解和思考..." required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">标签</label>
+        <input type="text" class="form-input" id="tagInput" placeholder="输入标签后按回车添加...">
+        <div class="tag-input" id="tagContainer"></div>
+      </div>
+      
+      <div class="form-group">
+        <div class="public-toggle">
+          <div class="toggle-switch" id="publicToggle">
+            <div class="toggle-slider"></div>
+          </div>
+          <span>公开分享</span>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn-diary">保存日记</button>
+    </form>
+  </div>
+
+  <!-- 日记列表 -->
+  <div class="diary-section">
+    <h2 class="section-title">我的日记</h2>
+    <div class="diary-list" id="diaryList">
+      <!-- 日记将通过JavaScript动态加载 -->
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedTags = [];
+let availableReadings = [];
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+  loadAvailableReadings();
+  loadDiaries();
+  setupEventListeners();
+});
+
+// 设置事件监听器
+function setupEventListeners() {
+  // 标签输入
+  document.getElementById('tagInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  });
+  
+  // 公开切换
+  document.getElementById('publicToggle').addEventListener('click', function() {
+    this.classList.toggle('active');
+  });
+  
+  // 表单提交
+  document.getElementById('diaryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    createDiary();
+  });
+}
+
+// 加载可用的占卜记录
+async function loadAvailableReadings() {
+  try {
+    const response = await fetch('/tools/api/tarot/readings/');
+    const data = await response.json();
+    
+    if (data.success) {
+      availableReadings = data.readings;
+      const select = document.getElementById('readingSelect');
+      
+      data.readings.forEach(reading => {
+        const option = document.createElement('option');
+        option.value = reading.id;
+        option.textContent = `${reading.spread_name} - ${reading.reading_type} (${reading.created_at})`;
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('加载占卜记录失败:', error);
+  }
+}
+
+// 添加标签
+function addTag() {
+  const tagInput = document.getElementById('tagInput');
+  const tag = tagInput.value.trim();
+  
+  if (tag && !selectedTags.includes(tag)) {
+    selectedTags.push(tag);
+    updateTagDisplay();
+    tagInput.value = '';
+  }
+}
+
+// 移除标签
+function removeTag(tag) {
+  selectedTags = selectedTags.filter(t => t !== tag);
+  updateTagDisplay();
+}
+
+// 更新标签显示
+function updateTagDisplay() {
+  const container = document.getElementById('tagContainer');
+  container.innerHTML = '';
+  
+  selectedTags.forEach(tag => {
+    const tagElement = document.createElement('div');
+    tagElement.className = 'tag';
+    tagElement.innerHTML = `
+      ${tag}
+      <span class="tag-remove" onclick="removeTag('${tag}')">&times;</span>
+    `;
+    container.appendChild(tagElement);
+  });
+}
+
+// 创建日记
+async function createDiary() {
+  const readingId = document.getElementById('readingSelect').value;
+  const title = document.getElementById('diaryTitle').value.trim();
+  const content = document.getElementById('diaryContent').value.trim();
+  const isPublic = document.getElementById('publicToggle').classList.contains('active');
+  
+  if (!readingId || !title || !content) {
+    alert('请填写完整信息');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/tools/api/tarot/create-diary/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        reading_id: readingId,
+        title: title,
+        content: content,
+        tags: selectedTags,
+        is_public: isPublic
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      alert('日记创建成功！');
+      resetForm();
+      loadDiaries();
+    } else {
+      alert('创建日记失败: ' + data.message);
+    }
+  } catch (error) {
+    console.error('创建日记失败:', error);
+    alert('创建日记失败，请重试');
+  }
+}
+
+// 重置表单
+function resetForm() {
+  document.getElementById('diaryForm').reset();
+  selectedTags = [];
+  updateTagDisplay();
+  document.getElementById('publicToggle').classList.remove('active');
+}
+
+// 加载日记列表
+async function loadDiaries() {
+  try {
+    const response = await fetch('/tools/api/tarot/diaries/');
+    const data = await response.json();
+    
+    const diaryList = document.getElementById('diaryList');
+    
+    if (data.success && data.diaries.length > 0) {
+      diaryList.innerHTML = '';
+      
+      data.diaries.forEach(diary => {
+        const diaryItem = document.createElement('div');
+        diaryItem.className = 'diary-item';
+        
+        diaryItem.innerHTML = `
+          <div class="diary-item-header">
+            <div class="diary-title">${diary.title}</div>
+            <div class="diary-date">${diary.created_at}</div>
+          </div>
+          <div class="diary-content">${diary.content}</div>
+          <div class="diary-tags">
+            ${diary.tags.map(tag => `<span class="diary-tag">${tag}</span>`).join('')}
+          </div>
+          <div class="diary-reading-info">
+            <div class="reading-title">相关占卜: ${diary.reading.spread_name}</div>
+            <div class="reading-question">问题: ${diary.reading.question}</div>
+            <div class="reading-cards">${diary.reading.drawn_cards_count}张牌</div>
+          </div>
+        `;
+        
+        diaryList.appendChild(diaryItem);
+      });
+    } else {
+      diaryList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📖</div>
+          <p>还没有日记记录</p>
+          <p>创建你的第一篇塔罗日记吧！</p>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('加载日记失败:', error);
+  }
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+{% endblock %} 

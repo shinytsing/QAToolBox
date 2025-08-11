@@ -1,0 +1,1759 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}🍽️ 我其实一直有三个问题 - 美食选择器{% endblock %}
+
+{% block extra_css %}
+<style>
+    .food-randomizer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        min-height: 100vh;
+        font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* 餐厅装饰元素 */
+    .food-randomizer-container::before {
+        content: '🍽️ 🍕 🍜 🍣 🥘 🍔 🍟 🍰';
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: 2rem;
+        opacity: 0.1;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .food-randomizer-container::after {
+        content: '🍜 🍕 🍣 🥘 🍔 🍟 🍰 🍽️';
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        font-size: 2rem;
+        opacity: 0.1;
+        animation: float 6s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(5deg); }
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+        position: relative;
+        z-index: 2;
+    }
+
+    .header-title {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        animation: titleGlow 3s ease-in-out infinite alternate;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+        background-size: 400% 400%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: titleGlow 3s ease-in-out infinite alternate, gradientShift 4s ease infinite;
+    }
+
+    @keyframes titleGlow {
+        from { 
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3), 0 0 30px rgba(255,255,255,0.8);
+            transform: scale(1);
+        }
+        to { 
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3), 0 0 50px rgba(255,255,255,1);
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .header-subtitle {
+        font-size: 1.3rem;
+        opacity: 0.95;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        animation: subtitlePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes subtitlePulse {
+        0%, 100% { opacity: 0.95; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.02); }
+    }
+
+    .control-panel {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 25px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        backdrop-filter: blur(15px);
+        border: 2px solid rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .control-panel::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .meal-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .meal-option {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.4s ease;
+    }
+
+    .meal-option input[type="radio"] {
+        display: none;
+    }
+
+    .meal-option label {
+        display: block;
+        padding: 15px 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 3px solid #dee2e6;
+        border-radius: 15px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #495057;
+        transition: all 0.4s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .meal-option label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    .meal-option:hover label::before {
+        left: 100%;
+    }
+
+    .meal-option input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .meal-option:hover label {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .cuisine-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .cuisine-option {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.4s ease;
+    }
+
+    .cuisine-option input[type="radio"] {
+        display: none;
+    }
+
+    .cuisine-option label {
+        display: block;
+        padding: 12px 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #495057;
+        transition: all 0.4s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cuisine-option label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    .cuisine-option:hover label::before {
+        left: 100%;
+    }
+
+    .cuisine-option input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-color: #28a745;
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    .cuisine-option:hover label {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .mood-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .mood-option {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.4s ease;
+    }
+
+    .mood-option input[type="radio"] {
+        display: none;
+    }
+
+    .mood-option label {
+        display: block;
+        padding: 12px 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #495057;
+        transition: all 0.4s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mood-option label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    .mood-option:hover label::before {
+        left: 100%;
+    }
+
+    .mood-option input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        border-color: #ff6b6b;
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+    }
+
+    .mood-option:hover label {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .price-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .price-option {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.4s ease;
+    }
+
+    .price-option input[type="radio"] {
+        display: none;
+    }
+
+    .price-option label {
+        display: block;
+        padding: 12px 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #495057;
+        transition: all 0.4s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .price-option label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    .price-option:hover label::before {
+        left: 100%;
+    }
+
+    .price-option input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-color: #28a745;
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    .price-option:hover label {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .dietary-restrictions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    .restriction-option {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.4s ease;
+    }
+
+    .restriction-option input[type="checkbox"] {
+        display: none;
+    }
+
+    .restriction-option label {
+        display: block;
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #495057;
+        transition: all 0.4s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .restriction-option label::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    .restriction-option:hover label::before {
+        left: 100%;
+    }
+
+    .restriction-option input[type="checkbox"]:checked + label {
+        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        color: white;
+        border-color: #6f42c1;
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 6px 15px rgba(111, 66, 193, 0.4);
+    }
+
+    .restriction-option:hover label {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .button-group {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .start-button, .pure-random-button {
+        flex: 1;
+        min-width: 200px;
+        max-width: 300px;
+        padding: 18px 35px;
+        border: none;
+        border-radius: 20px;
+        font-size: 1.4rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .start-button {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #ff6b6b 100%);
+        background-size: 200% 200%;
+        color: white;
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        animation: buttonGlow 2s ease-in-out infinite alternate;
+    }
+
+    .pure-random-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
+        color: white;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        animation: pureRandomGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes pureRandomGlow {
+        from { 
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            background-position: 0% 50%;
+        }
+        to { 
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+            background-position: 100% 50%;
+        }
+    }
+
+    @keyframes buttonGlow {
+        from { 
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+            background-position: 0% 50%;
+        }
+        to { 
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.6);
+            background-position: 100% 50%;
+        }
+    }
+
+    .start-button::before, .pure-random-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+
+    .start-button:hover::before, .pure-random-button:hover::before {
+        left: 100%;
+    }
+
+    .start-button:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(255, 107, 107, 0.6);
+    }
+
+    .pure-random-button:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+
+    .start-button:disabled, .pure-random-button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        animation: none;
+    }
+
+    .animation-container {
+        display: none;
+        text-align: center;
+        margin: 40px 0;
+        padding: 50px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 25px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        border: 2px solid rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .animation-container::before {
+        content: '🍽️ 🍕 🍜 🍣 🥘 🍔 🍟 🍰';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.5rem;
+        opacity: 0.1;
+        animation: foodFloat 4s ease-in-out infinite;
+    }
+
+    @keyframes foodFloat {
+        0%, 100% { transform: translateX(-50%) translateY(0px); }
+        50% { transform: translateX(-50%) translateY(-10px); }
+    }
+
+    /* 老虎机样式 */
+    .slot-machine {
+        width: 300px;
+        height: 200px;
+        margin: 0 auto 25px;
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border-radius: 20px;
+        border: 5px solid #f39c12;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .slot-machine::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+        animation: slotShine 2s ease-in-out infinite;
+    }
+
+    @keyframes slotShine {
+        0%, 100% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+    }
+
+    .slot-window {
+        width: 80%;
+        height: 60%;
+        margin: 20px auto;
+        background: #ecf0f1;
+        border-radius: 10px;
+        border: 3px solid #95a5a6;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .slot-reel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        animation: slotSpin 0.5s linear infinite;
+    }
+
+    .slot-item {
+        font-size: 2.5rem;
+        margin: 10px 0;
+        animation: slotBounce 0.3s ease-in-out;
+    }
+
+    @keyframes slotSpin {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+    }
+
+    @keyframes slotBounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+
+    .slot-lever {
+        position: absolute;
+        right: -20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 80px;
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        border-radius: 20px;
+        border: 3px solid #7f8c8d;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .slot-lever::before {
+        content: '🎰';
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.5rem;
+    }
+
+    .slot-lever:hover {
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    }
+
+    .slot-lever:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    .spinning-wheel {
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        background: conic-gradient(
+            #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, 
+            #54a0ff, #5f27cd, #00d2d3, #ff9f43, #10ac84, #ff6b6b
+        );
+        margin: 0 auto 25px;
+        animation: spin 1.5s linear infinite;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .spinning-wheel::after {
+        content: '🎲';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        background: white;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .spinning-text {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #333;
+        animation: pulse 1.5s ease-in-out infinite alternate;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    @keyframes pulse {
+        from { opacity: 0.7; transform: scale(1); }
+        to { opacity: 1; transform: scale(1.05); }
+    }
+
+    .result-container {
+        display: none;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 25px;
+        padding: 35px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        margin-bottom: 30px;
+        border: 2px solid rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .result-container::before {
+        content: '🎉 🎊 🎈';
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 1.5rem;
+        opacity: 0.1;
+        animation: celebration 3s ease-in-out infinite;
+    }
+
+    @keyframes celebration {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        50% { transform: scale(1.2) rotate(10deg); }
+    }
+
+    .food-result {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 30px;
+        align-items: start;
+    }
+
+    .food-image {
+        width: 100%;
+        max-width: 350px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+        border: 3px solid rgba(255,255,255,0.5);
+    }
+
+    .food-image:hover {
+        transform: scale(1.05);
+    }
+
+    .food-info {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .food-name {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        animation: nameAppear 0.8s ease-out;
+    }
+
+    @keyframes nameAppear {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .food-description {
+        font-size: 1.2rem;
+        color: #666;
+        line-height: 1.7;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        border-left: 5px solid #667eea;
+    }
+
+    .ingredients-section {
+        margin-top: 25px;
+    }
+
+    .ingredients-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .ingredients-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .ingredient-tag {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        box-shadow: 0 3px 10px rgba(255, 107, 107, 0.3);
+        transition: all 0.3s ease;
+        animation: tagAppear 0.5s ease-out;
+    }
+
+    .ingredient-tag:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    @keyframes tagAppear {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .alternative-section {
+        margin-top: 35px;
+    }
+
+    .alternative-title {
+        font-size: 1.6rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .alternative-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+    }
+
+    .alternative-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 20px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .alternative-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+
+    .alternative-card:hover::before {
+        left: 100%;
+    }
+
+    .alternative-card:hover {
+        transform: translateY(-8px) scale(1.05);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        border-color: #667eea;
+    }
+
+    .alternative-image {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .alternative-card:hover .alternative-image {
+        transform: scale(1.1);
+    }
+
+    .alternative-name {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+    }
+
+    .alternative-cuisine {
+        font-size: 1rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .action-button {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        text-decoration: none;
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+    }
+
+    .action-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .action-button:hover::before {
+        left: 100%;
+    }
+
+    .action-button:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+    }
+
+    .section-title {
+        font-size: 1.6rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+    }
+
+    @media (max-width: 768px) {
+        .food-result {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+        
+        .food-image {
+            max-width: 100%;
+        }
+        
+        .meal-selection {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .cuisine-selection {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .alternative-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .header-title {
+            font-size: 2.2rem;
+        }
+
+        .spinning-wheel {
+            width: 200px;
+            height: 200px;
+        }
+
+        .spinning-wheel::after {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
+    }
+
+    /* 模态框样式 */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        margin: 5% auto;
+        padding: 0;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+        padding: 20px 25px;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+
+    .close {
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .close:hover {
+        transform: scale(1.2);
+        color: #ff6b6b;
+    }
+
+    .modal-body {
+        padding: 25px;
+    }
+
+    .modal-footer {
+        padding: 20px 25px;
+        border-top: 2px solid #e9ecef;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        background: #f8f9fa;
+        border-radius: 0 0 20px 20px;
+    }
+
+    /* 评分样式 */
+    .rating-stars {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .star {
+        font-size: 2.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 0 5px;
+        opacity: 0.3;
+    }
+
+    .star:hover,
+    .star.active {
+        opacity: 1;
+        transform: scale(1.2);
+        color: #ffd700;
+    }
+
+    .rating-text {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+        color: #666;
+    }
+
+    #feedbackText {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 1rem;
+        resize: vertical;
+        margin-bottom: 20px;
+        transition: border-color 0.3s ease;
+    }
+
+    #feedbackText:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .quick-btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #495057;
+    }
+
+    .quick-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+
+
+     /* 紧急逃生动画 */
+     @keyframes shake {
+         0%, 100% { transform: translateX(0); }
+         10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+         20%, 40%, 60%, 80% { transform: translateX(10px); }
+     }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="food-randomizer-container">
+    <div class="header-section">
+                        <h1 class="header-title">🍽️ 中午吃什么</h1>
+        <p class="header-subtitle">我其实一直有三个问题</p>
+    </div>
+
+    <div class="control-panel">
+        <h3 class="section-title">选择餐种</h3>
+        <div class="meal-selection">
+            <div class="meal-option">
+                <input type="radio" id="breakfast" name="meal_type" value="breakfast">
+                <label for="breakfast">🌅 早餐</label>
+            </div>
+            <div class="meal-option">
+                <input type="radio" id="lunch" name="meal_type" value="lunch" checked>
+                <label for="lunch">☀️ 午餐</label>
+            </div>
+            <div class="meal-option">
+                <input type="radio" id="dinner" name="meal_type" value="dinner">
+                <label for="dinner">🌙 晚餐</label>
+            </div>
+            <div class="meal-option">
+                <input type="radio" id="snack" name="meal_type" value="snack">
+                <label for="snack">🌃 夜宵</label>
+            </div>
+        </div>
+
+        <h3 class="section-title">今日心情</h3>
+        <div class="mood-selection">
+            <div class="mood-option">
+                <input type="radio" id="mood_happy" name="mood" value="happy" checked>
+                <label for="mood_happy">😊 开心 - 推荐美味佳肴</label>
+            </div>
+            <div class="mood-option">
+                <input type="radio" id="mood_excited" name="mood" value="excited">
+                <label for="mood_excited">⭐ 兴奋 - 推荐特色美食</label>
+            </div>
+            <div class="mood-option">
+                <input type="radio" id="mood_calm" name="mood" value="calm">
+                <label for="mood_calm">😌 平静 - 推荐养生清淡</label>
+            </div>
+            <div class="mood-option">
+                <input type="radio" id="mood_sad" name="mood" value="sad">
+                <label for="mood_sad">😢 难过 - 推荐暖心美食</label>
+            </div>
+            <div class="mood-option">
+                <input type="radio" id="mood_angry" name="mood" value="angry">
+                <label for="mood_angry">😠 生气 - 推荐重口味</label>
+            </div>
+            <div class="mood-option">
+                <input type="radio" id="mood_neutral" name="mood" value="neutral">
+                <label for="mood_neutral">😐 一般 - 推荐经典美食</label>
+            </div>
+        </div>
+
+        <h3 class="section-title">菜系偏好</h3>
+        <div class="cuisine-selection">
+            <div class="cuisine-option">
+                <input type="radio" id="mixed" name="cuisine" value="mixed" checked>
+                <label for="mixed">🍽️ 混合</label>
+            </div>
+            <div class="cuisine-option">
+                <input type="radio" id="chinese" name="cuisine" value="chinese">
+                <label for="chinese">🥢 中餐</label>
+            </div>
+            <div class="cuisine-option">
+                <input type="radio" id="western" name="cuisine" value="western">
+                <label for="western">🍕 西餐</label>
+            </div>
+            <div class="cuisine-option">
+                <input type="radio" id="japanese" name="cuisine" value="japanese">
+                <label for="japanese">🍣 日料</label>
+            </div>
+            <div class="cuisine-option">
+                <input type="radio" id="korean" name="cuisine" value="korean">
+                <label for="korean">🍜 韩料</label>
+            </div>
+            <div class="cuisine-option">
+                <input type="radio" id="thai" name="cuisine" value="thai">
+                <label for="thai">🥘 泰餐</label>
+            </div>
+        </div>
+
+        <h3 class="section-title">价格区间</h3>
+        <div class="price-selection">
+            <div class="price-option">
+                <input type="radio" id="price_low" name="price_range" value="low" checked>
+                <label for="price_low">💰 经济实惠 (20-50元)</label>
+            </div>
+            <div class="price-option">
+                <input type="radio" id="price_medium" name="price_range" value="medium">
+                <label for="price_medium">💵 中等价位 (50-100元)</label>
+            </div>
+            <div class="price-option">
+                <input type="radio" id="price_high" name="price_range" value="high">
+                <label for="price_high">💎 高端享受 (100元以上)</label>
+            </div>
+        </div>
+
+        <h3 class="section-title">饮食禁忌</h3>
+        <div class="dietary-restrictions">
+            <div class="restriction-option">
+                <input type="checkbox" id="no_spicy" name="dietary_restrictions" value="no_spicy">
+                <label for="no_spicy">🌶️ 不吃辣</label>
+            </div>
+            <div class="restriction-option">
+                <input type="checkbox" id="vegetarian" name="dietary_restrictions" value="vegetarian">
+                <label for="vegetarian">🥬 素食</label>
+            </div>
+            <div class="restriction-option">
+                <input type="checkbox" id="no_seafood" name="dietary_restrictions" value="no_seafood">
+                <label for="no_seafood">🦐 不吃海鲜</label>
+            </div>
+            <div class="restriction-option">
+                <input type="checkbox" id="no_pork" name="dietary_restrictions" value="no_pork">
+                <label for="no_pork">🐷 不吃猪肉</label>
+            </div>
+            <div class="restriction-option">
+                <input type="checkbox" id="low_sugar" name="dietary_restrictions" value="low_sugar">
+                <label for="low_sugar">🍯 低糖</label>
+            </div>
+            <div class="restriction-option">
+                <input type="checkbox" id="low_salt" name="dietary_restrictions" value="low_salt">
+                <label for="low_salt">🧂 低盐</label>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="startButton" class="start-button" onclick="startRandomization()">
+                🎰 开始老虎机抽奖
+            </button>
+            <button id="pureRandomButton" class="pure-random-button" onclick="startPureRandomization()">
+                🎲 朕随便
+            </button>
+        </div>
+    </div>
+
+    <div id="animationContainer" class="animation-container">
+        <div class="slot-machine">
+            <div class="slot-window">
+                <div class="slot-reel" id="slotReel">
+                    <div class="slot-item">🍕</div>
+                    <div class="slot-item">🍜</div>
+                    <div class="slot-item">🍣</div>
+                    <div class="slot-item">🥘</div>
+                    <div class="slot-item">🍔</div>
+                    <div class="slot-item">🍟</div>
+                    <div class="slot-item">🍰</div>
+                    <div class="slot-item">🍽️</div>
+                </div>
+            </div>
+            <div class="slot-lever" onclick="pullLever()"></div>
+        </div>
+        <div class="spinning-text">🎰 老虎机正在为您选择美食...</div>
+    </div>
+
+
+
+    <div id="resultContainer" class="result-container">
+        <div class="food-result">
+            <div>
+                <img id="foodImage" class="food-image" src="" alt="食物图片">
+            </div>
+            <div class="food-info">
+                <h2 id="foodName" class="food-name"></h2>
+                <p id="foodDescription" class="food-description"></p>
+                
+                <div class="ingredients-section">
+                    <h3 class="ingredients-title">🥬 主要食材</h3>
+                    <div id="ingredientsList" class="ingredients-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-button btn-primary" onclick="startRandomization()">
+                🎲 重新选择
+            </button>
+            <button class="action-button btn-success" onclick="showRatingModal()">
+                ⭐ 快速评分
+            </button>
+            <button class="action-button btn-danger" onclick="emergencyEscape()">
+                🚨 紧急逃生
+            </button>
+        </div>
+    </div>
+
+    <div id="alternativeSection" class="alternative-section">
+        <h3 class="alternative-title">🍽️ 备选推荐</h3>
+        <div id="alternativeGrid" class="alternative-grid"></div>
+    </div>
+
+    <!-- 快速评分模态框 -->
+    <div id="ratingModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⭐ 喜欢这个结果吗？</h3>
+                <span class="close" onclick="closeRatingModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="rating-stars">
+                    <span class="star" data-rating="1">⭐</span>
+                    <span class="star" data-rating="2">⭐</span>
+                    <span class="star" data-rating="3">⭐</span>
+                    <span class="star" data-rating="4">⭐</span>
+                    <span class="star" data-rating="5">⭐</span>
+                </div>
+                <div class="rating-text">点击星星进行评分</div>
+                <textarea id="feedbackText" placeholder="有什么想说的吗？" rows="3"></textarea>
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="quickRate('love')">😍 超爱</button>
+                    <button class="quick-btn" onclick="quickRate('like')">😊 喜欢</button>
+                    <button class="quick-btn" onclick="quickRate('neutral')">😐 一般</button>
+                    <button class="quick-btn" onclick="quickRate('dislike')">😞 不喜欢</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeRatingModal()">取消</button>
+                <button class="btn-primary" onclick="submitRating()">提交评分</button>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+let currentSessionId = null;
+let currentHistoryId = null;
+let currentRating = 0;
+let isSlotSpinning = false;
+let localFoodImages = {};
+let useLocalImages = {% if use_local_images %}true{% else %}false{% endif %};
+
+// 初始化本地图片数据
+{% if use_local_images and local_food_images %}
+localFoodImages = {{ local_food_images|safe }};
+console.log('本地食物图片已加载:', Object.keys(localFoodImages).length, '个食物');
+{% else %}
+console.log('未启用本地图片或无本地图片数据');
+{% endif %}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function resetUI() {
+    document.getElementById('animationContainer').style.display = 'none';
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('startButton').disabled = false;
+    document.getElementById('pureRandomButton').disabled = false;
+    isSlotSpinning = false;
+}
+
+
+
+// 老虎机拉杆功能
+function pullLever() {
+    if (isSlotSpinning) return;
+    
+    isSlotSpinning = true;
+    const lever = document.querySelector('.slot-lever');
+    const reel = document.getElementById('slotReel');
+    
+    // 拉杆动画
+    lever.style.transform = 'translateY(-50%) rotate(-20deg)';
+    
+    // 开始老虎机动画
+    reel.style.animation = 'slotSpin 0.2s linear infinite';
+    
+    // 3秒后停止
+    setTimeout(() => {
+        lever.style.transform = 'translateY(-50%) rotate(0deg)';
+        reel.style.animation = 'none';
+        isSlotSpinning = false;
+        
+        // 开始真正的随机选择
+        startRandomization();
+    }, 3000);
+}
+
+async function startRandomization() {
+    const mealType = document.querySelector('input[name="meal_type"]:checked').value;
+    const cuisine = document.querySelector('input[name="cuisine"]:checked').value;
+    const mood = document.querySelector('input[name="mood"]:checked').value;
+    const priceRange = document.querySelector('input[name="price_range"]:checked').value;
+    
+    // 获取饮食禁忌
+    const dietaryRestrictions = Array.from(document.querySelectorAll('input[name="dietary_restrictions"]:checked'))
+        .map(input => input.value);
+    
+    // 显示动画容器
+    document.getElementById('animationContainer').style.display = 'block';
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('startButton').disabled = true;
+    
+    try {
+        const response = await fetch('/tools/api/food-randomizer/start/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                meal_type: mealType,
+                cuisine_preference: cuisine,
+                mood: mood,
+                price_range: priceRange,
+                dietary_restrictions: dietaryRestrictions,
+                animation_duration: 3000
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSessionId = data.session_id;
+            currentHistoryId = data.session_id;
+            
+            // 模拟动画延迟
+            setTimeout(() => {
+                showResult(data.selected_food, data.alternative_foods);
+            }, 3000);
+        } else {
+            alert('随机选择失败: ' + data.error);
+            resetUI();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('网络错误，请重试');
+        resetUI();
+    }
+}
+
+async function startPureRandomization() {
+    // 显示动画容器
+    document.getElementById('animationContainer').style.display = 'block';
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('startButton').disabled = true;
+    document.getElementById('pureRandomButton').disabled = true;
+    
+    try {
+        const response = await fetch('/tools/api/food-randomizer/pure-random/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                animation_duration: 3000
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSessionId = data.session_id;
+            currentHistoryId = data.session_id;
+            
+            // 模拟动画延迟
+            setTimeout(() => {
+                showResult(data.selected_food, data.alternative_foods);
+            }, 3000);
+        } else {
+            alert('朕随便失败: ' + data.error);
+            resetUI();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('网络错误，请重试');
+        resetUI();
+    }
+}
+
+function showResult(selectedFood, alternativeFoods) {
+    document.getElementById('animationContainer').style.display = 'none';
+    document.getElementById('resultContainer').style.display = 'block';
+    
+    // 填充食物信息
+    document.getElementById('foodName').textContent = selectedFood.name;
+    document.getElementById('foodDescription').textContent = selectedFood.description || '暂无描述';
+    
+    // 设置图片 - 优先使用本地图片
+    const foodImage = document.getElementById('foodImage');
+    let imageUrl = selectedFood.image_url;
+    
+    // 如果启用本地图片并且有对应的本地图片，优先使用本地图片
+    if (useLocalImages && localFoodImages[selectedFood.name]) {
+        imageUrl = localFoodImages[selectedFood.name];
+        console.log('使用本地图片:', selectedFood.name, '->', imageUrl);
+    }
+    
+    if (imageUrl) {
+        foodImage.src = imageUrl;
+        foodImage.style.display = 'block';
+        foodImage.onerror = function() {
+            // 如果本地图片加载失败，回退到原始图片
+            if (useLocalImages && selectedFood.image_url && imageUrl !== selectedFood.image_url) {
+                console.log('本地图片加载失败，回退到原始图片');
+                this.src = selectedFood.image_url;
+            } else {
+                console.log('图片加载失败，隐藏图片');
+                this.style.display = 'none';
+            }
+        };
+    } else {
+        foodImage.style.display = 'none';
+    }
+    
+
+    
+    // 填充食材
+    const ingredientsList = document.getElementById('ingredientsList');
+    ingredientsList.innerHTML = '';
+    if (selectedFood.ingredients && selectedFood.ingredients.length > 0) {
+        selectedFood.ingredients.forEach((ingredient, index) => {
+            const tag = document.createElement('span');
+            tag.className = 'ingredient-tag';
+            tag.textContent = ingredient;
+            tag.style.animationDelay = `${index * 0.1}s`;
+            ingredientsList.appendChild(tag);
+        });
+    } else {
+        ingredientsList.innerHTML = '<span style="color: #666;">暂无食材信息</span>';
+    }
+    
+    // 填充备选食物
+    const alternativeGrid = document.getElementById('alternativeGrid');
+    alternativeGrid.innerHTML = '';
+    
+    if (alternativeFoods && alternativeFoods.length > 0) {
+        alternativeFoods.forEach((food, index) => {
+            const card = document.createElement('div');
+            card.className = 'alternative-card';
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.onclick = () => {
+                // 点击备选食物时，将其设为主要结果
+                showResult(food, alternativeFoods.filter(f => f.id !== food.id));
+            };
+            
+            // 获取图片URL，优先使用本地图片
+            let altImageUrl = food.image_url || '/static/img/default-food.jpg';
+            if (useLocalImages && localFoodImages[food.name]) {
+                altImageUrl = localFoodImages[food.name];
+            }
+            
+            card.innerHTML = `
+                <img src="${altImageUrl}" alt="${food.name}" class="alternative-image" 
+                     onerror="this.src='${food.image_url || '/static/img/default-food.jpg'}'">
+                <div class="alternative-name">${food.name}</div>
+                <div class="alternative-cuisine">${food.cuisine}</div>
+            `;
+            
+            alternativeGrid.appendChild(card);
+        });
+    }
+    
+    // 重新启用开始按钮
+    document.getElementById('startButton').disabled = false;
+}
+
+// 评分相关功能
+function showRatingModal() {
+    document.getElementById('ratingModal').style.display = 'block';
+    currentRating = 0;
+    updateStars(0);
+}
+
+function closeRatingModal() {
+    document.getElementById('ratingModal').style.display = 'none';
+}
+
+function updateStars(rating) {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add('active');
+        } else {
+            star.classList.remove('active');
+        }
+    });
+    currentRating = rating;
+}
+
+function quickRate(type) {
+    const ratings = {
+        'love': 5,
+        'like': 4,
+        'neutral': 3,
+        'dislike': 2
+    };
+    updateStars(ratings[type]);
+}
+
+async function submitRating() {
+    if (currentRating === 0) {
+        alert('请先进行评分');
+        return;
+    }
+    
+    const feedback = document.getElementById('feedbackText').value;
+    
+    try {
+        const response = await fetch('/tools/api/food-randomizer/rate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                session_id: currentSessionId,
+                rating: currentRating,
+                feedback: feedback
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('评分提交成功！');
+            closeRatingModal();
+        } else {
+            alert('评分提交失败: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('网络错误，请重试');
+    }
+}
+
+
+
+// 紧急逃生功能
+function emergencyEscape() {
+    if (confirm('🚨 确定要紧急逃生吗？这将重新开始选择过程。')) {
+        resetUI();
+        // 可以添加一些紧急逃生的特效
+        document.body.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+            document.body.style.animation = '';
+        }, 500);
+    }
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 默认选择午餐
+    document.getElementById('lunch').checked = true;
+    document.getElementById('mixed').checked = true;
+    document.getElementById('mood_happy').checked = true;
+    document.getElementById('price_low').checked = true;
+    
+    // 绑定星星点击事件
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            updateStars(rating);
+        });
+    });
+    
+    // 点击模态框外部关闭
+    window.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

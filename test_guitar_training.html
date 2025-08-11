@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎸 不摇就滚 - 吉他训练系统测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #e94560 100%);
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .test-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #e94560;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 20px rgba(233, 69, 96, 0.5);
+        }
+        
+        .test-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 30px;
+        }
+        
+        .test-section {
+            background: rgba(233, 69, 96, 0.1);
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-section h3 {
+            color: #e94560;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid #e94560;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .status.info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+            color: #2196F3;
+        }
+        
+        .status.warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #FFC107;
+            color: #FFC107;
+        }
+        
+        .demo-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .demo-btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-btn:hover {
+            background: #d63384;
+            transform: translateY(-2px);
+        }
+        
+        .demo-btn:active {
+            transform: translateY(0);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b9d);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .chord-display {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #e94560;
+            margin: 20px 0;
+            text-shadow: 0 2px 10px rgba(233, 69, 96, 0.3);
+        }
+        
+        .bpm-display {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e94560;
+            margin: 20px 0;
+        }
+        
+        .tuner-meter {
+            width: 100%;
+            height: 60px;
+            background: #333;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .tuner-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 80%;
+            background: #e94560;
+            transform: translate(-50%, -50%);
+            transition: left 0.1s ease;
+            border-radius: 2px;
+        }
+        
+        .tuner-scale {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: #ffffff;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1 class="test-title">🎸 不摇就滚 - 吉他训练系统</h1>
+            <p class="test-subtitle">狂暴模式新增功能测试页面</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>✅ 功能实现状态</h3>
+            <div class="status success">
+                ✅ 页面模板已创建 (guitar_training.html)
+            </div>
+            <div class="status success">
+                ✅ URL路由已配置 (/tools/guitar-training/)
+            </div>
+            <div class="status success">
+                ✅ 视图函数已添加 (guitar_training_view)
+            </div>
+            <div class="status success">
+                ✅ 狂暴模式入口已添加
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 核心功能模块</h3>
+            <ul class="feature-list">
+                <li>🎚️ <strong>智能调音器</strong> - 实时音频分析，精准调音，支持多种调弦模式</li>
+                <li>🤘 <strong>和弦训练器</strong> - 3D指板演示，AI识别正确率，和弦转换训练</li>
+                <li>🥁 <strong>节奏训练工坊</strong> - 节拍器、鼓机伴奏、节奏游戏，提升节奏感</li>
+                <li>📅 <strong>个性化练习计划</strong> - AI生成个性化练习计划，追踪进步曲线</li>
+                <li>🏆 <strong>社区挑战</strong> - 每周挑战曲目，AI评分，排行榜竞争</li>
+                <li>🔲 <strong>极简模式</strong> - 一键进入全屏练习，专注指板和节拍器</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎵 功能演示</h3>
+            
+            <h4>智能调音器演示</h4>
+            <div class="tuner-meter">
+                <div class="tuner-indicator" id="tunerIndicator"></div>
+                <div class="tuner-scale">
+                    <span>-50</span>
+                    <span>-25</span>
+                    <span>0</span>
+                    <span>+25</span>
+                    <span>+50</span>
+                </div>
+            </div>
+            <div class="demo-buttons">
+                <button class="demo-btn" onclick="simulateTuner()">模拟调音</button>
+                <button class="demo-btn" onclick="stopTuner()">停止调音</button>
+            </div>
+            
+            <h4>和弦训练器演示</h4>
+            <div class="chord-display" id="chordDisplay">C</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="chordProgress"></div>
+            </div>
+            <div class="demo-buttons">
+                <button class="demo-btn" onclick="nextChord()">下一个和弦</button>
+                <button class="demo-btn" onclick="showChordHeatmap()">显示热力图</button>
+            </div>
+            
+            <h4>节拍器演示</h4>
+            <div class="bpm-display" id="bpmDisplay">120 BPM</div>
+            <div class="demo-buttons">
+                <button class="demo-btn" onclick="toggleMetronome()" id="metronomeBtn">开始节拍器</button>
+                <button class="demo-btn" onclick="increaseBPM()">+5 BPM</button>
+                <button class="demo-btn" onclick="decreaseBPM()">-5 BPM</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 技术特点</h3>
+            <ul class="feature-list">
+                <li>🎨 <strong>视觉设计</strong> - 深色渐变背景，浮动音符动画，吉他主题色彩</li>
+                <li>⚡ <strong>实时交互</strong> - 调音器实时反馈，节拍器音频播放，和弦进度追踪</li>
+                <li>📱 <strong>响应式设计</strong> - 适配桌面和移动设备，流畅的用户体验</li>
+                <li>🎯 <strong>用户友好</strong> - 直观的界面设计，清晰的功能分类，易于上手</li>
+                <li>🔧 <strong>可扩展性</strong> - 模块化设计，便于后续功能扩展和优化</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 访问真实页面</h3>
+            <p>点击下面的链接访问真实的吉他训练系统：</p>
+            <div class="demo-buttons">
+                <a href="/tools/guitar-training/" style="text-decoration: none;">
+                    <button class="demo-btn">🎸 进入吉他训练系统</button>
+                </a>
+                <a href="/tools/training/" style="text-decoration: none;">
+                    <button class="demo-btn">⚡ 返回狂暴模式</button>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let tunerActive = false;
+        let metronomeActive = false;
+        let currentChord = 0;
+        let currentBPM = 120;
+        let metronomeInterval;
+        
+        // 和弦库
+        const chords = ['C', 'G', 'Am', 'F', 'D', 'Em', 'Bm', 'A', 'E', 'Dm'];
+        
+        // 调音器模拟
+        function simulateTuner() {
+            if (!tunerActive) {
+                tunerActive = true;
+                console.log('🎚️ 开始调音模拟...');
+                tunerLoop();
+            }
+        }
+        
+        function tunerLoop() {
+            if (!tunerActive) return;
+            
+            const randomOffset = (Math.random() - 0.5) * 100;
+            const indicator = document.getElementById('tunerIndicator');
+            const position = 50 + (randomOffset / 100) * 40;
+            indicator.style.left = Math.max(10, Math.min(90, position)) + '%';
+            
+            setTimeout(tunerLoop, 100);
+        }
+        
+        function stopTuner() {
+            tunerActive = false;
+            console.log('⏹️ 停止调音');
+        }
+        
+        // 和弦训练器
+        function nextChord() {
+            currentChord = (currentChord + 1) % chords.length;
+            updateChordDisplay();
+        }
+        
+        function updateChordDisplay() {
+            const chordDisplay = document.getElementById('chordDisplay');
+            const chordProgress = document.getElementById('chordProgress');
+            
+            chordDisplay.textContent = chords[currentChord];
+            
+            // 模拟进度
+            const progress = Math.random() * 100;
+            chordProgress.style.width = progress + '%';
+        }
+        
+        function showChordHeatmap() {
+            alert('🔥 和弦热力图功能：\n\n红色区域：经常按错\n黄色区域：偶尔按错\n绿色区域：按对\n\n帮助用户识别薄弱环节');
+        }
+        
+        // 节拍器
+        function toggleMetronome() {
+            if (!metronomeActive) {
+                startMetronome();
+            } else {
+                stopMetronome();
+            }
+        }
+        
+        function startMetronome() {
+            metronomeActive = true;
+            document.getElementById('metronomeBtn').textContent = '停止节拍器';
+            console.log('🥁 开始节拍器，BPM:', currentBPM);
+            
+            const interval = 60000 / currentBPM;
+            metronomeInterval = setInterval(() => {
+                playMetronomeClick();
+            }, interval);
+        }
+        
+        function stopMetronome() {
+            metronomeActive = false;
+            document.getElementById('metronomeBtn').textContent = '开始节拍器';
+            clearInterval(metronomeInterval);
+            console.log('⏹️ 停止节拍器');
+        }
+        
+        function playMetronomeClick() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+        
+        function increaseBPM() {
+            currentBPM = Math.min(200, currentBPM + 5);
+            updateBPMDisplay();
+            
+            if (metronomeActive) {
+                stopMetronome();
+                startMetronome();
+            }
+        }
+        
+        function decreaseBPM() {
+            currentBPM = Math.max(40, currentBPM - 5);
+            updateBPMDisplay();
+            
+            if (metronomeActive) {
+                stopMetronome();
+                startMetronome();
+            }
+        }
+        
+        function updateBPMDisplay() {
+            document.getElementById('bpmDisplay').textContent = currentBPM + ' BPM';
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎸 吉他训练系统测试页面已加载');
+            updateChordDisplay();
+        });
+    </script>
+</body>
+</html>

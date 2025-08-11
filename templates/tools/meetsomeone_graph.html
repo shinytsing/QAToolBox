@@ -1,0 +1,808 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}MeeSomeone 关系图谱{% endblock %}
+{% block tool_title_display %}MeeSomeone 关系图谱{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'emo.css' %}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+/* MeeSomeone 关系图谱专属样式 */
+.graph-container {
+  min-height: 100vh;
+  background: var(--emo-bg);
+  padding: 2rem;
+  font-family: var(--emo-font);
+  position: relative;
+}
+
+.graph-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.graph-title {
+  color: var(--emo-primary);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(156, 39, 176, 0.3);
+}
+
+.graph-subtitle {
+  color: var(--emo-text-muted);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.graph-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  padding: 0.8rem 1rem;
+  box-shadow: var(--emo-shadow);
+}
+
+.control-label {
+  color: var(--emo-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.control-input {
+  border: none;
+  background: transparent;
+  color: var(--emo-text);
+  font-size: 0.9rem;
+}
+
+.control-button {
+  background: var(--emo-gradient);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: var(--emo-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.control-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+}
+
+.graph-stats {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  padding: 1rem 1.5rem;
+  text-align: center;
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+  min-width: 120px;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--emo-primary);
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  color: var(--emo-text-muted);
+  font-size: 0.8rem;
+}
+
+.graph-content {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius-lg);
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
+}
+
+#graphContainer {
+  width: 100%;
+  height: 600px;
+  position: relative;
+}
+
+.graph-legend {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  padding: 1rem;
+  box-shadow: var(--emo-shadow);
+  max-width: 200px;
+  z-index: 10;
+}
+
+.legend-title {
+  font-weight: 600;
+  color: var(--emo-text);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.node-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.8rem;
+  border-radius: var(--emo-radius);
+  font-size: 0.85rem;
+  max-width: 250px;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tooltip-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #fff;
+}
+
+.tooltip-content {
+  color: #ccc;
+  line-height: 1.4;
+}
+
+.side-panel {
+  position: absolute;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background: var(--emo-gradient-card);
+  border-left: 1px solid var(--emo-border);
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+  transition: right 0.3s ease;
+  z-index: 15;
+  overflow-y: auto;
+}
+
+.side-panel.open {
+  right: 0;
+}
+
+.panel-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--emo-border);
+  display: flex;
+  justify-content: between;
+  align-items: center;
+}
+
+.panel-title {
+  font-weight: 600;
+  color: var(--emo-text);
+  font-size: 1.1rem;
+}
+
+.panel-close {
+  background: none;
+  border: none;
+  color: var(--emo-text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.panel-content {
+  padding: 1.5rem;
+}
+
+.node-details {
+  margin-bottom: 1.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-label {
+  color: var(--emo-text-muted);
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  color: var(--emo-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.back-button {
+  position: fixed;
+  top: 100px;
+  left: 2rem;
+  background: var(--emo-gradient);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  box-shadow: var(--emo-shadow);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--emo-shadow-hover);
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: var(--emo-text-muted);
+}
+
+.loading i {
+  font-size: 3rem;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--emo-text-muted);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* D3.js 图形样式 */
+.node {
+  cursor: pointer;
+  stroke: #fff;
+  stroke-width: 2px;
+  transition: all 0.3s ease;
+}
+
+.node:hover {
+  stroke-width: 3px;
+  filter: brightness(1.2);
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+  stroke-width: 1.5px;
+}
+
+.node-label {
+  font-family: var(--emo-font);
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--emo-text);
+  text-anchor: middle;
+  pointer-events: none;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 768px) {
+  .graph-container {
+    padding: 1rem;
+  }
+  
+  .graph-title {
+    font-size: 2rem;
+  }
+  
+  .graph-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .graph-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  #graphContainer {
+    height: 400px;
+  }
+  
+  .graph-legend {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin: 1rem;
+    max-width: none;
+  }
+  
+  .side-panel {
+    width: 100%;
+    right: -100%;
+  }
+  
+  .back-button {
+    left: 1rem;
+    top: 80px;
+    width: 50px;
+    height: 50px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="graph-container emo-theme">
+  <!-- 返回按钮 -->
+          
+    <i class="fas fa-arrow-left"></i>
+  </button>
+
+  <div class="graph-header">
+    <h1 class="graph-title">
+      <i class="fas fa-project-diagram"></i> 关系图谱
+    </h1>
+    <p class="graph-subtitle">🌐 可视化展示你的人际关系网络</p>
+  </div>
+
+  <!-- 控制面板 -->
+  <div class="graph-controls">
+    <div class="control-group">
+      <label class="control-label">引力强度</label>
+      <input type="range" id="forceStrength" class="control-input" min="-500" max="-50" value="-200">
+    </div>
+    <div class="control-group">
+      <label class="control-label">节点距离</label>
+      <input type="range" id="linkDistance" class="control-input" min="50" max="200" value="100">
+    </div>
+    <div class="control-group">
+      <button class="control-button" onclick="resetSimulation()">重置位置</button>
+    </div>
+    <div class="control-group">
+      <button class="control-button" onclick="toggleLabels()">显示/隐藏标签</button>
+    </div>
+  </div>
+
+  <!-- 统计信息 -->
+  <div class="graph-stats" id="graphStats">
+    <div class="stat-card">
+      <div class="stat-number" id="totalNodes">-</div>
+      <div class="stat-label">人物节点</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalEdges">-</div>
+      <div class="stat-label">关系连线</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalGroups">-</div>
+      <div class="stat-label">分组</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="avgImportance">-</div>
+      <div class="stat-label">平均重要度</div>
+    </div>
+  </div>
+
+  <!-- 图谱内容 -->
+  <div class="graph-content">
+    <div id="graphContainer">
+      <div class="loading">
+        <i class="fas fa-spinner"></i>
+        <p>加载关系图谱中...</p>
+      </div>
+    </div>
+
+    <!-- 图例 -->
+    <div class="graph-legend">
+      <div class="legend-title">重要程度</div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ff9999;"></div>
+        <span>⭐ 一般</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ffcc99;"></div>
+        <span>⭐⭐ 较重要</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #ffff99;"></div>
+        <span>⭐⭐⭐ 重要</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #99ff99;"></div>
+        <span>⭐⭐⭐⭐ 很重要</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background: #9999ff;"></div>
+        <span>⭐⭐⭐⭐⭐ 极重要</span>
+      </div>
+    </div>
+
+    <!-- 侧边详情面板 -->
+    <div class="side-panel" id="sidePanel">
+      <div class="panel-header">
+        <div class="panel-title">人物详情</div>
+        <button class="panel-close" onclick="closeSidePanel()">&times;</button>
+      </div>
+      <div class="panel-content" id="panelContent">
+        <!-- 详情内容将在这里动态加载 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 工具提示 -->
+  <div class="node-tooltip" id="tooltip">
+    <div class="tooltip-title"></div>
+    <div class="tooltip-content"></div>
+  </div>
+</div>
+
+<script>
+// 全局变量
+let graphData = null;
+let svg = null;
+let simulation = null;
+let nodes = null;
+let links = null;
+let nodeElements = null;
+let linkElements = null;
+let labelElements = null;
+let labelsVisible = true;
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+  loadGraphData();
+  initControls();
+});
+
+// 加载关系图谱数据
+async function loadGraphData() {
+  try {
+    const response = await fetch('/tools/api/meetsomeone/graph/');
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      graphData = data.data;
+      displayGraphData(graphData);
+      updateStats(graphData.stats);
+    } else {
+      showError('加载关系图谱数据失败: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Error loading graph data:', error);
+    showError('网络错误，请稍后重试');
+  }
+}
+
+// 显示关系图谱
+function displayGraphData(data) {
+  const container = document.getElementById('graphContainer');
+  
+  if (!data.nodes || data.nodes.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-project-diagram"></i>
+        <h3>暂无关系图谱数据</h3>
+        <p>开始创建人物档案，建立你的人际关系网络！</p>
+      </div>
+    `;
+    return;
+  }
+
+  // 清空容器
+  container.innerHTML = '';
+
+  // 设置SVG尺寸
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  // 创建SVG
+  svg = d3.select('#graphContainer')
+    .append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .call(d3.zoom()
+      .scaleExtent([0.3, 3])
+      .on('zoom', function(event) {
+        svg.select('.graph-group').attr('transform', event.transform);
+      }));
+
+  // 创建图形组
+  const g = svg.append('g').attr('class', 'graph-group');
+
+  // 复制数据以避免修改原数据
+  nodes = data.nodes.map(d => ({...d}));
+  links = data.edges.map(d => ({...d}));
+
+  // 创建力导向布局
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.size / 2 + 5));
+
+  // 创建连线
+  linkElements = g.append('g')
+    .selectAll('line')
+    .data(links)
+    .enter().append('line')
+    .attr('class', 'link')
+    .attr('stroke-width', d => Math.sqrt(d.weight))
+    .attr('stroke', d => d.color || '#999');
+
+  // 创建节点
+  nodeElements = g.append('g')
+    .selectAll('circle')
+    .data(nodes)
+    .enter().append('circle')
+    .attr('class', 'node')
+    .attr('r', d => d.size / 2)
+    .attr('fill', d => d.color)
+    .on('click', function(event, d) {
+      showNodeDetails(d);
+    })
+    .on('mouseover', function(event, d) {
+      showTooltip(event, d);
+    })
+    .on('mouseout', function() {
+      hideTooltip();
+    })
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended));
+
+  // 创建标签
+  labelElements = g.append('g')
+    .selectAll('text')
+    .data(nodes)
+    .enter().append('text')
+    .attr('class', 'node-label')
+    .text(d => d.label)
+    .attr('x', 0)
+    .attr('y', 5);
+
+  // 启动模拟
+  simulation.on('tick', ticked);
+}
+
+// 更新位置
+function ticked() {
+  if (linkElements) {
+    linkElements
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+  }
+
+  if (nodeElements) {
+    nodeElements
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y);
+  }
+
+  if (labelElements) {
+    labelElements
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + 5);
+  }
+}
+
+// 拖拽事件
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+// 显示工具提示
+function showTooltip(event, d) {
+  const tooltip = document.getElementById('tooltip');
+  const title = tooltip.querySelector('.tooltip-title');
+  const content = tooltip.querySelector('.tooltip-content');
+  
+  title.textContent = d.name;
+  content.innerHTML = `
+    <div>重要程度: ${'⭐'.repeat(d.importance_level)}</div>
+    <div>互动次数: ${d.interaction_count}</div>
+    <div>职业: ${d.occupation || '未知'}</div>
+    <div>标签: ${d.tags.join(', ') || '无'}</div>
+    ${d.last_interaction_date ? `<div>最后互动: ${d.last_interaction_date}</div>` : ''}
+  `;
+  
+  tooltip.style.left = (event.pageX + 10) + 'px';
+  tooltip.style.top = (event.pageY - 10) + 'px';
+  tooltip.style.opacity = '1';
+}
+
+// 隐藏工具提示
+function hideTooltip() {
+  document.getElementById('tooltip').style.opacity = '0';
+}
+
+// 显示节点详情
+function showNodeDetails(nodeData) {
+  const panel = document.getElementById('sidePanel');
+  const content = document.getElementById('panelContent');
+  
+  content.innerHTML = `
+    <div class="node-details">
+      <h3>${nodeData.name}</h3>
+      ${nodeData.nickname ? `<p>昵称: ${nodeData.nickname}</p>` : ''}
+      
+      <div class="detail-item">
+        <span class="detail-label">重要程度</span>
+        <span class="detail-value">${'⭐'.repeat(nodeData.importance_level)}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-label">互动次数</span>
+        <span class="detail-value">${nodeData.interaction_count}</span>
+      </div>
+      
+      ${nodeData.occupation ? `
+        <div class="detail-item">
+          <span class="detail-label">职业</span>
+          <span class="detail-value">${nodeData.occupation}</span>
+        </div>
+      ` : ''}
+      
+      ${nodeData.age_display ? `
+        <div class="detail-item">
+          <span class="detail-label">年龄</span>
+          <span class="detail-value">${nodeData.age_display}</span>
+        </div>
+      ` : ''}
+      
+      ${nodeData.last_interaction_date ? `
+        <div class="detail-item">
+          <span class="detail-label">最后互动</span>
+          <span class="detail-value">${nodeData.last_interaction_date}</span>
+        </div>
+      ` : ''}
+      
+      ${nodeData.tags.length > 0 ? `
+        <div class="detail-item">
+          <span class="detail-label">关系标签</span>
+          <span class="detail-value">${nodeData.tags.join(', ')}</span>
+        </div>
+      ` : ''}
+      
+      <div class="detail-item">
+        <span class="detail-label">分组</span>
+        <span class="detail-value">${nodeData.group}</span>
+      </div>
+    </div>
+  `;
+  
+  panel.classList.add('open');
+}
+
+// 关闭侧边面板
+function closeSidePanel() {
+  document.getElementById('sidePanel').classList.remove('open');
+}
+
+// 更新统计信息
+function updateStats(stats) {
+  document.getElementById('totalNodes').textContent = stats.total_nodes;
+  document.getElementById('totalEdges').textContent = stats.total_edges;
+  document.getElementById('totalGroups').textContent = stats.total_groups;
+  document.getElementById('avgImportance').textContent = stats.avg_importance;
+}
+
+// 初始化控制器
+function initControls() {
+  document.getElementById('forceStrength').addEventListener('input', function() {
+    if (simulation) {
+      simulation.force('charge').strength(+this.value);
+      simulation.alpha(1).restart();
+    }
+  });
+  
+  document.getElementById('linkDistance').addEventListener('input', function() {
+    if (simulation) {
+      simulation.force('link').distance(+this.value);
+      simulation.alpha(1).restart();
+    }
+  });
+}
+
+// 重置模拟
+function resetSimulation() {
+  if (simulation) {
+    simulation.alpha(1).restart();
+  }
+}
+
+// 切换标签显示
+function toggleLabels() {
+  if (labelElements) {
+    labelsVisible = !labelsVisible;
+    labelElements.style('opacity', labelsVisible ? 1 : 0);
+  }
+}
+
+// 工具函数
+function showError(message) {
+  alert(message);
+}
+
+// 窗口大小改变时重新绘制
+window.addEventListener('resize', function() {
+  if (graphData && graphData.nodes.length > 0) {
+    displayGraphData(graphData);
+  }
+});
+</script>
+{% endblock %}
+

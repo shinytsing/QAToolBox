@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}创建分享链接{% endblock %}
+
+{% block extra_css %}
+<style>
+.create-link-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+}
+
+.create-link-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.create-link-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.create-link-form {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #FFD700;
+    background: rgba(255,255,255,0.15);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: rgba(255,255,255,0.6);
+}
+
+.submit-btn {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #333;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.result-container {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-top: 30px;
+    border: 1px solid rgba(255,255,255,0.2);
+    display: none;
+}
+
+.result-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #FFD700;
+}
+
+.share-link-display {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #FFD700;
+}
+
+.copy-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.test-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.test-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.error-message {
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid rgba(220, 53, 69, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #ff6b6b;
+}
+
+.success-message {
+    background: rgba(40, 167, 69, 0.2);
+    border: 1px solid rgba(40, 167, 69, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #51cf66;
+}
+
+@media (max-width: 768px) {
+    .create-link-container {
+        padding: 15px;
+    }
+    
+    .create-link-header h1 {
+        font-size: 2rem;
+    }
+    
+    .create-link-form {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-link-container">
+    <div class="create-link-header">
+        <h1>创建分享链接</h1>
+        <p>生成短链接，方便分享和传播</p>
+    </div>
+    
+    <div class="create-link-form">
+        <form id="createLinkForm">
+            <div class="form-group">
+                <label for="url">原始链接 *</label>
+                <input type="url" id="url" name="url" placeholder="https://example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="title">标题</label>
+                <input type="text" id="title" name="title" placeholder="分享内容的标题">
+            </div>
+            
+            <div class="form-group">
+                <label for="description">描述</label>
+                <textarea id="description" name="description" rows="3" placeholder="分享内容的描述"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="image_url">图片链接</label>
+                <input type="url" id="image_url" name="image_url" placeholder="https://example.com/image.jpg">
+            </div>
+            
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-link"></i> 创建分享链接
+            </button>
+        </form>
+    </div>
+    
+    <div class="result-container" id="resultContainer">
+        <div class="result-title">分享链接创建成功！</div>
+        <div class="share-link-display" id="shareLinkDisplay"></div>
+        <div style="text-align: center;">
+            <button class="copy-btn" onclick="copyShareLink()">
+                <i class="fas fa-copy"></i> 复制链接
+            </button>
+            <button class="test-btn" onclick="testShareLink()">
+                <i class="fas fa-external-link-alt"></i> 测试链接
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('createLinkForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        url: document.getElementById('url').value,
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        image_url: document.getElementById('image_url').value
+    };
+    
+    // 显示加载状态
+    const submitBtn = document.querySelector('.submit-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 创建中...';
+    submitBtn.disabled = true;
+    
+    fetch('{% url "share:create_share_link" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 显示结果
+            document.getElementById('shareLinkDisplay').textContent = data.share_url;
+            document.getElementById('resultContainer').style.display = 'block';
+            
+            // 滚动到结果区域
+            document.getElementById('resultContainer').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+            
+            showToast('分享链接创建成功！');
+        } else {
+            showError(data.error || '创建失败，请重试');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('网络错误，请重试');
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+function copyShareLink() {
+    const shareLink = document.getElementById('shareLinkDisplay').textContent;
+    navigator.clipboard.writeText(shareLink).then(() => {
+        showToast('链接已复制到剪贴板');
+    }).catch(() => {
+        // 降级方案
+        const textArea = document.createElement('textarea');
+        textArea.value = shareLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('链接已复制到剪贴板');
+    });
+}
+
+function testShareLink() {
+    const shareLink = document.getElementById('shareLinkDisplay').textContent;
+    window.open(shareLink, '_blank');
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 2000);
+}
+
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    
+    const form = document.getElementById('createLinkForm');
+    form.insertBefore(errorDiv, form.firstChild);
+    
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.parentNode.removeChild(errorDiv);
+        }
+    }, 5000);
+}
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

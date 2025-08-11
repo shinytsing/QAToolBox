@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Article, Comment, Suggestion, Feedback, AILink
+from .models import Article, Comment, Suggestion, Feedback, AILink, Announcement, FeatureAccess, UserFeatureAccess
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
@@ -9,7 +9,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('article', 'user', 'created_at')
+    list_display = ('article', 'author', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('content',)
 
@@ -103,9 +103,9 @@ class AILinkAdmin(admin.ModelAdmin):
     def icon_preview(self, obj):
         """预览图标"""
         if obj.icon:
-            return f'<img src="{obj.icon.url}" style="max-width: 32px; max-height: 32px;" />'
+            return f'<img src="{obj.icon.url}" style="max-width: 28px; max-height: 28px;" />'
         elif obj.icon_url:
-            return f'<img src="{obj.icon_url}" style="max-width: 32px; max-height: 32px;" />'
+            return f'<img src="{obj.icon_url}" style="max-width: 28px; max-height: 28px;" />'
         return '无图标'
     icon_preview.short_description = '图标预览'
     icon_preview.allow_tags = True
@@ -122,6 +122,96 @@ class AILinkAdmin(admin.ModelAdmin):
         }),
         ('时间信息', {
             'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'priority', 'status', 'is_popup', 'created_by', 'created_at')
+    list_filter = ('priority', 'status', 'is_popup', 'created_at')
+    search_fields = ('title', 'content')
+    list_editable = ('priority', 'status', 'is_popup')
+    readonly_fields = ('created_at', 'updated_at')
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('title', 'content', 'priority', 'status')
+        }),
+        ('显示设置', {
+            'fields': ('is_popup', 'start_time', 'end_time')
+        }),
+        ('管理信息', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+@admin.register(FeatureAccess)
+class FeatureAccessAdmin(admin.ModelAdmin):
+    list_display = ('feature_name', 'feature_key', 'status', 'visibility', 'sort_order', 'access_count', 'is_active')
+    list_filter = ('status', 'visibility', 'is_active', 'created_at')
+    search_fields = ('feature_name', 'feature_key', 'description')
+    list_editable = ('status', 'visibility', 'sort_order', 'is_active')
+    readonly_fields = ('access_count', 'created_at', 'updated_at')
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('feature_key', 'feature_name', 'description', 'url_path', 'icon')
+        }),
+        ('访问控制', {
+            'fields': ('status', 'visibility', 'is_active')
+        }),
+        ('显示设置', {
+            'fields': ('sort_order',)
+        }),
+        ('统计信息', {
+            'fields': ('access_count', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['enable_features', 'disable_features', 'set_public', 'set_admin_only']
+    
+    def enable_features(self, request, queryset):
+        updated = queryset.update(is_active=True, status='enabled')
+        self.message_user(request, f'已启用 {updated} 个功能')
+    enable_features.short_description = '启用选中的功能'
+    
+    def disable_features(self, request, queryset):
+        updated = queryset.update(is_active=False, status='disabled')
+        self.message_user(request, f'已禁用 {updated} 个功能')
+    disable_features.short_description = '禁用选中的功能'
+    
+    def set_public(self, request, queryset):
+        updated = queryset.update(visibility='public')
+        self.message_user(request, f'已将 {updated} 个功能设为公开')
+    set_public.short_description = '设为所有用户可见'
+    
+    def set_admin_only(self, request, queryset):
+        updated = queryset.update(visibility='admin')
+        self.message_user(request, f'已将 {updated} 个功能设为管理员专用')
+    set_admin_only.short_description = '设为管理员专用'
+
+@admin.register(UserFeatureAccess)
+class UserFeatureAccessAdmin(admin.ModelAdmin):
+    list_display = ('user', 'feature', 'is_enabled', 'access_count', 'last_accessed')
+    list_filter = ('is_enabled', 'feature__status', 'last_accessed', 'created_at')
+    search_fields = ('user__username', 'feature__feature_name')
+    list_editable = ('is_enabled',)
+    readonly_fields = ('access_count', 'last_accessed', 'created_at')
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'feature', 'is_enabled')
+        }),
+        ('统计信息', {
+            'fields': ('access_count', 'last_accessed', 'created_at'),
             'classes': ('collapse',)
         }),
     )

@@ -7,10 +7,8 @@ dj-database-url==2.1.0
 
 # 生产环境缓存
 django-redis==5.4.0
-redis==6.2.0
 
 # 生产环境服务器
-gunicorn==23.0.0
 uvicorn==0.32.1
 
 # 生产环境监控
@@ -30,9 +28,11 @@ whitenoise==6.6.0
 django-anymail==10.2
 
 # 生产环境任务队列
-celery==5.5.3
 django-celery-beat==2.5.0
 django-celery-results==2.5.1
 
 # 生产环境日志
-structlog==24.1.0 
+structlog==24.1.0
+
+# 生产环境性能
+django-cacheops==8.0.0 

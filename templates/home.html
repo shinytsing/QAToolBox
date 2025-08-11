@@ -16,70 +16,70 @@
   <!-- 主要内容 -->
   <div class="home-content">
     <div class="theme-card">
-      <div class="theme-title">
-        <div class="modeshift-logo" id="modeshiftLogo">
-          <div class="gear-container">
-            <div class="gear gear-1" data-theme="work">
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="thought-bubble"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="gear-inner">
-                <i class="fas fa-random"></i>
-                <div class="gear-teeth"></div>
+              <div class="theme-title">
+          <div class="modeshift-logo" id="modeshiftLogo">
+            <div class="gear-container">
+              <div class="gear gear-1" data-theme="work">
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="thought-bubble"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="gear-inner">
+                  <i class="fas fa-random"></i>
+                  <div class="gear-teeth"></div>
+                </div>
+              </div>
+              <div class="gear gear-2" data-theme="life">
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="thought-bubble"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="gear-inner">
+                  <i class="fas fa-leaf"></i>
+                  <div class="gear-teeth"></div>
+                </div>
+              </div>
+              <div class="gear gear-3" data-theme="training">
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="thought-bubble"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="gear-inner">
+                  <i class="fas fa-fire"></i>
+                  <div class="gear-teeth"></div>
+                </div>
+              </div>
+              <div class="gear gear-4" data-theme="cyberpunk">
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="emotion-wave"></div>
+                <div class="thought-bubble"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="gear-inner">
+                  <i class="fas fa-robot"></i>
+                  <div class="gear-teeth"></div>
+                </div>
               </div>
             </div>
-            <div class="gear gear-2" data-theme="life">
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="thought-bubble"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="gear-inner">
-                <i class="fas fa-leaf"></i>
-                <div class="gear-teeth"></div>
-              </div>
-            </div>
-            <div class="gear gear-3" data-theme="training">
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="thought-bubble"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="gear-inner">
-                <i class="fas fa-fire"></i>
-                <div class="gear-teeth"></div>
-              </div>
-            </div>
-            <div class="gear gear-4" data-theme="cyberpunk">
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="emotion-wave"></div>
-              <div class="thought-bubble"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="particle"></div>
-              <div class="gear-inner">
-                <i class="fas fa-robot"></i>
-                <div class="gear-teeth"></div>
-              </div>
+            <div class="logo-text">
+              <span class="title-glitch" data-text="ModeShift" id="titleClickable">ModeShift</span>
             </div>
           </div>
-          <div class="logo-text">
-            <span class="title-glitch" data-text="ModeShift" id="titleClickable">ModeShift</span>
-          </div>
-        </div>
       </div>
       
       <div class="theme-subtitle-text">
@@ -2251,14 +2251,14 @@ function enterCurrentModeTools(event) {
     
     // 主题页面映射
     const themePageMapping = {
-      'life': '/tools/life/',
-      'work': '/tools/work/',
-      'training': '/tools/training/',
-      'emo': '/tools/emo/'
+      'life': '/tools/life_mode/',
+'work': '/tools/work_mode/',
+'training': '/tools/training_mode/',
+      'emo': '/tools/emo_mode/'
     };
     
     // 跳转到对应的工具页面
-    const targetPage = themePageMapping[currentTheme] || '/tools/work/';
+    const targetPage = themePageMapping[currentTheme] || '/tools/work_mode/';
     window.location.href = targetPage;
   {% else %}
     // 用户未登录，跳转到登录页面

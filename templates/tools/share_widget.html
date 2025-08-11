@@ -1,0 +1,719 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}分享组件 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.share-widget-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.share-widget-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.share-widget-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.share-widget-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.share-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.share-option-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.share-option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color, #667eea);
+}
+
+.share-option-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.share-option-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.share-option-icon.wechat { background: #07C160; }
+.share-option-icon.weibo { background: #E6162D; }
+.share-option-icon.douyin { background: #000000; }
+.share-option-icon.qq { background: #12B7F5; }
+.share-option-icon.qrcode { background: #28a745; }
+.share-option-icon.copy { background: #007bff; }
+
+.share-option-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.share-option-description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.share-option-button {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color, #667eea);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.share-option-button:hover {
+    background: var(--primary-dark, #5a6fd8);
+    transform: translateY(-2px);
+}
+
+.share-option-button:active {
+    transform: translateY(0);
+}
+
+.share-stats {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 40px;
+}
+
+.share-stats h3 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color, #667eea);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.share-history {
+    margin-top: 40px;
+}
+
+.share-history h3 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.history-list {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-item:hover {
+    background-color: #f8f9fa;
+}
+
+.history-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 18px;
+    color: white;
+}
+
+.history-info {
+    flex: 1;
+}
+
+.history-platform {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.history-time {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.history-url {
+    font-size: 0.8rem;
+    color: #007bff;
+    word-break: break-all;
+}
+
+.empty-history {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.empty-history i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 15px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .share-widget-container {
+        padding: 20px 15px;
+    }
+    
+    .share-widget-header h1 {
+        font-size: 2rem;
+    }
+    
+    .share-options-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .share-option-card {
+        padding: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .share-option-card {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .share-option-title {
+        color: #e2e8f0;
+    }
+    
+    .share-option-description {
+        color: #a0aec0;
+    }
+    
+    .share-stats {
+        background: #2d3748;
+    }
+    
+    .share-stats h3 {
+        color: #e2e8f0;
+    }
+    
+    .stat-item {
+        background: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .stat-label {
+        color: #a0aec0;
+    }
+    
+    .history-list {
+        background: #2d3748;
+    }
+    
+    .history-item {
+        border-bottom-color: #4a5568;
+    }
+    
+    .history-item:hover {
+        background-color: #4a5568;
+    }
+    
+    .history-platform {
+        color: #e2e8f0;
+    }
+    
+    .history-time {
+        color: #a0aec0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="share-widget-container">
+    <div class="share-widget-header">
+        <h1>分享组件</h1>
+        <p>选择您喜欢的分享方式，将QAToolBox推荐给更多朋友</p>
+    </div>
+    
+    <div class="share-options-grid">
+        <div class="share-option-card">
+            <div class="share-option-header">
+                <div class="share-option-icon wechat">
+                    <i class="fab fa-weixin"></i>
+                </div>
+                <h3 class="share-option-title">微信分享</h3>
+            </div>
+            <p class="share-option-description">生成二维码，使用微信扫描分享给好友或朋友圈</p>
+            <button class="share-option-button" onclick="shareToWechat()">
+                <i class="fab fa-weixin"></i>
+                微信分享
+            </button>
+        </div>
+        
+        <div class="share-option-card">
+            <div class="share-option-header">
+                <div class="share-option-icon weibo">
+                    <i class="fab fa-weibo"></i>
+                </div>
+                <h3 class="share-option-title">微博分享</h3>
+            </div>
+            <p class="share-option-description">分享到微博，让更多人发现这个实用的工具集合</p>
+            <button class="share-option-button" onclick="shareToWeibo()">
+                <i class="fab fa-weibo"></i>
+                微博分享
+            </button>
+        </div>
+        
+        <div class="share-option-card">
+            <div class="share-option-header">
+                <div class="share-option-icon douyin">
+                    <i class="fab fa-tiktok"></i>
+                </div>
+                <h3 class="share-option-title">抖音分享</h3>
+            </div>
+            <p class="share-option-description">分享到抖音，展示QAToolBox的强大功能</p>
+            <button class="share-option-button" onclick="shareToDouyin()">
+                <i class="fab fa-tiktok"></i>
+                抖音分享
+            </button>
+        </div>
+        
+        <div class="share-option-card">
+            <div class="share-option-header">
+                <div class="share-option-icon qq">
+                    <i class="fab fa-qq"></i>
+                </div>
+                <h3 class="share-option-title">QQ分享</h3>
+            </div>
+            <p class="share-option-description">分享到QQ空间或QQ群，与朋友一起使用</p>
+            <button class="share-option-button" onclick="shareToQQ()">
+                <i class="fab fa-qq"></i>
+                QQ分享
+            </button>
+        </div>
+        
+        <div class="share-option-card">
+            <div class="share-option-header">
+                <div class="share-option-icon qrcode">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <h3 class="share-option-title">二维码分享</h3>
+            </div>
+            <p class="share-option-description">生成二维码，任何扫码应用都可以识别</p>
+            <button class="share-option-button" onclick="showQRCode()">
+                <i class="fas fa-qrcode"></i>
+                生成二维码
+            </button>
+        </div>
+        
+        <div class="share-option-card">
+            <div class="share-option-header">
+                <div class="share-option-icon copy">
+                    <i class="fas fa-link"></i>
+                </div>
+                <h3 class="share-option-title">复制链接</h3>
+            </div>
+            <p class="share-option-description">复制当前页面链接，粘贴到任何地方分享</p>
+            <button class="share-option-button" onclick="copyLink()">
+                <i class="fas fa-link"></i>
+                复制链接
+            </button>
+        </div>
+    </div>
+    
+    <div class="share-stats">
+        <h3>分享统计</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ total_shares|default:"0" }}</div>
+                <div class="stat-label">总分享次数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ today_shares|default:"0" }}</div>
+                <div class="stat-label">今日分享</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ wechat_shares|default:"0" }}</div>
+                <div class="stat-label">微信分享</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ weibo_shares|default:"0" }}</div>
+                <div class="stat-label">微博分享</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="share-history">
+        <h3>分享历史</h3>
+        <div class="history-list">
+            {% if share_history %}
+                {% for share in share_history %}
+                <div class="history-item">
+                    <div class="history-icon {{ share.platform }}">
+                        <i class="fab fa-{{ share.platform }}"></i>
+                    </div>
+                    <div class="history-info">
+                        <div class="history-platform">{{ share.get_platform_display }}</div>
+                        <div class="history-time">{{ share.created_at|date:"Y-m-d H:i" }}</div>
+                    </div>
+                    <div class="history-url">{{ share.page_url|truncatechars:30 }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-history">
+                    <i class="fas fa-share-alt"></i>
+                    <p>暂无分享记录</p>
+                    <p>开始分享，让更多人发现QAToolBox的魅力！</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 二维码弹窗 -->
+<div class="qrcode-modal" id="qrcodeModal" style="display: none;">
+    <div class="qrcode-content">
+        <div class="qrcode-header">
+            <h4>扫描二维码分享</h4>
+            <button class="close-qrcode" onclick="closeQRCode()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="qrcode-body">
+            <div id="qrcodeContainer"></div>
+            <p class="qrcode-tip">使用微信或支付宝扫描二维码</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 分享功能JavaScript
+let shareManager = null;
+
+// 初始化分享管理器
+function initShareManager() {
+    if (typeof ShareManager !== 'undefined') {
+        shareManager = new ShareManager();
+    }
+}
+
+// 分享到微信
+function shareToWechat() {
+    const currentUrl = window.location.href;
+    const title = document.title;
+    const description = getMetaDescription();
+    
+    if (shareManager) {
+        shareManager.shareTo('wechat', currentUrl, title, description);
+    } else {
+        showQRCode();
+    }
+}
+
+// 分享到微博
+function shareToWeibo() {
+    const currentUrl = window.location.href;
+    const title = document.title;
+    
+    const encodedUrl = encodeURIComponent(currentUrl);
+    const encodedTitle = encodeURIComponent(title);
+    
+    window.open(`https://service.weibo.com/share/share.php?url=${encodedUrl}&title=${encodedTitle}`, '_blank');
+    
+    // 记录分享
+    recordShare('weibo', currentUrl, title);
+}
+
+// 分享到抖音
+function shareToDouyin() {
+    const currentUrl = window.location.href;
+    const title = document.title;
+    
+    const encodedUrl = encodeURIComponent(currentUrl);
+    const encodedTitle = encodeURIComponent(title);
+    
+    window.open(`https://www.douyin.com/share?url=${encodedUrl}&title=${encodedTitle}`, '_blank');
+    
+    // 记录分享
+    recordShare('douyin', currentUrl, title);
+}
+
+// 分享到QQ
+function shareToQQ() {
+    const currentUrl = window.location.href;
+    const title = document.title;
+    const description = getMetaDescription();
+    
+    const encodedUrl = encodeURIComponent(currentUrl);
+    const encodedTitle = encodeURIComponent(title);
+    const encodedDesc = encodeURIComponent(description);
+    
+    window.open(`https://connect.qq.com/widget/shareqq/index.html?url=${encodedUrl}&title=${encodedTitle}&desc=${encodedDesc}`, '_blank');
+    
+    // 记录分享
+    recordShare('qq', currentUrl, title);
+}
+
+// 显示二维码
+function showQRCode() {
+    const modal = document.getElementById('qrcodeModal');
+    const container = document.getElementById('qrcodeContainer');
+    
+    if (modal && container) {
+        const currentUrl = window.location.href;
+        generateQRCode(currentUrl, container);
+        modal.style.display = 'flex';
+        
+        // 记录分享
+        recordShare('qrcode', currentUrl, document.title);
+    }
+}
+
+// 关闭二维码弹窗
+function closeQRCode() {
+    const modal = document.getElementById('qrcodeModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 复制链接
+function copyLink() {
+    const currentUrl = window.location.href;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            showToast('链接已复制到剪贴板');
+        }).catch(() => {
+            fallbackCopyToClipboard(currentUrl);
+        });
+    } else {
+        fallbackCopyToClipboard(currentUrl);
+    }
+    
+    // 记录分享
+    recordShare('copy', currentUrl, document.title);
+}
+
+// 获取页面描述
+function getMetaDescription() {
+    const metaDesc = document.querySelector('meta[name="description"]');
+    return metaDesc ? metaDesc.getAttribute('content') : document.title;
+}
+
+// 生成二维码
+function generateQRCode(text, container) {
+    // 使用QRCode.js库生成二维码
+    if (typeof QRCode !== 'undefined') {
+        container.innerHTML = '';
+        new QRCode(container, {
+            text: text,
+            width: 180,
+            height: 180,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } else {
+        // 备用方案：使用在线API
+        container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(text)}" alt="QR Code">`;
+    }
+}
+
+// 备用复制方法
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showToast('链接已复制到剪贴板');
+    } catch (err) {
+        showToast('复制失败，请手动复制');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// 记录分享
+function recordShare(platform, url, title) {
+    fetch('/share/record/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+        },
+        body: JSON.stringify({
+            platform: platform,
+            page_url: url,
+            page_title: title
+        })
+    }).catch(error => {
+        console.error('记录分享失败:', error);
+    });
+}
+
+// 获取CSRF Token
+function getCSRFToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    return token ? token.value : '';
+}
+
+// 显示提示消息
+function showToast(message, duration = 2000) {
+    const toast = document.createElement('div');
+    toast.className = 'share-toast';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 3000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 100);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                document.body.removeChild(toast);
+            }
+        }, 300);
+    }, duration);
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initShareManager();
+    
+    // 点击二维码弹窗背景关闭
+    const qrcodeModal = document.getElementById('qrcodeModal');
+    if (qrcodeModal) {
+        qrcodeModal.addEventListener('click', function(e) {
+            if (e.target === qrcodeModal) {
+                closeQRCode();
+            }
+        });
+    }
+    
+    // ESC键关闭弹窗
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const qrcodeModal = document.getElementById('qrcodeModal');
+            if (qrcodeModal && qrcodeModal.style.display === 'flex') {
+                closeQRCode();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+

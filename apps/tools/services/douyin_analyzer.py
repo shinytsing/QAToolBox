@@ -41,6 +41,30 @@ class DouyinAnalyzer:
             # 使用真实爬虫爬取用户数据
             user_data = self.crawler.crawl_user_profile(up主_url)
             
+            # 检查是否有错误
+            if user_data.get('error'):
+                # 如果是真实数据获取失败，尝试使用演示数据
+                if not user_data.get('is_demo'):
+                    print("尝试使用演示数据进行分析...")
+                    demo_data = self.crawler.get_fallback_analysis_data(up主_url)
+                    if demo_data and not demo_data.get('error'):
+                        user_data = demo_data
+                        analysis.analysis_status = 'completed'
+                        analysis.error_message = demo_data.get('demo_message', '使用演示数据')
+                    else:
+                        analysis.analysis_status = 'failed'
+                        analysis.error_message = user_data.get('error_message', '数据获取失败')
+                        analysis.save()
+                        
+                        return {
+                            'success': False,
+                            'error': user_data.get('error_message', '数据获取失败'),
+                            'analysis_id': analysis.id
+                        }
+                else:
+                    analysis.analysis_status = 'completed'
+                    analysis.error_message = user_data.get('demo_message', '使用演示数据')
+            
             # 分析用户内容特征
             content_analysis = self.crawler.analyze_user_content(user_data)
             
@@ -179,9 +203,10 @@ class DouyinAnalyzer:
         return prompt
     
     def _call_deepseek_api(self, prompt: str) -> str:
-        """调用DeepSeek API"""
+        """调用DeepSeek API，带重试机制和更长超时"""
         import os
         import requests
+        import time
         
         api_key = os.getenv('DEEPSEEK_API_KEY')
         if not api_key:
@@ -204,19 +229,69 @@ class DouyinAnalyzer:
             'max_tokens': 2000
         }
         
-        try:
-            response = requests.post(
-                'https://api.deepseek.com/v1/chat/completions',
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result['choices'][0]['message']['content']
-            else:
-                return f"API调用失败: {response.status_code}"
+        # 重试配置
+        max_retries = 3
+        retry_delays = [2, 5, 10]  # 递增重试延迟
+        timeout_values = [60, 90, 120]  # 递增超时时间
+        
+        for attempt in range(max_retries):
+            try:
+                print(f"DeepSeek API调用尝试 {attempt + 1}/{max_retries}，超时设置: {timeout_values[attempt]}秒")
                 
-        except Exception as e:
-            return f"API调用出错: {str(e)}" 
+                response = requests.post(
+                    'https://api.deepseek.com/v1/chat/completions',
+                    headers=headers,
+                    json=payload,
+                    timeout=timeout_values[attempt]
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print("DeepSeek API调用成功")
+                    return result['choices'][0]['message']['content']
+                else:
+                    error_msg = f"API调用失败: {response.status_code} - {response.text}"
+                    print(error_msg)
+                    
+                    # 如果是最后一次尝试，返回错误信息
+                    if attempt == max_retries - 1:
+                        return error_msg
+                    
+                    # 否则等待后重试
+                    time.sleep(retry_delays[attempt])
+                    continue
+                    
+            except requests.exceptions.Timeout:
+                error_msg = f"API调用超时 (尝试 {attempt + 1}/{max_retries}，超时时间: {timeout_values[attempt]}秒)"
+                print(error_msg)
+                
+                if attempt == max_retries - 1:
+                    return f"API调用超时: 所有重试尝试都已超时，请稍后再试"
+                
+                # 等待后重试
+                time.sleep(retry_delays[attempt])
+                continue
+                
+            except requests.exceptions.ConnectionError:
+                error_msg = f"网络连接错误 (尝试 {attempt + 1}/{max_retries})"
+                print(error_msg)
+                
+                if attempt == max_retries - 1:
+                    return f"网络连接错误: 无法连接到DeepSeek API服务器"
+                
+                # 等待后重试
+                time.sleep(retry_delays[attempt])
+                continue
+                
+            except Exception as e:
+                error_msg = f"API调用出错 (尝试 {attempt + 1}/{max_retries}): {str(e)}"
+                print(error_msg)
+                
+                if attempt == max_retries - 1:
+                    return f"API调用出错: {str(e)}"
+                
+                # 等待后重试
+                time.sleep(retry_delays[attempt])
+                continue
+        
+        return "API调用失败: 所有重试尝试都已失败" 

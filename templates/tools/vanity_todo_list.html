@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="vanity-todo-container">
+  <!-- 动态背景 -->
+  <div class="vanity-background">
+    <div class="money-rain"></div>
+    <div class="luxury-shapes">
+      <div class="shape car-shape">🚗</div>
+      <div class="shape yacht-shape">🛥️</div>
+      <div class="shape diamond-shape">💎</div>
+      <div class="shape mansion-shape">🏰</div>
+    </div>
+  </div>
+
+  <!-- 主要内容 -->
+  <div class="vanity-content">
+    <div class="vanity-header">
+      <h1 class="vanity-title">欲望驱动待办清单</h1>
+      <p class="vanity-subtitle">每个任务都绑定欲望兑现值</p>
+    </div>
+
+    <!-- 添加新任务 -->
+    <div class="add-task-section">
+      <div class="dashboard-card">
+        <h3>添加新任务</h3>
+        <form id="add-task-form">
+          <div class="form-group">
+            <label for="task-title">任务标题</label>
+            <input type="text" id="task-title" name="title" required>
+          </div>
+          <div class="form-group">
+            <label for="task-description">任务描述</label>
+            <textarea id="task-description" name="description" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="task-type">任务类型</label>
+            <select id="task-type" name="task_type" required>
+              <option value="code_refactor">代码重构</option>
+              <option value="bug_fix">修复Bug</option>
+              <option value="feature_dev">功能开发</option>
+              <option value="blog_write">写技术博客</option>
+              <option value="code_review">代码审查</option>
+              <option value="testing">测试编写</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="task-difficulty">难度等级 (1-10)</label>
+            <input type="number" id="task-difficulty" name="difficulty" min="1" max="10" value="3" required>
+          </div>
+          <button type="submit" class="btn btn-primary">添加任务</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 任务列表 -->
+    <div class="tasks-section">
+      <div class="dashboard-card">
+        <h3>我的欲望任务</h3>
+        <div id="tasks-list">
+          <p>正在加载任务...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务统计 -->
+    <div class="stats-section">
+      <div class="dashboard-card">
+        <h3>任务统计</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-number" id="total-tasks">0</div>
+            <div class="stat-label">总任务数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="completed-tasks">0</div>
+            <div class="stat-label">已完成</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="pending-tasks">0</div>
+            <div class="stat-label">待完成</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="total-rewards">0</div>
+            <div class="stat-label">总奖励值</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* 容器样式 */
+.vanity-todo-container {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 20px;
+}
+
+/* 动态背景 */
+.vanity-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 金钱雨效果 */
+.money-rain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(255, 215, 0, 0.1) 50%, 
+    transparent 100%);
+  animation: moneyRain 15s linear infinite;
+}
+
+@keyframes moneyRain {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* 奢侈品形状 */
+.luxury-shapes {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.shape {
+  position: absolute;
+  font-size: 2rem;
+  animation: floatLuxury 8s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.car-shape {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.yacht-shape {
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.diamond-shape {
+  bottom: 30%;
+  left: 20%;
+  animation-delay: 4s;
+}
+
+.mansion-shape {
+  top: 40%;
+  left: 60%;
+  animation-delay: 6s;
+}
+
+@keyframes floatLuxury {
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+  50% { transform: translateY(-20px) rotate(10deg); opacity: 0.8; }
+}
+
+/* 主要内容 */
+.vanity-content {
+  position: relative;
+  z-index: 10;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 标题 */
+.vanity-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.vanity-title {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(45deg, #ffd700, #ff6b35, #ff0066);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+  margin-bottom: 10px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.vanity-subtitle {
+  font-size: 1.2rem;
+  color: #ffffff;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* 卡片样式 */
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 15px;
+  padding: 25px;
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+}
+
+.dashboard-card h3 {
+  color: #ffd700;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  color: #ffffff;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* 按钮样式 */
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #ff0066, #ff6b35);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 0, 102, 0.3);
+}
+
+.btn-success {
+  background: linear-gradient(45deg, #00ff88, #00bfff);
+  color: white;
+}
+
+.btn-danger {
+  background: linear-gradient(45deg, #ff0066, #ff3333);
+  color: white;
+}
+
+/* 任务列表样式 */
+.task-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.task-item:hover {
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: translateX(5px);
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.task-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.task-difficulty {
+  background: linear-gradient(45deg, #ff0066, #ff6b35);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.task-description {
+  color: #ffffff;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.task-actions .btn {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+/* 统计样式 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #ffffff;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .vanity-title {
+    font-size: 2rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .task-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .vanity-title {
+    font-size: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-card {
+    padding: 15px;
+  }
+}
+</style>
+
+<script>
+// 页面加载时获取数据
+document.addEventListener('DOMContentLoaded', function() {
+  loadTasks();
+  loadStats();
+});
+
+// 加载任务列表
+function loadTasks() {
+  fetch('/tools/api/vanity_tasks/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        displayTasks(data.tasks);
+      } else {
+        document.getElementById('tasks-list').innerHTML = '<p style="color: #ff0066;">加载任务失败</p>';
+      }
+    })
+    .catch(error => {
+      console.error('加载任务失败:', error);
+      document.getElementById('tasks-list').innerHTML = '<p style="color: #ff0066;">加载任务失败</p>';
+    });
+}
+
+// 显示任务列表
+function displayTasks(tasks) {
+  const tasksList = document.getElementById('tasks-list');
+  
+  if (tasks.length === 0) {
+    tasksList.innerHTML = '<p style="text-align: center; color: #ffffff; opacity: 0.8;">暂无任务，添加第一个欲望任务吧！</p>';
+    return;
+  }
+  
+  let html = '';
+  tasks.forEach(task => {
+    html += `
+      <div class="task-item">
+        <div class="task-header">
+          <div class="task-title">${task.title}</div>
+          <div class="task-difficulty">难度 ${task.difficulty}</div>
+        </div>
+        <div class="task-description">${task.description || '无描述'}</div>
+        <div class="task-actions">
+          <button class="btn btn-success" onclick="completeTask(${task.id})">完成</button>
+          <button class="btn btn-danger" onclick="deleteTask(${task.id})">删除</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  tasksList.innerHTML = html;
+}
+
+// 加载统计数据
+function loadStats() {
+  fetch('/tools/api/vanity_tasks/stats/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('total-tasks').textContent = data.total_tasks;
+        document.getElementById('completed-tasks').textContent = data.completed_tasks;
+        document.getElementById('pending-tasks').textContent = data.pending_tasks;
+        document.getElementById('total-rewards').textContent = data.total_rewards;
+      }
+    })
+    .catch(error => {
+      console.error('加载统计失败:', error);
+    });
+}
+
+// 添加新任务
+document.getElementById('add-task-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const taskData = {
+    title: formData.get('title'),
+    description: formData.get('description'),
+    task_type: formData.get('task_type'),
+    difficulty: parseInt(formData.get('difficulty'))
+  };
+  
+  fetch('/tools/api/vanity_tasks/add/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify(taskData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      this.reset();
+      loadTasks();
+      loadStats();
+      alert('任务添加成功！');
+    } else {
+      alert('添加失败: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('添加任务失败:', error);
+    alert('添加任务失败');
+  });
+});
+
+// 完成任务
+function completeTask(taskId) {
+  fetch('/tools/api/vanity_tasks/complete/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({task_id: taskId})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      loadTasks();
+      loadStats();
+      alert('任务完成！获得奖励: ' + data.reward_description);
+    } else {
+      alert('操作失败: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('完成任务失败:', error);
+    alert('完成任务失败');
+  });
+}
+
+// 删除任务
+function deleteTask(taskId) {
+  if (!confirm('确定要删除这个任务吗？')) {
+    return;
+  }
+  
+  fetch('/tools/api/vanity_tasks/delete/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({task_id: taskId})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      loadTasks();
+      loadStats();
+      alert('任务删除成功！');
+    } else {
+      alert('删除失败: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('删除任务失败:', error);
+    alert('删除任务失败');
+  });
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+{% endblock %}

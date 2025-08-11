@@ -1,0 +1,642 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}MeeSomeone 时光轴{% endblock %}
+{% block tool_title_display %}MeeSomeone 时光轴{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'emo.css' %}">
+<style>
+/* MeeSomeone 时光轴专属样式 */
+.timeline-container {
+  min-height: 100vh;
+  background: var(--emo-bg);
+  padding: 2rem;
+  font-family: var(--emo-font);
+}
+
+.timeline-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2rem 0;
+}
+
+.timeline-title {
+  color: var(--emo-primary);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(156, 39, 176, 0.3);
+}
+
+.timeline-subtitle {
+  color: var(--emo-text-muted);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.timeline-filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-label {
+  color: var(--emo-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.filter-select {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--emo-text);
+  font-size: 1rem;
+  min-width: 150px;
+}
+
+.timeline-stats {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius);
+  padding: 1rem 2rem;
+  text-align: center;
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--emo-primary);
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  color: var(--emo-text-muted);
+  font-size: 0.9rem;
+}
+
+.timeline-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.timeline-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--emo-gradient);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.timeline-group {
+  margin-bottom: 4rem;
+  position: relative;
+}
+
+.timeline-month {
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.month-label {
+  display: inline-block;
+  background: var(--emo-primary);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 30px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  box-shadow: var(--emo-shadow);
+}
+
+.timeline-item {
+  display: flex;
+  margin-bottom: 2rem;
+  position: relative;
+  align-items: flex-start;
+}
+
+.timeline-item.left {
+  justify-content: flex-start;
+}
+
+.timeline-item.right {
+  justify-content: flex-end;
+}
+
+.timeline-content-card {
+  background: var(--emo-gradient-card);
+  border: 1px solid var(--emo-border);
+  border-radius: var(--emo-radius-lg);
+  padding: 1.5rem;
+  max-width: 450px;
+  box-shadow: var(--emo-shadow);
+  backdrop-filter: blur(15px);
+  position: relative;
+  margin: 0 3rem;
+}
+
+.timeline-content-card::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+}
+
+.timeline-item.left .timeline-content-card::before {
+  right: -20px;
+  border-left-color: var(--emo-border);
+}
+
+.timeline-item.right .timeline-content-card::before {
+  left: -20px;
+  border-right-color: var(--emo-border);
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  width: 20px;
+  height: 20px;
+  background: var(--emo-primary);
+  border: 4px solid white;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  box-shadow: var(--emo-shadow);
+}
+
+.timeline-dot.interaction {
+  background: var(--emo-primary);
+}
+
+.timeline-dot.moment {
+  background: var(--emo-accent);
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--emo-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-title {
+  font-weight: 600;
+  color: var(--emo-text);
+  margin-bottom: 0.3rem;
+  font-size: 1.1rem;
+}
+
+.item-meta {
+  color: var(--emo-text-muted);
+  font-size: 0.9rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.item-content {
+  color: var(--emo-text);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.item-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.item-tag {
+  background: rgba(156, 39, 176, 0.1);
+  color: var(--emo-primary);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(156, 39, 176, 0.2);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--emo-text-muted);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--emo-text-muted);
+}
+
+.loading i {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.back-button {
+  position: fixed;
+  top: 100px;
+  left: 2rem;
+  background: var(--emo-gradient);
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  box-shadow: var(--emo-shadow);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--emo-shadow-hover);
+}
+
+@media (max-width: 768px) {
+  .timeline-container {
+    padding: 1rem;
+  }
+  
+  .timeline-title {
+    font-size: 2rem;
+  }
+  
+  .timeline-filters {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .timeline-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .timeline-line {
+    left: 30px;
+  }
+  
+  .timeline-item {
+    justify-content: flex-start !important;
+    padding-left: 60px;
+  }
+  
+  .timeline-content-card {
+    margin: 0;
+    max-width: 100%;
+  }
+  
+  .timeline-content-card::before {
+    left: -20px !important;
+    right: auto !important;
+    border-right-color: var(--emo-border) !important;
+    border-left-color: transparent !important;
+  }
+  
+  .timeline-dot {
+    left: 30px;
+  }
+  
+  .back-button {
+    left: 1rem;
+    top: 80px;
+    width: 50px;
+    height: 50px;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="timeline-container emo-theme">
+  <!-- 返回按钮 -->
+          
+    <i class="fas fa-arrow-left"></i>
+  </button>
+
+  <div class="timeline-header">
+    <h1 class="timeline-title">
+      <i class="fas fa-clock"></i> 时光轴
+    </h1>
+    <p class="timeline-subtitle">💫 回顾生命中的美好瞬间与重要连接</p>
+  </div>
+
+  <!-- 筛选器 -->
+  <div class="timeline-filters">
+    <div class="filter-group">
+      <label class="filter-label">年份</label>
+      <select id="yearFilter" class="filter-select">
+        <option value="">全部年份</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">月份</label>
+      <select id="monthFilter" class="filter-select">
+        <option value="">全部月份</option>
+        <option value="1">1月</option>
+        <option value="2">2月</option>
+        <option value="3">3月</option>
+        <option value="4">4月</option>
+        <option value="5">5月</option>
+        <option value="6">6月</option>
+        <option value="7">7月</option>
+        <option value="8">8月</option>
+        <option value="9">9月</option>
+        <option value="10">10月</option>
+        <option value="11">11月</option>
+        <option value="12">12月</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">人物</label>
+      <select id="personFilter" class="filter-select">
+        <option value="">全部人物</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 统计信息 -->
+  <div class="timeline-stats" id="timelineStats">
+    <div class="stat-item">
+      <div class="stat-number" id="totalInteractions">-</div>
+      <div class="stat-label">互动记录</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="totalMoments">-</div>
+      <div class="stat-label">重要时刻</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" id="totalItems">-</div>
+      <div class="stat-label">总事件</div>
+    </div>
+  </div>
+
+  <!-- 时光轴内容 -->
+  <div class="timeline-content">
+    <div class="timeline-line"></div>
+    <div id="timelineData">
+      <div class="loading">
+        <i class="fas fa-spinner"></i>
+        <p>加载时光轴数据中...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 全局变量
+let timelineData = [];
+let personProfiles = [];
+let currentFilters = {
+  year: '',
+  month: '',
+  person_id: ''
+};
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+  loadTimelineData();
+  loadPersonProfiles();
+  initFilters();
+});
+
+// 加载时光轴数据
+async function loadTimelineData() {
+  try {
+    const params = new URLSearchParams();
+    if (currentFilters.year) params.append('year', currentFilters.year);
+    if (currentFilters.month) params.append('month', currentFilters.month);
+    if (currentFilters.person_id) params.append('person_id', currentFilters.person_id);
+    
+    const response = await fetch(`/tools/api/meetsomeone/timeline/?${params}`);
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      displayTimelineData(data.data);
+      updateStats(data.data.stats);
+      updateYearFilter(data.data.available_years);
+    } else {
+      showError('加载时光轴数据失败: ' + data.message);
+    }
+  } catch (error) {
+    console.error('Error loading timeline data:', error);
+    showError('网络错误，请稍后重试');
+  }
+}
+
+// 显示时光轴数据
+function displayTimelineData(data) {
+  const container = document.getElementById('timelineData');
+  
+  if (!data.timeline_groups || data.timeline_groups.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-clock"></i>
+        <h3>暂无时光轴记录</h3>
+        <p>开始记录你的人际互动，创建属于你的时光轴吧！</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  let itemIndex = 0;
+  
+  data.timeline_groups.forEach(group => {
+    html += `
+      <div class="timeline-group">
+        <div class="timeline-month">
+          <div class="month-label">${group.month_name}</div>
+        </div>
+    `;
+    
+    group.items.forEach(item => {
+      const isLeft = itemIndex % 2 === 0;
+      const typeClass = item.type === 'interaction' ? 'interaction' : 'moment';
+      
+      html += `
+        <div class="timeline-item ${isLeft ? 'left' : 'right'}">
+          <div class="timeline-dot ${typeClass}"></div>
+          <div class="timeline-content-card">
+            <div class="item-header">
+              <div class="item-avatar">
+                ${item.person ? item.person.name.charAt(0) : '✨'}
+              </div>
+              <div class="item-info">
+                <div class="item-title">${item.title}</div>
+                <div class="item-meta">
+                  <span><i class="fas fa-calendar"></i> ${item.date}</span>
+                  ${item.time ? `<span><i class="fas fa-clock"></i> ${item.time}</span>` : ''}
+                  ${item.person ? `<span><i class="fas fa-user"></i> ${item.person.nickname || item.person.name}</span>` : ''}
+                  ${item.type === 'interaction' ? 
+                    `<span><i class="fas fa-comments"></i> ${item.interaction_type}</span>` :
+                    `<span><i class="fas fa-star"></i> ${item.moment_type}</span>`
+                  }
+                  ${item.mood_emoji ? `<span>${item.mood_emoji}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="item-content">${item.content}</div>
+            ${item.location ? `<div class="item-meta"><i class="fas fa-map-marker-alt"></i> ${item.location}</div>` : ''}
+            ${item.tags && item.tags.length > 0 ? `
+              <div class="item-tags">
+                ${item.tags.map(tag => `<span class="item-tag">${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      itemIndex++;
+    });
+    
+    html += '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+// 更新统计信息
+function updateStats(stats) {
+  document.getElementById('totalInteractions').textContent = stats.total_interactions;
+  document.getElementById('totalMoments').textContent = stats.total_moments;
+  document.getElementById('totalItems').textContent = stats.total_items;
+}
+
+// 更新年份筛选器
+function updateYearFilter(years) {
+  const yearSelect = document.getElementById('yearFilter');
+  const currentYear = yearSelect.value;
+  
+  yearSelect.innerHTML = '<option value="">全部年份</option>';
+  years.forEach(year => {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year + '年';
+    if (year.toString() === currentYear) {
+      option.selected = true;
+    }
+    yearSelect.appendChild(option);
+  });
+}
+
+// 加载人物档案列表
+async function loadPersonProfiles() {
+  try {
+    const response = await fetch('/tools/api/meetsomeone/person-profiles/?page_size=100');
+    const data = await response.json();
+    
+    if (data.status === 'success') {
+      personProfiles = data.data.profiles;
+      updatePersonFilter();
+    }
+  } catch (error) {
+    console.error('Error loading person profiles:', error);
+  }
+}
+
+// 更新人物筛选器
+function updatePersonFilter() {
+  const personSelect = document.getElementById('personFilter');
+  const currentPerson = personSelect.value;
+  
+  personSelect.innerHTML = '<option value="">全部人物</option>';
+  personProfiles.forEach(person => {
+    const option = document.createElement('option');
+    option.value = person.id;
+    option.textContent = person.nickname || person.name;
+    if (person.id.toString() === currentPerson) {
+      option.selected = true;
+    }
+    personSelect.appendChild(option);
+  });
+}
+
+// 初始化筛选器事件
+function initFilters() {
+  document.getElementById('yearFilter').addEventListener('change', function() {
+    currentFilters.year = this.value;
+    loadTimelineData();
+  });
+  
+  document.getElementById('monthFilter').addEventListener('change', function() {
+    currentFilters.month = this.value;
+    loadTimelineData();
+  });
+  
+  document.getElementById('personFilter').addEventListener('change', function() {
+    currentFilters.person_id = this.value;
+    loadTimelineData();
+  });
+}
+
+// 工具函数
+function showError(message) {
+  // 这里可以实现一个错误提示组件
+  alert(message);
+}
+</script>
+{% endblock %}
+

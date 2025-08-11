@@ -16,39 +16,40 @@
     box-sizing: border-box;
 }
 
-/* 修复蒙层问题 - 确保正确的层级 */
+/* 修复蒙层问题 - 完全解决黑色遮罩覆盖问题 */
 .modal-backdrop {
     z-index: 1040 !important;
-}
-.modal {
-    z-index: 1050 !important;
-}
-.toast-container {
-    z-index: 1060 !important;
-}
-.dropdown-menu {
-    z-index: 1070 !important;
-}
-
-/* 确保模态框正确显示 */
-.modal.show {
-    display: block !important;
+    pointer-events: none !important; /* 允许点击穿透到下层 */
 }
 
 .modal-backdrop.show {
     opacity: 0.5 !important;
+    pointer-events: none !important; /* 防止遮罩阻止点击 */
 }
 
-/* 修复弹窗被顶部盖住的问题 */
+.modal {
+    z-index: 1050 !important;
+    pointer-events: auto !important; /* 确保模态框本身可以点击 */
+}
+
 .modal-dialog {
     margin: 1.75rem auto !important;
     max-height: calc(100vh - 3.5rem) !important;
     overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保对话框可以点击 */
 }
 
 .modal-content {
     max-height: calc(100vh - 3.5rem) !important;
     overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保内容区域可以点击 */
+    position: relative !important;
+    z-index: 1051 !important; /* 确保在遮罩之上 */
+}
+
+/* 确保模态框正确显示 */
+.modal.show {
+    display: block !important;
 }
 
 /* 确保模态框在视口内正确显示 */
@@ -57,13 +58,35 @@
     padding-right: 0 !important;
 }
 
-/* 修复按钮点击后的蒙层问题 */
-.modal-backdrop {
+/* 修复页面内容区域的点击问题 */
+.container-fluid {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.suggestion-management {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* 修复表格和按钮的点击问题 */
+.table, .btn, .form-control, .form-select {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* 确保所有交互元素都可以点击 */
+button, a, input, select, textarea {
+    position: relative !important;
+    z-index: 3 !important;
     pointer-events: auto !important;
 }
 
-.modal {
-    pointer-events: auto !important;
+.toast-container {
+    z-index: 1060 !important;
+}
+.dropdown-menu {
+    z-index: 1070 !important;
 }
 
 /* 确保下拉菜单不被遮挡 */
@@ -825,7 +848,7 @@
                                                 <span>
                                                     <i class="fas fa-user"></i> 
                                                     {% if suggestion.user %}
-                                                        <img src="{% if suggestion.user.profile.avatar %}{{ suggestion.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd; margin-right: 5px; vertical-align: middle;">
+                                                        <img src="{% if suggestion.user.profile.avatar %}{{ suggestion.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 20px; height: 20px; border-radius: 4px; object-fit: cover; border: 1px solid #ddd; margin-right: 5px; vertical-align: middle;">
                                                         {{ suggestion.user.username }}
                                                     {% else %}
                                                         {{ suggestion.user_name|default:"匿名用户" }}
@@ -960,12 +983,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                                                <label for="quickResponse" class="form-label">
-                                <i class="fas fa-comment"></i> <span data-zh="回复内容" data-en="Reply Content">回复内容</span>
-                            </label>
-                    <textarea id="quickResponse" class="form-control" rows="5" placeholder="请输入回复内容..."></textarea>
-                </div>
+                                            <div class="mb-3">
+                                <label for="quickResponse" class="form-label">
+                                    <i class="fas fa-comment"></i> <span data-zh="回复内容" data-en="Reply Content">回复内容</span>
+                                </label>
+                                <textarea id="quickResponse" class="form-control" rows="5" placeholder="请输入回复内容..."></textarea>
+                            </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -1943,5 +1966,49 @@ function getCSRFToken() {
     }
     return cookieValue;
 }
+
+// 修复蒙层问题的JavaScript代码
+$(document).ready(function() {
+    // 监听所有模态框的隐藏事件
+    $('.modal').on('hidden.bs.modal', function() {
+        // 强制移除所有蒙层
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+        
+        // 恢复页面滚动
+        $('body').css('overflow', '');
+        $('body').css('padding-right', '');
+        
+        // 确保页面元素可以正常点击
+        $('*').css('pointer-events', '');
+    });
+    
+    // 监听模态框显示事件
+    $('.modal').on('shown.bs.modal', function() {
+        // 确保模态框在最上层
+        $(this).css('z-index', 1050);
+        
+        // 确保背景遮罩设置正确
+        $('.modal-backdrop').css({
+            'z-index': 1040,
+            'pointer-events': 'none'
+        });
+    });
+    
+    // 点击遮罩关闭模态框
+    $(document).on('click', '.modal-backdrop', function() {
+        $('.modal.show').modal('hide');
+    });
+    
+    // 确保页面加载时没有残留的蒙层
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+});
+
+// 添加全局错误处理，防止JavaScript错误导致蒙层卡住
+window.addEventListener('error', function() {
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+});
 </script>
 {% endblock %} 

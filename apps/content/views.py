@@ -12,7 +12,7 @@ import json
 import os
 import uuid
 from datetime import datetime
-from .models import Article, Comment, Suggestion, Feedback, Announcement, AILink
+from .models import Article, Comment, Suggestion, Feedback, Announcement, AILink, FeatureAccess, UserFeatureAccess
 from .forms import ArticleForm, CommentForm
 from .utils import extract_favicon_url, download_and_save_icon, get_domain_from_url
 from apps.users.models import UserRole
@@ -230,7 +230,18 @@ def upload_media_api(request):
             return JsonResponse({
                 'success': True,
                 'files': uploaded_files,
-                'message': f'成功上传 {len(uploaded_files)} 个文件'
+                'message': f'成功上传 {len(uploaded_files)} 个文件',
+                'upload_info': {
+                    'total_files': len(uploaded_files),
+                    'upload_time': datetime.now().strftime('%H:%M:%S'),
+                    'file_details': [
+                        {
+                            'name': file['name'],
+                            'type': file['type'],
+                            'size': f'{file["size"] / 1024:.1f}KB'
+                        } for file in uploaded_files
+                    ]
+                }
             })
             
         except Exception as e:
@@ -879,6 +890,18 @@ def create_ai_links_from_list(request):
                 'url': 'https://pollo.ai/image-to-video',
                 'category': 'image',
                 'description': 'AI图片转视频工具，将静态图片转换为动态视频'
+            },
+            {
+                'name': 'Viggle AI',
+                'url': 'https://viggle.ai/home',
+                'category': 'image',
+                'description': 'AI视频生成工具，创建动态视频内容'
+            },
+            {
+                'name': 'MiniMax',
+                'url': 'https://www.minimaxi.com/',
+                'category': 'other',
+                'description': '全栈自研的新一代AI模型矩阵，包含文本、视频、音频等多种AI能力'
             }
         ]
         

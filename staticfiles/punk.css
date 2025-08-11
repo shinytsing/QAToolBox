@@ -374,7 +374,7 @@ body::before {
 /* 朋克导航 */
 .navbar.punk-nav {
     background: rgba(0, 0, 0, 0.9) !important;
-    border-bottom: 4px solid var(--punk-primary) !important;
+    border-bottom: 0.5px solid var(--punk-primary) !important;
     box-shadow: 0 8px 30px rgba(255, 0, 128, 0.6) !important;
     backdrop-filter: blur(15px);
 }
@@ -394,6 +394,25 @@ body::before {
     text-transform: uppercase !important;
     transition: all 0.3s ease !important;
     letter-spacing: 1px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    line-height: 1 !important;
+}
+
+.navbar.punk-nav .nav-link i {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+}
+
+.navbar.punk-nav .nav-link span {
+    display: flex !important;
+    align-items: center !important;
+    line-height: 1 !important;
 }
 
 .navbar.punk-nav .nav-link:hover {

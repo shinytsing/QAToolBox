@@ -619,7 +619,7 @@
 <script>
 // 刷新欲望数据
 function refreshDesireData() {
-  fetch('/tools/api/desire-dashboard/')
+  fetch('/tools/api/desire_dashboard/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -630,7 +630,7 @@ function refreshDesireData() {
 
 // 显示欲望进度
 function showDesireProgress() {
-  fetch('/tools/api/desire-dashboard/progress/')
+  fetch('/tools/api/desire_dashboard/progress/')
   .then(response => response.json())
   .then(data => {
     if (data.success) {
@@ -670,7 +670,7 @@ function fulfillRandomDesire() {
 
 // 检查欲望满足
 function checkDesireFulfillment(taskType, taskDetails) {
-  fetch('/tools/api/desire-dashboard/check-fulfillment/', {
+  fetch('/tools/api/desire_dashboard/check-fulfillment/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -701,7 +701,7 @@ function checkDesireFulfillment(taskType, taskDetails) {
 
 // 生成欲望兑现图片
 function generateDesireImage(fulfillmentId, desireTitle) {
-  fetch('/tools/api/desire-dashboard/generate-image/', {
+  fetch('/tools/api/desire_dashboard/generate-image/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -733,7 +733,7 @@ document.getElementById('desireForm').addEventListener('submit', function(e) {
     intensity: parseInt(document.getElementById('desireIntensity').value)
   };
   
-  fetch('/tools/api/desire-dashboard/add/', {
+  fetch('/tools/api/desire_dashboard/add/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

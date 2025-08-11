@@ -1,0 +1,1315 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}公告管理 - QAToolBox{% endblock %}
+
+{% block content %}
+<style>
+/* 修复蒙层问题 - 完全解决黑色遮罩覆盖问题 */
+.modal-backdrop {
+    z-index: 1040 !important;
+    pointer-events: none !important; /* 允许点击穿透到下层 */
+}
+
+.modal-backdrop.show {
+    opacity: 0.5 !important;
+    pointer-events: none !important; /* 防止遮罩阻止点击 */
+}
+
+.modal {
+    z-index: 1050 !important;
+    pointer-events: auto !important; /* 确保模态框本身可以点击 */
+}
+
+.modal-dialog {
+    margin: 1.75rem auto !important;
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保对话框可以点击 */
+}
+
+.modal-content {
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保内容区域可以点击 */
+    position: relative !important;
+    z-index: 1051 !important; /* 确保在遮罩之上 */
+}
+
+/* 确保所有交互元素都可以点击 */
+button, a, input, select, textarea {
+    position: relative !important;
+    z-index: 3 !important;
+    pointer-events: auto !important;
+}
+
+/* 现代化公告管理界面样式 */
+.announcement-management {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px 0;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.management-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.management-title {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.management-subtitle {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.announcement-controls {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.control-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 250px;
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 20px 12px 45px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8c8d;
+}
+
+.filter-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-select {
+    padding: 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    background: white;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+}
+
+.filter-select:focus {
+    border-color: #667eea;
+    outline: none;
+}
+
+.btn-modern {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-modern:hover::before {
+    left: 100%;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-success-modern {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.btn-warning-modern {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-danger-modern {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #e74c3c;
+}
+
+.announcements-grid {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.announcement-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.announcement-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.announcement-card.active {
+    border-left-color: #43e97b;
+}
+
+.announcement-card.inactive {
+    border-left-color: #e74c3c;
+    opacity: 0.7;
+}
+
+.announcement-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.announcement-title {
+    flex: 1;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.announcement-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.meta-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.status-inactive {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #e74c3c;
+}
+
+.priority-high {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.priority-normal {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.priority-low {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.announcement-content {
+    color: #7f8c8d;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.announcement-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: #e74c3c;
+}
+
+.btn-toggle {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #7f8c8d;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.modal-modern .modal-content {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-modern .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+    padding: 25px 30px;
+}
+
+.modal-modern .modal-body {
+    padding: 30px;
+}
+
+.form-group-modern {
+    margin-bottom: 25px;
+}
+
+.form-label-modern {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-input-modern {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-input-modern:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.form-textarea-modern {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .management-header {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .control-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: auto;
+    }
+    
+    .filter-group {
+        justify-content: center;
+    }
+    
+    .announcement-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .announcement-actions {
+        justify-content: center;
+    }
+    
+    .modal-modern .modal-header,
+    .modal-modern .modal-body {
+        padding: 20px;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.announcement-card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.fade-in:nth-child(1) { animation-delay: 0.1s; }
+.fade-in:nth-child(2) { animation-delay: 0.2s; }
+.fade-in:nth-child(3) { animation-delay: 0.3s; }
+.fade-in:nth-child(4) { animation-delay: 0.4s; }
+</style>
+
+<div class="announcement-management">
+    <div class="container-fluid">
+        <!-- 管理头部 -->
+        <div class="management-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="management-title">
+                        <i class="fas fa-bullhorn text-primary"></i>
+                        公告管理系统
+                    </h1>
+                    <p class="management-subtitle">
+                        创建、编辑和管理系统公告，确保重要信息及时传达给用户
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button type="button" class="btn btn-modern btn-primary-modern" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+                        <i class="fas fa-plus"></i> 创建新公告
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="announcement-controls">
+            <div class="control-group">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" id="searchInput" placeholder="搜索公告标题或内容...">
+                </div>
+                <div class="filter-group">
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">全部状态</option>
+                        <option value="active">激活</option>
+                        <option value="inactive">非激活</option>
+                    </select>
+                    <select class="filter-select" id="priorityFilter">
+                        <option value="">全部优先级</option>
+                        <option value="high">高</option>
+                        <option value="normal">普通</option>
+                        <option value="low">低</option>
+                    </select>
+                    <button class="btn btn-modern btn-success-modern" onclick="refreshAnnouncements()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 公告网格 -->
+        <div class="announcements-grid">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p class="mt-3">加载中...</p>
+            </div>
+            <div id="announcementsContainer">
+                <!-- 公告列表将通过JavaScript动态加载 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加公告模态框 -->
+<div class="modal fade modal-modern" id="addAnnouncementModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i>
+                    创建新公告
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAnnouncementForm">
+                    <div class="form-group-modern">
+                        <label for="title" class="form-label-modern">
+                            <i class="fas fa-heading"></i> 公告标题
+                        </label>
+                        <input type="text" class="form-input-modern" id="title" name="title" placeholder="请输入公告标题..." required>
+                    </div>
+                    <div class="form-group-modern">
+                        <label for="content" class="form-label-modern">
+                            <i class="fas fa-align-left"></i> 公告内容
+                        </label>
+                        <textarea class="form-input-modern form-textarea-modern" id="content" name="content" placeholder="请输入公告内容..." required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="status" class="form-label-modern">
+                                    <i class="fas fa-toggle-on"></i> 状态
+                                </label>
+                                <select class="form-input-modern" id="status" name="status">
+                                    <option value="active">✅ 激活</option>
+                                    <option value="inactive">❌ 非激活</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="priority" class="form-label-modern">
+                                    <i class="fas fa-flag"></i> 优先级
+                                </label>
+                                <select class="form-input-modern" id="priority" name="priority">
+                                    <option value="normal">🔵 普通</option>
+                                    <option value="high">🔴 高</option>
+                                    <option value="low">⚪ 低</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="startTime" class="form-label-modern">
+                                    <i class="fas fa-calendar-alt"></i> 开始时间
+                                </label>
+                                <input type="datetime-local" class="form-input-modern" id="startTime" name="start_time">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="endTime" class="form-label-modern">
+                                    <i class="fas fa-calendar-times"></i> 结束时间
+                                </label>
+                                <input type="datetime-local" class="form-input-modern" id="endTime" name="end_time">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group-modern">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isPopup" name="is_popup">
+                            <label for="isPopup" class="form-check-label">
+                                <i class="fas fa-window-restore"></i> 显示为弹窗
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+                <button type="button" class="btn btn-modern btn-primary-modern" onclick="addAnnouncement()">
+                    <i class="fas fa-save"></i> 保存公告
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑公告模态框 -->
+<div class="modal fade modal-modern" id="editAnnouncementModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i>
+                    编辑公告
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAnnouncementForm">
+                    <input type="hidden" id="editId" name="id">
+                    <div class="form-group-modern">
+                        <label for="editTitle" class="form-label-modern">
+                            <i class="fas fa-heading"></i> 公告标题
+                        </label>
+                        <input type="text" class="form-input-modern" id="editTitle" name="title" required>
+                    </div>
+                    <div class="form-group-modern">
+                        <label for="editContent" class="form-label-modern">
+                            <i class="fas fa-align-left"></i> 公告内容
+                        </label>
+                        <textarea class="form-input-modern form-textarea-modern" id="editContent" name="content" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="editStatus" class="form-label-modern">
+                                    <i class="fas fa-toggle-on"></i> 状态
+                                </label>
+                                <select class="form-input-modern" id="editStatus" name="status">
+                                    <option value="active">✅ 激活</option>
+                                    <option value="inactive">❌ 非激活</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="editPriority" class="form-label-modern">
+                                    <i class="fas fa-flag"></i> 优先级
+                                </label>
+                                <select class="form-input-modern" id="editPriority" name="priority">
+                                    <option value="normal">🔵 普通</option>
+                                    <option value="high">🔴 高</option>
+                                    <option value="low">⚪ 低</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="editStartTime" class="form-label-modern">
+                                    <i class="fas fa-calendar-alt"></i> 开始时间
+                                </label>
+                                <input type="datetime-local" class="form-input-modern" id="editStartTime" name="start_time">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label for="editEndTime" class="form-label-modern">
+                                    <i class="fas fa-calendar-times"></i> 结束时间
+                                </label>
+                                <input type="datetime-local" class="form-input-modern" id="editEndTime" name="end_time">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group-modern">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="editIsPopup" name="is_popup">
+                            <label for="editIsPopup" class="form-check-label">
+                                <i class="fas fa-window-restore"></i> 显示为弹窗
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+                <button type="button" class="btn btn-modern btn-primary-modern" onclick="updateAnnouncement()">
+                    <i class="fas fa-save"></i> 更新公告
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全局变量
+let allAnnouncements = [];
+let filteredAnnouncements = [];
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    loadAnnouncements();
+    
+    // 添加搜索和过滤功能
+    document.getElementById('searchInput').addEventListener('input', filterAnnouncements);
+    document.getElementById('statusFilter').addEventListener('change', filterAnnouncements);
+    document.getElementById('priorityFilter').addEventListener('change', filterAnnouncements);
+});
+
+// 初始化事件监听器
+function initializeEventListeners() {
+    // 模态框事件
+    const addModal = document.getElementById('addAnnouncementModal');
+    const editModal = document.getElementById('editAnnouncementModal');
+    
+    // 重置表单当模态框关闭时
+    if (addModal) {
+        addModal.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('addAnnouncementForm').reset();
+        });
+    }
+    
+    // 添加按钮动画效果
+    document.querySelectorAll('.btn-modern').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+}
+
+// 加载公告列表
+function loadAnnouncements() {
+    showLoading(true);
+    
+    fetch('/content/api/admin/announcements/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                allAnnouncements = data.announcements || [];
+                filteredAnnouncements = [...allAnnouncements];
+                displayAnnouncements(filteredAnnouncements);
+                showMessage('公告加载成功', 'success');
+            } else {
+                showMessage('加载公告失败: ' + (data.error || '未知错误'), 'error');
+                displayEmptyState();
+            }
+        })
+        .catch(error => {
+            console.error('请求失败:', error);
+            showMessage('网络错误，请检查连接', 'error');
+            displayEmptyState();
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+}
+
+// 显示公告列表（卡片式布局）
+function displayAnnouncements(announcements) {
+    const container = document.getElementById('announcementsContainer');
+    
+    if (!announcements || announcements.length === 0) {
+        displayEmptyState();
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    announcements.forEach((announcement, index) => {
+        const card = createAnnouncementCard(announcement, index);
+        container.appendChild(card);
+    });
+    
+    // 添加渐入动画
+    setTimeout(() => {
+        document.querySelectorAll('.announcement-card').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('fade-in');
+        });
+    }, 100);
+}
+
+// 创建公告卡片
+function createAnnouncementCard(announcement, index) {
+    const card = document.createElement('div');
+    card.className = `announcement-card ${announcement.status === 'active' ? 'active' : 'inactive'}`;
+    
+    const statusIcon = announcement.status === 'active' ? '✅' : '❌';
+    const priorityIcon = getPriorityIcon(announcement.priority);
+    const priorityClass = `priority-${announcement.priority || 'normal'}`;
+    
+    card.innerHTML = `
+        <div class="announcement-header">
+            <div class="announcement-title">${escapeHtml(announcement.title || '未命名公告')}</div>
+            <div class="announcement-meta">
+                <span class="meta-badge status-${announcement.status}">${statusIcon} ${announcement.status === 'active' ? '激活' : '非激活'}</span>
+                <span class="meta-badge ${priorityClass}">${priorityIcon} ${getPriorityText(announcement.priority)}</span>
+                ${announcement.is_popup ? '<span class="meta-badge" style="background: #f093fb; color: white;">🪟 弹窗</span>' : ''}
+            </div>
+        </div>
+        <div class="announcement-content">
+            ${escapeHtml(announcement.content ? announcement.content.substring(0, 200) : '无内容')}
+            ${announcement.content && announcement.content.length > 200 ? '...' : ''}
+        </div>
+        <div class="announcement-meta">
+            <small style="color: #95a5a6;">
+                <i class="fas fa-user"></i> ${escapeHtml(announcement.created_by || '系统')} | 
+                <i class="fas fa-clock"></i> ${formatDateTime(announcement.created_at)}
+                ${announcement.start_time ? ` | <i class="fas fa-calendar-alt"></i> ${formatDateTime(announcement.start_time)}` : ''}
+                ${announcement.end_time ? ` - ${formatDateTime(announcement.end_time)}` : ''}
+            </small>
+        </div>
+        <div class="announcement-actions">
+            <button class="action-btn btn-edit" onclick="editAnnouncement(${announcement.id})" title="编辑公告">
+                <i class="fas fa-edit"></i> 编辑
+            </button>
+            <button class="action-btn btn-toggle" onclick="toggleAnnouncementStatus(${announcement.id})" title="切换状态">
+                <i class="fas fa-toggle-${announcement.status === 'active' ? 'off' : 'on'}"></i> 
+                ${announcement.status === 'active' ? '停用' : '启用'}
+            </button>
+            <button class="action-btn btn-delete" onclick="deleteAnnouncement(${announcement.id})" title="删除公告">
+                <i class="fas fa-trash"></i> 删除
+            </button>
+        </div>
+    `;
+    
+    return card;
+}
+
+// 显示空状态
+function displayEmptyState() {
+    const container = document.getElementById('announcementsContainer');
+    container.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <h4>暂无公告</h4>
+            <p>点击"创建新公告"按钮来添加第一个公告</p>
+            <button class="btn btn-modern btn-primary-modern" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+                <i class="fas fa-plus"></i> 创建新公告
+            </button>
+        </div>
+    `;
+}
+
+// 搜索和过滤功能
+function filterAnnouncements() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const priorityFilter = document.getElementById('priorityFilter').value;
+    
+    filteredAnnouncements = allAnnouncements.filter(announcement => {
+        const matchesSearch = !searchTerm || 
+            announcement.title.toLowerCase().includes(searchTerm) ||
+            announcement.content.toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = !statusFilter || announcement.status === statusFilter;
+        const matchesPriority = !priorityFilter || announcement.priority === priorityFilter;
+        
+        return matchesSearch && matchesStatus && matchesPriority;
+    });
+    
+    displayAnnouncements(filteredAnnouncements);
+}
+
+// 刷新公告列表
+function refreshAnnouncements() {
+    showMessage('正在刷新...', 'info');
+    loadAnnouncements();
+}
+
+// 添加公告
+function addAnnouncement() {
+    const form = document.getElementById('addAnnouncementForm');
+    if (!validateForm(form)) return;
+    
+    const formData = new FormData(form);
+    const data = {
+        title: formData.get('title'),
+        content: formData.get('content'),
+        status: formData.get('status'),
+        priority: formData.get('priority'),
+        start_time: formData.get('start_time'),
+        end_time: formData.get('end_time'),
+        is_popup: formData.get('is_popup') === 'on'
+    };
+    
+    // 显示加载状态
+    const submitBtn = document.querySelector('#addAnnouncementModal .btn-primary-modern');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+    submitBtn.disabled = true;
+    
+    fetch('/content/api/admin/announcements/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closeModal('addAnnouncementModal');
+            form.reset();
+            loadAnnouncements();
+            showMessage('公告创建成功！', 'success');
+        } else {
+            showMessage('公告创建失败: ' + (data.error || '未知错误'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('请求失败:', error);
+        showMessage('网络错误，请重试', 'error');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// 编辑公告
+function editAnnouncement(id) {
+    // 先获取公告详情
+    const announcement = allAnnouncements.find(a => a.id === id);
+    if (!announcement) {
+        showMessage('找不到该公告', 'error');
+        return;
+    }
+    
+    // 填充编辑表单
+    document.getElementById('editId').value = announcement.id;
+    document.getElementById('editTitle').value = announcement.title || '';
+    document.getElementById('editContent').value = announcement.content || '';
+    document.getElementById('editStatus').value = announcement.status || 'active';
+    document.getElementById('editPriority').value = announcement.priority || 'normal';
+    
+    // 处理时间字段
+    if (announcement.start_time) {
+        document.getElementById('editStartTime').value = formatDateTimeLocal(announcement.start_time);
+    }
+    if (announcement.end_time) {
+        document.getElementById('editEndTime').value = formatDateTimeLocal(announcement.end_time);
+    }
+    
+    document.getElementById('editIsPopup').checked = announcement.is_popup || false;
+    
+    // 显示模态框
+    showModal('editAnnouncementModal');
+}
+
+// 更新公告
+function updateAnnouncement() {
+    const form = document.getElementById('editAnnouncementForm');
+    if (!validateForm(form)) return;
+    
+    const formData = new FormData(form);
+    const id = formData.get('id');
+    const data = {
+        title: formData.get('title'),
+        content: formData.get('content'),
+        status: formData.get('status'),
+        priority: formData.get('priority'),
+        start_time: formData.get('start_time'),
+        end_time: formData.get('end_time'),
+        is_popup: formData.get('is_popup') === 'on'
+    };
+    
+    // 显示加载状态
+    const submitBtn = document.querySelector('#editAnnouncementModal .btn-primary-modern');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 更新中...';
+    submitBtn.disabled = true;
+    
+    fetch(`/content/api/admin/announcements/${id}/`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closeModal('editAnnouncementModal');
+            loadAnnouncements();
+            showMessage('公告更新成功！', 'success');
+        } else {
+            showMessage('公告更新失败: ' + (data.error || '未知错误'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('请求失败:', error);
+        showMessage('网络错误，请重试', 'error');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// 切换公告状态
+function toggleAnnouncementStatus(id) {
+    const announcement = allAnnouncements.find(a => a.id === id);
+    if (!announcement) return;
+    
+    const newStatus = announcement.status === 'active' ? 'inactive' : 'active';
+    const actionText = newStatus === 'active' ? '启用' : '停用';
+    
+    if (!confirm(`确定要${actionText}这个公告吗？`)) return;
+    
+    fetch(`/content/api/admin/announcements/${id}/`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadAnnouncements();
+            showMessage(`公告已${actionText}`, 'success');
+        } else {
+            showMessage(`${actionText}失败: ` + (data.error || '未知错误'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('请求失败:', error);
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+// 删除公告
+function deleteAnnouncement(id) {
+    if (!confirm('⚠️ 确定要删除这个公告吗？\n\n此操作不可撤销！')) return;
+    
+    fetch(`/content/api/admin/announcements/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            loadAnnouncements();
+            showMessage('公告删除成功！', 'success');
+        } else {
+            showMessage('公告删除失败: ' + (data.error || '未知错误'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('请求失败:', error);
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+// ===== 工具函数 =====
+
+// 显示加载状态
+function showLoading(show) {
+    const spinner = document.getElementById('loadingSpinner');
+    const container = document.getElementById('announcementsContainer');
+    
+    if (show) {
+        spinner.style.display = 'block';
+        container.style.display = 'none';
+    } else {
+        spinner.style.display = 'none';
+        container.style.display = 'block';
+    }
+}
+
+// 显示消息提示
+function showMessage(message, type = 'info') {
+    // 移除旧的消息
+    const oldMessages = document.querySelectorAll('.message-toast');
+    oldMessages.forEach(msg => msg.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = `message-toast alert alert-${type} alert-dismissible fade show`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        border-radius: 10px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    const icon = {
+        'success': 'fas fa-check-circle',
+        'error': 'fas fa-exclamation-triangle',
+        'warning': 'fas fa-exclamation-circle',
+        'info': 'fas fa-info-circle'
+    }[type] || 'fas fa-info-circle';
+    
+    toast.innerHTML = `
+        <i class="${icon}"></i> ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 自动消失
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 4000);
+}
+
+// 表单验证
+function validateForm(form) {
+    const title = form.querySelector('[name="title"]').value.trim();
+    const content = form.querySelector('[name="content"]').value.trim();
+    
+    if (!title) {
+        showMessage('请输入公告标题', 'warning');
+        form.querySelector('[name="title"]').focus();
+        return false;
+    }
+    
+    if (title.length > 100) {
+        showMessage('公告标题不能超过100个字符', 'warning');
+        form.querySelector('[name="title"]').focus();
+        return false;
+    }
+    
+    if (!content) {
+        showMessage('请输入公告内容', 'warning');
+        form.querySelector('[name="content"]').focus();
+        return false;
+    }
+    
+    if (content.length > 2000) {
+        showMessage('公告内容不能超过2000个字符', 'warning');
+        form.querySelector('[name="content"]').focus();
+        return false;
+    }
+    
+    return true;
+}
+
+// 获取CSRF令牌
+function getCsrfToken() {
+    const token = document.querySelector('[name=csrfmiddlewaretoken]');
+    return token ? token.value : '';
+}
+
+// 模态框操作
+function showModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+}
+
+function closeModal(modalId) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+    if (modal) modal.hide();
+}
+
+// 转义HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 格式化日期时间
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// 格式化日期时间为本地输入格式
+function formatDateTimeLocal(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// 获取优先级图标
+function getPriorityIcon(priority) {
+    switch (priority) {
+        case 'high': return '🔴';
+        case 'low': return '⚪';
+        default: return '🔵';
+    }
+}
+
+// 获取优先级文本
+function getPriorityText(priority) {
+    switch (priority) {
+        case 'high': return '高';
+        case 'low': return '低';
+        default: return '普通';
+    }
+}
+
+// 添加CSS动画样式
+const animationStyles = document.createElement('style');
+animationStyles.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(animationStyles);
+
+// 修复蒙层问题的JavaScript代码
+document.addEventListener('DOMContentLoaded', function() {
+    // 监听所有模态框的隐藏事件
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // 强制移除所有蒙层
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            
+            // 恢复页面滚动
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // 确保模态框在最上层
+            this.style.zIndex = '1050';
+            
+            // 确保背景遮罩设置正确
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.style.zIndex = '1040';
+                backdrop.style.pointerEvents = 'none';
+            });
+        });
+    });
+    
+    // 点击遮罩关闭模态框
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-backdrop')) {
+            const activeModal = document.querySelector('.modal.show');
+            if (activeModal) {
+                const modal = bootstrap.Modal.getInstance(activeModal);
+                if (modal) modal.hide();
+            }
+        }
+    });
+    
+    // 确保页面加载时没有残留的蒙层
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+
+// 添加全局错误处理，防止JavaScript错误导致蒙层卡住
+window.addEventListener('error', function() {
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+</script>
+{% endblock %} 

@@ -174,24 +174,26 @@
 // 工具数据
 const toolsData = {
   work: [
-    { name: '测试用例生成器', url: '/tools/test-case-generator/', icon: '🧪', desc: '自动生成测试用例，让代码更可靠！' },
-    { name: 'PDF转换器', url: '/tools/pdf-converter/', icon: '📄', desc: 'PDF转Word，文档处理神器！' },
-    { name: '网页爬虫', url: '/tools/web-crawler/', icon: '🕷️', desc: '智能爬取网页数据！' }
+    { name: '测试用例生成器', url: '/tools/test_case_generator/', icon: '🧪', desc: '自动生成测试用例，让代码更可靠！' },
+{ name: 'PDF转换器', url: '/tools/pdf_converter/', icon: '📄', desc: 'PDF转Word，文档处理神器！' },
+{ name: '网页爬虫', url: '/tools/web_crawler/', icon: '🕷️', desc: '智能爬取网页数据！' }
   ],
   life: [
-    { name: '生活日记', url: '/tools/life-diary-progressive/', icon: '📖', desc: '记录美好生活，AI助你总结！' },
-    { name: '健身中心', url: '/tools/fitness/', icon: '💪', desc: '科学健身计划，健康生活！' },
-    { name: '冥想指南', url: '/tools/meditation-guide/', icon: '🧘', desc: '静心冥想，找回内心的平静！' },
-    { name: '音乐疗愈', url: '/tools/music-healing/', icon: '🎵', desc: '用音乐治愈心灵！' }
+    { name: '生活日记', url: '/tools/life_diary_progressive/', icon: '📖', desc: '记录美好生活，AI助你总结！' },
+    { name: 'FitMatrix', url: '/tools/fitness/', icon: '💪', desc: '智能健身矩阵，重塑身体边界！' },
+    { name: '冥想指南', url: '/tools/meditation_guide/', icon: '🧘', desc: '静心冥想，找回内心的平静！' },
+    { name: '音乐疗愈', url: '/tools/music_healing/', icon: '🎵', desc: '用音乐治愈心灵！' },
+{ name: '美食选择器', url: '/tools/food_randomizer/', icon: '🍽️', desc: '智能美食推荐，解决选择困难！' },
+{ name: '本地美食图库', url: '/tools/local_food_display/', icon: '🍜', desc: '精美食物图片展示，食物与图片完美匹配！' }
   ],
   training: [
-    { name: '自我分析', url: '/tools/self-analysis/', icon: '🔍', desc: '深度分析自我，发现潜能！' },
+    { name: '自我分析', url: '/tools/self_analysis/', icon: '🔍', desc: '深度分析自我，发现潜能！' },
     { name: '故事板', url: '/tools/storyboard/', icon: '🎬', desc: '创意故事板，激发灵感！' },
-    { name: '命运分析', url: '/tools/fortune-analyzer/', icon: '🔮', desc: '探索命运的奥秘！' }
+    { name: '命运分析', url: '/tools/fortune_analyzer/', icon: '🔮', desc: '探索命运的奥秘！' }
   ],
   emo: [
-    { name: '情感日记', url: '/tools/emo-diary/', icon: '💭', desc: '记录情感波动，了解自己！' },
-    { name: '创意写作', url: '/tools/creative-writer/', icon: '✍️', desc: 'AI助你创作，释放创意！' }
+    { name: '情感日记', url: '/tools/emo_diary/', icon: '💭', desc: '记录情感波动，了解自己！' },
+{ name: '创意写作', url: '/tools/creative_writer/', icon: '✍️', desc: 'AI助你创作，释放创意！' }
   ]
 };
 
@@ -219,7 +221,7 @@ let modeNames = {
 // 记录模式点击到服务器
 async function recordModeClick(mode) {
   try {
-    const response = await fetch('/tools/api/mode/record-click/', {
+    const response = await fetch('/tools/api/mode/record_click/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

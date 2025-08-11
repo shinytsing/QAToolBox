@@ -5,6 +5,98 @@
 {% block tool_title_display %}生活日记 - 层层递进{% endblock %}
 
 {% block extra_css %}
+
+<!-- CDN回退处理 -->
+<script>
+// 简单的CDN回退处理
+document.addEventListener('DOMContentLoaded', function() {
+    // 检查Bootstrap CSS是否加载
+    if (!document.querySelector('link[href*="bootstrap"]')) {
+        const bootstrapLink = document.createElement('link');
+        bootstrapLink.rel = 'stylesheet';
+        bootstrapLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css';
+        bootstrapLink.onerror = function() {
+            this.href = 'https://unpkg.com/bootstrap@4.5.2/dist/css/bootstrap.min.css';
+        };
+        document.head.appendChild(bootstrapLink);
+    }
+    
+    // 检查Font Awesome是否加载
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+        const faLink = document.createElement('link');
+        faLink.rel = 'stylesheet';
+        faLink.href = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css';
+        faLink.onerror = function() {
+            this.href = 'https://unpkg.com/@fortawesome/fontawesome-free@5.15.4/css/all.min.css';
+        };
+        document.head.appendChild(faLink);
+    }
+    
+    // 检查并加载JavaScript依赖 - 确保正确的加载顺序
+    function loadScript(src, fallbackSrc, callback) {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onerror = function() {
+            this.src = fallbackSrc;
+        };
+        script.onload = callback;
+        document.head.appendChild(script);
+    }
+    
+    // 按顺序加载依赖
+    if (!window.jQuery) {
+        loadScript(
+            'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js',
+            'https://unpkg.com/jquery@3.5.1/dist/jquery.slim.min.js',
+            function() {
+                // jQuery加载完成后加载Popper
+                if (!window.Popper) {
+                    loadScript(
+                        'https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js',
+                        'https://unpkg.com/@popperjs/core@2.9.2/dist/umd/popper.min.js',
+                        function() {
+                            // Popper加载完成后加载Bootstrap
+                            if (!window.bootstrap) {
+                                loadScript(
+                                    'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                                    'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                                );
+                            }
+                        }
+                    );
+                } else if (!window.bootstrap) {
+                    // 如果Popper已存在，直接加载Bootstrap
+                    loadScript(
+                        'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                        'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                    );
+                }
+            }
+        );
+    } else if (!window.Popper) {
+        // 如果jQuery已存在，加载Popper
+        loadScript(
+            'https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js',
+            'https://unpkg.com/@popperjs/core@2.9.2/dist/umd/popper.min.js',
+            function() {
+                if (!window.bootstrap) {
+                    loadScript(
+                        'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+                        'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+                    );
+                }
+            }
+        );
+    } else if (!window.bootstrap) {
+        // 如果jQuery和Popper都已存在，只加载Bootstrap
+        loadScript(
+            'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js',
+            'https://unpkg.com/bootstrap@4.5.2/dist/js/bootstrap.min.js'
+        );
+    }
+});
+</script>
+
 <link rel="stylesheet" href="{% static 'progressive_diary.css' %}">
 <style>
 /* 思考问题输入框样式 */
@@ -44,8 +136,11 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 12px;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
   resize: vertical;
   transition: border-color 0.3s ease;
 }
@@ -66,8 +161,11 @@
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 8px 12px;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
   transition: border-color 0.3s ease;
   background-color: #f8f9fa;
 }
@@ -151,11 +249,13 @@
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 6px;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
   resize: vertical;
   margin-bottom: 10px;
-  font-family: inherit;
 }
 
 .question-edit-input:focus {
@@ -366,6 +466,189 @@
   display: block !important;
 }
 
+/* 打卡日历样式 */
+.checkin-calendar-section {
+  margin-top: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 15px;
+  border: 1px solid #dee2e6;
+}
+
+.checkin-calendar-section h4 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.checkin-calendar-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6c757d;
+}
+
+.nav-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.today-btn {
+  background: #007bff;
+  color: white;
+}
+
+.today-btn:hover {
+  background: #0056b3;
+}
+
+.current-month {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.streak-info {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  border-radius: 10px;
+  color: white;
+}
+
+.streak-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.streak-item i {
+  color: #ffd700;
+}
+
+.calendar-grid {
+  margin-bottom: 20px;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.calendar-header > div {
+  text-align: center;
+  padding: 10px;
+  font-weight: 600;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  position: relative;
+  background: white;
+  border: 1px solid #e9ecef;
+}
+
+.calendar-day:hover {
+  background: #e3f2fd;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-day.other-month {
+  color: #adb5bd;
+  background: #f8f9fa;
+}
+
+.calendar-day.today {
+  background: #007bff;
+  color: white;
+  font-weight: 600;
+}
+
+.calendar-day.has-checkin {
+  background: #28a745;
+  color: white;
+}
+
+.calendar-day.completed {
+  background: #28a745;
+  color: white;
+}
+
+.calendar-day.rest {
+  background: #ffc107;
+  color: #212529;
+}
+
+.monthly-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .question-input-group {
@@ -383,6 +666,173 @@
   .search-box button {
     width: 100%;
   }
+  
+  .streak-info {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .monthly-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+/* 打卡模态框样式 */
+.checkin-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.checkin-modal-content {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.checkin-modal-content h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.confirmation-message {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.confirmation-message p {
+  margin: 10px 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 25px;
+}
+
+.btn-cancel,
+.btn-confirm,
+.btn-submit,
+.btn-edit,
+.btn-delete {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: #5a6268;
+}
+
+.btn-confirm,
+.btn-submit {
+  background: #007bff;
+  color: white;
+}
+
+.btn-confirm:hover,
+.btn-submit:hover {
+  background: #0056b3;
+}
+
+.btn-edit {
+  background: #28a745;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #218838;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+}
+
+.checkin-detail {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.checkin-detail p {
+  margin: 8px 0;
+  color: #333;
 }
 
 @keyframes slideInUp {
@@ -576,6 +1026,27 @@
   cursor: not-allowed;
 }
 
+/* 按钮状态样式 */
+.btn-enabled {
+  opacity: 1 !important;
+  transform: scale(1);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  cursor: pointer !important;
+}
+
+.btn-disabled {
+  opacity: 0.6 !important;
+  transform: scale(0.98);
+  cursor: not-allowed !important;
+  box-shadow: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: scale(0.98);
+}
+
 .question-custom {
   padding: 12px 16px;
   border-top: 1px solid #e9ecef;
@@ -593,10 +1064,14 @@
 .custom-question-input {
   width: 100%;
   min-height: 60px;
-  padding: 8px;
+  padding: 12px;
   border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
   resize: vertical;
   margin-bottom: 8px;
 }
@@ -1130,6 +1605,142 @@
   font-size: 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* 心情选择器样式 */
+.mood-selector {
+  margin: 30px 0;
+}
+
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mood-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 15px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.mood-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.mood-option:hover::before {
+  left: 100%;
+}
+
+.mood-option:hover {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+}
+
+.mood-option.selected {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.25);
+  transform: translateY(-2px);
+}
+
+.mood-option.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  animation: checkmarkAppear 0.3s ease;
+}
+
+.mood-option i {
+  font-size: 32px;
+  margin-bottom: 8px;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.mood-option:hover i {
+  color: #4CAF50;
+  transform: scale(1.1);
+}
+
+.mood-option.selected i {
+  color: #4CAF50;
+  transform: scale(1.1);
+}
+
+.mood-option span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.mood-option:hover span {
+  color: #4CAF50;
+}
+
+.mood-option.selected span {
+  color: #4CAF50;
+}
+
+@media (max-width: 768px) {
+  .stat-detail-content {
+    font-size: 1rem;
+    order: -1;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .mood-options {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .mood-option {
+    padding: 15px 10px;
+  }
+  
+  .mood-option i {
+    font-size: 24px;
+  }
+  
+  .mood-option span {
+    font-size: 12px;
+  }
+}
 </style>
 {% endblock %}
 
@@ -1163,6 +1774,8 @@
       </div>
     </div>
   </div>
+
+
 
   <div class="progressive-diary-container">
     <div class="progressive-main">
@@ -1207,6 +1820,11 @@
           <h2>选择今日心情</h2>
           <p>选择今天的心情状态，这将帮助我们为您生成更贴心的内容</p>
         </div>
+        
+        <!-- 心情选择事件处理 -->
+        <script>
+        // 心情选择事件委托处理将在主初始化函数中处理
+        </script>
         
         <!-- 心情选择 -->
         <div class="mood-selector">
@@ -1470,6 +2088,60 @@
                     <!-- 心情统计摘要将在这里显示 -->
                 </div>
             </div>
+
+            <!-- 打卡日历 -->
+            <div class="checkin-calendar-section">
+                <h4>📅 日记打卡</h4>
+                <div class="checkin-calendar-container">
+                    <!-- 日历导航 -->
+                    <div class="calendar-nav">
+                        <button class="nav-btn" id="diaryPrevMonth"><i class="fas fa-chevron-left"></i></button>
+                        <div class="current-month" id="diaryCurrentMonth">2024年1月</div>
+                        <button class="nav-btn" id="diaryNextMonth"><i class="fas fa-chevron-right"></i></button>
+                        <button class="nav-btn today-btn" id="diaryGoToday">今天</button>
+                    </div>
+                    
+                    <!-- 连续打卡信息 -->
+                    <div class="streak-info">
+                        <div class="streak-item">
+                            <i class="fas fa-fire"></i>
+                            <span>连续 <span id="diaryCurrentStreak">0</span> 天</span>
+                        </div>
+                        <div class="streak-item">
+                            <i class="fas fa-trophy"></i>
+                            <span>最长 <span id="diaryLongestStreak">0</span> 天</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 日历网格 -->
+                    <div class="calendar-grid">
+                        <div class="calendar-header">
+                            <div>日</div>
+                            <div>一</div>
+                            <div>二</div>
+                            <div>三</div>
+                            <div>四</div>
+                            <div>五</div>
+                            <div>六</div>
+                        </div>
+                        <div class="calendar-body" id="diaryCalendarBody">
+                            <!-- 日历日期将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 月度统计 -->
+                    <div class="monthly-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">本月完成</span>
+                            <span class="stat-value" id="diaryMonthlyCompleted">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">完成率</span>
+                            <span class="stat-value" id="diaryMonthlyRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="progressive-buttons">
@@ -1523,10 +2195,7 @@
               <i class="fas fa-plus"></i>
               <span>继续记录美好</span>
             </button>
-            <a href="/tools/life-mode/" class="btn btn-secondary">
-              <i class="fas fa-home"></i>
-              <span>返回主页</span>
-            </a>
+
           </div>
         </div>
               </div>
@@ -1560,17 +2229,33 @@ let diaryData = {
   goal_category: ''
 };
 
-// 初始化页面
+// 初始化页面（主要的DOMContentLoaded事件监听器）
 document.addEventListener('DOMContentLoaded', function() {
+  // 避免重复初始化
+  if (window.pageInitialized) return;
+  window.pageInitialized = true;
+  
+  console.log('页面加载完成，开始初始化...');
+  
   initGoalSelector();
   initMoodSelector();
   initNavigation();
   loadTodayData();
   
-  // 背景音乐控制
-  document.getElementById('bgMusicToggle').addEventListener('click', toggleBackgroundMusic);
+  // 初始化统计卡片点击监听器
+  addStatCardListeners();
   
-  // 音乐搜索功能已恢复
+  // 初始化统计详情弹窗
+  initStatDetailModal();
+  
+  // 初始化日记打卡日历
+  initDiaryCheckInCalendar();
+  
+  // 背景音乐控制
+  const bgMusicToggle = document.getElementById('bgMusicToggle');
+  if (bgMusicToggle) {
+    bgMusicToggle.addEventListener('click', toggleBackgroundMusic);
+  }
   
   // 临时调试：强制启用保存按钮
   setTimeout(() => {
@@ -1606,8 +2291,53 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }, 1000);
-
+  
+  console.log('页面初始化完成');
+  
+  // 调试：检查页面元素状态
+  setTimeout(() => {
+    console.log('🔍 页面元素状态检查:');
+    console.log('- 心情选项数量:', document.querySelectorAll('.mood-option').length);
+    console.log('- 今日完成按钮:', document.getElementById('nextToStep2'));
+    console.log('- 当前selectedMood:', selectedMood);
+    console.log('- 当前diaryData:', diaryData);
+    
+    // 检查心情选项的样式
+    const moodOptions = document.querySelectorAll('.mood-option');
+    moodOptions.forEach((option, index) => {
+      console.log(`- 心情选项 ${index + 1}:`, {
+        mood: option.dataset.mood,
+        pointerEvents: option.style.pointerEvents,
+        cursor: option.style.cursor,
+        selected: option.classList.contains('selected')
+      });
+    });
+  }, 1000);
+  
+  // 加载心情选择修复脚本
+  const fixScript = document.createElement('script');
+  fixScript.src = '/static/js/fix_mood_selection.js';
+  fixScript.onerror = function() {
+    console.log('修复脚本加载失败，使用内联修复');
+    // 如果外部脚本加载失败，使用内联修复
+    setTimeout(() => {
+      const moodOptions = document.querySelectorAll('.mood-option');
+      moodOptions.forEach(option => {
+        option.style.pointerEvents = 'auto';
+        option.style.cursor = 'pointer';
+        option.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('内联修复: 心情选择点击:', this.dataset.mood);
+          alert('心情选择测试: ' + this.dataset.mood);
+        });
+      });
+    }, 1000);
+  };
+  document.head.appendChild(fixScript);
 });
+
+
 
 // 目标选择器
 function initGoalSelector() {
@@ -1649,7 +2379,35 @@ function checkStep2Completion() {
 // 检查步骤1是否完成
 function checkStep1Completion() {
   const nextButton = document.getElementById('nextToStep2');
-  nextButton.disabled = !selectedMood;
+  console.log('🔍 检查步骤1完成状态:', { 
+    selectedMood, 
+    buttonExists: !!nextButton,
+    buttonId: nextButton ? nextButton.id : 'null',
+    buttonDisabled: nextButton ? nextButton.disabled : 'N/A'
+  });
+  
+  if (nextButton) {
+    const shouldBeEnabled = !!selectedMood;
+    nextButton.disabled = !shouldBeEnabled;
+    
+    // 添加视觉反馈
+    if (shouldBeEnabled) {
+      nextButton.classList.add('btn-enabled');
+      nextButton.classList.remove('btn-disabled');
+    } else {
+      nextButton.classList.add('btn-disabled');
+      nextButton.classList.remove('btn-enabled');
+    }
+    
+    console.log('✅ 按钮状态已更新:', { 
+      disabled: nextButton.disabled, 
+      selectedMood,
+      shouldBeEnabled,
+      buttonClasses: nextButton.className
+    });
+  } else {
+    console.log('❌ 未找到nextToStep2按钮');
+  }
 }
 
 // 显示心情选择反馈
@@ -1696,21 +2454,9 @@ function hideGoalFeedback() {
 
 // 心情选择器
 function initMoodSelector() {
-  const moodOptions = document.querySelectorAll('.mood-option');
-  
-  moodOptions.forEach(option => {
-    option.addEventListener('click', function() {
-      moodOptions.forEach(opt => opt.classList.remove('selected'));
-      this.classList.add('selected');
-      
-      selectedMood = this.dataset.mood;
-      diaryData.mood = selectedMood;
-      
-      // 检查是否同时选择了心情和目标
-      checkStep1Completion();
-      showMoodFeedback(selectedMood);
-    });
-  });
+  // 调用实际的心情选择监听器初始化函数
+  addMoodSelectionListener();
+  console.log('initMoodSelector: 心情选择器初始化完成');
 }
 
 // 导航控制
@@ -2108,7 +2854,7 @@ function generateFallbackContent(mood, goalCategories) {
 // 显示日记详情
 async function showDiaryDetails() {
   try {
-    const response = await fetch('/tools/api/life-diary/', {
+    const response = await fetch('/tools/api/life_diary/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2904,8 +3650,6 @@ function formatContentForDisplay(content) {
   return formatted;
 }
 
-
-
 // 完成日记
 async function completeDiary() {
   console.log('completeDiary 函数被触发。');
@@ -2979,7 +3723,11 @@ async function completeDiary() {
     // 收集音乐推荐信息
     const musicRecommendation = window.currentMusicRecommendation || '';
     
-    const response = await fetch('/tools/api/life-diary/', {
+    // 获取当前日期
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0]; // 格式化为 YYYY-MM-DD
+    
+    const response = await fetch('/tools/api/life_diary/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2993,7 +3741,8 @@ async function completeDiary() {
         mood_note: '',
         tags: [],
         question_answers: questionAnswersData,
-        music_recommendation: musicRecommendation
+        music_recommendation: musicRecommendation,
+        date: dateStr
       })
     });
     
@@ -3028,7 +3777,7 @@ async function loadStatistics() {
       console.error('找不到statisticsSection元素');
     }
     
-    const response = await fetch('/tools/api/life-diary/', {
+    const response = await fetch('/tools/api/life_diary/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -3079,21 +3828,132 @@ async function loadStatistics() {
         console.error('找不到totalWords元素');
       }
       
-      // 渲染心情趋势
-      renderMoodChart(data.data);
+      // 渲染心情图表
+      const canvas = document.getElementById('moodChart');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width = canvas.offsetWidth;
+        const height = canvas.height = 300;
+        renderMoodChart(ctx, width, height, data.data.mood_data);
+      }
       
-      // 添加统计卡片点击事件监听器
-      addStatCardListeners();
+      // 更新心情统计摘要
+      updateMoodStatsSummary(data.data.mood_data);
       
-      // 添加心情选择监听器
-      addMoodSelectionListener();
+      console.log('统计数据更新完成');
     } else {
-      console.error('统计数据加载失败:', data.error);
+      console.error('获取统计数据失败:', data.error);
+      showNotification('获取统计数据失败', 'error');
     }
   } catch (error) {
     console.error('加载统计数据失败:', error);
+    showNotification('加载统计数据失败', 'error');
   }
 }
+
+
+function formatContentForEditing(content) {
+  // 移除【10个疑问句】和【推荐音乐】标记，并清理多余的空行
+  let processedContent = content
+    .replace(/【10个疑问句】\n*/g, '') // 移除标题和其后的换行
+    .replace(/【推荐音乐】\n*/g, '') // 移除标题和其后的换行
+    .trim(); // 清理整体内容的空白
+
+  const lines = processedContent.split('\n');
+  let questions = [];
+  let music = '';
+  let inMusicSection = false; // 标记是否进入音乐信息部分
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine === '') {
+      continue; // 跳过空行
+    }
+
+    // 尝试匹配音乐信息行 (例如 "歌曲名 - 艺术家")
+    // 并且确保我们还没有找到音乐信息，避免重复或错误匹配
+    if (trimmedLine.includes(' - ') && !music && !inMusicSection) {
+        music = trimmedLine;
+        inMusicSection = true; // 标记已找到音乐信息
+        continue;
+    }
+
+    // 匹配数字编号的疑问句 (例如 "1. 你的问题?")
+    const questionMatch = trimmedLine.match(/^(\d+)\.\s*(.*)/);
+    if (questionMatch) {
+      questions.push(`• ${questionMatch[2]}`); // 转换为圆点列表格式
+    } else if (!inMusicSection) {
+      // 如果不是编号问题，也不是音乐信息，且未进入音乐部分，则作为普通文本行处理
+      // 这可以捕获AI可能生成的非编号文本
+      questions.push(trimmedLine);
+    }
+  }
+
+  // 将所有处理过的疑问句用双换行符连接，确保每句独立
+  let finalOutput = questions.join('\n\n');
+
+  // 添加音乐推荐信息
+  if (music) {
+    if (finalOutput) {
+      finalOutput += '\n\n'; // 如果前面有内容，则添加双换行分隔
+    }
+    finalOutput += `🎵 音乐推荐：${music}`;
+  }
+
+  // 确保最终输出有良好的排版
+  finalOutput = finalOutput
+    .replace(/\n{3,}/g, '\n\n') // 将3个或更多换行符替换为2个
+    .trim(); // 清理首尾空白
+
+  return finalOutput;
+}
+
+// 格式化内容用于显示
+function formatContentForDisplay(content) {
+  let formatted = content;
+  // 确保内容开始干净
+  formatted = formatted.trim();
+
+  // 替换【10个疑问句】为美观的标题
+  formatted = formatted.replace(/【10个疑问句】/, '<h3><span style="color: #ff8c00;">&#128161;</span> 选择您想回答的问题</h3><p style="color: #666; margin-bottom: 20px;">请选择您想要回答的问题，这些问题将作为您今天的生活记录内容</p>');
+  // 替换【推荐音乐】为美观的标题
+  formatted = formatted.replace(/【推荐音乐】/, '<h3><span style="color: #ff8c00;">&#127925;</span> 音乐推荐</h3>');
+
+  // 将数字编号的疑问句转换为可选择的形式
+  formatted = formatted.replace(/(\d+)\.\s*(.*?)(?=\n\n|\n【|\Z)/gs, (match, number, text) => {
+    // 避免将音乐信息误判为问题
+    if (text.includes(' - ') && text.includes('🎵 音乐推荐：')) {
+        return match; // 如果看起来像音乐信息，则不处理
+    }
+    const questionText = text.trim();
+    return `
+      <div class="question-selection-item" data-question="${questionText}" data-index="${parseInt(number) - 1}">
+        <div class="question-checkbox">
+          <input type="checkbox" id="question${parseInt(number) - 1}" class="question-select-checkbox">
+          <label for="question${parseInt(number) - 1}"></label>
+        </div>
+        <div class="question-content">
+          <span class="question-number">${number}.</span>
+          <span class="question-text">${questionText}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  // 将换行符转换为 <br> 标签，以便在HTML中正确显示
+  formatted = formatted.replace(/\n\n+/g, '<br><br>'); // 将多个换行符转换为双 <br>
+  formatted = formatted.replace(/\n/g, '<br>'); // 将单个换行符转换为单 <br>
+
+  return formatted;
+}
+
+
+
+
+
+
+
+
 
 // 渲染心情趋势图表
 function renderMoodChart(moodData) {
@@ -3356,7 +4216,7 @@ function renderTemporaryMoodChart(ctx, width, height, currentMood) {
       levels.push(currentLevel);
     } else {
       // 前几天是随机但接近当前心情的数据
-      const variation = Math.random() * 2 - 1; // -1 到 1 的随机数
+      const variation = Math.random() * 2 - 1; // 负1到1的随机数
       const simulatedLevel = Math.max(0, Math.min(5, currentLevel + variation));
       levels.push(Math.round(simulatedLevel));
     }
@@ -3456,9 +4316,7 @@ function updateTemporaryMoodStats(currentMood) {
   `;
 }
 
-// 更新心情统计摘要
-  updateMoodStatsSummary(moodData);
-}
+
 
 // 更新心情统计摘要
 function updateMoodStatsSummary(moodData) {
@@ -3508,11 +4366,55 @@ function finishDiary() {
   goToStep(5);
 }
 
+// 心情选择函数已在HTML中定义
+
 // 监听心情选择变化
 function addMoodSelectionListener() {
+  console.log('addMoodSelectionListener: 开始初始化心情选择监听器');
   const moodOptions = document.querySelectorAll('.mood-option');
-  moodOptions.forEach(option => {
-    option.addEventListener('click', function() {
+  console.log('addMoodSelectionListener: 找到心情选项数量:', moodOptions.length);
+  
+  if (moodOptions.length === 0) {
+    console.error('❌ 未找到心情选项元素');
+    return;
+  }
+  
+  moodOptions.forEach((option, index) => {
+    console.log(`addMoodSelectionListener: 为选项 ${index + 1} (${option.dataset.mood}) 添加点击监听器`);
+    
+    // 确保样式正确
+    option.style.pointerEvents = 'auto';
+    option.style.cursor = 'pointer';
+    option.style.userSelect = 'none';
+    
+    // 移除可能存在的旧事件监听器
+    option.removeEventListener('click', option._moodClickHandler);
+    
+    // 创建新的点击处理函数
+    option._moodClickHandler = function(e) {
+      console.log('🎯 心情选择点击事件触发:', this.dataset.mood);
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // 移除其他选项的选中状态
+      moodOptions.forEach(opt => opt.classList.remove('selected'));
+      // 添加当前选项的选中状态
+      this.classList.add('selected');
+      
+      // 直接更新全局变量
+      selectedMood = this.dataset.mood;
+      if (typeof diaryData !== 'undefined') {
+        diaryData.mood = this.dataset.mood;
+      }
+      
+      console.log('✅ 心情已更新为:', selectedMood);
+      
+      // 立即检查步骤1是否完成
+      checkStep1Completion();
+      
+      // 显示心情反馈
+      showMoodFeedback(this.dataset.mood);
+      
       // 延迟一下，确保选择状态已更新
       setTimeout(() => {
         const currentMood = getCurrentPageMood();
@@ -3528,8 +4430,13 @@ function addMoodSelectionListener() {
           }
         }
       }, 100);
-    });
+    };
+    
+    // 添加点击事件监听器
+    option.addEventListener('click', option._moodClickHandler);
   });
+  
+  console.log('✅ addMoodSelectionListener: 心情选择监听器初始化完成');
 }
 
 // 统计卡片点击功能
@@ -3603,7 +4510,7 @@ function closeStatDetail() {
 }
 
 // 点击弹窗外部关闭
-document.addEventListener('DOMContentLoaded', function() {
+function initStatDetailModal() {
   const modal = document.getElementById('statDetailModal');
   if (modal) {
     modal.addEventListener('click', function(e) {
@@ -3612,11 +4519,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-});
+}
 
 // 加载日记天数详情
 function loadDiaryDaysDetail(list) {
-  fetch('/tools/api/life-diary/', {
+  fetch('/tools/api/life_diary/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3643,7 +4550,7 @@ function loadDiaryDaysDetail(list) {
 
 // 加载日记次数详情
 function loadDiaryCountDetail(list) {
-  fetch('/tools/api/life-diary/', {
+  fetch('/tools/api/life_diary/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3669,7 +4576,7 @@ function loadDiaryCountDetail(list) {
 
 // 加载开心天数详情
 function loadHappyDaysDetail(list) {
-  fetch('/tools/api/life-diary/', {
+  fetch('/tools/api/life_diary/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3695,7 +4602,7 @@ function loadHappyDaysDetail(list) {
 
 // 加载总字数详情
 function loadTotalWordsDetail(list) {
-  fetch('/tools/api/life-diary/', {
+  fetch('/tools/api/life_diary/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -3984,7 +4891,7 @@ document.addEventListener('click', function(e) {
 // 加载今日数据
 async function loadTodayData() {
   try {
-    const response = await fetch('/tools/api/life-diary/', {
+    const response = await fetch('/tools/api/life_diary/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4115,29 +5022,473 @@ function useCustomQuestion(number) {
   }
 }
 
-// 问题编辑相关函数（保留原有函数以兼容）
-function editQuestion(number, originalText) {
-  showQuestionSelector(number, originalText);
-}
 
-function saveQuestion(number) {
-  // 这个函数现在通过selectQuestion或useCustomQuestion来处理
-  closeQuestionSelector(number);
-}
 
-function cancelEditQuestion(number) {
-  closeQuestionSelector(number);
-  showNotification('已取消编辑', 'info');
-}
 
-// 更新问题项的样式
-function updateQuestionItemStyle(checkbox) {
-  const questionItem = checkbox.closest('.question-selection-item');
-  if (checkbox.checked) {
-    questionItem.classList.add('selected');
-  } else {
-    questionItem.classList.remove('selected');
+
+// 日记打卡日历类
+class DiaryCheckInCalendar {
+  constructor() {
+    this.currentDate = new Date();
+    this.currentYear = this.currentDate.getFullYear();
+    this.currentMonth = this.currentDate.getMonth();
+    this.calendarData = {};
+    this.streak = { current: 0, longest: 0 };
+    this.monthlyStats = {};
+    
+    this.init();
+  }
+  
+  async init() {
+    await this.loadCalendarData();
+    this.renderCalendar();
+    this.bindEvents();
+    this.updateStats();
+  }
+  
+  async loadCalendarData() {
+    try {
+      const response = await fetch(`/tools/api/checkin/calendar/?type=diary&year=${this.currentYear}&month=${this.currentMonth + 1}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        this.calendarData = data.calendar_data;
+        this.streak = data.streak;
+        this.monthlyStats = data.monthly_stats;
+      }
+    } catch (error) {
+      console.error('加载日记日历数据失败:', error);
+    }
+  }
+  
+  renderCalendar() {
+    const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+    const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const calendarBody = document.getElementById('diaryCalendarBody');
+    if (!calendarBody) return;
+    
+    calendarBody.innerHTML = '';
+    
+    // 更新月份显示
+    const currentMonthElement = document.getElementById('diaryCurrentMonth');
+    if (currentMonthElement) {
+      currentMonthElement.textContent = `${this.currentYear}年${this.currentMonth + 1}月`;
+    }
+    
+    // 更新连续打卡信息
+    const currentStreakElement = document.getElementById('diaryCurrentStreak');
+    const longestStreakElement = document.getElementById('diaryLongestStreak');
+    if (currentStreakElement) currentStreakElement.textContent = this.streak.current;
+    if (longestStreakElement) longestStreakElement.textContent = this.streak.longest;
+    
+    // 生成日历网格
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      
+      const dayElement = document.createElement('div');
+      dayElement.className = 'calendar-day';
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const isCurrentMonth = date.getMonth() === this.currentMonth;
+      const isToday = date.toDateString() === new Date().toDateString();
+      const checkinData = this.calendarData[dateStr];
+      
+      if (!isCurrentMonth) {
+        dayElement.classList.add('other-month');
+      }
+      
+      if (isToday) {
+        dayElement.classList.add('today');
+      }
+      
+      if (checkinData) {
+        dayElement.classList.add('has-checkin');
+        if (checkinData.status === 'completed') {
+          dayElement.classList.add('completed');
+        } else if (checkinData.status === 'rest') {
+          dayElement.classList.add('rest');
+        }
+      }
+      
+      dayElement.textContent = date.getDate();
+      dayElement.setAttribute('data-date', dateStr);
+      
+      dayElement.addEventListener('click', () => this.handleDayClick(dateStr, checkinData));
+      
+      calendarBody.appendChild(dayElement);
+    }
+  }
+  
+  async handleDayClick(dateStr, checkinData) {
+    const clickedDate = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 检查是否为未来日期
+    if (clickedDate > today) {
+      this.showNotification('不能为未来日期打卡', 'error');
+      return;
+    }
+    
+    if (checkinData) {
+      // 显示打卡详情
+      this.showCheckinDetail(dateStr, checkinData);
+    } else {
+      // 检查是否为过去的日期
+      if (clickedDate < today) {
+        // 显示二次确认对话框
+        this.showPastDateConfirmation(dateStr);
+      } else {
+        // 今天的日期，直接显示打卡表单
+        this.showCheckinForm(dateStr);
+      }
+    }
+  }
+
+  showPastDateConfirmation(dateStr) {
+    const confirmation = `
+      <div class="checkin-modal">
+        <div class="checkin-modal-content">
+          <h3>确认补打卡</h3>
+          <div class="confirmation-message">
+            <i class="fas fa-exclamation-triangle" style="color: #ff6b35; font-size: 2rem; margin-bottom: 15px;"></i>
+            <p>您正在为 <strong>${dateStr}</strong> 补打卡，这是一个过去的日期。</p>
+            <p>请确认您确实在这一天写了日记。</p>
+          </div>
+          <div class="form-actions">
+            <button class="btn-cancel">取消</button>
+            <button class="btn-confirm">确认补打卡</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', confirmation);
+    
+    const modal = document.querySelector('.checkin-modal');
+    
+    modal.querySelector('.btn-cancel').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modal.querySelector('.btn-confirm').addEventListener('click', () => {
+      modal.remove();
+      this.showCheckinForm(dateStr);
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  showCheckinForm(dateStr) {
+    const form = `
+      <div class="checkin-modal">
+        <div class="checkin-modal-content">
+          <h3>添加日记打卡 - ${dateStr}</h3>
+          <form id="diaryCheckinForm">
+            <div class="form-group">
+              <label>心情状态</label>
+              <select name="mood" required>
+                <option value="happy">开心</option>
+                <option value="sad">难过</option>
+                <option value="angry">愤怒</option>
+                <option value="calm">平静</option>
+                <option value="excited">兴奋</option>
+                <option value="tired">疲惫</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>天气</label>
+              <input type="text" name="weather" placeholder="如：晴天、雨天等">
+            </div>
+            <div class="form-group">
+              <label>备注</label>
+              <textarea name="notes" rows="3" placeholder="记录今天的心情和感受..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-cancel">取消</button>
+              <button type="submit" class="btn-submit">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', form);
+    
+    const modal = document.querySelector('.checkin-modal');
+    const formElement = document.getElementById('diaryCheckinForm');
+    
+    formElement.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitCheckin(dateStr, formElement);
+    });
+    
+    modal.querySelector('.btn-cancel').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  showCheckinDetail(dateStr, checkinData) {
+    const detail = `
+      <div class="checkin-modal">
+        <div class="checkin-modal-content">
+          <h3>日记打卡详情 - ${dateStr}</h3>
+          <div class="checkin-detail">
+            <p><strong>状态:</strong> ${checkinData.status === 'completed' ? '已完成' : '休息日'}</p>
+            ${checkinData.detail ? `
+              <p><strong>心情:</strong> ${this.getMoodName(checkinData.detail.mood)}</p>
+              <p><strong>天气:</strong> ${checkinData.detail.weather || '无'}</p>
+              <p><strong>备注:</strong> ${checkinData.detail.notes || '无'}</p>
+            ` : ''}
+          </div>
+          <div class="form-actions">
+            <button class="btn-edit">编辑</button>
+            <button class="btn-delete">删除</button>
+            <button class="btn-cancel">关闭</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', detail);
+    
+    const modal = document.querySelector('.checkin-modal');
+    
+    modal.querySelector('.btn-cancel').addEventListener('click', () => {
+      modal.remove();
+    });
+    
+    modal.querySelector('.btn-edit').addEventListener('click', () => {
+      modal.remove();
+      this.showCheckinForm(dateStr);
+    });
+    
+    modal.querySelector('.btn-delete').addEventListener('click', () => {
+      if (confirm('确定要删除这条打卡记录吗？')) {
+        this.deleteCheckin(dateStr);
+        modal.remove();
+      }
+    });
+    
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  async submitCheckin(dateStr, formElement) {
+    const formData = new FormData(formElement);
+    const detailData = {
+      mood: formData.get('mood'),
+      weather: formData.get('weather'),
+      notes: formData.get('notes')
+    };
+    
+    try {
+      const response = await fetch('/tools/api/checkin/add/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          type: 'diary',
+          date: dateStr,
+          status: 'completed',
+          detail: detailData
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showNotification('打卡成功！', 'success');
+        document.querySelector('.checkin-modal').remove();
+        await this.loadCalendarData();
+        this.renderCalendar();
+        this.updateStats();
+      } else {
+        this.showNotification(data.error || '打卡失败', 'error');
+      }
+    } catch (error) {
+      console.error('提交打卡失败:', error);
+      this.showNotification('网络错误，请稍后重试', 'error');
+    }
+  }
+  
+  async deleteCheckin(dateStr) {
+    try {
+      const response = await fetch('/tools/api/checkin/delete/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          type: 'diary',
+          date: dateStr
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showNotification('删除成功！', 'success');
+        await this.loadCalendarData();
+        this.renderCalendar();
+        this.updateStats();
+      } else {
+        this.showNotification(data.error || '删除失败', 'error');
+      }
+    } catch (error) {
+      console.error('删除打卡失败:', error);
+      this.showNotification('网络错误，请稍后重试', 'error');
+    }
+  }
+  
+  updateStats() {
+    if (this.monthlyStats) {
+      const completedElement = document.getElementById('diaryMonthlyCompleted');
+      const rateElement = document.getElementById('diaryMonthlyRate');
+      
+      if (completedElement) {
+        completedElement.textContent = this.monthlyStats.completed_days || 0;
+      }
+      if (rateElement) {
+        rateElement.textContent = `${this.monthlyStats.completion_rate || 0}%`;
+      }
+    }
+  }
+  
+  bindEvents() {
+    const prevBtn = document.getElementById('diaryPrevMonth');
+    const nextBtn = document.getElementById('diaryNextMonth');
+    const todayBtn = document.getElementById('diaryGoToday');
+    
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        this.currentMonth--;
+        if (this.currentMonth < 0) {
+          this.currentMonth = 11;
+          this.currentYear--;
+        }
+        this.loadCalendarData().then(() => this.renderCalendar());
+      });
+    }
+    
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        this.currentMonth++;
+        if (this.currentMonth > 11) {
+          this.currentMonth = 0;
+          this.currentYear++;
+        }
+        this.loadCalendarData().then(() => this.renderCalendar());
+      });
+    }
+    
+    if (todayBtn) {
+      todayBtn.addEventListener('click', () => {
+        this.currentYear = new Date().getFullYear();
+        this.currentMonth = new Date().getMonth();
+        this.loadCalendarData().then(() => this.renderCalendar());
+      });
+    }
+  }
+  
+  getMoodName(mood) {
+    const moodNames = {
+      'happy': '开心',
+      'sad': '难过',
+      'angry': '愤怒',
+      'calm': '平静',
+      'excited': '兴奋',
+      'tired': '疲惫',
+      'other': '其他'
+    };
+    return moodNames[mood] || mood;
+  }
+  
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+      <span>${message}</span>
+    `;
+    
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 20px',
+      borderRadius: '6px',
+      color: 'white',
+      fontSize: '14px',
+      fontWeight: '500',
+      zIndex: '10000',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      minWidth: '250px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
+      animation: 'slideInRight 0.3s ease-out'
+    });
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOutRight 0.3s ease-in';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
   }
 }
+
+// 初始化日记打卡日历
+let diaryCheckInCalendar = null;
+
+// 初始化日记打卡日历
+function initDiaryCheckInCalendar() {
+  // 当进入第4步（统计页面）时初始化打卡日历
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        const statisticsSection = document.getElementById('statisticsSection');
+        if (statisticsSection && statisticsSection.style.display !== 'none' && !diaryCheckInCalendar) {
+          diaryCheckInCalendar = new DiaryCheckInCalendar();
+        }
+      }
+    });
+  });
+  
+  // 观察统计部分的变化
+  const statisticsSection = document.getElementById('statisticsSection');
+  if (statisticsSection) {
+    observer.observe(statisticsSection, { attributes: true });
+  }
+}
+
 </script>
+
 {% endblock %}

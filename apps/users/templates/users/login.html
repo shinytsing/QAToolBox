@@ -44,13 +44,43 @@
         <div class="geek-input-line"></div>
       </div>
       
-      <div class="geek-input-group geek-captcha-group">
-        <div class="geek-input-icon">
-          <i class="fas fa-shield-alt"></i>
+      <!-- 隐藏字段用于标识验证码类型 -->
+      <input type="hidden" name="captcha_type" id="captchaType" value="click">
+      
+      <!-- 渐进式验证码 -->
+      <div id="progressiveCaptchaGroup" class="geek-progressive-captcha-group">
+        <div class="geek-captcha-header">
+          <div class="geek-captcha-level-info">
+            <i class="fas fa-shield-alt"></i>
+            <span id="captchaLevelName">智能验证</span>
+          </div>
+          <div class="geek-captcha-failure-info" id="captchaFailureInfo" style="display: none;">
+            <span class="failure-count">失败 <span id="failureCount">0</span> 次</span>
+          </div>
         </div>
-        <input type="text" name="captcha" required class="geek-input" placeholder="请输入验证码" data-zh="请输入验证码" data-en="Enter captcha">
-        <div class="geek-input-line"></div>
-        <img src="{% url 'generate_captcha' %}" alt="点击刷新验证码" title="点击刷新" id="captcha-image" class="geek-captcha-img">
+        
+        <!-- 数学验证码 -->
+        <div id="mathCaptchaContainer" class="geek-captcha-container" style="display: none;">
+          <div class="geek-math-question">
+            <span id="mathQuestion">加载中...</span>
+          </div>
+          <div class="geek-math-input-group">
+            <input type="text" id="mathAnswer" class="geek-math-input" placeholder="请输入答案">
+            <div class="geek-math-hint" id="mathHint" style="display: none;"></div>
+          </div>
+        </div>
+        
+
+        
+        <!-- 移除滑动验证码和文字验证码容器 -->
+        
+        <div class="geek-captcha-actions">
+          <button type="button" id="refreshCaptcha" class="geek-btn-small">
+            <span data-zh="刷新" data-en="Refresh">刷新</span>
+          </button>
+        </div>
+        
+        <div id="captchaStatus" class="geek-captcha-status"></div>
       </div>
       
       <div class="geek-checkbox-group">
@@ -363,6 +393,287 @@
   transform: translateX(5px);
 }
 
+
+
+/* 渐进式验证码样式 */
+.geek-progressive-captcha-group {
+  margin-bottom: 20px;
+  border: 1px solid rgba(0, 255, 231, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  background: rgba(0, 255, 231, 0.05);
+}
+
+.geek-captcha-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 255, 231, 0.1);
+}
+
+.geek-captcha-level-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.geek-captcha-level-info i {
+  color: var(--geek-primary, #00ffe7);
+  font-size: 1.1rem;
+}
+
+#captchaLevelName {
+  color: #ff6b9d;
+  font-weight: bold;
+  font-size: 1.1rem;
+  text-shadow: 0 0 8px rgba(255, 107, 157, 0.5);
+  background: linear-gradient(135deg, #ff6b9d 0%, #ff8e53 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 移除不再需要的样式 */
+
+.geek-captcha-failure-info {
+  font-size: 0.8rem;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.geek-captcha-container {
+  margin-bottom: 15px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 数学验证码样式 */
+.geek-math-question {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #00ff88;
+  margin-bottom: 15px;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+  background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.geek-math-input-group {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.geek-math-input {
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid #00ff88;
+  border-radius: 8px;
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+.geek-math-input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.15);
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.5);
+  color: #00d4ff;
+}
+
+.geek-math-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid #00ff88;
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #00ff88;
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  text-align: center;
+}
+
+.geek-math-hint.error {
+  background: rgba(255, 71, 87, 0.15);
+  border-color: #ff4757;
+  color: #ff4757;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+}
+
+/* 移除不需要的按钮样式 */
+
+/* 隐藏数字输入框的上下箭头 */
+.geek-math-input::-webkit-outer-spin-button,
+.geek-math-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.geek-math-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+
+
+/* 移除滑动验证码和文字验证码样式 */
+
+.geek-captcha-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.geek-btn-primary {
+  background: var(--geek-gradient, linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%));
+  color: #000;
+}
+
+.geek-captcha-status {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.geek-captcha-status.success {
+  background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+  animation: successPulse 2s ease-in-out infinite;
+  border: 2px solid #00ff88;
+}
+
+.geek-captcha-status.error {
+  background: linear-gradient(135deg, #ff4757 0%, #ff6b9d 100%);
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(255, 71, 87, 0.5);
+  border: 2px solid #ff4757;
+  animation: errorShake 0.5s ease-in-out;
+}
+
+.geek-captcha-status.info {
+  background: linear-gradient(135deg, #00ffe7 0%, #00bfff 100%);
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(0, 255, 231, 0.4);
+  border: 2px solid #00ffe7;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes successPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+    transform: scale(1.02);
+  }
+}
+
+/* 验证成功按钮样式 */
+.geek-btn-success {
+  background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%) !important;
+  color: #000 !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.6) !important;
+  border: 2px solid #00ff88 !important;
+  animation: successButtonPulse 2s ease-in-out infinite !important;
+  cursor: default !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.geek-btn-success:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: successShine 2s ease-in-out infinite;
+}
+
+@keyframes successButtonPulse {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(0, 255, 136, 0.9);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes successShine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+
+
+
+
+.geek-btn-small {
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 255, 231, 0.3);
+  background: rgba(0, 255, 231, 0.1);
+  color: var(--geek-text, #e6e6e6);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--geek-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.geek-btn-small:hover {
+  border-color: var(--geek-primary, #00ffe7);
+  color: var(--geek-primary, #00ffe7);
+  transform: translateY(-1px);
+}
+
+
+
 @media (max-width: 480px) {
   .geek-auth-card {
     padding: 30px 20px;
@@ -371,36 +682,491 @@
   .geek-auth-title {
     font-size: 1.5rem;
   }
+  
+
+  
+  .geek-btn-small {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>
 
 <script>
-document.getElementById('captcha-image').onclick = function() {
-  this.src = '{% url "generate_captcha" %}?t=' + Math.random();
-};
+// 全局变量
+let currentCaptchaData = null;
+let currentLanguage = 'zh';
+let captchaVerified = false; // 添加验证状态标志
 
-// 添加输入框焦点效果
-document.querySelectorAll('.geek-input').forEach(input => {
-  input.addEventListener('focus', function() {
-    this.parentElement.classList.add('focused');
+// 获取CSRF Token
+function getCsrfToken() {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                   document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+  return csrfToken;
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+  initializeProgressiveCaptcha();
+  bindEvents();
+});
+
+function initializeProgressiveCaptcha() {
+  // 重置验证按钮状态
+  resetVerifyButton();
+  // 加载渐进式验证码
+  loadProgressiveCaptcha();
+}
+
+function bindEvents() {
+  // 渐进式验证码相关事件
+  document.getElementById('refreshCaptcha').addEventListener('click', function() {
+    loadProgressiveCaptcha();
   });
   
-  input.addEventListener('blur', function() {
-    this.parentElement.classList.remove('focused');
+  document.getElementById('verifyCaptcha').addEventListener('click', function() {
+    verifyCurrentCaptcha();
   });
-});
+  
+  // 数学验证码回车键提交
+  document.getElementById('mathAnswer').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      verifyCurrentCaptcha();
+    }
+  });
+  
+  // 移除文字验证码事件绑定
+  
+  // 移除滑动验证码事件初始化
 
-// 语言切换功能
-document.querySelectorAll('.geek-lang-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const lang = this.getAttribute('data-lang');
-    switchLanguage(lang);
+  // 添加输入框焦点效果
+  document.querySelectorAll('.geek-input').forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.classList.add('focused');
+    });
     
-    // 更新按钮状态
-    document.querySelectorAll('.geek-lang-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
+    input.addEventListener('blur', function() {
+      this.parentElement.classList.remove('focused');
+    });
   });
-});
+
+  // 语言切换功能
+  document.querySelectorAll('.geek-lang-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const lang = this.getAttribute('data-lang');
+      currentLanguage = lang;
+      switchLanguage(lang);
+      
+      // 更新按钮状态
+      document.querySelectorAll('.geek-lang-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+}
+
+
+
+function loadProgressiveCaptcha() {
+  const statusDiv = document.getElementById('captchaStatus');
+  
+  // 显示加载状态
+  statusDiv.className = 'geek-captcha-status info';
+  statusDiv.textContent = currentLanguage === 'en' ? 'Loading...' : '加载中...';
+  
+  fetch('{% url "generate_progressive_captcha" %}')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        currentCaptchaData = data.data;
+        
+        // 重置验证状态
+        captchaVerified = false;
+        
+        // 更新级别信息
+        updateCaptchaLevelInfo(data.data);
+        
+        // 显示对应的验证码类型
+        showCaptchaType(data.data.type);
+        
+        // 根据类型初始化验证码
+        initializeCaptchaByType(data.data);
+        
+        // 清除状态
+        statusDiv.className = 'geek-captcha-status';
+        statusDiv.textContent = '';
+        
+        // 重置验证按钮状态
+        resetVerifyButton();
+        
+      } else {
+        statusDiv.className = 'geek-captcha-status error';
+        statusDiv.textContent = data.message || (currentLanguage === 'en' ? 'Failed to load captcha' : '加载验证码失败');
+        
+        // 如果是锁定状态，显示锁定信息
+        if (data.locked_until) {
+          const lockTime = new Date(data.locked_until);
+          statusDiv.textContent = `验证失败过多，请在 ${lockTime.toLocaleTimeString()} 后再试`;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error loading progressive captcha:', error);
+      statusDiv.className = 'geek-captcha-status error';
+      statusDiv.textContent = currentLanguage === 'en' ? 'Network error' : '网络错误';
+    });
+}
+
+function updateCaptchaLevelInfo(data) {
+  document.getElementById('captchaLevelName').textContent = data.level_name;
+  
+  // 显示失败次数信息
+  const failureInfo = document.getElementById('captchaFailureInfo');
+  if (data.failure_count > 0) {
+    document.getElementById('failureCount').textContent = data.failure_count;
+    failureInfo.style.display = 'block';
+  } else {
+    failureInfo.style.display = 'none';
+  }
+}
+
+function showCaptchaType(type) {
+  // 只显示数学验证码
+  document.getElementById('mathCaptchaContainer').style.display = 'block';
+}
+
+function initializeCaptchaByType(data) {
+  // 只处理数学验证码
+  document.getElementById('mathQuestion').textContent = data.question;
+  
+  // 只有在未验证成功时才清空输入框和重新初始化
+  if (!captchaVerified) {
+    document.getElementById('mathAnswer').value = '';
+    document.getElementById('mathHint').style.display = 'none';
+    document.getElementById('mathAnswer').focus();
+    initializeMathCaptcha();
+  }
+}
+
+function initializeMathCaptcha() {
+  const mathInput = document.getElementById('mathAnswer');
+  const hintDiv = document.getElementById('mathHint');
+  let autoVerifyTimer = null;
+  
+  // 如果已经验证成功，不再绑定事件监听器
+  if (captchaVerified) {
+    return;
+  }
+  
+  // 实时输入验证和自动验证
+  mathInput.addEventListener('input', function() {
+    const value = this.value.trim();
+    
+    // 清除之前的定时器
+    if (autoVerifyTimer) {
+      clearTimeout(autoVerifyTimer);
+    }
+    
+    if (value) {
+      // 隐藏提示
+      hintDiv.style.display = 'none';
+      
+      // 延迟1秒后自动验证（给用户时间完成输入）
+      autoVerifyTimer = setTimeout(() => {
+        autoVerifyMathCaptcha();
+      }, 1000);
+    } else {
+      hintDiv.style.display = 'none';
+    }
+  });
+  
+  // 回车键立即验证
+  mathInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      if (autoVerifyTimer) {
+        clearTimeout(autoVerifyTimer);
+      }
+      autoVerifyMathCaptcha();
+    }
+  });
+  
+  // 失去焦点时立即验证
+  mathInput.addEventListener('blur', function() {
+    if (autoVerifyTimer) {
+      clearTimeout(autoVerifyTimer);
+    }
+    const value = this.value.trim();
+    if (value) {
+      autoVerifyMathCaptcha();
+    }
+  });
+}
+
+function autoVerifyMathCaptcha() {
+  const mathInput = document.getElementById('mathAnswer');
+  const value = mathInput.value.trim();
+  
+  if (!value) {
+    return;
+  }
+  
+  // 如果已经验证成功，不再重复验证
+  if (captchaVerified) {
+    return;
+  }
+  
+  // 显示验证中状态
+  showMathHint('正在验证...', 'info');
+  
+  // 调用验证接口
+  fetch('{% url "verify_progressive_captcha" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken(),
+    },
+    body: JSON.stringify({
+      captcha_id: currentCaptchaData.captcha_id,
+      captcha_type: currentCaptchaData.type,
+      user_input: value
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showMathHint('输入正确', 'success');
+      showStatus('success', '验证成功！');
+      
+      // 设置验证成功标志
+      captchaVerified = true;
+      
+      // 禁用刷新按钮，防止用户刷新验证码
+      const refreshBtn = document.getElementById('refreshCaptcha');
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.style.opacity = '0.5';
+        refreshBtn.style.cursor = 'not-allowed';
+      }
+      
+      // 不清空输入框，让用户可以继续看到自己的答案
+      // 不禁用输入框，让用户可以继续输入
+      
+    } else {
+      // 针对数学验证码的特殊处理
+      if (data.hint) {
+        showMathHint(data.hint, 'error');
+      } else {
+        showMathHint(data.message || '验证失败', 'error');
+      }
+      
+      // 清空输入框，让用户重新输入
+      mathInput.value = '';
+      mathInput.focus();
+      
+      // 显示失败信息和用户引导
+      if (data.failure_info) {
+        const failureInfo = data.failure_info;
+        console.log('验证失败:', failureInfo);
+        
+        // 检查是否升级了验证码级别
+        if (failureInfo.level > (currentCaptchaData?.level || 0)) {
+          showStatus('info', '验证失败次数较多，正在升级验证方式...');
+        }
+        
+        // 自动刷新验证码
+        setTimeout(() => {
+          loadProgressiveCaptcha();
+        }, 1500);
+      } else {
+        // 即使没有失败信息，也在延迟后重新生成验证码
+        setTimeout(() => {
+          loadProgressiveCaptcha();
+        }, 2000);
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error verifying captcha:', error);
+    showMathHint('网络错误，请重试', 'error');
+    
+    // 清空输入框
+    mathInput.value = '';
+    mathInput.focus();
+  });
+}
+
+function showMathHint(message, type = 'info') {
+  const hintDiv = document.getElementById('mathHint');
+  hintDiv.textContent = message;
+  hintDiv.style.display = 'block';
+  
+  // 根据类型设置颜色
+  hintDiv.className = 'geek-math-hint';
+  if (type === 'error') {
+    hintDiv.style.background = 'rgba(255, 107, 107, 0.1)';
+    hintDiv.style.borderColor = 'rgba(255, 107, 107, 0.3)';
+    hintDiv.style.color = '#ff6b6b';
+  } else if (type === 'success') {
+    hintDiv.style.background = 'rgba(76, 175, 80, 0.1)';
+    hintDiv.style.borderColor = 'rgba(76, 175, 80, 0.3)';
+    hintDiv.style.color = '#4caf50';
+  } else {
+    hintDiv.style.background = 'rgba(255, 193, 7, 0.1)';
+    hintDiv.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+    hintDiv.style.color = '#ffc107';
+  }
+  
+  // 3秒后自动隐藏
+  setTimeout(() => {
+    hintDiv.style.display = 'none';
+  }, 3000);
+}
+
+function verifyCurrentCaptcha() {
+  if (!currentCaptchaData) {
+    showStatus('error', '请先加载验证码');
+    return;
+  }
+  
+  // 如果已经验证成功，不再重复验证
+  if (captchaVerified) {
+    return;
+  }
+  
+  // 只处理数学验证码
+  const userInput = document.getElementById('mathAnswer').value;
+  
+  if (!userInput || (Array.isArray(userInput) && userInput.length === 0)) {
+    showStatus('error', '请完成验证码');
+    return;
+  }
+  
+  showStatus('info', '验证中...');
+  
+  fetch('{% url "verify_progressive_captcha" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCsrfToken(),
+    },
+    body: JSON.stringify({
+      captcha_id: currentCaptchaData.captcha_id,
+      captcha_type: currentCaptchaData.type,
+      user_input: userInput
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showMathHint('输入正确', 'success');
+      showStatus('success', '验证成功！');
+      
+      // 设置验证成功标志
+      captchaVerified = true;
+      
+      // 禁用刷新按钮，防止用户刷新验证码
+      const refreshBtn = document.getElementById('refreshCaptcha');
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.style.opacity = '0.5';
+        refreshBtn.style.cursor = 'not-allowed';
+      }
+      
+    } else {
+      const errorMessage = data.message || '验证失败';
+      
+      // 针对数学验证码的特殊处理
+      if (currentCaptchaData.type === 'simple_math' && data.hint) {
+        showMathHint(data.hint, 'error');
+        showStatus('error', errorMessage);
+      } else {
+        showStatus('error', errorMessage);
+      }
+      
+      // 清空用户输入
+      clearUserInput();
+      
+      // 显示失败信息和用户引导
+      if (data.failure_info) {
+        const failureInfo = data.failure_info;
+        console.log('验证失败:', failureInfo);
+        
+        // 检查是否升级了验证码级别
+        if (failureInfo.level > (currentCaptchaData?.level || 0)) {
+          showStatus('info', '验证失败次数较多，正在升级验证方式...');
+        }
+        
+        // 自动刷新验证码
+        setTimeout(() => {
+          loadProgressiveCaptcha();
+        }, 1500);
+      } else {
+        // 即使没有失败信息，也在延迟后重新生成验证码
+        setTimeout(() => {
+          loadProgressiveCaptcha();
+        }, 2000);
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error verifying captcha:', error);
+    showStatus('error', '网络错误，请重试');
+    
+    // 清空用户输入
+    clearUserInput();
+    
+    // 网络错误时也要重新加载验证码
+    setTimeout(() => {
+      loadProgressiveCaptcha();
+    }, 2000);
+  });
+}
+
+function showStatus(type, message) {
+  const statusDiv = document.getElementById('captchaStatus');
+  statusDiv.className = `geek-captcha-status ${type}`;
+  statusDiv.textContent = message;
+}
+
+function resetVerifyButton() {
+  // 重置验证状态
+  captchaVerified = false;
+  
+  // 重置数学验证码输入框状态
+  const mathInput = document.getElementById('mathAnswer');
+  if (mathInput) {
+    mathInput.disabled = false;
+    mathInput.value = '';
+  }
+  
+  // 清空提示
+  const mathHint = document.getElementById('mathHint');
+  if (mathHint) {
+    mathHint.style.display = 'none';
+  }
+  
+  // 重新启用刷新按钮
+  const refreshBtn = document.getElementById('refreshCaptcha');
+  if (refreshBtn) {
+    refreshBtn.disabled = false;
+    refreshBtn.style.opacity = '1';
+    refreshBtn.style.cursor = 'pointer';
+  }
+}
+
+function clearUserInput() {
+  // 清空数学验证码输入
+  const mathInput = document.getElementById('mathAnswer');
+  if (mathInput) mathInput.value = '';
+  
+  // 清空数学验证码提示
+  const mathHint = document.getElementById('mathHint');
+  if (mathHint) mathHint.style.display = 'none';
+}
+
+
+
+// 移除滑动验证码相关函数
 
 function switchLanguage(lang) {
   // 更新标题和副标题
@@ -415,35 +1181,18 @@ function switchLanguage(lang) {
     subtitle.textContent = '进入数字世界';
   }
   
-  // 更新输入框占位符
+  // 更新所有带有语言属性的元素
   document.querySelectorAll('[data-zh][data-en]').forEach(element => {
-    if (lang === 'en') {
-      element.placeholder = element.getAttribute('data-en');
-      element.textContent = element.getAttribute('data-en');
+    const text = lang === 'en' ? element.getAttribute('data-en') : element.getAttribute('data-zh');
+    
+    if (element.tagName === 'INPUT') {
+      element.placeholder = text;
     } else {
-      element.placeholder = element.getAttribute('data-zh');
-      element.textContent = element.getAttribute('data-zh');
+      element.textContent = text;
     }
   });
   
-  // 更新按钮文本
-  document.querySelectorAll('[data-zh][data-en]').forEach(element => {
-    if (lang === 'en') {
-      element.textContent = element.getAttribute('data-en');
-    } else {
-      element.textContent = element.getAttribute('data-zh');
-    }
-  });
-  
-  // 更新验证码图片的alt和title
-  const captchaImg = document.getElementById('captcha-image');
-  if (lang === 'en') {
-    captchaImg.alt = 'Click to refresh';
-    captchaImg.title = 'Click to refresh';
-  } else {
-    captchaImg.alt = '点击刷新验证码';
-    captchaImg.title = '点击刷新';
-  }
+
 }
 </script>
 {% endblock %}

@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}分享 - {{ current_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.share-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+}
+
+.share-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.share-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.share-header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.share-content {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.share-platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.share-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 15px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 15px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.share-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.share-btn i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.share-btn span {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.share-btn.wechat { border-color: #07C160; }
+.share-btn.weibo { border-color: #E6162D; }
+.share-btn.douyin { border-color: #000000; }
+.share-btn.xiaohongshu { border-color: #FF2442; }
+.share-btn.qq { border-color: #12B7F5; }
+.share-btn.linkedin { border-color: #0077B5; }
+.share-btn.twitter { border-color: #1DA1F2; }
+.share-btn.facebook { border-color: #1877F2; }
+.share-btn.telegram { border-color: #0088CC; }
+.share-btn.whatsapp { border-color: #25D366; }
+.share-btn.email { border-color: #EA4335; }
+.share-btn.link { border-color: #6C757D; }
+.share-btn.qrcode { border-color: #000000; }
+
+.share-info {
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.share-info h3 {
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.share-url {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.copy-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.qr-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.qr-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.qr-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.close-qr {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #666;
+}
+
+.mobile-install {
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+}
+
+.mobile-install h3 {
+    margin-bottom: 15px;
+    color: white;
+}
+
+.install-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin: 0 10px;
+}
+
+.install-btn:hover {
+    background: white;
+    color: #FF6B6B;
+}
+
+@media (max-width: 768px) {
+    .share-container {
+        padding: 15px;
+    }
+    
+    .share-header h1 {
+        font-size: 2rem;
+    }
+    
+    .share-platforms {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+    }
+    
+    .share-btn {
+        padding: 15px 10px;
+    }
+    
+    .share-btn i {
+        font-size: 1.5rem;
+    }
+    
+    .mobile-install {
+        display: block;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="share-container">
+    <div class="share-header">
+        <h1>分享到社交媒体</h1>
+        <p>让更多人发现这个精彩内容</p>
+    </div>
+    
+    <div class="share-content">
+        <div class="share-info">
+            <h3>分享内容</h3>
+            <p><strong>标题：</strong>{{ current_title }}</p>
+            <p><strong>描述：</strong>{{ current_description }}</p>
+            <div class="share-url" id="shareUrl">{{ current_url }}</div>
+            <button class="copy-btn" onclick="copyUrl()">
+                <i class="fas fa-copy"></i> 复制链接
+            </button>
+        </div>
+        
+        <div class="share-platforms" id="sharePlatforms">
+            {% for platform, data in share_urls.items %}
+            <div class="share-btn {{ platform }}" onclick="shareTo('{{ platform }}', '{{ data.url }}', '{{ data.type }}')">
+                <i class="{{ data.icon }}"></i>
+                <span>{{ data.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="mobile-install" id="mobileInstall">
+        <h3>📱 添加到手机桌面</h3>
+        <p>快速访问，离线使用</p>
+        <button class="install-btn" onclick="installPWA()">
+            <i class="fas fa-download"></i> 安装应用
+        </button>
+        <button class="install-btn" onclick="showQRCode()">
+            <i class="fas fa-qrcode"></i> 扫码安装
+        </button>
+    </div>
+</div>
+
+<!-- 二维码模态框 -->
+<div class="qr-modal" id="qrModal">
+    <div class="qr-content">
+        <button class="close-qr" onclick="closeQRModal()">&times;</button>
+        <h3>扫码分享</h3>
+        <img id="qrImage" src="" alt="二维码">
+        <p>使用微信、支付宝等扫码分享</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let deferredPrompt;
+
+// 监听PWA安装事件
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('mobileInstall').style.display = 'block';
+});
+
+// 分享功能
+function shareTo(platform, url, type) {
+    // 记录分享行为
+    recordShare(platform);
+    
+    switch(type) {
+        case 'popup':
+            openPopup(url, platform);
+            break;
+        case 'qrcode':
+            showQRCode(url);
+            break;
+        case 'direct':
+            window.location.href = url;
+            break;
+        case 'copy':
+            copyUrl();
+            break;
+    }
+}
+
+// 打开弹窗分享
+function openPopup(url, platform) {
+    const width = 600;
+    const height = 400;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    window.open(url, platform, 
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+}
+
+// 显示二维码
+function showQRCode(url = null) {
+    const qrUrl = url || '{{ current_url }}';
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}`;
+    
+    document.getElementById('qrImage').src = qrImageUrl;
+    document.getElementById('qrModal').style.display = 'block';
+}
+
+// 关闭二维码模态框
+function closeQRModal() {
+    document.getElementById('qrModal').style.display = 'none';
+}
+
+// 复制链接
+function copyUrl() {
+    const url = document.getElementById('shareUrl').textContent;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('链接已复制到剪贴板');
+    }).catch(() => {
+        // 降级方案
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('链接已复制到剪贴板');
+    });
+}
+
+// 安装PWA
+function installPWA() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                showToast('应用安装成功！');
+            }
+            deferredPrompt = null;
+        });
+    } else {
+        showToast('请使用浏览器的安装功能');
+    }
+}
+
+// 记录分享行为
+function recordShare(platform) {
+    fetch('{% url "share:record_share" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            platform: platform,
+            page_url: '{{ current_url }}',
+            page_title: '{{ current_title }}'
+        })
+    }).catch(error => {
+        console.log('分享记录失败:', error);
+    });
+}
+
+// 获取Cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 显示提示
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 2000);
+}
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// 点击模态框外部关闭
+document.getElementById('qrModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeQRModal();
+    }
+});
+
+// 检测移动设备
+if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    document.getElementById('mobileInstall').style.display = 'block';
+}
+</script>
+{% endblock %}

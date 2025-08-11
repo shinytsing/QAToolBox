@@ -1,0 +1,860 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}功能入口管理 - QAToolBox{% endblock %}
+
+{% block content %}
+<style>
+/* 修复蒙层问题 - 完全解决黑色遮罩覆盖问题 */
+.modal-backdrop {
+    z-index: 1040 !important;
+    pointer-events: none !important; /* 允许点击穿透到下层 */
+}
+
+.modal-backdrop.show {
+    opacity: 0.5 !important;
+    pointer-events: none !important; /* 防止遮罩阻止点击 */
+}
+
+.modal {
+    z-index: 1050 !important;
+    pointer-events: auto !important; /* 确保模态框本身可以点击 */
+}
+
+.modal-dialog {
+    margin: 1.75rem auto !important;
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保对话框可以点击 */
+}
+
+.modal-content {
+    max-height: calc(100vh - 3.5rem) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important; /* 确保内容区域可以点击 */
+    position: relative !important;
+    z-index: 1051 !important; /* 确保在遮罩之上 */
+}
+
+/* 确保所有交互元素都可以点击 */
+button, a, input, select, textarea {
+    position: relative !important;
+    z-index: 3 !important;
+    pointer-events: auto !important;
+}
+
+/* 现代化功能管理页面样式 */
+.feature-management {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px 0;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.management-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.management-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feature-table th {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.feature-table td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+}
+
+.feature-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-enabled { background: #d4edda; color: #155724; }
+.status-disabled { background: #f8d7da; color: #721c24; }
+.status-maintenance { background: #fff3cd; color: #856404; }
+.status-beta { background: #d1ecf1; color: #0c5460; }
+
+.visibility-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.visibility-public { background: #d4edda; color: #155724; }
+.visibility-registered { background: #d1ecf1; color: #0c5460; }
+.visibility-vip { background: #fff3cd; color: #856404; }
+.visibility-admin { background: #f8d7da; color: #721c24; }
+.visibility-hidden { background: #e2e3e5; color: #495057; }
+
+.action-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin: 2px;
+    transition: all 0.2s ease;
+}
+
+.btn-edit { background: #ffc107; color: #212529; }
+.btn-delete { background: #dc3545; color: white; }
+.btn-toggle { background: #17a2b8; color: white; }
+
+.toolbar {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.batch-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.modern-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-success-modern {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.btn-warning-modern {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #212529;
+}
+
+.btn-danger-modern {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    color: inherit;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border-left: 4px solid #667eea;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #7f8c8d;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<div class="feature-management">
+    <div class="container-fluid">
+        <!-- 页面头部 -->
+        <div class="management-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 style="color: #2c3e50; font-weight: 700; margin-bottom: 10px;">
+                        <i class="fas fa-cogs"></i> 功能入口管理
+                    </h1>
+                    <p style="color: #7f8c8d; font-size: 1.1rem; margin-bottom: 0;">
+                        集中管理系统功能的访问权限和可见性
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex justify-content-end gap-2 flex-wrap">
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> 返回仪表盘
+                        </a>
+                        <button class="btn btn-outline-success btn-sm" onclick="initDefaultFeatures()">
+                            <i class="fas fa-plus"></i> 初始化默认功能
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number" id="totalFeatures">{{ total_features }}</div>
+                <div class="stat-label">总功能数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="enabledFeatures">{{ enabled_features }}</div>
+                <div class="stat-label">已启用</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="disabledFeatures">{{ disabled_features }}</div>
+                <div class="stat-label">已禁用</div>
+            </div>
+        </div>
+
+        <!-- 功能管理 -->
+        <div class="management-card">
+            <!-- 工具栏 -->
+            <div class="toolbar">
+                <div class="d-flex align-items-center gap-3">
+                    <h3 class="mb-0">
+                        <i class="fas fa-list"></i> 功能列表
+                    </h3>
+                    <button class="modern-btn btn-primary-modern" onclick="createFeature()">
+                        <i class="fas fa-plus"></i> 新增功能
+                    </button>
+                </div>
+                
+                <div class="batch-actions">
+                    <button class="modern-btn btn-success-modern" onclick="batchEnable()">
+                        <i class="fas fa-check"></i> 批量启用
+                    </button>
+                    <button class="modern-btn btn-warning-modern" onclick="batchDisable()">
+                        <i class="fas fa-times"></i> 批量禁用
+                    </button>
+                    <button class="modern-btn btn-danger-modern" onclick="batchSetVisibility()">
+                        <i class="fas fa-eye"></i> 批量设置可见性
+                    </button>
+                    <button class="modern-btn btn-primary-modern" onclick="refreshFeatures()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+
+            <!-- 加载状态 -->
+            <div class="loading" id="loadingState">
+                <div class="spinner"></div>
+                <p>正在加载功能列表...</p>
+            </div>
+
+            <!-- 功能表格 -->
+            <div class="table-responsive">
+                <table class="feature-table" id="featureTable">
+                    <thead>
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th>功能名称</th>
+                            <th>功能标识</th>
+                            <th>状态</th>
+                            <th>可见性</th>
+                            <th>排序</th>
+                            <th>访问次数</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="featureTableBody">
+                        <!-- 动态加载内容 -->
+                    </tbody>
+                </table>
+                
+                <!-- 空状态 -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <h4>暂无功能数据</h4>
+                    <p>点击"初始化默认功能"开始添加功能</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑功能模态框 -->
+<div class="modal fade" id="editFeatureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i> 编辑功能
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editFeatureForm">
+                    <input type="hidden" id="editFeatureId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">功能标识</label>
+                                <input type="text" id="editFeatureKey" class="form-control" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">功能名称</label>
+                                <input type="text" id="editFeatureName" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">功能描述</label>
+                        <textarea id="editDescription" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">URL路径</label>
+                                <input type="text" id="editUrlPath" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">图标类名</label>
+                                <input type="text" id="editIcon" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">状态</label>
+                                <select id="editStatus" class="form-select">
+                                    <option value="enabled">启用</option>
+                                    <option value="disabled">禁用</option>
+                                    <option value="maintenance">维护中</option>
+                                    <option value="beta">测试版</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">可见性</label>
+                                <select id="editVisibility" class="form-select">
+                                    <option value="public">所有用户</option>
+                                    <option value="registered">注册用户</option>
+                                    <option value="vip">VIP用户</option>
+                                    <option value="admin">管理员</option>
+                                    <option value="hidden">隐藏</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">排序</label>
+                                <input type="number" id="editSortOrder" class="form-control" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" id="editIsActive" class="form-check-input">
+                            <label class="form-check-label">是否启用</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveFeature()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 实时通知 -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+    <div id="notificationToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-bell text-primary"></i>
+            <strong class="me-auto ms-2">系统通知</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="notificationMessage"></div>
+    </div>
+</div>
+
+<script>
+let currentFeatures = [];
+let selectedFeatures = [];
+
+// 页面加载完成后加载功能列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadFeatures();
+});
+
+// 加载功能列表
+function loadFeatures() {
+    showLoading(true);
+    
+    fetch('/content/api/admin/features/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentFeatures = data.features;
+                renderFeatureTable(data.features);
+                updateStats();
+            } else {
+                showError('加载功能列表失败');
+            }
+        })
+        .catch(error => {
+            console.error('加载功能失败:', error);
+            showError('加载功能列表失败');
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+}
+
+// 渲染功能表格
+function renderFeatureTable(features) {
+    const tbody = document.getElementById('featureTableBody');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (features.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    tbody.innerHTML = features.map(feature => `
+        <tr data-feature-id="${feature.id}">
+            <td>
+                <input type="checkbox" class="feature-checkbox" value="${feature.id}" onchange="updateSelection()">
+            </td>
+            <td>
+                <div>
+                    <i class="${feature.icon}"></i>
+                    <strong>${feature.feature_name}</strong>
+                </div>
+                <small class="text-muted">${feature.description || '无描述'}</small>
+            </td>
+            <td><code>${feature.feature_key}</code></td>
+            <td>
+                <span class="status-badge status-${feature.status}">
+                    ${feature.status_display}
+                </span>
+            </td>
+            <td>
+                <span class="visibility-badge visibility-${feature.visibility}">
+                    ${feature.visibility_display}
+                </span>
+            </td>
+            <td>${feature.sort_order}</td>
+            <td>${feature.access_count}</td>
+            <td>
+                <button class="action-btn btn-edit" onclick="editFeature(${feature.id})" title="编辑">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn btn-toggle" onclick="toggleFeature(${feature.id})" title="切换状态">
+                    <i class="fas fa-power-off"></i>
+                </button>
+                <button class="action-btn btn-delete" onclick="deleteFeature(${feature.id})" title="删除">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// 更新统计信息
+function updateStats() {
+    const total = currentFeatures.length;
+    const enabled = currentFeatures.filter(f => f.is_active && f.status === 'enabled').length;
+    const disabled = currentFeatures.filter(f => !f.is_active || f.status === 'disabled').length;
+    
+    document.getElementById('totalFeatures').textContent = total;
+    document.getElementById('enabledFeatures').textContent = enabled;
+    document.getElementById('disabledFeatures').textContent = disabled;
+}
+
+// 显示/隐藏加载状态
+function showLoading(show) {
+    document.getElementById('loadingState').style.display = show ? 'block' : 'none';
+    document.getElementById('featureTable').style.display = show ? 'none' : 'table';
+}
+
+// 初始化默认功能
+function initDefaultFeatures() {
+    if (!confirm('确定要初始化默认功能吗？这将创建系统预设的功能入口。')) return;
+    
+    showNotification('正在初始化默认功能...', 'info');
+    
+    fetch('/content/api/admin/features/init-default/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            loadFeatures();
+        } else {
+            showError(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('初始化失败:', error);
+        showError('初始化默认功能失败');
+    });
+}
+
+// 编辑功能
+function editFeature(featureId) {
+    const feature = currentFeatures.find(f => f.id === featureId);
+    if (!feature) return;
+    
+    document.getElementById('editFeatureId').value = feature.id;
+    document.getElementById('editFeatureKey').value = feature.feature_key;
+    document.getElementById('editFeatureName').value = feature.feature_name;
+    document.getElementById('editDescription').value = feature.description;
+    document.getElementById('editUrlPath').value = feature.url_path;
+    document.getElementById('editIcon').value = feature.icon;
+    document.getElementById('editStatus').value = feature.status;
+    document.getElementById('editVisibility').value = feature.visibility;
+    document.getElementById('editSortOrder').value = feature.sort_order;
+    document.getElementById('editIsActive').checked = feature.is_active;
+    
+    new bootstrap.Modal(document.getElementById('editFeatureModal')).show();
+}
+
+// 保存功能
+function saveFeature() {
+    const featureId = document.getElementById('editFeatureId').value;
+    const formData = {
+        feature_id: featureId,
+        feature_name: document.getElementById('editFeatureName').value,
+        description: document.getElementById('editDescription').value,
+        url_path: document.getElementById('editUrlPath').value,
+        icon: document.getElementById('editIcon').value,
+        status: document.getElementById('editStatus').value,
+        visibility: document.getElementById('editVisibility').value,
+        sort_order: parseInt(document.getElementById('editSortOrder').value),
+        is_active: document.getElementById('editIsActive').checked
+    };
+    
+    fetch('/content/api/admin/features/update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('功能更新成功', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editFeatureModal')).hide();
+            loadFeatures();
+        } else {
+            showError(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('保存失败:', error);
+        showError('保存功能失败');
+    });
+}
+
+// 切换功能状态
+function toggleFeature(featureId) {
+    const feature = currentFeatures.find(f => f.id === featureId);
+    if (!feature) return;
+    
+    const newStatus = feature.is_active ? 'disabled' : 'enabled';
+    const newActive = !feature.is_active;
+    
+    fetch('/content/api/admin/features/update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            feature_id: featureId,
+            status: newStatus,
+            is_active: newActive
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('功能状态已更新', 'success');
+            loadFeatures();
+        } else {
+            showError(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('更新失败:', error);
+        showError('更新功能状态失败');
+    });
+}
+
+// 批量启用
+function batchEnable() {
+    batchUpdateFeatures('enable', '启用');
+}
+
+// 批量禁用
+function batchDisable() {
+    batchUpdateFeatures('disable', '禁用');
+}
+
+// 批量更新功能
+function batchUpdateFeatures(action, actionName) {
+    const selected = getSelectedFeatures();
+    if (selected.length === 0) {
+        showError('请先选择要操作的功能');
+        return;
+    }
+    
+    if (!confirm(`确定要${actionName}选中的 ${selected.length} 个功能吗？`)) return;
+    
+    fetch('/content/api/admin/features/batch-update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            feature_ids: selected,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            loadFeatures();
+            clearSelection();
+        } else {
+            showError(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('批量操作失败:', error);
+        showError(`批量${actionName}失败`);
+    });
+}
+
+// 获取选中的功能ID
+function getSelectedFeatures() {
+    return Array.from(document.querySelectorAll('.feature-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+// 清空选择
+function clearSelection() {
+    document.querySelectorAll('.feature-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateSelection();
+}
+
+// 更新选择状态
+function updateSelection() {
+    selectedFeatures = getSelectedFeatures();
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.feature-checkbox');
+    
+    if (selectedFeatures.length === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (selectedFeatures.length === checkboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+    }
+}
+
+// 切换全选
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.feature-checkbox');
+    
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateSelection();
+}
+
+// 刷新功能列表
+function refreshFeatures() {
+    loadFeatures();
+    showNotification('功能列表已刷新', 'success');
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const toast = document.getElementById('notificationToast');
+    const messageElement = document.getElementById('notificationMessage');
+    
+    messageElement.textContent = message;
+    toast.className = `toast ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : 'bg-info text-white'}`;
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// 显示错误
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+// 获取CSRF Token
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 修复蒙层问题的JavaScript代码
+document.addEventListener('DOMContentLoaded', function() {
+    // 监听所有模态框的隐藏事件
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // 强制移除所有蒙层
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            
+            // 恢复页面滚动
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // 确保模态框在最上层
+            this.style.zIndex = '1050';
+            
+            // 确保背景遮罩设置正确
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.style.zIndex = '1040';
+                backdrop.style.pointerEvents = 'none';
+            });
+        });
+    });
+    
+    // 点击遮罩关闭模态框
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-backdrop')) {
+            const activeModal = document.querySelector('.modal.show');
+            if (activeModal) {
+                const modal = bootstrap.Modal.getInstance(activeModal);
+                if (modal) modal.hide();
+            }
+        }
+    });
+    
+    // 确保页面加载时没有残留的蒙层
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+
+// 添加全局错误处理，防止JavaScript错误导致蒙层卡住
+window.addEventListener('error', function() {
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+});
+</script>
+{% endblock %}
