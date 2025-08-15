@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NutriCoach Pro - 营养定制仪表板{% endblock %}
+
+{% block extra_css %}
+<style>
+.nutrition-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.dashboard-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.meal-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s;
+}
+
+.meal-card:hover {
+    transform: translateY(-2px);
+}
+
+.meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.meal-type {
+    background: #667eea;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.meal-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.meal-nutrition {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.nutrition-item {
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.nutrition-value {
+    font-weight: bold;
+    color: #667eea;
+}
+
+.nutrition-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+    text-decoration: none;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.quick-action {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.quick-action:hover {
+    border-color: #667eea;
+    transform: translateY(-3px);
+    color: #333;
+    text-decoration: none;
+}
+
+.quick-action i {
+    font-size: 2rem;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nutrition-dashboard">
+    <div class="container">
+        <!-- 欢迎信息 -->
+        <div class="dashboard-card">
+            <h1 class="mb-4">
+                <i class="fas fa-heartbeat text-primary"></i>
+                NutriCoach Pro - 您的专属营养师
+            </h1>
+            <p class="lead">欢迎回来，{{ user.username }}！让我们继续您的健身营养之旅。</p>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ active_plan.daily_calories|default:"0" }}</div>
+                <div class="stat-label">今日目标热量 (kcal)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ today_meals|length }}</div>
+                <div class="stat-label">今日餐食计划</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ today_logs|length }}</div>
+                <div class="stat-label">已完成餐食</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ recent_weight.weight|default:"--" }}</div>
+                <div class="stat-label">当前体重 (kg)</div>
+            </div>
+        </div>
+
+        <!-- 今日餐食计划 -->
+        <div class="dashboard-card">
+            <h3><i class="fas fa-utensils"></i> 今日餐食计划</h3>
+            {% if today_meals %}
+                {% for meal in today_meals %}
+                <div class="meal-card">
+                    <div class="meal-header">
+                        <span class="meal-type">{{ meal.get_meal_type_display }}</span>
+                        <span class="meal-time">{{ meal.ideal_time|time:"H:i" }}</span>
+                    </div>
+                    <h5>{{ meal.description }}</h5>
+                    <p class="text-muted">
+                        <i class="fas fa-list"></i> 
+                        食材：{{ meal.ingredients|join:", " }}
+                    </p>
+                    <div class="meal-nutrition">
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">{{ meal.calories }}</div>
+                            <div class="nutrition-label">热量 (kcal)</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">{{ meal.protein }}g</div>
+                            <div class="nutrition-label">蛋白质</div>
+                        </div>
+                        <div class="nutrition-item">
+                            <div class="nutrition-value">{{ meal.carbs }}g</div>
+                            <div class="nutrition-label">碳水</div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-success btn-sm" onclick="logMeal({{ meal.id }})">
+                            <i class="fas fa-check"></i> 已完成
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="viewMealDetail({{ meal.id }})">
+                            <i class="fas fa-eye"></i> 查看详情
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-utensils fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">暂无今日餐食计划</p>
+                    <a href="{% url 'nutrition_generate_plan' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 生成饮食计划
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="dashboard-card">
+            <h3><i class="fas fa-bolt"></i> 快速操作</h3>
+            <div class="quick-actions">
+                <a href="{% url 'nutrition_meal_log' %}" class="quick-action">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h5>记录餐食</h5>
+                    <p>记录您的饮食情况</p>
+                </a>
+                <a href="{% url 'nutrition_weight_tracking' %}" class="quick-action">
+                    <i class="fas fa-weight"></i>
+                    <h5>体重记录</h5>
+                    <p>追踪体重变化</p>
+                </a>
+                <a href="{% url 'nutrition_progress' %}" class="quick-action">
+                    <i class="fas fa-chart-line"></i>
+                    <h5>进度分析</h5>
+                    <p>查看健身进展</p>
+                </a>
+                <a href="{% url 'nutrition_reminders' %}" class="quick-action">
+                    <i class="fas fa-bell"></i>
+                    <h5>提醒设置</h5>
+                    <p>管理营养提醒</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- 营养目标进度 -->
+        {% if active_plan %}
+        <div class="dashboard-card">
+            <h3><i class="fas fa-target"></i> 今日营养目标</h3>
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <div class="progress-ring">
+                        <svg width="120" height="120">
+                            <circle class="bg" cx="60" cy="60" r="45"></circle>
+                            <circle class="progress" cx="60" cy="60" r="45" 
+                                    data-progress="75"></circle>
+                        </svg>
+                    </div>
+                    <h5 class="mt-2">总体完成度</h5>
+                    <p class="text-muted">75%</p>
+                </div>
+                <div class="col-md-9">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>蛋白质</h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-primary" style="width: 80%"></div>
+                            </div>
+                            <small class="text-muted">160g / {{ active_plan.protein_goal }}g</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>碳水</h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" style="width: 65%"></div>
+                            </div>
+                            <small class="text-muted">195g / {{ active_plan.carbs_goal }}g</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>脂肪</h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-warning" style="width: 70%"></div>
+                            </div>
+                            <small class="text-muted">63g / {{ active_plan.fat_goal }}g</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function logMeal(mealId) {
+    // 实现餐食记录功能
+    fetch('{% url "nutrition_meal_log" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `meal_id=${mealId}&consumed_date=${new Date().toISOString().split('T')[0]}&consumed_time=${new Date().toTimeString().split(' ')[0]}&is_completed=true`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('记录失败：' + data.error);
+        }
+    });
+}
+
+function viewMealDetail(mealId) {
+    // 实现查看餐食详情功能
+    console.log('查看餐食详情：', mealId);
+}
+
+// 初始化进度环
+document.addEventListener('DOMContentLoaded', function() {
+    const progressRings = document.querySelectorAll('.progress-ring .progress');
+    progressRings.forEach(ring => {
+        const progress = ring.getAttribute('data-progress');
+        const circumference = 2 * Math.PI * 45;
+        const offset = circumference - (progress / 100) * circumference;
+        ring.style.strokeDashoffset = offset;
+    });
+});
+</script>
+{% endblock %}

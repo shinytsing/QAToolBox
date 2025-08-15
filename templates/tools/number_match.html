@@ -139,20 +139,32 @@
     opacity: 0.9;
 }
 
+.match-links {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
 .chat-link {
     display: inline-block;
     background: rgba(255,255,255,0.2);
     color: white;
     text-decoration: none;
-    padding: 12px 25px;
-    border-radius: 20px;
-    margin-top: 15px;
+    padding: 12px 24px;
+    border-radius: 25px;
+    border: 2px solid rgba(255,255,255,0.3);
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-weight: 600;
+    margin: 5px;
 }
 
 .chat-link:hover {
     background: rgba(255,255,255,0.3);
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     color: white;
     text-decoration: none;
 }
@@ -375,12 +387,14 @@ function showMatchInfo(data) {
     matchInfoContent.innerHTML = `
         <p><strong>匹配用户:</strong> ${data.matched_user.display_name}</p>
         <p><strong>聊天室ID:</strong> ${data.room_id}</p>
-        <a href="/tools/chat/enhanced/${data.room_id}/" class="chat-link">
-            💬 开始聊天
-        </a>
-        <a href="/tools/video-chat/${data.room_id}/" class="chat-link" style="margin-left: 10px;">
-            📹 视频通话
-        </a>
+        <div class="match-links">
+            <a href="/tools/chat/enhanced/${data.room_id}/" class="chat-link">
+                💬 开始聊天
+            </a>
+            <a href="/tools/video-chat/${data.room_id}/" class="chat-link">
+                📹 视频通话
+            </a>
+        </div>
     `;
     
     matchInfo.style.display = 'block';

@@ -207,6 +207,7 @@ class FeatureAccess(models.Model):
         
         # 管理功能
         ('food_photo_binding', '食物照片绑定'),
+        ('food_image_correction', '食物图片矫正'),
         ('content_suggestions', '内容建议'),
         ('user_feedback', '用户反馈'),
         ('admin_dashboard', '管理员仪表盘'),

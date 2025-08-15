@@ -1,0 +1,573 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}音频转换器 - 极客模式{% endblock %}
+
+{% block extra_css %}
+<style>
+.audio-converter-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: var(--geek-card-bg);
+    border-radius: var(--geek-radius);
+    border: 1px solid var(--geek-border);
+    box-shadow: var(--geek-shadow);
+}
+
+.audio-converter-title {
+    color: var(--geek-primary);
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-family: var(--geek-font-mono);
+    letter-spacing: 2px;
+}
+
+.audio-converter-subtitle {
+    color: var(--geek-text-muted);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.upload-area {
+    border: 2px dashed var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 3rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    background: var(--geek-gradient-card);
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: var(--geek-primary);
+    background: rgba(0, 255, 231, 0.05);
+}
+
+.upload-area.dragover {
+    border-color: var(--geek-primary);
+    background: rgba(0, 255, 231, 0.1);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 4rem;
+    color: var(--geek-primary);
+    margin-bottom: 1rem;
+    animation: geekPulse 2s ease-in-out infinite;
+}
+
+.upload-text {
+    color: var(--geek-text);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.upload-hint {
+    color: var(--geek-text-muted);
+    font-size: 0.9rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.format-selector {
+    margin-bottom: 2rem;
+}
+
+.format-label {
+    color: var(--geek-text);
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.format-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.format-option {
+    background: var(--geek-card-bg);
+    border: 2px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.format-option:hover {
+    border-color: var(--geek-primary);
+    transform: translateY(-2px);
+}
+
+.format-option.selected {
+    border-color: var(--geek-primary);
+    background: rgba(0, 255, 231, 0.1);
+}
+
+.format-option-icon {
+    font-size: 2rem;
+    color: var(--geek-primary);
+    margin-bottom: 0.5rem;
+}
+
+.format-option-text {
+    color: var(--geek-text);
+    font-weight: 600;
+}
+
+.convert-btn {
+    background: var(--geek-gradient);
+    color: var(--geek-bg);
+    border: none;
+    border-radius: var(--geek-radius);
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    font-family: var(--geek-font-mono);
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.convert-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 255, 231, 0.4);
+}
+
+.convert-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.progress-container {
+    margin-top: 2rem;
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--geek-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--geek-gradient);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: var(--geek-text-muted);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.result-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: var(--geek-radius);
+    display: none;
+}
+
+.result-success {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.result-error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.result-message {
+    color: var(--geek-text);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.download-btn {
+    background: var(--geek-primary);
+    color: var(--geek-bg);
+    border: none;
+    border-radius: var(--geek-radius);
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);
+    text-decoration: none;
+    color: var(--geek-bg);
+}
+
+.file-info {
+    background: var(--geek-card-bg);
+    border: 1px solid var(--geek-border);
+    border-radius: var(--geek-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.file-name {
+    color: var(--geek-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.file-size {
+    color: var(--geek-text-muted);
+    font-size: 0.9rem;
+}
+
+@keyframes geekPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@media (max-width: 768px) {
+    .audio-converter-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .audio-converter-title {
+        font-size: 2rem;
+    }
+    
+    .upload-area {
+        padding: 2rem 1rem;
+    }
+    
+    .format-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="audio-converter-container">
+    <h1 class="audio-converter-title">
+        <i class="fas fa-music"></i> 音频转换器
+    </h1>
+    <p class="audio-converter-subtitle">
+        支持NCM、MP3、WAV、FLAC、M4A格式互转，专业音频处理工具
+    </p>
+
+    <!-- 文件上传区域 -->
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <div class="upload-text">点击或拖拽文件到此处</div>
+        <div class="upload-hint">支持 NCM、MP3、WAV、FLAC、M4A 格式</div>
+        <input type="file" class="file-input" id="fileInput" accept=".ncm,.mp3,.wav,.flac,.m4a">
+    </div>
+
+    <!-- 文件信息 -->
+    <div class="file-info" id="fileInfo">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
+    </div>
+
+    <!-- 格式选择 -->
+    <div class="format-selector">
+        <label class="format-label">选择输出格式：</label>
+        <div class="format-options">
+            <div class="format-option selected" data-format="mp3">
+                <div class="format-option-icon">
+                    <i class="fas fa-music"></i>
+                </div>
+                <div class="format-option-text">MP3</div>
+            </div>
+            <div class="format-option" data-format="wav">
+                <div class="format-option-icon">
+                    <i class="fas fa-wave-square"></i>
+                </div>
+                <div class="format-option-text">WAV</div>
+            </div>
+            <div class="format-option" data-format="flac">
+                <div class="format-option-icon">
+                    <i class="fas fa-compact-disc"></i>
+                </div>
+                <div class="format-option-text">FLAC</div>
+            </div>
+            <div class="format-option" data-format="m4a">
+                <div class="format-option-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="format-option-text">M4A</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 转换按钮 -->
+    <button class="convert-btn" id="convertBtn" disabled>
+        <i class="fas fa-cog fa-spin" style="display: none;"></i>
+        <span>开始转换</span>
+    </button>
+
+    <!-- 进度条 -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">准备转换...</div>
+    </div>
+
+    <!-- 结果容器 -->
+    <div class="result-container" id="resultContainer">
+        <div class="result-message" id="resultMessage"></div>
+        <a href="#" class="download-btn" id="downloadBtn" style="display: none;">
+            <i class="fas fa-download"></i> 下载转换后的文件
+        </a>
+    </div>
+</div>
+
+<script>
+let selectedFile = null;
+let selectedFormat = 'mp3';
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const formatOptions = document.querySelectorAll('.format-option');
+
+    // 文件上传区域点击事件
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // 拖拽事件
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+
+    // 文件选择事件
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    // 格式选择事件
+    formatOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            formatOptions.forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedFormat = this.dataset.format;
+        });
+    });
+
+    // 转换按钮事件
+    convertBtn.addEventListener('click', function() {
+        if (selectedFile) {
+            convertAudio();
+        }
+    });
+});
+
+// 处理文件选择
+function handleFileSelect(file) {
+    const allowedTypes = ['.ncm', '.mp3', '.wav', '.flac', '.m4a'];
+    const fileExtension = '.' + file.name.toLowerCase().split('.').pop();
+    
+    if (!allowedTypes.includes(fileExtension)) {
+        showResult('error', '不支持的文件格式，请选择NCM、MP3、WAV、FLAC或M4A文件');
+        return;
+    }
+
+    selectedFile = file;
+    
+    // 显示文件信息
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileInfo.style.display = 'block';
+    
+    // 启用转换按钮
+    document.getElementById('convertBtn').disabled = false;
+    
+    // 隐藏之前的结果
+    hideResult();
+}
+
+// 转换音频
+function convertAudio() {
+    const formData = new FormData();
+    formData.append('audio_file', selectedFile);
+    formData.append('target_format', selectedFormat);
+    
+    // 显示进度条
+    showProgress();
+    
+    // 禁用转换按钮
+    const convertBtn = document.getElementById('convertBtn');
+    convertBtn.disabled = true;
+    convertBtn.querySelector('i').style.display = 'inline';
+    convertBtn.querySelector('span').textContent = '转换中...';
+    
+    // 模拟进度
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        updateProgress(progress, '正在转换音频...');
+    }, 200);
+    
+    fetch('/tools/api/audio_converter/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        updateProgress(100, '转换完成！');
+        
+        setTimeout(() => {
+            hideProgress();
+            
+            if (data.success) {
+                showResult('success', data.message);
+                const downloadBtn = document.getElementById('downloadBtn');
+                downloadBtn.href = data.download_url;
+                downloadBtn.download = data.filename;
+                downloadBtn.style.display = 'inline-block';
+                
+                // 自动下载文件
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = data.download_url;
+                    link.download = data.filename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, 1000);
+            } else {
+                showResult('error', data.message);
+            }
+            
+            // 重置转换按钮
+            convertBtn.disabled = false;
+            convertBtn.querySelector('i').style.display = 'none';
+            convertBtn.querySelector('span').textContent = '开始转换';
+        }, 500);
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        hideProgress();
+        showResult('error', '网络错误，请重试');
+        
+        // 重置转换按钮
+        const convertBtn = document.getElementById('convertBtn');
+        convertBtn.disabled = false;
+        convertBtn.querySelector('i').style.display = 'none';
+        convertBtn.querySelector('span').textContent = '开始转换';
+    });
+}
+
+// 显示进度条
+function showProgress() {
+    document.getElementById('progressContainer').style.display = 'block';
+}
+
+// 隐藏进度条
+function hideProgress() {
+    document.getElementById('progressContainer').style.display = 'none';
+}
+
+// 更新进度
+function updateProgress(percent, text) {
+    document.getElementById('progressFill').style.width = percent + '%';
+    document.getElementById('progressText').textContent = text;
+}
+
+// 显示结果
+function showResult(type, message) {
+    const resultContainer = document.getElementById('resultContainer');
+    const resultMessage = document.getElementById('resultMessage');
+    
+    resultContainer.className = 'result-container result-' + type;
+    resultMessage.textContent = message;
+    resultContainer.style.display = 'block';
+}
+
+// 隐藏结果
+function hideResult() {
+    document.getElementById('resultContainer').style.display = 'none';
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+from django.core.management.base import BaseCommand
+from apps.tools.models import FoodItem
+
+
+class Command(BaseCommand):
+    help = '创建基于DeepSeek数据的上班族食品库'
+
+    def handle(self, *args, **options):
+        # 上班族食品库数据 - 基于DeepSeek数据
+        office_foods = [
+            # 早餐类
+            {
+                'name': '豆浆油条',
+                'description': '经典中式早餐，豆浆营养丰富，油条香脆可口',
+                'meal_types': ['breakfast'],
+                'cuisine': 'chinese',
+                'difficulty': 'easy',
+                'cooking_time': 10,
+                'ingredients': ['豆浆', '油条', '白糖'],
+                'tags': ['breakfast', 'traditional', 'quick'],
+                'image_url': '/static/img/food/soy-milk-1280.jpg',
+                'calories': 320, 'protein': 12, 'fat': 18, 'carbohydrates': 35, 'fiber': 3, 'sugar': 8, 'sodium': 680
+            },
+            {
+                'name': '煎蛋三明治',
+                'description': '简单营养的早餐选择，鸡蛋蛋白质丰富',
+                'meal_types': ['breakfast'],
+                'cuisine': 'western',
+                'difficulty': 'easy',
+                'cooking_time': 8,
+                'ingredients': ['面包', '鸡蛋', '生菜', '番茄'],
+                'tags': ['breakfast', 'protein', 'quick'],
+                'image_url': '/static/img/food/egg-sandwich-1280.jpg',
+                'calories': 280, 'protein': 15, 'fat': 12, 'carbohydrates': 32, 'fiber': 2, 'sugar': 5, 'sodium': 450
+            },
+            {
+                'name': '燕麦粥',
+                'description': '健康营养的早餐，富含膳食纤维',
+                'meal_types': ['breakfast'],
+                'cuisine': 'western',
+                'difficulty': 'easy',
+                'cooking_time': 15,
+                'ingredients': ['燕麦', '牛奶', '蜂蜜', '坚果'],
+                'tags': ['breakfast', 'healthy', 'fiber'],
+                'image_url': '/static/img/food/oatmeal-1280.jpg',
+                'calories': 220, 'protein': 8, 'fat': 6, 'carbohydrates': 35, 'fiber': 5, 'sugar': 12, 'sodium': 120
+            },
+            
+            # 午餐类 - 中式
+            {
+                'name': '宫保鸡丁',
+                'description': '经典川菜，鸡肉嫩滑，花生香脆，微辣开胃',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'chinese',
+                'difficulty': 'medium',
+                'cooking_time': 25,
+                'ingredients': ['鸡胸肉', '花生', '干辣椒', '黄瓜', '葱姜蒜'],
+                'tags': ['sichuan', 'spicy', 'popular'],
+                'image_url': '/static/img/food/kungpao-chicken-1280.jpg',
+                'calories': 320, 'protein': 25, 'fat': 18, 'carbohydrates': 15, 'fiber': 2, 'sugar': 8, 'sodium': 850
+            },
+            {
+                'name': '麻婆豆腐',
+                'description': '川菜经典，豆腐嫩滑，麻辣鲜香',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'chinese',
+                'difficulty': 'medium',
+                'cooking_time': 20,
+                'ingredients': ['嫩豆腐', '猪肉末', '豆瓣酱', '花椒', '葱花'],
+                'tags': ['sichuan', 'spicy', 'tofu'],
+                'image_url': '/static/img/food/mapo-tofu-1280.jpg',
+                'calories': 280, 'protein': 18, 'fat': 22, 'carbohydrates': 8, 'fiber': 3, 'sugar': 2, 'sodium': 1200
+            },
+            {
+                'name': '番茄炒蛋',
+                'description': '家常菜，简单易做，营养丰富',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'chinese',
+                'difficulty': 'easy',
+                'cooking_time': 12,
+                'ingredients': ['番茄', '鸡蛋', '葱花', '盐'],
+                'tags': ['homestyle', 'easy', 'healthy'],
+                'image_url': '/static/img/food/tomato-egg-1280.jpg',
+                'calories': 220, 'protein': 15, 'fat': 16, 'carbohydrates': 8, 'fiber': 2, 'sugar': 5, 'sodium': 450
+            },
+            {
+                'name': '青椒肉丝',
+                'description': '经典家常菜，青椒爽脆，肉丝嫩滑',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'chinese',
+                'difficulty': 'medium',
+                'cooking_time': 18,
+                'ingredients': ['青椒', '猪肉丝', '蒜末', '生抽'],
+                'tags': ['homestyle', 'green', 'protein'],
+                'image_url': '/static/img/food/pepper-pork-1280.jpg',
+                'calories': 260, 'protein': 22, 'fat': 18, 'carbohydrates': 8, 'fiber': 2, 'sugar': 3, 'sodium': 680
+            },
+            
+            # 午餐类 - 西式
+            {
+                'name': '意大利面',
+                'description': '经典意式料理，面条劲道，酱汁浓郁',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'western',
+                'difficulty': 'medium',
+                'cooking_time': 20,
+                'ingredients': ['意大利面', '番茄酱', '肉末', '洋葱', '奶酪'],
+                'tags': ['italian', 'pasta', 'popular'],
+                'image_url': '/static/img/food/spaghetti-1280.jpg',
+                'calories': 380, 'protein': 12, 'fat': 8, 'carbohydrates': 65, 'fiber': 4, 'sugar': 6, 'sodium': 680
+            },
+            {
+                'name': '三明治',
+                'description': '简单营养的午餐选择，方便携带',
+                'meal_types': ['lunch'],
+                'cuisine': 'western',
+                'difficulty': 'easy',
+                'cooking_time': 10,
+                'ingredients': ['面包', '火腿', '生菜', '番茄', '奶酪'],
+                'tags': ['quick', 'portable', 'lunch'],
+                'image_url': '/static/img/food/sandwich-1280.jpg',
+                'calories': 280, 'protein': 15, 'fat': 12, 'carbohydrates': 32, 'fiber': 3, 'sugar': 5, 'sodium': 680
+            },
+            {
+                'name': '沙拉',
+                'description': '健康轻食，新鲜蔬菜，低卡路里',
+                'meal_types': ['lunch'],
+                'cuisine': 'western',
+                'difficulty': 'easy',
+                'cooking_time': 8,
+                'ingredients': ['生菜', '番茄', '黄瓜', '胡萝卜', '橄榄油'],
+                'tags': ['healthy', 'light', 'vegetarian'],
+                'image_url': '/static/img/food/salad-1280.jpg',
+                'calories': 120, 'protein': 8, 'fat': 8, 'carbohydrates': 12, 'fiber': 4, 'sugar': 6, 'sodium': 450
+            },
+            
+            # 晚餐类
+            {
+                'name': '红烧肉',
+                'description': '经典家常菜，肥而不腻，入口即化',
+                'meal_types': ['dinner'],
+                'cuisine': 'chinese',
+                'difficulty': 'medium',
+                'cooking_time': 60,
+                'ingredients': ['五花肉', '生抽', '老抽', '冰糖', '葱姜'],
+                'tags': ['homestyle', 'braised', 'popular'],
+                'image_url': '/static/img/food/braised-pork-1280.jpg',
+                'calories': 450, 'protein': 28, 'fat': 35, 'carbohydrates': 5, 'fiber': 1, 'sugar': 3, 'sodium': 680
+            },
+            {
+                'name': '牛排',
+                'description': '西式经典，肉质鲜嫩，营养丰富',
+                'meal_types': ['dinner'],
+                'cuisine': 'western',
+                'difficulty': 'medium',
+                'cooking_time': 15,
+                'ingredients': ['牛排', '黑胡椒', '盐', '黄油', '迷迭香'],
+                'tags': ['western', 'protein', 'premium'],
+                'image_url': '/static/img/food/steak-1280.jpg',
+                'calories': 380, 'protein': 45, 'fat': 22, 'carbohydrates': 0, 'fiber': 0, 'sugar': 0, 'sodium': 450
+            },
+            {
+                'name': '水煮鱼',
+                'description': '川菜经典，鱼肉嫩滑，麻辣鲜香',
+                'meal_types': ['dinner'],
+                'cuisine': 'chinese',
+                'difficulty': 'hard',
+                'cooking_time': 30,
+                'ingredients': ['草鱼', '豆芽', '干辣椒', '花椒', '蒜末'],
+                'tags': ['sichuan', 'spicy', 'fish'],
+                'image_url': '/static/img/food/boiled-fish-1280.jpg',
+                'calories': 310, 'protein': 35, 'fat': 18, 'carbohydrates': 5, 'fiber': 2, 'sugar': 2, 'sodium': 1100
+            },
+            
+            # 快餐类
+            {
+                'name': '汉堡包',
+                'description': '美式快餐，方便快捷，饱腹感强',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'western',
+                'difficulty': 'easy',
+                'cooking_time': 12,
+                'ingredients': ['汉堡面包', '牛肉饼', '生菜', '番茄', '奶酪'],
+                'tags': ['fast-food', 'quick', 'popular'],
+                'image_url': '/static/img/food/burger-1280.jpg',
+                'calories': 520, 'protein': 25, 'fat': 28, 'carbohydrates': 42, 'fiber': 2, 'sugar': 8, 'sodium': 850
+            },
+            {
+                'name': '披萨',
+                'description': '意式快餐，奶酪浓郁，配料丰富',
+                'meal_types': ['lunch', 'dinner'],
+                'cuisine': 'western',
+                'difficulty': 'medium',
+                'cooking_time': 25,
+                'ingredients': ['披萨饼底', '番茄酱', '奶酪', '火腿', '蘑菇'],
+                'tags': ['italian', 'cheese', 'popular'],
+                'image_url': '/static/img/food/pizza-1280.jpg',
+                'calories': 450, 'protein': 18, 'fat': 22, 'carbohydrates': 48, 'fiber': 3, 'sugar': 8, 'sodium': 1200
+            },
+            
+            # 夜宵类
+            {
+                'name': '小龙虾',
+                'description': '夜宵首选，麻辣鲜香，肉质鲜美',
+                'meal_types': ['snack'],
+                'cuisine': 'chinese',
+                'difficulty': 'medium',
+                'cooking_time': 20,
+                'ingredients': ['小龙虾', '干辣椒', '花椒', '蒜末', '啤酒'],
+                'tags': ['spicy', 'seafood', 'snack'],
+                'image_url': '/static/img/food/crayfish-1280.jpg',
+                'calories': 180, 'protein': 28, 'fat': 8, 'carbohydrates': 2, 'fiber': 0, 'sugar': 1, 'sodium': 450
+            },
+            {
+                'name': '火锅',
+                'description': '社交美食，汤底浓郁，配料丰富',
+                'meal_types': ['dinner', 'snack'],
+                'cuisine': 'chinese',
+                'difficulty': 'easy',
+                'cooking_time': 15,
+                'ingredients': ['火锅底料', '牛肉片', '蔬菜', '豆腐', '粉丝'],
+                'tags': ['social', 'hot-pot', 'popular'],
+                'image_url': '/static/img/food/hotpot-1280.jpg',
+                'calories': 350, 'protein': 25, 'fat': 22, 'carbohydrates': 15, 'fiber': 4, 'sugar': 5, 'sodium': 1200
+            }
+        ]
+        
+        created_count = 0
+        
+        for food_data in office_foods:
+            food = FoodItem.objects.create(
+                name=food_data['name'],
+                description=food_data['description'],
+                meal_types=food_data['meal_types'],
+                cuisine=food_data['cuisine'],
+                difficulty=food_data['difficulty'],
+                cooking_time=food_data['cooking_time'],
+                ingredients=food_data['ingredients'],
+                tags=food_data['tags'],
+                image_url=food_data['image_url'],
+                calories=food_data['calories'],
+                protein=food_data['protein'],
+                fat=food_data['fat'],
+                carbohydrates=food_data['carbohydrates'],
+                fiber=food_data['fiber'],
+                sugar=food_data['sugar'],
+                sodium=food_data['sodium'],
+                popularity_score=0.8,
+                is_active=True
+            )
+            
+            self.stdout.write(
+                self.style.SUCCESS(f'✅ 创建: {food.name} - {food_data["calories"]}千卡')
+            )
+            created_count += 1
+        
+        self.stdout.write(
+            self.style.SUCCESS(f'\n📊 上班族食品库创建完成! 共创建: {created_count}个食物')
+        )

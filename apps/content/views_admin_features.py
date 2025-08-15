@@ -346,7 +346,7 @@ def admin_init_default_features_api(request):
                 'feature_key': 'life_diary',
                 'feature_name': '生活日记',
                 'description': '记录生活点滴',
-                'url_path': '/tools/life_diary_progressive/',
+                'url_path': '/tools/diary/',
                 'icon': 'fas fa-book',
                 'sort_order': 4
             },
@@ -354,10 +354,19 @@ def admin_init_default_features_api(request):
                 'feature_key': 'food_photo_binding',
                 'feature_name': '食物照片绑定',
                 'description': '管理食物与照片的映射关系',
-                'url_path': '/tools/food-photo-binding/',
-                'icon': 'fas fa-camera',
+                'url_path': '/tools/food_photo_binding/',
+                'icon': 'fas fa-link',
                 'visibility': 'admin',
                 'sort_order': 100
+            },
+            {
+                'feature_key': 'food_image_correction',
+                'feature_name': '食物图片矫正',
+                'description': '优化和矫正食物图片质量',
+                'url_path': '/tools/food_image_correction/',
+                'icon': 'fas fa-camera-retro',
+                'visibility': 'admin',
+                'sort_order': 101
             },
             {
                 'feature_key': 'admin_dashboard',

@@ -50,7 +50,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # 工具主页面路由
     # 工具子路由（包含测试用例生成器等）
-    path('tools/', include('apps.tools.urls')),
+    path('tools/', include('apps.tools.urls', namespace='tools')),
     path('users/', include('apps.users.urls')),
     path('content/', include('apps.content.urls')),
     # path('share/', include('apps.share.urls')),

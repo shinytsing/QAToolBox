@@ -91,12 +91,12 @@ def setup_database():
 
 def start_development_server():
     """启动开发服务器"""
-    print("🚀 启动开发服务器...")
+    print("🚀 启动统一服务器（API + WebSocket）...")
     
     try:
-        # 启动Django开发服务器
+        # 启动统一服务器脚本
         subprocess.run([
-            sys.executable, 'manage.py', 'runserver', '0.0.0.0:8000'
+            sys.executable, 'start_unified_server.py'
         ], check=True)
     except KeyboardInterrupt:
         print("\n👋 服务器已停止")

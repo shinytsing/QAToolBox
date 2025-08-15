@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+import os
 
 # 加载环境变量
 env_paths = [
@@ -73,9 +74,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    # 用户活动监控中间件
+    # 自定义中间件
     'apps.users.middleware.UserActivityMiddleware',
-    'apps.users.middleware.UserSessionMiddleware',
+    'apps.users.middleware.SessionExtensionMiddleware',  # Session延长中间件
+    
+    # 性能监控中间件
+    'apps.tools.services.monitoring_service.PerformanceMonitoringMiddleware',
 ]
 
 ROOT_URLCONF = 'urls'
@@ -108,21 +112,54 @@ CHANNEL_LAYERS = {
     }
 }
 
-# Database
+# 数据库配置
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django_db_connection_pool.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'qatoolbox'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
         'OPTIONS': {
-            'timeout': 20,
+            'POOL_OPTIONS': {
+                'POOL_SIZE': 20,
+                'MAX_OVERFLOW': 30,
+                'RECYCLE': 300,
+            }
         }
     }
 }
 
-# 生产环境数据库配置（可选）
-if os.environ.get('DATABASE_URL'):
-    import dj_database_url
-    DATABASES['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+# Redis缓存配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+        },
+        'KEY_PREFIX': 'qatoolbox',
+        'TIMEOUT': 300,
+    },
+    'session': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'session',
+    }
+}
+
+# 会话配置
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'session'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -166,6 +203,11 @@ LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+# 会话配置
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30天（1个月）
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True  # 每次请求都保存session，延长过期时间
+
 # DRF配置
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
@@ -194,17 +236,47 @@ DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY')
 SITE_ID = 1
 
 # Celery配置
-CELERY_BROKER_URL = 'django-db://'
-CELERY_RESULT_BACKEND = 'django-db'
+CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/3')
+CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/3')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Shanghai'
-CELERY_TASK_ALWAYS_EAGER = True  # 开发环境同步执行任务
-CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
 
-# Redis配置（可选）
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+# 缓存配置
+CACHEOPS_REDIS = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/4')
+CACHEOPS_DEFAULTS = {
+    'timeout': 60 * 15
+}
+CACHEOPS = {
+    'auth.user': {'ops': 'all', 'timeout': 60 * 15},
+    'tools.chatroom': {'ops': 'all', 'timeout': 60 * 10},
+    'tools.chatmessage': {'ops': 'all', 'timeout': 60 * 5},
+    'tools.timecapsule': {'ops': 'all', 'timeout': 60 * 20},
+    'tools.heartlinkrequest': {'ops': 'all', 'timeout': 60 * 10},
+}
+
+# 性能监控
+if DEBUG:
+    INSTALLED_APPS += [
+        'debug_toolbar',
+        'django_extensions',
+    ]
+    
+    MIDDLEWARE += [
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+    ]
+    
+    INTERNAL_IPS = [
+        '127.0.0.1',
+        'localhost',
+    ]
+    
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+    }
 
 # 安全配置
 SECURE_BROWSER_XSS_FILTER = True
@@ -213,6 +285,25 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# IP黑名单配置
+BLACKLISTED_IPS = [
+    '183.94.33.160',  # 攻击IP
+]
+
+# 允许的引用域名
+ALLOWED_REFERER_DOMAINS = [
+    'shenyiqing.xin',
+    'localhost',
+    '127.0.0.1',
+]
+
+# 黑名单邮箱域名
+BLACKLISTED_EMAIL_DOMAINS = [
+    'temp-mail.org',
+    '10minutemail.com',
+    'guerrillamail.com',
+]
 
 # CORS配置
 CORS_ALLOWED_ORIGINS = [
@@ -285,4 +376,5 @@ os.makedirs(os.path.join(MEDIA_ROOT, 'tool_previews'), exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'tool_outputs'), exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'ai_links/icons'), exist_ok=True)
 os.makedirs(os.path.join(MEDIA_ROOT, 'chat_images'), exist_ok=True)  # 添加聊天图片目录
+os.makedirs(os.path.join(MEDIA_ROOT, 'temp_audio'), exist_ok=True)  # 添加临时音频目录
 os.makedirs(BASE_DIR / 'logs', exist_ok=True)

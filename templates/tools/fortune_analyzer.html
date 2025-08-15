@@ -6,13 +6,13 @@
 
 {% block breadcrumb %}
 <div class="breadcrumb-item">
-    <a href="{% url 'tools' %}" class="breadcrumb-link geek-breadcrumb-link">
+    <a href="{% url 'tools:tools_index' %}" class="breadcrumb-link geek-breadcrumb-link">
         <i class="fas fa-wrench"></i>
         工具集
     </a>
 </div>
 <div class="breadcrumb-item">
-    <a href="{% url 'fortune_analyzer' %}" class="breadcrumb-link geek-breadcrumb-link">
+    <a href="{% url 'tools:fortune_analyzer' %}" class="breadcrumb-link geek-breadcrumb-link">
         <i class="fas fa-star"></i>
         命运解析器
     </a>

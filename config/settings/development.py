@@ -45,6 +45,14 @@ CACHES = {
             'MAX_ENTRIES': 1000,
             'CULL_FREQUENCY': 3,
         }
+    },
+    'session': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'session-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
     }
 }
 
@@ -58,8 +66,10 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 if DEBUG:
     try:
         import debug_toolbar
-        INSTALLED_APPS += ['debug_toolbar']
-        MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+        if 'debug_toolbar' not in INSTALLED_APPS:
+            INSTALLED_APPS += ['debug_toolbar']
+        if 'debug_toolbar.middleware.DebugToolbarMiddleware' not in MIDDLEWARE:
+            MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
         INTERNAL_IPS = ['127.0.0.1', 'localhost']
     except ImportError:
         pass

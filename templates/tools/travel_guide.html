@@ -2299,6 +2299,7 @@
   <div class="nav-buttons">
     <button class="nav-btn active" onclick="showTravelForm()">新建攻略</button>
     <button class="nav-btn" onclick="showGuidesList()">我的攻略</button>
+    <button class="nav-btn" onclick="showGoodPeopleGuides()">好心人攻略</button>
   </div>
 
   <!-- 旅游攻略表单 -->
@@ -2513,6 +2514,53 @@
   <div id="guidesList" class="guide-result" style="display: none;">
     <h2 class="guide-title">我的旅游攻略</h2>
     <div id="guidesContainer"></div>
+  </div>
+
+  <!-- 好心人攻略列表 -->
+  <div id="goodPeopleGuidesList" class="guide-result" style="display: none;">
+    <div class="guides-header">
+      <h2 class="guide-title">好心人攻略</h2>
+      <div class="search-filters">
+        <input type="text" id="searchDestination" placeholder="搜索目的地..." class="search-input">
+        <select id="filterTravelStyle" class="filter-select">
+          <option value="">所有风格</option>
+          <option value="general">通用型</option>
+          <option value="adventure">冒险型</option>
+          <option value="leisure">休闲型</option>
+          <option value="cultural">文化型</option>
+          <option value="foodie">美食型</option>
+          <option value="shopping">购物型</option>
+          <option value="photography">摄影型</option>
+        </select>
+        <button class="search-btn" onclick="searchGoodPeopleGuides()">
+          <i class="fas fa-search"></i> 搜索
+        </button>
+      </div>
+    </div>
+    <div id="goodPeopleGuidesContainer" class="guides-container">
+      <!-- 好心人攻略列表将在这里动态加载 -->
+    </div>
+  </div>
+
+  <!-- 好心人攻略详情 -->
+  <div id="goodPeopleGuideDetail" class="guide-result" style="display: none;">
+    <div class="guide-detail-header">
+      <button class="back-btn" onclick="showGoodPeopleGuides()">
+        <i class="fas fa-arrow-left"></i> 返回列表
+      </button>
+      <h2 id="guideDetailTitle" class="guide-title">攻略详情</h2>
+    </div>
+    <div id="guideDetailContent" class="guide-detail-content">
+      <!-- 攻略详情将在这里动态加载 -->
+    </div>
+    <div class="guide-detail-actions">
+      <button class="action-btn download-btn" onclick="downloadGuide()" style="display: none;">
+        <i class="fas fa-download"></i> 下载附件
+      </button>
+      <button class="action-btn use-btn" onclick="useGuide()">
+        <i class="fas fa-magic"></i> 使用此攻略
+      </button>
+    </div>
   </div>
 </div>
 
@@ -5049,6 +5097,377 @@ function createShareModal() {
               <span>抖音</span>
             </div>
             <div class="share-platform-btn" onclick="shareTo('xiaohongshu')">
+              <i class="fas fa-book"></i>
+              <span>小红书</span>
+            </div>
+            <div class="share-platform-btn" onclick="shareTo('qq')">
+              <i class="fab fa-qq"></i>
+              <span>QQ</span>
+            </div>
+            <div class="share-platform-btn" onclick="shareTo('copy')">
+              <i class="fas fa-link"></i>
+              <span>复制链接</span>
+            </div>
+            <div class="share-platform-btn" onclick="showQRCode()">
+              <i class="fas fa-qrcode"></i>
+              <span>二维码</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// 好心人攻略相关功能
+let currentGoodPeopleGuide = null;
+
+// 显示好心人攻略列表
+function showGoodPeopleGuides() {
+  const travelForm = document.getElementById('travelForm');
+  const guideResult = document.getElementById('guideResult');
+  const guidesList = document.getElementById('guidesList');
+  const goodPeopleGuidesList = document.getElementById('goodPeopleGuidesList');
+  const goodPeopleGuideDetail = document.getElementById('goodPeopleGuideDetail');
+  const loading = document.getElementById('loading');
+  
+  if (travelForm) travelForm.style.display = 'none';
+  if (guideResult) guideResult.style.display = 'none';
+  if (guidesList) guidesList.style.display = 'none';
+  if (goodPeopleGuideDetail) goodPeopleGuideDetail.style.display = 'none';
+  if (goodPeopleGuidesList) goodPeopleGuidesList.style.display = 'block';
+  if (loading) loading.style.display = 'none';
+  
+  // 更新导航按钮状态
+  const navBtns = document.querySelectorAll('.nav-btn');
+  if (navBtns && navBtns.length > 2) {
+    navBtns.forEach(btn => {
+      if (btn) btn.classList.remove('active');
+    });
+    if (navBtns[2]) navBtns[2].classList.add('active');
+  }
+  
+  loadGoodPeopleGuides();
+}
+
+// 加载好心人攻略列表
+async function loadGoodPeopleGuides() {
+  try {
+    const response = await fetch('/tools/api/user_generated_travel_guide/');
+    const data = await response.json();
+    
+    if (data.success) {
+      displayGoodPeopleGuidesList(data.guides);
+    } else {
+      console.error('加载好心人攻略列表失败:', data.error);
+      showToast('加载攻略列表失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('加载好心人攻略列表失败:', error);
+    showToast('网络错误，请重试');
+  }
+}
+
+// 显示好心人攻略列表
+function displayGoodPeopleGuidesList(guides) {
+  const container = document.getElementById('goodPeopleGuidesContainer');
+  
+  if (!container) {
+    console.warn('好心人攻略列表容器不存在');
+    return;
+  }
+  
+  if (!guides || !Array.isArray(guides) || guides.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🤝</div>
+        <div class="empty-text">还没有好心人分享的攻略</div>
+        <div class="empty-subtext">成为第一个分享攻略的好心人吧！</div>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = guides.map(guide => {
+    if (guide && guide.id && guide.title) {
+      return `
+        <div class="guide-card good-people-guide" onclick="loadGoodPeopleGuideDetail(${guide.id})">
+          <div class="guide-card-header">
+            <div class="guide-destination">${guide.title}</div>
+            <div class="guide-badge ${guide.is_featured ? 'featured' : ''}">
+              ${guide.is_featured ? '⭐ 推荐' : '🤝 好心人'}
+            </div>
+          </div>
+          <div class="guide-summary">${guide.summary}</div>
+          <div class="guide-stats">
+            <div class="guide-stat">
+              <i class="fas fa-map-marker-alt"></i>
+              ${guide.destination}
+            </div>
+            <div class="guide-stat">
+              <i class="fas fa-eye"></i>
+              ${guide.view_count} 次查看
+            </div>
+            <div class="guide-stat">
+              <i class="fas fa-download"></i>
+              ${guide.download_count} 次下载
+            </div>
+            <div class="guide-stat">
+              <i class="fas fa-user"></i>
+              ${guide.user_name}
+            </div>
+            <div class="guide-stat">
+              <i class="fas fa-calendar"></i>
+              ${guide.created_at}
+            </div>
+          </div>
+          <div class="guide-actions">
+            <button class="action-btn small" onclick="event.stopPropagation(); downloadGoodPeopleGuide(${guide.id})" ${!guide.has_attachment ? 'disabled' : ''}>
+              <i class="fas fa-download"></i> 下载
+            </button>
+            <button class="action-btn small primary" onclick="event.stopPropagation(); useGoodPeopleGuide(${guide.id})">
+              <i class="fas fa-magic"></i> 使用
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    return '';
+  }).join('');
+}
+
+// 搜索好心人攻略
+async function searchGoodPeopleGuides() {
+  const destination = document.getElementById('searchDestination').value.trim();
+  const travelStyle = document.getElementById('filterTravelStyle').value;
+  
+  try {
+    let url = '/tools/api/user_generated_travel_guide/';
+    const params = new URLSearchParams();
+    if (destination) params.append('destination', destination);
+    if (travelStyle) params.append('travel_style', travelStyle);
+    
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success) {
+      displayGoodPeopleGuidesList(data.guides);
+    } else {
+      console.error('搜索好心人攻略失败:', data.error);
+      showToast('搜索失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('搜索好心人攻略失败:', error);
+    showToast('网络错误，请重试');
+  }
+}
+
+// 加载好心人攻略详情
+async function loadGoodPeopleGuideDetail(guideId) {
+  try {
+    const response = await fetch(`/tools/api/user_generated_travel_guide/${guideId}/`);
+    const data = await response.json();
+    
+    if (data.success) {
+      currentGoodPeopleGuide = data.guide;
+      displayGoodPeopleGuideDetail(data.guide);
+      
+      // 显示详情页面
+      const goodPeopleGuidesList = document.getElementById('goodPeopleGuidesList');
+      const goodPeopleGuideDetail = document.getElementById('goodPeopleGuideDetail');
+      
+      if (goodPeopleGuidesList) goodPeopleGuidesList.style.display = 'none';
+      if (goodPeopleGuideDetail) goodPeopleGuideDetail.style.display = 'block';
+    } else {
+      console.error('加载攻略详情失败:', data.error);
+      showToast('加载攻略详情失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('加载攻略详情失败:', error);
+    showToast('网络错误，请重试');
+  }
+}
+
+// 显示好心人攻略详情
+function displayGoodPeopleGuideDetail(guide) {
+  const titleElement = document.getElementById('guideDetailTitle');
+  const contentElement = document.getElementById('guideDetailContent');
+  const downloadBtn = document.querySelector('.download-btn');
+  
+  if (titleElement) {
+    titleElement.textContent = guide.title;
+  }
+  
+  if (contentElement) {
+    contentElement.innerHTML = `
+      <div class="guide-detail-info">
+        <div class="guide-detail-meta">
+          <span class="meta-item">
+            <i class="fas fa-map-marker-alt"></i>
+            ${guide.destination}
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-user"></i>
+            ${guide.user_name}
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-calendar"></i>
+            ${guide.created_at}
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-eye"></i>
+            ${guide.view_count} 次查看
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-download"></i>
+            ${guide.download_count} 次下载
+          </span>
+          <span class="meta-item">
+            <i class="fas fa-magic"></i>
+            ${guide.use_count} 次使用
+          </span>
+        </div>
+        
+        <div class="guide-detail-summary">
+          <h3>攻略摘要</h3>
+          <p>${guide.summary || '暂无摘要'}</p>
+        </div>
+        
+        <div class="guide-detail-content">
+          <h3>详细内容</h3>
+          <div class="content-text">${guide.content.replace(/\n/g, '<br>')}</div>
+        </div>
+        
+        <div class="guide-detail-tags">
+          <h3>攻略标签</h3>
+          <div class="tags-container">
+            <span class="tag">${guide.travel_style}</span>
+            <span class="tag">${guide.budget_range}</span>
+            <span class="tag">${guide.travel_duration}</span>
+            ${guide.interests.map(interest => `<span class="tag">${interest}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 显示/隐藏下载按钮
+  if (downloadBtn) {
+    if (guide.has_attachment) {
+      downloadBtn.style.display = 'inline-block';
+    } else {
+      downloadBtn.style.display = 'none';
+    }
+  }
+}
+
+// 下载好心人攻略
+async function downloadGuide() {
+  if (!currentGoodPeopleGuide) {
+    showToast('没有可下载的攻略');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/tools/api/user_generated_travel_guide/${currentGoodPeopleGuide.id}/download/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // 创建下载链接
+      const link = document.createElement('a');
+      link.href = data.download_url;
+      link.download = data.filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('下载开始！');
+    } else {
+      showToast('下载失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('下载攻略失败:', error);
+    showToast('下载失败，请重试');
+  }
+}
+
+// 使用好心人攻略
+async function useGuide() {
+  if (!currentGoodPeopleGuide) {
+    showToast('没有可使用的攻略');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/tools/api/user_generated_travel_guide/${currentGoodPeopleGuide.id}/use/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // 填充到新建攻略表单
+      fillTravelFormWithGuide(data.guide_data);
+      showToast('攻略已加载到新建攻略中！');
+      
+      // 切换到新建攻略页面
+      showTravelForm();
+    } else {
+      showToast('使用攻略失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('使用攻略失败:', error);
+    showToast('使用攻略失败，请重试');
+  }
+}
+
+// 填充攻略表单
+function fillTravelFormWithGuide(guideData) {
+  const destinationInput = document.getElementById('destination');
+  const travelStyleSelect = document.getElementById('travelStyle');
+  const budgetRangeSelect = document.getElementById('budgetRange');
+  const travelDurationSelect = document.getElementById('travelDuration');
+  
+  if (destinationInput) destinationInput.value = guideData.destination || '';
+  if (travelStyleSelect) travelStyleSelect.value = guideData.travel_style || 'general';
+  if (budgetRangeSelect) budgetRangeSelect.value = guideData.budget_range || 'medium';
+  if (travelDurationSelect) travelDurationSelect.value = guideData.travel_duration || '3-5天';
+  
+  // 填充兴趣标签
+  if (guideData.interests && Array.isArray(guideData.interests)) {
+    selectedInterests = guideData.interests;
+    updateInterestTags();
+  }
+}
+
+// 更新兴趣标签显示
+function updateInterestTags() {
+  const interestTags = document.querySelectorAll('.interest-tag');
+  interestTags.forEach(tag => {
+    const interest = tag.dataset.interest;
+    if (selectedInterests.includes(interest)) {
+      tag.classList.add('selected');
+    } else {
+      tag.classList.remove('selected');
+    }
+  });
+}
               <i class="fas fa-book"></i>
               <span>小红书</span>
             </div>

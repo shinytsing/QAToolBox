@@ -648,6 +648,15 @@ async function startHeartLink() {
                 
                 // 启动倒计时
                 startCountdown();
+                
+                // 添加自动重试机制
+                setTimeout(() => {
+                    // 如果5秒后还没有匹配成功，尝试重新匹配
+                    if (currentRequestId && !roomId) {
+                        console.log('5秒后未匹配成功，尝试重新匹配...');
+                        retryMatch();
+                    }
+                }, 5000);
             }
         } else {
             if (data.redirect_url) {
@@ -800,22 +809,28 @@ function startStatusCheck() {
             
             const data = await response.json();
             
-                         if (data.success) {
-                 if (data.status === 'matched') {
-                     roomId = data.room_id;
-                     showNotification('匹配成功！', 'success');
-                     handleMatchSuccess();
-                 } else if (data.status === 'expired') {
-                     showNotification('匹配请求已过期', 'warning');
-                     resetUI();
-                 } else if (data.status === 'not_found') {
-                     // 请求可能已被取消或匹配成功
-                     resetUI();
-                 }
-                 // 如果状态是pending，继续等待
-             }
+            if (data.success) {
+                if (data.status === 'matched') {
+                    roomId = data.room_id;
+                    showNotification('匹配成功！', 'success');
+                    handleMatchSuccess();
+                } else if (data.status === 'expired') {
+                    showNotification('匹配请求已过期', 'warning');
+                    resetUI();
+                } else if (data.status === 'not_found') {
+                    // 请求可能已被取消或匹配成功
+                    console.log('请求未找到，重置UI');
+                    resetUI();
+                } else if (data.status === 'pending') {
+                    // 继续等待，但检查是否等待时间过长
+                    console.log('等待匹配中...');
+                }
+            } else {
+                console.error('状态检查失败:', data.error);
+            }
         } catch (error) {
             console.error('检查状态失败:', error);
+            // 如果连续多次失败，考虑重试
         }
     }, 3000); // 每3秒检查一次
 }
@@ -938,6 +953,27 @@ function showCancelOption() {
     
     if (statusDescription) {
         statusDescription.textContent = '请点击"取消匹配"按钮取消当前请求，然后重新开始';
+    }
+}
+
+// 重试匹配函数
+async function retryMatch() {
+    try {
+        console.log('开始重试匹配...');
+        
+        // 先取消当前请求
+        if (currentRequestId) {
+            await cancelHeartLink();
+        }
+        
+        // 等待一秒后重新开始匹配
+        setTimeout(() => {
+            startHeartLink();
+        }, 1000);
+        
+    } catch (error) {
+        console.error('重试匹配失败:', error);
+        resetUI();
     }
 }
 

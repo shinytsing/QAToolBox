@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NutriCoach Pro - 用户档案设置{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-setup {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.setup-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border-left: 4px solid #667eea;
+}
+
+.form-section h4 {
+    color: #667eea;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.form-section h4 i {
+    margin-right: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s;
+}
+
+.checkbox-item:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    width: 100%;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.progress-step.active {
+    color: #667eea;
+    font-weight: bold;
+}
+
+.progress-step.completed {
+    color: #28a745;
+}
+
+.progress-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e9ecef;
+    z-index: -1;
+}
+
+.progress-line-fill {
+    height: 100%;
+    background: #667eea;
+    transition: width 0.3s;
+    width: 0%;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-weight: bold;
+}
+
+.progress-step.active .step-number {
+    background: #667eea;
+    color: white;
+}
+
+.progress-step.completed .step-number {
+    background: #28a745;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-setup">
+    <div class="container">
+        <div class="setup-card">
+            <div class="text-center mb-4">
+                <h1 class="mb-3">
+                    <i class="fas fa-user-plus text-primary"></i>
+                    创建您的健身档案
+                </h1>
+                <p class="lead text-muted">请填写以下信息，我们将为您定制专属的饮食计划</p>
+            </div>
+
+            <!-- 进度指示器 -->
+            <div class="progress-indicator">
+                <div class="progress-line">
+                    <div class="progress-line-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div>基础信息</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div>健身目标</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div>饮食偏好</div>
+                </div>
+            </div>
+
+            <form method="post" id="profileForm">
+                {% csrf_token %}
+                
+                <!-- 第一步：基础信息 -->
+                <div class="form-section" id="step1">
+                    <h4><i class="fas fa-user"></i> 基础信息</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">年龄 *</label>
+                                <input type="number" name="age" class="form-control" required min="16" max="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">性别 *</label>
+                                <select name="gender" class="form-control" required>
+                                    <option value="">请选择</option>
+                                    <option value="male">男性</option>
+                                    <option value="female">女性</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">身高 (cm) *</label>
+                                <input type="number" name="height" class="form-control" required min="100" max="250">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">当前体重 (kg) *</label>
+                                <input type="number" name="weight" class="form-control" required min="30" max="300" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">日常活动水平 *</label>
+                        <select name="activity_level" class="form-control" required>
+                            <option value="">请选择</option>
+                            <option value="sedentary">久坐（办公室工作，很少运动）</option>
+                            <option value="light">轻度活动（每周运动1-3次）</option>
+                            <option value="moderate">中度活动（每周运动3-5次）</option>
+                            <option value="high">重度活动（每周运动6-7次或体力劳动）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 第二步：健身目标 -->
+                <div class="form-section" id="step2" style="display: none;">
+                    <h4><i class="fas fa-target"></i> 健身目标</h4>
+                    <div class="form-group">
+                        <label class="form-label">主要目标 *</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="radio" name="goal" value="lose_weight" id="goal_lose">
+                                <label for="goal_lose">减脂</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="radio" name="goal" value="gain_muscle" id="goal_gain">
+                                <label for="goal_gain">增肌</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="radio" name="goal" value="maintain" id="goal_maintain">
+                                <label for="goal_maintain">维持体重</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">目标强度</label>
+                        <select name="intensity" class="form-control">
+                            <option value="conservative">保守型（缓慢但稳定）</option>
+                            <option value="balanced" selected>均衡型（推荐）</option>
+                            <option value="aggressive">激进型（快速见效）</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">每周训练天数</label>
+                        <select name="training_days_per_week" class="form-control">
+                            <option value="0">不训练</option>
+                            <option value="1">1天</option>
+                            <option value="2">2天</option>
+                            <option value="3" selected>3天</option>
+                            <option value="4">4天</option>
+                            <option value="5">5天</option>
+                            <option value="6">6天</option>
+                            <option value="7">7天</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 第三步：饮食偏好 -->
+                <div class="form-section" id="step3" style="display: none;">
+                    <h4><i class="fas fa-utensils"></i> 饮食偏好</h4>
+                    <div class="form-group">
+                        <label class="form-label">饮食偏好（可多选）</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="dietary_preferences" value="vegetarian" id="pref_vegetarian">
+                                <label for="pref_vegetarian">素食</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="dietary_preferences" value="vegan" id="pref_vegan">
+                                <label for="pref_vegan">纯素</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="dietary_preferences" value="keto" id="pref_keto">
+                                <label for="pref_keto">生酮</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="dietary_preferences" value="low_fat" id="pref_low_fat">
+                                <label for="pref_low_fat">低脂</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="dietary_preferences" value="gluten_free" id="pref_gluten_free">
+                                <label for="pref_gluten_free">无麸质</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="dietary_preferences" value="dairy_free" id="pref_dairy_free">
+                                <label for="pref_dairy_free">无乳制品</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">过敏食物（可多选）</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="allergies" value="nuts" id="allergy_nuts">
+                                <label for="allergy_nuts">坚果</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="allergies" value="seafood" id="allergy_seafood">
+                                <label for="allergy_seafood">海鲜</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="allergies" value="eggs" id="allergy_eggs">
+                                <label for="allergy_eggs">鸡蛋</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="allergies" value="milk" id="allergy_milk">
+                                <label for="allergy_milk">牛奶</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="allergies" value="wheat" id="allergy_wheat">
+                                <label for="allergy_wheat">小麦</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" name="allergies" value="soy" id="allergy_soy">
+                                <label for="allergy_soy">大豆</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 导航按钮 -->
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                        <i class="fas fa-arrow-left"></i> 上一步
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        下一步 <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="submit" class="btn btn-submit" id="submitBtn" style="display: none;">
+                        <i class="fas fa-check"></i> 完成设置
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStep = 1;
+const totalSteps = 3;
+
+function showStep(step) {
+    // 隐藏所有步骤
+    for (let i = 1; i <= totalSteps; i++) {
+        document.getElementById(`step${i}`).style.display = 'none';
+    }
+    
+    // 显示当前步骤
+    document.getElementById(`step${step}`).style.display = 'block';
+    
+    // 更新进度指示器
+    updateProgressIndicator(step);
+    
+    // 更新按钮状态
+    updateButtons(step);
+}
+
+function updateProgressIndicator(step) {
+    const progressFill = document.getElementById('progressFill');
+    const progressPercent = ((step - 1) / (totalSteps - 1)) * 100;
+    progressFill.style.width = progressPercent + '%';
+    
+    // 更新步骤状态
+    document.querySelectorAll('.progress-step').forEach((stepEl, index) => {
+        const stepNum = index + 1;
+        stepEl.classList.remove('active', 'completed');
+        
+        if (stepNum < step) {
+            stepEl.classList.add('completed');
+        } else if (stepNum === step) {
+            stepEl.classList.add('active');
+        }
+    });
+}
+
+function updateButtons(step) {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    prevBtn.style.display = step > 1 ? 'block' : 'none';
+    nextBtn.style.display = step < totalSteps ? 'block' : 'none';
+    submitBtn.style.display = step === totalSteps ? 'block' : 'none';
+}
+
+function validateStep(step) {
+    const currentStepEl = document.getElementById(`step${step}`);
+    const requiredFields = currentStepEl.querySelectorAll('[required]');
+    
+    for (let field of requiredFields) {
+        if (!field.value) {
+            field.focus();
+            alert('请填写所有必填项');
+            return false;
+        }
+    }
+    
+    // 特殊验证
+    if (step === 2) {
+        const goalSelected = document.querySelector('input[name="goal"]:checked');
+        if (!goalSelected) {
+            alert('请选择健身目标');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+document.getElementById('nextBtn').addEventListener('click', function() {
+    if (validateStep(currentStep)) {
+        currentStep++;
+        showStep(currentStep);
+    }
+});
+
+document.getElementById('prevBtn').addEventListener('click', function() {
+    currentStep--;
+    showStep(currentStep);
+});
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    showStep(1);
+});
+</script>
+{% endblock %}

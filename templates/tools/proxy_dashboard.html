@@ -1,0 +1,906 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}代理系统 - 极客模式{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 代理翻墙功能样式 */
+.proxy-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+    color: #e6e6e6;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.proxy-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 255, 231, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 107, 157, 0.05) 0%, transparent 50%);
+    z-index: -1;
+    animation: geekMatrix 25s ease-in-out infinite;
+}
+
+@keyframes geekMatrix {
+    0%, 100% { 
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.8;
+    }
+    33% { 
+        transform: translateY(-10px) rotate(0.5deg);
+        opacity: 1;
+    }
+    66% { 
+        transform: translateY(5px) rotate(-0.5deg);
+        opacity: 0.9;
+    }
+}
+
+.proxy-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.proxy-title {
+    color: #00ffe7;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(0, 255, 231, 0.5);
+    animation: geekGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes geekGlow {
+    from { text-shadow: 0 0 20px rgba(0, 255, 231, 0.5); }
+    to { text-shadow: 0 0 30px rgba(0, 255, 231, 0.8), 0 0 40px rgba(0, 255, 231, 0.3); }
+}
+
+.proxy-subtitle {
+    color: #8a9ba8;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.proxy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.proxy-card {
+    background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%);
+    border: 1px solid rgba(0, 255, 231, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.proxy-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.proxy-card:hover::after {
+    transform: scaleX(1);
+}
+
+.proxy-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: #00ffe7;
+    box-shadow: 0 8px 32px rgba(0, 255, 231, 0.2);
+}
+
+.proxy-card-title {
+    color: #00ffe7;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.proxy-card-title i {
+    font-size: 1.2rem;
+}
+
+.proxy-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff4444;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.working {
+    background: #00ff41;
+}
+
+.status-indicator.testing {
+    background: #ffaa00;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.proxy-btn {
+    background: linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%);
+    color: #0a0e17;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    margin: 0.5rem;
+}
+
+.proxy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);
+}
+
+.proxy-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.proxy-btn.secondary {
+    background: transparent;
+    color: #00ffe7;
+    border: 2px solid #00ffe7;
+}
+
+.proxy-btn.secondary:hover {
+    background: #00ffe7;
+    color: #0a0e17;
+}
+
+.proxy-results {
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.proxy-result-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    border-left: 3px solid #00ffe7;
+}
+
+.proxy-result-item.success {
+    background: rgba(0, 255, 65, 0.1);
+    border-left-color: #00ff41;
+}
+
+.proxy-result-item.error {
+    background: rgba(255, 68, 68, 0.1);
+    border-left-color: #ff4444;
+}
+
+.proxy-result-item.warning {
+    background: rgba(255, 170, 0, 0.1);
+    border-left-color: #ffaa00;
+}
+
+.proxy-input {
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    border-radius: 8px;
+    padding: 0.8rem;
+    color: #e6e6e6;
+    font-family: inherit;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.proxy-input:focus {
+    outline: none;
+    border-color: #00ffe7;
+    box-shadow: 0 0 0 2px rgba(0, 255, 231, 0.2);
+}
+
+.proxy-select {
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    border-radius: 8px;
+    padding: 0.8rem;
+    color: #e6e6e6;
+    font-family: inherit;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.proxy-select:focus {
+    outline: none;
+    border-color: #00ffe7;
+}
+
+.proxy-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-number {
+    color: #00ffe7;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #8a9ba8;
+    font-size: 0.9rem;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 255, 231, 0.3);
+    border-radius: 50%;
+    border-top-color: #00ffe7;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.proxy-terminal {
+    background: #111417;
+    color: #00ffe7;
+    font-family: 'Courier New', monospace;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.proxy-terminal::before {
+    content: '$ ';
+    color: #00bfff;
+    font-weight: bold;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .proxy-container {
+        padding: 1rem;
+    }
+    
+    .proxy-title {
+        font-size: 2rem;
+    }
+    
+    .proxy-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .proxy-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="proxy-container">
+    <div class="proxy-header">
+        <h1 class="proxy-title">
+            <i class="fas fa-shield-alt"></i>
+            代理翻墙系统
+        </h1>
+        <p class="proxy-subtitle">🔧 极客模式 - 突破网络限制，自由访问全球资源</p>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="proxy-stats" id="proxyStats">
+        <div class="stat-card">
+            <div class="stat-number" id="totalProxies">-</div>
+            <div class="stat-label">总代理数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="workingProxies">-</div>
+            <div class="stat-label">可用代理</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="successRate">-</div>
+            <div class="stat-label">成功率</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="currentIP">-</div>
+            <div class="stat-label">当前IP</div>
+        </div>
+    </div>
+
+    <!-- 功能卡片 -->
+    <div class="proxy-grid">
+        <!-- 代理状态检测 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-network-wired"></i>
+                代理状态检测
+            </h3>
+            <div class="proxy-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">准备检测</span>
+            </div>
+            <button class="proxy-btn" onclick="testAllProxies()">
+                <i class="fas fa-play"></i>
+                开始检测
+            </button>
+            <button class="proxy-btn secondary" onclick="refreshStatus()">
+                <i class="fas fa-sync-alt"></i>
+                刷新状态
+            </button>
+            <div class="proxy-results" id="proxyResults"></div>
+        </div>
+
+        <!-- 网站访问测试 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-globe"></i>
+                网站访问测试
+            </h3>
+            <input type="text" class="proxy-input" id="testUrl" 
+                   placeholder="输入要测试的网站URL (如: https://www.google.com)">
+            <select class="proxy-select" id="proxySelect">
+                <option value="">直连访问</option>
+            </select>
+            <button class="proxy-btn" onclick="testWebsite()">
+                <i class="fas fa-search"></i>
+                测试访问
+            </button>
+            <div class="proxy-results" id="websiteResults"></div>
+        </div>
+
+        <!-- IP对比功能 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-exchange-alt"></i>
+                IP对比功能
+            </h3>
+            <p class="proxy-description">对比直连和代理的IP地址</p>
+            <button class="proxy-btn" onclick="getIPComparison()">
+                <i class="fas fa-balance-scale"></i>
+                获取IP对比
+            </button>
+            <div class="proxy-results" id="ipComparisonResults"></div>
+        </div>
+
+        <!-- 真实代理测试 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-rocket"></i>
+                真实代理测试
+            </h3>
+            <p class="proxy-description">测试代理是否能真实访问目标网站</p>
+            <input type="text" class="proxy-input" id="realTestUrl" 
+                   placeholder="目标网站 (默认: https://www.google.com)" value="https://www.google.com">
+            <select class="proxy-select" id="realProxySelect">
+                <option value="">选择代理</option>
+            </select>
+            <button class="proxy-btn" onclick="testRealProxy()">
+                <i class="fas fa-play"></i>
+                测试真实代理
+            </button>
+            <div class="proxy-results" id="realProxyResults"></div>
+        </div>
+
+        <!-- IP信息查询 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-map-marker-alt"></i>
+                IP信息查询
+            </h3>
+            <select class="proxy-select" id="ipProxySelect">
+                <option value="">当前IP (直连)</option>
+            </select>
+            <button class="proxy-btn" onclick="getIPInfo()">
+                <i class="fas fa-info-circle"></i>
+                查询IP信息
+            </button>
+            <div class="proxy-results" id="ipResults"></div>
+        </div>
+
+        <!-- 代理列表 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-list"></i>
+                代理服务器列表
+            </h3>
+            <button class="proxy-btn" onclick="loadProxyList()">
+                <i class="fas fa-download"></i>
+                加载代理列表
+            </button>
+            <button class="proxy-btn secondary" onclick="exportProxyConfig()">
+                <i class="fas fa-file-export"></i>
+                导出配置
+            </button>
+            <div class="proxy-results" id="proxyList"></div>
+        </div>
+    </div>
+
+    <!-- 终端输出 -->
+    <div class="proxy-terminal" id="proxyTerminal">
+        代理系统已启动...
+        输入 'help' 查看可用命令
+    </div>
+</div>
+
+<script>
+// 全局变量
+let proxyList = [];
+let currentStatus = 'idle';
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 代理系统初始化...');
+    loadProxyList();
+    updateStatus('准备就绪', 'working');
+    log('系统初始化完成');
+});
+
+// 更新状态指示器
+function updateStatus(text, status) {
+    const indicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    
+    indicator.className = `status-indicator ${status}`;
+    statusText.textContent = text;
+    currentStatus = status;
+}
+
+// 日志输出
+function log(message, type = 'info') {
+    const terminal = document.getElementById('proxyTerminal');
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'error' ? '#ff4444' : type === 'success' ? '#00ff41' : '#00ffe7';
+    
+    terminal.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+    terminal.scrollTop = terminal.scrollHeight;
+    console.log(`[${timestamp}] ${message}`);
+}
+
+// 加载代理列表
+async function loadProxyList() {
+    try {
+        log('正在加载代理列表...');
+        updateStatus('加载中...', 'testing');
+        
+        const response = await fetch('/tools/api/proxy/list/');
+        const data = await response.json();
+        
+        if (data.success) {
+            proxyList = data.data.proxies_by_country;
+            updateProxySelects();
+            updateStats(data.data);
+            log(`✅ 成功加载 ${data.data.total_proxies} 个代理服务器`);
+            updateStatus('代理列表已加载', 'working');
+        } else {
+            log(`❌ 加载代理列表失败: ${data.error}`, 'error');
+            updateStatus('加载失败', 'error');
+        }
+    } catch (error) {
+        log(`❌ 网络错误: ${error.message}`, 'error');
+        updateStatus('网络错误', 'error');
+    }
+}
+
+// 更新代理选择器
+function updateProxySelects() {
+    const selects = ['proxySelect', 'ipProxySelect', 'realProxySelect'];
+    
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (selectId === 'realProxySelect') {
+            select.innerHTML = '<option value="">选择代理</option>';
+        } else {
+            select.innerHTML = '<option value="">直连访问</option>';
+        }
+        
+        for (const [country, proxies] of Object.entries(proxyList)) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = country;
+            
+            proxies.forEach(proxy => {
+                const option = document.createElement('option');
+                option.value = proxy.name;
+                option.textContent = `${proxy.name} (${proxy.category})`;
+                optgroup.appendChild(option);
+            });
+            
+            select.appendChild(optgroup);
+        }
+    });
+}
+
+// 更新统计信息
+function updateStats(data) {
+    document.getElementById('totalProxies').textContent = data.total_proxies || '-';
+}
+
+// 测试所有代理
+async function testAllProxies() {
+    try {
+        log('开始测试所有代理服务器...');
+        updateStatus('测试中...', 'testing');
+        
+        const resultsDiv = document.getElementById('proxyResults');
+        resultsDiv.innerHTML = '<div class="loading"></div> 正在测试代理...';
+        
+        const response = await fetch('/tools/api/proxy/status/');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayProxyResults(data.data.proxy_results);
+            updateStats(data.data.statistics);
+            log(`✅ 代理测试完成，${data.data.statistics.working_proxies}/${data.data.statistics.total_proxies} 可用`);
+            updateStatus('测试完成', 'working');
+        } else {
+            log(`❌ 代理测试失败: ${data.error}`, 'error');
+            updateStatus('测试失败', 'error');
+        }
+    } catch (error) {
+        log(`❌ 网络错误: ${error.message}`, 'error');
+        updateStatus('网络错误', 'error');
+    }
+}
+
+// 显示代理测试结果
+function displayProxyResults(results) {
+    const resultsDiv = document.getElementById('proxyResults');
+    resultsDiv.innerHTML = '';
+    
+    results.forEach(result => {
+        const item = document.createElement('div');
+        item.className = `proxy-result-item ${result.success ? 'success' : 'error'}`;
+        
+        if (result.success) {
+            item.innerHTML = `
+                <strong>${result.proxy}</strong> ✅ 
+                <br>响应时间: ${result.response_time}s | IP: ${result.ip}
+            `;
+        } else {
+            item.innerHTML = `
+                <strong>${result.proxy}</strong> ❌ 
+                <br>错误: ${result.error}
+            `;
+        }
+        
+        resultsDiv.appendChild(item);
+    });
+}
+
+// 测试网站访问
+async function testWebsite() {
+    const url = document.getElementById('testUrl').value.trim();
+    const proxy = document.getElementById('proxySelect').value;
+    
+    if (!url) {
+        log('❌ 请输入要测试的网站URL', 'error');
+        return;
+    }
+    
+    try {
+        log(`正在测试网站: ${url} ${proxy ? `(使用代理: ${proxy})` : '(直连)'}`);
+        
+        const response = await fetch('/tools/api/proxy/test-website/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ url, proxy })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayWebsiteResult(data.data);
+            log(`✅ 网站测试完成: ${data.data.accessible ? '可访问' : '不可访问'}`, 'success');
+        } else {
+            log(`❌ 网站测试失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 网络错误: ${error.message}`, 'error');
+    }
+}
+
+// 获取IP对比
+async function getIPComparison() {
+    try {
+        log('正在获取IP对比信息...');
+        
+        const response = await fetch('/tools/api/proxy/ip-comparison/');
+        const data = await response.json();
+        
+        if (data.success) {
+            displayIPComparison(data.data);
+            log(`✅ IP对比获取完成`, 'success');
+        } else {
+            log(`❌ IP对比获取失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 网络错误: ${error.message}`, 'error');
+    }
+}
+
+// 显示IP对比结果
+function displayIPComparison(data) {
+    const resultsDiv = document.getElementById('ipComparisonResults');
+    let html = '<div class="proxy-result-item">';
+    
+    // 直连IP
+    if (data.direct_ip.success) {
+        html += `
+            <div style="margin-bottom: 15px;">
+                <strong>🌐 直连IP:</strong> ${data.direct_ip.ip}
+                <br><small>状态: ✅ 正常</small>
+            </div>
+        `;
+    } else {
+        html += `
+            <div style="margin-bottom: 15px;">
+                <strong>🌐 直连IP:</strong> 获取失败
+                <br><small>错误: ${data.direct_ip.error}</small>
+            </div>
+        `;
+    }
+    
+    // 代理IP
+    if (data.proxy_ip && data.proxy_ip.success) {
+        html += `
+            <div style="margin-bottom: 15px;">
+                <strong>🔗 代理IP:</strong> ${data.proxy_ip.ip}
+                <br><small>代理: ${data.proxy_ip.proxy_used} | 状态: ✅ 正常</small>
+            </div>
+        `;
+    } else {
+        html += `
+            <div style="margin-bottom: 15px;">
+                <strong>🔗 代理IP:</strong> 获取失败
+                <br><small>错误: ${data.proxy_ip ? data.proxy_ip.error : '无可用代理'}</small>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    resultsDiv.innerHTML = html;
+}
+
+// 测试真实代理
+async function testRealProxy() {
+    const url = document.getElementById('realTestUrl').value.trim();
+    const proxy = document.getElementById('realProxySelect').value;
+    
+    if (!proxy) {
+        log('❌ 请选择要测试的代理', 'error');
+        return;
+    }
+    
+    if (!url) {
+        log('❌ 请输入要测试的网站URL', 'error');
+        return;
+    }
+    
+    try {
+        log(`正在测试真实代理: ${proxy} -> ${url}`);
+        
+        const response = await fetch('/tools/api/proxy/test-real/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ proxy, url })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayRealProxyResult(data.data);
+            log(`✅ 真实代理测试完成: ${data.data.success ? '成功' : '失败'}`, data.data.success ? 'success' : 'error');
+        } else {
+            log(`❌ 真实代理测试失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 网络错误: ${error.message}`, 'error');
+    }
+}
+
+// 显示真实代理测试结果
+function displayRealProxyResult(result) {
+    const resultsDiv = document.getElementById('realProxyResults');
+    const item = document.createElement('div');
+    item.className = `proxy-result-item ${result.success ? 'success' : 'error'}`;
+    
+    if (result.success) {
+        item.innerHTML = `
+            <strong>${result.proxy}</strong> ✅ 
+            <br>目标: ${result.target_url}
+            <br>状态码: ${result.status_code} | 响应时间: ${result.response_time}s
+        `;
+    } else {
+        item.innerHTML = `
+            <strong>${result.proxy}</strong> ❌ 
+            <br>目标: ${result.target_url}
+            <br>错误: ${result.error}
+            ${result.solution ? `<br>💡 解决方案: ${result.solution}` : ''}
+        `;
+    }
+    
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(item);
+}
+
+// 显示网站测试结果
+function displayWebsiteResult(result) {
+    const resultsDiv = document.getElementById('websiteResults');
+    const item = document.createElement('div');
+    item.className = `proxy-result-item ${result.accessible ? 'success' : 'error'}`;
+    
+    if (result.accessible) {
+        item.innerHTML = `
+            <strong>${result.url}</strong> ✅ 
+            <br>状态码: ${result.status_code} | 响应时间: ${result.response_time}s
+            <br>代理: ${result.proxy_used}
+        `;
+    } else {
+        item.innerHTML = `
+            <strong>${result.url}</strong> ❌ 
+            <br>错误: ${result.error}
+            <br>代理: ${result.proxy_used}
+        `;
+    }
+    
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(item);
+}
+
+// 获取IP信息
+async function getIPInfo() {
+    const proxy = document.getElementById('ipProxySelect').value;
+    
+    try {
+        log(`正在查询IP信息 ${proxy ? `(使用代理: ${proxy})` : '(直连)'}`);
+        
+        const url = proxy ? `/tools/api/proxy/ip-info/?proxy=${encodeURIComponent(proxy)}` : '/tools/api/proxy/ip-info/';
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayIPInfo(data.data);
+            log(`✅ IP信息查询完成`, 'success');
+        } else {
+            log(`❌ IP信息查询失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 网络错误: ${error.message}`, 'error');
+    }
+}
+
+// 显示IP信息
+function displayIPInfo(info) {
+    const resultsDiv = document.getElementById('ipResults');
+    const item = document.createElement('div');
+    item.className = 'proxy-result-item success';
+    
+    if (info.error) {
+        item.className = 'proxy-result-item error';
+        item.innerHTML = `
+            <strong>IP信息查询失败</strong> ❌ 
+            <br>错误: ${info.error}
+            <br>代理: ${info.proxy_used}
+        `;
+    } else {
+        item.innerHTML = `
+            <strong>IP信息</strong> ✅ 
+            <br>IP地址: ${info.ip}
+            <br>国家/地区: ${info.country} ${info.region} ${info.city}
+            <br>ISP: ${info.isp}
+            <br>代理: ${info.proxy_used}
+        `;
+    }
+    
+    resultsDiv.innerHTML = '';
+    resultsDiv.appendChild(item);
+}
+
+// 刷新状态
+function refreshStatus() {
+    log('刷新系统状态...');
+    loadProxyList();
+}
+
+// 导出代理配置
+function exportProxyConfig() {
+    log('导出代理配置功能开发中...', 'warning');
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 键盘快捷键
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        refreshStatus();
+    }
+    if (e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        testAllProxies();
+    }
+});
+
+log('代理翻墙系统已启动，按 Ctrl+R 刷新状态，Ctrl+T 测试代理');
+</script>
+{% endblock %}

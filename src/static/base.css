@@ -105,6 +105,97 @@ body {
 
 .nav-link {
   animation: fadeInUp 0.5s ease-out;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 强制统一导航栏颜色 - 最高优先级 */
+.navbar * .nav-link,
+.navbar-nav * .nav-link,
+.navbar .nav-link,
+.nav-link,
+a.nav-link {
+  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--navbar-text-color, rgba(255, 255, 255, 0.9)) !important;
+}
+
+.navbar * .navbar-brand,
+.navbar .navbar-brand,
+.navbar-brand,
+a.navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--navbar-text-color, rgba(255, 255, 255, 0.9)) !important;
+}
+
+/* 使用CSS变量强制统一 */
+.navbar {
+  --navbar-text-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+  color: var(--navbar-text-color) !important;
+}
+
+/* 最强优先级 - 覆盖所有可能的样式 */
+.navbar.navbar-dark .navbar-nav .nav-link,
+.navbar.navbar-expand-lg.navbar-dark .navbar-nav .nav-link,
+.navbar .navbar-nav .nav-link,
+.navbar-nav .nav-link,
+.navbar .nav-link,
+.nav-link {
+  color: rgba(255, 255, 255, 0.9) !important;
+  color: #ffffff !important;
+}
+
+.navbar.navbar-dark .navbar-brand,
+.navbar.navbar-expand-lg.navbar-dark .navbar-brand,
+.navbar .navbar-brand,
+.navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+  color: #ffffff !important;
+}
+
+/* 最终强制覆盖 - 使用最高优先级 */
+html body .navbar.navbar-dark .navbar-nav .nav-link,
+html body .navbar.navbar-expand-lg.navbar-dark .navbar-nav .nav-link,
+html body .navbar .navbar-nav .nav-link,
+html body .navbar-nav .nav-link,
+html body .navbar .nav-link,
+html body .nav-link {
+  color: #ffffff !important;
+}
+
+/* 强制所有导航图标为白色 - 最高优先级 */
+html body .navbar .nav-link i,
+html body .navbar-nav .nav-link i,
+html body .nav-link i,
+.navbar .nav-link i,
+.navbar-nav .nav-link i,
+.nav-link i,
+.navbar .nav-item .nav-link i,
+.navbar-nav .nav-item .nav-link i,
+.nav-item .nav-link i {
+  color: #ffffff !important;
+}
+
+/* 强制所有导航文字为白色 */
+html body .navbar .nav-link span,
+html body .navbar-nav .nav-link span,
+html body .nav-link span,
+.navbar .nav-link span,
+.navbar-nav .nav-link span,
+.nav-link span,
+.navbar .nav-item .nav-link span,
+.navbar-nav .nav-item .nav-link span,
+.nav-item .nav-link span {
+  color: #ffffff !important;
+}
+
+html body .navbar.navbar-dark .navbar-brand,
+html body .navbar.navbar-expand-lg.navbar-dark .navbar-brand,
+html body .navbar .navbar-brand,
+html body .navbar-brand {
+  color: #ffffff !important;
 }
 
 .nav-link:nth-child(1) { animation-delay: 0.1s; }
@@ -117,29 +208,30 @@ body {
 }
 
 /* 导航栏最终优化 - 符合用户使用习惯 */
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0.75rem 1.5rem;
-  backdrop-filter: blur(20px);
-  background: rgba(0, 0, 0, 0.25);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  max-width: 1200px;
-  margin: 0 auto;
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
-  min-height: 64px;
-  max-height: 64px; /* 强制限制最大高度 */
-  height: 64px; /* 固定高度 */
-  display: flex;
-  align-items: center;
-  overflow: hidden; /* 防止内容溢出 */
-  width: 100%; /* 确保宽度正确 */
+.navbar.navbar-dark,
+.navbar.navbar-expand-lg.navbar-dark {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 0.75rem 1.5rem !important;
+  backdrop-filter: blur(20px) !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15) !important;
+  min-height: 64px !important;
+  max-height: 64px !important; /* 强制限制最大高度 */
+  height: 64px !important; /* 固定高度 */
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important; /* 防止内容溢出 */
+  width: 100% !important; /* 确保宽度正确 */
 }
 
 .navbar.scrolled {
@@ -151,16 +243,17 @@ body {
 }
 
 /* 导航栏容器优化 - 防止变形 */
-.navbar-collapse {
+.navbar.navbar-dark .navbar-collapse,
+.navbar.navbar-expand-lg.navbar-dark .navbar-collapse {
   display: flex !important;
-  flex-basis: 100%;
-  flex-grow: 1;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  height: 100%; /* 继承导航栏高度 */
-  overflow: hidden; /* 防止内容溢出 */
-  width: 100%; /* 确保宽度正确 */
+  flex-basis: 100% !important;
+  flex-grow: 1 !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  height: 100% !important; /* 继承导航栏高度 */
+  overflow: hidden !important; /* 防止内容溢出 */
+  width: 100% !important; /* 确保宽度正确 */
 }
 
 /* 导航菜单优化 */
@@ -179,20 +272,23 @@ body {
 }
 
 /* 导航栏品牌优化 */
+.navbar.navbar-dark .navbar-brand,
+.navbar.navbar-expand-lg.navbar-dark .navbar-brand,
+.navbar .navbar-brand,
 .navbar-brand {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95) !important;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid transparent;
-  min-height: 40px;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0.4rem 0.6rem !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid transparent !important;
+  min-height: 40px !important;
 }
 
 .navbar-brand:hover {
@@ -206,7 +302,7 @@ body {
 
 .navbar-brand i {
   font-size: 1.1rem;
-  color: #667eea;
+  color: #ffffff;
 }
 
 .theme-subtitle {
@@ -223,26 +319,31 @@ body {
 }
 
 /* 导航链接最终优化 - 符合用户使用习惯 */
-.nav-link {
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0.5rem 0.8rem;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid transparent;
-  backdrop-filter: blur(10px);
-  font-size: 0.85rem;
-  margin: 0 0.15rem;
-  min-height: 40px;
+.navbar.navbar-dark .nav-link,
+.navbar.navbar-expand-lg.navbar-dark .nav-link,
+.navbar .nav-link,
+.nav-link,
+.navbar-nav .nav-link,
+.navbar .navbar-nav .nav-link {
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 0.5rem 0.8rem !important;
+  border-radius: 8px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid transparent !important;
+  backdrop-filter: blur(10px) !important;
+  font-size: 0.85rem !important;
+  margin: 0 0.15rem !important;
+  min-height: 40px !important;
 }
 
 .nav-link::before {
@@ -289,11 +390,13 @@ body {
   font-size: 0.9rem;
   line-height: 1;
   transition: all 0.3s ease;
+  color: #ffffff !important;
 }
 
 .nav-link:hover i {
   transform: scale(1.1) rotate(5deg);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #ffffff !important;
 }
 
 .nav-link span {
@@ -1217,6 +1320,11 @@ body {
     font-size: 0.85rem;
     min-height: 44px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #ffffff !important;
+  }
+  
+  .nav-link i {
+    color: #ffffff !important;
   }
   
   .nav-buttons {

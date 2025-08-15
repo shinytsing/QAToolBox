@@ -1,0 +1,875 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}食品图像识别 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+    .image-recognition-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: white;
+    }
+
+    .recognition-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .recognition-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .recognition-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .upload-section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .upload-area {
+        border: 3px dashed rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-area:hover {
+        border-color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .upload-area.dragover {
+        border-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.2);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.8;
+    }
+
+    .upload-text {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    .upload-hint {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .upload-button {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        background: linear-gradient(45deg, #45a049, #4CAF50);
+    }
+
+    .upload-button:disabled {
+        background: #666;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        opacity: 0.6;
+    }
+
+    .upload-button:disabled::after {
+        content: "请先选择图片";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    .preview-section {
+        display: none;
+        margin-top: 20px;
+    }
+
+    .image-preview {
+        max-width: 300px;
+        max-height: 300px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .recognition-result {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 30px;
+        margin-top: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: none;
+    }
+
+    .result-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .result-header h3 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+
+    .confidence-bar {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        height: 20px;
+        margin: 10px 0;
+        overflow: hidden;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .recognized-food {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .food-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .confidence-text {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .food-description {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .food-description h4 {
+        margin-bottom: 10px;
+        color: #4CAF50;
+    }
+    
+    .description-text {
+        line-height: 1.6;
+        opacity: 0.9;
+    }
+    
+    .nutrition-info {
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .nutrition-info h4 {
+        margin-bottom: 15px;
+        color: #4CAF50;
+    }
+    
+    .nutrition-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+    }
+    
+    .nutrition-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .nutrition-item .label {
+        font-weight: bold;
+        color: #4CAF50;
+    }
+    
+    .nutrition-item .value {
+        font-weight: bold;
+    }
+    
+    .suggestion-group {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .suggestion-group h4 {
+        margin-bottom: 10px;
+        color: #4CAF50;
+        text-align: center;
+    }
+
+    .suggestions-section {
+        margin-top: 25px;
+    }
+
+    .suggestions-title {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .suggestions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .suggestion-item {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .suggestion-item:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .suggestion-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+        background: rgba(244, 67, 54, 0.2);
+        border: 1px solid rgba(244, 67, 54, 0.5);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        text-align: center;
+        color: #ff4444;
+        font-weight: bold;
+    }
+
+    .success-message {
+        background: rgba(76, 175, 80, 0.2);
+        border: 1px solid rgba(76, 175, 80, 0.5);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        text-align: center;
+        color: #4CAF50;
+        font-weight: bold;
+    }
+
+    .alternatives-section {
+        margin-top: 20px;
+    }
+
+    .alternatives-title {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .alternatives-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .alternative-item {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .alternative-item:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .back-to-randomizer {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    .back-button {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .back-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .demo-button {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 12px 25px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-left: 15px;
+        font-size: 1rem;
+    }
+
+    .demo-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="image-recognition-container">
+    <div class="recognition-header">
+        <h1>🍽️ 食品图像识别</h1>
+        <p>上传食品图片，AI将为您识别并提供相似食品建议</p>
+    </div>
+
+    <div class="upload-section">
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">点击或拖拽上传食品图片</div>
+            <div class="upload-hint">支持 JPG、PNG 格式，最大 5MB</div>
+            <input type="file" class="file-input" id="fileInput" accept="image/*">
+            <button class="upload-button" id="uploadButton" disabled>📷 请先选择图片</button>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <img class="image-preview" id="imagePreview" alt="预览图片">
+        </div>
+    </div>
+
+    <div class="recognition-result" id="recognitionResult">
+        <div class="result-header">
+            <h3>🎯 识别结果</h3>
+        </div>
+        
+        <div class="recognized-food" id="recognizedFood">
+            <div class="food-name" id="foodName"></div>
+            <div class="confidence-bar">
+                <div class="confidence-fill" id="confidenceFill"></div>
+            </div>
+            <div class="confidence-text" id="confidenceText"></div>
+            
+            <!-- 详细描述 -->
+            <div class="food-description" id="foodDescription" style="display: none;">
+                <h4>📝 食品描述</h4>
+                <p class="description-text"></p>
+            </div>
+            
+            <!-- 营养信息 -->
+            <div class="nutrition-info" id="nutritionInfo" style="display: none;">
+                <h4>🍎 营养信息</h4>
+                <div class="nutrition-grid"></div>
+            </div>
+        </div>
+
+        <div class="alternatives-section" id="alternativesSection">
+            <div class="alternatives-title">其他可能的结果：</div>
+            <div class="alternatives-list" id="alternativesList"></div>
+        </div>
+
+        <div class="suggestions-section" id="suggestionsSection">
+            <div class="suggestions-title">💡 相似食品建议</div>
+            <div class="suggestions-grid" id="suggestionsGrid"></div>
+        </div>
+    </div>
+
+    <div class="loading" id="loadingSection" style="display: none;">
+        <div class="spinner"></div>
+        <div>正在识别中，请稍候...</div>
+    </div>
+
+    <div class="back-to-randomizer">
+        <a href="{% url 'tools:food_randomizer' %}" class="back-button">
+            🔄 返回食物随机器
+        </a>
+        <button class="demo-button" onclick="runDemo()">
+            🎬 演示功能
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const previewSection = document.getElementById('previewSection');
+    const imagePreview = document.getElementById('imagePreview');
+    const loadingSection = document.getElementById('loadingSection');
+    const recognitionResult = document.getElementById('recognitionResult');
+    const foodName = document.getElementById('foodName');
+    const confidenceFill = document.getElementById('confidenceFill');
+    const confidenceText = document.getElementById('confidenceText');
+    const alternativesSection = document.getElementById('alternativesSection');
+    const alternativesList = document.getElementById('alternativesList');
+    const suggestionsSection = document.getElementById('suggestionsSection');
+    const suggestionsGrid = document.getElementById('suggestionsGrid');
+
+    let selectedFile = null;
+
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+
+    // 点击上传
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    // 处理文件选择
+    function handleFileSelect(file) {
+        // 验证文件类型
+        if (!file.type.startsWith('image/')) {
+            showError('请选择图片文件');
+            return;
+        }
+
+        // 验证文件大小（5MB）
+        if (file.size > 5 * 1024 * 1024) {
+            showError('图片大小不能超过5MB');
+            return;
+        }
+
+        selectedFile = file;
+        
+        // 显示预览
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            previewSection.style.display = 'block';
+            uploadButton.disabled = false;
+            uploadButton.textContent = '🚀 开始识别';
+            
+            // 显示成功提示
+            showSuccess('图片已选择，请点击"开始识别"按钮');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 上传按钮点击
+    uploadButton.addEventListener('click', function() {
+        if (!selectedFile) {
+            showError('请先选择图片');
+            return;
+        }
+
+        uploadImage();
+    });
+
+    // 上传图片进行识别
+    function uploadImage() {
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+
+        // 显示加载状态
+        loadingSection.style.display = 'block';
+        recognitionResult.style.display = 'none';
+        uploadButton.disabled = true;
+
+        fetch('{% url "tools:food_image_recognition_api" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loadingSection.style.display = 'none';
+            uploadButton.disabled = false;
+
+            if (data.success) {
+                displayRecognitionResult(data);
+            } else {
+                showError(data.error || '识别失败');
+            }
+        })
+        .catch(error => {
+            loadingSection.style.display = 'none';
+            uploadButton.disabled = false;
+            showError('网络错误，请重试');
+            console.error('Error:', error);
+        });
+    }
+
+    // 显示识别结果
+    function displayRecognitionResult(data) {
+        const recognition = data.recognition;
+        const suggestions = data.suggestions;
+
+        // 显示主要识别结果
+        if (recognition.recognized_food) {
+            // DeepSeek格式
+            foodName.textContent = recognition.recognized_food;
+            const confidence = Math.round((recognition.confidence || 0) * 100);
+            confidenceFill.style.width = confidence + '%';
+            confidenceText.textContent = `置信度: ${confidence}%`;
+            
+            // 显示详细描述
+            if (recognition.description) {
+                const descriptionEl = document.getElementById('foodDescription');
+                if (descriptionEl) {
+                    descriptionEl.textContent = recognition.description;
+                    descriptionEl.style.display = 'block';
+                }
+            }
+            
+            // 显示营养信息
+            if (recognition.nutrition_info && Object.keys(recognition.nutrition_info).length > 0) {
+                const nutritionEl = document.getElementById('nutritionInfo');
+                if (nutritionEl) {
+                    const nutrition = recognition.nutrition_info;
+                    nutritionEl.innerHTML = `
+                        <div class="nutrition-item">
+                            <span class="label">卡路里:</span>
+                            <span class="value">${nutrition.calories || 'N/A'} kcal</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span class="label">蛋白质:</span>
+                            <span class="value">${nutrition.protein || 'N/A'} g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span class="label">脂肪:</span>
+                            <span class="value">${nutrition.fat || 'N/A'} g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span class="label">碳水化合物:</span>
+                            <span class="value">${nutrition.carbohydrates || 'N/A'} g</span>
+                        </div>
+                    `;
+                    nutritionEl.style.display = 'block';
+                }
+            }
+            
+            // 显示相似食品
+            if (recognition.similar_foods && recognition.similar_foods.length > 0) {
+                alternativesList.innerHTML = '';
+                recognition.similar_foods.forEach(food => {
+                    const altItem = document.createElement('div');
+                    altItem.className = 'alternative-item';
+                    altItem.textContent = food;
+                    altItem.onclick = () => selectAlternative(food);
+                    alternativesList.appendChild(altItem);
+                });
+                alternativesSection.style.display = 'block';
+            } else {
+                alternativesSection.style.display = 'none';
+            }
+            
+        } else {
+            // 传统格式
+            foodName.textContent = recognition.food_name || '未知食品';
+            const confidence = Math.round((recognition.confidence || 0) * 100);
+            confidenceFill.style.width = confidence + '%';
+            confidenceText.textContent = `置信度: ${confidence}%`;
+
+            // 显示替代选项
+            if (recognition.alternatives && recognition.alternatives.length > 0) {
+                alternativesList.innerHTML = '';
+                recognition.alternatives.forEach(alt => {
+                    const altItem = document.createElement('div');
+                    altItem.className = 'alternative-item';
+                    altItem.textContent = `${alt.name} (${Math.round(alt.confidence * 100)}%)`;
+                    altItem.onclick = () => selectAlternative(alt.name);
+                    alternativesList.appendChild(altItem);
+                });
+                alternativesSection.style.display = 'block';
+            } else {
+                alternativesSection.style.display = 'none';
+            }
+        }
+
+        // 显示建议（支持新的建议格式）
+        if (suggestions && suggestions.length > 0) {
+            suggestionsGrid.innerHTML = '';
+            
+            if (Array.isArray(suggestions) && typeof suggestions[0] === 'object' && suggestions[0].type) {
+                // DeepSeek建议格式
+                suggestions.forEach(suggestionGroup => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'suggestion-group';
+                    groupDiv.innerHTML = `<h4>${suggestionGroup.title}</h4>`;
+                    
+                    suggestionGroup.items.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'suggestion-item';
+                        itemDiv.textContent = item;
+                        itemDiv.onclick = () => selectSuggestion(item);
+                        groupDiv.appendChild(itemDiv);
+                    });
+                    
+                    suggestionsGrid.appendChild(groupDiv);
+                });
+            } else {
+                // 传统建议格式
+                suggestions.forEach(suggestion => {
+                    const suggestionItem = document.createElement('div');
+                    suggestionItem.className = 'suggestion-item';
+                    suggestionItem.innerHTML = `
+                        <div class="suggestion-name">${suggestion}</div>
+                    `;
+                    suggestionItem.onclick = () => selectSuggestion(suggestion);
+                    suggestionsGrid.appendChild(suggestionItem);
+                });
+            }
+            
+            suggestionsSection.style.display = 'block';
+        } else {
+            suggestionsSection.style.display = 'none';
+        }
+
+        recognitionResult.style.display = 'block';
+    }
+
+    // 选择替代选项
+    function selectAlternative(foodName) {
+        // 显示选择确认
+        if (confirm(`您选择了: ${foodName}\n\n是否跳转到食物随机器查看详细信息？`)) {
+            window.location.href = `{% url 'tools:food_randomizer' %}?food=${encodeURIComponent(foodName)}`;
+        }
+    }
+
+    // 选择建议
+    function selectSuggestion(foodName) {
+        // 显示选择确认
+        if (confirm(`您选择了: ${foodName}\n\n是否跳转到食物随机器查看详细信息？`)) {
+            window.location.href = `{% url 'tools:food_randomizer' %}?food=${encodeURIComponent(foodName)}`;
+        }
+    }
+
+    // 显示错误信息
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        
+        // 移除之前的错误信息
+        const existingError = document.querySelector('.error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        uploadArea.parentNode.appendChild(errorDiv);
+        
+        // 3秒后自动移除
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 3000);
+    }
+
+    // 显示成功信息
+    function showSuccess(message) {
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        
+        // 移除之前的成功信息
+        const existingSuccess = document.querySelector('.success-message');
+        if (existingSuccess) {
+            existingSuccess.remove();
+        }
+        
+        uploadArea.parentNode.appendChild(successDiv);
+        
+        // 3秒后自动移除
+        setTimeout(() => {
+            successDiv.remove();
+        }, 3000);
+    }
+
+    // 获取CSRF Token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 演示功能
+    function runDemo() {
+        if (confirm('🎬 开始演示图像识别功能？\n\n这将模拟上传一张食品图片并进行识别。')) {
+            // 显示加载状态
+            showLoading();
+            
+            // 模拟识别过程
+            setTimeout(() => {
+                // 模拟成功的结果
+                const mockResult = {
+                    success: true,
+                    recognition: {
+                        food_name: '宫保鸡丁',
+                        confidence: 0.85,
+                        alternatives: [
+                            { name: '鱼香肉丝', confidence: 0.72 },
+                            { name: '回锅肉', confidence: 0.68 },
+                            { name: '青椒肉丝', confidence: 0.65 }
+                        ],
+                        characteristics: {
+                            color: { red_ratio: 0.3, green_ratio: 0.1, yellow_ratio: 0.05 },
+                            texture: { smoothness: 25, contrast: 120 },
+                            size: [224, 224]
+                        }
+                    },
+                    suggestions: ['鱼香肉丝', '回锅肉', '青椒肉丝', '糖醋里脊']
+                };
+                
+                // 显示结果
+                displayRecognitionResult(mockResult);
+                hideLoading();
+            }, 2000);
+        }
+    }
+    
+    // 显示加载状态
+    function showLoading() {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        loadingDiv.innerHTML = `
+            <div class="spinner"></div>
+            <p>正在识别食品图片...</p>
+        `;
+        
+        // 移除之前的错误信息
+        const existingError = document.querySelector('.error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        uploadArea.parentNode.appendChild(loadingDiv);
+    }
+    
+    // 隐藏加载状态
+    function hideLoading() {
+        const loadingDiv = document.querySelector('.loading');
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+    }
+
+    // 将runDemo函数设为全局函数
+    window.runDemo = runDemo;
+});
+</script>
+{% endblock %}

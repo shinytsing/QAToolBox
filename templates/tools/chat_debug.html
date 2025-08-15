@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}聊天室调试{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>🔧 聊天室调试页面</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>连接状态</h5>
+                </div>
+                <div class="card-body">
+                    <div id="connectionStatus" class="alert alert-warning">
+                        <i class="fas fa-wifi"></i> 未连接
+                    </div>
+                    <button id="connectBtn" class="btn btn-primary">连接WebSocket</button>
+                    <button id="disconnectBtn" class="btn btn-secondary">断开连接</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>房间信息</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>房间ID:</strong> <span id="roomId">{{ room_id|default:"test-room-123" }}</span></p>
+                    <p><strong>当前用户:</strong> <span id="currentUser">{{ user.username }}</span></p>
+                    <p><strong>WebSocket URL:</strong> <code id="wsUrl">ws://{{ request.get_host }}/ws/chat/{{ room_id|default:"test-room-123" }}/</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>发送消息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <input type="text" id="messageInput" class="form-control" placeholder="输入消息...">
+                    </div>
+                    <button id="sendBtn" class="btn btn-success mt-2">发送</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>接收消息</h5>
+                </div>
+                <div class="card-body">
+                    <div id="messageLog" style="height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f8f9fa;">
+                        <p class="text-muted">消息将在这里显示...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>调试信息</h5>
+                </div>
+                <div class="card-body">
+                    <div id="debugLog" style="height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #000; color: #0f0; font-family: monospace; font-size: 12px;">
+                        <p>调试日志将在这里显示...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let socket = null;
+let roomId = '{{ room_id|default:"test-room-123" }}';
+let currentUser = '{{ user.username }}';
+
+function log(message) {
+    const debugLog = document.getElementById('debugLog');
+    const timestamp = new Date().toLocaleTimeString();
+    debugLog.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+    debugLog.scrollTop = debugLog.scrollHeight;
+}
+
+function updateConnectionStatus(status, message) {
+    const statusElement = document.getElementById('connectionStatus');
+    statusElement.className = `alert alert-${status === 'connected' ? 'success' : status === 'connecting' ? 'warning' : 'danger'}`;
+    statusElement.innerHTML = `<i class="fas fa-wifi"></i> ${message}`;
+    log(`连接状态: ${message}`);
+}
+
+function addMessage(message, type = 'info') {
+    const messageLog = document.getElementById('messageLog');
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'sent' ? 'text-primary' : type === 'received' ? 'text-success' : 'text-muted';
+    messageLog.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+    messageLog.scrollTop = messageLog.scrollHeight;
+}
+
+function connectWebSocket() {
+    const wsUrl = `ws://${window.location.host}/ws/chat/${roomId}/`;
+    log(`尝试连接到: ${wsUrl}`);
+    
+    updateConnectionStatus('connecting', '连接中...');
+    
+    try {
+        socket = new WebSocket(wsUrl);
+        
+        socket.onopen = function(event) {
+            updateConnectionStatus('connected', '已连接');
+            log('WebSocket连接成功');
+            addMessage('WebSocket连接已建立', 'info');
+        };
+        
+        socket.onmessage = function(event) {
+            log(`收到消息: ${event.data}`);
+            try {
+                const data = JSON.parse(event.data);
+                addMessage(`收到: ${JSON.stringify(data)}`, 'received');
+            } catch (e) {
+                addMessage(`收到原始数据: ${event.data}`, 'received');
+            }
+        };
+        
+        socket.onclose = function(event) {
+            updateConnectionStatus('disconnected', '连接已断开');
+            log(`WebSocket连接已关闭: ${event.code} - ${event.reason}`);
+            addMessage('WebSocket连接已断开', 'info');
+        };
+        
+        socket.onerror = function(error) {
+            updateConnectionStatus('disconnected', '连接错误');
+            log(`WebSocket错误: ${error}`);
+            addMessage('WebSocket连接错误', 'info');
+        };
+        
+    } catch (error) {
+        log(`连接失败: ${error.message}`);
+        updateConnectionStatus('disconnected', '连接失败');
+    }
+}
+
+function disconnectWebSocket() {
+    if (socket) {
+        socket.close();
+        socket = null;
+        log('手动断开WebSocket连接');
+    }
+}
+
+function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) {
+        alert('请输入消息');
+        return;
+    }
+    
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        alert('WebSocket未连接');
+        return;
+    }
+    
+    const data = {
+        type: 'message',
+        content: message,
+        message_type: 'text'
+    };
+    
+    try {
+        socket.send(JSON.stringify(data));
+        addMessage(`发送: ${message}`, 'sent');
+        messageInput.value = '';
+        log(`发送消息: ${JSON.stringify(data)}`);
+    } catch (error) {
+        log(`发送失败: ${error.message}`);
+        alert('发送失败');
+    }
+}
+
+// 事件监听器
+document.getElementById('connectBtn').addEventListener('click', connectWebSocket);
+document.getElementById('disconnectBtn').addEventListener('click', disconnectWebSocket);
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('messageInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// 页面加载时的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    log('页面加载完成');
+    log(`房间ID: ${roomId}`);
+    log(`当前用户: ${currentUser}`);
+    log(`WebSocket URL: ws://${window.location.host}/ws/chat/${roomId}/`);
+});
+</script>
+{% endblock %}

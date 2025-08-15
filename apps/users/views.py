@@ -20,6 +20,7 @@ from datetime import timedelta
 import json
 from .forms import UserRegistrationForm, UserLoginForm, ProfileEditForm
 from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile, UserTheme, UserActivityLog, UserSessionStats
+from django.contrib.sessions.backends.cache import SessionStore
 from apps.content.views import admin_required
 from django.template.defaulttags import register
 
@@ -1199,3 +1200,89 @@ def user_logout_api(request):
 def test_logout_view(request):
     """登出功能测试页面"""
     return render(request, 'test_logout.html')
+
+
+# Session延长API
+@csrf_exempt
+@require_http_methods(["POST"])
+def extend_session_api(request):
+    """延长用户session过期时间API"""
+    try:
+        if request.user.is_authenticated and hasattr(request, 'session'):
+            # 延长session过期时间到30天
+            request.session.set_expiry(60 * 60 * 24 * 30)  # 30天
+            request.session.save()
+            
+            # 记录session延长活动
+            try:
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    ip = x_forwarded_for.split(',')[0]
+                else:
+                    ip = request.META.get('REMOTE_ADDR')
+                
+                UserActivityLog.objects.create(
+                    user=request.user,
+                    activity_type='session_extend',
+                    ip_address=ip,
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    details={
+                        'new_expiry': '30天',
+                        'extend_method': 'api'
+                    }
+                )
+            except Exception as e:
+                print(f"记录session延长活动失败: {e}")
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Session已延长至30天',
+                'expires_in': 60 * 60 * 24 * 30  # 过期时间（秒）
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': '用户未登录或session不可用'
+            }, status=401)
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Session延长失败: {str(e)}'
+        }, status=500)
+
+
+# 获取session状态API
+@csrf_exempt
+@require_http_methods(["GET"])
+def session_status_api(request):
+    """获取用户session状态API"""
+    try:
+        if request.user.is_authenticated and hasattr(request, 'session'):
+            # 获取session过期时间
+            expiry_age = request.session.get_expiry_age()
+            expiry_date = request.session.get_expiry_date()
+            
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'user_id': request.user.id,
+                    'username': request.user.username,
+                    'is_authenticated': request.user.is_authenticated,
+                    'session_key': request.session.session_key,
+                    'expiry_age': expiry_age,  # 剩余秒数
+                    'expiry_date': expiry_date.isoformat() if expiry_date else None,
+                    'expires_in_days': expiry_age // (60 * 60 * 24) if expiry_age else 0
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': '用户未登录或session不可用'
+            }, status=401)
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取session状态失败: {str(e)}'
+        }, status=500)

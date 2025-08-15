@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Manager 测试</title>
+</head>
+<body>
+    <h1>Session Manager 测试页面</h1>
+    <p>打开浏览器控制台查看测试结果</p>
+    
+    <div id="status">
+        <p>Session状态: <span id="login-status">检查中...</span></p>
+        <p>Session数据: <span id="session-data">无</span></p>
+    </div>
+    
+    <button onclick="testSessionManager()">测试Session Manager</button>
+    <button onclick="clearConsole()">清空控制台</button>
+    
+    <script>
+        // 模拟fetch函数用于测试
+        function mockFetch(url, options = {}) {
+            console.log('Mock fetch called:', url, options);
+            
+            // 模拟未登录状态
+            return Promise.resolve({
+                status: 401,
+                ok: false,
+                headers: {
+                    get: (name) => {
+                        if (name === 'content-type') {
+                            return 'application/json';
+                        }
+                        return null;
+                    }
+                },
+                json: () => Promise.resolve({
+                    success: false,
+                    message: '用户未登录或session不可用'
+                })
+            });
+        }
+        
+        // 替换全局fetch函数
+        window.fetch = mockFetch;
+        
+        function testSessionManager() {
+            console.log('=== 开始测试 Session Manager ===');
+            
+            // 创建新的SessionManager实例进行测试
+            const testManager = new SessionManager();
+            
+            // 等待一段时间后检查状态
+            setTimeout(() => {
+                console.log('测试结果:');
+                console.log('- isLoggedIn:', testManager.isLoggedIn);
+                console.log('- sessionData:', testManager.sessionData);
+                
+                // 更新页面显示
+                document.getElementById('login-status').textContent = 
+                    testManager.isLoggedIn ? '已登录' : '未登录';
+                document.getElementById('session-data').textContent = 
+                    testManager.sessionData ? JSON.stringify(testManager.sessionData) : '无数据';
+                
+                console.log('=== 测试完成 ===');
+            }, 1000);
+        }
+        
+        function clearConsole() {
+            console.clear();
+        }
+        
+        // 页面加载完成后自动测试
+        window.addEventListener('load', () => {
+            console.log('页面加载完成，Session Manager 已初始化');
+            setTimeout(testSessionManager, 500);
+        });
+    </script>
+    
+    <!-- 引入session_manager.js -->
+    <script src="/static/js/session_manager.js"></script>
+</body>
+</html>

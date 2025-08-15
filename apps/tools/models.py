@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 import random
+import json
 
 
 class ToolUsageLog(models.Model):
@@ -379,19 +380,20 @@ class ChatRoom(models.Model):
         ('ended', '已结束'),
     ]
     
-    room_id = models.CharField(max_length=50, unique=True, verbose_name='房间ID')
-    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_as_user1', verbose_name='用户1')
-    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_as_user2', verbose_name='用户2', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=ROOM_STATUS_CHOICES, default='waiting', verbose_name='房间状态')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-    ended_at = models.DateTimeField(null=True, blank=True, verbose_name='结束时间')
-    
+    room_id = models.CharField(max_length=100, unique=True, db_index=True)  # 添加索引
+    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_1', db_index=True)
+    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_2', null=True, blank=True, db_index=True)
+    status = models.CharField(max_length=20, default='active', db_index=True)  # 添加索引
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
-        verbose_name = '聊天室'
-        verbose_name_plural = '聊天室'
-        ordering = ['-created_at']
-    
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['user1', 'status']),
+            models.Index(fields=['user2', 'status']),
+        ]
+
     def __str__(self):
         return f"聊天室 {self.room_id}"
     
@@ -417,15 +419,20 @@ class ChatMessage(models.Model):
         ('audio', '语音'),
     ]
     
-    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages', verbose_name='聊天室')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages', verbose_name='发送者')
-    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='text', verbose_name='消息类型')
-    content = models.TextField(verbose_name='消息内容')
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='chat_messages', db_index=True)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages', db_index=True)
+    message_type = models.CharField(max_length=20, default='text', db_index=True)  # 添加索引
+    content = models.TextField()
     file_url = models.URLField(blank=True, null=True, verbose_name='文件URL')
     is_read = models.BooleanField(default=False, verbose_name='是否已读')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='发送时间')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
     
     class Meta:
+        indexes = [
+            models.Index(fields=['room', 'created_at']),
+            models.Index(fields=['sender', 'created_at']),
+            models.Index(fields=['message_type', 'created_at']),
+        ]
         verbose_name = '聊天消息'
         verbose_name_plural = '聊天消息'
         ordering = ['created_at']
@@ -467,17 +474,23 @@ class HeartLinkRequest(models.Model):
         ('cancelled', '已取消'),
     ]
     
-    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='heart_link_requests', verbose_name='请求者')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='heart_link_requests', db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)  # 添加索引
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
     matched_at = models.DateTimeField(null=True, blank=True, verbose_name='匹配时间')
     matched_with = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='matched_heart_links', verbose_name='匹配用户')
-    chat_room = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, null=True, blank=True, related_name='heart_link_requests', verbose_name='聊天室')
+    chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='heart_link_requests', db_index=True)
     
     class Meta:
+        indexes = [
+            models.Index(fields=['requester', 'status']),
+            models.Index(fields=['chat_room', 'status']),
+            models.Index(fields=['status', 'created_at']),
+        ]
         verbose_name = '心动链接请求'
         verbose_name_plural = '心动链接请求'
         ordering = ['-created_at']
+        unique_together = ['requester', 'chat_room']
     
     def __str__(self):
         return f"{self.requester.username} 的心动链接请求"
@@ -1840,6 +1853,16 @@ class FoodItem(models.Model):
     image_url = models.URLField(blank=True, null=True, verbose_name='图片链接')
     recipe_url = models.URLField(blank=True, null=True, verbose_name='食谱链接')
     popularity_score = models.FloatField(default=0.0, verbose_name='受欢迎度')
+    
+    # 营养信息
+    calories = models.IntegerField(default=0, verbose_name='卡路里(千卡)')
+    protein = models.FloatField(default=0.0, verbose_name='蛋白质(克)')
+    fat = models.FloatField(default=0.0, verbose_name='脂肪(克)')
+    carbohydrates = models.FloatField(default=0.0, verbose_name='碳水化合物(克)')
+    fiber = models.FloatField(default=0.0, verbose_name='膳食纤维(克)')
+    sugar = models.FloatField(default=0.0, verbose_name='糖分(克)')
+    sodium = models.FloatField(default=0.0, verbose_name='钠(毫克)')
+    
     is_active = models.BooleanField(default=True, verbose_name='是否启用')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -2871,35 +2894,45 @@ class FitnessCommunityLike(models.Model):
 
 class FitnessUserProfile(models.Model):
     """健身用户档案模型"""
+    GENDER_CHOICES = [
+        ('male', '男性'),
+        ('female', '女性'),
+    ]
+    
+    GOAL_CHOICES = [
+        ('lose_weight', '减脂'),
+        ('gain_muscle', '增肌'),
+        ('maintain', '维持体重'),
+    ]
+    
+    ACTIVITY_LEVEL_CHOICES = [
+        ('sedentary', '久坐'),
+        ('light', '轻度活动'),
+        ('moderate', '中度活动'),
+        ('high', '重度活动'),
+    ]
+    
+    INTENSITY_CHOICES = [
+        ('conservative', '保守型'),
+        ('balanced', '均衡型'),
+        ('aggressive', '激进型'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
-    
-    # 基础信息
-    nickname = models.CharField(max_length=100, blank=True, null=True, verbose_name='健身昵称')
-    avatar = models.ImageField(upload_to='fitness_avatars/', blank=True, null=True, verbose_name='头像')
-    bio = models.TextField(blank=True, null=True, verbose_name='个人简介')
-    
-    # 健身信息
-    fitness_level = models.CharField(max_length=20, choices=[
-        ('beginner', '初学者'),
-        ('intermediate', '进阶者'),
-        ('advanced', '高级者'),
-        ('expert', '专家级')
-    ], default='beginner', verbose_name='健身水平')
-    
-    primary_goals = models.JSONField(default=list, verbose_name='主要目标', help_text='如：增肌、减脂、塑形等')
-    favorite_workouts = models.JSONField(default=list, verbose_name='喜欢的运动类型')
-    
-    # 统计数据
-    total_workouts = models.IntegerField(default=0, verbose_name='总训练次数')
-    total_duration = models.IntegerField(default=0, verbose_name='总训练时长(分钟)')
-    current_streak = models.IntegerField(default=0, verbose_name='当前连续天数')
-    longest_streak = models.IntegerField(default=0, verbose_name='最长连续天数')
-    
-    # 社交设置
-    is_public_profile = models.BooleanField(default=True, verbose_name='是否公开档案')
-    allow_followers = models.BooleanField(default=True, verbose_name='允许关注')
-    show_achievements = models.BooleanField(default=True, verbose_name='显示成就')
-    
+    age = models.IntegerField(default=25, verbose_name='年龄')
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male', verbose_name='性别')
+    height = models.FloatField(default=170.0, verbose_name='身高(cm)')
+    weight = models.FloatField(default=70.0, verbose_name='当前体重(kg)')
+    body_fat_percentage = models.FloatField(null=True, blank=True, verbose_name='体脂率(%)')
+    bmr = models.FloatField(null=True, blank=True, verbose_name='基础代谢率')
+    goal = models.CharField(max_length=20, choices=GOAL_CHOICES, default='maintain', verbose_name='健身目标')
+    intensity = models.CharField(max_length=20, choices=INTENSITY_CHOICES, default='balanced', verbose_name='目标强度')
+    activity_level = models.CharField(max_length=20, choices=ACTIVITY_LEVEL_CHOICES, default='moderate', verbose_name='日常活动量')
+    dietary_preferences = models.JSONField(default=list, verbose_name='饮食偏好')
+    allergies = models.JSONField(default=list, verbose_name='过敏食物')
+    training_days_per_week = models.IntegerField(default=3, verbose_name='每周训练天数')
+    training_intensity = models.CharField(max_length=20, default='moderate', verbose_name='训练强度')
+    training_duration = models.IntegerField(default=60, verbose_name='训练时长(分钟)')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     
@@ -2908,38 +2941,155 @@ class FitnessUserProfile(models.Model):
         verbose_name_plural = '健身用户档案'
     
     def __str__(self):
-        return f"{self.user.username} 的健身档案"
+        return f"{self.user.username} - {self.get_goal_display()}"
+
+
+class DietPlan(models.Model):
+    """饮食计划模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    start_date = models.DateField(verbose_name='开始日期')
+    end_date = models.DateField(verbose_name='结束日期')
+    daily_calories = models.IntegerField(verbose_name='每日总热量')
+    protein_goal = models.IntegerField(verbose_name='蛋白质目标(g)')
+    carbs_goal = models.IntegerField(verbose_name='碳水目标(g)')
+    fat_goal = models.IntegerField(verbose_name='脂肪目标(g)')
+    is_active = models.BooleanField(default=True, verbose_name='是否激活')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     
-    def get_display_name(self):
-        """获取显示名称"""
-        return self.nickname or self.user.username
+    class Meta:
+        verbose_name = '饮食计划'
+        verbose_name_plural = '饮食计划'
+        ordering = ['-created_at']
     
-    def update_stats(self):
-        """更新统计数据"""
-        checkins = CheckInCalendar.objects.filter(
-            user=self.user,
-            calendar_type='fitness',
-            status='completed'
-        )
-        
-        self.total_workouts = checkins.count()
-        self.total_duration = sum(
-            checkin.detail.duration or 0 
-            for checkin in checkins 
-            if hasattr(checkin, 'detail') and checkin.detail
-        )
-        
-        # 计算连续天数
-        streak, _ = CheckInStreak.objects.get_or_create(
-            user=self.user,
-            calendar_type='fitness',
-            defaults={'current_streak': 0, 'longest_streak': 0}
-        )
-        
-        self.current_streak = streak.current_streak
-        self.longest_streak = streak.longest_streak
-        
-        self.save()
+    def __str__(self):
+        return f"{self.user.username} - {self.start_date} 到 {self.end_date}"
+
+
+class Meal(models.Model):
+    """餐食模型"""
+    MEAL_TYPE_CHOICES = [
+        ('breakfast', '早餐'),
+        ('lunch', '午餐'),
+        ('dinner', '晚餐'),
+        ('snack', '加餐'),
+        ('pre_workout', '训练前'),
+        ('post_workout', '训练后'),
+    ]
+    
+    plan = models.ForeignKey(DietPlan, on_delete=models.CASCADE, verbose_name='饮食计划')
+    meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, verbose_name='餐食类型')
+    day_of_week = models.IntegerField(verbose_name='星期几(1-7)')
+    description = models.TextField(verbose_name='餐食描述')
+    ingredients = models.JSONField(default=list, verbose_name='食材清单')
+    calories = models.IntegerField(verbose_name='热量')
+    protein = models.FloatField(verbose_name='蛋白质(g)')
+    carbs = models.FloatField(verbose_name='碳水(g)')
+    fat = models.FloatField(verbose_name='脂肪(g)')
+    ideal_time = models.TimeField(null=True, blank=True, verbose_name='理想用餐时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '餐食'
+        verbose_name_plural = '餐食'
+        ordering = ['day_of_week', 'meal_type']
+    
+    def __str__(self):
+        return f"{self.plan.user.username} - {self.get_meal_type_display()} - 第{self.day_of_week}天"
+
+
+class NutritionReminder(models.Model):
+    """营养提醒模型"""
+    REMINDER_TYPE_CHOICES = [
+        ('meal_time', '用餐时间'),
+        ('pre_workout', '训练前加餐'),
+        ('post_workout', '训练后补充'),
+        ('hydration', '水分补充'),
+        ('meal_log', '餐食记录'),
+        ('weight_track', '体重记录'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    reminder_type = models.CharField(max_length=20, choices=REMINDER_TYPE_CHOICES, verbose_name='提醒类型')
+    message = models.TextField(verbose_name='提醒内容')
+    trigger_time = models.TimeField(null=True, blank=True, verbose_name='触发时间')
+    trigger_days = models.JSONField(default=list, verbose_name='触发日期(1-7)')
+    is_recurring = models.BooleanField(default=True, verbose_name='是否重复')
+    is_active = models.BooleanField(default=True, verbose_name='是否激活')
+    last_sent = models.DateTimeField(null=True, blank=True, verbose_name='最后发送时间')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '营养提醒'
+        verbose_name_plural = '营养提醒'
+        ordering = ['trigger_time']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_reminder_type_display()}"
+
+
+class MealLog(models.Model):
+    """餐食记录模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    meal = models.ForeignKey(Meal, on_delete=models.CASCADE, verbose_name='计划餐食')
+    consumed_date = models.DateField(verbose_name='消费日期')
+    consumed_time = models.TimeField(verbose_name='消费时间')
+    actual_calories = models.IntegerField(null=True, blank=True, verbose_name='实际热量')
+    actual_protein = models.FloatField(null=True, blank=True, verbose_name='实际蛋白质')
+    actual_carbs = models.FloatField(null=True, blank=True, verbose_name='实际碳水')
+    actual_fat = models.FloatField(null=True, blank=True, verbose_name='实际脂肪')
+    notes = models.TextField(blank=True, verbose_name='备注')
+    is_completed = models.BooleanField(default=False, verbose_name='是否完成')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '餐食记录'
+        verbose_name_plural = '餐食记录'
+        ordering = ['-consumed_date', '-consumed_time']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.meal.get_meal_type_display()} - {self.consumed_date}"
+
+
+class WeightTracking(models.Model):
+    """体重追踪模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    weight = models.FloatField(verbose_name='体重(kg)')
+    body_fat_percentage = models.FloatField(null=True, blank=True, verbose_name='体脂率(%)')
+    measurement_date = models.DateField(verbose_name='测量日期')
+    notes = models.TextField(blank=True, verbose_name='备注')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '体重追踪'
+        verbose_name_plural = '体重追踪'
+        ordering = ['-measurement_date']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.weight}kg - {self.measurement_date}"
+
+
+class FoodDatabase(models.Model):
+    """食物数据库模型"""
+    name = models.CharField(max_length=200, verbose_name='食物名称')
+    category = models.CharField(max_length=100, verbose_name='食物类别')
+    calories_per_100g = models.FloatField(verbose_name='每100g热量')
+    protein_per_100g = models.FloatField(verbose_name='每100g蛋白质')
+    carbs_per_100g = models.FloatField(verbose_name='每100g碳水')
+    fat_per_100g = models.FloatField(verbose_name='每100g脂肪')
+    fiber_per_100g = models.FloatField(default=0, verbose_name='每100g纤维')
+    is_vegetarian = models.BooleanField(default=False, verbose_name='是否素食')
+    is_gluten_free = models.BooleanField(default=False, verbose_name='是否无麸质')
+    allergens = models.JSONField(default=list, verbose_name='过敏原')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '食物数据库'
+        verbose_name_plural = '食物数据库'
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
 
 
 class FitnessAchievement(models.Model):
@@ -3017,3 +3167,1105 @@ class FitnessFollow(models.Model):
     
     def __str__(self):
         return f"{self.follower.username} 关注了 {self.following.username}"
+
+
+class TimeCapsule(models.Model):
+    """时光胶囊模型"""
+    CAPSULE_TYPES = [
+        ('memory', '记忆胶囊'),
+        ('wish', '愿望胶囊'),
+        ('secret', '秘密胶囊'),
+    ]
+    
+    UNLOCK_CONDITIONS = [
+        ('time', '时间解锁'),
+        ('location', '位置解锁'),
+        ('event', '事件解锁'),
+    ]
+    
+    VISIBILITY_CHOICES = [
+        ('private', '仅自己'),
+        ('public', '公开分享'),
+        ('anonymous', '匿名分享'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='time_capsules', db_index=True)
+    title = models.CharField(max_length=200, blank=True)
+    content = models.TextField()
+    emotions = models.JSONField(default=list)  # 存储情绪组合
+    location = models.JSONField(null=True, blank=True)  # 存储位置信息
+    weather = models.JSONField(null=True, blank=True)  # 存储天气信息
+    keywords = models.JSONField(default=list, blank=True)  # 存储AI生成的关键词
+    
+    # 胶囊设置
+    capsule_type = models.CharField(max_length=20, choices=CAPSULE_TYPES, default='memory')
+    unlock_condition = models.CharField(max_length=20, choices=UNLOCK_CONDITIONS, default='time')
+    unlock_time = models.DateTimeField(null=True, blank=True, db_index=True)  # 添加索引
+    unlock_location = models.JSONField(null=True, blank=True)  # 位置解锁条件
+    unlock_event = models.CharField(max_length=200, blank=True)  # 事件解锁条件
+    
+    # 可见性设置
+    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='private', db_index=True)  # 添加索引
+    is_anonymous = models.BooleanField(default=False)
+    
+    # 媒体文件
+    images = models.JSONField(default=list, blank=True)  # 存储图片URL列表
+    audio = models.URLField(blank=True)  # 音频文件URL
+    
+    # 状态
+    is_locked = models.BooleanField(default=True)
+    is_unlocked = models.BooleanField(default=False)
+    unlock_count = models.IntegerField(default=0)  # 被解锁次数
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '时光胶囊'
+        verbose_name_plural = '时光胶囊'
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['visibility', 'created_at']),
+            models.Index(fields=['unlock_time', 'unlock_condition']),
+            models.Index(fields=['emotions'], name='timecapsule_emotions_gin'),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username}的{self.get_capsule_type_display()} - {self.created_at.strftime('%Y-%m-%d')}"
+    
+    def can_be_unlocked_by(self, user):
+        """检查胶囊是否可以被指定用户解锁"""
+        if self.user == user:
+            return True
+        
+        if self.visibility == 'private':
+            return False
+        
+        # 检查时间解锁条件
+        if self.unlock_condition == 'time' and self.unlock_time:
+            return timezone.now() >= self.unlock_time
+        
+        # 检查位置解锁条件
+        if self.unlock_condition == 'location' and self.unlock_location:
+            # 这里需要实现位置距离计算
+            pass
+        
+        return False
+
+class CapsuleUnlock(models.Model):
+    """胶囊解锁记录"""
+    capsule = models.ForeignKey(TimeCapsule, on_delete=models.CASCADE, related_name='unlocks')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocked_capsules')
+    unlocked_at = models.DateTimeField(auto_now_add=True)
+    location = models.JSONField(null=True, blank=True)  # 解锁时的位置
+    
+    class Meta:
+        unique_together = ['capsule', 'user']
+        ordering = ['-unlocked_at']
+        verbose_name = '胶囊解锁记录'
+        verbose_name_plural = '胶囊解锁记录'
+    
+    def __str__(self):
+        return f"{self.user.username}解锁了{self.capsule.user.username}的胶囊"
+
+class MemoryFragment(models.Model):
+    """记忆碎片"""
+    FRAGMENT_TYPES = [
+        ('text', '文字碎片'),
+        ('image', '图片碎片'),
+        ('audio', '音频碎片'),
+        ('location', '位置碎片'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memory_fragments')
+    capsule = models.ForeignKey(TimeCapsule, on_delete=models.CASCADE, related_name='fragments')
+    fragment_type = models.CharField(max_length=20, choices=FRAGMENT_TYPES)
+    content = models.TextField()
+    metadata = models.JSONField(default=dict)  # 存储额外信息
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '记忆碎片'
+        verbose_name_plural = '记忆碎片'
+    
+    def __str__(self):
+        return f"{self.user.username}的{self.get_fragment_type_display()}"
+
+class Achievement(models.Model):
+    """成就系统"""
+    ACHIEVEMENT_TYPES = [
+        ('traveler', '时光旅人'),
+        ('explorer', '城市探险家'),
+        ('prophet', '预言家'),
+        ('collector', '记忆收藏家'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
+    achievement_type = models.CharField(max_length=20, choices=ACHIEVEMENT_TYPES)
+    unlocked_at = models.DateTimeField(auto_now_add=True)
+    progress = models.IntegerField(default=0)  # 进度值
+    
+    class Meta:
+        unique_together = ['user', 'achievement_type']
+        ordering = ['-unlocked_at']
+        verbose_name = '成就'
+        verbose_name_plural = '成就'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_achievement_type_display()}"
+
+class ParallelMatch(models.Model):
+    """平行宇宙匹配"""
+    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='parallel_matches_1')
+    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='parallel_matches_2')
+    match_date = models.DateField(auto_now_add=True)
+    keywords = models.JSONField(default=list)  # 匹配的关键词
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = ['user1', 'user2', 'match_date']
+        ordering = ['-match_date']
+        verbose_name = '平行匹配'
+        verbose_name_plural = '平行匹配'
+    
+    def __str__(self):
+        return f"{self.user1.username} ↔ {self.user2.username} ({self.match_date})"
+
+class UserGeneratedTravelGuide(models.Model):
+    """用户生成的旅游攻略模型 - 好心人的攻略"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='创建用户')
+    title = models.CharField(max_length=200, verbose_name='攻略标题')
+    destination = models.CharField(max_length=200, verbose_name='目的地')
+    content = models.TextField(verbose_name='攻略内容')
+    summary = models.TextField(blank=True, null=True, verbose_name='攻略摘要')
+    
+    # 攻略分类
+    travel_style = models.CharField(max_length=50, default='general', verbose_name='旅行风格')
+    budget_range = models.CharField(max_length=50, default='medium', verbose_name='预算范围')
+    travel_duration = models.CharField(max_length=50, default='3-5天', verbose_name='旅行时长')
+    interests = models.JSONField(default=list, verbose_name='兴趣标签')
+    
+    # 文件附件
+    attachment = models.FileField(upload_to='travel_guides/', blank=True, null=True, verbose_name='附件')
+    attachment_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='附件名称')
+    
+    # 统计信息
+    view_count = models.IntegerField(default=0, verbose_name='查看次数')
+    download_count = models.IntegerField(default=0, verbose_name='下载次数')
+    use_count = models.IntegerField(default=0, verbose_name='使用次数')
+    
+    # 状态
+    is_public = models.BooleanField(default=True, verbose_name='是否公开')
+    is_featured = models.BooleanField(default=False, verbose_name='是否推荐')
+    is_approved = models.BooleanField(default=True, verbose_name='是否审核通过')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '用户生成旅游攻略'
+        verbose_name_plural = '用户生成旅游攻略'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.title}"
+    
+    def get_file_extension(self):
+        """获取文件扩展名"""
+        if self.attachment:
+            return self.attachment.name.split('.')[-1].lower()
+        return None
+    
+    def is_downloadable(self):
+        """检查是否可下载"""
+        return bool(self.attachment)
+    
+    def increment_view_count(self):
+        """增加查看次数"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+    
+    def increment_download_count(self):
+        """增加下载次数"""
+        self.download_count += 1
+        self.save(update_fields=['download_count'])
+    
+    def increment_use_count(self):
+        """增加使用次数"""
+        self.use_count += 1
+        self.save(update_fields=['use_count'])
+
+
+class TravelGuideUsage(models.Model):
+    """旅游攻略使用记录模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    guide = models.ForeignKey(UserGeneratedTravelGuide, on_delete=models.CASCADE, verbose_name='攻略')
+    usage_type = models.CharField(max_length=20, choices=[
+        ('view', '查看'),
+        ('download', '下载'),
+        ('use', '使用'),
+    ], verbose_name='使用类型')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='使用时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '攻略使用记录'
+        verbose_name_plural = '攻略使用记录'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.guide.title} - {self.get_usage_type_display()}"
+
+
+# 船宝（二手线下交易）相关模型
+
+class ShipBaoItem(models.Model):
+    """船宝物品模型"""
+    CATEGORY_CHOICES = [
+        ('electronics', '电子产品'),
+        ('clothing', '服饰鞋包'),
+        ('furniture', '家具家居'),
+        ('books', '图书音像'),
+        ('sports', '运动户外'),
+        ('beauty', '美妆护肤'),
+        ('toys', '玩具游戏'),
+        ('food', '食品饮料'),
+        ('other', '其他'),
+    ]
+    
+    CONDITION_CHOICES = [
+        (1, '1星 - 很旧'),
+        (2, '2星 - 较旧'),
+        (3, '3星 - 一般'),
+        (4, '4星 - 较新'),
+        (5, '5星 - 全新'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', '发布中'),
+        ('reserved', '交易中'),
+        ('completed', '已完成'),
+        ('cancelled', '已取消'),
+    ]
+    
+    DELIVERY_CHOICES = [
+        ('pickup', '仅自提'),
+        ('delivery', '仅送货'),
+        ('both', '自提/送货'),
+    ]
+    
+    # 基础信息
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='卖家')
+    title = models.CharField(max_length=200, verbose_name='物品标题')
+    description = models.TextField(verbose_name='物品描述')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, verbose_name='分类')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='价格(元)')
+    condition = models.IntegerField(choices=CONDITION_CHOICES, verbose_name='新旧程度')
+    
+    # 图片
+    images = models.JSONField(default=list, verbose_name='图片URL列表')
+    
+    # 交易设置
+    delivery_option = models.CharField(max_length=20, choices=DELIVERY_CHOICES, default='pickup', verbose_name='交易方式')
+    can_bargain = models.BooleanField(default=False, verbose_name='是否可议价')
+    
+    # 地理位置
+    location = models.CharField(max_length=200, verbose_name='交易地点')
+    latitude = models.FloatField(blank=True, null=True, verbose_name='纬度')
+    longitude = models.FloatField(blank=True, null=True, verbose_name='经度')
+    
+    # 状态
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='交易状态')
+    
+    # 统计信息
+    view_count = models.IntegerField(default=0, verbose_name='浏览次数')
+    favorite_count = models.IntegerField(default=0, verbose_name='收藏次数')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='发布时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '船宝物品'
+        verbose_name_plural = '船宝物品'
+        indexes = [
+            models.Index(fields=['category', 'status']),
+            models.Index(fields=['seller', 'status']),
+            models.Index(fields=['price']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.seller.username} - {self.title} - ¥{self.price}"
+    
+    def get_condition_stars(self):
+        """获取新旧程度星级显示"""
+        return '★' * self.condition + '☆' * (5 - self.condition)
+    
+    def get_main_image(self):
+        """获取主图"""
+        return self.images[0] if self.images else None
+    
+    def get_image_count(self):
+        """获取图片数量"""
+        return len(self.images)
+
+
+class ShipBaoTransaction(models.Model):
+    """船宝交易记录模型"""
+    STATUS_CHOICES = [
+        ('initiated', '已发起'),
+        ('negotiating', '协商中'),
+        ('meeting_arranged', '已约定见面'),
+        ('completed', '已完成'),
+        ('cancelled', '已取消'),
+    ]
+    
+    # 交易信息
+    item = models.ForeignKey(ShipBaoItem, on_delete=models.CASCADE, related_name='transactions', verbose_name='物品')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipbao_purchases', verbose_name='买家')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipbao_sales', verbose_name='卖家')
+    
+    # 交易状态
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='initiated', verbose_name='交易状态')
+    
+    # 交易详情
+    final_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='最终价格')
+    meeting_location = models.CharField(max_length=200, blank=True, null=True, verbose_name='见面地点')
+    meeting_time = models.DateTimeField(blank=True, null=True, verbose_name='见面时间')
+    
+    # 评价
+    buyer_rating = models.IntegerField(blank=True, null=True, choices=[(i, i) for i in range(1, 6)], verbose_name='买家评分')
+    seller_rating = models.IntegerField(blank=True, null=True, choices=[(i, i) for i in range(1, 6)], verbose_name='卖家评分')
+    buyer_comment = models.TextField(blank=True, null=True, verbose_name='买家评价')
+    seller_comment = models.TextField(blank=True, null=True, verbose_name='卖家评价')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='发起时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    completed_at = models.DateTimeField(blank=True, null=True, verbose_name='完成时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '船宝交易'
+        verbose_name_plural = '船宝交易'
+        unique_together = ['item', 'buyer']
+    
+    def __str__(self):
+        return f"{self.buyer.username} 购买 {self.item.title}"
+
+
+class ShipBaoMessage(models.Model):
+    """船宝私信模型"""
+    MESSAGE_TYPE_CHOICES = [
+        ('text', '文本'),
+        ('image', '图片'),
+        ('offer', '报价'),
+        ('system', '系统消息'),
+    ]
+    
+    transaction = models.ForeignKey(ShipBaoTransaction, on_delete=models.CASCADE, related_name='messages', verbose_name='交易')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='发送者')
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default='text', verbose_name='消息类型')
+    content = models.TextField(verbose_name='消息内容')
+    image_url = models.URLField(blank=True, null=True, verbose_name='图片URL')
+    offer_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='报价金额')
+    
+    # 消息状态
+    is_read = models.BooleanField(default=False, verbose_name='是否已读')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='发送时间')
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = '船宝私信'
+        verbose_name_plural = '船宝私信'
+    
+    def __str__(self):
+        return f"{self.sender.username}: {self.content[:50]}"
+
+
+class ShipBaoUserProfile(models.Model):
+    """船宝用户资料模型"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
+    
+    # 实名认证
+    is_verified = models.BooleanField(default=False, verbose_name='是否实名认证')
+    real_name = models.CharField(max_length=50, blank=True, null=True, verbose_name='真实姓名')
+    id_card_number = models.CharField(max_length=18, blank=True, null=True, verbose_name='身份证号')
+    verification_time = models.DateTimeField(blank=True, null=True, verbose_name='认证时间')
+    
+    # 信用评分
+    credit_score = models.IntegerField(default=100, verbose_name='信用评分')
+    total_transactions = models.IntegerField(default=0, verbose_name='总交易数')
+    successful_transactions = models.IntegerField(default=0, verbose_name='成功交易数')
+    
+    # 位置信息
+    city = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在城市')
+    district = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在区域')
+    
+    # 偏好设置
+    notification_enabled = models.BooleanField(default=True, verbose_name='启用通知')
+    auto_accept_offers = models.BooleanField(default=False, verbose_name='自动接受报价')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        verbose_name = '船宝用户资料'
+        verbose_name_plural = '船宝用户资料'
+    
+    def __str__(self):
+        return f"{self.user.username} - 船宝资料"
+    
+    def get_success_rate(self):
+        """获取交易成功率"""
+        if self.total_transactions == 0:
+            return 0
+        return round((self.successful_transactions / self.total_transactions) * 100, 1)
+    
+    def get_credit_level(self):
+        """获取信用等级"""
+        if self.credit_score >= 90:
+            return '优秀'
+        elif self.credit_score >= 80:
+            return '良好'
+        elif self.credit_score >= 70:
+            return '一般'
+        else:
+            return '较差'
+
+
+class ShipBaoReport(models.Model):
+    """船宝举报模型"""
+    REPORT_TYPE_CHOICES = [
+        ('fraud', '欺诈行为'),
+        ('fake_info', '虚假信息'),
+        ('inappropriate', '不当内容'),
+        ('harassment', '骚扰行为'),
+        ('other', '其他'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', '待处理'),
+        ('investigating', '调查中'),
+        ('resolved', '已处理'),
+        ('dismissed', '已驳回'),
+    ]
+    
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipbao_reports', verbose_name='举报者')
+    reported_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipbao_reported', verbose_name='被举报者')
+    reported_item = models.ForeignKey(ShipBaoItem, on_delete=models.CASCADE, blank=True, null=True, verbose_name='被举报物品')
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES, verbose_name='举报类型')
+    description = models.TextField(verbose_name='举报描述')
+    evidence = models.JSONField(default=list, verbose_name='证据材料')
+    
+    # 处理状态
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='处理状态')
+    admin_notes = models.TextField(blank=True, null=True, verbose_name='管理员备注')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='举报时间')
+    resolved_at = models.DateTimeField(blank=True, null=True, verbose_name='处理时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '船宝举报'
+        verbose_name_plural = '船宝举报'
+    
+    def __str__(self):
+        return f"{self.reporter.username} 举报 {self.reported_user.username}"
+
+
+# 搭子（同城活动匹配）相关模型
+
+class BuddyEvent(models.Model):
+    """搭子活动模型"""
+    EVENT_TYPE_CHOICES = [
+        ('meal', '饭搭'),
+        ('sports', '球搭'),
+        ('travel', '旅行搭'),
+        ('study', '学习搭'),
+        ('game', '游戏搭'),
+        ('movie', '电影搭'),
+        ('shopping', '购物搭'),
+        ('coffee', '咖啡搭'),
+        ('other', '其他'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', '招募中'),
+        ('full', '人数已满'),
+        ('in_progress', '进行中'),
+        ('completed', '已结束'),
+        ('cancelled', '已取消'),
+    ]
+    
+    COST_TYPE_CHOICES = [
+        ('free', '免费'),
+        ('aa', 'AA制'),
+    ]
+    
+    GENDER_RESTRICTION_CHOICES = [
+        ('none', '不限'),
+        ('male', '仅限男性'),
+        ('female', '仅限女性'),
+    ]
+    
+    # 基础信息
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='发起人')
+    title = models.CharField(max_length=200, verbose_name='活动标题')
+    description = models.TextField(verbose_name='活动描述')
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, verbose_name='活动类型')
+    
+    # 时间地点
+    start_time = models.DateTimeField(verbose_name='开始时间')
+    end_time = models.DateTimeField(blank=True, null=True, verbose_name='结束时间')
+    location = models.CharField(max_length=200, verbose_name='活动地点')
+    latitude = models.FloatField(blank=True, null=True, verbose_name='纬度')
+    longitude = models.FloatField(blank=True, null=True, verbose_name='经度')
+    
+    # 人数和费用
+    max_members = models.IntegerField(default=4, verbose_name='人数上限')
+    cost_type = models.CharField(max_length=20, choices=COST_TYPE_CHOICES, default='aa', verbose_name='费用类型')
+    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name='预估费用')
+    
+    # 限制条件
+    gender_restriction = models.CharField(max_length=20, choices=GENDER_RESTRICTION_CHOICES, default='none', verbose_name='性别限制')
+    age_min = models.IntegerField(blank=True, null=True, verbose_name='最小年龄')
+    age_max = models.IntegerField(blank=True, null=True, verbose_name='最大年龄')
+    
+    # 状态
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='活动状态')
+    
+    # 统计信息
+    view_count = models.IntegerField(default=0, verbose_name='浏览次数')
+    application_count = models.IntegerField(default=0, verbose_name='申请次数')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '搭子活动'
+        verbose_name_plural = '搭子活动'
+        indexes = [
+            models.Index(fields=['event_type', 'status']),
+            models.Index(fields=['creator', 'status']),
+            models.Index(fields=['start_time']),
+            models.Index(fields=['location']),
+        ]
+    
+    def __str__(self):
+        return f"{self.creator.username} - {self.title}"
+    
+    def get_current_member_count(self):
+        """获取当前成员数"""
+        return self.members.filter(status='joined').count()
+    
+    def is_full(self):
+        """检查是否已满员"""
+        return self.get_current_member_count() >= self.max_members
+    
+    def get_time_until_start(self):
+        """获取距离开始时间"""
+        from django.utils import timezone
+        now = timezone.now()
+        if self.start_time > now:
+            delta = self.start_time - now
+            days = delta.days
+            hours = delta.seconds // 3600
+            if days > 0:
+                return f"{days}天{hours}小时"
+            else:
+                return f"{hours}小时"
+        return "已开始"
+
+
+class BuddyEventMember(models.Model):
+    """搭子活动成员模型"""
+    STATUS_CHOICES = [
+        ('pending', '待审核'),
+        ('joined', '已加入'),
+        ('rejected', '已拒绝'),
+        ('left', '已退出'),
+    ]
+    
+    event = models.ForeignKey(BuddyEvent, on_delete=models.CASCADE, related_name='members', verbose_name='活动')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
+    
+    # 申请信息
+    application_message = models.TextField(blank=True, null=True, verbose_name='申请留言')
+    
+    # 时间戳
+    applied_at = models.DateTimeField(auto_now_add=True, verbose_name='申请时间')
+    joined_at = models.DateTimeField(blank=True, null=True, verbose_name='加入时间')
+    
+    class Meta:
+        unique_together = ['event', 'user']
+        ordering = ['applied_at']
+        verbose_name = '搭子活动成员'
+        verbose_name_plural = '搭子活动成员'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.event.title}"
+
+
+class BuddyEventChat(models.Model):
+    """搭子活动群聊模型"""
+    event = models.OneToOneField(BuddyEvent, on_delete=models.CASCADE, related_name='chat', verbose_name='活动')
+    is_active = models.BooleanField(default=False, verbose_name='是否活跃')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    
+    class Meta:
+        verbose_name = '搭子活动群聊'
+        verbose_name_plural = '搭子活动群聊'
+    
+    def __str__(self):
+        return f"{self.event.title} - 群聊"
+
+
+class BuddyEventMessage(models.Model):
+    """搭子活动群聊消息模型"""
+    MESSAGE_TYPE_CHOICES = [
+        ('text', '文本'),
+        ('image', '图片'),
+        ('system', '系统消息'),
+    ]
+    
+    chat = models.ForeignKey(BuddyEventChat, on_delete=models.CASCADE, related_name='messages', verbose_name='群聊')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='发送者')
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default='text', verbose_name='消息类型')
+    content = models.TextField(verbose_name='消息内容')
+    image_url = models.URLField(blank=True, null=True, verbose_name='图片URL')
+    
+    # 消息状态
+    is_read_by = models.ManyToManyField(User, related_name='read_messages', blank=True, verbose_name='已读用户')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='发送时间')
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = '搭子活动消息'
+        verbose_name_plural = '搭子活动消息'
+    
+    def __str__(self):
+        return f"{self.sender.username}: {self.content[:50]}"
+
+
+class BuddyUserProfile(models.Model):
+    """搭子用户资料模型"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
+    
+    # 兴趣标签
+    interests = models.JSONField(default=list, verbose_name='兴趣标签')
+    
+    # 位置信息
+    city = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在城市')
+    district = models.CharField(max_length=50, blank=True, null=True, verbose_name='所在区域')
+    
+    # 活动统计
+    created_events = models.IntegerField(default=0, verbose_name='发起活动数')
+    joined_events = models.IntegerField(default=0, verbose_name='参与活动数')
+    total_events = models.IntegerField(default=0, verbose_name='总活动数')
+    
+    # 信用评分
+    credit_score = models.IntegerField(default=100, verbose_name='信用评分')
+    no_show_count = models.IntegerField(default=0, verbose_name='爽约次数')
+    
+    # 偏好设置
+    notification_enabled = models.BooleanField(default=True, verbose_name='启用通知')
+    auto_join_enabled = models.BooleanField(default=False, verbose_name='自动加入')
+    
+    # 黑名单
+    blacklisted_users = models.ManyToManyField(User, related_name='blacklisted_by', blank=True, verbose_name='黑名单用户')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        verbose_name = '搭子用户资料'
+        verbose_name_plural = '搭子用户资料'
+    
+    def __str__(self):
+        return f"{self.user.username} - 搭子资料"
+    
+    def get_activity_rate(self):
+        """获取活动参与率"""
+        if self.total_events == 0:
+            return 0
+        return round((self.joined_events / self.total_events) * 100, 1)
+    
+    def get_credit_level(self):
+        """获取信用等级"""
+        if self.credit_score >= 90:
+            return '优秀'
+        elif self.credit_score >= 80:
+            return '良好'
+        elif self.credit_score >= 70:
+            return '一般'
+        else:
+            return '较差'
+
+
+class BuddyEventReview(models.Model):
+    """搭子活动评价模型"""
+    event = models.ForeignKey(BuddyEvent, on_delete=models.CASCADE, related_name='reviews', verbose_name='活动')
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='评价者')
+    reviewed_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buddy_reviews_received', verbose_name='被评价者')
+    
+    # 评价内容
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name='评分')
+    comment = models.TextField(blank=True, null=True, verbose_name='评价内容')
+    
+    # 评价维度
+    punctuality = models.IntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name='守时程度')
+    friendliness = models.IntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name='友好程度')
+    participation = models.IntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name='参与度')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='评价时间')
+    
+    class Meta:
+        unique_together = ['event', 'reviewer', 'reviewed_user']
+        ordering = ['-created_at']
+        verbose_name = '搭子活动评价'
+        verbose_name_plural = '搭子活动评价'
+    
+    def __str__(self):
+        return f"{self.reviewer.username} 评价 {self.reviewed_user.username}"
+
+
+class BuddyEventReport(models.Model):
+    """搭子活动举报模型"""
+    REPORT_TYPE_CHOICES = [
+        ('no_show', '爽约'),
+        ('inappropriate', '不当行为'),
+        ('harassment', '骚扰'),
+        ('fake_info', '虚假信息'),
+        ('other', '其他'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', '待处理'),
+        ('investigating', '调查中'),
+        ('resolved', '已处理'),
+        ('dismissed', '已驳回'),
+    ]
+    
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buddy_reports', verbose_name='举报者')
+    reported_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='buddy_reported', verbose_name='被举报者')
+    reported_event = models.ForeignKey(BuddyEvent, on_delete=models.CASCADE, blank=True, null=True, verbose_name='相关活动')
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPE_CHOICES, verbose_name='举报类型')
+    description = models.TextField(verbose_name='举报描述')
+    evidence = models.JSONField(default=list, verbose_name='证据材料')
+    
+    # 处理状态
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='处理状态')
+    admin_notes = models.TextField(blank=True, null=True, verbose_name='管理员备注')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='举报时间')
+    resolved_at = models.DateTimeField(blank=True, null=True, verbose_name='处理时间')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = '搭子活动举报'
+        verbose_name_plural = '搭子活动举报'
+    
+    def __str__(self):
+        return f"{self.reporter.username} 举报 {self.reported_user.username}"
+
+
+class ExerciseWeightRecord(models.Model):
+    """锻炼重量记录模型"""
+    EXERCISE_TYPE_CHOICES = [
+        # 三大项
+        ('squat', '深蹲'),
+        ('bench_press', '卧推'),
+        ('deadlift', '硬拉'),
+        # 其他力量训练
+        ('overhead_press', '推举'),
+        ('barbell_row', '杠铃划船'),
+        ('pull_up', '引体向上'),
+        ('dip', '双杠臂屈伸'),
+        ('lunge', '弓步蹲'),
+        ('leg_press', '腿举'),
+        ('leg_curl', '腿弯举'),
+        ('leg_extension', '腿伸展'),
+        ('calf_raise', '提踵'),
+        ('bicep_curl', '弯举'),
+        ('tricep_extension', '臂屈伸'),
+        ('shoulder_press', '肩推'),
+        ('lateral_raise', '侧平举'),
+        ('rear_delt_fly', '后三角肌飞鸟'),
+        ('chest_fly', '飞鸟'),
+        ('lat_pulldown', '高位下拉'),
+        ('face_pull', '面拉'),
+        ('shrug', '耸肩'),
+        ('upright_row', '直立划船'),
+        ('good_morning', '早安式'),
+        ('romanian_deadlift', '罗马尼亚硬拉'),
+        ('sumo_deadlift', '相扑硬拉'),
+        ('front_squat', '前蹲'),
+        ('back_squat', '后蹲'),
+        ('box_squat', '箱式深蹲'),
+        ('pause_squat', '暂停深蹲'),
+        ('close_grip_bench', '窄握卧推'),
+        ('wide_grip_bench', '宽握卧推'),
+        ('incline_bench', '上斜卧推'),
+        ('decline_bench', '下斜卧推'),
+        ('dumbbell_bench', '哑铃卧推'),
+        ('dumbbell_squat', '哑铃深蹲'),
+        ('goblet_squat', '高脚杯深蹲'),
+        ('bulgarian_split_squat', '保加利亚分腿蹲'),
+        ('step_up', '台阶上'),
+        ('hip_thrust', '臀桥'),
+        ('glute_bridge', '臀桥'),
+        ('plank', '平板支撑'),
+        ('side_plank', '侧平板'),
+        ('crunch', '卷腹'),
+        ('sit_up', '仰卧起坐'),
+        ('russian_twist', '俄罗斯转体'),
+        ('mountain_climber', '登山者'),
+        ('burpee', '波比跳'),
+        ('jumping_jack', '开合跳'),
+        ('high_knee', '高抬腿'),
+        ('butt_kick', '后踢腿'),
+        ('other', '其他'),
+    ]
+    
+    REP_TYPE_CHOICES = [
+        ('1rm', '1RM'),
+        ('3rm', '3RM'),
+        ('5rm', '5RM'),
+        ('8rm', '8RM'),
+        ('10rm', '10RM'),
+        ('12rm', '12RM'),
+        ('15rm', '15RM'),
+        ('20rm', '20RM'),
+        ('max_reps', '最大次数'),
+        ('custom', '自定义'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    exercise_type = models.CharField(max_length=50, choices=EXERCISE_TYPE_CHOICES, verbose_name='锻炼类型')
+    weight = models.FloatField(verbose_name='重量(kg)')
+    reps = models.IntegerField(verbose_name='次数')
+    rep_type = models.CharField(max_length=10, choices=REP_TYPE_CHOICES, default='custom', verbose_name='次数类型')
+    sets = models.IntegerField(default=1, verbose_name='组数')
+    rpe = models.IntegerField(null=True, blank=True, verbose_name='RPE(1-10)')
+    notes = models.TextField(blank=True, null=True, verbose_name='备注')
+    workout_date = models.DateField(verbose_name='训练日期')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='记录时间')
+    
+    class Meta:
+        ordering = ['-workout_date', '-created_at']
+        verbose_name = '锻炼重量记录'
+        verbose_name_plural = '锻炼重量记录'
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_exercise_type_display()} - {self.weight}kg x {self.reps}次"
+    
+    def get_estimated_1rm(self):
+        """估算1RM"""
+        if self.reps == 1:
+            return self.weight
+        
+        # 使用Epley公式估算1RM
+        if self.reps <= 10:
+            return round(self.weight * (1 + self.reps / 30), 1)
+        else:
+            # 对于高次数，使用更保守的估算
+            return round(self.weight * (1 + self.reps / 40), 1)
+    
+    def get_weight_class(self):
+        """获取重量等级"""
+        if self.exercise_type in ['squat', 'bench_press', 'deadlift']:
+            if self.weight < 50:
+                return '初学者'
+            elif self.weight < 100:
+                return '进阶者'
+            elif self.weight < 150:
+                return '中级者'
+            elif self.weight < 200:
+                return '高级者'
+            else:
+                return '专家级'
+        return '标准'
+
+
+class FitnessStrengthProfile(models.Model):
+    """健身力量档案模型"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
+    
+    # 三大项最佳记录
+    squat_1rm = models.FloatField(null=True, blank=True, verbose_name='深蹲1RM(kg)')
+    squat_1rm_date = models.DateField(null=True, blank=True, verbose_name='深蹲1RM日期')
+    bench_press_1rm = models.FloatField(null=True, blank=True, verbose_name='卧推1RM(kg)')
+    bench_press_1rm_date = models.DateField(null=True, blank=True, verbose_name='卧推1RM日期')
+    deadlift_1rm = models.FloatField(null=True, blank=True, verbose_name='硬拉1RM(kg)')
+    deadlift_1rm_date = models.DateField(null=True, blank=True, verbose_name='硬拉1RM日期')
+    
+    # 总重量
+    total_1rm = models.FloatField(null=True, blank=True, verbose_name='三大项总重量(kg)')
+    
+    # 体重相关
+    bodyweight = models.FloatField(null=True, blank=True, verbose_name='记录时体重(kg)')
+    bodyweight_date = models.DateField(null=True, blank=True, verbose_name='体重记录日期')
+    
+    # 力量系数
+    strength_coefficient = models.FloatField(null=True, blank=True, verbose_name='力量系数(总重量/体重)')
+    
+    # 目标设定
+    squat_goal = models.FloatField(null=True, blank=True, verbose_name='深蹲目标(kg)')
+    bench_press_goal = models.FloatField(null=True, blank=True, verbose_name='卧推目标(kg)')
+    deadlift_goal = models.FloatField(null=True, blank=True, verbose_name='硬拉目标(kg)')
+    total_goal = models.FloatField(null=True, blank=True, verbose_name='总重量目标(kg)')
+    
+    # 统计信息
+    total_workouts = models.IntegerField(default=0, verbose_name='总训练次数')
+    current_streak = models.IntegerField(default=0, verbose_name='当前连续天数')
+    longest_streak = models.IntegerField(default=0, verbose_name='最长连续天数')
+    total_duration = models.IntegerField(default=0, verbose_name='总训练时长(分钟)')
+    
+    # 时间戳
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        verbose_name = '健身力量档案'
+        verbose_name_plural = '健身力量档案'
+    
+    def __str__(self):
+        return f"{self.user.username} - 力量档案"
+    
+    def update_stats(self):
+        """更新统计数据"""
+        from datetime import datetime, timedelta
+        
+        # 更新总训练次数
+        self.total_workouts = ExerciseWeightRecord.objects.filter(user=self.user).count()
+        
+        # 更新连续天数
+        records = ExerciseWeightRecord.objects.filter(user=self.user).order_by('-workout_date')
+        if records.exists():
+            current_streak = 0
+            longest_streak = 0
+            temp_streak = 0
+            current_date = datetime.now().date()
+            
+            for i, record in enumerate(records):
+                if i == 0:
+                    if record.workout_date == current_date:
+                        temp_streak = 1
+                    else:
+                        break
+                else:
+                    prev_record = records[i-1]
+                    if (prev_record.workout_date - record.workout_date).days == 1:
+                        temp_streak += 1
+                    else:
+                        break
+            
+            self.current_streak = temp_streak
+            
+            # 计算最长连续天数
+            dates = list(records.values_list('workout_date', flat=True).distinct())
+            if dates:
+                dates.sort(reverse=True)
+                temp_streak = 1
+                longest_streak = 1
+                
+                for i in range(1, len(dates)):
+                    if (dates[i-1] - dates[i]).days == 1:
+                        temp_streak += 1
+                        longest_streak = max(longest_streak, temp_streak)
+                    else:
+                        temp_streak = 1
+                
+                self.longest_streak = longest_streak
+        
+        self.save()
+    
+    def update_1rm_records(self):
+        """更新1RM记录"""
+        # 更新深蹲1RM
+        squat_records = ExerciseWeightRecord.objects.filter(
+            user=self.user, 
+            exercise_type='squat'
+        ).order_by('-weight', '-workout_date')
+        
+        if squat_records.exists():
+            best_squat = squat_records.first()
+            self.squat_1rm = best_squat.get_estimated_1rm()
+            self.squat_1rm_date = best_squat.workout_date
+        
+        # 更新卧推1RM
+        bench_records = ExerciseWeightRecord.objects.filter(
+            user=self.user, 
+            exercise_type='bench_press'
+        ).order_by('-weight', '-workout_date')
+        
+        if bench_records.exists():
+            best_bench = bench_records.first()
+            self.bench_press_1rm = best_bench.get_estimated_1rm()
+            self.bench_press_1rm_date = best_bench.workout_date
+        
+        # 更新硬拉1RM
+        deadlift_records = ExerciseWeightRecord.objects.filter(
+            user=self.user, 
+            exercise_type='deadlift'
+        ).order_by('-weight', '-workout_date')
+        
+        if deadlift_records.exists():
+            best_deadlift = deadlift_records.first()
+            self.deadlift_1rm = best_deadlift.get_estimated_1rm()
+            self.deadlift_1rm_date = best_deadlift.workout_date
+        
+        # 更新总重量
+        if self.squat_1rm and self.bench_press_1rm and self.deadlift_1rm:
+            self.total_1rm = self.squat_1rm + self.bench_press_1rm + self.deadlift_1rm
+        
+        # 更新力量系数
+        if self.total_1rm and self.bodyweight:
+            self.strength_coefficient = round(self.total_1rm / self.bodyweight, 2)
+        
+        self.save()
+    
+    def get_strength_level(self):
+        """获取力量等级"""
+        if not self.total_1rm:
+            return '未记录'
+        
+        if self.total_1rm < 200:
+            return '初学者'
+        elif self.total_1rm < 400:
+            return '进阶者'
+        elif self.total_1rm < 600:
+            return '中级者'
+        elif self.total_1rm < 800:
+            return '高级者'
+        else:
+            return '专家级'
+    
+    def get_progress_percentage(self, exercise_type):
+        """获取进度百分比"""
+        current = getattr(self, f'{exercise_type}_1rm', 0) or 0
+        goal = getattr(self, f'{exercise_type}_goal', 0) or 0
+        
+        if goal == 0:
+            return 0
+        
+        return min(round((current / goal) * 100, 1), 100)

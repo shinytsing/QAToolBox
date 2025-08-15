@@ -1,0 +1,954 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}自动扒谱系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tab-generator {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .generator-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    }
+    
+    .generator-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .generator-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .main-content {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 30px;
+    }
+    
+    .upload-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .upload-area {
+        border: 3px dashed #667eea;
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 20px;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .upload-area:hover {
+        border-color: #5a6fd8;
+        background: #e9ecef;
+    }
+    
+    .upload-area.dragover {
+        border-color: #4CAF50;
+        background: #e8f5e8;
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+    
+    .upload-text {
+        font-size: 1.2rem;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .upload-hint {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .upload-btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+    
+    .upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .upload-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .analysis-section {
+        display: none;
+        margin-bottom: 30px;
+    }
+    
+    .analysis-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .analysis-header h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .analysis-progress {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 15px;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .analysis-results {
+        background: #e3f2fd;
+        border-radius: 10px;
+        padding: 20px;
+        border-left: 4px solid #2196F3;
+    }
+    
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .result-label {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .result-value {
+        color: #667eea;
+        font-weight: 500;
+    }
+    
+    .tab-generation-section {
+        display: none;
+        margin-bottom: 30px;
+    }
+    
+    .tab-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .tab-option {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .tab-option:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+    
+    .tab-option.selected {
+        border-color: #667eea;
+        background: #e3f2fd;
+    }
+    
+    .tab-option-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .tab-option-title {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .tab-option-desc {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .generate-btn {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: block;
+        margin: 0 auto;
+    }
+    
+    .generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+    
+    .generate-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .tab-result-section {
+        display: none;
+        margin-bottom: 30px;
+    }
+    
+    .tab-result-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .tab-result-header h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .tab-content {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .tab-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .action-btn.primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .action-btn.secondary {
+        background: #f8f9fa;
+        color: #666;
+        border: 1px solid #ddd;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .history-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 30px;
+    }
+    
+    .history-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .history-header h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .history-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .history-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .history-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .history-item-title {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .history-item-date {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .history-item-details {
+        display: flex;
+        gap: 15px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .stats-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 30px;
+    }
+    
+    .stats-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .stats-header h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .nav-btn:hover {
+        background: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .error-message {
+        background: #ffebee;
+        color: #c62828;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border-left: 4px solid #f44336;
+    }
+    
+    .success-message {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border-left: 4px solid #4caf50;
+    }
+    
+    @media (max-width: 768px) {
+        .tab-options {
+            grid-template-columns: 1fr;
+        }
+        
+        .tab-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .action-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .generator-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tab-generator">
+    <div class="generator-header">
+        <h1>🎵 自动扒谱系统</h1>
+        <p>上传音频文件，自动生成吉他谱</p>
+    </div>
+
+    <div class="main-content">
+        <!-- 错误/成功消息 -->
+        <div id="messageContainer"></div>
+
+        <!-- 音频上传区域 -->
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🎵</div>
+                <div class="upload-text">拖拽音频文件到这里或点击选择文件</div>
+                <div class="upload-hint">支持 MP3, WAV, M4A, FLAC 格式，最大 50MB</div>
+                <input type="file" id="audioFile" class="file-input" accept="audio/*">
+                <button class="upload-btn" id="uploadBtn" onclick="selectFile()">选择文件</button>
+            </div>
+        </div>
+
+        <!-- 音频分析区域 -->
+        <div class="analysis-section" id="analysisSection">
+            <div class="analysis-header">
+                <h3>🎼 音频分析</h3>
+            </div>
+            
+            <div class="analysis-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">正在分析音频...</div>
+            </div>
+            
+            <div class="analysis-results" id="analysisResults">
+                <!-- 分析结果将在这里显示 -->
+            </div>
+        </div>
+
+        <!-- 吉他谱生成选项 -->
+        <div class="tab-generation-section" id="tabGenerationSection">
+            <div class="analysis-header">
+                <h3>🎸 选择吉他谱类型</h3>
+            </div>
+            
+            <div class="tab-options">
+                <div class="tab-option" onclick="selectTabType('chords')">
+                    <span class="tab-option-icon">🎼</span>
+                    <div class="tab-option-title">和弦谱</div>
+                    <div class="tab-option-desc">显示和弦进行和指法图</div>
+                </div>
+                <div class="tab-option" onclick="selectTabType('melody')">
+                    <span class="tab-option-icon">🎵</span>
+                    <div class="tab-option-title">旋律谱</div>
+                    <div class="tab-option-desc">显示主旋律的指法谱</div>
+                </div>
+                <div class="tab-option" onclick="selectTabType('full')">
+                    <span class="tab-option-icon">🎸</span>
+                    <div class="tab-option-title">完整谱</div>
+                    <div class="tab-option-desc">包含和弦和旋律的完整谱</div>
+                </div>
+            </div>
+            
+            <button class="generate-btn" id="generateBtn" onclick="generateTab()" disabled>
+                生成吉他谱
+            </button>
+        </div>
+
+        <!-- 吉他谱结果 -->
+        <div class="tab-result-section" id="tabResultSection">
+            <div class="tab-result-header">
+                <h3>📝 生成的吉他谱</h3>
+            </div>
+            
+            <div class="tab-content" id="tabContent">
+                <!-- 吉他谱内容将在这里显示 -->
+            </div>
+            
+            <div class="tab-actions">
+                <button class="action-btn primary" onclick="downloadTab()">📥 下载谱子</button>
+                <button class="action-btn secondary" onclick="saveTab()">💾 保存到库</button>
+                <button class="action-btn secondary" onclick="shareTab()">📤 分享</button>
+                <button class="action-btn secondary" onclick="resetGenerator()">🔄 重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="stats-section">
+        <div class="stats-header">
+            <h3>📊 扒谱统计</h3>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-icon">📝</span>
+                <div class="stat-value">{{ tab_statistics.total_tabs }}</div>
+                <div class="stat-label">总扒谱数</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🎼</span>
+                <div class="stat-value">{{ tab_statistics.chord_tabs }}</div>
+                <div class="stat-label">和弦谱</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🎵</span>
+                <div class="stat-value">{{ tab_statistics.melody_tabs }}</div>
+                <div class="stat-label">旋律谱</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🎸</span>
+                <div class="stat-value">{{ tab_statistics.full_tabs }}</div>
+                <div class="stat-label">完整谱</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">✅</span>
+                <div class="stat-value">{{ tab_statistics.success_rate }}%</div>
+                <div class="stat-label">成功率</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 扒谱历史 -->
+    <div class="history-section">
+        <div class="history-header">
+            <h3>📚 扒谱历史</h3>
+        </div>
+        <div class="history-list" id="historyList">
+            {% for tab in recent_tabs %}
+            <div class="history-item">
+                <div class="history-item-header">
+                    <div class="history-item-title">{{ tab.title }}</div>
+                    <div class="history-item-date">{{ tab.created_at|date:"Y-m-d H:i" }}</div>
+                </div>
+                <div class="history-item-details">
+                    <span>类型: {{ tab.type }}</span>
+                    <span>调性: {{ tab.key }}</span>
+                    <span>速度: {{ tab.tempo }} BPM</span>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; color: #666; padding: 20px;">
+                还没有扒谱记录，开始你的第一次扒谱吧！
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="navigation-buttons">
+        <a href="{% url 'tools:guitar_training_dashboard' %}" class="nav-btn">🏠 返回主页</a>
+<a href="{% url 'tools:guitar_progress_tracking' %}" class="nav-btn">📊 进度跟踪</a>
+<a href="{% url 'tools:guitar_theory_guide' %}" class="nav-btn">📚 乐理学习</a>
+<a href="{% url 'tools:guitar_song_library' %}" class="nav-btn">🎵 歌曲库</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedFile = null;
+let selectedTabType = null;
+let currentTaskId = null;
+let analysisData = null;
+
+// 文件选择
+function selectFile() {
+    document.getElementById('audioFile').click();
+}
+
+// 文件拖拽
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('audioFile');
+    
+    // 文件选择事件
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            handleFileSelect(file);
+        }
+    });
+    
+    // 拖拽事件
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    // 点击上传区域
+    uploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+});
+
+function handleFileSelect(file) {
+    // 检查文件类型
+    const allowedTypes = ['audio/mp3', 'audio/wav', 'audio/m4a', 'audio/flac'];
+    if (!allowedTypes.includes(file.type)) {
+        showMessage('请选择支持的音频格式：MP3, WAV, M4A, FLAC', 'error');
+        return;
+    }
+    
+    // 检查文件大小
+    if (file.size > 50 * 1024 * 1024) {
+        showMessage('文件大小不能超过50MB', 'error');
+        return;
+    }
+    
+    selectedFile = file;
+    uploadFile(file);
+}
+
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('audio_file', file);
+    
+    // 显示分析区域
+    document.getElementById('analysisSection').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadBtn').textContent = '上传中...';
+    
+    // 模拟进度
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress > 90) progress = 90;
+        updateProgress(progress, '上传音频文件...');
+    }, 200);
+    
+    fetch('/tools/api/guitar/upload-audio/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        clearInterval(progressInterval);
+        
+        if (data.success) {
+            currentTaskId = data.task_id;
+            analysisData = data.analysis_result;
+            
+            updateProgress(100, '上传完成！');
+            showAnalysisResults(data.analysis_result);
+            showTabGenerationOptions();
+        } else {
+            showMessage(data.message, 'error');
+            resetUpload();
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        showMessage('上传失败，请重试', 'error');
+        resetUpload();
+    });
+}
+
+function updateProgress(percentage, text) {
+    document.getElementById('progressFill').style.width = percentage + '%';
+    document.getElementById('progressText').textContent = text;
+}
+
+function showAnalysisResults(results) {
+    const resultsContainer = document.getElementById('analysisResults');
+    
+    let html = '<h4>🎵 分析结果</h4>';
+    html += `<div class="result-item"><span class="result-label">调性:</span><span class="result-value">${results.key}</span></div>`;
+    html += `<div class="result-item"><span class="result-label">速度:</span><span class="result-value">${results.tempo} BPM</span></div>`;
+    html += `<div class="result-item"><span class="result-label">拍号:</span><span class="result-value">${results.time_signature}</span></div>`;
+    html += `<div class="result-item"><span class="result-label">时长:</span><span class="result-value">${Math.floor(results.duration / 60)}:${(results.duration % 60).toString().padStart(2, '0')}</span></div>`;
+    html += `<div class="result-item"><span class="result-label">检测到和弦:</span><span class="result-value">${results.chords_detected.length} 个</span></div>`;
+    html += `<div class="result-item"><span class="result-label">旋律音符:</span><span class="result-value">${results.melody_notes.length} 个</span></div>`;
+    
+    resultsContainer.innerHTML = html;
+}
+
+function showTabGenerationOptions() {
+    document.getElementById('tabGenerationSection').style.display = 'block';
+}
+
+function selectTabType(type) {
+    selectedTabType = type;
+    
+    // 更新选择状态
+    document.querySelectorAll('.tab-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // 启用生成按钮
+    document.getElementById('generateBtn').disabled = false;
+}
+
+function generateTab() {
+    if (!selectedTabType) {
+        showMessage('请选择吉他谱类型', 'error');
+        return;
+    }
+    
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('generateBtn').textContent = '生成中...';
+    
+    const requestData = {
+        task_id: currentTaskId,
+        analysis_data: analysisData,
+        tab_type: selectedTabType
+    };
+    
+    fetch('/tools/api/guitar/generate-tab/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showTabResult(data.tab_result);
+        } else {
+            showMessage(data.message, 'error');
+        }
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('generateBtn').textContent = '生成吉他谱';
+    })
+    .catch(error => {
+        showMessage('生成失败，请重试', 'error');
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('generateBtn').textContent = '生成吉他谱';
+    });
+}
+
+function showTabResult(tabResult) {
+    document.getElementById('tabResultSection').style.display = 'block';
+    document.getElementById('tabContent').textContent = tabResult.content;
+    
+    // 滚动到结果区域
+    document.getElementById('tabResultSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function downloadTab() {
+    const tabContent = document.getElementById('tabContent').textContent;
+    const blob = new Blob([tabContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `guitar_tab_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function saveTab() {
+    showMessage('谱子已保存到你的库中', 'success');
+}
+
+function shareTab() {
+    // 复制到剪贴板
+    const tabContent = document.getElementById('tabContent').textContent;
+    navigator.clipboard.writeText(tabContent).then(() => {
+        showMessage('谱子已复制到剪贴板', 'success');
+    });
+}
+
+function resetGenerator() {
+    selectedFile = null;
+    selectedTabType = null;
+    currentTaskId = null;
+    analysisData = null;
+    
+    document.getElementById('analysisSection').style.display = 'none';
+    document.getElementById('tabGenerationSection').style.display = 'none';
+    document.getElementById('tabResultSection').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('uploadBtn').textContent = '选择文件';
+    document.getElementById('audioFile').value = '';
+    
+    // 重置选择状态
+    document.querySelectorAll('.tab-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+}
+
+function resetUpload() {
+    document.getElementById('uploadBtn').disabled = false;
+    document.getElementById('uploadBtn').textContent = '选择文件';
+}
+
+function showMessage(message, type) {
+    const container = document.getElementById('messageContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+    messageDiv.textContent = message;
+    
+    container.innerHTML = '';
+    container.appendChild(messageDiv);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 添加一些动画效果
+document.addEventListener('DOMContentLoaded', function() {
+    const sections = document.querySelectorAll('.main-content, .stats-section, .history-section');
+    sections.forEach((section, index) => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            section.style.transition = 'all 0.6s ease';
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+});
+</script>
+{% endblock %}

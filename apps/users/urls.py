@@ -38,6 +38,8 @@ urlpatterns = [
     
     # 用户认证API
     path('api/logout/', views.user_logout_api, name='user_logout_api'),
+    path('api/extend-session/', views.extend_session_api, name='extend_session_api'),
+    path('api/session-status/', views.session_status_api, name='session_status_api'),
     
     # 测试页面
     path('test-logout/', views.test_logout_view, name='test_logout'),

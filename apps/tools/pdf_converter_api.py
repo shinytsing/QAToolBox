@@ -1210,15 +1210,17 @@ def pdf_download_view(request, filename):
     专门的PDF文件下载视图，解决Google浏览器下载问题
     """
     try:
-        from django.http import FileResponse, Http404
+        from django.http import FileResponse, Http404, HttpResponse
         from django.conf import settings
         import os
+        import mimetypes
         
         # 构建文件路径
         file_path = os.path.join(settings.MEDIA_ROOT, 'converted', filename)
         
         # 检查文件是否存在
         if not os.path.exists(file_path):
+            logger.error(f"文件不存在: {file_path}")
             raise Http404("文件不存在")
         
         # 获取文件大小
@@ -1233,15 +1235,30 @@ def pdf_download_view(request, filename):
             '.zip': 'application/zip',
             '.png': 'image/png',
             '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg'
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.bmp': 'image/bmp',
+            '.tiff': 'image/tiff'
         }
         
         file_ext = os.path.splitext(filename)[1].lower()
         content_type = mime_types.get(file_ext, 'application/octet-stream')
         
+        # 如果MIME类型未知，尝试自动检测
+        if content_type == 'application/octet-stream':
+            detected_type, _ = mimetypes.guess_type(filename)
+            if detected_type:
+                content_type = detected_type
+        
+        logger.info(f"下载文件: {filename}, 路径: {file_path}, 大小: {file_size}, 类型: {content_type}")
+        
         # 打开文件并创建响应
-        file_handle = open(file_path, 'rb')
-        response = FileResponse(file_handle, content_type=content_type)
+        try:
+            file_handle = open(file_path, 'rb')
+            response = FileResponse(file_handle, content_type=content_type)
+        except Exception as e:
+            logger.error(f"打开文件失败: {str(e)}")
+            raise Http404("文件读取失败")
         
         # 设置下载头信息
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -1257,11 +1274,202 @@ def pdf_download_view(request, filename):
         response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         response['Access-Control-Allow-Headers'] = 'Content-Type, Content-Disposition'
         
+        # 添加额外的下载头
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        
+        logger.info(f"文件下载响应已创建: {filename}")
         return response
             
+    except Http404 as e:
+        logger.error(f"文件不存在: {filename}")
+        return HttpResponse(f"文件不存在: {filename}", status=404)
     except Exception as e:
         logger.error(f"PDF下载视图错误: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': f'下载失败: {str(e)}'
+        }, status=500) 
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def pdf_converter_test_api(request):
+    """PDF转换测试API（无需登录）"""
+    try:
+        import time
+        
+        # 添加调试信息
+        logger.info(f"PDF转换测试API请求: POST数据={dict(request.POST)}, FILES={list(request.FILES.keys())}")
+        
+        conversion_type = request.POST.get('type', '')
+        
+        # 检查是否有文件上传（文本转PDF除外）
+        if conversion_type != 'text-to-pdf':
+            if 'file' not in request.FILES:
+                logger.warning("PDF转换测试API: 没有上传文件")
+                return JsonResponse({
+                    'success': False,
+                    'error': '没有上传文件'
+                }, status=400)
+            file = request.FILES['file']
+        else:
+            # 文本转PDF不需要文件上传
+            file = None
+        
+        start_time = time.time()
+        
+        # 验证转换类型
+        valid_types = ['pdf-to-word', 'word-to-pdf', 'pdf-to-image', 'image-to-pdf', 'text-to-pdf', 'pdf-to-text', 'txt-to-pdf']
+        if conversion_type not in valid_types:
+            return JsonResponse({
+                'success': False,
+                'error': f'不支持的转换类型: {conversion_type}'
+            }, status=400)
+        
+        # 根据转换类型验证文件格式
+        if conversion_type == 'text-to-pdf':
+            # 文本转PDF不需要文件验证
+            text_content = request.POST.get('text_content', '')
+            if not text_content.strip():
+                is_valid, message = False, "请输入要转换的文本内容"
+            else:
+                is_valid, message = True, "文本内容验证通过"
+        elif conversion_type == 'pdf-to-word':
+            is_valid, message = converter.validate_file(file, 'pdf')
+        elif conversion_type == 'word-to-pdf':
+            is_valid, message = converter.validate_file(file, 'word')
+        elif conversion_type == 'pdf-to-image':
+            is_valid, message = converter.validate_file(file, 'pdf')
+        elif conversion_type == 'image-to-pdf':
+            is_valid, message = converter.validate_file(file, 'image')
+        elif conversion_type == 'pdf-to-text':
+            is_valid, message = converter.validate_file(file, 'pdf')
+        elif conversion_type == 'txt-to-pdf':
+            is_valid, message = converter.validate_file(file, 'text')
+        else:
+            is_valid, message = True, "文件验证通过"
+        
+        if not is_valid:
+            return JsonResponse({
+                'success': False,
+                'error': message
+            }, status=400)
+        
+        # 执行转换
+        if conversion_type == 'pdf-to-word':
+            success, result, file_type = converter.pdf_to_word(file)
+        elif conversion_type == 'word-to-pdf':
+            success, result, file_type = converter.word_to_pdf(file)
+        elif conversion_type == 'pdf-to-image':
+            success, result, file_type = converter.pdf_to_images(file)
+        elif conversion_type == 'image-to-pdf':
+            success, result, file_type = converter.images_to_pdf([file])
+        elif conversion_type == 'pdf-to-text':
+            success, result, file_type = converter.pdf_to_text(file)
+        elif conversion_type == 'text-to-pdf':
+            success, result, file_type = converter.text_to_pdf(request.POST.get('text_content', ''))
+        elif conversion_type == 'txt-to-pdf':
+            success, result, file_type = converter.txt_to_pdf(file)
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': f'不支持的转换类型: {conversion_type}'
+            }, status=400)
+        
+        if not success:
+            return JsonResponse({
+                'success': False,
+                'error': result
+            }, status=500)
+        
+        # 保存转换结果
+        output_filename = f"{uuid.uuid4()}_{conversion_type.replace('-', '_')}"
+        
+        if file_type == 'pdf_to_word':
+            output_filename += '.docx'
+            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+        elif file_type == 'word_to_pdf':
+            output_filename += '.pdf'
+            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+        elif file_type == 'images_to_pdf':
+            # 创建ZIP文件包含所有图片
+            import zipfile
+            from io import BytesIO
+            import base64
+            
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for i, img_data in enumerate(result):
+                    # 解码base64图片数据
+                    img_bytes = base64.b64decode(img_data['data'])
+                    # 添加到ZIP文件
+                    zip_file.writestr(f'page_{i+1}.png', img_bytes)
+            
+            zip_content = zip_buffer.getvalue()
+            zip_buffer.close()
+            
+            # 保存ZIP文件
+            output_filename += '_images.zip'
+            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(zip_content))
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+            
+            # 返回下载链接
+            return JsonResponse({
+                'success': True,
+                'type': 'file',
+                'download_url': download_url,
+                'filename': output_filename,
+                'original_filename': file.name if file else '图片集合',
+                'file_size': len(zip_content),
+                'total_pages': len(result),
+                'message': f'已转换{len(result)}页，打包为ZIP文件供下载',
+                'conversion_type': conversion_type
+            })
+        elif file_type == 'images_to_pdf':
+            output_filename += '.pdf'
+            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+        elif file_type == 'text_to_pdf':
+            output_filename += '.pdf'
+            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+        elif file_type == 'pdf_to_text':
+            output_filename += '.txt'
+            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result.encode('utf-8')))
+            # 设置下载链接
+            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': '未知的文件类型'
+            }, status=500)
+        
+        # 确定原始文件名
+        if conversion_type == 'text-to-pdf':
+            original_filename = '文本内容'
+        elif conversion_type == 'pdf-to-text':
+            original_filename = file.name if file else 'PDF文件'
+        else:
+            original_filename = file.name if file else '文件'
+        
+        return JsonResponse({
+            'success': True,
+            'type': 'file',
+            'download_url': download_url,
+            'filename': output_filename,
+            'original_filename': original_filename,
+            'conversion_type': conversion_type
+        })
+        
+    except Exception as e:
+        logger.error(f"PDF转换测试API错误: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'服务器错误: {str(e)}'
         }, status=500) 

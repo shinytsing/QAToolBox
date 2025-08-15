@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}时光胶囊历史{% endblock %}
+{% block tool_title_display %}时光胶囊历史{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary-color: #6366f1;
+  --secondary-color: #8b5cf6;
+  --accent-color: #f59e0b;
+  --success-color: #10b981;
+  --warning-color: #f97316;
+  --error-color: #ef4444;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-accent: #f3f4f6;
+  --border-color: #e5e7eb;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: var(--text-primary);
+}
+
+.history-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 头部区域 */
+.history-header {
+  text-align: center;
+  margin-bottom: 40px;
+  color: white;
+}
+
+.history-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(45deg, #ffffff, #f8f9fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.history-header .subtitle {
+  font-size: 1.2rem;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* 统计卡片 */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* 胶囊列表 */
+.capsules-section {
+  background: var(--bg-primary);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: var(--shadow-xl);
+  margin-bottom: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.capsule-filters {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.filter-btn.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+}
+
+.capsule-list {
+  display: grid;
+  gap: 20px;
+}
+
+.capsule-item {
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.capsule-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.capsule-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+.capsule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.capsule-date {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.capsule-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.capsule-status.locked {
+  background: var(--warning-color);
+  color: white;
+}
+
+.capsule-status.unlocked {
+  background: var(--success-color);
+  color: white;
+}
+
+.capsule-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.capsule-emotions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.emotion-tag {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--bg-accent);
+  color: var(--text-secondary);
+}
+
+.capsule-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.unlock-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unlock-time i {
+  font-size: 0.8rem;
+}
+
+/* 成就区域 */
+.achievements-section {
+  background: var(--bg-primary);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: var(--shadow-xl);
+}
+
+.achievement-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.achievement-item {
+  text-align: center;
+  padding: 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.achievement-item:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+.achievement-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.achievement-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.achievement-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  font-size: 1rem;
+  margin-bottom: 24px;
+}
+
+.create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  color: white;
+  text-decoration: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .history-container {
+    padding: 15px;
+  }
+  
+  .history-header h1 {
+    font-size: 2rem;
+  }
+  
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .capsule-filters {
+    justify-content: center;
+  }
+  
+  .achievement-list {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="history-container">
+  <!-- 头部区域 -->
+  <div class="history-header">
+    <h1>时光胶囊历史</h1>
+    <p class="subtitle">回顾你的记忆碎片，重温美好时光</p>
+  </div>
+
+  <!-- 统计卡片 -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-number">{{ total_capsules|default:0 }}</div>
+      <div class="stat-label">总胶囊数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ achievements.count|default:0 }}</div>
+      <div class="stat-label">获得成就</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ capsules.count|default:0 }}</div>
+      <div class="stat-label">已解锁</div>
+    </div>
+  </div>
+
+  <!-- 胶囊列表 -->
+  <div class="capsules-section">
+    <div class="section-header">
+      <h2 class="section-title">我的胶囊</h2>
+      <div class="capsule-filters">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="locked">未解锁</button>
+        <button class="filter-btn" data-filter="unlocked">已解锁</button>
+      </div>
+    </div>
+
+    <div class="capsule-list" id="capsuleList">
+      {% if capsules %}
+        {% for capsule in capsules %}
+        <div class="capsule-item" data-status="{% if capsule.is_unlocked %}unlocked{% else %}locked{% endif %}">
+          <div class="capsule-header">
+            <div class="capsule-date">{{ capsule.created_at|date:"Y年m月d日 H:i" }}</div>
+            <div class="capsule-status {% if capsule.is_unlocked %}unlocked{% else %}locked{% endif %}">
+              {% if capsule.is_unlocked %}已解锁{% else %}未解锁{% endif %}
+            </div>
+          </div>
+          
+          <div class="capsule-content">{{ capsule.content|truncatechars:150 }}</div>
+          
+          <div class="capsule-emotions">
+            {% for emotion in capsule.emotions %}
+            <span class="emotion-tag">{{ emotion }}</span>
+            {% endfor %}
+          </div>
+          
+          <div class="capsule-meta">
+            <div class="unlock-time">
+              <i class="fas fa-clock"></i>
+              <span>解锁时间: {{ capsule.unlock_time|date:"Y年m月d日 H:i"|default:"未设置" }}</span>
+            </div>
+            <div class="capsule-actions">
+              {% if not capsule.is_unlocked %}
+                <button class="unlock-btn" data-capsule-id="{{ capsule.id }}">解锁</button>
+              {% else %}
+                <button class="view-btn" data-capsule-id="{{ capsule.id }}">查看</button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="fas fa-box-open"></i>
+          <h3>还没有时光胶囊</h3>
+          <p>开始记录你的第一个时光胶囊吧！</p>
+          <a href="{% url 'tools:time_capsule_diary' %}" class="create-btn">
+            <i class="fas fa-plus"></i>
+            创建胶囊
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 成就区域 -->
+  <div class="achievements-section">
+    <h2 class="section-title">我的成就</h2>
+    <div class="achievement-list">
+      {% if achievements %}
+        {% for achievement in achievements %}
+        <div class="achievement-item">
+          <div class="achievement-icon">
+            {% if achievement.achievement_type == 'traveler' %}🚀
+            {% elif achievement.achievement_type == 'collector' %}💎
+            {% elif achievement.achievement_type == 'explorer' %}🗺️
+            {% elif achievement.achievement_type == 'prophet' %}🔮
+            {% else %}🏆{% endif %}
+          </div>
+          <div class="achievement-name">{{ achievement.get_achievement_type_display }}</div>
+          <div class="achievement-date">{{ achievement.unlocked_at|date:"Y年m月d日" }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="fas fa-trophy"></i>
+          <h3>还没有获得成就</h3>
+          <p>继续记录时光胶囊，解锁更多成就！</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- 胶囊详情模态框 -->
+<div id="capsuleModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>胶囊详情</h3>
+      <span class="close">&times;</span>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- 内容将通过JavaScript填充 -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class TimeCapsuleHistory {
+  constructor() {
+    this.initEventListeners();
+  }
+
+  initEventListeners() {
+    // 过滤器事件
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => this.filterCapsules(e.target.dataset.filter));
+    });
+
+    // 胶囊操作事件
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('unlock-btn')) {
+        this.unlockCapsule(e.target.dataset.capsuleId);
+      } else if (e.target.classList.contains('view-btn')) {
+        this.viewCapsule(e.target.dataset.capsuleId);
+      }
+    });
+
+    // 模态框关闭事件
+    const modal = document.getElementById('capsuleModal');
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.addEventListener('click', () => this.closeModal());
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) this.closeModal();
+    });
+  }
+
+  filterCapsules(filter) {
+    // 更新过滤器按钮状态
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+
+    // 过滤胶囊
+    const capsules = document.querySelectorAll('.capsule-item');
+    capsules.forEach(capsule => {
+      const status = capsule.dataset.status;
+      if (filter === 'all' || status === filter) {
+        capsule.style.display = 'block';
+      } else {
+        capsule.style.display = 'none';
+      }
+    });
+  }
+
+  async unlockCapsule(capsuleId) {
+    try {
+      const response = await fetch(`/tools/unlock-capsule/${capsuleId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showNotification(data.message, 'success');
+        // 刷新页面以更新状态
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        this.showNotification(data.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('解锁失败，请重试', 'error');
+    }
+  }
+
+  async viewCapsule(capsuleId) {
+    try {
+      const response = await fetch(`/tools/capsule-detail/${capsuleId}/`);
+      const data = await response.json();
+      
+      if (data.success) {
+        this.showCapsuleModal(data.capsule);
+      } else {
+        this.showNotification(data.message, 'error');
+      }
+    } catch (error) {
+      this.showNotification('获取详情失败，请重试', 'error');
+    }
+  }
+
+  showCapsuleModal(capsule) {
+    const modal = document.getElementById('capsuleModal');
+    const modalBody = document.getElementById('modalBody');
+    
+    modalBody.innerHTML = `
+      <div class="capsule-detail">
+        <div class="detail-date">创建时间: ${capsule.created_at}</div>
+        <div class="detail-content">${capsule.content}</div>
+        <div class="detail-emotions">
+          ${capsule.emotions.map(emotion => `<span class="emotion-tag">${emotion}</span>`).join('')}
+        </div>
+        <div class="detail-meta">
+          <div>解锁条件: ${capsule.unlock_condition}</div>
+          <div>可见性: ${capsule.visibility}</div>
+        </div>
+      </div>
+    `;
+    
+    modal.style.display = 'block';
+  }
+
+  closeModal() {
+    document.getElementById('capsuleModal').style.display = 'none';
+  }
+
+  showNotification(message, type = 'info') {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed; top: 20px; right: 20px; padding: 15px 20px; 
+      border-radius: 8px; color: white; z-index: 10000; 
+      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#6366f1'};
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (notification.parentNode) {
+        document.body.removeChild(notification);
+      }
+    }, 3000);
+  }
+
+  getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+  new TimeCapsuleHistory();
+});
+</script>
+{% endblock %}

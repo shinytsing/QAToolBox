@@ -1359,7 +1359,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case 's':
         e.preventDefault();
-        window.location.href = '/tools/self_analysis/';
+        window.location.href = '{% url "tools:self_analysis" %}';
         break;
       case 'b':
         e.preventDefault();

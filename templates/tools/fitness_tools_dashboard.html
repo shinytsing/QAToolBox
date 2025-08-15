@@ -1,0 +1,567 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}健身工具中心 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.dashboard-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 15px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color, #667eea);
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.tools-section {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.tool-card {
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color, #667eea);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    text-decoration: none;
+    color: inherit;
+}
+
+.tool-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 20px;
+}
+
+.tool-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.tool-desc {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.tool-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tool-features li {
+    padding: 5px 0;
+    color: #666;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tool-features li:before {
+    content: '✓';
+    color: var(--primary-color, #667eea);
+    font-weight: bold;
+}
+
+.recent-activity {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.activity-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 16px;
+}
+
+.activity-info {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.activity-time {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.empty-activity {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.empty-activity i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 15px;
+}
+
+.tips-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 40px;
+    text-align: center;
+}
+
+.tips-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.tips-content {
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 20px 15px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .tools-section,
+    .recent-activity,
+    .tips-section {
+        padding: 20px;
+    }
+    
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .activity-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .tools-section,
+    .recent-activity {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .tool-card {
+        background: #4a5568;
+    }
+    
+    .tool-title {
+        color: #e2e8f0;
+    }
+    
+    .tool-desc {
+        color: #a0aec0;
+    }
+    
+    .tool-features li {
+        color: #a0aec0;
+    }
+    
+    .activity-item {
+        border-bottom-color: #4a5568;
+    }
+    
+    .activity-item:hover {
+        background: #4a5568;
+    }
+    
+    .activity-title {
+        color: #e2e8f0;
+    }
+    
+    .activity-time {
+        color: #a0aec0;
+    }
+    
+    .empty-activity {
+        color: #a0aec0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>健身工具中心</h1>
+        <p>专业的健身工具集合，帮助您科学健身，追踪进步，实现健康目标</p>
+    </div>
+    
+    <div class="quick-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calculator"></i>
+            </div>
+            <div class="stat-value">8</div>
+            <div class="stat-label">可用工具</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">1,234</div>
+            <div class="stat-label">活跃用户</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value">5,678</div>
+            <div class="stat-label">计算次数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-value">4.8</div>
+            <div class="stat-label">用户评分</div>
+        </div>
+    </div>
+    
+    <div class="tools-section">
+        <h2>健身工具</h2>
+        <div class="tools-grid">
+            <a href="/tools/fitness/tools/bmi-calculator/" class="tool-card">
+                <div class="tool-icon">
+                    <i class="fas fa-weight"></i>
+                </div>
+                <div class="tool-title">BMI计算器</div>
+                <div class="tool-desc">计算身体质量指数，评估体重健康状况</div>
+                <ul class="tool-features">
+                    <li>快速BMI计算</li>
+                    <li>健康范围评估</li>
+                    <li>个性化建议</li>
+                </ul>
+            </a>
+            
+            <a href="/tools/fitness/tools/workout-timer/" class="tool-card">
+                <div class="tool-icon">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <div class="tool-title">训练计时器</div>
+                <div class="tool-desc">专业的训练计时器，支持多种训练模式</div>
+                <ul class="tool-features">
+                    <li>多种计时模式</li>
+                    <li>休息提醒</li>
+                    <li>训练记录</li>
+                </ul>
+            </a>
+            
+            <a href="/tools/fitness/tools/nutrition-calculator/" class="tool-card">
+                <div class="tool-icon">
+                    <i class="fas fa-apple-alt"></i>
+                </div>
+                <div class="tool-title">营养计算器</div>
+                <div class="tool-desc">计算每日营养需求，制定科学饮食计划</div>
+                <ul class="tool-features">
+                    <li>热量需求计算</li>
+                    <li>营养素分析</li>
+                    <li>饮食建议</li>
+                </ul>
+            </a>
+            
+            <a href="/tools/fitness/tools/body-analyzer/" class="tool-card">
+                <div class="tool-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="tool-title">身体成分分析</div>
+                <div class="tool-desc">全面分析身体成分，了解肌肉脂肪比例</div>
+                <ul class="tool-features">
+                    <li>体脂率计算</li>
+                    <li>腰臀比分析</li>
+                    <li>健康评估</li>
+                </ul>
+            </a>
+            
+            <a href="/tools/fitness/tools/workout-tracker/" class="tool-card">
+                <div class="tool-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="tool-title">训练追踪器</div>
+                <div class="tool-desc">记录训练数据，追踪进步情况</div>
+                <ul class="tool-features">
+                    <li>训练记录</li>
+                    <li>进度统计</li>
+                    <li>数据分析</li>
+                </ul>
+            </a>
+            
+            <a href="/tools/fitness/tools/workout-planner/" class="tool-card">
+                <div class="tool-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="tool-title">训练计划器</div>
+                <div class="tool-desc">制定个性化训练计划，合理安排训练强度</div>
+                <ul class="tool-features">
+                    <li>个性化计划</li>
+                    <li>多种模板</li>
+                    <li>科学安排</li>
+                </ul>
+            </a>
+        </div>
+    </div>
+    
+    <div class="recent-activity">
+        <div class="activity-header">
+            <h2>最近活动</h2>
+            <button class="btn btn-primary" onclick="refreshActivity()">
+                <i class="fas fa-sync-alt"></i>
+                刷新
+            </button>
+        </div>
+        <div class="activity-list" id="activityList">
+            <!-- 活动记录将在这里动态显示 -->
+        </div>
+    </div>
+    
+    <div class="tips-section">
+        <div class="tips-title">健身小贴士</div>
+        <div class="tips-content">
+            <p>科学健身需要合理的计划和坚持。建议每周进行3-5次训练，每次30-60分钟，结合有氧运动和力量训练，注意营养补充和充分休息。记住，健身是一个长期的过程，保持耐心和持续性比追求短期效果更重要。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class FitnessDashboard {
+    constructor() {
+        this.initializeElements();
+        this.loadRecentActivity();
+    }
+    
+    initializeElements() {
+        this.activityList = document.getElementById('activityList');
+    }
+    
+    loadRecentActivity() {
+        // 模拟从本地存储获取活动数据
+        const activities = JSON.parse(localStorage.getItem('fitnessActivities') || '[]');
+        
+        if (activities.length === 0) {
+            this.activityList.innerHTML = `
+                <div class="empty-activity">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>暂无活动记录</h3>
+                    <p>开始使用健身工具，记录您的健身活动</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // 显示最近的活动
+        const recentActivities = activities.slice(0, 5);
+        this.activityList.innerHTML = recentActivities.map(activity => `
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="${this.getActivityIcon(activity.type)}"></i>
+                </div>
+                <div class="activity-info">
+                    <div class="activity-title">${activity.title}</div>
+                    <div class="activity-time">${new Date(activity.timestamp).toLocaleString()}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    getActivityIcon(type) {
+        const icons = {
+            'bmi': 'fas fa-weight',
+            'timer': 'fas fa-stopwatch',
+            'nutrition': 'fas fa-apple-alt',
+            'body': 'fas fa-chart-pie',
+            'tracker': 'fas fa-clipboard-list',
+            'planner': 'fas fa-calendar-alt'
+        };
+        return icons[type] || 'fas fa-dumbbell';
+    }
+    
+    addActivity(type, title) {
+        const activities = JSON.parse(localStorage.getItem('fitnessActivities') || '[]');
+        activities.unshift({
+            type: type,
+            title: title,
+            timestamp: new Date().toISOString()
+        });
+        
+        // 只保留最近20条记录
+        activities.splice(20);
+        localStorage.setItem('fitnessActivities', JSON.stringify(activities));
+        
+        this.loadRecentActivity();
+    }
+}
+
+// 刷新活动记录
+function refreshActivity() {
+    const dashboard = new FitnessDashboard();
+    dashboard.loadRecentActivity();
+}
+
+// 页面加载完成后初始化仪表板
+document.addEventListener('DOMContentLoaded', function() {
+    new FitnessDashboard();
+    
+    // 为工具卡片添加点击事件，记录活动
+    document.querySelectorAll('.tool-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const title = this.querySelector('.tool-title').textContent;
+            const type = this.getAttribute('href').split('/').pop().replace('-', '_');
+            
+            // 记录活动
+            const dashboard = new FitnessDashboard();
+            dashboard.addActivity(type, `使用了${title}`);
+        });
+    });
+});
+</script>
+{% endblock %}

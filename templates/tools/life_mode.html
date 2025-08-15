@@ -561,11 +561,11 @@ function goToLifeDiary() {
         }
         
         // 跳转到生活日记页面
-        window.location.href = '/tools/life_diary_progressive/';
+        window.location.href = '{% url "tools:diary" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/life_diary_progressive/', '_self');
+        window.open('/tools/diary/', '_self');
     }
 }
 
@@ -584,7 +584,7 @@ function goToRedbookGenerator() {
         }
         
         // 跳转到小红书生成器页面
-        window.location.href = '/tools/redbook_generator/';
+        window.location.href = '{% url "tools:redbook_generator" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
@@ -608,7 +608,7 @@ function goToMeditationGuide() {
         }
         
         // 跳转到冥想指导页面
-        window.location.href = '/tools/meditation_guide/';
+        window.location.href = '{% url "tools:meditation_guide" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
@@ -631,7 +631,7 @@ function goToHeartLink() {
         }
         
         // 跳转到心动链接页面
-        window.location.href = '/tools/heart_link/';
+        window.location.href = '{% url "tools:heart_link" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
@@ -654,7 +654,7 @@ function goToTravelGuide() {
         }
         
         // 跳转到旅游攻略页面
-        window.location.href = '/tools/travel_guide/';
+        window.location.href = '{% url "tools:travel_guide" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
@@ -678,7 +678,7 @@ function goToJobSearchMachine() {
         }
         
         // 跳转到自动求职机页面
-        window.location.href = '/tools/job_search_machine/';
+        window.location.href = '{% url "tools:web_crawler" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
@@ -702,7 +702,7 @@ function goToFoodRandomizer() {
         }
         
         // 跳转到食物随机选择器页面
-        window.location.href = '/tools/food_randomizer/';
+        window.location.href = '{% url "tools:food_randomizer" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式

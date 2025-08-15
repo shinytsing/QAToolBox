@@ -1,0 +1,245 @@
+{
+  "system_monitor": {
+    "success": true,
+    "metrics": {
+      "timestamp": "2025-08-15T11:05:54.041765+00:00",
+      "cpu": {
+        "percent": 12.5,
+        "count": 12,
+        "frequency": 4
+      },
+      "memory": {
+        "total": 25769803776,
+        "available": 8004861952,
+        "percent": 68.9,
+        "used": 11089018880
+      },
+      "disk": {
+        "total": 494384795648,
+        "free": 320204926976,
+        "percent": 4.4
+      },
+      "network": {
+        "bytes_sent": 194190602582,
+        "bytes_recv": 125967971399
+      },
+      "process": {
+        "memory_rss": 49627136,
+        "memory_vms": 421169627136,
+        "cpu_percent": 0.0
+      }
+    },
+    "alerts": [],
+    "timestamp": "2025-08-15T19:05:54.042001"
+  },
+  "database_monitor": {
+    "success": true,
+    "stats": {},
+    "alerts": [],
+    "timestamp": "2025-08-15T19:05:54.045949"
+  },
+  "cache_monitor": {
+    "success": true,
+    "stats": {
+      "status": "cache_stats_not_available"
+    },
+    "alerts": [],
+    "timestamp": "2025-08-15T19:05:54.046459"
+  },
+  "application_monitor": {
+    "success": true,
+    "stats": {
+      "total_users": 93,
+      "active_users_today": 2,
+      "total_chat_rooms": 13,
+      "active_chat_rooms": 3,
+      "total_messages": 32,
+      "messages_today": 0,
+      "total_capsules": 35,
+      "public_capsules": 28,
+      "total_heart_links": 33,
+      "pending_heart_links": 0,
+      "timestamp": "2025-08-15T11:05:54.050648+00:00"
+    },
+    "alerts": [
+      {
+        "type": "low_active_users",
+        "level": "info",
+        "message": "今日活跃用户较少: 2",
+        "timestamp": "2025-08-15T11:05:54.050653+00:00"
+      }
+    ],
+    "timestamp": "2025-08-15T19:05:54.050655"
+  },
+  "performance_monitor": {
+    "success": true,
+    "metrics": {
+      "/tools/": {
+        "count": 5,
+        "total_time": 1.0,
+        "min_time": 0.1,
+        "max_time": 0.30000000000000004,
+        "avg_time": 0.2,
+        "p95_time": 0.30000000000000004,
+        "p99_time": 0.30000000000000004
+      },
+      "/tools/heart_link/": {
+        "count": 5,
+        "total_time": 1.0,
+        "min_time": 0.1,
+        "max_time": 0.30000000000000004,
+        "avg_time": 0.2,
+        "p95_time": 0.30000000000000004,
+        "p99_time": 0.30000000000000004
+      },
+      "/tools/chat_enhanced/": {
+        "count": 5,
+        "total_time": 1.0,
+        "min_time": 0.1,
+        "max_time": 0.30000000000000004,
+        "avg_time": 0.2,
+        "p95_time": 0.30000000000000004,
+        "p99_time": 0.30000000000000004
+      }
+    },
+    "alerts": [],
+    "timestamp": "2025-08-15T19:05:54.231235"
+  },
+  "monitoring_service": {
+    "success": true,
+    "metrics": {
+      "system": {
+        "timestamp": "2025-08-15T11:05:55.233461+00:00",
+        "cpu": {
+          "percent": 14.7,
+          "count": 12,
+          "frequency": 4
+        },
+        "memory": {
+          "total": 25769803776,
+          "available": 8035647488,
+          "percent": 68.8,
+          "used": 11056660480
+        },
+        "disk": {
+          "total": 494384795648,
+          "free": 320204926976,
+          "percent": 4.4
+        },
+        "network": {
+          "bytes_sent": 194190604665,
+          "bytes_recv": 125967975214
+        },
+        "process": {
+          "memory_rss": 50790400,
+          "memory_vms": 421170495488,
+          "cpu_percent": 0.0
+        }
+      },
+      "database": {},
+      "cache": {
+        "status": "cache_stats_not_available"
+      },
+      "application": {
+        "total_users": 93,
+        "active_users_today": 2,
+        "total_chat_rooms": 13,
+        "active_chat_rooms": 3,
+        "total_messages": 32,
+        "messages_today": 0,
+        "total_capsules": 35,
+        "public_capsules": 28,
+        "total_heart_links": 33,
+        "pending_heart_links": 0,
+        "timestamp": "2025-08-15T11:05:55.238411+00:00"
+      },
+      "performance": {},
+      "timestamp": "2025-08-15T11:05:55.238422+00:00"
+    },
+    "alerts": [
+      {
+        "type": "low_active_users",
+        "level": "info",
+        "message": "今日活跃用户较少: 2",
+        "timestamp": "2025-08-15T11:05:55.238538+00:00"
+      }
+    ],
+    "dashboard_data": {
+      "metrics": {
+        "system": {
+          "timestamp": "2025-08-15T11:05:56.243370+00:00",
+          "cpu": {
+            "percent": 13.3,
+            "count": 12,
+            "frequency": 4
+          },
+          "memory": {
+            "total": 25769803776,
+            "available": 8051163136,
+            "percent": 68.8,
+            "used": 11039981568
+          },
+          "disk": {
+            "total": 494384795648,
+            "free": 320204931072,
+            "percent": 4.4
+          },
+          "network": {
+            "bytes_sent": 194190612469,
+            "bytes_recv": 125967990861
+          },
+          "process": {
+            "memory_rss": 50987008,
+            "memory_vms": 421189369856,
+            "cpu_percent": 0.0
+          }
+        },
+        "database": {},
+        "cache": {
+          "status": "cache_stats_not_available"
+        },
+        "application": {
+          "total_users": 93,
+          "active_users_today": 2,
+          "total_chat_rooms": 13,
+          "active_chat_rooms": 3,
+          "total_messages": 32,
+          "messages_today": 0,
+          "total_capsules": 35,
+          "public_capsules": 28,
+          "total_heart_links": 33,
+          "pending_heart_links": 0,
+          "timestamp": "2025-08-15T11:05:56.249310+00:00"
+        },
+        "performance": {},
+        "timestamp": "2025-08-15T11:05:56.249322+00:00"
+      },
+      "alerts": [
+        {
+          "type": "low_active_users",
+          "level": "info",
+          "message": "今日活跃用户较少: 2",
+          "timestamp": "2025-08-15T11:05:56.249407+00:00"
+        }
+      ],
+      "health_score": 100,
+      "alert_summary": {
+        "critical": 0,
+        "warning": 0,
+        "info": 1
+      },
+      "timestamp": "2025-08-15T11:05:56.249438+00:00"
+    },
+    "timestamp": "2025-08-15T19:05:56.249441"
+  },
+  "cache_manager": {
+    "success": false,
+    "error": "type object 'CacheManager' has no attribute 'user_cache'",
+    "timestamp": "2025-08-15T19:05:56.249502"
+  },
+  "web_requests": {
+    "success": false,
+    "error": "unexpected indent (urls.py, line 145)",
+    "timestamp": "2025-08-15T19:05:59.990450"
+  }
+}

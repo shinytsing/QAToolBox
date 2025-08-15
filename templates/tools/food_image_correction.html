@@ -1,0 +1,858 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}食物图片矫正 - {{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .correction-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .correction-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .correction-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .correction-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .correction-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .correction-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+    
+    .panel-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .panel-title i {
+        color: #667eea;
+    }
+    
+    .image-upload-area {
+        border: 3px dashed #ddd;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: #f8f9fa;
+    }
+    
+    .image-upload-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+    
+    .image-upload-area.dragover {
+        border-color: #4caf50;
+        background: #e8f5e8;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+    
+    .upload-text {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    
+    .upload-hint {
+        font-size: 0.9rem;
+        color: #999;
+    }
+    
+    .image-preview {
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .correction-controls {
+        margin-top: 20px;
+    }
+    
+    .control-group {
+        margin-bottom: 15px;
+    }
+    
+    .control-label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    
+    .control-input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .control-input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    .slider-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .slider {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: #ddd;
+        outline: none;
+        -webkit-appearance: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        border: none;
+    }
+    
+    .slider-value {
+        min-width: 40px;
+        text-align: center;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .correction-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 25px;
+    }
+    
+    .btn-correction {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+    }
+    
+    .btn-primary-correction {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary-correction:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary-correction {
+        background: #f8f9fa;
+        color: #666;
+        border: 2px solid #ddd;
+    }
+    
+    .btn-secondary-correction:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+    
+    .btn-success-correction {
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        color: white;
+    }
+    
+    .btn-success-correction:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+    }
+    
+    .results-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+    }
+    
+    .result-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background: #f8f9fa;
+    }
+    
+    .result-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+    }
+    
+    .result-info {
+        flex: 1;
+    }
+    
+    .result-name {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .result-details {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .result-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-small {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-edit {
+        background: #ffc107;
+        color: #333;
+    }
+    
+    .btn-edit:hover {
+        background: #e0a800;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c82333;
+    }
+    
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .message {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    
+    .message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .message.warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    @media (max-width: 768px) {
+        .correction-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .correction-buttons {
+            flex-direction: column;
+        }
+        
+        .result-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .result-actions {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="correction-container">
+    <!-- 页面头部 -->
+    <div class="correction-header">
+        <h1 class="correction-title">
+            <i class="fas fa-camera-retro"></i>
+            食物图片矫正
+        </h1>
+        <p class="correction-subtitle">
+            优化和矫正食物图片，提升用户体验
+        </p>
+    </div>
+    
+    <!-- 消息提示 -->
+    <div id="messageContainer"></div>
+    
+    <!-- 主要内容区域 -->
+    <div class="correction-grid">
+        <!-- 图片上传和矫正面板 -->
+        <div class="correction-panel">
+            <h2 class="panel-title">
+                <i class="fas fa-upload"></i>
+                图片上传与矫正
+            </h2>
+            
+            <!-- 图片上传区域 -->
+            <div class="image-upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div class="upload-text">点击或拖拽上传图片</div>
+                <div class="upload-hint">支持 JPG, PNG, GIF 格式，最大 10MB</div>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            </div>
+            
+            <!-- 图片预览 -->
+            <div class="image-preview" id="imagePreview" style="display: none;">
+                <img id="previewImage" class="preview-image" alt="预览图片">
+            </div>
+            
+            <!-- 矫正控制 -->
+            <div class="correction-controls" id="correctionControls" style="display: none;">
+                <div class="control-group">
+                    <label class="control-label">亮度调整</label>
+                    <div class="slider-control">
+                        <input type="range" class="slider" id="brightnessSlider" min="0" max="200" value="100">
+                        <span class="slider-value" id="brightnessValue">100%</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">对比度调整</label>
+                    <div class="slider-control">
+                        <input type="range" class="slider" id="contrastSlider" min="0" max="200" value="100">
+                        <span class="slider-value" id="contrastValue">100%</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">饱和度调整</label>
+                    <div class="slider-control">
+                        <input type="range" class="slider" id="saturationSlider" min="0" max="200" value="100">
+                        <span class="slider-value" id="saturationValue">100%</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">锐化程度</label>
+                    <div class="slider-control">
+                        <input type="range" class="slider" id="sharpnessSlider" min="0" max="100" value="0">
+                        <span class="slider-value" id="sharpnessValue">0</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">图片尺寸</label>
+                    <select class="control-input" id="sizeSelect">
+                        <option value="original">保持原始尺寸</option>
+                        <option value="square">正方形 (800x800)</option>
+                        <option value="landscape">横版 (1200x800)</option>
+                        <option value="portrait">竖版 (800x1200)</option>
+                    </select>
+                </div>
+                
+                <div class="correction-buttons">
+                    <button class="btn-correction btn-secondary-correction" id="resetBtn">
+                        <i class="fas fa-undo"></i> 重置
+                    </button>
+                    <button class="btn-correction btn-primary-correction" id="previewBtn">
+                        <i class="fas fa-eye"></i> 预览效果
+                    </button>
+                    <button class="btn-correction btn-success-correction" id="saveBtn">
+                        <i class="fas fa-save"></i> 保存图片
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 批量处理面板 -->
+        <div class="correction-panel">
+            <h2 class="panel-title">
+                <i class="fas fa-tasks"></i>
+                批量处理
+            </h2>
+            
+            <div class="control-group">
+                <label class="control-label">选择处理模式</label>
+                <select class="control-input" id="batchMode">
+                    <option value="auto">自动优化</option>
+                    <option value="brightness">统一亮度</option>
+                    <option value="contrast">统一对比度</option>
+                    <option value="resize">统一尺寸</option>
+                    <option value="format">格式转换</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label class="control-label">目标文件夹</label>
+                <input type="text" class="control-input" id="outputFolder" placeholder="输出文件夹路径">
+            </div>
+            
+            <div class="control-group">
+                <label class="control-label">文件命名规则</label>
+                <select class="control-input" id="namingRule">
+                    <option value="original">保持原名</option>
+                    <option value="prefix">添加前缀</option>
+                    <option value="suffix">添加后缀</option>
+                    <option value="sequence">序号命名</option>
+                </select>
+            </div>
+            
+            <div class="correction-buttons">
+                <button class="btn-correction btn-secondary-correction" id="selectFolderBtn">
+                    <i class="fas fa-folder-open"></i> 选择文件夹
+                </button>
+                <button class="btn-correction btn-primary-correction" id="batchProcessBtn">
+                    <i class="fas fa-cogs"></i> 开始批量处理
+                </button>
+            </div>
+            
+            <!-- 处理进度 -->
+            <div class="loading" id="batchLoading">
+                <div class="spinner"></div>
+                <div>正在处理中，请稍候...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 处理结果面板 -->
+    <div class="results-panel">
+        <h2 class="panel-title">
+            <i class="fas fa-list"></i>
+            处理结果
+        </h2>
+        
+        <div id="resultsList">
+            <div class="text-center text-muted">
+                <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                <p>暂无处理结果</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 全局变量
+    let currentImage = null;
+    let originalImageData = null;
+    let processedImages = [];
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        setupEventListeners();
+        setupSliders();
+    });
+    
+    // 设置事件监听器
+    function setupEventListeners() {
+        // 图片上传
+        const uploadArea = document.getElementById('uploadArea');
+        const imageInput = document.getElementById('imageInput');
+        
+        uploadArea.addEventListener('click', () => imageInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        imageInput.addEventListener('change', handleImageSelect);
+        
+        // 按钮事件
+        document.getElementById('resetBtn').addEventListener('click', resetImage);
+        document.getElementById('previewBtn').addEventListener('click', previewCorrection);
+        document.getElementById('saveBtn').addEventListener('click', saveImage);
+        document.getElementById('selectFolderBtn').addEventListener('click', selectFolder);
+        document.getElementById('batchProcessBtn').addEventListener('click', batchProcess);
+    }
+    
+    // 设置滑块事件
+    function setupSliders() {
+        const sliders = ['brightness', 'contrast', 'saturation', 'sharpness'];
+        
+        sliders.forEach(type => {
+            const slider = document.getElementById(`${type}Slider`);
+            const value = document.getElementById(`${type}Value`);
+            
+            slider.addEventListener('input', function() {
+                value.textContent = this.value + (type === 'sharpness' ? '' : '%');
+                if (currentImage) {
+                    applyCorrection();
+                }
+            });
+        });
+    }
+    
+    // 拖拽处理
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('dragover');
+    }
+    
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('dragover');
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    }
+    
+    // 图片选择处理
+    function handleImageSelect(e) {
+        const file = e.target.files[0];
+        if (file) {
+            handleFile(file);
+        }
+    }
+    
+    // 处理文件
+    function handleFile(file) {
+        if (!file.type.startsWith('image/')) {
+            showMessage('请选择图片文件', 'error');
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            showMessage('文件大小不能超过10MB', 'error');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            loadImage(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    // 加载图片
+    function loadImage(src) {
+        const img = new Image();
+        img.onload = function() {
+            currentImage = img;
+            originalImageData = src;
+            
+            // 显示预览
+            const preview = document.getElementById('previewImage');
+            preview.src = src;
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('correctionControls').style.display = 'block';
+            
+            // 重置滑块
+            resetSliders();
+            
+            showMessage('图片加载成功', 'success');
+        };
+        img.src = src;
+    }
+    
+    // 重置滑块
+    function resetSliders() {
+        const sliders = ['brightness', 'contrast', 'saturation', 'sharpness'];
+        const values = [100, 100, 100, 0];
+        
+        sliders.forEach((type, index) => {
+            const slider = document.getElementById(`${type}Slider`);
+            const value = document.getElementById(`${type}Value`);
+            
+            slider.value = values[index];
+            value.textContent = values[index] + (type === 'sharpness' ? '' : '%');
+        });
+    }
+    
+    // 应用矫正
+    function applyCorrection() {
+        if (!currentImage) return;
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 设置画布尺寸
+        const sizeSelect = document.getElementById('sizeSelect').value;
+        let width = currentImage.width;
+        let height = currentImage.height;
+        
+        if (sizeSelect === 'square') {
+            const size = Math.max(width, height);
+            width = height = size;
+        } else if (sizeSelect === 'landscape') {
+            width = 1200;
+            height = 800;
+        } else if (sizeSelect === 'portrait') {
+            width = 800;
+            height = 1200;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // 绘制图片
+        ctx.drawImage(currentImage, 0, 0, width, height);
+        
+        // 应用滤镜
+        const brightness = document.getElementById('brightnessSlider').value;
+        const contrast = document.getElementById('contrastSlider').value;
+        const saturation = document.getElementById('saturationSlider').value;
+        
+        // 这里可以添加更复杂的图像处理逻辑
+        // 目前使用简单的CSS滤镜模拟
+        const filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+        
+        // 更新预览
+        const preview = document.getElementById('previewImage');
+        preview.style.filter = filter;
+    }
+    
+    // 预览矫正效果
+    function previewCorrection() {
+        if (!currentImage) {
+            showMessage('请先上传图片', 'warning');
+            return;
+        }
+        
+        applyCorrection();
+        showMessage('矫正效果已应用', 'success');
+    }
+    
+    // 保存图片
+    function saveImage() {
+        if (!currentImage) {
+            showMessage('请先上传图片', 'warning');
+            return;
+        }
+        
+        // 创建下载链接
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = currentImage.width;
+        canvas.height = currentImage.height;
+        ctx.drawImage(currentImage, 0, 0);
+        
+        canvas.toBlob(function(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'corrected_image.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('图片保存成功', 'success');
+        });
+    }
+    
+    // 重置图片
+    function resetImage() {
+        if (!currentImage) return;
+        
+        resetSliders();
+        const preview = document.getElementById('previewImage');
+        preview.src = originalImageData;
+        preview.style.filter = 'none';
+        
+        showMessage('图片已重置', 'info');
+    }
+    
+    // 选择文件夹
+    function selectFolder() {
+        // 这里可以添加文件夹选择逻辑
+        showMessage('文件夹选择功能开发中', 'warning');
+    }
+    
+    // 批量处理
+    function batchProcess() {
+        const mode = document.getElementById('batchMode').value;
+        const folder = document.getElementById('outputFolder').value;
+        
+        if (!folder) {
+            showMessage('请选择输出文件夹', 'warning');
+            return;
+        }
+        
+        // 显示加载状态
+        document.getElementById('batchLoading').style.display = 'block';
+        
+        // 模拟批量处理
+        setTimeout(() => {
+            document.getElementById('batchLoading').style.display = 'none';
+            showMessage('批量处理完成', 'success');
+            
+            // 添加示例结果
+            addResultItem('example1.jpg', '自动优化', '处理成功');
+            addResultItem('example2.png', '尺寸调整', '处理成功');
+        }, 3000);
+    }
+    
+    // 添加结果项
+    function addResultItem(filename, operation, status) {
+        const resultsList = document.getElementById('resultsList');
+        
+        // 如果是第一个结果，清除默认内容
+        if (resultsList.querySelector('.text-muted')) {
+            resultsList.innerHTML = '';
+        }
+        
+        const resultItem = document.createElement('div');
+        resultItem.className = 'result-item';
+        resultItem.innerHTML = `
+            <img src="/static/img/food/default-food.svg" alt="${filename}" class="result-image">
+            <div class="result-info">
+                <div class="result-name">${filename}</div>
+                <div class="result-details">操作: ${operation} | 状态: ${status}</div>
+            </div>
+            <div class="result-actions">
+                <button class="btn-small btn-edit" onclick="editResult(this)">
+                    <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button class="btn-small btn-delete" onclick="deleteResult(this)">
+                    <i class="fas fa-trash"></i> 删除
+                </button>
+            </div>
+        `;
+        
+        resultsList.appendChild(resultItem);
+    }
+    
+    // 编辑结果
+    function editResult(button) {
+        const resultItem = button.closest('.result-item');
+        const filename = resultItem.querySelector('.result-name').textContent;
+        showMessage(`编辑 ${filename}`, 'info');
+    }
+    
+    // 删除结果
+    function deleteResult(button) {
+        const resultItem = button.closest('.result-item');
+        const filename = resultItem.querySelector('.result-name').textContent;
+        
+        if (confirm(`确定要删除 ${filename} 吗？`)) {
+            resultItem.remove();
+            showMessage(`${filename} 已删除`, 'success');
+        }
+    }
+    
+    // 显示消息
+    function showMessage(text, type) {
+        const container = document.getElementById('messageContainer');
+        const message = document.createElement('div');
+        message.className = `message ${type}`;
+        message.textContent = text;
+        
+        container.appendChild(message);
+        
+        // 3秒后自动移除
+        setTimeout(() => {
+            message.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

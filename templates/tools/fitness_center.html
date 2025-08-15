@@ -10,7 +10,9 @@
 
 
   <!-- 快捷键提示 -->
-
+  <button class="shortcuts-help-btn" id="showShortcutsHelp" title="快捷键帮助">
+    <i class="fas fa-keyboard"></i>
+  </button>
 
   <!-- 快捷键帮助面板 -->
   <div class="shortcuts-help-panel" id="shortcutsHelpPanel">
@@ -1219,6 +1221,32 @@
   transform: scale(1.1);
 }
 
+/* 快捷键帮助按钮样式 */
+.shortcuts-help-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  border: none;
+  color: #000;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.shortcuts-help-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
 /* 快捷键帮助面板样式 */
 .shortcuts-help-panel {
   position: fixed;
@@ -1952,7 +1980,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case 's':
         e.preventDefault();
-        window.location.href = '/tools/self_analysis/';
+        window.location.href = '{% url "tools:self_analysis" %}';
         break;
       case 'b':
         e.preventDefault();
@@ -1980,6 +2008,12 @@ function initShortcutsHelp() {
   const helpPanel = document.getElementById('shortcutsHelpPanel');
   const closeBtn = document.getElementById('closeShortcutsHelp');
   const overlay = document.getElementById('helpOverlay');
+  
+  // 检查元素是否存在
+  if (!helpBtn || !helpPanel || !closeBtn || !overlay) {
+    console.warn('快捷键帮助面板元素未找到，跳过初始化');
+    return;
+  }
   
   // 显示帮助面板
   helpBtn.addEventListener('click', function() {
@@ -2027,48 +2061,72 @@ let timeLeft = 0;
 let isRunning = false;
 
 // 设置计时器按钮事件
-document.getElementById('setTimer').addEventListener('click', function() {
-  const seconds = parseInt(document.getElementById('timerSeconds').value);
-  if (seconds && seconds > 0 && seconds <= 7200) {
-    timeLeft = seconds;
-    updateTimerDisplay();
-    document.getElementById('startTimer').textContent = '开始';
+const setTimerBtn = document.getElementById('setTimer');
+if (setTimerBtn) {
+  setTimerBtn.addEventListener('click', function() {
+    const timerSecondsEl = document.getElementById('timerSeconds');
+    if (!timerSecondsEl) return;
+    
+    const seconds = parseInt(timerSecondsEl.value);
+    if (seconds && seconds > 0 && seconds <= 7200) {
+      timeLeft = seconds;
+      updateTimerDisplay();
+      const startTimerEl = document.getElementById('startTimer');
+      if (startTimerEl) {
+        startTimerEl.textContent = '开始';
+      }
+      if (isRunning) {
+        isRunning = false;
+        clearInterval(timerInterval);
+      }
+    } else {
+      alert('请输入1-7200之间的秒数');
+    }
+  });
+}
+
+const startTimerBtn = document.getElementById('startTimer');
+if (startTimerBtn) {
+  startTimerBtn.addEventListener('click', function() {
+    if (!isRunning && timeLeft > 0) {
+      isRunning = true;
+      timerInterval = setInterval(updateTimer, 1000);
+      this.textContent = '暂停';
+    } else if (isRunning) {
+      isRunning = false;
+      clearInterval(timerInterval);
+      this.textContent = '继续';
+    }
+  });
+}
+
+const pauseTimerBtn = document.getElementById('pauseTimer');
+if (pauseTimerBtn) {
+  pauseTimerBtn.addEventListener('click', function() {
     if (isRunning) {
       isRunning = false;
       clearInterval(timerInterval);
+      const startTimerEl = document.getElementById('startTimer');
+      if (startTimerEl) {
+        startTimerEl.textContent = '继续';
+      }
     }
-  } else {
-    alert('请输入1-7200之间的秒数');
-  }
-});
+  });
+}
 
-document.getElementById('startTimer').addEventListener('click', function() {
-  if (!isRunning && timeLeft > 0) {
-    isRunning = true;
-    timerInterval = setInterval(updateTimer, 1000);
-    this.textContent = '暂停';
-  } else if (isRunning) {
+const resetTimerBtn = document.getElementById('resetTimer');
+if (resetTimerBtn) {
+  resetTimerBtn.addEventListener('click', function() {
     isRunning = false;
     clearInterval(timerInterval);
-    this.textContent = '继续';
-  }
-});
-
-document.getElementById('pauseTimer').addEventListener('click', function() {
-  if (isRunning) {
-    isRunning = false;
-    clearInterval(timerInterval);
-    document.getElementById('startTimer').textContent = '继续';
-  }
-});
-
-document.getElementById('resetTimer').addEventListener('click', function() {
-  isRunning = false;
-  clearInterval(timerInterval);
-  timeLeft = 0;
-  updateTimerDisplay();
-  document.getElementById('startTimer').textContent = '开始';
-});
+    timeLeft = 0;
+    updateTimerDisplay();
+    const startTimerEl = document.getElementById('startTimer');
+    if (startTimerEl) {
+      startTimerEl.textContent = '开始';
+    }
+  });
+}
 
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -2149,12 +2207,16 @@ class CheckInCalendar {
       const data = await response.json();
       
       if (data.success) {
-        this.calendarData = data.calendar_data;
-        this.streak = data.streak;
-        this.monthlyStats = data.monthly_stats;
+        this.calendarData = data.calendar_data || {};
+        this.streak = data.streak || { current: 0, longest: 0 };
+        this.monthlyStats = data.monthly_stats || {};
       }
     } catch (error) {
       console.error('加载日历数据失败:', error);
+      // 设置默认值
+      this.calendarData = {};
+      this.streak = { current: 0, longest: 0 };
+      this.monthlyStats = {};
     }
   }
   
@@ -2165,15 +2227,26 @@ class CheckInCalendar {
     startDate.setDate(startDate.getDate() - firstDay.getDay());
     
     const calendarBody = document.getElementById('calendarBody');
+    if (!calendarBody) return;
+    
     calendarBody.innerHTML = '';
     
     // 更新月份显示
-    document.getElementById('currentMonth').textContent = 
-      `${this.currentYear}年${this.currentMonth + 1}月`;
+    const currentMonthEl = document.getElementById('currentMonth');
+    if (currentMonthEl) {
+      currentMonthEl.textContent = `${this.currentYear}年${this.currentMonth + 1}月`;
+    }
     
     // 更新连续打卡信息
-    document.getElementById('currentStreak').textContent = this.streak.current;
-    document.getElementById('longestStreak').textContent = this.streak.longest;
+    const currentStreakEl = document.getElementById('currentStreak');
+    const longestStreakEl = document.getElementById('longestStreak');
+    
+    if (currentStreakEl) {
+      currentStreakEl.textContent = this.streak.current || 0;
+    }
+    if (longestStreakEl) {
+      longestStreakEl.textContent = this.streak.longest || 0;
+    }
     
     // 生成日历网格
     for (let i = 0; i < 42; i++) {
@@ -2641,39 +2714,56 @@ class CheckInCalendar {
   }
   
   updateStats() {
-    document.getElementById('completionRate').textContent = 
-      `${this.monthlyStats.completion_rate || 0}%`;
-    document.getElementById('totalDuration').textContent = 
-      this.monthlyStats.total_duration || 0;
-    document.getElementById('completedDays').textContent = 
-      this.monthlyStats.completed_days || 0;
+    const completionRateEl = document.getElementById('completionRate');
+    const totalDurationEl = document.getElementById('totalDuration');
+    const completedDaysEl = document.getElementById('completedDays');
+    
+    if (completionRateEl) {
+      completionRateEl.textContent = `${this.monthlyStats.completion_rate || 0}%`;
+    }
+    if (totalDurationEl) {
+      totalDurationEl.textContent = this.monthlyStats.total_duration || 0;
+    }
+    if (completedDaysEl) {
+      completedDaysEl.textContent = this.monthlyStats.completed_days || 0;
+    }
   }
   
   bindEvents() {
-    document.getElementById('prevMonth').addEventListener('click', () => {
-      this.currentMonth--;
-      if (this.currentMonth < 0) {
-        this.currentMonth = 11;
-        this.currentYear--;
-      }
-      this.loadCalendarData().then(() => this.renderCalendar());
-    });
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const goTodayBtn = document.getElementById('goToday');
     
-    document.getElementById('nextMonth').addEventListener('click', () => {
-      this.currentMonth++;
-      if (this.currentMonth > 11) {
-        this.currentMonth = 0;
-        this.currentYear++;
-      }
-      this.loadCalendarData().then(() => this.renderCalendar());
-    });
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener('click', () => {
+        this.currentMonth--;
+        if (this.currentMonth < 0) {
+          this.currentMonth = 11;
+          this.currentYear--;
+        }
+        this.loadCalendarData().then(() => this.renderCalendar());
+      });
+    }
     
-    document.getElementById('goToday').addEventListener('click', () => {
-      this.currentDate = new Date();
-      this.currentYear = this.currentDate.getFullYear();
-      this.currentMonth = this.currentDate.getMonth();
-      this.loadCalendarData().then(() => this.renderCalendar());
-    });
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener('click', () => {
+        this.currentMonth++;
+        if (this.currentMonth > 11) {
+          this.currentMonth = 0;
+          this.currentYear++;
+        }
+        this.loadCalendarData().then(() => this.renderCalendar());
+      });
+    }
+    
+    if (goTodayBtn) {
+      goTodayBtn.addEventListener('click', () => {
+        this.currentDate = new Date();
+        this.currentYear = this.currentDate.getFullYear();
+        this.currentMonth = this.currentDate.getMonth();
+        this.loadCalendarData().then(() => this.renderCalendar());
+      });
+    }
   }
   
   async loadAchievements() {
@@ -2682,8 +2772,8 @@ class CheckInCalendar {
       const data = await response.json();
       
       if (data.success) {
-        this.renderAchievements(data.achievements);
-        this.updateAchievementStats(data.stats);
+        this.renderAchievements(data.achievements || []);
+        this.updateAchievementStats(data.stats || {});
       } else {
         console.error('加载成就失败:', data.error);
         this.showAchievementError();
@@ -2698,6 +2788,11 @@ class CheckInCalendar {
     const container = document.getElementById('achievementsContainer');
     if (!container) return;
     
+    // 确保achievements是数组
+    if (!Array.isArray(achievements)) {
+      achievements = [];
+    }
+    
     if (achievements.length === 0) {
       container.innerHTML = `
         <div class="loading-message">
@@ -2708,22 +2803,25 @@ class CheckInCalendar {
     }
     
     const achievementHTML = achievements.map(achievement => {
+      // 确保achievement对象存在且包含必要属性
+      if (!achievement) return '';
+      
       const statusClass = achievement.is_achieved ? 'unlocked' : 'locked';
       const progressBar = achievement.is_achieved ? '' : `
         <div class="achievement-progress">
-          <div class="achievement-progress-bar" style="width: ${achievement.progress}%"></div>
+          <div class="achievement-progress-bar" style="width: ${achievement.progress || 0}%"></div>
         </div>
       `;
       const meta = achievement.is_achieved ? 
         `<div class="achievement-meta">已获得</div>` : 
-        `<div class="achievement-meta">${achievement.current}/${achievement.target}</div>`;
+        `<div class="achievement-meta">${achievement.current || 0}/${achievement.target || 0}</div>`;
       
       return `
         <div class="achievement ${statusClass}">
-          <i class="${achievement.icon}"></i>
+          <i class="${achievement.icon || 'fas fa-trophy'}"></i>
           <div class="achievement-info">
-            <div class="achievement-title">${achievement.title}</div>
-            <div class="achievement-desc">${achievement.description}</div>
+            <div class="achievement-title">${achievement.title || '未知成就'}</div>
+            <div class="achievement-desc">${achievement.description || '暂无描述'}</div>
             ${progressBar}
           </div>
           ${meta}
@@ -2735,6 +2833,12 @@ class CheckInCalendar {
   }
   
   updateAchievementStats(stats) {
+    // 检查stats是否存在
+    if (!stats) {
+      console.warn('成就统计数据为空');
+      return;
+    }
+    
     const elements = {
       achievementCount: document.getElementById('achievementCount'),
       currentStreakStat: document.getElementById('currentStreakStat'),
@@ -2742,13 +2846,13 @@ class CheckInCalendar {
     };
     
     if (elements.achievementCount) {
-      elements.achievementCount.textContent = stats.achievement_count;
+      elements.achievementCount.textContent = stats.achievement_count || 0;
     }
     if (elements.currentStreakStat) {
-      elements.currentStreakStat.textContent = stats.current_streak;
+      elements.currentStreakStat.textContent = stats.current_streak || 0;
     }
     if (elements.totalCheckinsStat) {
-      elements.totalCheckinsStat.textContent = stats.total_checkins;
+      elements.totalCheckinsStat.textContent = stats.total_checkins || 0;
     }
   }
   

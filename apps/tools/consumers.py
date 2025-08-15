@@ -60,25 +60,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
         logger.info(f'User {self.scope["user"].username} connected to room {self.room_id}')
     
     async def disconnect(self, close_code):
-        # 广播用户离开消息
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'user_left',
-                'username': self.scope['user'].username
-            }
-        )
-        
-        # 更新在线状态
-        await self.update_online_status('offline')
-        
-        # 离开房间组
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-        
-        logger.info(f'User {self.scope["user"].username} disconnected from room {self.room_id}')
+        try:
+            # 广播用户离开消息
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'user_left',
+                    'username': self.scope['user'].username
+                }
+            )
+            
+            # 更新在线状态为离线
+            await self.update_online_status('offline')
+            
+            # 记录断开连接时间
+            await self.record_disconnect_time()
+            
+            # 离开房间组
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
+            
+            logger.info(f'User {self.scope["user"].username} disconnected from room {self.room_id} (code: {close_code})')
+            
+        except Exception as e:
+            logger.error(f'Error during disconnect: {e}')
     
     async def receive(self, text_data):
         try:
@@ -216,6 +223,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             # 如果是测试房间，允许所有已登录用户访问
             if self.room_id.startswith('test-room-'):
+                # 检查测试房间是否存在，如果不存在则创建
+                room, created = ChatRoom.objects.get_or_create(
+                    room_id=self.room_id,
+                    defaults={
+                        'user1': self.scope['user'],
+                        'status': 'active'
+                    }
+                )
                 return True
                 
             room = ChatRoom.objects.get(room_id=self.room_id)
@@ -224,21 +239,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 participants.append(room.user2)
             return self.scope['user'] in participants
         except ChatRoom.DoesNotExist:
-            # 如果房间不存在，创建测试房间
-            if self.room_id.startswith('test-room-'):
-                from django.contrib.auth.models import User
-                try:
-                    # 获取第一个用户作为测试用户
-                    test_user = User.objects.first()
-                    if test_user:
-                        room = ChatRoom.objects.create(
-                            room_id=self.room_id,
-                            user1=test_user,
-                            status='active'
-                        )
-                        return True
-                except Exception as e:
-                    logger.error(f'Error creating test room: {e}')
+            logger.warning(f'Room {self.room_id} does not exist')
+            return False
+        except Exception as e:
+            logger.error(f'Error checking room access: {e}')
             return False
     
     @database_sync_to_async
@@ -349,3 +353,50 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'tags': ['🆕 新用户'],
                 'is_online': True,
             }
+    
+    @database_sync_to_async
+    def record_disconnect_time(self):
+        """记录用户断开连接时间"""
+        try:
+            from django.utils import timezone
+            
+            # 更新用户在线状态，记录断开时间
+            online_status, created = UserOnlineStatus.objects.get_or_create(
+                user=self.scope['user'],
+                defaults={
+                    'status': 'offline',
+                    'is_online': False,
+                    'last_seen': timezone.now()
+                }
+            )
+            
+            if not created:
+                online_status.status = 'offline'
+                online_status.is_online = False
+                online_status.last_seen = timezone.now()
+                online_status.save()
+            
+            # 检查聊天室是否需要结束
+            try:
+                room = ChatRoom.objects.get(room_id=self.room_id)
+                if room.status == 'active':
+                    # 检查房间中的其他用户是否也离线
+                    participants = room.participants
+                    all_offline = True
+                    
+                    for participant in participants:
+                        if participant != self.scope['user']:
+                            participant_status = UserOnlineStatus.objects.filter(user=participant).first()
+                            if participant_status and participant_status.is_online:
+                                all_offline = False
+                                break
+                    
+                    # 如果所有用户都离线，标记房间为需要清理
+                    if all_offline:
+                        logger.info(f'聊天室 {self.room_id} 所有用户已离线，标记为需要清理')
+                        
+            except ChatRoom.DoesNotExist:
+                pass
+                
+        except Exception as e:
+            logger.error(f'Error recording disconnect time: {e}')

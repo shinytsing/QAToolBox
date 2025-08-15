@@ -380,16 +380,16 @@ body::before {
 }
 
 .navbar.punk-nav .navbar-brand {
-    color: var(--punk-primary) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
     font-weight: 900 !important;
     font-size: 2em !important;
     text-transform: uppercase !important;
     letter-spacing: 3px !important;
-    text-shadow: 0 0 15px var(--punk-primary);
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 .navbar.punk-nav .nav-link {
-    color: var(--punk-secondary) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
     font-weight: bold !important;
     text-transform: uppercase !important;
     transition: all 0.3s ease !important;

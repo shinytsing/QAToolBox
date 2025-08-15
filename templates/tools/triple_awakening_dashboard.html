@@ -575,7 +575,7 @@
       </p>
       
       <div class="action-buttons">
-        <button class="action-btn" onclick="window.location.href='{% url 'copilot_page' %}'">
+        <button class="action-btn" onclick="window.location.href='{% url 'tools:copilot_page' %}'">
           <i class="fas fa-eye"></i> 查看协作
         </button>
         <button class="action-btn secondary" onclick="createCollaboration()">
@@ -805,7 +805,7 @@ function createCollaboration() {
   .then(data => {
     if (data.success) {
       alert('AI协作声明创建成功！');
-      window.location.href = '/tools/copilot/';
+      window.location.href = '{% url "tools:copilot_page" %}';
     } else {
       alert('协作声明创建失败: ' + data.message);
     }

@@ -521,6 +521,30 @@
         animation: none;
     }
 
+    .image-recognition-button {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .image-recognition-button:hover {
+        background: linear-gradient(45deg, #764ba2, #667eea);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
     .animation-container {
         display: none;
         text-align: center;
@@ -814,6 +838,62 @@
     @keyframes tagAppear {
         from { opacity: 0; transform: scale(0.8); }
         to { opacity: 1; transform: scale(1); }
+    }
+
+    .nutrition-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        border: 1px solid #dee2e6;
+    }
+
+    .nutrition-title {
+        color: #495057;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .nutrition-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+    }
+
+    .nutrition-item {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e9ecef;
+        transition: transform 0.2s ease;
+    }
+
+    .nutrition-item:hover {
+        transform: translateY(-2px);
+    }
+
+    .nutrition-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #007bff;
+        margin-bottom: 4px;
+    }
+
+    .nutrition-label {
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .nutrition-unit {
+        font-size: 10px;
+        color: #adb5bd;
     }
 
     .alternative-section {
@@ -1331,6 +1411,9 @@
             <button id="pureRandomButton" class="pure-random-button" onclick="startPureRandomization()">
                 🎲 朕随便
             </button>
+            <a href="{% url 'tools:food_image_recognition' %}" class="image-recognition-button">
+                📷 图像识别
+            </a>
         </div>
     </div>
 
@@ -1367,6 +1450,11 @@
                 <div class="ingredients-section">
                     <h3 class="ingredients-title">🥬 主要食材</h3>
                     <div id="ingredientsList" class="ingredients-list"></div>
+                </div>
+                
+                <div class="nutrition-section">
+                    <h3 class="nutrition-title">📊 营养信息</h3>
+                    <div id="nutritionInfo" class="nutrition-info"></div>
                 </div>
             </div>
         </div>
@@ -1429,15 +1517,52 @@ let currentHistoryId = null;
 let currentRating = 0;
 let isSlotSpinning = false;
 let localFoodImages = {};
-let useLocalImages = {% if use_local_images %}true{% else %}false{% endif %};
+let useLocalImages = true; // 强制使用本地图片
 
-// 初始化本地图片数据
-{% if use_local_images and local_food_images %}
-localFoodImages = {{ local_food_images|safe }};
-console.log('本地食物图片已加载:', Object.keys(localFoodImages).length, '个食物');
-{% else %}
-console.log('未启用本地图片或无本地图片数据');
-{% endif %}
+// 初始化DeepSeek图片数据
+const deepseekFoodImages = {
+    // 早餐类
+    '豆浆油条': '/static/img/food/bread-1836411_1280.jpg',
+    '煎蛋三明治': '/static/img/food/bread-6725352_1280.jpg',
+    '燕麦粥': '/static/img/food/food-5983402_1280.jpg',
+    '包子豆浆': '/static/img/food/chinese-5233510_1280.jpg',
+    
+    // 午餐类 - 中式
+    '宫保鸡丁': '/static/img/food/chinese-3855829_1280.jpg',
+    '麻婆豆腐': '/static/img/food/mapo-tofu-2570173_1280.jpg',
+    '番茄炒蛋': '/static/img/food/egg-roll-6353108_1280.jpg',
+    '青椒肉丝': '/static/img/food/green-dragon-vegetable-1707089_1280.jpg',
+    '鱼香肉丝': '/static/img/food/chinese-915325_1280.jpg',
+    '回锅肉': '/static/img/food/braise-pork-1398308_1280.jpg',
+    '白切鸡': '/static/img/food/chinese-841179_1280.jpg',
+    '叉烧肉': '/static/img/food/roast-3416333_1280.jpg',
+    '炸酱面': '/static/img/food/lanzhou-6896276_1280.jpg',
+    '蛋炒饭': '/static/img/food/the-pork-fried-rice-made-908333_1280.jpg',
+    
+    // 午餐类 - 西式
+    '意大利面': '/static/img/food/pasta-7209002_1280.jpg',
+    '三明治': '/static/img/food/bread-6725352_1280.jpg',
+    '沙拉': '/static/img/food/vegetarian-1141242_1280.jpg',
+    '汉堡包': '/static/img/food/food-3228058_1280.jpg',
+    '披萨': '/static/img/food/pizza-6478478_1280.jpg',
+    
+    // 晚餐类
+    '红烧肉': '/static/img/food/braise-pork-1398308_1280.jpg',
+    '牛排': '/static/img/food/steak-6714964_1280.jpg',
+    '水煮鱼': '/static/img/food/steamed-fish-3495930_1280.jpg',
+    '北京烤鸭': '/static/img/food/duck-253846_1280.jpg',
+    '东坡肉': '/static/img/food/braise-pork-1398308_1280.jpg',
+    '剁椒鱼头': '/static/img/food/steamed-fish-3495930_1280.jpg',
+    
+    // 夜宵类
+    '小龙虾': '/static/img/food/crayfish-866400_1280.jpg',
+    '火锅': '/static/img/food/chongqing-6764962_1280.jpg',
+    '烧烤': '/static/img/food/korean-barbecue-8579177_1280.jpg',
+};
+
+// 使用DeepSeek图片数据
+localFoodImages = deepseekFoodImages;
+console.log('DeepSeek食物图片已加载:', Object.keys(localFoodImages).length, '个食物');
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1632,6 +1757,36 @@ function showResult(selectedFood, alternativeFoods) {
         });
     } else {
         ingredientsList.innerHTML = '<span style="color: #666;">暂无食材信息</span>';
+    }
+    
+    // 填充营养信息
+    const nutritionInfo = document.getElementById('nutritionInfo');
+    nutritionInfo.innerHTML = '';
+    
+    if (selectedFood.calories > 0) {
+        const nutritionItems = [
+            { label: '卡路里', value: selectedFood.calories, unit: '千卡', icon: '🔥' },
+            { label: '蛋白质', value: selectedFood.protein, unit: '克', icon: '💪' },
+            { label: '脂肪', value: selectedFood.fat, unit: '克', icon: '🥑' },
+            { label: '碳水化合物', value: selectedFood.carbohydrates, unit: '克', icon: '🍞' },
+            { label: '膳食纤维', value: selectedFood.fiber, unit: '克', icon: '🌾' },
+            { label: '糖分', value: selectedFood.sugar, unit: '克', icon: '🍯' },
+            { label: '钠', value: selectedFood.sodium, unit: '毫克', icon: '🧂' }
+        ];
+        
+        nutritionItems.forEach((item, index) => {
+            const nutritionItem = document.createElement('div');
+            nutritionItem.className = 'nutrition-item';
+            nutritionItem.style.animationDelay = `${index * 0.1}s`;
+            nutritionItem.innerHTML = `
+                <div class="nutrition-value">${item.icon} ${item.value}</div>
+                <div class="nutrition-label">${item.label}</div>
+                <div class="nutrition-unit">${item.unit}</div>
+            `;
+            nutritionInfo.appendChild(nutritionItem);
+        });
+    } else {
+        nutritionInfo.innerHTML = '<span style="color: #666; grid-column: 1 / -1; text-align: center;">暂无营养信息</span>';
     }
     
     // 填充备选食物

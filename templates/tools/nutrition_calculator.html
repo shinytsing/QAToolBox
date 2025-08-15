@@ -1,0 +1,634 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}营养计算器 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.nutrition-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.nutrition-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.nutrition-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.nutrition-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.calculator-section {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.calculator-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 12px 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color, #667eea);
+}
+
+.calculate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    grid-column: 1 / -1;
+    margin-top: 20px;
+}
+
+.calculate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.calculate-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.result-section {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    display: none;
+}
+
+.result-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.nutrition-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.result-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.result-card:hover {
+    transform: translateY(-5px);
+}
+
+.result-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color, #667eea);
+    margin-bottom: 10px;
+}
+
+.result-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.macro-breakdown {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.macro-breakdown h3 {
+    margin: 0 0 15px 0;
+    text-align: center;
+}
+
+.macro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.macro-item {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.macro-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.macro-name {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.recommendations {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.recommendations h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.recommendations ul {
+    list-style: none;
+    padding: 0;
+}
+
+.recommendations li {
+    padding: 8px 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.recommendations li:before {
+    content: '✓';
+    color: var(--primary-color, #667eea);
+    font-weight: bold;
+}
+
+.food-suggestions {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.food-category {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.food-category h4 {
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.food-list {
+    list-style: none;
+    padding: 0;
+}
+
+.food-list li {
+    padding: 5px 0;
+    color: #666;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.food-list li:last-child {
+    border-bottom: none;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color, #667eea);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .nutrition-container {
+        padding: 20px 15px;
+    }
+    
+    .nutrition-header h1 {
+        font-size: 2rem;
+    }
+    
+    .calculator-section,
+    .result-section,
+    .food-suggestions {
+        padding: 20px;
+    }
+    
+    .calculator-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .nutrition-results {
+        grid-template-columns: 1fr;
+    }
+    
+    .macro-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .calculator-section,
+    .result-section,
+    .food-suggestions {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .form-group label {
+        color: #e2e8f0;
+    }
+    
+    .form-group input,
+    .form-group select {
+        background: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .result-card {
+        background: #4a5568;
+    }
+    
+    .recommendations {
+        background: #4a5568;
+    }
+    
+    .recommendations h3 {
+        color: #e2e8f0;
+    }
+    
+    .recommendations li {
+        color: #a0aec0;
+    }
+    
+    .food-category {
+        background: #4a5568;
+    }
+    
+    .food-category h4 {
+        color: #e2e8f0;
+    }
+    
+    .food-list li {
+        color: #a0aec0;
+        border-bottom-color: #718096;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nutrition-container">
+    <div class="nutrition-header">
+        <h1>营养计算器</h1>
+        <p>科学计算每日所需热量和营养素，制定合理的饮食计划，配合训练效果</p>
+    </div>
+    
+    <div class="calculator-section">
+        <h2>计算您的营养需求</h2>
+        <form class="calculator-form" id="nutritionForm">
+            <div class="form-group">
+                <label for="age">年龄</label>
+                <input type="number" id="age" name="age" placeholder="例如: 25" min="15" max="100" required>
+            </div>
+            <div class="form-group">
+                <label for="gender">性别</label>
+                <select id="gender" name="gender" required>
+                    <option value="male">男性</option>
+                    <option value="female">女性</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="height">身高 (厘米)</label>
+                <input type="number" id="height" name="height" placeholder="例如: 170" min="100" max="250" required>
+            </div>
+            <div class="form-group">
+                <label for="weight">体重 (公斤)</label>
+                <input type="number" id="weight" name="weight" placeholder="例如: 65" min="30" max="300" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="activityLevel">活动水平</label>
+                <select id="activityLevel" name="activityLevel" required>
+                    <option value="sedentary">久坐不动</option>
+                    <option value="light">轻度活动</option>
+                    <option value="moderate" selected>中度活动</option>
+                    <option value="active">重度活动</option>
+                    <option value="very_active">极重度活动</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="goal">目标</label>
+                <select id="goal" name="goal" required>
+                    <option value="maintain" selected>保持体重</option>
+                    <option value="lose">减重</option>
+                    <option value="gain">增重</option>
+                </select>
+            </div>
+            <button type="submit" class="calculate-btn" id="calculateBtn">
+                <i class="fas fa-calculator"></i>
+                计算营养需求
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>正在计算...</p>
+        </div>
+    </div>
+    
+    <div class="result-section" id="resultSection">
+        <div class="result-header">
+            <h2>营养需求分析</h2>
+        </div>
+        
+        <div class="nutrition-results" id="nutritionResults">
+            <!-- 结果将在这里动态显示 -->
+        </div>
+        
+        <div class="macro-breakdown" id="macroBreakdown">
+            <!-- 宏量营养素分解将在这里显示 -->
+        </div>
+        
+        <div class="recommendations" id="recommendations">
+            <!-- 建议将在这里显示 -->
+        </div>
+    </div>
+    
+    <div class="food-suggestions">
+        <h2>食物建议</h2>
+        <div class="suggestions-grid">
+            <div class="food-category">
+                <h4><i class="fas fa-drumstick-bite"></i> 优质蛋白质</h4>
+                <ul class="food-list">
+                    <li>鸡胸肉 (31g蛋白质/100g)</li>
+                    <li>三文鱼 (20g蛋白质/100g)</li>
+                    <li>鸡蛋 (13g蛋白质/100g)</li>
+                    <li>希腊酸奶 (10g蛋白质/100g)</li>
+                    <li>豆腐 (8g蛋白质/100g)</li>
+                </ul>
+            </div>
+            <div class="food-category">
+                <h4><i class="fas fa-bread-slice"></i> 复合碳水化合物</h4>
+                <ul class="food-list">
+                    <li>燕麦 (68g碳水/100g)</li>
+                    <li>糙米 (23g碳水/100g)</li>
+                    <li>红薯 (20g碳水/100g)</li>
+                    <li>全麦面包 (49g碳水/100g)</li>
+                    <li>藜麦 (21g碳水/100g)</li>
+                </ul>
+            </div>
+            <div class="food-category">
+                <h4><i class="fas fa-seedling"></i> 健康脂肪</h4>
+                <ul class="food-list">
+                    <li>牛油果 (15g脂肪/100g)</li>
+                    <li>坚果 (50-70g脂肪/100g)</li>
+                    <li>橄榄油 (100g脂肪/100g)</li>
+                    <li>椰子油 (100g脂肪/100g)</li>
+                    <li>奇亚籽 (31g脂肪/100g)</li>
+                </ul>
+            </div>
+            <div class="food-category">
+                <h4><i class="fas fa-apple-alt"></i> 维生素和矿物质</h4>
+                <ul class="food-list">
+                    <li>菠菜 (富含铁和维生素K)</li>
+                    <li>蓝莓 (富含抗氧化剂)</li>
+                    <li>胡萝卜 (富含维生素A)</li>
+                    <li>橙子 (富含维生素C)</li>
+                    <li>香蕉 (富含钾)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('nutritionForm');
+    const resultSection = document.getElementById('resultSection');
+    const loading = document.getElementById('loading');
+    const calculateBtn = document.getElementById('calculateBtn');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // 验证数据
+        if (!data.age || !data.height || !data.weight) {
+            alert('请填写所有必填字段');
+            return;
+        }
+        
+        // 显示加载状态
+        loading.style.display = 'block';
+        resultSection.style.display = 'none';
+        calculateBtn.disabled = true;
+        
+        // 计算基础代谢率 (BMR)
+        let bmr;
+        if (data.gender === 'male') {
+            bmr = 88.362 + (13.397 * parseFloat(data.weight)) + (4.799 * parseFloat(data.height)) - (5.677 * parseFloat(data.age));
+        } else {
+            bmr = 447.593 + (9.247 * parseFloat(data.weight)) + (3.098 * parseFloat(data.height)) - (4.330 * parseFloat(data.age));
+        }
+        
+        // 活动系数
+        const activityMultipliers = {
+            'sedentary': 1.2,
+            'light': 1.375,
+            'moderate': 1.55,
+            'active': 1.725,
+            'very_active': 1.9
+        };
+        
+        const tdee = bmr * activityMultipliers[data.activityLevel];
+        
+        // 根据目标调整热量
+        let targetCalories;
+        switch(data.goal) {
+            case 'lose':
+                targetCalories = tdee - 500; // 减重：每天减少500卡路里
+                break;
+            case 'gain':
+                targetCalories = tdee + 300; // 增重：每天增加300卡路里
+                break;
+            default:
+                targetCalories = tdee; // 保持体重
+        }
+        
+        // 计算宏量营养素
+        const protein = parseFloat(data.weight) * 2.2; // 每公斤体重2.2g蛋白质
+        const fat = targetCalories * 0.25 / 9; // 25%的热量来自脂肪
+        const carbs = (targetCalories - protein * 4 - fat * 9) / 4; // 剩余热量来自碳水化合物
+        
+        // 模拟API响应
+        setTimeout(() => {
+            loading.style.display = 'none';
+            calculateBtn.disabled = false;
+            
+            displayResults({
+                bmr: Math.round(bmr),
+                tdee: Math.round(tdee),
+                targetCalories: Math.round(targetCalories),
+                protein: Math.round(protein),
+                fat: Math.round(fat),
+                carbs: Math.round(carbs),
+                goal: data.goal
+            });
+        }, 1000);
+    });
+    
+    function displayResults(data) {
+        const nutritionResults = document.getElementById('nutritionResults');
+        const macroBreakdown = document.getElementById('macroBreakdown');
+        const recommendations = document.getElementById('recommendations');
+        
+        // 显示营养结果
+        nutritionResults.innerHTML = `
+            <div class="result-card">
+                <div class="result-value">${data.bmr}</div>
+                <div class="result-label">基础代谢率 (卡路里/天)</div>
+            </div>
+            <div class="result-card">
+                <div class="result-value">${data.tdee}</div>
+                <div class="result-label">每日总消耗 (卡路里/天)</div>
+            </div>
+            <div class="result-card">
+                <div class="result-value">${data.targetCalories}</div>
+                <div class="result-label">目标热量 (卡路里/天)</div>
+            </div>
+            <div class="result-card">
+                <div class="result-value">${data.protein}g</div>
+                <div class="result-label">蛋白质需求</div>
+            </div>
+        `;
+        
+        // 显示宏量营养素分解
+        macroBreakdown.innerHTML = `
+            <h3>宏量营养素分配</h3>
+            <div class="macro-grid">
+                <div class="macro-item">
+                    <div class="macro-amount">${data.protein}g</div>
+                    <div class="macro-name">蛋白质</div>
+                </div>
+                <div class="macro-item">
+                    <div class="macro-amount">${data.carbs}g</div>
+                    <div class="macro-name">碳水化合物</div>
+                </div>
+                <div class="macro-item">
+                    <div class="macro-amount">${data.fat}g</div>
+                    <div class="macro-name">脂肪</div>
+                </div>
+            </div>
+        `;
+        
+        // 显示建议
+        const goalText = {
+            'maintain': '保持当前饮食模式，注意营养均衡',
+            'lose': '适当减少热量摄入，增加蛋白质比例，配合运动',
+            'gain': '增加热量摄入，特别是蛋白质和碳水化合物'
+        };
+        
+        recommendations.innerHTML = `
+            <h3>营养建议</h3>
+            <ul>
+                <li>${goalText[data.goal]}</li>
+                <li>蛋白质建议分3-4次摄入，每次20-30g</li>
+                <li>碳水化合物优先选择复合碳水，避免精制糖</li>
+                <li>脂肪选择健康脂肪，如橄榄油、坚果等</li>
+                <li>每天至少喝8杯水，运动时增加饮水量</li>
+                <li>建议咨询专业营养师制定个性化饮食计划</li>
+            </ul>
+        `;
+        
+        // 显示结果区域
+        resultSection.style.display = 'block';
+        
+        // 滚动到结果区域
+        resultSection.scrollIntoView({ behavior: 'smooth' });
+    }
+});
+</script>
+{% endblock %}

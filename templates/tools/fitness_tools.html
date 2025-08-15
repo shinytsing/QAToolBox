@@ -686,33 +686,32 @@
 <script>
 // 打开BMI计算器
 function openBMICalculator() {
-    alert('BMI计算器功能开发中...');
-    // 这里可以跳转到具体的计算器页面
+    window.location.href = '/tools/fitness/tools/bmi-calculator/';
 }
 
 // 打开训练追踪器
 function openWorkoutTracker() {
-    alert('训练追踪器功能开发中...');
+    window.location.href = '/tools/fitness/tools/workout-tracker/';
 }
 
 // 打开训练计划器
 function openWorkoutPlanner() {
-    alert('训练计划器功能开发中...');
+    window.location.href = '/tools/fitness/tools/workout-planner/';
 }
 
 // 打开身体成分分析
 function openBodyAnalyzer() {
-    alert('身体成分分析功能开发中...');
+    window.location.href = '/tools/fitness/tools/body-analyzer/';
 }
 
 // 打开训练计时器
 function openWorkoutTimer() {
-    alert('训练计时器功能开发中...');
+    window.location.href = '/tools/fitness/tools/workout-timer/';
 }
 
 // 打开营养计算器
 function openNutritionCalculator() {
-    alert('营养计算器功能开发中...');
+    window.location.href = '/tools/fitness/tools/nutrition-calculator/';
 }
 
 // 了解更多功能
@@ -731,16 +730,21 @@ function learnMore(tool) {
 
 // 打开快速工具
 function openQuickTool(tool) {
-    const toolNames = {
-        'heart-rate': '心率计算器',
-        'calories': '卡路里计算器',
-        'protein': '蛋白质计算器',
-        'water': '水分计算器',
-        'reps': 'RM计算器',
-        'pace': '配速计算器'
+    const toolUrls = {
+        'heart-rate': '/tools/fitness/tools/heart-rate-calculator/',
+        'calories': '/tools/fitness/tools/calories-calculator/',
+        'protein': '/tools/fitness/tools/protein-calculator/',
+        'water': '/tools/fitness/tools/water-calculator/',
+        'reps': '/tools/fitness/tools/rm-calculator/',
+        'pace': '/tools/fitness/tools/pace-calculator/'
     };
     
-    alert(`${toolNames[tool]}功能开发中...`);
+    const url = toolUrls[tool];
+    if (url) {
+        window.location.href = url;
+    } else {
+        alert('该工具正在开发中...');
+    }
 }
 
 // 页面加载完成后的初始化

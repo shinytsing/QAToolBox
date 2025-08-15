@@ -810,6 +810,170 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+/* 节拍器样式 */
+.metronome {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.metronome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.metronome-header h4 {
+  color: #e94560;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.metronome-status {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #f44336;
+}
+
+.bpm-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.bpm-display {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #e94560;
+  text-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+  margin-bottom: 5px;
+}
+
+.bpm-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bpm-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.bpm-btn {
+  background: rgba(233, 69, 96, 0.2);
+  color: white;
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  min-width: 40px;
+}
+
+.bpm-btn:hover {
+  background: rgba(233, 69, 96, 0.4);
+  transform: translateY(-2px);
+}
+
+.bpm-slider {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.bpm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #e94560;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+.bpm-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #e94560;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+.bpm-presets {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.preset-btn:hover {
+  background: rgba(233, 69, 96, 0.3);
+  border-color: #e94560;
+}
+
+.metronome-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.tuner-btn.primary {
+  background: linear-gradient(135deg, #e94560 0%, #d63384 100%);
+  border-color: #e94560;
+}
+
+.time-signature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.time-signature label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.time-signature select {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.time-signature select:focus {
+  outline: none;
+  border-color: #e94560;
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .calendar-nav {
@@ -845,6 +1009,24 @@
   
   .form-actions {
     flex-direction: column;
+  }
+  
+  .bpm-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .bpm-presets {
+    justify-content: center;
+  }
+  
+  .metronome-controls {
+    flex-direction: column;
+  }
+  
+  .time-signature {
+    flex-direction: column;
+    gap: 5px;
   }
 }
 </style>
@@ -943,14 +1125,49 @@
       
       <div class="rhythm-trainer" id="rhythmTrainer">
         <div class="metronome">
-          <div class="bpm-display" id="bpmDisplay">120</div>
-          <div class="bpm-controls">
-            <button class="bpm-btn" onclick="decreaseBPM()">-</button>
-            <input type="range" class="bpm-slider" id="bpmSlider" min="40" max="200" value="120" oninput="updateBPM()">
-            <button class="bpm-btn" onclick="increaseBPM()">+</button>
+          <div class="metronome-header">
+            <h4>节拍器控制</h4>
+            <div class="metronome-status" id="metronomeStatus">已停止</div>
           </div>
-          <button class="tuner-btn" onclick="toggleMetronome()" id="metronomeBtn">开始节拍器</button>
+          
+          <div class="bpm-section">
+            <div class="bpm-display" id="bpmDisplay">120</div>
+            <div class="bpm-label">BPM</div>
+          </div>
+          
+          <div class="bpm-controls">
+            <button class="bpm-btn" onclick="decreaseBPM()" title="减少5 BPM">-5</button>
+            <button class="bpm-btn" onclick="decreaseBPM(1)" title="减少1 BPM">-1</button>
+            <input type="range" class="bpm-slider" id="bpmSlider" min="40" max="200" value="120" oninput="updateBPM()">
+            <button class="bpm-btn" onclick="increaseBPM(1)" title="增加1 BPM">+1</button>
+            <button class="bpm-btn" onclick="increaseBPM()" title="增加5 BPM">+5</button>
+          </div>
+          
+          <div class="bpm-presets">
+            <button class="preset-btn" onclick="setBPM(60)">慢速</button>
+            <button class="preset-btn" onclick="setBPM(80)">中慢</button>
+            <button class="preset-btn" onclick="setBPM(120)">中速</button>
+            <button class="preset-btn" onclick="setBPM(160)">中快</button>
+            <button class="preset-btn" onclick="setBPM(180)">快速</button>
+          </div>
+          
+          <div class="metronome-controls">
+            <button class="tuner-btn primary" onclick="toggleMetronome()" id="metronomeBtn">开始节拍器</button>
+            <button class="tuner-btn" onclick="tapTempo()" id="tapTempoBtn">点击节拍</button>
+            <button class="tuner-btn" onclick="resetMetronome()">重置</button>
+          </div>
+          
+          <div class="time-signature">
+            <label>拍号：</label>
+            <select id="timeSignature" onchange="updateTimeSignature()">
+              <option value="4/4">4/4</option>
+              <option value="3/4">3/4</option>
+              <option value="6/8">6/8</option>
+              <option value="2/4">2/4</option>
+            </select>
+          </div>
         </div>
+        
         <div class="tuner-controls">
           <button class="tuner-btn" onclick="selectDrumStyle('rock')">摇滚</button>
           <button class="tuner-btn" onclick="selectDrumStyle('blues')">布鲁斯</button>
@@ -1087,10 +1304,7 @@
 <script>
 // 全局变量
 let tunerActive = false;
-let metronomeActive = false;
 let currentChord = 0;
-let currentBPM = 120;
-let metronomeInterval;
 
 // 和弦库
 const chords = ['C', 'G', 'Am', 'F', 'D', 'Em', 'Bm', 'A', 'E', 'Dm'];
@@ -1178,6 +1392,14 @@ function toggleRhythmTrainer() {
   container.style.display = container.style.display === 'none' ? 'block' : 'none';
 }
 
+// 节拍器相关变量
+let metronomeActive = false;
+let currentBPM = 120;
+let metronomeInterval;
+let timeSignature = '4/4';
+let tapTempoTimes = [];
+let beatCount = 0;
+
 function toggleMetronome() {
   if (!metronomeActive) {
     startMetronome();
@@ -1189,18 +1411,31 @@ function toggleMetronome() {
 function startMetronome() {
   metronomeActive = true;
   document.getElementById('metronomeBtn').textContent = '停止节拍器';
-  console.log('🥁 开始节拍器，BPM:', currentBPM);
+  document.getElementById('metronomeStatus').textContent = '运行中';
+  document.getElementById('metronomeStatus').style.color = '#4CAF50';
+  console.log('🥁 开始节拍器，BPM:', currentBPM, '拍号:', timeSignature);
   
   const interval = 60000 / currentBPM; // 毫秒
+  beatCount = 0;
   metronomeInterval = setInterval(() => {
     playMetronomeClick();
+    beatCount++;
+    
+    // 根据拍号重置节拍计数
+    const beatsPerBar = parseInt(timeSignature.split('/')[0]);
+    if (beatCount >= beatsPerBar) {
+      beatCount = 0;
+    }
   }, interval);
 }
 
 function stopMetronome() {
   metronomeActive = false;
   document.getElementById('metronomeBtn').textContent = '开始节拍器';
+  document.getElementById('metronomeStatus').textContent = '已停止';
+  document.getElementById('metronomeStatus').style.color = '#f44336';
   clearInterval(metronomeInterval);
+  beatCount = 0;
   console.log('⏹️ 停止节拍器');
 }
 
@@ -1231,16 +1466,91 @@ function updateBPM() {
   }
 }
 
-function increaseBPM() {
-  currentBPM = Math.min(200, currentBPM + 5);
+function increaseBPM(increment = 5) {
+  currentBPM = Math.min(200, currentBPM + increment);
   document.getElementById('bpmSlider').value = currentBPM;
-  updateBPM();
+  document.getElementById('bpmDisplay').textContent = currentBPM;
+  
+  if (metronomeActive) {
+    stopMetronome();
+    startMetronome();
+  }
 }
 
-function decreaseBPM() {
-  currentBPM = Math.max(40, currentBPM - 5);
+function decreaseBPM(decrement = 5) {
+  currentBPM = Math.max(40, currentBPM - decrement);
   document.getElementById('bpmSlider').value = currentBPM;
-  updateBPM();
+  document.getElementById('bpmDisplay').textContent = currentBPM;
+  
+  if (metronomeActive) {
+    stopMetronome();
+    startMetronome();
+  }
+}
+
+function setBPM(bpm) {
+  currentBPM = Math.max(40, Math.min(200, bpm));
+  document.getElementById('bpmSlider').value = currentBPM;
+  document.getElementById('bpmDisplay').textContent = currentBPM;
+  
+  if (metronomeActive) {
+    stopMetronome();
+    startMetronome();
+  }
+  
+  console.log('🎵 设置BPM为:', currentBPM);
+}
+
+function tapTempo() {
+  const now = Date.now();
+  tapTempoTimes.push(now);
+  
+  // 只保留最近4次点击
+  if (tapTempoTimes.length > 4) {
+    tapTempoTimes.shift();
+  }
+  
+  // 计算平均间隔
+  if (tapTempoTimes.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < tapTempoTimes.length; i++) {
+      intervals.push(tapTempoTimes[i] - tapTempoTimes[i-1]);
+    }
+    
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    const calculatedBPM = Math.round(60000 / avgInterval);
+    
+    // 限制BPM范围
+    const newBPM = Math.max(40, Math.min(200, calculatedBPM));
+    setBPM(newBPM);
+    
+    console.log('👆 点击节拍计算BPM:', newBPM);
+  }
+  
+  // 3秒后清除点击记录
+  setTimeout(() => {
+    tapTempoTimes = [];
+  }, 3000);
+}
+
+function resetMetronome() {
+  stopMetronome();
+  setBPM(120);
+  timeSignature = '4/4';
+  document.getElementById('timeSignature').value = '4/4';
+  tapTempoTimes = [];
+  beatCount = 0;
+  console.log('🔄 重置节拍器');
+}
+
+function updateTimeSignature() {
+  timeSignature = document.getElementById('timeSignature').value;
+  console.log('🎼 更新拍号:', timeSignature);
+  
+  if (metronomeActive) {
+    stopMetronome();
+    startMetronome();
+  }
 }
 
 function selectDrumStyle(style) {
@@ -1322,7 +1632,194 @@ function viewLeaderboard() {
 // 极简模式
 function enterMinimalMode() {
   console.log('🔲 进入极简模式');
-  alert('极简模式：\n\n隐藏所有UI界面\n只保留指板和节拍器\n专注练习，不受干扰\n按ESC键退出');
+  
+  // 进入全屏模式
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen();
+  }
+  
+  // 创建极简模式界面
+  const minimalMode = document.createElement('div');
+  minimalMode.id = 'minimalMode';
+  minimalMode.innerHTML = `
+    <div class="minimal-mode-overlay">
+      <div class="minimal-mode-content">
+        <div class="minimal-fretboard" id="minimalFretboard">
+          <!-- 极简指板 -->
+          <div class="minimal-fretboard-display">
+            <div class="fretboard-strings">
+              <div class="string"></div>
+              <div class="string"></div>
+              <div class="string"></div>
+              <div class="string"></div>
+              <div class="string"></div>
+              <div class="string"></div>
+            </div>
+            <div class="fretboard-frets">
+              <div class="fret"></div>
+              <div class="fret"></div>
+              <div class="fret"></div>
+              <div class="fret"></div>
+              <div class="fret"></div>
+            </div>
+          </div>
+        </div>
+        <div class="minimal-metronome">
+          <div class="bpm-display" id="minimalBPM">120</div>
+          <button class="minimal-btn" onclick="toggleMinimalMetronome()">节拍器</button>
+        </div>
+        <button class="minimal-exit-btn" onclick="exitMinimalMode()">退出</button>
+      </div>
+    </div>
+  `;
+  
+  // 添加极简模式样式
+  const style = document.createElement('style');
+  style.textContent = `
+    .minimal-mode-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .minimal-mode-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    
+    .minimal-fretboard {
+      width: 80%;
+      height: 60%;
+      background: #333;
+      border: 2px solid #666;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .minimal-fretboard-display {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    .fretboard-strings {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .string {
+      flex: 1;
+      border-bottom: 1px solid #666;
+    }
+    
+    .fretboard-frets {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+    
+    .fret {
+      flex: 1;
+      border-right: 2px solid #666;
+    }
+    
+    .minimal-metronome {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .bpm-display {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    
+    .minimal-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    
+    .minimal-exit-btn {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  `;
+  
+  document.head.appendChild(style);
+  document.body.appendChild(minimalMode);
+}
+
+// 退出极简模式
+function exitMinimalMode() {
+  const minimalMode = document.getElementById('minimalMode');
+  if (minimalMode) {
+    minimalMode.remove();
+  }
+  
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+}
+
+// 极简模式节拍器
+let minimalMetronomeActive = false;
+let minimalMetronomeInterval;
+
+function toggleMinimalMetronome() {
+  if (minimalMetronomeActive) {
+    stopMinimalMetronome();
+  } else {
+    startMinimalMetronome();
+  }
+}
+
+function startMinimalMetronome() {
+  const bpmDisplay = document.getElementById('minimalBPM');
+  const bpm = parseInt(bpmDisplay.textContent);
+  const interval = 60000 / bpm;
+  
+  minimalMetronomeInterval = setInterval(() => {
+    playMetronomeClick();
+  }, interval);
+  
+  minimalMetronomeActive = true;
+}
+
+function stopMinimalMetronome() {
+  if (minimalMetronomeInterval) {
+    clearInterval(minimalMetronomeInterval);
+    minimalMetronomeActive = false;
+  }
 }
 
 // 页面加载完成后的初始化
@@ -1507,7 +2004,7 @@ class GuitarCheckInCalendar {
       top: '20px',
       right: '20px',
       padding: '12px 20px',
-      border-radius: '6px',
+      borderRadius: '6px',
       color: 'white',
       fontSize: '14px',
       fontWeight: '500',
@@ -1834,5 +2331,87 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// 主题音乐加载函数（如果base.html中没有定义）
+if (typeof loadThemeMusic === 'undefined') {
+  async function loadThemeMusic(theme) {
+    try {
+      const response = await fetch(`/tools/api/music/?mode=work&action=random`);
+      const data = await response.json();
+      
+      if (data.success && data.music_url) {
+        // 创建音频元素
+        const audio = document.createElement('audio');
+        audio.src = data.music_url;
+        audio.loop = true;
+        audio.volume = 0.3;
+        audio.id = 'themeMusic';
+        
+        // 移除旧的音频元素
+        const oldAudio = document.getElementById('themeMusic');
+        if (oldAudio) {
+          oldAudio.remove();
+        }
+        
+        document.body.appendChild(audio);
+        
+        // 自动播放（需要用户交互）
+        audio.play().catch(error => {
+          console.log('自动播放失败，需要用户交互:', error);
+        });
+      }
+    } catch (error) {
+      console.log('加载主题音乐失败:', error);
+    }
+  }
+}
+
+// 确保所有函数都已定义到全局作用域
+(function() {
+  // 将所有函数绑定到window对象，确保全局可访问
+  const functions = {
+    toggleTuner,
+    toggleChordTrainer,
+    toggleRhythmTrainer,
+    togglePracticePlan,
+    toggleCommunityChallenge,
+    enterMinimalMode,
+    startTuner,
+    stopTuner,
+    changeTuningMode,
+    startChordTraining,
+    nextChord,
+    showChordHeatmap,
+    toggleMetronome,
+    startMetronome,
+    stopMetronome,
+    updateBPM,
+    increaseBPM,
+    decreaseBPM,
+    setBPM,
+    tapTempo,
+    resetMetronome,
+    updateTimeSignature,
+    selectDrumStyle,
+    startRhythmGame,
+    generatePracticePlan,
+    updateProgress,
+    showProgressChart,
+    startChallenge,
+    uploadVideo,
+    viewLeaderboard,
+    exitMinimalMode,
+    toggleMinimalMetronome,
+    startMinimalMetronome,
+    stopMinimalMetronome
+  };
+  
+  // 将函数绑定到window对象
+  Object.keys(functions).forEach(functionName => {
+    if (typeof functions[functionName] === 'function') {
+      window[functionName] = functions[functionName];
+    }
+  });
+})();
 </script>
 {% endblock %}

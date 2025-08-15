@@ -304,8 +304,12 @@ body.geek-theme::before {
   border-bottom: 0.5px solid var(--geek-border);
 }
 
+.geek-navbar .navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
 .geek-navbar .nav-link {
-  color: var(--geek-text);
+  color: rgba(255, 255, 255, 0.9) !important;
   font-weight: 500;
   transition: all 0.3s ease;
   font-family: var(--geek-font-mono);
@@ -322,6 +326,7 @@ body.geek-theme::before {
   justify-content: center;
   font-size: 1rem;
   line-height: 1;
+  color: #ffffff !important;
 }
 
 .geek-navbar .nav-link span {

@@ -1,12 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block tool_title_inner %}FitMatrix - 训练计划编辑器{% endblock %}
-{% block tool_title_display %}FitMatrix - 训练计划编辑器{% endblock %}
-
 {% block content %}
 {% csrf_token %}
-<div class="plan-editor-container">
+<div class="plan-editor-container" style="opacity: 0; transition: opacity 0.3s ease;">
   <!-- 顶部工具栏 -->
   <div class="editor-toolbar">
     <div class="toolbar-left">
@@ -22,6 +19,9 @@
       </button>
     </div>
     <div class="toolbar-right">
+      <button class="toolbar-btn" onclick="manageWeights()">
+        <i class="fas fa-dumbbell"></i> 重量管理
+      </button>
       <button class="toolbar-btn" onclick="previewPlan()">
         <i class="fas fa-eye"></i> 预览
       </button>
@@ -48,7 +48,7 @@
           <div class="mode-option" data-mode="三分化">
             <i class="fas fa-fire"></i>
             <span>三分化</span>
-        </div>
+          </div>
           <div class="mode-option" data-mode="推拉腿">
             <i class="fas fa-arrows-alt"></i>
             <span>推拉腿</span>
@@ -56,18 +56,18 @@
           <div class="mode-option" data-mode="有氧运动">
             <i class="fas fa-running"></i>
             <span>有氧运动</span>
-        </div>
+          </div>
           <div class="mode-option" data-mode="功能性训练">
             <i class="fas fa-heartbeat"></i>
             <span>功能性训练</span>
-            </div>
+          </div>
           <div class="mode-option" data-mode="自定义">
             <i class="fas fa-cog"></i>
             <span>自定义</span>
           </div>
-              </div>
-            </div>
-            
+        </div>
+      </div>
+      
       <div class="cycle-section">
         <h3><i class="fas fa-calendar"></i> 训练周期</h3>
         <select id="cycleWeeks" class="cycle-select">
@@ -76,130 +76,159 @@
           <option value="12">12周</option>
           <option value="16">16周</option>
         </select>
-            </div>
-            
-              <div class="week-overview">
-          <h3><i class="fas fa-calendar-week"></i> 周安排</h3>
-          <div class="week-cards" id="weekCards">
-            <!-- 动态生成的星期卡片 -->
-              </div>
-          <div class="week-settings">
-            <button class="settings-btn" onclick="editor.showWeekSettings()">
-              <i class="fas fa-cog"></i> 修改周安排
-              </button>
-            </div>
-          <div class="plan-stats">
-            <div class="stat-item">
-              <span class="stat-label">总动作数:</span>
-              <span class="stat-value" id="totalExercises">0</span>
+      </div>
+      
+      <div class="week-overview">
+        <h3><i class="fas fa-calendar-week"></i> 周安排</h3>
+        <div class="week-cards" id="weekCards">
+          <!-- 周卡片将通过JavaScript动态生成 -->
+        </div>
+        <button class="week-settings-btn" onclick="showWeekSettings()">
+          <i class="fas fa-cog"></i> 修改周安排
+        </button>
+      </div>
+      
+      <div class="plan-stats">
+        <h3><i class="fas fa-chart-bar"></i> 计划统计</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="totalExercises">0</div>
+            <div class="stat-label">总动作数</div>
           </div>
-            <div class="stat-item">
-              <span class="stat-label">训练天数:</span>
-              <span class="stat-value" id="trainingDays">0</span>
-              </div>
-            <div class="stat-item">
-              <span class="stat-label">休息天数:</span>
-              <span class="stat-value" id="restDays">0</span>
-                </div>
-                </div>
-              </div>
-            </div>
-            
-    <!-- 中间：动作库 -->
-    <div class="exercise-library">
-          <div class="library-header">
-        <h3><i class="fas fa-dumbbell"></i> 动作库</h3>
-            <div class="library-search">
-          <input type="text" id="exerciseSearch" placeholder="搜索动作...">
-              <i class="fas fa-search"></i>
-            </div>
+          <div class="stat-item">
+            <div class="stat-value" id="trainingDays">5</div>
+            <div class="stat-label">训练天数</div>
           </div>
-      <div class="body-parts">
-        <!-- 动态渲染的动作库内容 -->
-              </div>
-            </div>
-            
+          <div class="stat-item">
+            <div class="stat-value" id="restDays">2</div>
+            <div class="stat-label">休息天数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalWeight">0.0kg</div>
+            <div class="stat-label">总重量</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 右侧：训练内容编辑 -->
-    <div class="training-editor">
-          <div class="editor-header">
-        <h3 id="currentDayTitle">周一：胸部+三头</h3>
-            <div class="editor-controls">
-          <button class="control-btn" onclick="copyDay()">
-                <i class="fas fa-copy"></i> 复制
-              </button>
-          <button class="control-btn" onclick="clearDay()">
-                <i class="fas fa-trash"></i> 清空
+    <div class="editor-content">
+      <div class="content-header">
+        <h2 id="currentDayTitle">周一：胸部</h2>
+        <div class="day-actions">
+          <button class="action-btn" onclick="copyDay()">
+            <i class="fas fa-copy"></i> 复制
+          </button>
+          <button class="action-btn" onclick="clearDay()">
+            <i class="fas fa-trash"></i> 清空
+          </button>
+        </div>
+      </div>
+      
+      <div class="training-modules">
+        <!-- 热身模块 -->
+        <div class="module-section" data-module="warmup">
+          <div class="module-header">
+            <div class="module-toggle">
+              <i class="fas fa-chevron-down"></i>
+              <span>热身</span>
+            </div>
+            <div class="module-actions">
+              <button class="add-exercise-btn" onclick="addExerciseToModule('warmup')">
+                <i class="fas fa-plus"></i> 添加动作
               </button>
             </div>
           </div>
-          
-          <div class="training-modules">
-            <div class="module-section" data-module="warmup">
-              <div class="module-header">
-            <h4><i class="fas fa-thermometer-half"></i> 热身</h4>
-            <button class="module-toggle">
-                  <i class="fas fa-chevron-down"></i>
-                </button>
-              </div>
-              <div class="module-content">
-                <div class="exercise-drop-zone" data-module="warmup">
-                  <i class="fas fa-plus"></i>
+          <div class="module-content">
+            <div class="exercise-drop-zone" data-module="warmup">
+              <i class="fas fa-plus"></i>
               <p>拖拽热身动作至此</p>
-                </div>
-              </div>
             </div>
-            
-            <div class="module-section" data-module="main">
-              <div class="module-header">
-            <h4><i class="fas fa-fire"></i> 主训</h4>
-            <button class="module-toggle">
-                  <i class="fas fa-chevron-down"></i>
-                </button>
-              </div>
-              <div class="module-content">
-                <div class="exercise-drop-zone" data-module="main">
-                  <i class="fas fa-plus"></i>
-              <p>拖拽主要动作至此</p>
-                </div>
-              </div>
+          </div>
+        </div>
+
+        <!-- 主训模块 -->
+        <div class="module-section" data-module="main">
+          <div class="module-header">
+            <div class="module-toggle">
+              <i class="fas fa-chevron-down"></i>
+              <span>主训</span>
             </div>
-            
-            <div class="module-section" data-module="accessory">
-              <div class="module-header">
-            <h4><i class="fas fa-plus-circle"></i> 辅助</h4>
-            <button class="module-toggle">
-                  <i class="fas fa-chevron-down"></i>
-                </button>
-              </div>
-              <div class="module-content">
-                <div class="exercise-drop-zone" data-module="accessory">
-                  <i class="fas fa-plus"></i>
+            <div class="module-actions">
+              <button class="add-exercise-btn" onclick="addExerciseToModule('main')">
+                <i class="fas fa-plus"></i> 添加动作
+              </button>
+            </div>
+          </div>
+          <div class="module-content">
+            <div class="exercise-drop-zone" data-module="main">
+              <i class="fas fa-plus"></i>
+              <p>拖拽主训动作至此</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 辅助模块 -->
+        <div class="module-section" data-module="accessory">
+          <div class="module-header">
+            <div class="module-toggle">
+              <i class="fas fa-chevron-down"></i>
+              <span>辅助</span>
+            </div>
+            <div class="module-actions">
+              <button class="add-exercise-btn" onclick="addExerciseToModule('accessory')">
+                <i class="fas fa-plus"></i> 添加动作
+              </button>
+            </div>
+          </div>
+          <div class="module-content">
+            <div class="exercise-drop-zone" data-module="accessory">
+              <i class="fas fa-plus"></i>
               <p>拖拽辅助动作至此</p>
-                </div>
-              </div>
             </div>
-            
-            <div class="module-section" data-module="cooldown">
-              <div class="module-header">
-            <h4><i class="fas fa-leaf"></i> 拉伸</h4>
-            <button class="module-toggle">
-                  <i class="fas fa-chevron-down"></i>
-                </button>
-              </div>
-              <div class="module-content">
-                <div class="exercise-drop-zone" data-module="cooldown">
-                  <i class="fas fa-plus"></i>
+          </div>
+        </div>
+
+        <!-- 拉伸模块 -->
+        <div class="module-section" data-module="cooldown">
+          <div class="module-header">
+            <div class="module-toggle">
+              <i class="fas fa-chevron-down"></i>
+              <span>拉伸</span>
+            </div>
+            <div class="module-actions">
+              <button class="add-exercise-btn" onclick="addExerciseToModule('cooldown')">
+                <i class="fas fa-plus"></i> 添加动作
+              </button>
+            </div>
+          </div>
+          <div class="module-content">
+            <div class="exercise-drop-zone" data-module="cooldown">
+              <i class="fas fa-plus"></i>
               <p>拖拽拉伸动作至此</p>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 右侧：动作库 -->
+    <div class="exercise-library">
+      <div class="library-header">
+        <h3><i class="fas fa-dumbbell"></i> 动作库</h3>
+        <div class="library-search">
+          <input type="text" id="exerciseSearch" placeholder="搜索动作..." onkeyup="searchExercises()">
+        </div>
+      </div>
+      <div class="body-parts">
+        <!-- 动作库内容将通过JavaScript动态生成 -->
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- 模板选择模态框 -->
-<div id="templateModal" class="modal">
+<div id="templateModal" class="modal" style="display: none;">
   <div class="modal-content">
     <div class="modal-header">
       <h3><i class="fas fa-magic"></i> 选择训练模板</h3>
@@ -211,48 +240,55 @@
           <div class="template-icon">
             <i class="fas fa-dumbbell"></i>
           </div>
-          <h4>五分化</h4>
-          <p>胸背肩腿臂 分化训练</p>
+          <div class="template-info">
+            <h4>五分化训练</h4>
+            <p>胸背肩腿臂，适合增肌</p>
+          </div>
         </div>
-        
         <div class="template-card" onclick="selectTemplate('三分化')">
           <div class="template-icon">
             <i class="fas fa-fire"></i>
           </div>
-          <h4>三分化</h4>
-          <p>推拉腿 循环训练</p>
+          <div class="template-info">
+            <h4>三分化训练</h4>
+            <p>推拉腿，高效训练</p>
+          </div>
         </div>
-        
         <div class="template-card" onclick="selectTemplate('推拉腿')">
           <div class="template-icon">
             <i class="fas fa-arrows-alt"></i>
           </div>
-          <h4>推拉腿</h4>
-          <p>经典三分化模式</p>
+          <div class="template-info">
+            <h4>推拉腿训练</h4>
+            <p>经典三分化模式</p>
           </div>
-        
+        </div>
         <div class="template-card" onclick="selectTemplate('有氧运动')">
           <div class="template-icon">
             <i class="fas fa-running"></i>
           </div>
-          <h4>有氧运动</h4>
-          <p>心肺功能提升</p>
+          <div class="template-info">
+            <h4>有氧运动</h4>
+            <p>减脂塑形专用</p>
+          </div>
         </div>
-        
         <div class="template-card" onclick="selectTemplate('功能性训练')">
           <div class="template-icon">
             <i class="fas fa-heartbeat"></i>
           </div>
-          <h4>功能性训练</h4>
-          <p>全面提升体能</p>
+          <div class="template-info">
+            <h4>功能性训练</h4>
+            <p>提升运动表现</p>
+          </div>
         </div>
-        
         <div class="template-card" onclick="selectTemplate('自定义')">
           <div class="template-icon">
             <i class="fas fa-cog"></i>
           </div>
-          <h4>自定义</h4>
-          <p>完全自由配置</p>
+          <div class="template-info">
+            <h4>自定义训练</h4>
+            <p>完全自由定制</p>
+          </div>
         </div>
       </div>
     </div>
@@ -260,21 +296,25 @@
 </div>
 
 <style>
-/* 基础样式 */
+/* 训练计划编辑器样式 */
 .plan-editor-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  color: #e6e6e6;
+  background: var(--rage-gradient-bg, linear-gradient(135deg, #1a1a2e 0%, #16213e 100%));
+  color: var(--rage-text, #e6e6e6);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* 工具栏 */
+/* 工具栏样式 */
 .editor-toolbar {
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%));
+  border-bottom: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 2px solid rgba(255, 107, 53, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   backdrop-filter: blur(10px);
 }
 
@@ -284,101 +324,110 @@
   gap: 15px;
 }
 
-.toolbar-center {
-  flex: 1;
-  justify-content: center;
+.editor-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--rage-primary, #ff6b35);
+  margin: 0;
 }
 
 .toolbar-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
-  color: #e6e6e6;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--rage-text, #e6e6e6);
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 0.9rem;
   font-weight: 600;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .toolbar-btn:hover {
   background: rgba(255, 107, 53, 0.2);
+  border-color: var(--rage-primary, #ff6b35);
   transform: translateY(-2px);
 }
 
 .toolbar-btn.primary {
-  background: #ff6b35;
-  color: white;
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  color: #000;
+  border: none;
 }
 
-.editor-title {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #ff6b35;
-  margin: 0;
-  text-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+.toolbar-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
 }
 
 .plan-name-input {
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid #ddd;
-  padding: 8px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--rage-text, #e6e6e6);
+  padding: 8px 12px;
   border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
+  font-size: 0.9rem;
   min-width: 200px;
 }
 
-/* 主编辑区 */
+.plan-name-input:focus {
+  outline: none;
+  border-color: var(--rage-primary, #ff6b35);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* 主编辑区样式 */
 .editor-main {
   display: grid;
-  grid-template-columns: 280px 1fr 350px;
+  grid-template-columns: 300px 1fr 350px;
   gap: 20px;
   padding: 20px;
-  min-height: calc(100vh - 100px);
+  min-height: calc(100vh - 80px);
 }
 
-/* 左侧边栏 */
+/* 侧边栏样式 */
 .editor-sidebar {
-  background: rgba(26, 26, 46, 0.9);
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%));
+  border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
   border-radius: 12px;
-  border: 1px solid rgba(255, 107, 53, 0.3);
   padding: 20px;
-  overflow-y: auto;
+  height: fit-content;
+  position: sticky;
+  top: 100px;
 }
 
-.mode-section, .cycle-section, .week-overview {
+.mode-section, .cycle-section, .week-overview, .plan-stats {
   margin-bottom: 25px;
 }
 
-.mode-section h3, .cycle-section h3, .week-overview h3 {
-  color: #ff6b35;
-  margin: 0 0 15px 0;
+.mode-section h3, .cycle-section h3, .week-overview h3, .plan-stats h3 {
+  color: var(--rage-primary, #ff6b35);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 1.1rem;
+  gap: 8px;
 }
 
 .mode-selector {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 8px;
 }
 
 .mode-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .mode-option:hover {
@@ -387,33 +436,40 @@
 }
 
 .mode-option.active {
-  background: rgba(255, 107, 53, 0.2);
-  border-color: #ff6b35;
-  color: #ff6b35;
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  color: #000;
+  border-color: var(--rage-primary, #ff6b35);
 }
 
 .cycle-select {
   width: 100%;
-  padding: 10px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--rage-text, #e6e6e6);
+  padding: 10px;
   border-radius: 6px;
-  color: #e6e6e6;
+  font-size: 0.9rem;
+}
+
+.cycle-select:focus {
+  outline: none;
+  border-color: var(--rage-primary, #ff6b35);
 }
 
 .week-cards {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 8px;
+  margin-bottom: 15px;
 }
 
 .week-card {
-  padding: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: 8px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: center;
 }
 
 .week-card:hover {
@@ -422,411 +478,179 @@
 }
 
 .week-card.active {
-  background: rgba(255, 107, 53, 0.2);
-  border-color: #ff6b35;
-}
-
-.week-card.rest-day {
-  background: rgba(158, 158, 158, 0.2);
-  border-color: rgba(158, 158, 158, 0.5);
-  opacity: 0.7;
-}
-
-.week-card.rest-day:hover {
-  background: rgba(158, 158, 158, 0.3);
-  border-color: rgba(158, 158, 158, 0.7);
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  color: #000;
+  border-color: var(--rage-primary, #ff6b35);
 }
 
 .week-card .day-name {
   font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.week-settings {
-  margin: 15px 0;
-  text-align: center;
-}
-
-.settings-btn {
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.settings-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
-}
-
-.plan-stats {
-  margin-top: 15px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
   margin-bottom: 5px;
-  font-size: 0.85rem;
-}
-
-.stat-item:last-child {
-  margin-bottom: 0;
-}
-
-.stat-label {
-  color: #a8a8a8;
-}
-
-.stat-value {
-  color: #ff6b35;
-  font-weight: 600;
 }
 
 .week-card .day-parts {
-  font-size: 0.85rem;
-  color: #a8a8a8;
+  font-size: 0.8rem;
+  opacity: 0.8;
 }
 
-/* 中间动作库 */
-.exercise-library {
-  background: rgba(26, 26, 46, 0.9);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 107, 53, 0.3);
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.library-header {
-  margin-bottom: 20px;
-}
-
-.library-header h3 {
-  color: #ff6b35;
-  margin: 0 0 15px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.library-search {
-  position: relative;
-}
-
-.library-search input {
+.week-settings-btn {
   width: 100%;
-  padding: 10px 40px 10px 15px;
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #e6e6e6;
-}
-
-.library-search i {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #a8a8a8;
-}
-
-.body-parts {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.part-category {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--rage-text, #e6e6e6);
+  padding: 10px;
   border-radius: 6px;
-  overflow: hidden;
-}
-
-.part-category.active {
-  border-color: #ff6b35;
-}
-
-.part-header {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 12px 15px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: background 0.3s ease;
-}
-
-.part-header:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.part-category.active .part-header {
-  background: rgba(255, 107, 53, 0.1);
-  color: #ff6b35;
-}
-
-.part-header i {
-  transition: transform 0.3s ease;
-}
-
-.part-category.active .part-header i {
-  transform: rotate(90deg);
-}
-
-.part-exercises {
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.exercise-item {
-  padding: 10px 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: grab;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.3s ease;
-}
-
-.exercise-item:hover {
-  background: rgba(255, 107, 53, 0.1);
-  transform: translateX(5px);
-}
-
-.exercise-item:active {
-  cursor: grabbing;
-}
-
-.exercise-item .fa-star {
-  color: #ffd700;
   font-size: 0.9rem;
-}
-
-.favorite-btn {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
   transition: all 0.3s ease;
-  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  height: 24px;
+  gap: 8px;
 }
 
-.favorite-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.1);
+.week-settings-btn:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: var(--rage-primary, #ff6b35);
 }
 
-.favorite-btn.favorite-active {
-  color: #ff6b35;
-  animation: pulse 0.6s ease-in-out;
-}
-
-.favorite-btn.favorite-active:hover {
-  color: #ff8c69;
-  background: rgba(255, 107, 53, 0.1);
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-/* 周设置模态框样式 */
-.week-settings-grid {
+.stats-grid {
   display: grid;
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.day-setting {
-  border: 1px solid #e9ecef;
+.stat-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 15px;
-  background: #f8f9fa;
+  padding: 12px;
+  text-align: center;
 }
 
-.day-setting-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e9ecef;
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 5px;
 }
 
-.day-setting-header h4 {
-  margin: 0;
-  color: #333;
-  font-size: 1.1rem;
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--rage-text-muted, #a8a8a8);
 }
 
-.rest-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.rest-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #ff6b35;
-}
-
-.body-parts-selection label {
-  display: block;
-  margin-bottom: 10px;
-  font-weight: 600;
-  color: #333;
-}
-
-.parts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 8px;
-}
-
-.part-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 6px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.part-checkbox:hover {
-  background-color: #e9ecef;
-}
-
-.part-checkbox input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  accent-color: #ff6b35;
-}
-
-.part-checkbox span {
-  color: #333;
-}
-
-/* 右侧训练编辑器 */
-.training-editor {
-  background: rgba(26, 26, 46, 0.9);
+/* 编辑内容区样式 */
+.editor-content {
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%));
+  border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
   border-radius: 12px;
-  border: 1px solid rgba(255, 107, 53, 0.3);
   padding: 20px;
-  overflow-y: auto;
 }
 
-.editor-header {
+.content-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid rgba(255, 107, 53, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.editor-header h3 {
-  color: #ff6b35;
+.content-header h2 {
+  color: var(--rage-primary, #ff6b35);
+  font-size: 1.3rem;
+  font-weight: 600;
   margin: 0;
-  font-size: 1.2rem;
 }
 
-.editor-controls {
+.day-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
-.control-btn {
+.action-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #e6e6e6;
+  color: var(--rage-text, #e6e6e6);
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 0.8rem;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 0.85rem;
 }
 
-.control-btn:hover {
+.action-btn:hover {
   background: rgba(255, 107, 53, 0.2);
-  border-color: rgba(255, 107, 53, 0.5);
+  border-color: var(--rage-primary, #ff6b35);
 }
 
+/* 训练模块样式 */
 .training-modules {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
 .module-section {
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.module-section.dragover {
-  border-color: #ff6b35;
-  background: rgba(255, 107, 53, 0.1);
 }
 
 .module-header {
+  background: rgba(255, 107, 53, 0.1);
+  border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+  padding: 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 15px;
-  background: rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-}
-
-.module-header h4 {
-  margin: 0;
-  color: #e6e6e6;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.95rem;
 }
 
 .module-toggle {
-  background: none;
-  border: none;
-  color: #a8a8a8;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
+  font-weight: 600;
+  color: var(--rage-primary, #ff6b35);
+}
+
+.module-toggle i {
   transition: transform 0.3s ease;
 }
 
-.module-toggle.collapsed {
+.module-toggle.collapsed i {
   transform: rotate(-90deg);
+}
+
+.module-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.add-exercise-btn {
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  border: none;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.add-exercise-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
 .module-content {
@@ -835,147 +659,325 @@
 
 .exercise-drop-zone {
   border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 30px;
   text-align: center;
-  color: #a8a8a8;
+  color: var(--rage-text-muted, #a8a8a8);
   transition: all 0.3s ease;
-  min-height: 80px;
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+}
+
+.exercise-drop-zone:hover {
+  border-color: var(--rage-primary, #ff6b35);
+  background: rgba(255, 107, 53, 0.05);
 }
 
 .exercise-drop-zone.dragover {
-  border-color: #ff6b35;
+  border-color: var(--rage-primary, #ff6b35);
   background: rgba(255, 107, 53, 0.1);
-  color: #ff6b35;
+  transform: scale(1.02);
 }
 
 .exercise-drop-zone i {
-  font-size: 1.5rem;
-  margin-bottom: 8px;
+  font-size: 2rem;
+  color: var(--rage-text-muted, #a8a8a8);
 }
 
-.exercise-drop-zone p {
-  margin: 0;
+/* 动作库样式 */
+.exercise-library {
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%));
+  border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
+  border-radius: 12px;
+  padding: 20px;
+  height: fit-content;
+  position: sticky;
+  top: 100px;
+}
+
+.library-header {
+  margin-bottom: 20px;
+}
+
+.library-header h3 {
+  color: var(--rage-primary, #ff6b35);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.library-search input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--rage-text, #e6e6e6);
+  padding: 8px 12px;
+  border-radius: 6px;
   font-size: 0.9rem;
 }
 
-/* 模态框 */
+.library-search input:focus {
+  outline: none;
+  border-color: var(--rage-primary, #ff6b35);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.body-parts {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.part-category {
+  margin-bottom: 15px;
+}
+
+.part-header {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.part-header:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.part-header i {
+  transition: transform 0.3s ease;
+  color: var(--rage-primary, #ff6b35);
+}
+
+.part-category.active .part-header i {
+  transform: rotate(90deg);
+}
+
+.part-exercises {
+  display: none;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: none;
+}
+
+.part-category.active .part-exercises {
+  display: block;
+}
+
+.exercise-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.exercise-item:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: rgba(255, 107, 53, 0.3);
+  transform: translateX(5px);
+}
+
+.exercise-item:last-child {
+  margin-bottom: 0;
+}
+
+.favorite-btn {
+  background: none;
+  border: none;
+  color: var(--rage-text-muted, #a8a8a8);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.favorite-btn:hover {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.2);
+}
+
+.favorite-btn.favorite-active {
+  color: #ff6b6b;
+}
+
+/* 模态框样式 */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: none;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
-  background: white;
+  background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%));
+  border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
   border-radius: 12px;
-  max-width: 600px;
+  max-width: 800px;
+  width: 90%;
   max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  color: var(--rage-text, #e6e6e6);
 }
 
 .modal-header {
+  background: rgba(255, 107, 53, 0.1);
+  border-bottom: 1px solid rgba(255, 107, 53, 0.2);
   padding: 20px;
-  border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .modal-header h3 {
+  color: var(--rage-primary, #ff6b35);
   margin: 0;
-  color: #333;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .close-btn {
   background: none;
   border: none;
+  color: var(--rage-text, #e6e6e6);
   font-size: 1.5rem;
-  color: #6c757d;
   cursor: pointer;
   padding: 5px;
-  border-radius: 3px;
-  transition: background 0.3s ease;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
 .close-btn:hover {
-  background: #f8f9fa;
+  background: rgba(255, 107, 53, 0.2);
+  color: var(--rage-primary, #ff6b35);
 }
 
 .modal-body {
   padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
 }
 
 .template-card {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  padding: 15px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .template-card:hover {
-  border-color: #ff6b35;
+  background: rgba(255, 107, 53, 0.1);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);
 }
 
 .template-icon {
-  font-size: 2rem;
-  color: #ff6b35;
-  margin-bottom: 10px;
+  width: 50px;
+  height: 50px;
+  background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #000;
 }
 
-.template-card h4 {
+.template-info h4 {
+  color: var(--rage-text, #e6e6e6);
   margin: 0 0 5px 0;
-  color: #333;
+  font-size: 1rem;
 }
 
-.template-card p {
+.template-info p {
+  color: var(--rage-text-muted, #a8a8a8);
   margin: 0;
-  color: #6c757d;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .editor-main {
     grid-template-columns: 250px 1fr 300px;
+    gap: 15px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 992px) {
+  .editor-main {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .editor-sidebar, .exercise-library {
+    position: static;
+  }
+  
+  .editor-toolbar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .toolbar-left, .toolbar-center, .toolbar-right {
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 768px) {
-  .editor-main {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+  .plan-editor-container .editor-main {
+    padding: 10px;
+    gap: 10px;
   }
   
-  .toolbar-left, .toolbar-center, .toolbar-right {
-    flex-direction: column;
-    gap: 10px;
+  .plan-editor-container .editor-toolbar {
+    padding: 10px 15px;
+  }
+  
+  .plan-editor-container .editor-title {
+    font-size: 1.2rem;
   }
 }
 
@@ -994,2117 +996,169 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-.part-exercises {
-  animation: slideIn 0.3s ease-out;
-}
+  .part-exercises {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  /* 动作卡片样式 */
+  .exercise-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .exercise-card:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.3);
+  }
+  
+  .exercise-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .exercise-card-name {
+    font-weight: 500;
+    color: #e6e6e6;
+  }
+  
+  .exercise-card-controls {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .card-control-btn {
+    background: none;
+    border: none;
+    color: #a8a8a8;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+  }
+  
+  .card-control-btn:hover {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.2);
+  }
+  
+  .exercise-params {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .param-group {
+    text-align: center;
+  }
+  
+  .param-label {
+    font-size: 0.8rem;
+    color: #a8a8a8;
+    margin-bottom: 3px;
+  }
+  
+  .param-input {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e6e6e6;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  
+  .param-input:focus {
+    outline: none;
+    border-color: #ff6b35;
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .weight-adjust-btn {
+    background: rgba(255, 107, 53, 0.2);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    color: #ff6b35;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .weight-adjust-btn:hover {
+    background: rgba(255, 107, 53, 0.3);
+    border-color: #ff6b35;
+    transform: scale(1.1);
+  }
+  
+  .weight-adjust-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .weight-suggestion-btn {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .weight-suggestion-btn:hover {
+    background: rgba(255, 193, 7, 0.3);
+    border-color: #ffc107;
+    transform: scale(1.1);
+  }
+  
+  .weight-suggestion-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* 通知样式 */
+  .notification {
+    animation: slideInRight 0.3s ease-out;
+  }
+  
+  .notification.notification-error {
+    background-color: #f44336;
+  }
+  
+  .notification.notification-success {
+    background-color: #4CAF50;
+  }
+  
+  .notification.notification-info {
+    background-color: #2196F3;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
 </style>
 
-<script>
-// 训练计划编辑器
-class TrainingPlanEditor {
-  constructor() {
-    this.currentDay = 0;
-    this.planData = this.initializePlanData();
-    this.favoriteExercises = this.loadFavoriteExercises();
-    this.init();
-  }
-  
-  init() {
-    this.renderWeekCards();
-    this.renderExerciseLibrary();
-    this.setupEventListeners();
-    this.updateCurrentDayDisplay();
-  }
-  
-  initializePlanData() {
-    return {
-      plan_name: "我的五分化计划",
-      mode: "五分化",
-      cycle_weeks: 8,
-      week_schedule: this.getTemplateSchedule("五分化")
-    };
-  }
-
-  // 获取训练模板
-  getTemplateSchedule(mode) {
-    const templates = {
-      "五分化": [
-        { 
-          weekday: "周一", 
-          body_parts: ["胸部", "三头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" },
-              { name: "轻重量卧推", sets: "2", reps: "15-20", rest: "60秒" }
-            ], 
-            main: [
-              { name: "杠铃卧推", sets: "4", reps: "8-10", rest: "3分钟" },
-              { name: "上斜哑铃推", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "器械推胸", sets: "3", reps: "12-15", rest: "90秒" }
-            ], 
-            accessory: [
-              { name: "绳索夹胸", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "三头肌下拉", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周二", 
-          body_parts: ["背部", "二头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" },
-              { name: "轻重量划船", sets: "2", reps: "15-20", rest: "60秒" }
-            ], 
-            main: [
-              { name: "引体向上", sets: "4", reps: "8-12", rest: "3分钟" },
-              { name: "杠铃划船", sets: "4", reps: "10-12", rest: "2分钟" },
-              { name: "高位下拉", sets: "3", reps: "12-15", rest: "90秒" }
-            ], 
-            accessory: [
-              { name: "坐姿绳索划船", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "杠铃弯举", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周三", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        },
-        { 
-          weekday: "周四", 
-          body_parts: ["肩部"], 
-          modules: { 
-            warmup: [
-              { name: "肩部动态拉伸", sets: "1", reps: "5分钟", rest: "无" },
-              { name: "轻重量推举", sets: "2", reps: "15-20", rest: "60秒" }
-            ], 
-            main: [
-              { name: "坐姿哑铃推举", sets: "4", reps: "8-10", rest: "3分钟" },
-              { name: "哑铃侧平举", sets: "3", reps: "12-15", rest: "90秒" },
-              { name: "哑铃前平举", sets: "3", reps: "12-15", rest: "90秒" }
-            ], 
-            accessory: [
-              { name: "哑铃后束飞鸟", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "耸肩", sets: "3", reps: "15-20", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "肩部拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周五", 
-          body_parts: ["腿部"], 
-          modules: { 
-            warmup: [
-              { name: "腿部动态拉伸", sets: "1", reps: "5分钟", rest: "无" },
-              { name: "轻重量深蹲", sets: "2", reps: "15-20", rest: "60秒" }
-            ], 
-            main: [
-              { name: "杠铃深蹲", sets: "4", reps: "8-10", rest: "4分钟" },
-              { name: "罗马尼亚硬拉", sets: "3", reps: "8-10", rest: "3分钟" },
-              { name: "腿举", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "腿弯举", sets: "3", reps: "12-15", rest: "90秒" },
-              { name: "小腿提踵", sets: "4", reps: "15-20", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "腿部拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周六", 
-          body_parts: ["手臂"], 
-          modules: { 
-            warmup: [
-              { name: "手臂动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "杠铃弯举", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "三头肌下拉", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "哑铃弯举", sets: "3", reps: "12-15", rest: "90秒" }
-            ], 
-            accessory: [
-              { name: "锤式弯举", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "绳索下拉", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "手臂拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周日", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        }
-      ],
-      "三分化": [
-        { 
-          weekday: "周一", 
-          body_parts: ["胸部", "肩部", "三头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "杠铃卧推", sets: "4", reps: "8-10", rest: "3分钟" },
-              { name: "坐姿哑铃推举", sets: "3", reps: "8-10", rest: "2分钟" },
-              { name: "上斜哑铃推", sets: "3", reps: "10-12", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "哑铃侧平举", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "三头肌下拉", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周二", 
-          body_parts: ["背部", "二头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "引体向上", sets: "4", reps: "8-12", rest: "3分钟" },
-              { name: "杠铃划船", sets: "4", reps: "10-12", rest: "2分钟" },
-              { name: "高位下拉", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "坐姿绳索划船", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "杠铃弯举", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周三", 
-          body_parts: ["腿部"], 
-          modules: { 
-            warmup: [
-              { name: "腿部动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "杠铃深蹲", sets: "4", reps: "8-10", rest: "4分钟" },
-              { name: "罗马尼亚硬拉", sets: "3", reps: "8-10", rest: "3分钟" },
-              { name: "腿举", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "腿弯举", sets: "3", reps: "12-15", rest: "90秒" },
-              { name: "小腿提踵", sets: "4", reps: "15-20", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "腿部拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周四", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        },
-        { 
-          weekday: "周五", 
-          body_parts: ["胸部", "肩部", "三头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "上斜哑铃推", sets: "4", reps: "8-10", rest: "3分钟" },
-              { name: "器械推胸", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "哑铃推举", sets: "3", reps: "8-10", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "绳索夹胸", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "绳索下拉", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周六", 
-          body_parts: ["背部", "二头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "T杠划船", sets: "4", reps: "10-12", rest: "3分钟" },
-              { name: "单臂哑铃划船", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "坐姿绳索划船", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "哑铃弯举", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "锤式弯举", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周日", 
-          body_parts: ["腿部"], 
-          modules: { 
-            warmup: [
-              { name: "腿部动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "前蹲", sets: "4", reps: "8-10", rest: "4分钟" },
-              { name: "腿举", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "腿弯举", sets: "3", reps: "10-12", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "小腿提踵", sets: "4", reps: "15-20", rest: "60秒" },
-              { name: "腿外展", sets: "3", reps: "15-20", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "腿部拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        }
-      ],
-      "推拉腿": [
-        { 
-          weekday: "周一", 
-          body_parts: ["推", "胸肩三头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "杠铃卧推", sets: "4", reps: "8-10", rest: "3分钟" },
-              { name: "坐姿哑铃推举", sets: "3", reps: "8-10", rest: "2分钟" },
-              { name: "上斜哑铃推", sets: "3", reps: "10-12", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "哑铃侧平举", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "三头肌下拉", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周二", 
-          body_parts: ["拉", "背二头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "引体向上", sets: "4", reps: "8-12", rest: "3分钟" },
-              { name: "杠铃划船", sets: "4", reps: "10-12", rest: "2分钟" },
-              { name: "高位下拉", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "坐姿绳索划船", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "杠铃弯举", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周三", 
-          body_parts: ["腿", "腿臀核心"], 
-          modules: { 
-            warmup: [
-              { name: "腿部动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "杠铃深蹲", sets: "4", reps: "8-10", rest: "4分钟" },
-              { name: "罗马尼亚硬拉", sets: "3", reps: "8-10", rest: "3分钟" },
-              { name: "腿举", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "腿弯举", sets: "3", reps: "12-15", rest: "90秒" },
-              { name: "平板支撑", sets: "3", reps: "60秒", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "腿部拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周四", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        },
-        { 
-          weekday: "周五", 
-          body_parts: ["推", "胸肩三头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "上斜哑铃推", sets: "4", reps: "8-10", rest: "3分钟" },
-              { name: "器械推胸", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "哑铃推举", sets: "3", reps: "8-10", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "绳索夹胸", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "绳索下拉", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周六", 
-          body_parts: ["拉", "背二头"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "T杠划船", sets: "4", reps: "10-12", rest: "3分钟" },
-              { name: "单臂哑铃划船", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "坐姿绳索划船", sets: "3", reps: "12-15", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "哑铃弯举", sets: "3", reps: "12-15", rest: "60秒" },
-              { name: "锤式弯举", sets: "3", reps: "12-15", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周日", 
-          body_parts: ["腿", "腿臀核心"], 
-          modules: { 
-            warmup: [
-              { name: "腿部动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "前蹲", sets: "4", reps: "8-10", rest: "4分钟" },
-              { name: "腿举", sets: "3", reps: "10-12", rest: "2分钟" },
-              { name: "腿弯举", sets: "3", reps: "10-12", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "小腿提踵", sets: "4", reps: "15-20", rest: "60秒" },
-              { name: "俄罗斯转体", sets: "3", reps: "20次", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "腿部拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        }
-      ],
-      "有氧运动": [
-        { 
-          weekday: "周一", 
-          body_parts: ["有氧", "HIIT"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "跑步", sets: "1", reps: "30分钟", rest: "无" },
-              { name: "HIIT", sets: "1", reps: "20分钟", rest: "无" }
-            ], 
-            accessory: [
-              { name: "跳绳", sets: "3", reps: "5分钟", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周二", 
-          body_parts: ["有氧", "力量"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "椭圆机", sets: "1", reps: "45分钟", rest: "无" }
-            ], 
-            accessory: [
-              { name: "平板支撑", sets: "3", reps: "60秒", rest: "60秒" },
-              { name: "卷腹", sets: "3", reps: "20次", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周三", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        },
-        { 
-          weekday: "周四", 
-          body_parts: ["有氧", "循环"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "动感单车", sets: "1", reps: "40分钟", rest: "无" }
-            ], 
-            accessory: [
-              { name: "俄罗斯转体", sets: "3", reps: "20次", rest: "60秒" },
-              { name: "仰卧举腿", sets: "3", reps: "15次", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周五", 
-          body_parts: ["有氧", "耐力"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "划船机", sets: "1", reps: "35分钟", rest: "无" }
-            ], 
-            accessory: [
-              { name: "侧平板", sets: "3", reps: "45秒", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周六", 
-          body_parts: ["有氧", "爆发力"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "HIIT", sets: "1", reps: "25分钟", rest: "无" }
-            ], 
-            accessory: [
-              { name: "死虫式", sets: "3", reps: "30秒", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周日", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        }
-      ],
-      "功能性训练": [
-        { 
-          weekday: "周一", 
-          body_parts: ["核心", "平衡"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "平板支撑", sets: "4", reps: "60秒", rest: "90秒" },
-              { name: "鸟狗式", sets: "3", reps: "20次", rest: "60秒" },
-              { name: "死虫式", sets: "3", reps: "30秒", rest: "60秒" }
-            ], 
-            accessory: [
-              { name: "俄罗斯转体", sets: "3", reps: "20次", rest: "60秒" },
-              { name: "侧平板", sets: "3", reps: "45秒", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周二", 
-          body_parts: ["爆发力", "协调"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "波比跳", sets: "4", reps: "10次", rest: "90秒" },
-              { name: "深蹲跳", sets: "3", reps: "15次", rest: "90秒" },
-              { name: "俯卧撑", sets: "3", reps: "20次", rest: "60秒" }
-            ], 
-            accessory: [
-              { name: "高抬腿", sets: "3", reps: "30秒", rest: "60秒" },
-              { name: "开合跳", sets: "3", reps: "30秒", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周三", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        },
-        { 
-          weekday: "周四", 
-          body_parts: ["灵活性", "稳定性"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "单腿深蹲", sets: "3", reps: "12次", rest: "90秒" },
-              { name: "保加利亚分腿蹲", sets: "3", reps: "10次", rest: "90秒" },
-              { name: "悬垂举腿", sets: "3", reps: "15次", rest: "60秒" }
-            ], 
-            accessory: [
-              { name: "卷腹", sets: "3", reps: "20次", rest: "60秒" },
-              { name: "仰卧举腿", sets: "3", reps: "15次", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周五", 
-          body_parts: ["耐力", "力量"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "引体向上", sets: "3", reps: "8-12", rest: "3分钟" },
-              { name: "双杠臂屈伸", sets: "3", reps: "10-15", rest: "2分钟" },
-              { name: "深蹲", sets: "3", reps: "15次", rest: "2分钟" }
-            ], 
-            accessory: [
-              { name: "平板支撑", sets: "3", reps: "60秒", rest: "60秒" },
-              { name: "俄罗斯转体", sets: "3", reps: "20次", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周六", 
-          body_parts: ["敏捷", "反应"], 
-          modules: { 
-            warmup: [
-              { name: "动态拉伸", sets: "1", reps: "5分钟", rest: "无" }
-            ], 
-            main: [
-              { name: "梯子训练", sets: "4", reps: "5分钟", rest: "90秒" },
-              { name: "锥桶训练", sets: "3", reps: "8分钟", rest: "90秒" }
-            ], 
-            accessory: [
-              { name: "跳绳", sets: "3", reps: "5分钟", rest: "60秒" },
-              { name: "高抬腿", sets: "3", reps: "30秒", rest: "60秒" }
-            ], 
-            cooldown: [
-              { name: "静态拉伸", sets: "1", reps: "10分钟", rest: "无" }
-            ]
-          }
-        },
-        { 
-          weekday: "周日", 
-          body_parts: ["休息"], 
-          modules: { warmup: [], main: [], accessory: [], cooldown: [] }
-        }
-      ],
-      "自定义": [
-        { weekday: "周一", body_parts: ["自定义"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }},
-        { weekday: "周二", body_parts: ["自定义"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }},
-        { weekday: "周三", body_parts: ["自定义"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }},
-        { weekday: "周四", body_parts: ["自定义"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }},
-        { weekday: "周五", body_parts: ["自定义"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }},
-        { weekday: "周六", body_parts: ["自定义"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }},
-        { weekday: "周日", body_parts: ["休息"], modules: { warmup: [], main: [], accessory: [], cooldown: [] }}
-      ]
-    };
-    
-    return JSON.parse(JSON.stringify(templates[mode] || templates["五分化"]));
-  }
-  
-  renderWeekCards() {
-    const container = document.getElementById('weekCards');
-    if (!container) return;
-    
-    container.innerHTML = this.planData.week_schedule.map((day, index) => {
-      const totalExercises = Object.values(day.modules).reduce((sum, module) => sum + module.length, 0);
-      const isRestDay = day.body_parts.includes('休息');
-      
-      return `
-        <div class="week-card ${index === this.currentDay ? 'active' : ''} ${isRestDay ? 'rest-day' : ''}" 
-             onclick="editor.selectDay(${index})">
-          <div class="day-name">${day.weekday}</div>
-          <div class="day-parts">${day.body_parts.join(' + ')}</div>
-          <div class="day-exercises">${isRestDay ? '休息日' : totalExercises + '个动作'}</div>
-        </div>
-      `;
-    }).join('');
-    
-    this.updatePlanStats();
-  }
-
-  updatePlanStats() {
-    let totalExercises = 0;
-    let trainingDays = 0;
-    let restDays = 0;
-    
-    this.planData.week_schedule.forEach(day => {
-      const dayExercises = Object.values(day.modules).reduce((sum, module) => sum + module.length, 0);
-      totalExercises += dayExercises;
-      
-      if (day.body_parts.includes('休息')) {
-        restDays++;
-      } else {
-        trainingDays++;
-      }
-    });
-    
-    document.getElementById('totalExercises').textContent = totalExercises;
-    document.getElementById('trainingDays').textContent = trainingDays;
-    document.getElementById('restDays').textContent = restDays;
-  }
-
-  getTotalExercises() {
-    let total = 0;
-    this.planData.week_schedule.forEach(day => {
-      total += Object.values(day.modules).reduce((sum, module) => sum + module.length, 0);
-    });
-    return total;
-  }
-
-  // 加载喜欢的动作
-  loadFavoriteExercises() {
-    const saved = localStorage.getItem('favorite_exercises');
-    return saved ? JSON.parse(saved) : [];
-  }
-
-  // 保存喜欢的动作
-  saveFavoriteExercises() {
-    localStorage.setItem('favorite_exercises', JSON.stringify(this.favoriteExercises));
-  }
-
-  // 添加喜欢的动作
-  addFavoriteExercise(exerciseName) {
-    const existingIndex = this.favoriteExercises.findIndex(fav => fav.name === exerciseName);
-    if (existingIndex !== -1) {
-      // 如果已存在，更新时间戳
-      this.favoriteExercises[existingIndex].timestamp = Date.now();
-    } else {
-      // 如果不存在，添加新记录
-      this.favoriteExercises.push({
-        name: exerciseName,
-        timestamp: Date.now()
-      });
-    }
-    this.saveFavoriteExercises();
-    this.updateFavoriteButton(exerciseName, true);
-    this.showNotification(`已添加"${exerciseName}"到喜欢列表`, 'success');
-  }
-
-  // 移除喜欢的动作
-  removeFavoriteExercise(exerciseName) {
-    this.favoriteExercises = this.favoriteExercises.filter(fav => fav.name !== exerciseName);
-    this.saveFavoriteExercises();
-    this.updateFavoriteButton(exerciseName, false);
-    this.showNotification(`已从喜欢列表移除"${exerciseName}"`, 'info');
-  }
-
-  // 更新喜欢按钮状态（不重新渲染整个动作库）
-  updateFavoriteButton(exerciseName, isFavorite) {
-    const buttons = document.querySelectorAll(`[data-exercise="${exerciseName}"] .favorite-btn`);
-    buttons.forEach(btn => {
-      if (isFavorite) {
-        btn.classList.add('favorite-active');
-        btn.title = '取消喜欢';
-      } else {
-        btn.classList.remove('favorite-active');
-        btn.title = '添加到喜欢';
-      }
-    });
-  }
-
-  // 检查动作是否被喜欢
-  isFavoriteExercise(exerciseName) {
-    return this.favoriteExercises.some(fav => fav.name === exerciseName);
-  }
-
-  // 获取喜欢的动作（按时间排序，最新的在最上面）
-  getFavoriteExercises() {
-    return this.favoriteExercises
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .map(fav => fav.name);
-  }
-
-  // 渲染动作库
-  renderExerciseLibrary() {
-    const exerciseLibrary = document.querySelector('.exercise-library .body-parts');
-    if (!exerciseLibrary) return;
-
-    const favoriteExercises = this.getFavoriteExercises();
-    
-    // 定义所有动作数据
-    const allExercises = {
-      chest: [
-        "杠铃卧推", "哑铃卧推", "上斜哑铃推", "下斜哑铃推", "器械推胸", 
-        "绳索夹胸", "哑铃飞鸟", "上斜飞鸟", "下斜飞鸟", "窄距卧推"
-      ],
-      back: [
-        "引体向上", "杠铃划船", "高位下拉", "坐姿绳索划船", "哑铃划船", 
-        "T杠划船", "单臂哑铃划船", "直臂下拉", "反向飞鸟", "面拉"
-      ],
-      shoulders: [
-        "坐姿哑铃推举", "杠铃推举", "哑铃侧平举", "哑铃前平举", "哑铃后束飞鸟", 
-        "耸肩", "绳索侧平举", "阿诺德推举", "面拉", "反向飞鸟"
-      ],
-      legs: [
-        "杠铃深蹲", "罗马尼亚硬拉", "腿举", "腿弯举", "小腿提踵", 
-        "前蹲", "腿外展", "腿内收", "保加利亚分腿蹲", "哑铃深蹲"
-      ],
-      arms: [
-        "杠铃弯举", "三头肌下拉", "哑铃弯举", "锤式弯举", "绳索下拉", 
-        "窄距卧推", "牧师椅弯举", "仰卧臂屈伸", "绳索弯举", "钻石俯卧撑"
-      ],
-      core: [
-        "平板支撑", "俄罗斯转体", "卷腹", "仰卧举腿", "侧平板", 
-        "死虫式", "鸟狗式", "悬垂举腿", "仰卧两头起", "龙旗"
-      ],
-      cardio: [
-        "跑步", "椭圆机", "动感单车", "划船机", "跳绳", "HIIT"
-      ],
-      functional: [
-        "波比跳", "深蹲跳", "高抬腿", "开合跳", "俯卧撑", 
-        "单腿深蹲", "梯子训练", "锥桶训练", "药球投掷", "壶铃摆动"
-      ],
-      stretch: [
-        "动态拉伸", "静态拉伸", "胸部拉伸", "背部拉伸", "肩部拉伸", 
-        "腿部拉伸", "手臂拉伸", "髋部拉伸", "瑜伽", "泡沫轴放松"
-      ]
-    };
-
-    const partNames = {
-      chest: "胸部",
-      back: "背部", 
-      shoulders: "肩部",
-      legs: "腿部",
-      arms: "手臂",
-      core: "核心",
-      cardio: "有氧",
-      functional: "功能性",
-      stretch: "拉伸"
-    };
-
-    let html = '';
-
-    // 首先渲染喜欢的动作
-    if (favoriteExercises.length > 0) {
-      html += `
-        <div class="part-category" data-part="favorites">
-          <div class="part-header">
-            <i class="fas fa-chevron-right"></i>
-            <span><i class="fas fa-heart" style="color: #ff6b35;"></i> 我喜欢的</span>
-          </div>
-          <div class="part-exercises" style="display: none;">
-      `;
-      
-      favoriteExercises.forEach(exerciseName => {
-        html += `
-          <div class="exercise-item" draggable="true" data-exercise="${exerciseName}">
-            <span>${exerciseName}</span>
-            <button class="favorite-btn favorite-active" onclick="editor.toggleFavorite('${exerciseName}')" title="取消喜欢">
-              <i class="fas fa-heart"></i>
-            </button>
-          </div>
-        `;
-      });
-      
-      html += '</div></div>';
-    }
-
-    // 渲染各个部位的动作
-    Object.keys(allExercises).forEach(part => {
-      html += `
-        <div class="part-category" data-part="${part}">
-          <div class="part-header">
-            <i class="fas fa-chevron-right"></i>
-            <span>${partNames[part]}</span>
-          </div>
-          <div class="part-exercises" style="display: none;">
-      `;
-      
-      allExercises[part].forEach(exerciseName => {
-        const isFavorite = this.isFavoriteExercise(exerciseName);
-        html += `
-          <div class="exercise-item" draggable="true" data-exercise="${exerciseName}">
-            <span>${exerciseName}</span>
-            <button class="favorite-btn ${isFavorite ? 'favorite-active' : ''}" onclick="editor.toggleFavorite('${exerciseName}')" title="${isFavorite ? '取消喜欢' : '添加到喜欢'}">
-              <i class="fas fa-heart"></i>
-            </button>
-          </div>
-        `;
-      });
-      
-      html += '</div></div>';
-    });
-
-    exerciseLibrary.innerHTML = html;
-  }
-
-  // 切换喜欢状态
-  toggleFavorite(exerciseName) {
-    if (this.isFavoriteExercise(exerciseName)) {
-      this.removeFavoriteExercise(exerciseName);
-    } else {
-      this.addFavoriteExercise(exerciseName);
-    }
-  }
-
-  // 显示周设置模态框
-  showWeekSettings() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    
-    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    const bodyParts = [
-      '胸部', '背部', '肩部', '腿部', '手臂', '核心', '有氧', '功能性', '拉伸', '休息'
-    ];
-    
-    let settingsHTML = `
-      <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
-        <div class="modal-header">
-          <h3><i class="fas fa-cog"></i> 修改周安排</h3>
-          <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div style="margin-bottom: 20px;">
-            <p style="color: #666; font-size: 0.9rem;">
-              <i class="fas fa-info-circle"></i> 可以修改每一天的训练部位，选择"休息"表示该天不训练
-            </p>
-          </div>
-          <div class="week-settings-grid">
-    `;
-    
-    weekDays.forEach((day, index) => {
-      const currentDay = this.planData.week_schedule[index];
-      const isRestDay = currentDay.body_parts.includes('休息');
-      const selectedParts = isRestDay ? ['休息'] : currentDay.body_parts;
-      
-      settingsHTML += `
-        <div class="day-setting">
-          <div class="day-setting-header">
-            <h4>${day}</h4>
-            <label class="rest-toggle">
-              <input type="checkbox" ${isRestDay ? 'checked' : ''} onchange="editor.toggleRestDay(${index}, this.checked)">
-              <span>休息日</span>
-            </label>
-          </div>
-          <div class="body-parts-selection" ${isRestDay ? 'style="display: none;"' : ''}>
-            <label>训练部位：</label>
-            <div class="parts-grid">
-      `;
-      
-      bodyParts.forEach(part => {
-        if (part !== '休息') {
-          const isSelected = selectedParts.includes(part);
-          settingsHTML += `
-            <label class="part-checkbox">
-              <input type="checkbox" ${isSelected ? 'checked' : ''} 
-                     onchange="editor.updateDayBodyParts(${index}, '${part}', this.checked)">
-              <span>${part}</span>
-            </label>
-          `;
-        }
-      });
-      
-      settingsHTML += `
-            </div>
-          </div>
-        </div>
-      `;
-    });
-    
-    settingsHTML += `
-          </div>
-          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-            <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 6px; cursor: pointer;">取消</button>
-            <button onclick="editor.applyWeekSettings()" style="padding: 10px 20px; border: none; background: #ff6b35; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">应用设置</button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    modal.innerHTML = settingsHTML;
-    document.body.appendChild(modal);
-  }
-
-  // 切换休息日
-  toggleRestDay(dayIndex, isRest) {
-    const bodyPartsSelection = document.querySelectorAll('.body-parts-selection')[dayIndex];
-    if (isRest) {
-      bodyPartsSelection.style.display = 'none';
-      this.planData.week_schedule[dayIndex].body_parts = ['休息'];
-      // 清空该天的所有训练内容
-      this.planData.week_schedule[dayIndex].modules = {
-        warmup: [], main: [], accessory: [], cooldown: []
-      };
-    } else {
-      bodyPartsSelection.style.display = 'block';
-      this.planData.week_schedule[dayIndex].body_parts = [];
-    }
-  }
-
-  // 更新天的训练部位
-  updateDayBodyParts(dayIndex, bodyPart, isSelected) {
-    const currentParts = this.planData.week_schedule[dayIndex].body_parts;
-    if (isSelected) {
-      if (!currentParts.includes(bodyPart)) {
-        currentParts.push(bodyPart);
-      }
-    } else {
-      const index = currentParts.indexOf(bodyPart);
-      if (index > -1) {
-        currentParts.splice(index, 1);
-      }
-    }
-  }
-
-  // 应用周设置
-  applyWeekSettings() {
-    this.renderWeekCards();
-    this.updateCurrentDayDisplay();
-    this.renderAllModules();
-    this.updatePlanStats();
-    this.showNotification('周安排已更新', 'success');
-    document.querySelector('.modal').remove();
-  }
-  
-  selectDay(dayIndex) {
-    this.currentDay = dayIndex;
-    this.renderWeekCards();
-    this.updateCurrentDayDisplay();
-  }
-  
-  updateCurrentDayDisplay() {
-    const currentDay = this.planData.week_schedule[this.currentDay];
-    const titleElement = document.getElementById('currentDayTitle');
-    if (titleElement) {
-      titleElement.textContent = `${currentDay.weekday}：${currentDay.body_parts.join(' + ')}`;
-    }
-    this.renderAllModules();
-  }
-
-  renderAllModules() {
-    const currentDay = this.planData.week_schedule[this.currentDay];
-    const modules = ['warmup', 'main', 'accessory', 'cooldown'];
-    
-    modules.forEach(module => {
-      this.renderModule(module, currentDay.modules[module]);
-    });
-  }
-  
-  setupEventListeners() {
-    // 模式选择
-    document.querySelectorAll('.mode-option').forEach(option => {
-      option.addEventListener('click', (e) => {
-        document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        this.changeMode(e.currentTarget.dataset.mode);
-      });
-    });
-    
-    // 部位分类切换 - 使用事件委托
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.part-header')) {
-        const header = e.target.closest('.part-header');
-        const category = header.closest('.part-category');
-        const part = category.dataset.part;
-        this.togglePartCategory(part);
-      }
-    });
-    
-    // 拖拽功能
-    this.setupDragAndDrop();
-    
-    // 模块切换
-    document.querySelectorAll('.module-toggle').forEach(toggle => {
-      toggle.addEventListener('click', (e) => {
-        const module = e.currentTarget.closest('.module-section');
-        this.toggleModule(module);
-      });
-    });
-  }
-  
-  changeMode(mode) {
-    this.planData.mode = mode;
-    this.planData.week_schedule = this.getTemplateSchedule(mode);
-    this.renderWeekCards();
-    this.updateCurrentDayDisplay();
-    this.renderAllModules();
-    this.showNotification(`已切换到${mode}模式`, 'success');
-  }
-  
-  togglePartCategory(part) {
-    const category = document.querySelector(`[data-part="${part}"]`);
-    const exercises = category.querySelector('.part-exercises');
-    const icon = category.querySelector('.part-header i');
-    
-    if (exercises.style.display === 'none') {
-      exercises.style.display = 'block';
-      icon.className = 'fas fa-chevron-down';
-      category.classList.add('active');
-    } else {
-      exercises.style.display = 'none';
-      icon.className = 'fas fa-chevron-right';
-      category.classList.remove('active');
-    }
-  }
-  
-  setupDragAndDrop() {
-    // 动作拖拽 - 使用事件委托
-    document.addEventListener('dragstart', (e) => {
-      if (e.target.closest('.exercise-item')) {
-        const item = e.target.closest('.exercise-item');
-        e.dataTransfer.setData('text/plain', item.dataset.exercise);
-        item.style.opacity = '0.5';
-      }
-    });
-    
-    document.addEventListener('dragend', (e) => {
-      if (e.target.closest('.exercise-item')) {
-        const item = e.target.closest('.exercise-item');
-        item.style.opacity = '1';
-      }
-    });
-    
-    // 放置区域
-    document.querySelectorAll('.exercise-drop-zone').forEach(zone => {
-      zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        zone.classList.add('dragover');
-      });
-      
-      zone.addEventListener('dragleave', () => {
-        zone.classList.remove('dragover');
-      });
-      
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('dragover');
-        
-        const exerciseName = e.dataTransfer.getData('text/plain');
-        const module = zone.dataset.module;
-        this.addExercise(exerciseName, module);
-      });
-    });
-  }
-  
-  addExercise(exerciseName, module) {
-    const currentDay = this.planData.week_schedule[this.currentDay];
-    const exercise = {
-      name: exerciseName,
-      sets: this.getDefaultSets(exerciseName, module),
-      reps: this.getDefaultReps(exerciseName, module),
-      rest: this.getDefaultRest(exerciseName, module)
-    };
-    
-    currentDay.modules[module].push(exercise);
-    this.renderModule(module, currentDay.modules[module]);
-    this.renderWeekCards();
-    this.showNotification(`已添加"${exerciseName}"到${this.getModuleName(module)}模块`, 'success');
-  }
-
-  // 获取动作的默认参数
-  getDefaultSets(exerciseName, module) {
-    const warmupExercises = ['动态拉伸', '静态拉伸', '胸部拉伸', '背部拉伸', '肩部拉伸', '腿部拉伸', '手臂拉伸', '髋部拉伸'];
-    const cardioExercises = ['跑步', '椭圆机', '动感单车', '划船机', '跳绳', 'HIIT'];
-    const functionalExercises = ['波比跳', '深蹲跳', '高抬腿', '开合跳', '梯子训练', '锥桶训练'];
-    
-    if (warmupExercises.includes(exerciseName) || module === 'cooldown') {
-      return '1';
-    }
-    if (cardioExercises.includes(exerciseName)) {
-      return '1';
-    }
-    if (functionalExercises.includes(exerciseName)) {
-      return '3';
-    }
-    if (module === 'warmup') {
-      return '2';
-    }
-    if (module === 'main') {
-      return '4';
-    }
-    return '3';
-  }
-
-  getDefaultReps(exerciseName, module) {
-    const warmupExercises = ['动态拉伸', '静态拉伸', '胸部拉伸', '背部拉伸', '肩部拉伸', '腿部拉伸', '手臂拉伸', '髋部拉伸'];
-    const cardioExercises = ['跑步', '椭圆机', '动感单车', '划船机', '跳绳', 'HIIT'];
-    const coreExercises = ['平板支撑', '侧平板', '死虫式', '鸟狗式'];
-    const functionalExercises = ['波比跳', '深蹲跳', '高抬腿', '开合跳', '梯子训练', '锥桶训练'];
-    
-    if (warmupExercises.includes(exerciseName) || module === 'cooldown') {
-      return '10分钟';
-    }
-    if (cardioExercises.includes(exerciseName)) {
-      return '20-30分钟';
-    }
-    if (coreExercises.includes(exerciseName)) {
-      return '60秒';
-    }
-    if (functionalExercises.includes(exerciseName)) {
-      if (exerciseName === '波比跳') return '10次';
-      if (exerciseName === '深蹲跳') return '15次';
-      if (exerciseName === '高抬腿' || exerciseName === '开合跳') return '30秒';
-      if (exerciseName === '梯子训练') return '5分钟';
-      if (exerciseName === '锥桶训练') return '8分钟';
-      return '20次';
-    }
-    if (module === 'warmup') {
-      return '15-20';
-    }
-    if (module === 'main') {
-      return '8-10';
-    }
-    return '10-12';
-  }
-
-  getDefaultRest(exerciseName, module) {
-    const warmupExercises = ['动态拉伸', '静态拉伸', '胸部拉伸', '背部拉伸', '肩部拉伸', '腿部拉伸', '手臂拉伸', '髋部拉伸'];
-    const cardioExercises = ['跑步', '椭圆机', '动感单车', '划船机', '跳绳', 'HIIT'];
-    const coreExercises = ['平板支撑', '侧平板', '死虫式', '鸟狗式'];
-    const functionalExercises = ['波比跳', '深蹲跳', '高抬腿', '开合跳', '梯子训练', '锥桶训练'];
-    
-    if (warmupExercises.includes(exerciseName) || module === 'cooldown') {
-      return '无';
-    }
-    if (cardioExercises.includes(exerciseName)) {
-      return '无';
-    }
-    if (coreExercises.includes(exerciseName)) {
-      return '60秒';
-    }
-    if (functionalExercises.includes(exerciseName)) {
-      if (exerciseName === '波比跳' || exerciseName === '深蹲跳') return '90秒';
-      if (exerciseName === '高抬腿' || exerciseName === '开合跳') return '60秒';
-      if (exerciseName === '梯子训练' || exerciseName === '锥桶训练') return '90秒';
-      return '60秒';
-    }
-    if (module === 'warmup') {
-      return '30秒';
-    }
-    if (module === 'main') {
-      return '3分钟';
-    }
-    return '90秒';
-  }
-  
-  getModuleName(module) {
-    const names = {
-      warmup: '热身', main: '主训', accessory: '辅助', cooldown: '拉伸'
-    };
-    return names[module] || module;
-  }
-  
-  renderModule(module, exercises) {
-    const dropZone = document.querySelector(`[data-module="${module}"] .exercise-drop-zone`);
-    if (!dropZone) return;
-    
-    if (exercises.length === 0) {
-      dropZone.innerHTML = `
-        <i class="fas fa-plus"></i>
-        <p>拖拽${this.getModuleName(module)}动作至此</p>
-      `;
-    } else {
-      dropZone.innerHTML = exercises.map((exercise, index) => 
-        this.createExerciseCard(exercise, module, index)
-      ).join('');
-    }
-  }
-
-  createExerciseCard(exercise, module, index) {
-    return `
-      <div class="exercise-card" data-module="${module}" data-index="${index}">
-        <div class="exercise-card-header">
-          <div class="exercise-card-name">${exercise.name}</div>
-          <div class="exercise-card-controls">
-            <button class="card-control-btn" onclick="editor.removeExercise('${module}', ${index})" title="删除">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        </div>
-        <div class="exercise-params">
-          <div class="param-group">
-            <div class="param-label">组数</div>
-            <input type="text" class="param-input" value="${exercise.sets}" 
-                   onchange="editor.updateExerciseParam('${module}', ${index}, 'sets', this.value)">
-          </div>
-          <div class="param-group">
-            <div class="param-label">次数</div>
-            <input type="text" class="param-input" value="${exercise.reps}"
-                   onchange="editor.updateExerciseParam('${module}', ${index}, 'reps', this.value)">
-          </div>
-          <div class="param-group">
-            <div class="param-label">休息</div>
-            <input type="text" class="param-input" value="${exercise.rest}"
-                   onchange="editor.updateExerciseParam('${module}', ${index}, 'rest', this.value)">
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  removeExercise(module, index) {
-      const currentDay = this.planData.week_schedule[this.currentDay];
-      const exercise = currentDay.modules[module][index];
-      currentDay.modules[module].splice(index, 1);
-      this.renderModule(module, currentDay.modules[module]);
-    this.renderWeekCards();
-      this.showNotification(`已删除"${exercise.name}"`, 'info');
-  }
-
-  updateExerciseParam(module, index, param, value) {
-      const currentDay = this.planData.week_schedule[this.currentDay];
-    currentDay.modules[module][index][param] = value;
-  }
-  
-  toggleModule(module) {
-    const content = module.querySelector('.module-content');
-    const toggle = module.querySelector('.module-toggle');
-    
-    if (content.style.display === 'none') {
-      content.style.display = 'block';
-      toggle.classList.remove('collapsed');
-    } else {
-      content.style.display = 'none';
-      toggle.classList.add('collapsed');
-    }
-  }
-
-  showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-      <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-      <span>${message}</span>
-    `;
-    
-    Object.assign(notification.style, {
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      padding: '12px 20px',
-      borderRadius: '6px',
-      color: 'white',
-      fontSize: '14px',
-      fontWeight: '500',
-      zIndex: '10000',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      minWidth: '250px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
-      animation: 'slideInRight 0.3s ease-out'
-    });
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.style.animation = 'slideOutRight 0.3s ease-in';
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification);
-        }
-      }, 300);
-    }, 3000);
-  }
-
-  // 生成预览HTML
-  generatePreviewHTML() {
-    const planName = this.planData.plan_name;
-    const mode = this.planData.mode;
-    const cycleWeeks = this.planData.cycle_weeks;
-    
-    let totalExercises = 0;
-    let trainingDays = 0;
-    let restDays = 0;
-    
-    this.planData.week_schedule.forEach(day => {
-      const dayExercises = Object.values(day.modules).reduce((sum, module) => sum + module.length, 0);
-      totalExercises += dayExercises;
-      
-      if (day.body_parts.includes('休息')) {
-        restDays++;
-      } else {
-        trainingDays++;
-      }
-    });
-
-    return `
-      <!DOCTYPE html>
-      <html lang="zh-CN">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${planName} - 训练计划预览</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-          }
-          
-          .export-toolbar {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-          }
-          
-          .export-btn {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            border: none;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-          }
-          
-          .export-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-          }
-          
-          .export-btn:active {
-            transform: translateY(0);
-          }
-          
-          .container {
-            max-width: 1000px;
-            margin: 0 auto;
-      background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
-          }
-          
-          .header {
-            background: linear-gradient(135deg, #ff6b35, #f7931e);
-            color: white;
-            padding: 30px;
-            text-align: center;
-          }
-          
-          .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          }
-          
-          .header .plan-info {
-      display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-          }
-          
-          .info-item {
-            background: rgba(255,255,255,0.2);
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-          }
-          
-          .stats-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
-          }
-          
-          .stats-grid {
-      display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-    }
-    
-          .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-      text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          }
-          
-          .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ff6b35;
-            margin-bottom: 5px;
-          }
-          
-          .stat-label {
-            color: #666;
-            font-size: 0.9rem;
-          }
-          
-          .content {
-            padding: 30px;
-          }
-          
-          .day-section {
-            margin-bottom: 30px;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-          }
-          
-          .day-section:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-          }
-          
-          .day-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-          }
-          
-          .day-header i {
-            font-size: 1.5rem;
-          }
-          
-          .module-section {
-            margin: 20px;
-          }
-          
-          .module-title {
-            color: #ff6b35;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #ff6b35;
-          }
-          
-          .exercise-list {
-            display: grid;
-            gap: 10px;
-          }
-          
-          .exercise-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #ff6b35;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-          }
-          
-          .exercise-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
-          }
-          
-          .exercise-name {
-            font-weight: 600;
-            color: #333;
-          }
-          
-          .exercise-details {
-            color: #666;
-            font-size: 0.9rem;
-          }
-          
-          .rest-day {
-            background: #f8f9fa;
-            padding: 30px;
-            text-align: center;
-            color: #666;
-            font-style: italic;
-          }
-          
-          .footer {
-            background: #333;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            margin-top: 30px;
-          }
-          
-          .footer p {
-            margin: 5px 0;
-            font-size: 0.9rem;
-          }
-          
-          @media print {
-            body {
-              background: white;
-              padding: 0;
-            }
-            
-            .container {
-              box-shadow: none;
-              border-radius: 0;
-            }
-            
-            .day-section:hover {
-              transform: none;
-              box-shadow: none;
-            }
-            
-            .export-toolbar {
-              display: none;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="export-toolbar">
-          <button class="export-btn" onclick="exportAsImage()">
-            <i class="fas fa-image"></i> 保存为图片
-          </button>
-          <button class="export-btn" onclick="exportAsPDF()">
-            <i class="fas fa-file-pdf"></i> 保存为PDF
-          </button>
-          <button class="export-btn" onclick="window.print()">
-            <i class="fas fa-print"></i> 打印
-          </button>
-        </div>
-        
-        <div class="container" id="planContainer">
-          <div class="header">
-            <h1><i class="fas fa-dumbbell"></i> ${planName}</h1>
-            <div class="plan-info">
-              <div class="info-item">
-                <i class="fas fa-fire"></i> ${mode}
-      </div>
-              <div class="info-item">
-                <i class="fas fa-calendar"></i> ${cycleWeeks}周
-          </div>
-              <div class="info-item">
-                <i class="fas fa-clock"></i> ${new Date().toLocaleDateString()}
-      </div>
-      </div>
-          </div>
-          
-          <div class="stats-section">
-            <h3><i class="fas fa-chart-bar"></i> 训练计划统计</h3>
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-number">${totalExercises}</div>
-                <div class="stat-label">总动作数</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number">${trainingDays}</div>
-                <div class="stat-label">训练天数</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number">${restDays}</div>
-                <div class="stat-label">休息天数</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number">${cycleWeeks}</div>
-                <div class="stat-label">训练周期</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="content">
-            ${this.planData.week_schedule.map(day => {
-              const isRestDay = day.body_parts.includes('休息');
-              
-              if (isRestDay) {
-                return `
-                  <div class="day-section">
-                    <div class="day-header">
-                      <i class="fas fa-bed"></i>
-                      ${day.weekday} - 休息日
-                    </div>
-                    <div class="rest-day">
-                      <i class="fas fa-heart"></i> 恢复和休息，为下一周的训练做准备
-                    </div>
-        </div>
-      `;
-              }
-              
-              const modules = ['warmup', 'main', 'accessory', 'cooldown'];
-              const moduleNames = {
-                warmup: { name: '热身', icon: 'fas fa-thermometer-half' },
-                main: { name: '主训', icon: 'fas fa-fire' },
-                accessory: { name: '辅助', icon: 'fas fa-plus-circle' },
-                cooldown: { name: '拉伸', icon: 'fas fa-leaf' }
-              };
-              
-    return `
-                <div class="day-section">
-                  <div class="day-header">
-                    <i class="fas fa-calendar-day"></i>
-                    ${day.weekday} - ${day.body_parts.join(' + ')}
-          </div>
-                  ${modules.filter(module => day.modules[module].length > 0).map(module => `
-                    <div class="module-section">
-                      <div class="module-title">
-                        <i class="${moduleNames[module].icon}"></i>
-                        ${moduleNames[module].name}模块
-        </div>
-                      <div class="exercise-list">
-                        ${day.modules[module].map(exercise => `
-                          <div class="exercise-item">
-                            <div class="exercise-name">${exercise.name}</div>
-                            <div class="exercise-details">
-                              ${exercise.sets}组 × ${exercise.reps} | 休息: ${exercise.rest}
-          </div>
-          </div>
-                        `).join('')}
-          </div>
-        </div>
-                  `).join('')}
-      </div>
-    `;
-            }).join('')}
-          </div>
-          
-          <div class="footer">
-            <p><i class="fas fa-dumbbell"></i> QAToolBox 训练计划编辑器</p>
-            <p>生成时间: ${new Date().toLocaleString()}</p>
-            <p>版本: v2.0 | 专业训练计划管理工具</p>
-          </div>
-        </div>
-
-        <script>
-          // 导出为图片
-          function exportAsImage() {
-            const container = document.getElementById('planContainer');
-            const toolbar = document.querySelector('.export-toolbar');
-            
-            // 临时隐藏工具栏
-            toolbar.style.display = 'none';
-            
-            html2canvas(container, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: '#ffffff'
-            }).then(canvas => {
-              // 恢复工具栏
-              toolbar.style.display = 'flex';
-              
-              // 创建下载链接
-              const link = document.createElement('a');
-              link.download = '${planName}_训练计划.png';
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-            }).catch(error => {
-              console.error('导出图片失败:', error);
-              toolbar.style.display = 'flex';
-              alert('导出图片失败，请重试');
-            });
-          }
-          
-          // 导出为PDF
-          function exportAsPDF() {
-            const container = document.getElementById('planContainer');
-            const toolbar = document.querySelector('.export-toolbar');
-            
-            // 临时隐藏工具栏
-            toolbar.style.display = 'none';
-            
-            html2canvas(container, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: '#ffffff'
-            }).then(canvas => {
-              // 恢复工具栏
-              toolbar.style.display = 'flex';
-              
-              const imgData = canvas.toDataURL('image/png');
-              const pdf = new jsPDF('p', 'mm', 'a4');
-              const imgWidth = 210;
-              const pageHeight = 295;
-              const imgHeight = (canvas.height * imgWidth) / canvas.width;
-              let heightLeft = imgHeight;
-              let position = 0;
-              
-              pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-              heightLeft -= pageHeight;
-              
-              while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-              }
-              
-              pdf.save('${planName}_训练计划.pdf');
-            }).catch(error => {
-              console.error('导出PDF失败:', error);
-              toolbar.style.display = 'flex';
-              alert('导出PDF失败，请重试');
-            });
-          }
-        </script>
-      </body>
-      </html>
-    `;
-  }
-}
-
-// 全局函数
-function goBack() {
-  window.history.back();
-}
-
-function loadTemplate() {
-  document.getElementById('templateModal').style.display = 'flex';
-}
-
-function closeTemplateModal() {
-  document.getElementById('templateModal').style.display = 'none';
-}
-
-function selectTemplate(templateName) {
-  if (editor) {
-    editor.changeMode(templateName);
-    closeTemplateModal();
-    
-    // 更新计划名称
-    const planNameInput = document.getElementById('planName');
-    if (planNameInput) {
-      planNameInput.value = `我的${templateName}计划`;
-    }
-  }
-}
-
-function previewPlan() {
-  if (editor) {
-    const planName = document.getElementById('planName').value.trim();
-    if (!planName) {
-        alert('请输入计划名称！');
-        return;
-      }
-      
-    const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
-    const previewHTML = editor.generatePreviewHTML();
-    
-    previewWindow.document.open();
-    previewWindow.document.write(previewHTML);
-    previewWindow.document.close();
-  }
-}
-
-function savePlan() {
-  if (editor) {
-    const planName = document.getElementById('planName').value.trim();
-    if (!planName) {
-      alert('请输入计划名称！');
-      return;
-    }
-    editor.planData.plan_name = planName;
-    localStorage.setItem('training_plan', JSON.stringify(editor.planData));
-    editor.showNotification('训练计划已保存！', 'success');
-  }
-}
-
-function publishPlan() {
-  if (editor) {
-    const planName = document.getElementById('planName').value.trim();
-    if (!planName) {
-      alert('请先填写计划名称！');
-      return;
-    }
-    
-    // 检查是否有训练内容
-    const hasContent = editor.planData.week_schedule.some(day => 
-      Object.values(day.modules).some(module => module.length > 0)
-    );
-    
-    if (!hasContent) {
-      alert('请至少添加一些训练动作！');
-      return;
-    }
-    
-    // 显示发布确认对话框
-    const publishModal = document.createElement('div');
-    publishModal.className = 'modal';
-    publishModal.style.display = 'flex';
-    publishModal.innerHTML = `
-      <div class="modal-content" style="max-width: 500px;">
-        <div class="modal-header">
-          <h3><i class="fas fa-upload"></i> 发布训练计划</h3>
-          <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div style="margin-bottom: 20px;">
-            <p><strong>计划名称:</strong> ${planName}</p>
-            <p><strong>训练模式:</strong> ${editor.planData.mode}</p>
-            <p><strong>训练周期:</strong> ${editor.planData.cycle_weeks}周</p>
-            <p><strong>总动作数:</strong> ${editor.getTotalExercises()}个</p>
-          </div>
-          
-          <div style="margin-bottom: 20px;">
-            <label for="publishDescription" style="display: block; margin-bottom: 8px; font-weight: 600;">计划描述:</label>
-            <textarea id="publishDescription" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; resize: vertical;" placeholder="描述你的训练计划特点、适用人群等..."></textarea>
-          </div>
-          
-          <div style="margin-bottom: 20px;">
-            <label for="publishTags" style="display: block; margin-bottom: 8px; font-weight: 600;">标签:</label>
-            <input type="text" id="publishTags" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;" placeholder="用逗号分隔，如：增肌,减脂,力量训练">
-          </div>
-          
-          <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 6px; cursor: pointer;">取消</button>
-            <button onclick="confirmPublish()" style="padding: 10px 20px; border: none; background: #ff6b35; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">确认发布</button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(publishModal);
-  }
-}
-
-function confirmPublish() {
-  const description = document.getElementById('publishDescription').value.trim();
-  const tags = document.getElementById('publishTags').value.trim();
-  
-  if (!description) {
-    alert('请填写计划描述！');
-    return;
-  }
-  
-  // 模拟发布过程
-  const publishModal = document.querySelector('.modal');
-  const modalBody = publishModal.querySelector('.modal-body');
-  
-  modalBody.innerHTML = `
-    <div style="text-align: center; padding: 40px 20px;">
-      <div style="margin-bottom: 20px;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #ff6b35;"></i>
-      </div>
-      <h3>正在发布训练计划...</h3>
-      <p style="color: #666; margin-top: 10px;">请稍候，正在处理您的请求</p>
-        </div>
-    `;
-    
-  // 模拟发布延迟
-  setTimeout(() => {
-    modalBody.innerHTML = `
-      <div style="text-align: center; padding: 40px 20px;">
-        <div style="margin-bottom: 20px;">
-          <i class="fas fa-check-circle" style="font-size: 3rem; color: #4CAF50;"></i>
-        </div>
-        <h3 style="color: #4CAF50;">发布成功！</h3>
-        <p style="color: #666; margin-top: 10px;">您的训练计划已成功发布到社区</p>
-        <div style="margin-top: 20px;">
-          <button onclick="publishModal.remove()" style="padding: 10px 20px; border: none; background: #4CAF50; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">确定</button>
-        </div>
-      </div>
-    `;
-    
-    // 保存发布记录
-    const publishedPlan = {
-      ...editor.planData,
-      description: description,
-      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      publishedAt: new Date().toISOString(),
-      publishedBy: '当前用户',
-      likes: 0,
-      downloads: 0
-    };
-    
-    localStorage.setItem('published_plans', JSON.stringify([
-      ...JSON.parse(localStorage.getItem('published_plans') || '[]'),
-      publishedPlan
-    ]));
-    
-    editor.showNotification('训练计划发布成功！', 'success');
-  }, 2000);
-}
-
-function copyDay() {
-  if (editor) {
-    editor.showNotification('复制功能开发中...', 'info');
-  }
-}
-
-function clearDay() {
-  if (editor) {
-    if (confirm('确定要清空当前训练日的所有内容吗？')) {
-      const currentDay = editor.planData.week_schedule[editor.currentDay];
-      Object.keys(currentDay.modules).forEach(module => {
-        currentDay.modules[module] = [];
-      });
-      Object.keys(currentDay.modules).forEach(module => {
-        editor.renderModule(module, currentDay.modules[module]);
-      });
-      editor.renderWeekCards();
-      editor.showNotification('已清空当前训练日', 'info');
-    }
-  }
-}
-
-// 初始化编辑器
-let editor;
-document.addEventListener('DOMContentLoaded', function() {
-  editor = new TrainingPlanEditor();
-  
-  // 添加动画关键帧
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes slideInRight {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes slideOutRight {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
-    
-    .exercise-card {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
-      padding: 10px;
-      margin-bottom: 8px;
-      transition: all 0.3s ease;
-    }
-    
-    .exercise-card:hover {
-      background: rgba(255, 107, 53, 0.1);
-      border-color: rgba(255, 107, 53, 0.3);
-    }
-    
-    .exercise-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .exercise-card-name {
-      font-weight: 500;
-      color: #e6e6e6;
-    }
-    
-    .exercise-card-controls {
-      display: flex;
-      gap: 5px;
-    }
-    
-    .card-control-btn {
-      background: none;
-      border: none;
-      color: #a8a8a8;
-      cursor: pointer;
-      padding: 3px;
-      border-radius: 3px;
-      transition: all 0.3s ease;
-    }
-    
-    .card-control-btn:hover {
-      color: #ff6b6b;
-      background: rgba(255, 107, 107, 0.2);
-    }
-    
-    .exercise-params {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-    
-    .param-group {
-      text-align: center;
-    }
-    
-    .param-label {
-      font-size: 0.8rem;
-      color: #a8a8a8;
-      margin-bottom: 3px;
-    }
-    
-    .param-input {
-      width: 100%;
-      padding: 4px 6px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.1);
-      color: #e6e6e6;
-      text-align: center;
-      font-size: 0.85rem;
-    }
-    
-    .param-input:focus {
-      outline: none;
-      border-color: #ff6b35;
-      background: rgba(255, 255, 255, 0.15);
-    }
-  `;
-  document.head.appendChild(style);
-});
-</script>
+<script src="{% static 'js/training_plan_editor.js' %}"></script>
 {% endblock %}

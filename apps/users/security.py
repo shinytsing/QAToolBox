@@ -1,8 +1,10 @@
 import re
 import html
 import logging
+import time
+from collections import defaultdict
 from django.utils.deprecation import MiddlewareMixin
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -14,33 +16,131 @@ logger = logging.getLogger(__name__)
 class SecurityMiddleware(MiddlewareMixin):
     """安全中间件，提供多种安全防护"""
     
+    def __init__(self, get_response=None):
+        super().__init__(get_response)
+        self.ip_attack_counts = defaultdict(list)
+        self.suspicious_patterns = [
+            r'<script[^>]*>',
+            r'javascript:',
+            r'on\w+\s*=',
+            r'<iframe[^>]*>',
+            r'<object[^>]*>',
+            r'<embed[^>]*>',
+            r'<link[^>]*>',
+            r'<meta[^>]*>',
+            r'<form[^>]*>',
+            r'<input[^>]*>',
+            r'<textarea[^>]*>',
+            r'<select[^>]*>',
+            r'<button[^>]*>',
+            r'<a[^>]*>',
+            r'<img[^>]*>',
+            r'<video[^>]*>',
+            r'<audio[^>]*>',
+            r'<canvas[^>]*>',
+            r'<svg[^>]*>',
+            r'<math[^>]*>',
+            r'<applet[^>]*>',
+            r'<base[^>]*>',
+            r'<bgsound[^>]*>',
+            r'<command[^>]*>',
+            r'<details[^>]*>',
+            r'<dialog[^>]*>',
+            r'<fieldset[^>]*>',
+            r'<figure[^>]*>',
+            r'<figcaption[^>]*>',
+            r'<footer[^>]*>',
+            r'<header[^>]*>',
+            r'<hgroup[^>]*>',
+            r'<keygen[^>]*>',
+            r'<legend[^>]*>',
+            r'<map[^>]*>',
+            r'<menu[^>]*>',
+            r'<menuitem[^>]*>',
+            r'<meter[^>]*>',
+            r'<nav[^>]*>',
+            r'<noscript[^>]*>',
+            r'<optgroup[^>]*>',
+            r'<option[^>]*>',
+            r'<output[^>]*>',
+            r'<param[^>]*>',
+            r'<progress[^>]*>',
+            r'<ruby[^>]*>',
+            r'<rt[^>]*>',
+            r'<rp[^>]*>',
+            r'<samp[^>]*>',
+            r'<section[^>]*>',
+            r'<source[^>]*>',
+            r'<summary[^>]*>',
+            r'<time[^>]*>',
+            r'<track[^>]*>',
+            r'<wbr[^>]*>',
+        ]
+    
     def process_request(self, request):
         """处理请求前的安全检查"""
+        client_ip = self._get_client_ip(request)
+        
+        # 检查IP黑名单
+        if self._is_blacklisted_ip(client_ip):
+            logger.warning(f"黑名单IP访问被拒绝: {client_ip}")
+            return HttpResponseForbidden("Access denied")
+        
+        # 检查攻击频率
+        if self._is_attack_frequency_exceeded(client_ip):
+            logger.warning(f"IP攻击频率过高: {client_ip}")
+            return HttpResponseForbidden("Rate limit exceeded")
+        
         # 检查请求来源
         if not self._is_valid_origin(request):
-            logger.warning(f"可疑请求来源: {request.META.get('HTTP_REFERER', 'Unknown')}")
+            logger.warning(f"可疑请求来源: {request.META.get('HTTP_REFERER', 'Unknown')} from {client_ip}")
             return HttpResponseForbidden("Invalid request origin")
-        
-        # 检查请求频率
-        if not self._check_rate_limit(request):
-            logger.warning(f"请求频率过高: {request.META.get('REMOTE_ADDR', 'Unknown')}")
-            return HttpResponseForbidden("Request rate limit exceeded")
         
         # 检查可疑请求头
         if self._has_suspicious_headers(request):
-            logger.warning(f"可疑请求头: {request.META.get('REMOTE_ADDR', 'Unknown')}")
+            logger.warning(f"可疑请求头: {client_ip}")
             return HttpResponseForbidden("Suspicious request headers")
+        
+        # 检查请求内容
+        if self._has_malicious_content(request):
+            logger.warning(f"恶意内容检测: {client_ip}")
+            return HttpResponseForbidden("Malicious content detected")
+        
+        # 记录请求
+        self._record_request(client_ip)
         
         return None
     
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        """处理视图前的安全检查"""
-        # 检查用户权限
-        if not self._check_user_permissions(request, view_func):
-            logger.warning(f"权限不足: {request.user.username if request.user.is_authenticated else 'Anonymous'}")
-            return HttpResponseForbidden("Insufficient permissions")
+    def _get_client_ip(self, request):
+        """获取客户端真实IP"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+    
+    def _is_blacklisted_ip(self, ip):
+        """检查是否为黑名单IP"""
+        blacklisted_ips = getattr(settings, 'BLACKLISTED_IPS', [])
+        return ip in blacklisted_ips
+    
+    def _is_attack_frequency_exceeded(self, ip):
+        """检查攻击频率是否超限"""
+        current_time = time.time()
+        # 清理超过1小时的记录
+        self.ip_attack_counts[ip] = [t for t in self.ip_attack_counts[ip] if current_time - t < 3600]
         
-        return None
+        # 如果1小时内请求超过1000次，认为是攻击
+        if len(self.ip_attack_counts[ip]) > 1000:
+            return True
+        
+        return False
+    
+    def _record_request(self, ip):
+        """记录请求"""
+        current_time = time.time()
+        self.ip_attack_counts[ip].append(current_time)
     
     def _is_valid_origin(self, request):
         """检查请求来源是否有效"""
@@ -52,15 +152,12 @@ class SecurityMiddleware(MiddlewareMixin):
         allowed_domains = getattr(settings, 'ALLOWED_REFERER_DOMAINS', [])
         if allowed_domains:
             from urllib.parse import urlparse
-            parsed = urlparse(referer)
-            return parsed.netloc in allowed_domains
+            try:
+                parsed = urlparse(referer)
+                return parsed.netloc in allowed_domains
+            except:
+                return False
         
-        return True
-    
-    def _check_rate_limit(self, request):
-        """检查请求频率限制"""
-        # 这里可以实现更复杂的频率限制逻辑
-        # 目前只是简单的检查
         return True
     
     def _has_suspicious_headers(self, request):
@@ -69,6 +166,10 @@ class SecurityMiddleware(MiddlewareMixin):
             'HTTP_X_FORWARDED_FOR',
             'HTTP_X_REAL_IP',
             'HTTP_CLIENT_IP',
+            'HTTP_X_CLUSTER_CLIENT_IP',
+            'HTTP_FORWARDED',
+            'HTTP_VIA',
+            'HTTP_PROXY_CONNECTION',
         ]
         
         for header in suspicious_headers:
@@ -81,14 +182,77 @@ class SecurityMiddleware(MiddlewareMixin):
     
     def _is_suspicious_ip(self, ip):
         """检查是否为可疑IP"""
-        # 这里可以实现IP黑名单检查
-        blacklisted_ips = getattr(settings, 'BLACKLISTED_IPS', [])
-        return ip in blacklisted_ips
+        # 在开发环境中允许本地访问
+        if settings.DEBUG:
+            return False
+            
+        # 检查是否为私有IP
+        private_ip_patterns = [
+            r'^10\.',
+            r'^172\.(1[6-9]|2[0-9]|3[0-1])\.',
+            r'^192\.168\.',
+            r'^127\.',
+            r'^169\.254\.',
+            r'^::1$',
+            r'^fe80:',
+        ]
+        
+        for pattern in private_ip_patterns:
+            if re.match(pattern, ip):
+                return True
+        
+        return False
     
-    def _check_user_permissions(self, request, view_func):
-        """检查用户权限"""
-        # 这里可以实现更复杂的权限检查逻辑
-        return True
+    def _has_malicious_content(self, request):
+        """检查是否包含恶意内容"""
+        # 检查POST数据
+        if request.method == 'POST':
+            for key, value in request.POST.items():
+                if isinstance(value, str):
+                    if self._contains_malicious_pattern(value):
+                        return True
+        
+        # 检查GET参数
+        for key, value in request.GET.items():
+            if isinstance(value, str):
+                if self._contains_malicious_pattern(value):
+                    return True
+        
+        # 检查请求头
+        for key, value in request.META.items():
+            if isinstance(value, str):
+                if self._contains_malicious_pattern(value):
+                    return True
+        
+        return False
+    
+    def _contains_malicious_pattern(self, content):
+        """检查是否包含恶意模式"""
+        content_lower = content.lower()
+        
+        # 检查XSS模式
+        for pattern in self.suspicious_patterns:
+            if re.search(pattern, content_lower, re.IGNORECASE):
+                return True
+        
+        # 检查SQL注入模式
+        sql_patterns = [
+            r'(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION)\b)',
+            r'(\b(OR|AND)\b\s+\d+\s*=\s*\d+)',
+            r'(\b(OR|AND)\b\s+\'[^\']*\'\s*=\s*\'[^\']*\')',
+            r'(\b(OR|AND)\b\s+\d+\s*=\s*\d+\s*--)',
+            r'(\b(OR|AND)\b\s+\'[^\']*\'\s*=\s*\'[^\']*\'--)',
+            r'(\b(OR|AND)\b\s+\d+\s*=\s*\d+\s*#)',
+            r'(\b(OR|AND)\b\s+\'[^\']*\'\s*=\s*\'[^\']*\'#)',
+            r'(\b(OR|AND)\b\s+\d+\s*=\s*\d+\s*/\*)',
+            r'(\b(OR|AND)\b\s+\'[^\']*\'\s*=\s*\'[^\']*\'/\*)',
+        ]
+        
+        for pattern in sql_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                return True
+        
+        return False
 
 
 class InputValidator:

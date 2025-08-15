@@ -3307,7 +3307,7 @@ document.addEventListener('keydown', function(e) {
         break;
       case 's':
         e.preventDefault();
-        window.location.href = '/tools/self_analysis/';
+        window.location.href = '{% url "tools:self_analysis" %}';
         break;
       case 'b':
         e.preventDefault();
@@ -3691,6 +3691,13 @@ function showConversionResult(data) {
             </div>
         `;
         
+        // 检查下载URL是否存在
+        if (!data.download_url) {
+            console.error('API响应中缺少download_url字段:', data);
+            showNotification('转换成功但无法获取下载链接，请检查API响应', 'error');
+            return;
+        }
+        
         // 自动触发下载
         setTimeout(() => {
             downloadFile(data.download_url, outputFileName);
@@ -4035,48 +4042,103 @@ document.head.appendChild(animationStyle);
 
 // 可靠的下载函数
 function downloadFile(url, filename) {
-    console.log(`开始下载: ${url}`);
+    console.log(`开始下载: ${url}, 文件名: ${filename}`);
+    
+    if (!url) {
+        console.error('下载URL为空');
+        showNotification('下载链接无效', 'error');
+        return;
+    }
+    
+    // 确保URL是完整的
+    if (!url.startsWith('http')) {
+        url = window.location.origin + url;
+    }
+    
+    console.log(`完整下载URL: ${url}`);
     
     // 方法1: 使用fetch下载
-    fetch(url)
-        .then(response => {
-            console.log('Download response status:', response.status);
-            if (response.ok) {
-                return response.blob();
-            }
-            throw new Error(`HTTP ${response.status}`);
-        })
-        .then(blob => {
-            console.log('Download blob size:', blob.size);
-            
-            // 创建下载链接
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(downloadUrl);
-            
-            console.log(`下载成功: ${filename}`);
-        })
-        .catch(error => {
-            console.error(`下载失败: ${error.message}`);
-            
-            // 方法2: 备用下载方法
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.target = '_blank';
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            console.log(`使用备用方法下载: ${filename}`);
-        });
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': '*/*',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Download response status:', response.status);
+        console.log('Download response headers:', response.headers);
+        
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    })
+    .then(blob => {
+        console.log('Download blob size:', blob.size);
+        
+        if (blob.size === 0) {
+            throw new Error('下载的文件大小为0');
+        }
+        
+        // 创建下载链接
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // 触发下载
+        link.click();
+        
+        // 清理
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+        
+        console.log(`下载成功: ${filename}`);
+        showNotification(`文件 "${filename}" 下载成功`, 'success');
+    })
+    .catch(error => {
+        console.error(`下载失败: ${error.message}`);
+        
+        // 方法2: 备用下载方法 - 直接链接
+        console.log('尝试备用下载方法...');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`使用备用方法下载: ${filename}`);
+        showNotification(`使用备用方法下载: ${filename}`, 'info');
+        
+        // 方法3: 如果还是失败，提示用户手动下载
+        setTimeout(() => {
+            showNotification(`如果下载失败，请右键点击链接选择"另存为"`, 'warning');
+        }, 2000);
+    });
+}
+
+// 增强的批量下载函数
+function downloadMultipleFiles(downloadLinks) {
+    if (!downloadLinks || downloadLinks.length === 0) {
+        console.log('没有文件需要下载');
+        return;
+    }
+    
+    console.log(`开始批量下载 ${downloadLinks.length} 个文件`);
+    
+    downloadLinks.forEach((link, index) => {
+        setTimeout(() => {
+            console.log(`下载第 ${index + 1} 个文件: ${link.filename}`);
+            downloadFile(link.url, link.filename);
+            showNotification(`正在下载: ${link.filename}`, 'info');
+        }, index * 1500); // 每个文件间隔1.5秒下载
+    });
 }
 </script>
 {% endblock %} 

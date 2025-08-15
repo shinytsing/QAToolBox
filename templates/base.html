@@ -851,11 +851,11 @@
             z-index: 2;
         }
         .navbar a {
-            color: #fff !important;
             transition: color 0.3s;
         }
         .navbar a:hover {
-            color: #FFD700 !important;
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
         }
         .nav-buttons {
             margin-left: auto;
@@ -1051,13 +1051,11 @@
         .navbar-brand {
             font-weight: bold;
             font-size: 1.5rem;
-            color: #FFD700 !important;
-            text-shadow: 0 0 10px rgba(255,215,0,0.5);
             position: relative;
         }
         .navbar-brand:hover {
-            color: #FFA500 !important;
-            text-shadow: 0 0 15px rgba(255,165,0,0.7);
+            transform: scale(1.05);
+            transition: all 0.3s ease;
         }
         
         .theme-subtitle {
@@ -1297,9 +1295,9 @@
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
     
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light">
+        <nav class="navbar navbar-expand-lg navbar-dark" style="--navbar-text-color: rgba(255, 255, 255, 0.9) !important;">
             <!-- 品牌Logo区域 -->
-            <a class="navbar-brand" href="{% url 'home' %}">
+                          <a class="navbar-brand" href="{% url 'home' %}" style="color: #ffffff !important;">
                 <i class="fas fa-cogs"></i> ModeShift
                 <div id="theme-subtitle" class="theme-subtitle" data-translate="专注技术，追求卓越">专注技术，追求卓越</div>
             </a>
@@ -1315,24 +1313,24 @@
                 <ul class="navbar-nav mr-auto">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="goToCurrentModeTools(); return false;">
-                            <i class="fas fa-tools"></i> <span data-translate="工具集">工具集</span>
+                        <a class="nav-link" href="#" onclick="goToCurrentModeTools(); return false;" style="color: #ffffff !important;">
+                            <i class="fas fa-tools" style="color: #ffffff !important;"></i> <span data-translate="工具集">工具集</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSuggestions(); return false;">
-                            <i class="fas fa-lightbulb"></i> <span data-translate="我的建议">我的建议</span>
+                        <a class="nav-link" href="#" onclick="showSuggestions(); return false;" style="color: #ffffff !important;">
+                            <i class="fas fa-lightbulb" style="color: #ffffff !important;"></i> <span data-translate="我的建议">我的建议</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息">
-                            <i class="fas fa-info-circle"></i> <span data-translate="关于">关于</span>
+                        <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息" style="color: #ffffff !important;">
+                            <i class="fas fa-info-circle" style="color: #ffffff !important;"></i> <span data-translate="关于">关于</span>
                         </a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息">
-                            <i class="fas fa-info-circle"></i> <span data-translate="关于">关于</span>
+                        <a class="nav-link" href="#" onclick="showHiddenInfo()" title="双击显示隐藏信息" style="color: #ffffff !important;">
+                            <i class="fas fa-info-circle" style="color: #ffffff !important;"></i> <span data-translate="关于">关于</span>
                         </a>
                     </li>
                     {% endif %}
@@ -1343,7 +1341,7 @@
                     {% if user.is_authenticated %}
                         <!-- 用户头像和下拉菜单 -->
                         <div class="dropdown user-dropdown-container">
-                                                        <span class="nav-link text-white user-nav-link" style="cursor: pointer;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        <span class="nav-link user-nav-link" style="cursor: pointer;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <img id="user-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" class="user-avatar">
                                 <span id="username-display">{{ user.username }}</span>
                                 <span id="theme-badge" class="theme-badge">极客</span>
@@ -1390,6 +1388,12 @@
                                     </a>
                                     <a class="dropdown-item" href="{% url 'admin_suggestions' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
                                         <i class="fas fa-lightbulb text-warning" style="margin-right: 8px; width: 16px; text-align: center;"></i> 建议管理
+                                    </a>
+                                    <a class="dropdown-item" href="/tools/food_photo_binding/" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                        <i class="fas fa-link text-info" style="margin-right: 8px; width: 16px; text-align: center;"></i> 食物照片绑定
+                                    </a>
+                                    <a class="dropdown-item" href="/tools/food_image_correction/" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                        <i class="fas fa-camera-retro text-success" style="margin-right: 8px; width: 16px; text-align: center;"></i> 食物图片矫正
                                     </a>
                                 {% endif %}
                                 <a class="dropdown-item logout-btn" href="#" onclick="stopMedia(); logoutUser(); return false;" style="color: #ff6b6b; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px; border-top: 1px solid rgba(255,255,255,0.1);">
@@ -2191,6 +2195,9 @@
                                     <h3 style="color: #00ffe7; margin: 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-shadow: 0 0 10px rgba(0, 255, 231, 0.5);">
                                         <i class="fas fa-lightbulb" style="color: #00ffe7; margin-right: 10px;"></i> 我的建议
                                     </h3>
+                                    <button onclick="closeSuggestions()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #ffffff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 12px; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-times"></i> 关闭
+                                    </button>
                                 </div>
                                 
                                 <!-- Tab导航 -->
@@ -2369,9 +2376,13 @@
         
         // 关闭建议界面
         function closeSuggestions() {
+            console.log('关闭建议界面被调用');
             const suggestions = document.querySelector('div[style*="z-index: 10000"]');
             if (suggestions) {
+                console.log('找到建议界面，正在关闭');
                 suggestions.remove();
+            } else {
+                console.log('未找到建议界面');
             }
         }
         
@@ -3251,6 +3262,18 @@
                 });
                 
                 if (response.ok) {
+                    // 检查响应类型
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        // 如果返回的不是JSON，可能是重定向到登录页面，使用默认主题
+                        console.log('用户未登录，使用默认主题');
+                        currentTheme = 'work';
+                        applyGlobalTheme(currentTheme);
+                        updateThemeBadge(currentTheme);
+                        updateActiveThemeItem(currentTheme);
+                        return;
+                    }
+                    
                     const data = await response.json();
                     if (data.success) {
                         currentTheme = data.data.mode || 'work';
@@ -3267,6 +3290,11 @@
                 }
             } catch (error) {
                 console.log('Failed to load theme:', error);
+                // 出错时使用默认主题
+                currentTheme = 'work';
+                applyGlobalTheme(currentTheme);
+                updateThemeBadge(currentTheme);
+                updateActiveThemeItem(currentTheme);
             }
         }
         
@@ -3280,6 +3308,9 @@
             // 更新body类名
             document.body.className = theme + '-theme';
             
+            // 更新导航栏类名
+            updateNavbarTheme(theme);
+            
             // 更新副标题
             updateThemeSubtitle(theme);
             
@@ -3288,6 +3319,30 @@
             
             // 更新页面模板内容
             updatePageTemplate(theme);
+        }
+        
+        // 更新导航栏主题
+        function updateNavbarTheme(theme) {
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                // 移除所有主题相关的导航栏类名
+                navbar.className = navbar.className.replace(/(geek|life|training|emo|cyberpunk|punk|rage)-navbar/g, '');
+                navbar.className = navbar.className.replace(/\s+/g, ' ').trim();
+                
+                // 添加新主题的导航栏类名
+                const themeNavbarMap = {
+                    'work': 'geek-navbar',
+                    'life': 'life-navbar',
+                    'training': 'rage-navbar',
+                    'emo': 'emo-navbar',
+                    'cyberpunk': 'cyber-navbar',
+                    'punk': 'punk-navbar'
+                };
+                
+                if (themeNavbarMap[theme]) {
+                    navbar.classList.add(themeNavbarMap[theme]);
+                }
+            }
         }
         
         // 更新页面模板内容
@@ -4494,7 +4549,7 @@
                         
                         setTimeout(() => {
                             // 跳转到里世界页面
-                            window.location.href = '/tools/vanity_os/';
+                            window.location.href = '{% url "tools:vanity_os_dashboard" %}';
                         }, 1000);
                     }
                 });
@@ -4545,12 +4600,6 @@
             let glitchLevel = 0;
             let glitchTimer = null;
             
-            // 添加故障艺术指示器
-            const glitchIndicator = document.createElement('div');
-            glitchIndicator.className = 'glitch-indicator';
-            glitchIndicator.textContent = '故障等级: 0';
-            document.body.appendChild(glitchIndicator);
-            
             // 监听页面点击事件
             document.addEventListener('click', function(e) {
                 // 如果当前是赛博哥特主题，才启用故障艺术切换
@@ -4578,23 +4627,15 @@
                     // 添加新的故障等级类
                     if (glitchLevel > 0) {
                         document.body.classList.add('glitch-level-' + glitchLevel);
-                        glitchIndicator.textContent = '故障等级: ' + glitchLevel;
-                        
-                        // 显示故障艺术指示器
-                        glitchIndicator.style.display = 'block';
                         
                         // 添加故障音效（可选）
                         playGlitchSound(glitchLevel);
-                    } else {
-                        glitchIndicator.textContent = '故障等级: 0';
-                        glitchIndicator.style.display = 'none';
                     }
                     
                     // 设置5秒后自动重置故障等级
                     glitchTimer = setTimeout(() => {
                         glitchLevel = 0;
                         document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
-                        glitchIndicator.style.display = 'none';
                     }, 5000);
                 }
             });
@@ -4617,9 +4658,6 @@
                 if (!document.body.classList.contains('cyberpunk-theme')) {
                     glitchLevel = 0;
                     document.body.classList.remove('glitch-level-1', 'glitch-level-2', 'glitch-level-3');
-                    if (glitchIndicator) {
-                        glitchIndicator.style.display = 'none';
-                    }
                 }
             };
         });
@@ -4786,9 +4824,108 @@
         });
     </script>
     
+    <!-- WebSocket连接修复脚本 -->
+    <script>
+    // WebSocket连接修复脚本
+    // 解决WebSocket连接到错误端口的问题
+    (function() {
+        'use strict';
+        
+        console.log('🔧 WebSocket连接修复脚本已加载');
+        
+        // 创建URL修复函数
+        function fixWebSocketUrl(url) {
+            if (url && typeof url === 'string') {
+                // 如果URL包含8001端口，替换为8000端口
+                if (url.includes('localhost:8001') || url.includes('127.0.0.1:8001')) {
+                    const fixedUrl = url.replace(/localhost:8001|127\.0\.0\.1:8001/g, 'localhost:8000');
+                    console.log('🔧 修复WebSocket URL:', url, '->', fixedUrl);
+                    return fixedUrl;
+                }
+                
+                // 如果URL包含8001端口但没有localhost，也进行修复
+                if (url.includes(':8001/')) {
+                    const fixedUrl = url.replace(/:8001\//g, ':8000/');
+                    console.log('🔧 修复WebSocket URL:', url, '->', fixedUrl);
+                    return fixedUrl;
+                }
+            }
+            return url;
+        }
+        
+        // 保存原始的WebSocket构造函数
+        const OriginalWebSocket = window.WebSocket;
+        
+        // 创建新的WebSocket构造函数
+        function FixedWebSocket(url, protocols) {
+            console.log('🔧 拦截WebSocket连接:', url);
+            
+            // 修复URL
+            const fixedUrl = fixWebSocketUrl(url);
+            
+            // 创建WebSocket连接
+            const ws = new OriginalWebSocket(fixedUrl, protocols);
+            
+            // 添加连接状态日志
+            ws.addEventListener('open', function(event) {
+                console.log('✅ WebSocket连接成功:', fixedUrl);
+            });
+            
+            ws.addEventListener('error', function(error) {
+                console.error('❌ WebSocket连接错误:', fixedUrl, error);
+            });
+            
+            ws.addEventListener('close', function(event) {
+                console.log('🔌 WebSocket连接关闭:', fixedUrl, event.code, event.reason);
+            });
+            
+            return ws;
+        }
+        
+        // 设置原型链
+        FixedWebSocket.prototype = OriginalWebSocket.prototype;
+        
+        // 复制静态属性（只读属性，使用Object.defineProperty）
+        Object.defineProperty(FixedWebSocket, 'CONNECTING', {
+            value: OriginalWebSocket.CONNECTING,
+            writable: false,
+            enumerable: true,
+            configurable: false
+        });
+        
+        Object.defineProperty(FixedWebSocket, 'OPEN', {
+            value: OriginalWebSocket.OPEN,
+            writable: false,
+            enumerable: true,
+            configurable: false
+        });
+        
+        Object.defineProperty(FixedWebSocket, 'CLOSING', {
+            value: OriginalWebSocket.CLOSING,
+            writable: false,
+            enumerable: true,
+            configurable: false
+        });
+        
+        Object.defineProperty(FixedWebSocket, 'CLOSED', {
+            value: OriginalWebSocket.CLOSED,
+            writable: false,
+            enumerable: true,
+            configurable: false
+        });
+        
+        // 替换全局WebSocket
+        window.WebSocket = FixedWebSocket;
+        
+        console.log('✅ WebSocket连接修复脚本已激活');
+        
+    })();
+    </script>
+    
     <!-- 用户认证相关JavaScript -->
     <script src="{% static 'js/auth.js' %}"></script>
     <script src="{% static 'js/feature-recommendation.js' %}"></script>
+    <script src="{% static 'js/session_manager.js' %}"></script>
     
     {% block extra_js %}{% endblock %}
     

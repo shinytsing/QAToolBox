@@ -720,21 +720,30 @@ function initializeProgressiveCaptcha() {
 }
 
 function bindEvents() {
-  // 渐进式验证码相关事件
-  document.getElementById('refreshCaptcha').addEventListener('click', function() {
-    loadProgressiveCaptcha();
-  });
+  // 渐进式验证码相关事件 - 添加元素存在性检查
+  const refreshCaptcha = document.getElementById('refreshCaptcha');
+  if (refreshCaptcha) {
+    refreshCaptcha.addEventListener('click', function() {
+      loadProgressiveCaptcha();
+    });
+  }
   
-  document.getElementById('verifyCaptcha').addEventListener('click', function() {
-    verifyCurrentCaptcha();
-  });
-  
-  // 数学验证码回车键提交
-  document.getElementById('mathAnswer').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
+  const verifyCaptcha = document.getElementById('verifyCaptcha');
+  if (verifyCaptcha) {
+    verifyCaptcha.addEventListener('click', function() {
       verifyCurrentCaptcha();
-    }
-  });
+    });
+  }
+  
+  // 数学验证码回车键提交 - 添加元素存在性检查
+  const mathAnswer = document.getElementById('mathAnswer');
+  if (mathAnswer) {
+    mathAnswer.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        verifyCurrentCaptcha();
+      }
+    });
+  }
   
   // 移除文字验证码事件绑定
   

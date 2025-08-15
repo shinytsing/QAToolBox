@@ -288,6 +288,12 @@
     padding: 12px 20px;
     font-size: 14px;
     transition: border-color 0.3s ease;
+    background: #2c3e50; /* 深色背景 */
+    color: white; /* 白色文字 */
+}
+
+.message-input::placeholder {
+    color: rgba(255, 255, 255, 0.7); /* 半透明白色占位符 */
 }
 
 .message-input:focus {
@@ -551,13 +557,15 @@
 
 .connection-status {
     position: fixed;
-    top: 20px;
+    top: 80px; /* 调整位置，避免被导航栏遮挡 */
     right: 20px;
     padding: 10px 20px;
     border-radius: 25px;
     font-weight: 600;
-    z-index: 1000;
+    z-index: 9999;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
 }
 
 .connection-status.connected {

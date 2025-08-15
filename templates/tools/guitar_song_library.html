@@ -1,0 +1,750 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}吉他歌曲库{% endblock %}
+
+{% block extra_css %}
+<style>
+    .song-library {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .library-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    }
+    
+    .library-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .library-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .library-content {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 30px;
+    }
+    
+    .difficulty-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .difficulty-tab {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        background: #f8f9fa;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .difficulty-tab.active {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .difficulty-tab:hover {
+        background: #5a6fd8;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .search-section {
+        margin-bottom: 30px;
+    }
+    
+    .search-box {
+        display: flex;
+        gap: 10px;
+        max-width: 500px;
+        margin: 0 auto 20px;
+    }
+    
+    .search-input {
+        flex: 1;
+        padding: 12px 20px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 1rem;
+        outline: none;
+    }
+    
+    .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+    
+    .search-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        background: #667eea;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .search-btn:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+    }
+    
+    .filter-tags {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-tag {
+        padding: 6px 16px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        background: white;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+    
+    .filter-tag.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .filter-tag:hover {
+        background: #f8f9fa;
+    }
+    
+    .songs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .song-card {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .song-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .song-card.learned {
+        border-left-color: #4CAF50;
+        background: #e8f5e8;
+    }
+    
+    .song-card.in-progress {
+        border-left-color: #FF9800;
+        background: #fff3e0;
+    }
+    
+    .song-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .song-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .song-artist {
+        color: #666;
+        font-size: 1rem;
+    }
+    
+    .song-difficulty {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .difficulty-beginner { background-color: #4CAF50; }
+    .difficulty-intermediate { background-color: #FF9800; }
+    .difficulty-advanced { background-color: #F44336; }
+    
+    .song-description {
+        color: #666;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    
+    .song-features {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .song-feature {
+        padding: 4px 8px;
+        background: #e3f2fd;
+        color: #1976D2;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+    
+    .song-progress {
+        margin-bottom: 15px;
+    }
+    
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .progress-text {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .progress-percentage {
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        transition: width 0.3s ease;
+    }
+    
+    .song-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .action-btn.primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .action-btn.secondary {
+        background: #f8f9fa;
+        color: #666;
+        border: 1px solid #ddd;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .song-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 10px;
+    }
+    
+    .stats-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .stats-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .stats-header h3 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .nav-btn:hover {
+        background: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .songs-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .difficulty-tabs {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex-direction: column;
+        }
+        
+        .library-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="song-library">
+    <div class="library-header">
+        <h1>🎵 吉他歌曲库</h1>
+        <p>从简单到复杂的完整歌曲学习资源</p>
+    </div>
+
+    <div class="library-content">
+        <!-- 难度选择标签 -->
+        <div class="difficulty-tabs">
+            <button class="difficulty-tab active" onclick="switchDifficulty('all')">全部歌曲</button>
+            <button class="difficulty-tab" onclick="switchDifficulty('beginner')">初学者</button>
+            <button class="difficulty-tab" onclick="switchDifficulty('intermediate')">进阶者</button>
+            <button class="difficulty-tab" onclick="switchDifficulty('advanced')">高级者</button>
+        </div>
+
+        <!-- 搜索和过滤 -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索歌曲或艺术家...">
+                <button class="search-btn" onclick="searchSongs()">🔍 搜索</button>
+            </div>
+            <div class="filter-tags">
+                <span class="filter-tag active" onclick="filterByStatus('all')">全部</span>
+                <span class="filter-tag" onclick="filterByStatus('not-started')">未开始</span>
+                <span class="filter-tag" onclick="filterByStatus('in-progress')">学习中</span>
+                <span class="filter-tag" onclick="filterByStatus('learned')">已学会</span>
+            </div>
+        </div>
+
+        <!-- 学习统计 -->
+        <div class="stats-section">
+            <div class="stats-header">
+                <h3>📊 学习统计</h3>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-icon">🎵</span>
+                    <div class="stat-value">{{ user_progress.total_songs|default:0 }}</div>
+                    <div class="stat-label">总歌曲数</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">✅</span>
+                    <div class="stat-value">{{ user_progress.learned_songs|default:0 }}</div>
+                    <div class="stat-label">已学会</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🔄</span>
+                    <div class="stat-value">{{ user_progress.in_progress_songs|default:0 }}</div>
+                    <div class="stat-label">学习中</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">📈</span>
+                    <div class="stat-value">{{ user_progress.completion_rate|default:0 }}%</div>
+                    <div class="stat-label">完成率</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 歌曲列表 -->
+        <div class="songs-grid" id="songsGrid">
+            {% for difficulty, song_list in songs.items %}
+                {% for song in song_list %}
+                <div class="song-card" data-difficulty="{{ song.difficulty }}" data-status="{{ user_progress|get_song_status:song.name|default:'not-started' }}">
+                    <div class="song-header">
+                        <div>
+                            <div class="song-title">{{ song.name }}</div>
+                            <div class="song-artist">{{ song.artist }}</div>
+                        </div>
+                        <span class="song-difficulty difficulty-{{ song.difficulty }}">
+                            {{ difficulty_levels|get_item:song.difficulty|get_item:"name" }}
+                        </span>
+                    </div>
+                    
+                    <div class="song-description">
+                        {% if song.difficulty == 'beginner' %}
+                            适合初学者的简单歌曲，和弦简单，节奏稳定。
+                        {% elif song.difficulty == 'intermediate' %}
+                            中等难度的歌曲，包含一些复杂的和弦转换和技巧。
+                        {% else %}
+                            高难度歌曲，需要掌握复杂的技巧和快速的指法。
+                        {% endif %}
+                    </div>
+                    
+                    <div class="song-features">
+                        <span class="song-feature">和弦进行</span>
+                        <span class="song-feature">指弹技巧</span>
+                        {% if song.difficulty == 'intermediate' or song.difficulty == 'advanced' %}
+                        <span class="song-feature">扫弦</span>
+                        {% endif %}
+                        {% if song.difficulty == 'advanced' %}
+                        <span class="song-feature">独奏</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% with status=user_progress|get_song_status:song.name|default:'not-started' %}
+                    {% if status != 'not-started' %}
+                    <div class="song-progress">
+                        <div class="progress-header">
+                            <span class="progress-text">学习进度</span>
+                            <span class="progress-percentage">{{ user_progress|get_song_progress:song.name|default:0 }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ user_progress|get_song_progress:song.name|default:0 }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <div class="song-actions">
+                        <a href="#" class="action-btn primary" onclick="startLearning('{{ song.name }}', '{{ song.difficulty }}')">
+                            {% if user_progress|get_song_status:song.name == 'learned' %}
+                            🎵 复习
+                            {% elif user_progress|get_song_status:song.name == 'in-progress' %}
+                            🔄 继续
+                            {% else %}
+                            🎯 开始学习
+                            {% endif %}
+                        </a>
+                        <a href="#" class="action-btn secondary" onclick="viewSongDetails('{{ song.name }}')">
+                            📖 详情
+                        </a>
+                        {% if user_progress|get_song_status:song.name != 'not-started' %}
+                        <a href="#" class="action-btn secondary" onclick="viewProgress('{{ song.name }}')">
+                            📊 进度
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="song-stats">
+                        <span>难度: {{ difficulty_levels|get_item:song.difficulty|get_item:"name" }}</span>
+                        <span>时长: 3-5分钟</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-state-icon">🎵</div>
+                <p>歌曲库正在建设中，敬请期待！</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="navigation-buttons">
+        <a href="{% url 'tools:guitar_training_dashboard' %}" class="nav-btn">🏠 返回主页</a>
+<a href="{% url 'tools:guitar_progress_tracking' %}" class="nav-btn">📊 进度跟踪</a>
+<a href="{% url 'tools:guitar_theory_guide' %}" class="nav-btn">📚 乐理学习</a>
+        <a href="#" class="nav-btn" onclick="exportSongLibrary()">📥 导出歌单</a>
+    </div>
+</div>
+
+<!-- 歌曲详情模态框 -->
+<div class="modal fade" id="songDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🎵 歌曲详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="songDetailContent">
+                    <!-- 歌曲详情内容将在这里动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="startLearningFromModal()">开始学习</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentDifficulty = 'all';
+let currentStatus = 'all';
+let currentSearch = '';
+
+function switchDifficulty(difficulty) {
+    // 更新标签状态
+    document.querySelectorAll('.difficulty-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    currentDifficulty = difficulty;
+    filterSongs();
+}
+
+function filterByStatus(status) {
+    // 更新过滤器状态
+    document.querySelectorAll('.filter-tag').forEach(tag => {
+        tag.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    currentStatus = status;
+    filterSongs();
+}
+
+function searchSongs() {
+    currentSearch = document.getElementById('searchInput').value.toLowerCase();
+    filterSongs();
+}
+
+function filterSongs() {
+    const songCards = document.querySelectorAll('.song-card');
+    
+    songCards.forEach(card => {
+        const difficulty = card.dataset.difficulty;
+        const status = card.dataset.status;
+        const title = card.querySelector('.song-title').textContent.toLowerCase();
+        const artist = card.querySelector('.song-artist').textContent.toLowerCase();
+        
+        let showCard = true;
+        
+        // 难度过滤
+        if (currentDifficulty !== 'all' && difficulty !== currentDifficulty) {
+            showCard = false;
+        }
+        
+        // 状态过滤
+        if (currentStatus !== 'all' && status !== currentStatus) {
+            showCard = false;
+        }
+        
+        // 搜索过滤
+        if (currentSearch && !title.includes(currentSearch) && !artist.includes(currentSearch)) {
+            showCard = false;
+        }
+        
+        card.style.display = showCard ? 'block' : 'none';
+    });
+}
+
+function startLearning(songName, difficulty) {
+    // 开始学习歌曲
+    window.location.href = `/tools/guitar-practice/song_learning/${difficulty}/?song=${encodeURIComponent(songName)}`;
+}
+
+function viewSongDetails(songName) {
+    const modal = new bootstrap.Modal(document.getElementById('songDetailModal'));
+    
+    // 生成歌曲详情内容
+    const detailContent = document.getElementById('songDetailContent');
+    detailContent.innerHTML = `
+        <div class="song-detail">
+            <h4>${songName}</h4>
+            <div class="song-info">
+                <p><strong>难度等级:</strong> 中等</p>
+                <p><strong>建议练习时间:</strong> 30-45分钟</p>
+                <p><strong>主要技巧:</strong> 和弦转换、扫弦、指弹</p>
+            </div>
+            <div class="chord-progression">
+                <h5>主要和弦进行:</h5>
+                <p>C - G - Am - F</p>
+            </div>
+            <div class="learning-steps">
+                <h5>学习步骤:</h5>
+                <ol>
+                    <li>熟悉歌曲旋律</li>
+                    <li>练习基本和弦</li>
+                    <li>掌握和弦转换</li>
+                    <li>练习节奏模式</li>
+                    <li>完整演奏</li>
+                </ol>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+}
+
+function startLearningFromModal() {
+    // 从模态框开始学习
+    const modal = bootstrap.Modal.getInstance(document.getElementById('songDetailModal'));
+    modal.hide();
+    
+    // 这里可以获取当前歌曲信息并开始学习
+    startLearning('当前歌曲', 'intermediate');
+}
+
+function viewProgress(songName) {
+    // 查看歌曲学习进度
+    alert(`${songName} 的学习进度功能正在开发中...`);
+}
+
+function exportSongLibrary() {
+    // 导出歌曲库数据
+    const songData = {
+        songs: {{ songs|safe }},
+        user_progress: {{ user_progress|safe }},
+        export_date: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(songData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `guitar_song_library_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 搜索框回车事件
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchSongs();
+    }
+});
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加动画效果
+    const cards = document.querySelectorAll('.song-card, .stat-item');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

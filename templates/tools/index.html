@@ -278,17 +278,17 @@
   <div class="featured-section">
     <h2>🌟 特色工具</h2>
     <div class="featured-grid">
-      <div class="featured-card" onclick="window.location.href='{% url 'life_diary_progressive' %}'">
-        <div class="featured-icon">📝</div>
-        <div class="featured-title">生活日记 - 层层递进</div>
+      <div class="featured-card" onclick="window.location.href='{% url 'tools:diary' %}'">
+        <div class="featured-icon">⏰</div>
+        <div class="featured-title">时光胶囊日记</div>
         <div class="featured-description">
-          通过AI辅助的渐进式日记记录，让您的生活更有条理，心情更加美好。
-          支持心情分析、目标设定、音乐推荐等功能。
+          记录今日碎片，解锁明日惊喜。创新的情绪魔方、时光胶囊系统，
+          让您的每一刻都成为珍贵的记忆。
         </div>
-        <div class="featured-badge">🔥 热门推荐</div>
+        <div class="featured-badge">🌟 全新体验</div>
       </div>
       
-      <div class="featured-card" onclick="window.location.href='{% url 'heart_link' %}'">
+      <div class="featured-card" onclick="window.location.href='{% url 'tools:heart_link' %}'">
         <div class="featured-icon">💝</div>
         <div class="featured-title">心链连接</div>
         <div class="featured-description">
@@ -298,7 +298,7 @@
         <div class="featured-badge">💫 社交新体验</div>
       </div>
       
-      <div class="featured-card" onclick="window.location.href='{% url 'travel_guide' %}'">
+      <div class="featured-card" onclick="window.location.href='{% url 'tools:travel_guide' %}'">
         <div class="featured-icon">✈️</div>
         <div class="featured-title">智能旅游攻略</div>
         <div class="featured-description">
@@ -314,25 +314,25 @@
   <div class="modes-section">
     <h2>🌱 生活模式</h2>
     <div class="modes-grid">
-      <div class="mode-card" onclick="window.location.href='{% url 'life_mode' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:life_mode' %}'">
         <div class="mode-icon">🌿</div>
         <div class="mode-title">生活模式</div>
         <div class="mode-description">专注于生活品质提升和个人成长</div>
       </div>
       
-      <div class="mode-card" onclick="window.location.href='{% url 'emo_mode' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:emo_mode' %}'">
         <div class="mode-icon">💕</div>
         <div class="mode-title">情感模式</div>
         <div class="mode-description">探索情感世界，提升情感智慧</div>
       </div>
       
-      <div class="mode-card" onclick="window.location.href='{% url 'training_mode' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:training_mode' %}'">
         <div class="mode-icon">🏋️</div>
         <div class="mode-title">训练模式</div>
         <div class="mode-description">专注健身训练和体能提升</div>
       </div>
       
-      <div class="mode-card" onclick="window.location.href='{% url 'guitar_training' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:guitar_training' %}'">
         <div class="mode-icon">🎸</div>
         <div class="mode-title">吉他训练</div>
         <div class="mode-description">专业的吉他学习和练习指导</div>
@@ -344,25 +344,25 @@
   <div class="modes-section">
     <h2>💼 工作模式</h2>
     <div class="modes-grid">
-      <div class="mode-card" onclick="window.location.href='{% url 'work_mode' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:work_mode' %}'">
         <div class="mode-icon">💻</div>
         <div class="mode-title">极客模式</div>
         <div class="mode-description">专注技术开发和编程效率</div>
       </div>
       
-      <div class="mode-card" onclick="window.location.href='{% url 'cyberpunk_mode' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:cyberpunk_mode' %}'">
         <div class="mode-icon">🤖</div>
         <div class="mode-title">赛博朋克模式</div>
         <div class="mode-description">探索未来科技和数字艺术</div>
       </div>
       
-      <div class="mode-card" onclick="window.location.href='{% url 'triple_awakening_dashboard' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:triple_awakening_dashboard' %}'">
         <div class="mode-icon">⚡</div>
         <div class="mode-title">三重觉醒</div>
         <div class="mode-description">身体、代码、AI的完美融合</div>
       </div>
       
-      <div class="mode-card" onclick="window.location.href='{% url 'copilot_page' %}'">
+      <div class="mode-card" onclick="window.location.href='{% url 'tools:copilot_page' %}'">
         <div class="mode-icon">🤝</div>
         <div class="mode-title">AI协作者</div>
         <div class="mode-description">与AI助手协作完成复杂任务</div>
@@ -374,84 +374,84 @@
   <div class="tools-section">
     <h2>🔧 实用工具</h2>
     <div class="tools-grid">
-      <div class="tool-card" onclick="window.location.href='{% url 'test_case_generator' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:test_case_generator' %}'">
         <div class="tool-icon">🧪</div>
         <div class="tool-title">测试用例生成器</div>
         <div class="tool-description">快速生成高质量的软件测试用例，提高测试效率</div>
         <div class="tool-category">开发工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'pdf_converter' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:pdf_converter' %}'">
         <div class="tool-icon">📄</div>
         <div class="tool-title">PDF转换器</div>
         <div class="tool-description">支持多种格式的PDF转换，文档处理更便捷</div>
         <div class="tool-category">文档工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'web_crawler' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:web_crawler' %}'">
         <div class="tool-icon">🕷️</div>
         <div class="tool-title">网页爬虫</div>
         <div class="tool-description">智能网页数据采集，支持多种网站和数据类型</div>
         <div class="tool-category">数据工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'fortune_analyzer' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:fortune_analyzer' %}'">
         <div class="tool-icon">🔮</div>
         <div class="tool-title">运势分析</div>
         <div class="tool-description">基于传统命理的现代运势分析工具</div>
         <div class="tool-category">生活工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'redbook_generator' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:redbook_generator' %}'">
         <div class="tool-icon">📱</div>
         <div class="tool-title">小红书生成器</div>
         <div class="tool-description">一键生成小红书风格的优质内容</div>
         <div class="tool-category">内容创作</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'creative_writer' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:creative_writer' %}'">
         <div class="tool-icon">✍️</div>
         <div class="tool-title">创意写作</div>
         <div class="tool-description">AI辅助的创意写作工具，激发创作灵感</div>
         <div class="tool-category">内容创作</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'meditation_guide' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:meditation_guide' %}'">
         <div class="tool-icon">🧘</div>
         <div class="tool-title">冥想指南</div>
         <div class="tool-description">专业的冥想指导和音频资源</div>
         <div class="tool-category">健康工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'music_healing' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:music_healing' %}'">
         <div class="tool-icon">🎵</div>
         <div class="tool-title">音乐疗愈</div>
         <div class="tool-description">根据心情推荐疗愈音乐，舒缓身心</div>
         <div class="tool-category">健康工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'fitness_center' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:fitness_center' %}'">
         <div class="tool-icon">💪</div>
         <div class="tool-title">健身中心</div>
         <div class="tool-description">全面的健身指导和社区交流平台</div>
         <div class="tool-category">健康工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'training_plan_editor' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:training_plan_editor' %}'">
         <div class="tool-icon">📋</div>
         <div class="tool-title">训练计划编辑器</div>
         <div class="tool-description">个性化训练计划制定和管理</div>
         <div class="tool-category">健康工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'self_analysis' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:self_analysis' %}'">
         <div class="tool-icon">🔍</div>
         <div class="tool-title">自我分析</div>
         <div class="tool-description">深度自我认知和性格分析工具</div>
         <div class="tool-category">心理工具</div>
       </div>
       
-      <div class="tool-card" onclick="window.location.href='{% url 'storyboard' %}'">
+      <div class="tool-card" onclick="window.location.href='{% url 'tools:storyboard' %}'">
         <div class="tool-icon">🎬</div>
         <div class="tool-title">故事板</div>
         <div class="tool-description">创意故事构思和可视化工具</div>

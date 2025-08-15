@@ -16,10 +16,10 @@ QAToolBox现在使用全新的免费音乐API系统，支持多种免费音乐�
 系统支持多个免费音乐API源，按优先级顺序尝试：
 
 1. **Jamendo API** - 免费音乐平台
-2. **Free Music Archive** - 免费音乐档案
-3. **ccMixter** - 创意共享音乐平台
-4. **Incompetech** - Kevin MacLeod的免费音乐
-5. **本地音乐文件** - 备用方案
+2. **Incompetech** - Kevin MacLeod的免费音乐
+3. **本地音乐文件** - 备用方案
+
+> **注意**: Free Music Archive和ccMixter API由于稳定性问题已被暂时禁用
 
 ### 🔄 智能降级机制
 - 当在线API不可用时，自动切换到本地音乐文件
@@ -78,99 +78,66 @@ for song in results:
     print(f"找到: {song['name']} - {song['artist']}")
 ```
 
-### JavaScript代码示例
-```javascript
-// 获取随机音乐
-fetch('/tools/api/music/?mode=work&action=random')
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const song = data.data;
-            console.log(`播放: ${song.name} - ${song.artist}`);
-        }
-    });
-
-// 获取模式信息
-fetch('/tools/api/music/?action=modes')
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            data.data.forEach(mode => {
-                console.log(`${mode.mode}: ${mode.description}`);
-            });
-        }
-    });
-```
-
 ## 配置说明
 
-### Jamendo API配置
-如需使用Jamendo API，请在 `music_api.py` 中配置：
-```python
-self.jamendo_client_id = "your_jamendo_client_id"  # 从 https://developer.jamendo.com/ 获取
-```
+### 1. Jamendo API配置
+- 访问 https://www.jamendo.com/ 注册免费账户
+- 获取 `client_id`
+- 在 `apps/tools/utils/music_api.py` 中配置
 
-### 本地音乐文件
-本地音乐文件存储在 `src/static/audio/` 目录下：
-- `friday.mp3` - 工作模式音乐
-- `monday.mp3` - 工作模式音乐
-- `saturday.mp3` - 生活模式音乐
-- `sunday.mp3` - 生活模式音乐
-- `tuesday.mp3` - 训练模式音乐
-- `thursday.mp3` - 训练模式音乐
-- `Eternxlkz - SLAY!.flac` - 情感模式音乐
-- `keshi - 2 soon.flac` - 情感模式音乐
-
-## 测试
-
-运行测试脚本验证功能：
-```bash
-python test_music_api.py
-```
+### 2. 本地音乐文件
+备用本地音乐文件位于 `src/static/audio/`:
+- `friday.mp3`, `monday.mp3` - 工作模式
+- `saturday.mp3`, `sunday.mp3` - 生活模式  
+- `tuesday.mp3`, `thursday.mp3` - 训练模式
+- `Eternxlkz - SLAY!.flac`, `keshi - 2 soon.flac` - 情感模式
 
 ## 故障排除
 
 ### 常见问题
+1. **API连接失败**: 系统会自动降级到本地音乐文件
+2. **音乐无法播放**: 检查网络连接和API配置
+3. **缓存问题**: 清除浏览器缓存或等待1小时缓存过期
 
-1. **API请求失败**
-   - 检查网络连接
-   - 确认API密钥配置正确
-   - 系统会自动降级到本地音乐
+### 禁用API说明
+- **Free Music Archive**: 由于API服务不稳定，已暂时禁用
+- **ccMixter**: 由于网络连接问题，已暂时禁用
 
-2. **音乐无法播放**
-   - 检查音频文件是否存在
-   - 确认浏览器支持音频格式
-   - 检查音频文件路径
+## 技术特性
 
-3. **搜索无结果**
-   - 尝试不同的关键词
-   - 检查搜索模式设置
-   - 确认音乐源可用
+### 智能降级机制
+```python
+# 当在线API不可用时，自动切换到本地音乐
+if not all_tracks:
+    print(f"所有免费API都失败，使用本地音乐数据")
+    all_tracks = self.local_music.get(mode, [])
+```
 
-### 日志查看
-音乐API的详细日志会输出到控制台，包括：
-- API请求状态
-- 错误信息
-- 降级操作记录
+### 缓存系统
+```python
+# 1小时缓存，提高响应速度
+self.cache_expire = 3600
+```
+
+### 多源支持
+```python
+# 按优先级尝试不同API
+self.free_apis = [
+    self._try_jamendo_api,
+    self._try_incompetech_api
+]
+```
 
 ## 更新日志
 
-### v2.0.0 (当前版本)
-- ✅ 替换网易云音乐API为免费音乐API
-- ✅ 支持多种免费音乐源
+### v2.1.0 (最新)
+- ✅ 禁用不稳定的Free Music Archive API
+- ✅ 禁用不稳定的ccMixter API
+- ✅ 优化错误处理机制
+- ✅ 改进降级逻辑
+
+### v2.0.0
+- ✅ 重构为免费音乐API系统
+- ✅ 支持多种音乐源
 - ✅ 添加智能降级机制
-- ✅ 优化缓存系统
-- ✅ 增加模式信息API
-- ✅ 改进搜索功能
-
-### v1.0.0 (历史版本)
-- 基于网易云音乐API
-- 支持本地音乐备用
-
-## 贡献
-
-欢迎提交Issue和Pull Request来改进音乐系统！
-
-## 许可证
-
-本项目使用MIT许可证。音乐文件遵循各自平台的许可协议。 
+- ✅ 完善缓存系统 

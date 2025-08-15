@@ -1,0 +1,778 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}吉他乐理学习指南{% endblock %}
+
+{% block extra_css %}
+<style>
+    .theory-guide {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .guide-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    }
+    
+    .guide-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .guide-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .user-level-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    
+    .level-beginner { background-color: #4CAF50; }
+    .level-intermediate { background-color: #FF9800; }
+    .level-advanced { background-color: #F44336; }
+    
+    .theory-content {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 30px;
+    }
+    
+    .difficulty-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .difficulty-tab {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        background: #f8f9fa;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .difficulty-tab.active {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .difficulty-tab:hover {
+        background: #5a6fd8;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .theory-section {
+        margin-bottom: 40px;
+    }
+    
+    .theory-section h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 10px;
+    }
+    
+    .theory-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .theory-card {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+    
+    .theory-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .theory-card h3 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 1.3rem;
+    }
+    
+    .theory-card p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .theory-examples {
+        background: #e3f2fd;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .theory-examples h4 {
+        color: #1976D2;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+    
+    .example-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .example-list li {
+        padding: 5px 0;
+        color: #333;
+        position: relative;
+        padding-left: 20px;
+    }
+    
+    .example-list li:before {
+        content: "🎵";
+        position: absolute;
+        left: 0;
+        top: 5px;
+    }
+    
+    .interactive-section {
+        background: #fff3e0;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border-left: 4px solid #FF9800;
+    }
+    
+    .interactive-section h3 {
+        color: #E65100;
+        margin-bottom: 15px;
+    }
+    
+    .interactive-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    
+    .interactive-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .interactive-item:hover {
+        border-color: #FF9800;
+        transform: scale(1.05);
+    }
+    
+    .interactive-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .progress-section {
+        background: #e8f5e8;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border-left: 4px solid #4CAF50;
+    }
+    
+    .progress-section h3 {
+        color: #2E7D32;
+        margin-bottom: 15px;
+    }
+    
+    .progress-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .progress-title {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .progress-percentage {
+        color: #4CAF50;
+        font-weight: bold;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        transition: width 0.3s ease;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .nav-btn:hover {
+        background: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .theory-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .interactive-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .difficulty-tabs {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .guide-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="theory-guide">
+    <div class="guide-header">
+        <h1>📚 吉他乐理学习指南</h1>
+        <p>从基础到高级的完整乐理知识体系</p>
+        <div class="user-level-badge level-{{ user_level }}">
+            {{ user_level|title }} 等级
+        </div>
+    </div>
+
+    <div class="theory-content">
+        <!-- 难度选择标签 -->
+        <div class="difficulty-tabs">
+            <button class="difficulty-tab active" onclick="switchDifficulty('beginner')">初学者</button>
+            <button class="difficulty-tab" onclick="switchDifficulty('intermediate')">进阶者</button>
+            <button class="difficulty-tab" onclick="switchDifficulty('advanced')">高级者</button>
+        </div>
+
+        <!-- 初学者内容 -->
+        <div id="beginner-content" class="theory-section">
+            <h2>🎵 初学者乐理基础</h2>
+            
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h3>音符基础</h3>
+                    <p>学习基本音符的名称、时值和在五线谱上的位置。掌握全音符、二分音符、四分音符、八分音符等基本时值。</p>
+                    <div class="theory-examples">
+                        <h4>基本音符：</h4>
+                        <ul class="example-list">
+                            <li>全音符 (𝅝) - 4拍</li>
+                            <li>二分音符 (𝅗𝅥) - 2拍</li>
+                            <li>四分音符 (♩) - 1拍</li>
+                            <li>八分音符 (♪) - 1/2拍</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>节拍与拍号</h3>
+                    <p>理解拍号的含义，掌握常见的2/4、3/4、4/4拍号，学会数拍子和保持稳定的节奏。</p>
+                    <div class="theory-examples">
+                        <h4>常见拍号：</h4>
+                        <ul class="example-list">
+                            <li>2/4拍 - 每小节2拍，以四分音符为一拍</li>
+                            <li>3/4拍 - 每小节3拍，以四分音符为一拍</li>
+                            <li>4/4拍 - 每小节4拍，以四分音符为一拍</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>和弦构成</h3>
+                    <p>学习和弦的基本构成原理，了解三和弦的构成方式，掌握C、G、Am、F等基础和弦。</p>
+                    <div class="theory-examples">
+                        <h4>基础和弦：</h4>
+                        <ul class="example-list">
+                            <li>C和弦 - C-E-G (1-3-5)</li>
+                            <li>G和弦 - G-B-D (1-3-5)</li>
+                            <li>Am和弦 - A-C-E (1-♭3-5)</li>
+                            <li>F和弦 - F-A-C (1-3-5)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进阶者内容 -->
+        <div id="intermediate-content" class="theory-section" style="display: none;">
+            <h2>🎼 进阶者乐理知识</h2>
+            
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h3>调式理论</h3>
+                    <p>深入学习大调和小调音阶，理解调式的概念，掌握五声音阶和布鲁斯音阶的特点。</p>
+                    <div class="theory-examples">
+                        <h4>常见音阶：</h4>
+                        <ul class="example-list">
+                            <li>C大调音阶 - C D E F G A B C</li>
+                            <li>A小调音阶 - A B C D E F G A</li>
+                            <li>C五声音阶 - C D E G A</li>
+                            <li>C布鲁斯音阶 - C E♭ F F♯ G B♭</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>和声进行</h3>
+                    <p>学习和声进行的基本原理，掌握常见的和弦进行模式，理解功能和声的概念。</p>
+                    <div class="theory-examples">
+                        <h4>常见进行：</h4>
+                        <ul class="example-list">
+                            <li>I-IV-V进行 - C-F-G</li>
+                            <li>I-V-vi-IV进行 - C-G-Am-F</li>
+                            <li>ii-V-I进行 - Dm-G-C</li>
+                            <li>vi-IV-I-V进行 - Am-F-C-G</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>节奏模式</h3>
+                    <p>学习复杂的节奏模式，掌握切分音、附点音符、连音等高级节奏技巧。</p>
+                    <div class="theory-examples">
+                        <h4>节奏技巧：</h4>
+                        <ul class="example-list">
+                            <li>切分音 - 强调弱拍</li>
+                            <li>附点音符 - 延长时值</li>
+                            <li>三连音 - 三等分时值</li>
+                            <li>摇摆节奏 - 八分音符不等分</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 高级者内容 -->
+        <div id="advanced-content" class="theory-section" style="display: none;">
+            <h2>🎹 高级者乐理理论</h2>
+            
+            <div class="theory-grid">
+                <div class="theory-card">
+                    <h3>爵士理论</h3>
+                    <p>深入学习爵士音乐理论，掌握七和弦、九和弦、十一和弦等复杂和弦的构成和应用。</p>
+                    <div class="theory-examples">
+                        <h4>爵士和弦：</h4>
+                        <ul class="example-list">
+                            <li>Cmaj7 - C-E-G-B</li>
+                            <li>Dm7 - D-F-A-C</li>
+                            <li>G7 - G-B-D-F</li>
+                            <li>Am7 - A-C-E-G</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>现代和声</h3>
+                    <p>学习现代和声理论，掌握调式互换、替代和弦、变化和弦等高级和声技巧。</p>
+                    <div class="theory-examples">
+                        <h4>现代技巧：</h4>
+                        <ul class="example-list">
+                            <li>调式互换 - 借用平行调和弦</li>
+                            <li>替代和弦 - 功能相同的和弦</li>
+                            <li>变化和弦 - 改变和弦音</li>
+                            <li>扩展和弦 - 添加九音、十一音</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="theory-card">
+                    <h3>复调音乐</h3>
+                    <p>学习复调音乐理论，掌握对位法、声部进行、和声外音等高级作曲技巧。</p>
+                    <div class="theory-examples">
+                        <h4>复调技巧：</h4>
+                        <ul class="example-list">
+                            <li>对位法 - 多声部独立进行</li>
+                            <li>声部进行 - 各声部的运动</li>
+                            <li>和声外音 - 非和弦音</li>
+                            <li>模进 - 音型重复</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 互动学习区域 -->
+        <div class="interactive-section">
+            <h3>🎯 互动学习</h3>
+            <div class="interactive-content">
+                <div class="interactive-item" onclick="startTheoryQuiz()">
+                    <span class="interactive-icon">📝</span>
+                    <h4>乐理测验</h4>
+                    <p>测试你的乐理知识掌握程度</p>
+                </div>
+                <div class="interactive-item" onclick="showChordBuilder()">
+                    <span class="interactive-icon">🎼</span>
+                    <h4>和弦构建器</h4>
+                    <p>可视化学习和弦构成</p>
+                </div>
+                <div class="interactive-item" onclick="showScaleVisualizer()">
+                    <span class="interactive-icon">🎵</span>
+                    <h4>音阶可视化</h4>
+                    <p>在指板上查看音阶位置</p>
+                </div>
+                <div class="interactive-item" onclick="showProgressTracker()">
+                    <span class="interactive-icon">📊</span>
+                    <h4>学习进度</h4>
+                    <p>跟踪你的乐理学习进度</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学习进度 -->
+        <div class="progress-section">
+            <h3>📈 学习进度</h3>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="progress-title">音符基础</span>
+                    <span class="progress-percentage">85%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 85%"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="progress-title">和弦理论</span>
+                    <span class="progress-percentage">70%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 70%"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="progress-title">调式理论</span>
+                    <span class="progress-percentage">60%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 60%"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-header">
+                    <span class="progress-title">和声进行</span>
+                    <span class="progress-percentage">45%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 45%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="navigation-buttons">
+        <a href="{% url 'tools:guitar_training_dashboard' %}" class="nav-btn">🏠 返回主页</a>
+<a href="{% url 'tools:guitar_progress_tracking' %}" class="nav-btn">📊 进度跟踪</a>
+<a href="{% url 'tools:guitar_song_library' %}" class="nav-btn">🎵 歌曲库</a>
+        <a href="#" class="nav-btn" onclick="downloadTheoryGuide()">📥 下载指南</a>
+    </div>
+</div>
+
+<!-- 乐理测验模态框 -->
+<div class="modal fade" id="theoryQuizModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🎵 乐理知识测验</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="quizContent">
+                    <!-- 测验内容将在这里动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="submitQuiz()">提交答案</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentDifficulty = 'beginner';
+
+function switchDifficulty(difficulty) {
+    // 更新标签状态
+    document.querySelectorAll('.difficulty-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // 隐藏所有内容
+    document.querySelectorAll('.theory-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // 显示对应内容
+    document.getElementById(difficulty + '-content').style.display = 'block';
+    
+    currentDifficulty = difficulty;
+}
+
+function startTheoryQuiz() {
+    const modal = new bootstrap.Modal(document.getElementById('theoryQuizModal'));
+    generateQuiz();
+    modal.show();
+}
+
+function generateQuiz() {
+    const quizContent = document.getElementById('quizContent');
+    const questions = getQuizQuestions(currentDifficulty);
+    
+    let html = '<div class="quiz-container">';
+    questions.forEach((question, index) => {
+        html += `
+            <div class="quiz-question mb-4">
+                <h6>问题 ${index + 1}: ${question.question}</h6>
+                <div class="quiz-options">
+                    ${question.options.map((option, optIndex) => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="q${index}" id="q${index}opt${optIndex}" value="${optIndex}">
+                            <label class="form-check-label" for="q${index}opt${optIndex}">
+                                ${option}
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    quizContent.innerHTML = html;
+}
+
+function getQuizQuestions(difficulty) {
+    const questions = {
+        beginner: [
+            {
+                question: "四分音符的时值是多少？",
+                options: ["1拍", "2拍", "4拍", "1/2拍"],
+                correct: 0
+            },
+            {
+                question: "C大调音阶的第一个音是什么？",
+                options: ["D", "E", "C", "F"],
+                correct: 2
+            },
+            {
+                question: "4/4拍号表示什么？",
+                options: ["每小节4拍，以四分音符为一拍", "每小节2拍，以四分音符为一拍", "每小节3拍，以四分音符为一拍", "每小节8拍，以四分音符为一拍"],
+                correct: 0
+            }
+        ],
+        intermediate: [
+            {
+                question: "A小调音阶的第三个音是什么？",
+                options: ["A", "B", "C", "D"],
+                correct: 2
+            },
+            {
+                question: "I-IV-V进行在C大调中是什么？",
+                options: ["C-F-G", "C-G-Am", "Am-F-C", "Dm-G-C"],
+                correct: 0
+            },
+            {
+                question: "五声音阶有几个音？",
+                options: ["5个", "6个", "7个", "8个"],
+                correct: 0
+            }
+        ],
+        advanced: [
+            {
+                question: "Cmaj7和弦的构成是什么？",
+                options: ["C-E-G", "C-E-G-B", "C-Eb-G-Bb", "C-E-G-B-D"],
+                correct: 1
+            },
+            {
+                question: "调式互换是指什么？",
+                options: ["改变调号", "借用平行调的和弦", "改变拍号", "改变速度"],
+                correct: 1
+            },
+            {
+                question: "对位法主要用于什么？",
+                options: ["单声部音乐", "多声部音乐", "打击乐", "独奏"],
+                correct: 1
+            }
+        ]
+    };
+    
+    return questions[difficulty] || questions.beginner;
+}
+
+function submitQuiz() {
+    const questions = getQuizQuestions(currentDifficulty);
+    let score = 0;
+    
+    questions.forEach((question, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        if (selected && parseInt(selected.value) === question.correct) {
+            score++;
+        }
+    });
+    
+    const percentage = Math.round((score / questions.length) * 100);
+    
+    const quizContent = document.getElementById('quizContent');
+    quizContent.innerHTML = `
+        <div class="text-center">
+            <h4>🎉 测验完成！</h4>
+            <p>你的得分: ${score}/${questions.length} (${percentage}%)</p>
+            <div class="progress mb-3">
+                <div class="progress-bar" style="width: ${percentage}%"></div>
+            </div>
+            <p>${getQuizFeedback(percentage)}</p>
+        </div>
+    `;
+}
+
+function getQuizFeedback(percentage) {
+    if (percentage >= 90) return "优秀！你对乐理知识掌握得很好！";
+    if (percentage >= 70) return "良好！继续努力，你会更棒的！";
+    if (percentage >= 50) return "及格！建议多复习一下相关知识。";
+    return "需要加强学习，建议重新学习相关章节。";
+}
+
+function showChordBuilder() {
+    alert('和弦构建器功能正在开发中...');
+}
+
+function showScaleVisualizer() {
+    alert('音阶可视化功能正在开发中...');
+}
+
+function showProgressTracker() {
+    window.location.href = "{% url 'tools:guitar_progress_tracking' %}";
+}
+
+function downloadTheoryGuide() {
+    // 创建乐理指南PDF下载
+    const guideData = {
+        difficulty: currentDifficulty,
+        content: document.querySelector('.theory-content').innerText,
+        timestamp: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(guideData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `guitar_theory_guide_${currentDifficulty}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 根据用户等级设置默认难度
+    const userLevel = '{{ user_level }}';
+    if (userLevel !== 'beginner') {
+        switchDifficulty(userLevel);
+    }
+    
+    // 添加动画效果
+    const cards = document.querySelectorAll('.theory-card, .interactive-item, .progress-item');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

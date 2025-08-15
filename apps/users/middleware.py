@@ -2,6 +2,7 @@ import time
 import json
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
+from django.contrib.sessions.backends.cache import SessionStore
 from .models import UserActivityLog, APIUsageStats, UserSessionStats
 from django.utils import timezone
 from datetime import timedelta
@@ -151,4 +152,31 @@ class UserSessionMiddleware(MiddlewareMixin):
                     active_session.duration = int((active_session.session_end - active_session.session_start).total_seconds())
                     active_session.save()
         
-        return response 
+        return response
+
+
+class SessionExtensionMiddleware(MiddlewareMixin):
+    """Session延长中间件 - 每次用户活动时延长session过期时间"""
+    
+    def process_request(self, request):
+        if request.user.is_authenticated and hasattr(request, 'session'):
+            # 获取当前session
+            session = request.session
+            
+            # 检查session是否即将过期（比如还有7天过期）
+            if session.get_expiry_age() < 60 * 60 * 24 * 7:  # 7天
+                # 延长session过期时间到30天
+                session.set_expiry(60 * 60 * 24 * 30)  # 30天
+                session.save()
+                
+                # 同时更新cookie的过期时间
+                if hasattr(request, 'session'):
+                    request.session.modified = True
+    
+    def process_response(self, request, response):
+        if request.user.is_authenticated and hasattr(request, 'session'):
+            # 确保session被保存
+            if request.session.modified:
+                request.session.save()
+        
+        return response

@@ -1,0 +1,1126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}吉他训练系统 - 从初学者到进阶者{% endblock %}
+
+{% block extra_css %}
+<style>
+    .guitar-dashboard {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .dashboard-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .dashboard-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card h3 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .practice-types-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .practice-type-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .practice-type-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .practice-type-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+    
+    .practice-type-card h3 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.3rem;
+    }
+    
+    .practice-type-card p {
+        color: #666;
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+    
+    .difficulty-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .difficulty-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .difficulty-beginner { background-color: #4CAF50; }
+    .difficulty-intermediate { background-color: #FF9800; }
+    .difficulty-advanced { background-color: #F44336; }
+    
+    .recommendations-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 30px;
+    }
+    
+    .recommendations-section h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+    
+    .recommendation-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .recommendation-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .recommendation-item h4 {
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 1.1rem;
+    }
+    
+    .recommendation-item p {
+        color: #666;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+    
+    .recommendation-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+        color: #888;
+    }
+    
+    .start-practice-btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .start-practice-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .achievements-section {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .achievements-section h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+    
+    .achievements-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    
+    .achievement-item {
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .achievement-item:hover {
+        background: #e9ecef;
+        transform: scale(1.05);
+    }
+    
+    .achievement-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .achievement-item h4 {
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 1rem;
+    }
+    
+    .achievement-item p {
+        color: #666;
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+    }
+    
+    .achievement-points {
+        color: #667eea;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .nav-btn:hover {
+        background: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: #333;
+    }
+    
+    .user-level-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    
+    .level-beginner { background-color: #4CAF50; }
+    .level-intermediate { background-color: #FF9800; }
+    .level-advanced { background-color: #F44336; }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .practice-types-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .achievements-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+        
+        .dashboard-header h1 {
+            font-size: 2rem;
+        }
+    }
+    
+    /* 模态框样式 */
+    .chord-trainer-content {
+        text-align: center;
+    }
+    
+    .chord-display {
+        margin-bottom: 20px;
+    }
+    
+    .current-chord {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+    
+    .chord-progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .progress-bar {
+        width: 200px;
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+    }
+    
+    .chord-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+    
+    .practice-plan-content {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .plan-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .plan-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+    }
+    
+    .plan-day {
+        font-weight: bold;
+        color: #667eea;
+        min-width: 60px;
+    }
+    
+    .plan-content {
+        flex: 1;
+    }
+    
+    .plan-content h6 {
+        margin-bottom: 5px;
+        color: #333;
+    }
+    
+    .plan-content p {
+        margin-bottom: 10px;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .plan-progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .plan-progress .progress-bar {
+        width: 150px;
+        height: 8px;
+    }
+    
+    .plan-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .fretboard-placeholder {
+        text-align: center;
+        padding: 40px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        color: #666;
+    }
+    
+    .fretboard-placeholder p {
+        margin: 5px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="guitar-dashboard">
+    <div class="dashboard-header">
+        <h1>🎸 吉他训练系统</h1>
+        <p>从初学者到进阶者的完整学习平台</p>
+        <div class="user-level-badge level-{{ user_level }}">
+            {{ difficulty_levels|get_item:user_level|get_item:"name" }}
+        </div>
+    </div>
+
+    <!-- 用户统计 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>总练习时间</h3>
+            <div class="stat-value">{{ user_stats.total_practice_time }}</div>
+            <div class="stat-label">小时</div>
+        </div>
+        <div class="stat-card">
+            <h3>练习次数</h3>
+            <div class="stat-value">{{ user_stats.total_sessions }}</div>
+            <div class="stat-label">次</div>
+        </div>
+        <div class="stat-card">
+            <h3>连续练习</h3>
+            <div class="stat-value">{{ user_stats.current_streak }}</div>
+            <div class="stat-label">天</div>
+        </div>
+        <div class="stat-card">
+            <h3>平均准确率</h3>
+            <div class="stat-value">{{ user_stats.accuracy_avg }}%</div>
+            <div class="stat-label">最近练习</div>
+        </div>
+        <div class="stat-card">
+            <h3>获得积分</h3>
+            <div class="stat-value">{{ user_stats.points }}</div>
+            <div class="stat-label">总分</div>
+        </div>
+        <div class="stat-card">
+            <h3>最长连续</h3>
+            <div class="stat-value">{{ user_stats.longest_streak }}</div>
+            <div class="stat-label">天</div>
+        </div>
+    </div>
+
+    <!-- 练习类型 -->
+    <div class="practice-types-grid">
+        {% for type_key, type_data in practice_types.items %}
+        <div class="practice-type-card" onclick="selectPracticeType('{{ type_key }}')">
+            <span class="practice-type-icon">
+                {% if type_key == 'chord_progression' %}🎼
+                {% elif type_key == 'fingerpicking' %}🎵
+                {% elif type_key == 'scale_practice' %}🎶
+                {% elif type_key == 'song_learning' %}🎤
+                {% elif type_key == 'theory_study' %}📚
+                {% else %}🎸{% endif %}
+            </span>
+            <h3>{{ type_data.name }}</h3>
+            <p>{{ type_data.description }}</p>
+            <div class="difficulty-badges">
+                {% for difficulty in type_data.difficulty %}
+                <span class="difficulty-badge difficulty-{{ difficulty }}">
+                    {{ difficulty_levels|get_item:difficulty|get_item:"name" }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 推荐练习 -->
+    <div class="recommendations-section">
+        <h2>🎯 推荐练习</h2>
+        {% for exercise in recommended_exercises %}
+        <div class="recommendation-item">
+            <h4>{{ exercise.name }}</h4>
+            <p>{{ exercise.description }}</p>
+            <div class="recommendation-meta">
+                <span>时长: {{ exercise.duration }} 分钟</span>
+                <span>难度: {{ difficulty_levels|get_item:exercise.difficulty|get_item:"name" }}</span>
+                <button class="start-practice-btn" onclick="startPractice('{{ exercise.type }}', '{{ exercise.difficulty }}', '{{ exercise.name }}')">
+                    开始练习
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 成就系统 -->
+    <div class="achievements-section">
+        <h2>🏆 成就系统</h2>
+        <div class="achievements-grid">
+            {% for achievement_key, achievement_data in achievements.items %}
+            <div class="achievement-item">
+                <span class="achievement-icon">{{ achievement_data.icon }}</span>
+                <h4>{{ achievement_data.name }}</h4>
+                <p>{{ achievement_data.description }}</p>
+                <div class="achievement-points">+{{ achievement_data.points }} 积分</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 导航按钮 -->
+    <div class="navigation-buttons">
+              <a href="{% url 'tools:guitar_progress_tracking' %}" class="nav-btn">📊 进度跟踪</a>
+      <a href="{% url 'tools:guitar_theory_guide' %}" class="nav-btn">📚 乐理学习</a>
+      <a href="{% url 'tools:guitar_song_library' %}" class="nav-btn">🎵 歌曲库</a>
+      <a href="{% url 'tools:guitar_tab_generator' %}" class="nav-btn">🎼 自动扒谱</a>
+        <a href="#" class="nav-btn" onclick="showPracticeHistory()">📝 练习历史</a>
+    </div>
+</div>
+
+<!-- 练习类型选择模态框 -->
+<div class="modal fade" id="practiceTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">选择练习类型</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="difficulty-selection">
+                    <h6>选择难度等级：</h6>
+                    <div class="btn-group" role="group">
+                        {% for difficulty_key, difficulty_data in difficulty_levels.items %}
+                        <input type="radio" class="btn-check" name="difficulty" id="difficulty_{{ difficulty_key }}" value="{{ difficulty_key }}">
+                        <label class="btn btn-outline-primary" for="difficulty_{{ difficulty_key }}">
+                            {{ difficulty_data.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="confirmPracticeType()">开始练习</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 和弦训练器模态框 -->
+<div class="modal fade" id="chordTrainerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🎼 和弦训练器</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="chord-trainer-content">
+                    <div class="chord-display">
+                        <div class="current-chord" id="currentChordDisplay">C</div>
+                        <div class="chord-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="chordProgressFill" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text">准确率: <span id="chordAccuracy">0%</span></span>
+                        </div>
+                    </div>
+                    <div class="fretboard-display" id="fretboardDisplay">
+                        <!-- 指板将在这里显示 -->
+                        <div class="fretboard-placeholder">
+                            <p>3D指板演示区域</p>
+                            <p>点击开始训练按钮开始练习</p>
+                        </div>
+                    </div>
+                    <div class="chord-controls">
+                        <button class="btn btn-primary" onclick="startChordTraining()">开始训练</button>
+                        <button class="btn btn-secondary" onclick="nextChord()">下一个和弦</button>
+                        <button class="btn btn-info" onclick="showChordHeatmap()">热力图</button>
+                        <button class="btn btn-warning" onclick="resetChordTraining()">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 练习计划模态框 -->
+<div class="modal fade" id="practicePlanModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📅 个性化练习计划</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="practice-plan-content">
+                    <div class="plan-header">
+                        <h6>两周练习计划</h6>
+                        <p>基于您的水平和进度生成的个性化计划</p>
+                    </div>
+                    <div class="plan-list" id="planList">
+                        <!-- 练习计划将在这里显示 -->
+                        <div class="plan-item">
+                            <div class="plan-day">第1天</div>
+                            <div class="plan-content">
+                                <h6>和弦转换练习</h6>
+                                <p>练习C、G、Am、F和弦的转换，每个和弦练习5分钟</p>
+                                <div class="plan-progress">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                    <span>0% 完成</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plan-controls">
+                        <button class="btn btn-primary" onclick="generatePracticePlan()">生成新计划</button>
+                        <button class="btn btn-secondary" onclick="updateProgress()">更新进度</button>
+                        <button class="btn btn-info" onclick="showProgressChart()">进步曲线</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedPracticeType = '';
+let selectedDifficulty = 'beginner';
+
+function selectPracticeType(type) {
+    selectedPracticeType = type;
+    const modal = new bootstrap.Modal(document.getElementById('practiceTypeModal'));
+    modal.show();
+}
+
+function confirmPracticeType() {
+    if (selectedPracticeType && selectedDifficulty) {
+        window.location.href = `/tools/guitar-practice/${selectedPracticeType}/${selectedDifficulty}/`;
+    }
+}
+
+function startPractice(type, difficulty, exerciseName) {
+    // 直接开始练习
+    window.location.href = `/tools/guitar-practice/${type}/${difficulty}/?exercise=${encodeURIComponent(exerciseName)}`;
+}
+
+function showPracticeHistory() {
+    // 显示练习历史
+    window.location.href = "{% url 'tools:guitar_progress_tracking' %}";
+}
+
+// 监听难度选择
+document.addEventListener('DOMContentLoaded', function() {
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    difficultyRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            selectedDifficulty = this.value;
+        });
+    });
+    
+    // 默认选择用户当前等级
+    const userLevel = '{{ user_level }}';
+    const defaultRadio = document.getElementById('difficulty_' + userLevel);
+    if (defaultRadio) {
+        defaultRadio.checked = true;
+        selectedDifficulty = userLevel;
+    }
+});
+
+// 添加一些动画效果
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.stat-card, .practice-type-card, .recommendation-item');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+// 和弦训练器功能
+function toggleChordTrainer() {
+    // 跳转到和弦训练页面或显示和弦训练模态框
+    const modal = new bootstrap.Modal(document.getElementById('chordTrainerModal'));
+    modal.show();
+}
+
+// 极简模式功能
+function enterMinimalMode() {
+    // 进入全屏练习模式
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+    }
+    
+    // 显示极简模式界面
+    showMinimalMode();
+}
+
+// 练习计划功能
+function togglePracticePlan() {
+    // 显示练习计划模态框
+    const modal = new bootstrap.Modal(document.getElementById('practicePlanModal'));
+    modal.show();
+}
+
+// 显示极简模式
+function showMinimalMode() {
+    // 创建极简模式界面
+    const minimalMode = document.createElement('div');
+    minimalMode.id = 'minimalMode';
+    minimalMode.innerHTML = `
+        <div class="minimal-mode-overlay">
+            <div class="minimal-mode-content">
+                <div class="minimal-fretboard" id="minimalFretboard">
+                    <!-- 极简指板 -->
+                </div>
+                <div class="minimal-metronome">
+                    <div class="bpm-display" id="minimalBPM">120</div>
+                    <button class="minimal-btn" onclick="toggleMinimalMetronome()">节拍器</button>
+                </div>
+                <button class="minimal-exit-btn" onclick="exitMinimalMode()">退出</button>
+            </div>
+        </div>
+    `;
+    
+    // 添加极简模式样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .minimal-mode-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .minimal-mode-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .minimal-fretboard {
+            width: 80%;
+            height: 60%;
+            background: #333;
+            border: 2px solid #666;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .minimal-metronome {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .bpm-display {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .minimal-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .minimal-exit-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(minimalMode);
+}
+
+// 退出极简模式
+function exitMinimalMode() {
+    const minimalMode = document.getElementById('minimalMode');
+    if (minimalMode) {
+        minimalMode.remove();
+    }
+    
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    }
+}
+
+// 极简模式节拍器
+let minimalMetronomeActive = false;
+let minimalMetronomeInterval;
+
+function toggleMinimalMetronome() {
+    if (minimalMetronomeActive) {
+        stopMinimalMetronome();
+    } else {
+        startMinimalMetronome();
+    }
+}
+
+function startMinimalMetronome() {
+    const bpmDisplay = document.getElementById('minimalBPM');
+    const bpm = parseInt(bpmDisplay.textContent);
+    const interval = 60000 / bpm;
+    
+    minimalMetronomeInterval = setInterval(() => {
+        // 播放节拍声音
+        playMetronomeSound();
+    }, interval);
+    
+    minimalMetronomeActive = true;
+}
+
+function stopMinimalMetronome() {
+    if (minimalMetronomeInterval) {
+        clearInterval(minimalMetronomeInterval);
+        minimalMetronomeActive = false;
+    }
+}
+
+function playMetronomeSound() {
+    // 创建音频上下文播放节拍声音
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+}
+
+// 和弦训练器相关函数
+let chordTrainingActive = false;
+let currentChordIndex = 0;
+let chordAccuracy = 0;
+let chordAttempts = 0;
+
+const chordLibrary = [
+    { name: 'C', fingers: [[1, 1], [2, 2], [3, 3]], difficulty: 'beginner' },
+    { name: 'G', fingers: [[1, 3], [2, 2], [3, 1], [6, 3]], difficulty: 'beginner' },
+    { name: 'Am', fingers: [[1, 1], [2, 2], [3, 3]], difficulty: 'beginner' },
+    { name: 'F', fingers: [[1, 1], [2, 1], [3, 2], [4, 3]], difficulty: 'intermediate' },
+    { name: 'D', fingers: [[1, 2], [2, 3], [3, 2]], difficulty: 'beginner' },
+    { name: 'Em', fingers: [[1, 2], [2, 3]], difficulty: 'beginner' },
+    { name: 'Bm', fingers: [[1, 2], [2, 3], [3, 4], [4, 4]], difficulty: 'intermediate' },
+    { name: 'A', fingers: [[1, 2], [2, 2], [3, 2]], difficulty: 'beginner' },
+    { name: 'E', fingers: [[1, 1], [2, 1], [3, 2], [4, 2]], difficulty: 'beginner' },
+    { name: 'Dm', fingers: [[1, 1], [2, 3], [3, 2]], difficulty: 'beginner' }
+];
+
+function startChordTraining() {
+    chordTrainingActive = true;
+    currentChordIndex = 0;
+    chordAccuracy = 0;
+    chordAttempts = 0;
+    
+    displayCurrentChord();
+    updateChordProgress();
+    
+    // 显示指板
+    displayFretboard();
+    
+    // 开始音频检测（模拟）
+    startAudioDetection();
+}
+
+function nextChord() {
+    if (currentChordIndex < chordLibrary.length - 1) {
+        currentChordIndex++;
+        displayCurrentChord();
+        updateChordProgress();
+    } else {
+        // 训练完成
+        completeChordTraining();
+    }
+}
+
+function displayCurrentChord() {
+    const chordDisplay = document.getElementById('currentChordDisplay');
+    const currentChord = chordLibrary[currentChordIndex];
+    chordDisplay.textContent = currentChord.name;
+}
+
+function displayFretboard() {
+    const fretboardDisplay = document.getElementById('fretboardDisplay');
+    const currentChord = chordLibrary[currentChordIndex];
+    
+    // 创建指板HTML
+    let fretboardHTML = '<div class="fretboard">';
+    fretboardHTML += '<div class="fretboard-strings">';
+    for (let string = 1; string <= 6; string++) {
+        fretboardHTML += `<div class="string string-${string}"></div>`;
+    }
+    fretboardHTML += '</div>';
+    
+    fretboardHTML += '<div class="fretboard-frets">';
+    for (let fret = 0; fret <= 5; fret++) {
+        fretboardHTML += `<div class="fret fret-${fret}">`;
+        for (let string = 1; string <= 6; string++) {
+            const finger = currentChord.fingers.find(f => f[0] === string);
+            if (finger && finger[1] === fret) {
+                fretboardHTML += `<div class="finger-position" data-string="${string}" data-fret="${fret}"></div>`;
+            } else {
+                fretboardHTML += `<div class="fret-position" data-string="${string}" data-fret="${fret}"></div>`;
+            }
+        }
+        fretboardHTML += '</div>';
+    }
+    fretboardHTML += '</div></div>';
+    
+    fretboardDisplay.innerHTML = fretboardHTML;
+    
+    // 添加指板样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .fretboard {
+            width: 100%;
+            height: 200px;
+            background: #2c3e50;
+            border-radius: 10px;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .fretboard-strings {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .string {
+            flex: 1;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .fretboard-frets {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        
+        .fret {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #34495e;
+        }
+        
+        .fret-position {
+            flex: 1;
+            border-bottom: 1px solid #34495e;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .fret-position:hover {
+            background: rgba(52, 152, 219, 0.3);
+        }
+        
+        .finger-position {
+            flex: 1;
+            background: #3498db;
+            border-radius: 50%;
+            margin: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    `;
+    
+    if (!document.getElementById('fretboardStyle')) {
+        style.id = 'fretboardStyle';
+        document.head.appendChild(style);
+    }
+}
+
+function startAudioDetection() {
+    // 模拟音频检测
+    console.log('开始音频检测...');
+    // 这里应该集成真实的音频检测功能
+}
+
+function showChordHeatmap() {
+    // 显示和弦热力图
+    alert('热力图功能：显示您最常练习的和弦位置');
+}
+
+function resetChordTraining() {
+    chordTrainingActive = false;
+    currentChordIndex = 0;
+    chordAccuracy = 0;
+    chordAttempts = 0;
+    
+    updateChordProgress();
+    displayCurrentChord();
+}
+
+function updateChordProgress() {
+    const progressFill = document.getElementById('chordProgressFill');
+    const accuracyDisplay = document.getElementById('chordAccuracy');
+    
+    const progress = (currentChordIndex / chordLibrary.length) * 100;
+    progressFill.style.width = progress + '%';
+    accuracyDisplay.textContent = chordAccuracy + '%';
+}
+
+function completeChordTraining() {
+    chordTrainingActive = false;
+    alert(`和弦训练完成！\n准确率: ${chordAccuracy}%\n练习和弦数: ${chordLibrary.length}`);
+}
+
+// 练习计划相关函数
+function generatePracticePlan() {
+    const planList = document.getElementById('planList');
+    
+    const plans = [
+        { day: '第1天', title: '和弦转换练习', content: '练习C、G、Am、F和弦的转换，每个和弦练习5分钟' },
+        { day: '第2天', title: '指弹练习', content: '练习基本的指弹模式，PIMA指法练习' },
+        { day: '第3天', title: '音阶练习', content: '练习C大调音阶，上下行各10遍' },
+        { day: '第4天', title: '歌曲学习', content: '学习一首简单的歌曲，练习和弦进行' },
+        { day: '第5天', title: '节奏训练', content: '使用节拍器练习基本节奏型' },
+        { day: '第6天', title: '乐理学习', content: '学习基本乐理知识，音符和节拍' },
+        { day: '第7天', title: '综合练习', content: '复习前6天的内容，综合练习' }
+    ];
+    
+    let planHTML = '';
+    plans.forEach(plan => {
+        planHTML += `
+            <div class="plan-item">
+                <div class="plan-day">${plan.day}</div>
+                <div class="plan-content">
+                    <h6>${plan.title}</h6>
+                    <p>${plan.content}</p>
+                    <div class="plan-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span>0% 完成</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    planList.innerHTML = planHTML;
+}
+
+function updateProgress() {
+    // 更新练习进度
+    alert('进度更新功能：记录您的练习进度');
+}
+
+function showProgressChart() {
+    // 显示进步曲线图
+    alert('进步曲线功能：显示您的学习进度图表');
+}
+</script>
+{% endblock %}

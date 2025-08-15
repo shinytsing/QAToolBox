@@ -1,0 +1,22 @@
+# 音频处理相关依赖
+librosa>=0.10.0
+numpy>=1.21.0
+scipy>=1.7.0
+soundfile>=0.10.0
+librosa-audio>=0.10.0
+
+# 可选依赖（用于更好的音频支持）
+pydub>=0.25.0
+audioread>=3.0.0
+resampy>=0.4.0
+
+# 系统音频库（Ubuntu/Debian）
+# sudo apt-get install libsndfile1-dev
+# sudo apt-get install ffmpeg
+
+# 系统音频库（macOS）
+# brew install libsndfile
+# brew install ffmpeg
+
+# 系统音频库（Windows）
+# 需要安装Visual Studio Build Tools

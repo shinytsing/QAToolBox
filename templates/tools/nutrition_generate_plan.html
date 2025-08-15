@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NutriCoach Pro - 生成饮食计划{% endblock %}
+
+{% block extra_css %}
+<style>
+.generate-plan {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.plan-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profile-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.profile-item {
+    text-align: center;
+}
+
+.profile-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.profile-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.options-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    border-left: 4px solid #667eea;
+}
+
+.options-section h4 {
+    color: #667eea;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.options-section h4 i {
+    margin-right: 10px;
+}
+
+.option-group {
+    margin-bottom: 20px;
+}
+
+.option-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.intensity-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.intensity-option {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.intensity-option:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.intensity-option.selected {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.intensity-option h5 {
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.intensity-option p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    width: 100%;
+}
+
+.btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.btn-generate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.preview-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 15px;
+    margin-top: 30px;
+    display: none;
+}
+
+.preview-section h4 {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.nutrition-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.nutrition-item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    border-left: 4px solid #667eea;
+}
+
+.nutrition-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.nutrition-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="generate-plan">
+    <div class="container">
+        <div class="plan-card">
+            <div class="text-center mb-4">
+                <h1 class="mb-3">
+                    <i class="fas fa-magic text-primary"></i>
+                    生成个性化饮食计划
+                </h1>
+                <p class="lead text-muted">基于您的档案信息，我们将为您定制专属的7天饮食计划</p>
+            </div>
+
+            <!-- 用户档案摘要 -->
+            <div class="profile-summary">
+                <h4 class="mb-3"><i class="fas fa-user"></i> 您的档案信息</h4>
+                <div class="profile-grid">
+                    <div class="profile-item">
+                        <div class="profile-value">{{ profile.age }}岁</div>
+                        <div class="profile-label">年龄</div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-value">{{ profile.get_gender_display }}</div>
+                        <div class="profile-label">性别</div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-value">{{ profile.height }}cm</div>
+                        <div class="profile-label">身高</div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-value">{{ profile.weight }}kg</div>
+                        <div class="profile-label">体重</div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-value">{{ profile.get_goal_display }}</div>
+                        <div class="profile-label">健身目标</div>
+                    </div>
+                    <div class="profile-item">
+                        <div class="profile-value">{{ profile.get_activity_level_display }}</div>
+                        <div class="profile-label">活动水平</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 计划生成选项 -->
+            <div class="options-section">
+                <h4><i class="fas fa-cog"></i> 计划生成选项</h4>
+                
+                <form method="post" id="planForm">
+                    {% csrf_token %}
+                    
+                    <div class="option-group">
+                        <label class="option-label">目标强度</label>
+                        <div class="intensity-options">
+                            <div class="intensity-option" data-value="conservative">
+                                <h5>保守型</h5>
+                                <p>缓慢但稳定的进展，适合初学者或希望温和改变的用户</p>
+                            </div>
+                            <div class="intensity-option selected" data-value="balanced">
+                                <h5>均衡型</h5>
+                                <p>平衡的进展速度，推荐给大多数用户</p>
+                            </div>
+                            <div class="intensity-option" data-value="aggressive">
+                                <h5>激进型</h5>
+                                <p>快速见效，适合有经验的健身者</p>
+                            </div>
+                        </div>
+                        <input type="hidden" name="intensity" value="balanced" id="intensityInput">
+                    </div>
+
+                    <div class="option-group">
+                        <label class="option-label">每周训练天数</label>
+                        <select name="training_days_per_week" class="form-control">
+                            <option value="0">不训练</option>
+                            <option value="1">1天</option>
+                            <option value="2">2天</option>
+                            <option value="3" selected>3天</option>
+                            <option value="4">4天</option>
+                            <option value="5">5天</option>
+                            <option value="6">6天</option>
+                            <option value="7">7天</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button type="button" class="btn btn-generate" id="generateBtn">
+                <i class="fas fa-magic"></i> 生成饮食计划
+            </button>
+
+            <!-- 加载动画 -->
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <h5>正在生成您的专属饮食计划...</h5>
+                <p class="text-muted">这可能需要几秒钟时间，请耐心等待</p>
+            </div>
+
+            <!-- 预览区域 -->
+            <div class="preview-section" id="previewSection">
+                <h4><i class="fas fa-eye"></i> 计划预览</h4>
+                <div class="nutrition-preview" id="nutritionPreview">
+                    <!-- 动态生成预览内容 -->
+                </div>
+                <div class="text-center">
+                    <button type="button" class="btn btn-success" id="confirmBtn">
+                        <i class="fas fa-check"></i> 确认生成计划
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 强度选择
+document.querySelectorAll('.intensity-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // 移除其他选中状态
+        document.querySelectorAll('.intensity-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // 添加当前选中状态
+        this.classList.add('selected');
+        
+        // 更新隐藏输入
+        const value = this.getAttribute('data-value');
+        document.getElementById('intensityInput').value = value;
+    });
+});
+
+// 生成计划
+document.getElementById('generateBtn').addEventListener('click', function() {
+    const btn = this;
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const previewSection = document.getElementById('previewSection');
+    
+    // 显示加载状态
+    btn.style.display = 'none';
+    loadingSpinner.style.display = 'block';
+    
+    // 收集表单数据
+    const formData = new FormData(document.getElementById('planForm'));
+    
+    // 调用API生成计划
+    fetch('{% url "nutrition_api_generate_plan" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            age: {{ profile.age }},
+            gender: '{{ profile.gender }}',
+            height: {{ profile.height }},
+            weight: {{ profile.weight }},
+            goal: '{{ profile.goal }}',
+            activity_level: '{{ profile.activity_level }}',
+            dietary_preferences: {{ profile.dietary_preferences|safe }},
+            allergies: {{ profile.allergies|safe }},
+            intensity: formData.get('intensity'),
+            training_days_per_week: parseInt(formData.get('training_days_per_week'))
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 隐藏加载状态
+        loadingSpinner.style.display = 'none';
+        
+        if (data.success) {
+            // 显示预览
+            showPreview(data.data);
+            previewSection.style.display = 'block';
+        } else {
+            alert('生成失败：' + data.error);
+            btn.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('生成失败，请重试');
+        loadingSpinner.style.display = 'none';
+        btn.style.display = 'block';
+    });
+});
+
+function showPreview(planData) {
+    const preview = document.getElementById('nutritionPreview');
+    
+    preview.innerHTML = `
+        <div class="nutrition-item">
+            <div class="nutrition-value">${planData.daily_calories}</div>
+            <div class="nutrition-label">每日热量 (kcal)</div>
+        </div>
+        <div class="nutrition-item">
+            <div class="nutrition-value">${planData.macros.protein}g</div>
+            <div class="nutrition-label">蛋白质</div>
+        </div>
+        <div class="nutrition-item">
+            <div class="nutrition-value">${planData.macros.carbs}g</div>
+            <div class="nutrition-label">碳水</div>
+        </div>
+        <div class="nutrition-item">
+            <div class="nutrition-value">${planData.macros.fat}g</div>
+            <div class="nutrition-label">脂肪</div>
+        </div>
+    `;
+}
+
+// 确认生成
+document.getElementById('confirmBtn').addEventListener('click', function() {
+    // 提交表单生成最终计划
+    document.getElementById('planForm').submit();
+});
+</script>
+{% endblock %}

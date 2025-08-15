@@ -1,0 +1,612 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}发布物品 - 船宝{% endblock %}
+
+{% block extra_css %}
+<style>
+.publish-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.publish-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.publish-header h1 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.publish-header p {
+    color: #7f8c8d;
+    font-size: 1rem;
+}
+
+.publish-form {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.image-upload {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.image-upload:hover {
+    border-color: #3498db;
+}
+
+.image-upload.dragover {
+    border-color: #3498db;
+    background: #ecf0f1;
+}
+
+.image-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.image-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-item .remove-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.price-input {
+    position: relative;
+}
+
+.price-input input {
+    padding-left: 30px;
+}
+
+.price-input::before {
+    content: '¥';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7f8c8d;
+    font-weight: 600;
+}
+
+.condition-stars {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #ddd;
+    transition: color 0.3s;
+}
+
+.star-btn.active {
+    color: #f39c12;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.location-input {
+    position: relative;
+}
+
+.location-input input {
+    padding-right: 40px;
+}
+
+.location-input .map-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.submit-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.3s;
+}
+
+.submit-btn:hover {
+    background: #c0392b;
+}
+
+.submit-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.back-btn {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.3s;
+}
+
+.back-btn:hover {
+    background: #7f8c8d;
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.success-message {
+    color: #27ae60;
+    font-size: 14px;
+    margin-top: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="publish-container">
+    <!-- 返回按钮 -->
+    <button class="back-btn" onclick="history.back()">← 返回</button>
+    
+    <!-- 头部 -->
+    <div class="publish-header">
+        <h1>📝 发布物品</h1>
+        <p>填写物品信息，开始您的二手交易之旅</p>
+    </div>
+
+    <!-- 发布表单 -->
+    <form class="publish-form" id="publish-form">
+        <!-- 图片上传 -->
+        <div class="form-group">
+            <label>物品图片 <span style="color: #e74c3c;">*</span></label>
+            <div class="image-upload" id="image-upload">
+                <div>
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #bdc3c7;"></i>
+                    <p>点击或拖拽上传图片（最多6张）</p>
+                    <p style="font-size: 12px; color: #7f8c8d;">支持 JPG、PNG 格式</p>
+                </div>
+                <input type="file" id="image-input" multiple accept="image/*" style="display: none;">
+            </div>
+            <div class="image-preview" id="image-preview"></div>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="form-group">
+            <label>物品标题 <span style="color: #e74c3c;">*</span></label>
+            <input type="text" id="title" placeholder="请输入物品标题" maxlength="100" required>
+        </div>
+
+        <div class="form-group">
+            <label>物品描述 <span style="color: #e74c3c;">*</span></label>
+            <textarea id="description" placeholder="请详细描述物品的成色、使用情况、购买时间等信息" required></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>分类 <span style="color: #e74c3c;">*</span></label>
+                <select id="category" required>
+                    <option value="">请选择分类</option>
+                    <option value="electronics">电子产品</option>
+                    <option value="clothing">服饰鞋包</option>
+                    <option value="furniture">家具家居</option>
+                    <option value="books">图书音像</option>
+                    <option value="sports">运动户外</option>
+                    <option value="beauty">美妆护肤</option>
+                    <option value="toys">玩具游戏</option>
+                    <option value="food">食品饮料</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>价格 <span style="color: #e74c3c;">*</span></label>
+                <div class="price-input">
+                    <input type="number" id="price" placeholder="0.00" min="0" step="0.01" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>新旧程度 <span style="color: #e74c3c;">*</span></label>
+            <div class="condition-stars" id="condition-stars">
+                <button type="button" class="star-btn" data-value="1">☆</button>
+                <button type="button" class="star-btn" data-value="2">☆</button>
+                <button type="button" class="star-btn" data-value="3">☆</button>
+                <button type="button" class="star-btn" data-value="4">☆</button>
+                <button type="button" class="star-btn" data-value="5">☆</button>
+            </div>
+            <input type="hidden" id="condition" value="3" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>交易方式</label>
+                <select id="delivery-option">
+                    <option value="pickup">仅自提</option>
+                    <option value="delivery">仅送货</option>
+                    <option value="both">自提/送货</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>是否可议价</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="can-bargain">
+                    <label for="can-bargain">可以议价</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>交易地点 <span style="color: #e74c3c;">*</span></label>
+            <div class="location-input">
+                <input type="text" id="location" placeholder="请输入交易地点" required>
+                <button type="button" class="map-btn" onclick="openMapPicker()">🗺️</button>
+            </div>
+        </div>
+
+        <!-- 提交按钮 -->
+        <button type="submit" class="submit-btn" id="submit-btn">
+            发布物品
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let uploadedImages = [];
+let selectedCondition = 3;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeImageUpload();
+    initializeConditionStars();
+    initializeForm();
+});
+
+// 初始化图片上传
+function initializeImageUpload() {
+    const uploadArea = document.getElementById('image-upload');
+    const fileInput = document.getElementById('image-input');
+    
+    // 点击上传
+    uploadArea.addEventListener('click', () => fileInput.click());
+    
+    // 文件选择
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+}
+
+// 处理文件选择
+function handleFileSelect(e) {
+    const files = e.target.files;
+    handleFiles(files);
+}
+
+// 处理文件
+function handleFiles(files) {
+    if (uploadedImages.length + files.length > 6) {
+        alert('最多只能上传6张图片');
+        return;
+    }
+    
+    Array.from(files).forEach(file => {
+        if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件');
+            return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            alert('图片大小不能超过5MB');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            uploadedImages.push({
+                file: file,
+                url: e.target.result
+            });
+            updateImagePreview();
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// 更新图片预览
+function updateImagePreview() {
+    const preview = document.getElementById('image-preview');
+    preview.innerHTML = '';
+    
+    uploadedImages.forEach((image, index) => {
+        const item = document.createElement('div');
+        item.className = 'image-item';
+        item.innerHTML = `
+            <img src="${image.url}" alt="预览图片">
+            <button type="button" class="remove-btn" onclick="removeImage(${index})">×</button>
+        `;
+        preview.appendChild(item);
+    });
+}
+
+// 移除图片
+function removeImage(index) {
+    uploadedImages.splice(index, 1);
+    updateImagePreview();
+}
+
+// 初始化新旧程度星级
+function initializeConditionStars() {
+    const stars = document.querySelectorAll('.star-btn');
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const value = parseInt(star.dataset.value);
+            selectedCondition = value;
+            updateConditionStars();
+        });
+    });
+    updateConditionStars();
+}
+
+// 更新星级显示
+function updateConditionStars() {
+    const stars = document.querySelectorAll('.star-btn');
+    stars.forEach((star, index) => {
+        if (index < selectedCondition) {
+            star.textContent = '★';
+            star.classList.add('active');
+        } else {
+            star.textContent = '☆';
+            star.classList.remove('active');
+        }
+    });
+    document.getElementById('condition').value = selectedCondition;
+}
+
+// 初始化表单
+function initializeForm() {
+    const form = document.getElementById('publish-form');
+    form.addEventListener('submit', handleSubmit);
+}
+
+// 处理表单提交
+function handleSubmit(e) {
+    e.preventDefault();
+    
+    // 验证表单
+    if (!validateForm()) {
+        return;
+    }
+    
+    // 禁用提交按钮
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '发布中...';
+    
+    // 准备表单数据
+    const formData = {
+        title: document.getElementById('title').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        category: document.getElementById('category').value,
+        price: document.getElementById('price').value,
+        condition: selectedCondition,
+        delivery_option: document.getElementById('delivery-option').value,
+        can_bargain: document.getElementById('can-bargain').checked,
+        location: document.getElementById('location').value.trim(),
+        images: uploadedImages.map(img => img.url) // 这里应该上传到服务器并获取URL
+    };
+    
+    // 发送请求
+    fetch('/tools/api/shipbao/create-item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('物品发布成功！');
+            window.location.href = '/tools/shipbao/';
+        } else {
+            alert('发布失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('发布失败，请重试');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '发布物品';
+    });
+}
+
+// 验证表单
+function validateForm() {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const category = document.getElementById('category').value;
+    const price = document.getElementById('price').value;
+    const location = document.getElementById('location').value.trim();
+    
+    if (!title) {
+        alert('请输入物品标题');
+        return false;
+    }
+    
+    if (!description) {
+        alert('请输入物品描述');
+        return false;
+    }
+    
+    if (!category) {
+        alert('请选择物品分类');
+        return false;
+    }
+    
+    if (!price || parseFloat(price) <= 0) {
+        alert('请输入有效的价格');
+        return false;
+    }
+    
+    if (!location) {
+        alert('请输入交易地点');
+        return false;
+    }
+    
+    if (uploadedImages.length === 0) {
+        alert('请至少上传一张物品图片');
+        return false;
+    }
+    
+    return true;
+}
+
+// 打开地图选择器
+function openMapPicker() {
+    // TODO: 实现地图选择功能
+    alert('地图选择功能开发中...');
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

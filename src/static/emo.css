@@ -266,8 +266,12 @@ body.emo-theme::before {
   border-bottom: 0.5px solid var(--emo-border);
 }
 
+.emo-navbar .navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
 .emo-navbar .nav-link {
-  color: var(--emo-text);
+  color: rgba(255, 255, 255, 0.9) !important;
   font-weight: 500;
   transition: all 0.3s ease;
   font-style: italic;
@@ -284,6 +288,7 @@ body.emo-theme::before {
   justify-content: center;
   font-size: 1rem;
   line-height: 1;
+  color: #ffffff !important;
 }
 
 .emo-navbar .nav-link span {

@@ -13,6 +13,7 @@ import random
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db import models
+from decimal import Decimal
 import uuid
 from PIL import Image
 from io import BytesIO
@@ -99,6 +100,18 @@ from .models import (
     FoodRandomizer, FoodItem, FoodRandomizationSession, FoodHistory
 )
 
+# 船宝（二手线下交易）相关模型导入
+from .models import (
+    ShipBaoItem, ShipBaoTransaction, ShipBaoMessage, 
+    ShipBaoUserProfile, ShipBaoReport
+)
+
+# 搭子（同城活动匹配）相关模型导入
+from .models import (
+    BuddyEvent, BuddyEventMember, BuddyEventChat, 
+    BuddyEventMessage, BuddyUserProfile, BuddyEventReview, BuddyEventReport
+)
+
 # 用户资料相关导入
 from django.contrib.auth.models import User
 from apps.users.models import Profile, UserMembership, UserTheme
@@ -121,6 +134,10 @@ def redbook_generator(request):
 def pdf_converter(request):
     """PDF转换器页面"""
     return render(request, 'tools/pdf_converter_modern.html')
+
+def pdf_converter_test(request):
+    """PDF转换器测试页面（无需登录）"""
+    return render(request, 'tools/pdf_converter_test.html')
 
 @login_required
 def fortune_analyzer(request):
@@ -156,15 +173,9 @@ def training_plan_editor(request):
     """训练计划编辑器页面"""
     return render(request, 'tools/training_plan_editor.html')
 
-@login_required
-def life_diary(request):
-    """生活日记页面 - 重定向到层层递进版本"""
-    return redirect('life_diary_progressive')
 
-@login_required
-def life_diary_progressive(request):
-    """层层递进生活日记页面"""
-    return render(request, 'tools/life_diary_progressive.html')
+
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -267,24 +278,51 @@ def heart_link_chat(request, room_id):
     
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 检查聊天室状态
+        if chat_room.status != 'active':
+            return redirect('tools:chat_room_error', error_type='ended', room_id=room_id)
+        
         # 检查用户是否是聊天室的参与者
         participants = [chat_room.user1]
         if chat_room.user2:
             participants.append(chat_room.user2)
         
         if request.user not in participants:
-            return redirect('heart_link')
+            # 如果用户不是参与者，但有匹配的请求，允许加入
+            heart_link_request = HeartLinkRequest.objects.filter(
+                requester=request.user,
+                chat_room=chat_room,
+                status='matched'
+            ).first()
+            
+            if not heart_link_request:
+                return JsonResponse({
+                    'success': False,
+                    'error': '您没有权限访问此聊天室'
+                }, status=403)
+        
+        # 获取对方用户信息
+        other_user = chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
+        if not other_user:
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室配置错误'
+            }, status=500)
+        
+        context = {
+            'room_id': room_id,
+            'chat_room': chat_room,
+            'other_user': other_user
+        }
+        
+        # 使用新的WebSocket版本的聊天页面
+        return render(request, 'tools/heart_link_chat_websocket_new.html', context)
+        
     except ChatRoom.DoesNotExist:
-        return redirect('heart_link')
-    
-    context = {
-        'room_id': room_id,
-        'chat_room': chat_room,
-        'other_user': chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
-    }
-    
-    # 使用新的WebSocket版本的聊天页面
-    return render(request, 'tools/heart_link_chat_websocket_new.html', context)
+        return redirect('tools:chat_room_error', error_type='not_found', room_id=room_id)
+    except Exception as e:
+        return redirect('tools:chat_room_error', error_type='general', room_id=room_id)
 
 @login_required
 def chat_entrance_view(request):
@@ -311,15 +349,40 @@ def video_chat_view(request, room_id):
         # 获取聊天室
         chat_room = ChatRoom.objects.get(room_id=room_id)
         
-        # 检查用户是否是聊天室的参与者
-        if request.user not in [chat_room.user1, chat_room.user2]:
+        # 检查聊天室状态
+        if chat_room.status != 'active':
             return JsonResponse({
                 'success': False,
-                'error': '您没有权限访问此聊天室'
-            }, status=403)
+                'error': '聊天室已结束或不存在'
+            }, status=404)
+        
+        # 检查用户是否是聊天室的参与者
+        participants = [chat_room.user1]
+        if chat_room.user2:
+            participants.append(chat_room.user2)
+        
+        if request.user not in participants:
+            # 如果用户不是参与者，但有匹配的请求，允许加入
+            heart_link_request = HeartLinkRequest.objects.filter(
+                requester=request.user,
+                chat_room=chat_room,
+                status='matched'
+            ).first()
+            
+            if not heart_link_request:
+                return JsonResponse({
+                    'success': False,
+                    'error': '您没有权限访问此聊天室'
+                }, status=403)
         
         # 获取对方用户信息
         other_user = chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
+        if not other_user:
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室配置错误'
+            }, status=500)
+        
         other_user_profile = get_user_profile_data(other_user)
         
         context = {
@@ -342,6 +405,66 @@ def video_chat_view(request, room_id):
         }, status=500)
 
 @login_required
+def multi_video_chat_view(request, room_id):
+    """多人视频聊天页面"""
+    try:
+        # 获取聊天室
+        chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 检查聊天室状态
+        if chat_room.status != 'active':
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室已结束或不存在'
+            }, status=404)
+        
+        # 检查用户是否有权限访问
+        participants = [chat_room.user1]
+        if chat_room.user2:
+            participants.append(chat_room.user2)
+        
+        if request.user not in participants:
+            # 如果用户不是参与者，但有匹配的请求，允许加入
+            heart_link_request = HeartLinkRequest.objects.filter(
+                requester=request.user,
+                chat_room=chat_room,
+                status='matched'
+            ).first()
+            
+            if not heart_link_request:
+                return JsonResponse({
+                    'success': False,
+                    'error': '您没有权限访问此聊天室'
+                }, status=403)
+        
+        # 获取所有参与者信息
+        all_participants = []
+        for participant in participants:
+            if participant:
+                profile = get_user_profile_data(participant)
+                all_participants.append(profile)
+        
+        context = {
+            'room_id': room_id,
+            'chat_room': chat_room,
+            'participants': all_participants,
+            'participants_count': len(all_participants)
+        }
+        
+        return render(request, 'tools/multi_video_chat.html', context)
+        
+    except ChatRoom.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '聊天室不存在'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'访问多人视频聊天失败: {str(e)}'
+        }, status=500)
+
+@login_required
 def chat_enhanced(request, room_id):
     """增强聊天页面 - 展示用户头像、昵称、信息和标签"""
     if not request.user.is_authenticated:
@@ -349,24 +472,84 @@ def chat_enhanced(request, room_id):
     
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 检查聊天室状态
+        if chat_room.status != 'active':
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室已结束或不存在'
+            }, status=404)
+        
         # 检查用户是否是聊天室的参与者
         participants = [chat_room.user1]
         if chat_room.user2:
             participants.append(chat_room.user2)
         
         if request.user not in participants:
-            return redirect('heart_link')
+            # 如果用户不是参与者，但有匹配的请求，允许加入
+            heart_link_request = HeartLinkRequest.objects.filter(
+                requester=request.user,
+                chat_room=chat_room,
+                status='matched'
+            ).first()
+            
+            if not heart_link_request:
+                return JsonResponse({
+                    'success': False,
+                    'error': '您没有权限访问此聊天室'
+                }, status=403)
+        
+        # 获取对方用户信息
+        other_user = chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
+        if not other_user:
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室配置错误'
+            }, status=500)
+        
+        context = {
+            'room_id': room_id,
+            'chat_room': chat_room,
+            'other_user': other_user
+        }
+        
+        # 使用增强的聊天页面
+        return render(request, 'tools/chat_enhanced.html', context)
+        
     except ChatRoom.DoesNotExist:
-        return redirect('heart_link')
+        return JsonResponse({
+            'success': False,
+            'error': '聊天室不存在'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'访问聊天室失败: {str(e)}'
+        }, status=500)
+
+@login_required
+def chat_debug_view(request, room_id):
+    """聊天调试页面 - 用于诊断WebSocket连接问题"""
+    if not request.user.is_authenticated:
+        return redirect('login')
     
     context = {
         'room_id': room_id,
-        'chat_room': chat_room,
-        'other_user': chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
     }
     
-    # 使用增强的聊天页面
-    return render(request, 'tools/chat_enhanced.html', context)
+    return render(request, 'tools/chat_debug.html', context)
+
+@login_required
+def active_chat_rooms_view(request):
+    """活跃聊天室页面 - 显示用户参与的活跃聊天室"""
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    context = {
+        'user': request.user,
+    }
+    
+    return render(request, 'tools/active_chat_rooms.html', context)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -2883,7 +3066,7 @@ def update_online_status_api(request):
             while retry_count < max_retries:
                 try:
                     UserOnlineStatus.objects.update_or_create(
-                        user=request.user,
+                user=request.user,
                         defaults=update_data
                     )
                     break  # 成功则跳出循环
@@ -2997,6 +3180,95 @@ def get_online_users_api(request, room_id):
         return JsonResponse({
             'success': False,
             'error': f'获取在线用户失败: {str(e)}'
+        }, status=500, content_type='application/json', headers=response_headers)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def get_active_chat_rooms_api(request):
+    """获取活跃聊天室信息API"""
+    # 设置响应头，确保返回JSON
+    response_headers = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
+    
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False,
+            'error': '请先登录',
+            'redirect_url': '/users/login/'
+        }, status=401, content_type='application/json', headers=response_headers)
+    
+    try:
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # 获取用户参与的活跃聊天室
+        user_rooms = ChatRoom.objects.filter(
+            status='active',
+            user1=request.user
+        ) | ChatRoom.objects.filter(
+            status='active',
+            user2=request.user
+        )
+        
+        active_rooms = []
+        for room in user_rooms:
+            # 检查房间是否真的活跃（有用户在线）
+            participants = room.participants
+            online_participants = []
+            
+            for participant in participants:
+                online_status = UserOnlineStatus.objects.filter(user=participant).first()
+                if online_status and online_status.is_online:
+                    online_participants.append({
+                        'id': participant.id,
+                        'username': participant.username,
+                        'display_name': f"{participant.first_name} {participant.last_name}".strip() or participant.username,
+                        'last_seen': online_status.last_seen.isoformat() if online_status.last_seen else None
+                    })
+            
+            # 只返回有在线用户的房间
+            if online_participants:
+                active_rooms.append({
+                    'room_id': room.room_id,
+                    'created_at': room.created_at.isoformat(),
+                    'participants': online_participants,
+                    'participant_count': len(online_participants)
+                })
+        
+        # 获取用户的心动链接请求状态
+        heart_link_request = HeartLinkRequest.objects.filter(
+            requester=request.user,
+            status='pending'
+        ).first()
+        
+        heart_link_status = None
+        if heart_link_request:
+            heart_link_status = {
+                'status': heart_link_request.status,
+                'created_at': heart_link_request.created_at.isoformat(),
+                'expires_at': (heart_link_request.created_at + timedelta(minutes=10)).isoformat()
+            }
+        
+        return JsonResponse({
+            'success': True,
+            'active_rooms': active_rooms,
+            'active_room_count': len(active_rooms),
+            'heart_link_status': heart_link_status,
+            'user_id': request.user.id,
+            'username': request.user.username
+        }, content_type='application/json', headers=response_headers)
+        
+    except Exception as e:
+        logger.error(f'获取活跃聊天室信息失败: {e}')
+        return JsonResponse({
+            'success': False,
+            'message': '获取活跃聊天室信息失败',
+            'error': str(e)
         }, status=500, content_type='application/json', headers=response_headers)
 
 
@@ -3907,8 +4179,8 @@ def get_vanity_wealth_api(request):
             'last_updated': wealth.last_updated.strftime('%Y-%m-%d %H:%M')
         })
     except Exception as e:
-        return JsonResponse({
-            'success': False,
+            return JsonResponse({
+                'success': False,
             'error': str(e)
         })
 
@@ -5376,7 +5648,7 @@ def travel_guide_api(request):
             
             # 保存到数据库
             travel_guide = TravelGuide.objects.create(
-                user=request.user,
+            user=request.user,
                 destination=destination,
                 travel_style=travel_style,
                 budget_min=budget_min,
@@ -6257,356 +6529,6 @@ def generate_travel_guide_with_deepseek(destination, travel_style, budget_min, b
         return None
 
 
-# ==================== 自动求职机相关视图 - 已隐藏 ====================
-
-# @login_required
-# def job_search_machine(request):
-#     """自动求职机页面"""
-#     return render(request, 'tools/job_search_machine.html')
-
-
-# @login_required
-# def job_search_profile(request):
-#     """求职者资料页面"""
-#     return render(request, 'tools/job_search_profile.html')
-
-
-# @login_required
-# def job_search_dashboard(request):
-#     """求职仪表盘页面"""
-#     return render(request, 'tools/job_search_dashboard.html')
-
-
-# @csrf_exempt
-# @require_http_methods(["POST"])
-# @login_required
-# def create_job_search_request_api(request):
-#     """创建求职请求API"""
-#     try:
-#         data = json.loads(request.body)
-#         
-#         # 验证必填字段
-#         required_fields = ['job_title', 'location', 'min_salary', 'max_salary']
-#         for field in required_fields:
-#             if not data.get(field):
-#                 return JsonResponse({
-#                     'success': False,
-#                     'message': f'请填写{field}字段'
-#                 })
-#         
-#         # 创建求职请求
-#         job_service = JobSearchService()
-#         job_request = job_service.create_job_search_request(
-#             user=request.user,
-#             job_title=data['job_title'],
-#             location=data['location'],
-#             min_salary=int(data['min_salary']),
-#             max_salary=int(data['max_salary']),
-#             job_type=data.get('job_type', 'full_time'),
-#             experience_level=data.get('experience_level', '1-3'),
-#             keywords=data.get('keywords', []),
-#             company_size=data.get('company_size', ''),
-#             industry=data.get('industry', ''),
-#             education_level=data.get('education_level', ''),
-#             auto_apply=data.get('auto_apply', True),
-#             max_applications=int(data.get('max_applications', 50)),
-#             application_interval=int(data.get('application_interval', 30))
-#         )
-#         
-#         return JsonResponse({
-#             'success': True,
-#             'message': '求职请求创建成功',
-#             'request_id': job_request.id
-#         })
-#         
-#     except Exception as e:
-#         return JsonResponse({
-#             'success': False,
-#             'message': f'创建求职请求失败: {str(e)}'
-#         })
-
-
-# @csrf_exempt
-# @require_http_methods(["POST"])
-# @login_required
-# def start_job_search_api(request):
-#     """开始自动求职API"""
-#     try:
-#         data = json.loads(request.body)
-#         request_id = data.get('request_id')
-#         
-#         if not request_id:
-#             return JsonResponse({
-#                 'success': False,
-#                 'message': '请提供求职请求ID'
-#             })
-#         
-#         # 获取求职请求
-#         try:
-#             job_request = JobSearchRequest.objects.get(id=request_id, user=request.user)
-#         except JobSearchRequest.DoesNotExist:
-#             return JsonResponse({
-#                 'success': False,
-#                 'message': '求职请求不存在'
-#             })
-#         
-#         # 开始自动求职
-#         job_service = JobSearchService()
-#         result = job_service.start_auto_job_search(job_request)
-#         
-#         return JsonResponse(result)
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-@login_required
-def get_job_applications_api(request):
-    """获取职位申请记录API"""
-    try:
-        request_id = request.GET.get('request_id')
-        
-        if request_id:
-            applications = JobApplication.objects.filter(
-                job_search_request_id=request_id,
-                job_search_request__user=request.user
-            ).order_by('-application_time')
-        else:
-            applications = JobApplication.objects.filter(
-                job_search_request__user=request.user
-            ).order_by('-application_time')
-        
-        applications_data = []
-        for app in applications:
-            applications_data.append({
-                'id': app.id,
-                'job_title': app.job_title,
-                'company_name': app.company_name,
-                'company_logo': app.company_logo,
-                'location': app.location,
-                'salary_range': app.salary_range,
-                'status': app.status,
-                'status_color': app.get_status_color(),
-                'match_score': app.match_score,
-                'match_reasons': app.match_reasons,
-                'application_time': app.application_time.strftime('%Y-%m-%d %H:%M:%S'),
-                'job_url': app.job_url,
-                'notes': app.notes
-            })
-        
-        return JsonResponse({
-            'success': True,
-            'data': applications_data
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'获取申请记录失败: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def save_job_profile_api(request):
-    """保存求职者资料API"""
-    try:
-        data = json.loads(request.body)
-        
-        # 获取或创建用户资料
-        profile, created = JobSearchProfile.objects.get_or_create(user=request.user)
-        
-        # 更新资料
-        profile.name = data.get('name', '')
-        profile.phone = data.get('phone', '')
-        profile.email = data.get('email', '')
-        profile.current_position = data.get('current_position', '')
-        profile.years_of_experience = int(data.get('years_of_experience', 0))
-        profile.education_level = data.get('education_level', '')
-        profile.school = data.get('school', '')
-        profile.major = data.get('major', '')
-        profile.skills = data.get('skills', [])
-        profile.expected_salary_min = int(data.get('expected_salary_min', 0))
-        profile.expected_salary_max = int(data.get('expected_salary_max', 0))
-        profile.preferred_locations = data.get('preferred_locations', [])
-        profile.preferred_industries = data.get('preferred_industries', [])
-        profile.resume_text = data.get('resume_text', '')
-        profile.boss_account = data.get('boss_account', '')
-        profile.auto_apply_enabled = data.get('auto_apply_enabled', True)
-        profile.notification_enabled = data.get('notification_enabled', True)
-        
-        profile.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': '资料保存成功'
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'保存资料失败: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-@login_required
-def get_job_profile_api(request):
-    """获取求职者资料API"""
-    try:
-        try:
-            profile = JobSearchProfile.objects.get(user=request.user)
-            profile_data = {
-                'name': profile.name,
-                'phone': profile.phone,
-                'email': profile.email,
-                'current_position': profile.current_position,
-                'years_of_experience': profile.years_of_experience,
-                'education_level': profile.education_level,
-                'school': profile.school,
-                'major': profile.major,
-                'skills': profile.skills,
-                'expected_salary_min': profile.expected_salary_min,
-                'expected_salary_max': profile.expected_salary_max,
-                'preferred_locations': profile.preferred_locations,
-                'preferred_industries': profile.preferred_industries,
-                'resume_text': profile.resume_text,
-                'boss_account': profile.boss_account,
-                'auto_apply_enabled': profile.auto_apply_enabled,
-                'notification_enabled': profile.notification_enabled,
-                'total_applications': profile.total_applications,
-                'total_interviews': profile.total_interviews,
-                'total_offers': profile.total_offers,
-                'success_rate': profile.get_success_rate()
-            }
-        except JobSearchProfile.DoesNotExist:
-            profile_data = {}
-        
-        return JsonResponse({
-            'success': True,
-            'data': profile_data
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'获取资料失败: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["GET"])
-@login_required
-def get_job_search_statistics_api(request):
-    """获取求职统计信息API"""
-    try:
-        job_service = JobSearchService()
-        stats = job_service.get_job_search_statistics(request.user)
-        
-        return JsonResponse({
-            'success': True,
-            'data': stats
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'获取统计信息失败: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def update_application_status_api(request):
-    """更新申请状态API"""
-    try:
-        data = json.loads(request.body)
-        application_id = data.get('application_id')
-        new_status = data.get('status')
-        
-        if not application_id or not new_status:
-            return JsonResponse({
-                'success': False,
-                'message': '请提供申请ID和新状态'
-            })
-        
-        # 更新申请状态
-        application = JobApplication.objects.get(
-            id=application_id,
-            job_search_request__user=request.user
-        )
-        application.status = new_status
-        application.response_time = timezone.now()
-        application.save()
-        
-        # 更新用户统计
-        profile = JobSearchProfile.objects.get(user=request.user)
-        if new_status in ['contacted', 'interview']:
-            profile.total_interviews += 1
-        elif new_status == 'accepted':
-            profile.total_offers += 1
-        profile.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': '状态更新成功'
-        })
-        
-    except JobApplication.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': '申请记录不存在'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'更新状态失败: {str(e)}'
-        })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def add_application_notes_api(request):
-    """添加申请备注API"""
-    try:
-        data = json.loads(request.body)
-        application_id = data.get('application_id')
-        notes = data.get('notes', '')
-        
-        if not application_id:
-            return JsonResponse({
-                'success': False,
-                'message': '请提供申请ID'
-            })
-        
-        # 更新备注
-        application = JobApplication.objects.get(
-            id=application_id,
-            job_search_request__user=request.user
-        )
-        application.notes = notes
-        application.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': '备注添加成功'
-        })
-        
-    except JobApplication.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': '申请记录不存在'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': f'添加备注失败: {str(e)}'
-        })
-
-
 @csrf_exempt
 @require_http_methods(["GET"])
 @login_required
@@ -6865,7 +6787,227 @@ def fitness_community(request):
 @login_required
 def fitness_profile(request):
     """健身个人档案页面"""
-    return render(request, 'tools/fitness_profile.html')
+    try:
+        # 获取或创建用户档案
+        profile, created = FitnessUserProfile.objects.get_or_create(
+            user=request.user,
+            defaults={
+                'nickname': request.user.username,
+                'fitness_level': 'beginner',
+                'primary_goals': ['增肌', '减脂'],
+                'favorite_workouts': ['力量训练']
+            }
+        )
+        
+        # 获取或创建力量档案
+        strength_profile, created = FitnessStrengthProfile.objects.get_or_create(
+            user=request.user
+        )
+        
+        # 更新统计数据
+        profile.update_stats()
+        strength_profile.update_stats()
+        strength_profile.update_1rm_records()
+        
+        # 获取用户成就
+        achievements = UserFitnessAchievement.objects.filter(
+            user=request.user
+        ).select_related('achievement').order_by('-earned_at')[:10]
+        
+        # 获取最近的训练记录
+        recent_workouts = CheckInCalendar.objects.filter(
+            user=request.user,
+            calendar_type='fitness',
+            status='completed'
+        ).select_related('detail').order_by('-date')[:5]
+        
+        # 获取最近的重量记录
+        recent_weight_records = ExerciseWeightRecord.objects.filter(
+            user=request.user
+        ).order_by('-workout_date')[:10]
+        
+        # 获取月度统计
+        from datetime import datetime, timedelta
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        
+        monthly_workouts = CheckInCalendar.objects.filter(
+            user=request.user,
+            calendar_type='fitness',
+            status='completed',
+            date__year=current_year,
+            date__month=current_month
+        ).count()
+        
+        # 获取训练类型分布
+        workout_types = CheckInCalendar.objects.filter(
+            user=request.user,
+            calendar_type='fitness',
+            status='completed'
+        ).select_related('detail')
+        
+        type_distribution = {}
+        for workout in workout_types:
+            if hasattr(workout, 'detail') and workout.detail and workout.detail.workout_type:
+                workout_type = workout.detail.workout_type
+                type_distribution[workout_type] = type_distribution.get(workout_type, 0) + 1
+        
+        # 获取身体数据（从用户档案中获取）
+        body_data = {
+            'gender': profile.gender,
+            'age': profile.age,
+            'height': profile.height,
+            'weight': profile.weight,
+            'bmi': None,
+            'bmi_status': '未计算'
+        }
+        
+        # 计算BMI
+        if body_data['height'] and body_data['weight']:
+            height_m = body_data['height'] / 100
+            body_data['bmi'] = round(body_data['weight'] / (height_m * height_m), 1)
+            if body_data['bmi'] < 18.5:
+                body_data['bmi_status'] = '偏瘦'
+            elif body_data['bmi'] < 24:
+                body_data['bmi_status'] = '正常'
+            elif body_data['bmi'] < 28:
+                body_data['bmi_status'] = '偏胖'
+            else:
+                body_data['bmi_status'] = '肥胖'
+        
+        # 获取健身目标（基于力量档案）
+        fitness_goals = []
+        
+        # 三大项目标
+        if strength_profile.squat_goal:
+            fitness_goals.append({
+                'type': 'squat',
+                'title': '深蹲目标',
+                'current': strength_profile.squat_1rm or 0,
+                'target': strength_profile.squat_goal,
+                'unit': 'kg',
+                'progress': strength_profile.get_progress_percentage('squat'),
+                'deadline': '持续训练',
+                'icon': 'fas fa-dumbbell'
+            })
+        
+        if strength_profile.bench_press_goal:
+            fitness_goals.append({
+                'type': 'bench_press',
+                'title': '卧推目标',
+                'current': strength_profile.bench_press_1rm or 0,
+                'target': strength_profile.bench_press_goal,
+                'unit': 'kg',
+                'progress': strength_profile.get_progress_percentage('bench_press'),
+                'deadline': '持续训练',
+                'icon': 'fas fa-dumbbell'
+            })
+        
+        if strength_profile.deadlift_goal:
+            fitness_goals.append({
+                'type': 'deadlift',
+                'title': '硬拉目标',
+                'current': strength_profile.deadlift_1rm or 0,
+                'target': strength_profile.deadlift_goal,
+                'unit': 'kg',
+                'progress': strength_profile.get_progress_percentage('deadlift'),
+                'deadline': '持续训练',
+                'icon': 'fas fa-dumbbell'
+            })
+        
+        # 如果没有设置目标，显示默认目标
+        if not fitness_goals:
+            fitness_goals = [
+                {
+                    'type': 'weight_loss',
+                    'title': '减重目标',
+                    'current': body_data['weight'] or 70,
+                    'target': (body_data['weight'] or 70) - 5,
+                    'unit': 'kg',
+                    'progress': 60,
+                    'deadline': '2024年12月31日',
+                    'icon': 'fas fa-weight'
+                },
+                {
+                    'type': 'strength',
+                    'title': '力量目标',
+                    'current': strength_profile.total_1rm or 0,
+                    'target': 400,
+                    'unit': 'kg',
+                    'progress': min(round((strength_profile.total_1rm or 0) / 400 * 100, 1), 100),
+                    'deadline': '持续训练',
+                    'icon': 'fas fa-dumbbell'
+                }
+            ]
+        
+        context = {
+            'profile': profile,
+            'strength_profile': strength_profile,
+            'achievements': achievements,
+            'recent_workouts': recent_workouts,
+            'recent_weight_records': recent_weight_records,
+            'monthly_workouts': monthly_workouts,
+            'type_distribution': type_distribution,
+            'body_data': body_data,
+            'fitness_goals': fitness_goals,
+            'total_achievements': achievements.count(),
+            'current_streak': strength_profile.current_streak,
+            'longest_streak': strength_profile.longest_streak,
+            'total_duration_hours': round(strength_profile.total_duration / 60, 1) if strength_profile.total_duration else 0
+        }
+        
+        return render(request, 'tools/fitness_profile.html', context)
+        
+    except Exception as e:
+        # 如果出错，返回基本页面
+        return render(request, 'tools/fitness_profile.html')
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def add_weight_record_api(request):
+    """添加重量记录API"""
+    try:
+        data = json.loads(request.body)
+        
+        # 验证必填字段
+        required_fields = ['exercise_type', 'weight', 'reps', 'workout_date']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({
+                    'success': False,
+                    'error': f'字段 {field} 不能为空'
+                }, status=400)
+        
+        # 创建重量记录
+        weight_record = ExerciseWeightRecord.objects.create(
+            user=request.user,
+            exercise_type=data['exercise_type'],
+            weight=float(data['weight']),
+            reps=int(data['reps']),
+            sets=int(data.get('sets', 1)),
+            rpe=int(data['rpe']) if data.get('rpe') else None,
+            notes=data.get('notes', ''),
+            workout_date=data['workout_date']
+        )
+        
+        # 更新力量档案
+        strength_profile, created = FitnessStrengthProfile.objects.get_or_create(
+            user=request.user
+        )
+        strength_profile.update_1rm_records()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '重量记录添加成功',
+            'record_id': weight_record.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @login_required
 def fitness_tools(request):
@@ -6913,7 +7055,7 @@ def get_fitness_community_posts_api(request):
             
             # 检查当前用户是否点赞
             is_liked = FitnessCommunityLike.objects.filter(
-                user=request.user,
+            user=request.user,
                 post=post
             ).exists()
             
@@ -7063,7 +7205,7 @@ def like_fitness_post_api(request):
                 return JsonResponse({
                     'success': False,
                     'error': '帖子不存在'
-                }, status=404)
+        }, status=404)
         
         elif comment_id:
             try:
@@ -7116,8 +7258,8 @@ def comment_fitness_post_api(request):
             return JsonResponse({
                 'success': False,
                 'error': '帖子ID和评论内容不能为空'
-            }, status=400)
-        
+        }, status=400)
+
         try:
             post = FitnessCommunityPost.objects.get(id=post_id)
         except FitnessCommunityPost.DoesNotExist:
@@ -7929,7 +8071,14 @@ def start_food_randomization_api(request):
                 'tags': selected_food.tags,
                 'meal_types': selected_food.meal_types,
                 'recipe_url': selected_food.recipe_url,
-                'popularity_score': selected_food.popularity_score
+                'popularity_score': selected_food.popularity_score,
+                'calories': selected_food.calories,
+                'protein': selected_food.protein,
+                'fat': selected_food.fat,
+                'carbohydrates': selected_food.carbohydrates,
+                'fiber': selected_food.fiber,
+                'sugar': selected_food.sugar,
+                'sodium': selected_food.sodium
             },
             'alternative_foods': [
                 {
@@ -8035,7 +8184,14 @@ def pure_random_food_api(request):
                 'tags': selected_food.tags,
                 'meal_types': selected_food.meal_types,
                 'recipe_url': selected_food.recipe_url,
-                'popularity_score': selected_food.popularity_score
+                'popularity_score': selected_food.popularity_score,
+                'calories': selected_food.calories,
+                'protein': selected_food.protein,
+                'fat': selected_food.fat,
+                'carbohydrates': selected_food.carbohydrates,
+                'fiber': selected_food.fiber,
+                'sugar': selected_food.sugar,
+                'sodium': selected_food.sodium
             },
             'alternative_foods': [
                 {
@@ -8585,3 +8741,1490 @@ def cancel_number_match_api(request):
             'success': False,
             'error': f'取消匹配失败: {str(e)}'
         }, status=500, content_type='application/json', headers=response_headers)
+
+
+# 食品图像识别相关导入
+from .services.food_image_mapping import (
+    recognize_food_from_image, 
+    get_food_suggestions_by_image,
+    get_food_image
+)
+from .services.real_image_recognition import (
+    recognize_food_from_image_real,
+    get_food_suggestions_by_image_real
+)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def food_image_recognition_api(request):
+    """
+    食品图像识别API
+    """
+    if request.method == 'POST':
+        try:
+            print("🔄 开始处理图像识别请求...")
+            
+            # 获取上传的图片
+            uploaded_file = request.FILES.get('image')
+            if not uploaded_file:
+                print("❌ 没有上传图片")
+                return JsonResponse({
+                    'success': False,
+                    'error': '没有上传图片'
+                })
+            
+            print(f"✅ 接收到图片: {uploaded_file.name}, 大小: {uploaded_file.size} bytes")
+            
+            # 保存上传的图片到临时目录
+            import os
+            import tempfile
+            from django.conf import settings
+            
+            # 创建临时文件
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+                for chunk in uploaded_file.chunks():
+                    temp_file.write(chunk)
+                temp_path = temp_file.name
+            
+            print(f"✅ 临时文件已保存: {temp_path}")
+            
+            # 检查文件是否存在和大小
+            if not os.path.exists(temp_path):
+                print("❌ 临时文件不存在")
+                return JsonResponse({
+                    'success': False,
+                    'error': '临时文件创建失败'
+                })
+            
+            file_size = os.path.getsize(temp_path)
+            print(f"📁 临时文件大小: {file_size} bytes")
+            
+            if file_size == 0:
+                print("❌ 临时文件为空")
+                os.unlink(temp_path)
+                return JsonResponse({
+                    'success': False,
+                    'error': '上传的图片文件为空'
+                })
+            
+            # 尝试使用DeepSeek进行图像识别
+            print("🔄 尝试使用DeepSeek进行图像识别...")
+            try:
+                from .services.deepseek_image_recognition import DeepSeekImageRecognition
+                deepseek_recognition = DeepSeekImageRecognition()
+                recognition_result = deepseek_recognition.recognize_food_image(temp_path)
+                print(f"✅ DeepSeek识别结果: {recognition_result}")
+                
+                if recognition_result['success']:
+                    # 获取食品建议
+                    suggestions = deepseek_recognition.get_food_suggestions(
+                        recognition_result['recognized_food'],
+                        recognition_result['nutrition_info']
+                    )
+                    print(f"✅ DeepSeek建议: {suggestions}")
+                else:
+                    # DeepSeek失败，使用备用识别方法
+                    print("⚠️ DeepSeek识别失败，使用备用方法...")
+                    recognition_result = recognize_food_from_image_real(temp_path)
+                    suggestions = get_food_suggestions_by_image_real(temp_path)
+                    
+            except Exception as deepseek_error:
+                print(f"⚠️ DeepSeek服务不可用: {deepseek_error}")
+                # 使用备用识别方法
+                recognition_result = recognize_food_from_image_real(temp_path)
+                suggestions = get_food_suggestions_by_image_real(temp_path)
+            
+            # 清理临时文件
+            try:
+                os.unlink(temp_path)
+                print(f"✅ 临时文件已清理: {temp_path}")
+            except Exception as e:
+                print(f"⚠️ 清理临时文件失败: {e}")
+            
+            return JsonResponse({
+                'success': True,
+                'recognition': recognition_result,
+                'suggestions': suggestions
+            })
+            
+        except Exception as e:
+            import traceback
+            print(f"❌ 图像识别API错误: {e}")
+            print(f"详细错误信息: {traceback.format_exc()}")
+            return JsonResponse({
+                'success': False,
+                'error': f'图像处理失败: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': '只支持POST请求'
+    })
+
+
+@login_required
+def food_image_recognition_view(request):
+    """
+    食品图像识别页面
+    """
+    return render(request, 'tools/food_image_recognition.html')
+
+
+@login_required
+def multi_video_test_view(request):
+    """多人视频功能测试页面"""
+    return render(request, 'tools/multi_video_test.html')
+
+
+def chat_room_error_view(request, error_type='general', room_id=None):
+    """聊天室错误页面"""
+    context = {
+        'error_type': error_type,
+        'room_id': room_id,
+        'error_message': request.GET.get('message', ''),
+        'error_details': request.GET.get('details', '')
+    }
+    return render(request, 'tools/chat_room_error.html', context)
+
+def audio_converter_view(request):
+    """音频转换器页面视图"""
+    return render(request, 'tools/audio_converter.html')
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def audio_converter_api(request):
+    """音频转换器API"""
+    try:
+        # 获取上传的文件
+        uploaded_file = request.FILES.get('audio_file')
+        target_format = request.POST.get('target_format', 'mp3')
+        
+        if not uploaded_file:
+            return JsonResponse({
+                'success': False,
+                'message': '请选择要转换的音频文件'
+            })
+        
+        # 检查文件类型
+        file_extension = uploaded_file.name.lower().split('.')[-1]
+        if file_extension not in ['ncm', 'mp3', 'wav', 'flac', 'm4a']:
+            return JsonResponse({
+                'success': False,
+                'message': '不支持的文件格式，请上传NCM、MP3、WAV、FLAC或M4A文件'
+            })
+        
+        # 创建临时目录
+        import tempfile
+        import os
+        from django.conf import settings
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+        import uuid
+        
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_audio')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # 生成唯一文件名
+        unique_id = str(uuid.uuid4())
+        input_filename = f'input_{unique_id}_{uploaded_file.name}'
+        output_filename = f'converted_{unique_id}_{os.path.splitext(uploaded_file.name)[0]}.{target_format}'
+        
+        # 保存上传的文件
+        temp_input_path = os.path.join(temp_dir, input_filename)
+        with open(temp_input_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        
+        # 生成输出文件路径
+        temp_output_path = os.path.join(temp_dir, output_filename)
+        
+        # 转换音频
+        success, message, output_path = convert_audio_file(temp_input_path, temp_output_path, target_format)
+        
+        if success:
+            # 保存到媒体存储
+            with open(output_path, 'rb') as f:
+                file_content = f.read()
+            
+            # 使用Django的存储系统保存文件
+            file_path = default_storage.save(f'temp_audio/{output_filename}', ContentFile(file_content))
+            
+            # 生成下载URL
+            download_url = default_storage.url(file_path)
+            
+            # 清理临时文件
+            try:
+                os.remove(temp_input_path)
+                os.remove(output_path)
+            except:
+                pass
+            
+            return JsonResponse({
+                'success': True,
+                'message': '音频转换成功！',
+                'download_url': download_url,
+                'filename': output_filename
+            })
+        else:
+            # 清理临时文件
+            try:
+                os.remove(temp_input_path)
+            except:
+                pass
+            
+            return JsonResponse({
+                'success': False,
+                'message': f'转换失败：{message}'
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'处理过程中发生错误：{str(e)}'
+        })
+
+def convert_audio_file(input_path, output_path, target_format):
+    """转换音频文件"""
+    try:
+        from pydub import AudioSegment
+        import os
+        
+        # 如果是NCM文件，先解密
+        if input_path.lower().endswith('.ncm'):
+            decrypted_path = decrypt_ncm_file(input_path)
+            if not decrypted_path:
+                return False, "NCM文件解密失败", None
+            input_path = decrypted_path
+        
+        # 加载音频文件
+        audio = AudioSegment.from_file(input_path)
+        
+        # 根据目标格式导出
+        if target_format == 'mp3':
+            audio.export(output_path, format='mp3', bitrate='192k')
+        elif target_format == 'wav':
+            audio.export(output_path, format='wav')
+        elif target_format == 'flac':
+            audio.export(output_path, format='flac')
+        elif target_format == 'm4a':
+            audio.export(output_path, format='ipod')
+        else:
+            return False, "不支持的目标格式", None
+        
+        return True, "转换成功", output_path
+        
+    except Exception as e:
+        return False, str(e), None
+
+def decrypt_ncm_file(ncm_path):
+    """解密NCM文件"""
+    try:
+        import struct
+        import base64
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.backends import default_backend
+        import os
+        
+        # NCM文件解密密钥
+        core_key = b'hzHRAmso5kInbaxW'
+        meta_key = b'#14ljk_!\\]&0U<\'('
+        unpad = lambda s: s[0:-(s[-1] if type(s[-1]) == int else ord(s[-1]))]
+        
+        with open(ncm_path, 'rb') as f:
+            # 读取文件头
+            header = f.read(8)
+            if header != b'CTENFDAM':
+                raise Exception("不是有效的NCM文件")
+            
+            # 跳过2字节
+            f.seek(2, 1)
+            
+            # 读取密钥数据
+            key_length = struct.unpack('<I', f.read(4))[0]
+            key_data = f.read(key_length)
+            
+            # 解密密钥数据
+            key_data = bytes([byte ^ 0x64 for byte in key_data])
+            cipher = Cipher(algorithms.AES.new(core_key, modes.ECB()), backend=default_backend())
+            decryptor = cipher.decryptor()
+            key_data = decryptor.update(key_data) + decryptor.finalize()
+            
+            # 移除PKCS7填充
+            key_data = unpad(key_data)
+            
+            # 读取元数据
+            meta_length = struct.unpack('<I', f.read(4))[0]
+            meta_data = f.read(meta_length)
+            
+            # 解密元数据
+            meta_data = bytes([byte ^ 0x63 for byte in meta_data])
+            meta_data = base64.b64decode(meta_data[22:])
+            cipher = Cipher(algorithms.AES.new(meta_key, modes.ECB()), backend=default_backend())
+            decryptor = cipher.decryptor()
+            meta_data = decryptor.update(meta_data) + decryptor.finalize()
+            meta_data = unpad(meta_data)
+            
+            # 跳过CRC32
+            f.seek(9, 1)
+            
+            # 读取音频数据
+            box_length = struct.unpack('<I', f.read(4))[0]
+            f.seek(box_length, 1)
+            
+            # 创建临时文件存储解密后的音频
+            temp_dir = os.path.dirname(ncm_path)
+            decrypted_path = os.path.join(temp_dir, 'decrypted_temp.mp3')
+            
+            with open(decrypted_path, 'wb') as out_file:
+                while True:
+                    chunk = f.read(0x8000)  # 32KB chunks
+                    if not chunk:
+                        break
+                    
+                    # 解密音频数据
+                    for i in range(len(chunk)):
+                        j = (i + 1) & 0xff
+                        chunk = chunk[:i] + bytes([chunk[i] ^ key_data[j]]) + chunk[i+1:]
+                    
+                    out_file.write(chunk)
+            
+            return decrypted_path
+            
+    except Exception as e:
+        print(f"NCM解密错误: {e}")
+        return None
+
+
+# 好心人攻略相关视图函数
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def user_generated_travel_guide_api(request):
+    """用户生成旅游攻略API"""
+    if request.method == 'GET':
+        # 获取攻略列表
+        try:
+            from .models import UserGeneratedTravelGuide
+            
+            # 获取查询参数
+            destination = request.GET.get('destination', '').strip()
+            travel_style = request.GET.get('travel_style', '').strip()
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            # 构建查询
+            queryset = UserGeneratedTravelGuide.objects.filter(
+                is_public=True, 
+                is_approved=True
+            ).order_by('-created_at')
+            
+            # 按目的地筛选
+            if destination:
+                queryset = queryset.filter(destination__icontains=destination)
+            
+            # 按旅行风格筛选
+            if travel_style:
+                queryset = queryset.filter(travel_style=travel_style)
+            
+            # 分页
+            start = (page - 1) * page_size
+            end = start + page_size
+            guides = queryset[start:end]
+            
+            # 格式化数据
+            guides_data = []
+            for guide in guides:
+                guides_data.append({
+                    'id': guide.id,
+                    'title': guide.title,
+                    'destination': guide.destination,
+                    'summary': guide.summary or guide.content[:200] + '...',
+                    'travel_style': guide.travel_style,
+                    'budget_range': guide.budget_range,
+                    'travel_duration': guide.travel_duration,
+                    'interests': guide.interests,
+                    'view_count': guide.view_count,
+                    'download_count': guide.download_count,
+                    'use_count': guide.use_count,
+                    'has_attachment': guide.is_downloadable(),
+                    'created_at': guide.created_at.strftime('%Y-%m-%d %H:%M'),
+                    'user_name': guide.user.username,
+                    'is_featured': guide.is_featured
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'guides': guides_data,
+                'total': queryset.count(),
+                'page': page,
+                'page_size': page_size
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'获取攻略列表失败: {str(e)}'
+            })
+    
+    elif request.method == 'POST':
+        # 创建新攻略
+        try:
+            if not request.user.is_authenticated:
+                return JsonResponse({
+                    'success': False,
+                    'error': '请先登录后再创建攻略'
+                }, status=401)
+            
+            data = json.loads(request.body)
+            title = data.get('title', '').strip()
+            destination = data.get('destination', '').strip()
+            content = data.get('content', '').strip()
+            summary = data.get('summary', '').strip()
+            travel_style = data.get('travel_style', 'general')
+            budget_range = data.get('budget_range', 'medium')
+            travel_duration = data.get('travel_duration', '3-5天')
+            interests = data.get('interests', [])
+            
+            # 验证必填字段
+            if not title or not destination or not content:
+                return JsonResponse({
+                    'success': False,
+                    'error': '请填写攻略标题、目的地和内容'
+                }, status=400)
+            
+            # 创建攻略
+            from .models import UserGeneratedTravelGuide
+            
+            guide = UserGeneratedTravelGuide.objects.create(
+                user=request.user,
+                title=title,
+                destination=destination,
+                content=content,
+                summary=summary,
+                travel_style=travel_style,
+                budget_range=budget_range,
+                travel_duration=travel_duration,
+                interests=interests
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': '攻略创建成功！',
+                'guide_id': guide.id
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'创建攻略失败: {str(e)}'
+            })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def user_generated_travel_guide_detail_api(request, guide_id):
+    """获取用户生成攻略详情API"""
+    try:
+        from .models import UserGeneratedTravelGuide, TravelGuideUsage
+        
+        guide = UserGeneratedTravelGuide.objects.get(
+            id=guide_id,
+            is_public=True,
+            is_approved=True
+        )
+        
+        # 增加查看次数
+        guide.increment_view_count()
+        
+        # 记录查看记录
+        if request.user.is_authenticated:
+            TravelGuideUsage.objects.create(
+                user=request.user,
+                guide=guide,
+                usage_type='view'
+            )
+        
+        # 格式化数据
+        guide_data = {
+            'id': guide.id,
+            'title': guide.title,
+            'destination': guide.destination,
+            'content': guide.content,
+            'summary': guide.summary,
+            'travel_style': guide.travel_style,
+            'budget_range': guide.budget_range,
+            'travel_duration': guide.travel_duration,
+            'interests': guide.interests,
+            'view_count': guide.view_count,
+            'download_count': guide.download_count,
+            'use_count': guide.use_count,
+            'has_attachment': guide.is_downloadable(),
+            'attachment_name': guide.attachment_name,
+            'created_at': guide.created_at.strftime('%Y-%m-%d %H:%M'),
+            'user_name': guide.user.username,
+            'is_featured': guide.is_featured
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'guide': guide_data
+        })
+        
+    except UserGeneratedTravelGuide.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '攻略不存在或已被删除'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'获取攻略详情失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def user_generated_travel_guide_download_api(request, guide_id):
+    """下载用户生成攻略API"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': '请先登录后再下载攻略'
+            }, status=401)
+        
+        from .models import UserGeneratedTravelGuide, TravelGuideUsage
+        
+        guide = UserGeneratedTravelGuide.objects.get(
+            id=guide_id,
+            is_public=True,
+            is_approved=True
+        )
+        
+        if not guide.is_downloadable():
+            return JsonResponse({
+                'success': False,
+                'error': '该攻略没有可下载的附件'
+            }, status=400)
+        
+        # 增加下载次数
+        guide.increment_download_count()
+        
+        # 记录下载记录
+        TravelGuideUsage.objects.create(
+            user=request.user,
+            guide=guide,
+            usage_type='download'
+        )
+        
+        # 返回下载链接
+        download_url = guide.attachment.url
+        
+        return JsonResponse({
+            'success': True,
+            'message': '下载链接已生成',
+            'download_url': download_url,
+            'filename': guide.attachment_name or f'{guide.title}.{guide.get_file_extension()}'
+        })
+        
+    except UserGeneratedTravelGuide.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '攻略不存在或已被删除'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'下载攻略失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def user_generated_travel_guide_use_api(request, guide_id):
+    """使用用户生成攻略API"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': '请先登录后再使用攻略'
+            }, status=401)
+        
+        from .models import UserGeneratedTravelGuide, TravelGuideUsage
+        
+        guide = UserGeneratedTravelGuide.objects.get(
+            id=guide_id,
+            is_public=True,
+            is_approved=True
+        )
+        
+        # 增加使用次数
+        guide.increment_use_count()
+        
+        # 记录使用记录
+        TravelGuideUsage.objects.create(
+            user=request.user,
+            guide=guide,
+            usage_type='use'
+        )
+        
+        # 返回攻略内容用于新建攻略
+        return JsonResponse({
+            'success': True,
+            'message': '攻略已加载到新建攻略中',
+            'guide_data': {
+                'destination': guide.destination,
+                'travel_style': guide.travel_style,
+                'budget_range': guide.budget_range,
+                'travel_duration': guide.travel_duration,
+                'interests': guide.interests,
+                'content': guide.content
+            }
+        })
+        
+    except UserGeneratedTravelGuide.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '攻略不存在或已被删除'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'使用攻略失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def user_generated_travel_guide_upload_attachment_api(request, guide_id):
+    """上传攻略附件API"""
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': '请先登录后再上传附件'
+            }, status=401)
+        
+        from .models import UserGeneratedTravelGuide
+        
+        guide = UserGeneratedTravelGuide.objects.get(
+            id=guide_id,
+            user=request.user  # 只能为自己的攻略上传附件
+        )
+        
+        # 获取上传的文件
+        uploaded_file = request.FILES.get('attachment')
+        if not uploaded_file:
+            return JsonResponse({
+                'success': False,
+                'error': '请选择要上传的附件'
+            })
+        
+        # 检查文件类型
+        allowed_extensions = ['pdf', 'doc', 'docx', 'txt', 'md', 'jpg', 'jpeg', 'png']
+        file_extension = uploaded_file.name.lower().split('.')[-1]
+        if file_extension not in allowed_extensions:
+            return JsonResponse({
+                'success': False,
+                'error': f'不支持的文件格式，请上传 {", ".join(allowed_extensions)} 格式的文件'
+            })
+        
+        # 保存附件
+        guide.attachment = uploaded_file
+        guide.attachment_name = uploaded_file.name
+        guide.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '附件上传成功！',
+            'attachment_name': uploaded_file.name
+        })
+        
+    except UserGeneratedTravelGuide.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': '攻略不存在或您没有权限'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'上传附件失败: {str(e)}'
+        })
+
+
+# ==================== 船宝（二手线下交易）相关视图 ====================
+
+@login_required
+def shipbao_home(request):
+    """船宝首页"""
+    return render(request, 'tools/shipbao_home.html')
+
+
+@login_required
+def shipbao_publish(request):
+    """船宝发布页面"""
+    return render(request, 'tools/shipbao_publish.html')
+
+
+@login_required
+def shipbao_detail(request, item_id):
+    """船宝物品详情页面"""
+    try:
+        item = ShipBaoItem.objects.get(id=item_id)
+        return render(request, 'tools/shipbao_detail.html', {'item': item})
+    except ShipBaoItem.DoesNotExist:
+        messages.error(request, '物品不存在')
+        return redirect('shipbao_home')
+
+
+@login_required
+def shipbao_transactions(request):
+    """船宝交易管理页面"""
+    return render(request, 'tools/shipbao_transactions.html')
+
+
+@login_required
+def shipbao_chat(request, transaction_id):
+    """船宝私信页面"""
+    try:
+        transaction = ShipBaoTransaction.objects.get(id=transaction_id)
+        if transaction.buyer != request.user and transaction.seller != request.user:
+            messages.error(request, '无权访问此交易')
+            return redirect('shipbao_transactions')
+        return render(request, 'tools/shipbao_chat.html', {'transaction': transaction})
+    except ShipBaoTransaction.DoesNotExist:
+        messages.error(request, '交易不存在')
+        return redirect('shipbao_transactions')
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def shipbao_create_item_api(request):
+    """创建船宝物品API"""
+    try:
+        data = json.loads(request.body)
+        
+        # 验证必填字段
+        required_fields = ['title', 'description', 'category', 'price', 'condition', 'location']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'请填写{field}字段'
+                })
+        
+        # 创建物品
+        item = ShipBaoItem.objects.create(
+            seller=request.user,
+            title=data['title'],
+            description=data['description'],
+            category=data['category'],
+            price=Decimal(data['price']),
+            condition=int(data['condition']),
+            images=data.get('images', []),
+            delivery_option=data.get('delivery_option', 'pickup'),
+            can_bargain=data.get('can_bargain', False),
+            location=data['location'],
+            latitude=data.get('latitude'),
+            longitude=data.get('longitude')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '物品发布成功',
+            'item_id': item.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'发布失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def shipbao_items_api(request):
+    """获取船宝物品列表API"""
+    try:
+        # 获取查询参数
+        category = request.GET.get('category')
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        delivery_option = request.GET.get('delivery_option')
+        can_bargain = request.GET.get('can_bargain')
+        sort_by = request.GET.get('sort_by', 'created_at')
+        
+        # 构建查询
+        items = ShipBaoItem.objects.filter(status='pending')
+        
+        if category:
+            items = items.filter(category=category)
+        if min_price:
+            items = items.filter(price__gte=Decimal(min_price))
+        if max_price:
+            items = items.filter(price__lte=Decimal(max_price))
+        if delivery_option:
+            items = items.filter(delivery_option=delivery_option)
+        if can_bargain == 'true':
+            items = items.filter(can_bargain=True)
+        
+        # 排序
+        if sort_by == 'price':
+            items = items.order_by('price')
+        elif sort_by == 'price_desc':
+            items = items.order_by('-price')
+        elif sort_by == 'distance':
+            # TODO: 实现距离排序
+            items = items.order_by('-created_at')
+        else:
+            items = items.order_by('-created_at')
+        
+        # 分页
+        page = int(request.GET.get('page', 1))
+        page_size = 20
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        items_data = []
+        for item in items[start:end]:
+            items_data.append({
+                'id': item.id,
+                'title': item.title,
+                'price': float(item.price),
+                'condition': item.condition,
+                'condition_stars': item.get_condition_stars(),
+                'category': item.category,
+                'category_display': item.get_category_display(),
+                'location': item.location,
+                'delivery_option': item.delivery_option,
+                'can_bargain': item.can_bargain,
+                'main_image': item.get_main_image(),
+                'image_count': item.get_image_count(),
+                'view_count': item.view_count,
+                'favorite_count': item.favorite_count,
+                'seller_name': item.seller.username,
+                'created_at': item.created_at.strftime('%Y-%m-%d %H:%M'),
+                'distance': '1.5km'  # TODO: 计算实际距离
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'data': items_data,
+            'total': items.count(),
+            'page': page,
+            'has_next': items.count() > end
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取物品列表失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def shipbao_initiate_transaction_api(request):
+    """发起船宝交易API"""
+    try:
+        data = json.loads(request.body)
+        item_id = data.get('item_id')
+        
+        if not item_id:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供物品ID'
+            })
+        
+        # 获取物品
+        try:
+            item = ShipBaoItem.objects.get(id=item_id, status='pending')
+        except ShipBaoItem.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '物品不存在或已售出'
+            })
+        
+        # 检查是否是自己发布的物品
+        if item.seller == request.user:
+            return JsonResponse({
+                'success': False,
+                'message': '不能购买自己发布的物品'
+            })
+        
+        # 检查是否已经发起过交易
+        if ShipBaoTransaction.objects.filter(item=item, buyer=request.user).exists():
+            return JsonResponse({
+                'success': False,
+                'message': '您已经发起过此物品的交易'
+            })
+        
+        # 创建交易
+        transaction = ShipBaoTransaction.objects.create(
+            item=item,
+            buyer=request.user,
+            seller=item.seller
+        )
+        
+        # 更新物品状态
+        item.status = 'reserved'
+        item.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '交易发起成功',
+            'transaction_id': transaction.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'发起交易失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def shipbao_send_message_api(request):
+    """发送船宝私信API"""
+    try:
+        data = json.loads(request.body)
+        transaction_id = data.get('transaction_id')
+        content = data.get('content')
+        message_type = data.get('message_type', 'text')
+        image_url = data.get('image_url')
+        offer_price = data.get('offer_price')
+        
+        if not transaction_id or not content:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供交易ID和消息内容'
+            })
+        
+        # 获取交易
+        try:
+            transaction = ShipBaoTransaction.objects.get(id=transaction_id)
+            if transaction.buyer != request.user and transaction.seller != request.user:
+                return JsonResponse({
+                    'success': False,
+                    'message': '无权访问此交易'
+                })
+        except ShipBaoTransaction.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '交易不存在'
+            })
+        
+        # 创建消息
+        message = ShipBaoMessage.objects.create(
+            transaction=transaction,
+            sender=request.user,
+            message_type=message_type,
+            content=content,
+            image_url=image_url,
+            offer_price=Decimal(offer_price) if offer_price else None
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '消息发送成功',
+            'message_id': message.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'发送消息失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def shipbao_messages_api(request):
+    """获取船宝私信列表API"""
+    try:
+        transaction_id = request.GET.get('transaction_id')
+        
+        if not transaction_id:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供交易ID'
+            })
+        
+        # 获取交易
+        try:
+            transaction = ShipBaoTransaction.objects.get(id=transaction_id)
+            if transaction.buyer != request.user and transaction.seller != request.user:
+                return JsonResponse({
+                    'success': False,
+                    'message': '无权访问此交易'
+                })
+        except ShipBaoTransaction.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '交易不存在'
+            })
+        
+        # 获取消息列表
+        messages = ShipBaoMessage.objects.filter(transaction=transaction).order_by('created_at')
+        
+        messages_data = []
+        for msg in messages:
+            messages_data.append({
+                'id': msg.id,
+                'sender_id': msg.sender.id,
+                'sender_name': msg.sender.username,
+                'is_sender': msg.sender == request.user,
+                'message_type': msg.message_type,
+                'content': msg.content,
+                'image_url': msg.image_url,
+                'offer_price': float(msg.offer_price) if msg.offer_price else None,
+                'is_read': msg.is_read,
+                'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'data': messages_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取消息失败: {str(e)}'
+        })
+
+
+# ==================== 搭子（同城活动匹配）相关视图 ====================
+
+@login_required
+def buddy_home(request):
+    """搭子首页"""
+    return render(request, 'tools/buddy_home.html')
+
+
+@login_required
+def buddy_create(request):
+    """搭子创建活动页面"""
+    return render(request, 'tools/buddy_create.html')
+
+
+@login_required
+def buddy_detail(request, event_id):
+    """搭子活动详情页面"""
+    try:
+        event = BuddyEvent.objects.get(id=event_id)
+        return render(request, 'tools/buddy_detail.html', {'event': event})
+    except BuddyEvent.DoesNotExist:
+        messages.error(request, '活动不存在')
+        return redirect('buddy_home')
+
+
+@login_required
+def buddy_manage(request):
+    """搭子活动管理页面"""
+    return render(request, 'tools/buddy_manage.html')
+
+
+@login_required
+def buddy_chat(request, event_id):
+    """搭子活动群聊页面"""
+    try:
+        event = BuddyEvent.objects.get(id=event_id)
+        # 检查用户是否参与此活动
+        if not event.members.filter(user=request.user, status='joined').exists() and event.creator != request.user:
+            messages.error(request, '您未参与此活动')
+            return redirect('buddy_home')
+        return render(request, 'tools/buddy_chat.html', {'event': event})
+    except BuddyEvent.DoesNotExist:
+        messages.error(request, '活动不存在')
+        return redirect('buddy_home')
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def buddy_create_event_api(request):
+    """创建搭子活动API"""
+    try:
+        data = json.loads(request.body)
+        
+        # 验证必填字段
+        required_fields = ['title', 'description', 'event_type', 'start_time', 'location']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({
+                    'success': False,
+                    'message': f'请填写{field}字段'
+                })
+        
+        # 创建活动
+        event = BuddyEvent.objects.create(
+            creator=request.user,
+            title=data['title'],
+            description=data['description'],
+            event_type=data['event_type'],
+            start_time=data['start_time'],
+            end_time=data.get('end_time'),
+            location=data['location'],
+            latitude=data.get('latitude'),
+            longitude=data.get('longitude'),
+            max_members=int(data.get('max_members', 4)),
+            cost_type=data.get('cost_type', 'aa'),
+            estimated_cost=Decimal(data.get('estimated_cost', 0)),
+            gender_restriction=data.get('gender_restriction', 'none'),
+            age_min=data.get('age_min'),
+            age_max=data.get('age_max')
+        )
+        
+        # 创建群聊
+        BuddyEventChat.objects.create(event=event)
+        
+        return JsonResponse({
+            'success': True,
+            'message': '活动创建成功',
+            'event_id': event.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'创建活动失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def buddy_events_api(request):
+    """获取搭子活动列表API"""
+    try:
+        # 获取查询参数
+        event_type = request.GET.get('event_type')
+        cost_type = request.GET.get('cost_type')
+        gender_restriction = request.GET.get('gender_restriction')
+        sort_by = request.GET.get('sort_by', 'created_at')
+        
+        # 构建查询
+        events = BuddyEvent.objects.filter(status='active')
+        
+        if event_type:
+            events = events.filter(event_type=event_type)
+        if cost_type:
+            events = events.filter(cost_type=cost_type)
+        if gender_restriction:
+            events = events.filter(gender_restriction=gender_restriction)
+        
+        # 排序
+        if sort_by == 'start_time':
+            events = events.order_by('start_time')
+        elif sort_by == 'distance':
+            # TODO: 实现距离排序
+            events = events.order_by('-created_at')
+        else:
+            events = events.order_by('-created_at')
+        
+        # 分页
+        page = int(request.GET.get('page', 1))
+        page_size = 20
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        events_data = []
+        for event in events[start:end]:
+            events_data.append({
+                'id': event.id,
+                'title': event.title,
+                'event_type': event.event_type,
+                'event_type_display': event.get_event_type_display(),
+                'start_time': event.start_time.strftime('%Y-%m-%d %H:%M'),
+                'location': event.location,
+                'max_members': event.max_members,
+                'current_members': event.get_current_member_count(),
+                'cost_type': event.cost_type,
+                'cost_type_display': event.get_cost_type_display(),
+                'estimated_cost': float(event.estimated_cost) if event.estimated_cost else None,
+                'gender_restriction': event.gender_restriction,
+                'creator_name': event.creator.username,
+                'view_count': event.view_count,
+                'application_count': event.application_count,
+                'time_until_start': event.get_time_until_start(),
+                'is_full': event.is_full(),
+                'distance': '2.1km'  # TODO: 计算实际距离
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'data': events_data,
+            'total': events.count(),
+            'page': page,
+            'has_next': events.count() > end
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取活动列表失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def buddy_join_event_api(request):
+    """加入搭子活动API"""
+    try:
+        data = json.loads(request.body)
+        event_id = data.get('event_id')
+        application_message = data.get('application_message', '')
+        
+        if not event_id:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供活动ID'
+            })
+        
+        # 获取活动
+        try:
+            event = BuddyEvent.objects.get(id=event_id, status='active')
+        except BuddyEvent.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '活动不存在或已结束'
+            })
+        
+        # 检查是否是自己创建的活动
+        if event.creator == request.user:
+            return JsonResponse({
+                'success': False,
+                'message': '不能加入自己创建的活动'
+            })
+        
+        # 检查是否已经申请过
+        if BuddyEventMember.objects.filter(event=event, user=request.user).exists():
+            return JsonResponse({
+                'success': False,
+                'message': '您已经申请过此活动'
+            })
+        
+        # 检查是否已满员
+        if event.is_full():
+            return JsonResponse({
+                'success': False,
+                'message': '活动人数已满'
+            })
+        
+        # 创建申请
+        member = BuddyEventMember.objects.create(
+            event=event,
+            user=request.user,
+            application_message=application_message
+        )
+        
+        # 更新活动申请数
+        event.application_count += 1
+        event.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '申请提交成功，等待发起人审核'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'申请失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def buddy_approve_member_api(request):
+    """审核搭子活动成员API"""
+    try:
+        data = json.loads(request.body)
+        member_id = data.get('member_id')
+        action = data.get('action')  # 'approve' or 'reject'
+        
+        if not member_id or action not in ['approve', 'reject']:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供成员ID和操作类型'
+            })
+        
+        # 获取成员
+        try:
+            member = BuddyEventMember.objects.get(id=member_id)
+            if member.event.creator != request.user:
+                return JsonResponse({
+                    'success': False,
+                    'message': '只有活动发起人可以审核'
+                })
+        except BuddyEventMember.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '申请不存在'
+            })
+        
+        if action == 'approve':
+            # 检查是否已满员
+            if member.event.is_full():
+                return JsonResponse({
+                    'success': False,
+                    'message': '活动人数已满'
+                })
+            
+            member.status = 'joined'
+            member.joined_at = timezone.now()
+            member.save()
+            
+            # 检查是否需要激活群聊
+            if member.event.get_current_member_count() >= 2:
+                chat, created = BuddyEventChat.objects.get_or_create(event=member.event)
+                if not chat.is_active:
+                    chat.is_active = True
+                    chat.save()
+            
+            message = '申请已通过'
+        else:
+            member.status = 'rejected'
+            member.save()
+            message = '申请已拒绝'
+        
+        return JsonResponse({
+            'success': True,
+            'message': message
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'审核失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def buddy_send_message_api(request):
+    """发送搭子活动群聊消息API"""
+    try:
+        data = json.loads(request.body)
+        event_id = data.get('event_id')
+        content = data.get('content')
+        message_type = data.get('message_type', 'text')
+        image_url = data.get('image_url')
+        
+        if not event_id or not content:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供活动ID和消息内容'
+            })
+        
+        # 获取活动
+        try:
+            event = BuddyEvent.objects.get(id=event_id)
+            # 检查用户是否参与此活动
+            if not event.members.filter(user=request.user, status='joined').exists() and event.creator != request.user:
+                return JsonResponse({
+                    'success': False,
+                    'message': '您未参与此活动'
+                })
+        except BuddyEvent.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '活动不存在'
+            })
+        
+        # 获取或创建群聊
+        chat, created = BuddyEventChat.objects.get_or_create(event=event)
+        
+        # 创建消息
+        message = BuddyEventMessage.objects.create(
+            chat=chat,
+            sender=request.user,
+            message_type=message_type,
+            content=content,
+            image_url=image_url
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '消息发送成功',
+            'message_id': message.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'发送消息失败: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@login_required
+def buddy_messages_api(request):
+    """获取搭子活动群聊消息API"""
+    try:
+        event_id = request.GET.get('event_id')
+        
+        if not event_id:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供活动ID'
+            })
+        
+        # 获取活动
+        try:
+            event = BuddyEvent.objects.get(id=event_id)
+            # 检查用户是否参与此活动
+            if not event.members.filter(user=request.user, status='joined').exists() and event.creator != request.user:
+                return JsonResponse({
+                    'success': False,
+                    'message': '您未参与此活动'
+                })
+        except BuddyEvent.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': '活动不存在'
+            })
+        
+        # 获取群聊消息
+        try:
+            chat = BuddyEventChat.objects.get(event=event)
+            messages = BuddyEventMessage.objects.filter(chat=chat).order_by('created_at')
+        except BuddyEventChat.DoesNotExist:
+            messages = []
+        
+        messages_data = []
+        for msg in messages:
+            messages_data.append({
+                'id': msg.id,
+                'sender_id': msg.sender.id,
+                'sender_name': msg.sender.username,
+                'is_sender': msg.sender == request.user,
+                'message_type': msg.message_type,
+                'content': msg.content,
+                'image_url': msg.image_url,
+                'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'data': messages_data
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'获取消息失败: {str(e)}'
+        })

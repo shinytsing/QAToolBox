@@ -57,42 +57,44 @@ class HeartLinkMatcher:
     
     def find_best_match(self, current_user, current_request):
         """找到最佳匹配对象"""
-        # 优先匹配等待时间较长的用户
-        # 计算当前用户的等待时间
-        current_wait_time = timezone.now() - current_request.created_at
-        
-        # 查找可用的匹配对象，按等待时间排序
-        available_requests = HeartLinkRequest.objects.filter(
-            status='pending',
-            requester__is_staff=False,
-            requester__is_superuser=False,
-            requester__is_active=True,
-        ).exclude(
-            Q(requester=current_user)
-        ).order_by('created_at')  # 优先匹配等待时间最长的
-        
-        if not available_requests.exists():
-            return None
-        
-        # 尝试匹配等待时间最长的用户
-        for available_request in available_requests:
-            try:
-                # 使用乐观锁：尝试更新状态
-                updated = HeartLinkRequest.objects.filter(
-                    id=available_request.id,
-                    status='pending'
-                ).update(status='matching')
-                
-                if updated > 0:
-                    # 更新成功，重新获取对象
-                    available_request.refresh_from_db()
-                    return available_request
+        try:
+            # 查找可用的匹配对象，按等待时间排序
+            available_requests = HeartLinkRequest.objects.filter(
+                status='pending',
+                requester__is_staff=False,
+                requester__is_superuser=False,
+                requester__is_active=True,
+            ).exclude(
+                Q(requester=current_user)
+            ).order_by('created_at')  # 优先匹配等待时间最长的
+            
+            if not available_requests.exists():
+                return None
+            
+            # 尝试匹配等待时间最长的用户
+            for available_request in available_requests:
+                try:
+                    # 使用乐观锁：尝试更新状态
+                    updated = HeartLinkRequest.objects.filter(
+                        id=available_request.id,
+                        status='pending'
+                    ).update(status='matching')
                     
-            except Exception as e:
-                print(f"匹配过程中出错: {str(e)}")
-                continue
-        
-        return None
+                    if updated > 0:
+                        # 更新成功，重新获取对象
+                        available_request.refresh_from_db()
+                        print(f"成功匹配用户: {available_request.requester.username}")
+                        return available_request
+                        
+                except Exception as e:
+                    print(f"匹配过程中出错: {str(e)}")
+                    continue
+            
+            return None
+            
+        except Exception as e:
+            print(f"查找匹配对象时出错: {str(e)}")
+            return None
     
     def create_match(self, user1, user2):
         """创建匹配"""
@@ -118,15 +120,18 @@ class HeartLinkMatcher:
                 best_match_request = self.find_best_match(current_user, current_request)
                 
                 if not best_match_request:
+                    print(f"用户 {current_user.username} 没有找到匹配对象")
                     return None, None
                 
                 # 双重检查：确保对方请求状态为matching
                 best_match_request.refresh_from_db()
                 if best_match_request.status != 'matching':
+                    print(f"用户 {best_match_request.requester.username} 的状态不是matching，可能是被其他用户匹配了")
                     return None, None
                 
                 # 创建匹配
                 chat_room = self.create_match(current_user, best_match_request.requester)
+                print(f"创建聊天室: {chat_room.room_id}")
                 
                 # 更新两个请求的状态
                 current_request.status = 'matched'
@@ -141,19 +146,27 @@ class HeartLinkMatcher:
                 best_match_request.chat_room = chat_room
                 best_match_request.save()
                 
+                print(f"匹配成功: {current_user.username} <-> {best_match_request.requester.username}")
                 return chat_room, best_match_request.requester
                 
         except Exception as e:
             # 如果匹配失败，记录错误但不立即设为过期
             print(f"匹配失败: {str(e)}")
-            # 只有在特定错误情况下才设为过期
+            # 保持pending状态，让用户有机会重试
+            # 只有在明确知道是致命错误时才设为过期
             if "database is locked" in str(e).lower():
                 # 数据库锁定错误，保持pending状态，让用户重试
+                print("数据库锁定，保持pending状态")
                 return None, None
-            else:
-                # 其他错误，设为过期
+            elif "duplicate key" in str(e).lower():
+                # 重复键错误，可能已经被匹配，设为过期
+                print("重复键错误，设为过期")
                 current_request.status = 'expired'
                 current_request.save()
+                return None, None
+            else:
+                # 其他错误，保持pending状态，让用户重试
+                print("其他错误，保持pending状态")
                 return None, None
     
     def cleanup_expired_requests(self):

@@ -534,7 +534,7 @@
   </div> -->
 
   <div class="rage-tools-grid">
-    <div class="training-card" onclick="window.location.href='{% url 'fitness' %}'">
+    <div class="training-card" onclick="window.location.href='{% url 'tools:fitness' %}'">
       <div class="training-icon">
         <i class="fas fa-dumbbell"></i>
       </div>
@@ -542,12 +542,20 @@
       <p class="training-description">高强度训练计划，突破体能极限，挑战身体潜能</p>
     </div>
 
-    <div class="training-card" onclick="window.location.href='{% url 'guitar_training' %}'">
+    <div class="training-card" onclick="window.location.href='{% url 'tools:guitar_training' %}'">
       <div class="training-icon">
         <i class="fas fa-guitar"></i>
       </div>
       <h3 class="training-title">不摇就滚</h3>
       <p class="training-description">吉他训练系统，智能调音器、和弦训练、节奏工坊</p>
+    </div>
+
+    <div class="training-card" onclick="window.location.href='{% url 'tools:nutrition_profile_setup' %}'">
+      <div class="training-icon">
+        <i class="fas fa-heartbeat"></i>
+      </div>
+      <h3 class="training-title">NutriCoach Pro</h3>
+      <p class="training-description">个性化营养定制，科学饮食计划，智能营养追踪</p>
     </div>
 
     <!-- <div class="training-card" onclick="window.location.href='/tools/triple_awakening/'">
@@ -689,7 +697,7 @@ function showPainCurrency() {
 // 显示欲望仪表盘
 /*
 function showDesireDashboard() {
-  window.location.href = '/tools/desire_dashboard/';
+  window.location.href = '{% url "tools:desire_dashboard" %}';
 }
 */
 

@@ -5,7 +5,7 @@ from apps.tools.models import (
     SocialMediaSubscription, 
     SocialMediaNotification, 
     SocialMediaPlatformConfig,
-    TravelGuide, TravelDestination, TravelReview,
+    TravelGuide, TravelDestination, TravelReview, UserGeneratedTravelGuide, TravelGuideUsage,
     FoodRandomizer, FoodItem, FoodRandomizationSession, FoodHistory,
     # LifeGraph Models
     RelationshipTag, PersonProfile, Interaction, ImportantMoment, 
@@ -702,3 +702,50 @@ class UserFirstVisitAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """禁止手动添加首次访问记录"""
         return False
+
+
+@admin.register(UserGeneratedTravelGuide)
+class UserGeneratedTravelGuideAdmin(admin.ModelAdmin):
+    list_display = ('title', 'user', 'destination', 'travel_style', 'view_count', 'download_count', 'use_count', 'is_public', 'is_featured', 'is_approved', 'created_at')
+    list_filter = ('travel_style', 'budget_range', 'is_public', 'is_featured', 'is_approved', 'created_at')
+    search_fields = ('title', 'destination', 'content', 'user__username')
+    readonly_fields = ('view_count', 'download_count', 'use_count', 'created_at', 'updated_at')
+    list_editable = ('is_public', 'is_featured', 'is_approved')
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'title', 'destination', 'content', 'summary')
+        }),
+        ('攻略分类', {
+            'fields': ('travel_style', 'budget_range', 'travel_duration', 'interests')
+        }),
+        ('文件附件', {
+            'fields': ('attachment', 'attachment_name'),
+            'classes': ('collapse',)
+        }),
+        ('统计信息', {
+            'fields': ('view_count', 'download_count', 'use_count'),
+            'classes': ('collapse',)
+        }),
+        ('状态设置', {
+            'fields': ('is_public', 'is_featured', 'is_approved')
+        }),
+        ('时间信息', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(TravelGuideUsage)
+class TravelGuideUsageAdmin(admin.ModelAdmin):
+    list_display = ('user', 'guide', 'usage_type', 'created_at')
+    list_filter = ('usage_type', 'created_at')
+    search_fields = ('user__username', 'guide__title')
+    readonly_fields = ('created_at',)
+    
+    fieldsets = (
+        ('使用记录', {
+            'fields': ('user', 'guide', 'usage_type', 'created_at')
+        }),
+    )

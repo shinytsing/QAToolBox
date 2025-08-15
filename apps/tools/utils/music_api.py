@@ -105,11 +105,9 @@ class FreeMusicAPI:
         self.music_cache = {}
         self.cache_expire = 3600  # 1小时缓存
         
-        # 免费音乐API列表
+        # 免费音乐API列表（移除了不稳定的Free Music Archive和ccMixter API）
         self.free_apis = [
             self._try_jamendo_api,
-            self._try_freemusicarchive_api,
-            self._try_ccmixter_api,
             self._try_incompetech_api
         ]
     
@@ -130,7 +128,7 @@ class FreeMusicAPI:
                 'include': 'musicinfo'
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 tracks = data.get('results', [])
@@ -152,81 +150,15 @@ class FreeMusicAPI:
         
         return []
     
-    def _try_freemusicarchive_api(self, mode: str) -> List[Dict]:
-        """尝试使用Free Music Archive API获取音乐"""
-        try:
-            # Free Music Archive的公开API端点
-            url = "https://freemusicarchive.org/api/get/tracks.json"
-            params = {
-                'api_key': 'your_api_key',  # 需要注册获取
-                'limit': 10,
-                'sort': 'track_interest'
-            }
-            
-            response = requests.get(url, params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                tracks = data.get('dataset', [])
-                
-                return [
-                    {
-                        'id': track.get('track_id', ''),
-                        'name': track.get('track_title', ''),
-                        'artist': track.get('artist_name', ''),
-                        'album': track.get('album_title', ''),
-                        'duration': track.get('track_duration', 0) * 1000,
-                        'pic_url': track.get('track_image_file', ''),
-                        'play_url': track.get('track_url', '')
-                    }
-                    for track in tracks
-                ]
-        except Exception as e:
-            print(f"Free Music Archive API异常: {e}")
-        
-        return []
+    # def _try_freemusicarchive_api(self, mode: str) -> List[Dict]:
+    #     """尝试使用Free Music Archive API获取音乐（已禁用，API不稳定）"""
+    #     # Free Music Archive API已不可用，暂时禁用
+    #     return []
     
-    def _try_ccmixter_api(self, mode: str) -> List[Dict]:
-        """尝试使用ccMixter API获取音乐"""
-        try:
-            # ccMixter的公开API端点
-            url = "http://ccmixter.org/api/query"
-            params = {
-                'f': 'json',
-                'limit': 10,
-                'sort': 'rank'
-            }
-            
-            response = requests.get(url, params=params, timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                # ccMixter API直接返回tracks列表，不是包含tracks键的字典
-                tracks = data if isinstance(data, list) else []
-                
-                result = []
-                for track in tracks:
-                    # 获取第一个可用的下载链接
-                    download_url = ''
-                    if 'files' in track and track['files']:
-                        for file_info in track['files']:
-                            if file_info.get('download_url'):
-                                download_url = file_info['download_url']
-                                break
-                    
-                    result.append({
-                        'id': str(track.get('upload_id', '')),
-                        'name': track.get('upload_name', ''),
-                        'artist': track.get('user_name', ''),
-                        'album': 'ccMixter',
-                        'duration': 180000,  # 默认3分钟
-                        'pic_url': '',
-                        'play_url': download_url
-                    })
-                
-                return result
-        except Exception as e:
-            print(f"ccMixter API异常: {e}")
-        
-        return []
+    # def _try_ccmixter_api(self, mode: str) -> List[Dict]:
+    #     """尝试使用ccMixter API获取音乐（已禁用，API不稳定）"""
+    #     # ccMixter API已不可用，暂时禁用
+    #     return []
     
     def _try_incompetech_api(self, mode: str) -> List[Dict]:
         """尝试使用Incompetech API获取音乐"""
@@ -234,7 +166,7 @@ class FreeMusicAPI:
             # Incompetech的公开音乐数据
             url = "https://incompetech.com/music/royalty-free/music.json"
             
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 tracks = data.get('music', [])

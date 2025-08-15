@@ -1,0 +1,863 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}训练计划器 - QAToolBox{% endblock %}
+
+{% block extra_css %}
+<style>
+.planner-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.planner-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.planner-header h1 {
+    color: var(--primary-color, #667eea);
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.planner-header p {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.planner-section {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.planner-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #667eea);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.generate-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    grid-column: 1 / -1;
+    margin-top: 20px;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.generate-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.plan-section {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    display: none;
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.plan-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.summary-item {
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.weekly-plan {
+    margin-bottom: 30px;
+}
+
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.day-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.day-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color, #667eea);
+}
+
+.day-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.day-type {
+    background: var(--primary-color, #667eea);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.workout-list {
+    list-style: none;
+    padding: 0;
+}
+
+.workout-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workout-item:last-child {
+    border-bottom: none;
+}
+
+.workout-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.workout-duration {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.rest-day {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+}
+
+.recommendations {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.recommendations h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.recommendations ul {
+    list-style: none;
+    padding: 0;
+}
+
+.recommendations li {
+    padding: 8px 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.recommendations li:before {
+    content: '✓';
+    color: var(--primary-color, #667eea);
+    font-weight: bold;
+}
+
+.template-section {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.template-card {
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color, #667eea);
+}
+
+.template-card.selected {
+    background: var(--primary-color, #667eea);
+    color: white;
+}
+
+.template-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.template-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.template-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color, #667eea);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .planner-container {
+        padding: 20px 15px;
+    }
+    
+    .planner-header h1 {
+        font-size: 2rem;
+    }
+    
+    .planner-section,
+    .plan-section,
+    .template-section {
+        padding: 20px;
+    }
+    
+    .planner-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .week-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .planner-section,
+    .plan-section,
+    .template-section {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .form-group label {
+        color: #e2e8f0;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        background: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .day-card {
+        background: #4a5568;
+    }
+    
+    .day-title {
+        color: #e2e8f0;
+    }
+    
+    .workout-item {
+        border-bottom-color: #718096;
+    }
+    
+    .workout-name {
+        color: #e2e8f0;
+    }
+    
+    .workout-duration {
+        color: #a0aec0;
+    }
+    
+    .rest-day {
+        color: #a0aec0;
+    }
+    
+    .recommendations {
+        background: #4a5568;
+    }
+    
+    .recommendations h3 {
+        color: #e2e8f0;
+    }
+    
+    .recommendations li {
+        color: #a0aec0;
+    }
+    
+    .template-card {
+        background: #4a5568;
+        color: #e2e8f0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="planner-container">
+    <div class="planner-header">
+        <h1>训练计划器</h1>
+        <p>根据您的目标和身体状况，制定科学的训练计划，合理安排训练强度</p>
+    </div>
+    
+    <div class="planner-section">
+        <h2>制定个性化训练计划</h2>
+        <form class="planner-form" id="plannerForm">
+            <div class="form-group">
+                <label for="goal">训练目标</label>
+                <select id="goal" name="goal" required>
+                    <option value="">选择训练目标</option>
+                    <option value="weight_loss">减重减脂</option>
+                    <option value="muscle_gain">增肌塑形</option>
+                    <option value="strength">力量提升</option>
+                    <option value="endurance">耐力提升</option>
+                    <option value="flexibility">柔韧性改善</option>
+                    <option value="general">一般健身</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fitnessLevel">健身水平</label>
+                <select id="fitnessLevel" name="fitnessLevel" required>
+                    <option value="">选择健身水平</option>
+                    <option value="beginner">初学者</option>
+                    <option value="intermediate">中级</option>
+                    <option value="advanced">高级</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="workoutDays">每周训练天数</label>
+                <select id="workoutDays" name="workoutDays" required>
+                    <option value="3">3天</option>
+                    <option value="4" selected>4天</option>
+                    <option value="5">5天</option>
+                    <option value="6">6天</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sessionDuration">每次训练时长 (分钟)</label>
+                <select id="sessionDuration" name="sessionDuration" required>
+                    <option value="30">30分钟</option>
+                    <option value="45" selected>45分钟</option>
+                    <option value="60">60分钟</option>
+                    <option value="90">90分钟</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="availableEquipment">可用器械</label>
+                <select id="availableEquipment" name="availableEquipment" required>
+                    <option value="bodyweight">徒手训练</option>
+                    <option value="dumbbells">哑铃</option>
+                    <option value="full_gym" selected>健身房</option>
+                    <option value="home_gym">家庭健身房</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="specialConsiderations">特殊考虑</label>
+                <textarea id="specialConsiderations" name="specialConsiderations" placeholder="例如：膝盖受伤、时间限制、特殊需求等..."></textarea>
+            </div>
+            <button type="submit" class="generate-btn" id="generateBtn">
+                <i class="fas fa-magic"></i>
+                生成训练计划
+            </button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>正在生成训练计划...</p>
+        </div>
+    </div>
+    
+    <div class="plan-section" id="planSection">
+        <div class="plan-header">
+            <h2>您的个性化训练计划</h2>
+        </div>
+        
+        <div class="plan-summary" id="planSummary">
+            <!-- 计划摘要将在这里显示 -->
+        </div>
+        
+        <div class="weekly-plan">
+            <h3>每周训练安排</h3>
+            <div class="week-grid" id="weekGrid">
+                <!-- 每周计划将在这里显示 -->
+            </div>
+        </div>
+        
+        <div class="recommendations" id="recommendations">
+            <!-- 建议将在这里显示 -->
+        </div>
+    </div>
+    
+    <div class="template-section">
+        <h2>训练计划模板</h2>
+        <p>选择预设的训练计划模板，快速开始您的健身之旅</p>
+        
+        <div class="template-grid">
+            <div class="template-card" data-template="weight_loss">
+                <div class="template-icon">🔥</div>
+                <div class="template-title">减重计划</div>
+                <div class="template-desc">专注于有氧运动和HIIT训练，帮助燃烧脂肪，适合减重目标</div>
+            </div>
+            <div class="template-card" data-template="muscle_gain">
+                <div class="template-icon">💪</div>
+                <div class="template-title">增肌计划</div>
+                <div class="template-desc">力量训练为主，配合适当的有氧运动，促进肌肉生长</div>
+            </div>
+            <div class="template-card" data-template="strength">
+                <div class="template-icon">🏋️</div>
+                <div class="template-title">力量计划</div>
+                <div class="template-desc">大重量低次数训练，提升最大力量和爆发力</div>
+            </div>
+            <div class="template-card" data-template="endurance">
+                <div class="template-icon">🏃</div>
+                <div class="template-title">耐力计划</div>
+                <div class="template-desc">长时间有氧训练，提升心肺功能和运动耐力</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class WorkoutPlanner {
+    constructor() {
+        this.initializeElements();
+        this.bindEvents();
+    }
+    
+    initializeElements() {
+        this.form = document.getElementById('plannerForm');
+        this.planSection = document.getElementById('planSection');
+        this.loading = document.getElementById('loading');
+        this.generateBtn = document.getElementById('generateBtn');
+    }
+    
+    bindEvents() {
+        this.form.addEventListener('submit', (e) => this.generatePlan(e));
+        
+        // 模板选择事件
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectTemplate(card.dataset.template);
+            });
+        });
+    }
+    
+    selectTemplate(template) {
+        // 移除所有选中状态
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // 添加选中状态
+        document.querySelector(`[data-template="${template}"]`).classList.add('selected');
+        
+        // 根据模板设置表单
+        this.setFormByTemplate(template);
+    }
+    
+    setFormByTemplate(template) {
+        const templateSettings = {
+            'weight_loss': {
+                goal: 'weight_loss',
+                fitnessLevel: 'intermediate',
+                workoutDays: '4',
+                sessionDuration: '45',
+                availableEquipment: 'full_gym'
+            },
+            'muscle_gain': {
+                goal: 'muscle_gain',
+                fitnessLevel: 'intermediate',
+                workoutDays: '5',
+                sessionDuration: '60',
+                availableEquipment: 'full_gym'
+            },
+            'strength': {
+                goal: 'strength',
+                fitnessLevel: 'intermediate',
+                workoutDays: '4',
+                sessionDuration: '60',
+                availableEquipment: 'full_gym'
+            },
+            'endurance': {
+                goal: 'endurance',
+                fitnessLevel: 'intermediate',
+                workoutDays: '5',
+                sessionDuration: '45',
+                availableEquipment: 'bodyweight'
+            }
+        };
+        
+        const settings = templateSettings[template];
+        if (settings) {
+            Object.keys(settings).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = settings[key];
+                }
+            });
+        }
+    }
+    
+    generatePlan(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this.form);
+        const planData = Object.fromEntries(formData);
+        
+        // 验证数据
+        if (!planData.goal || !planData.fitnessLevel || !planData.workoutDays) {
+            alert('请填写所有必填字段');
+            return;
+        }
+        
+        // 显示加载状态
+        this.loading.style.display = 'block';
+        this.generateBtn.disabled = true;
+        
+        // 模拟API调用
+        setTimeout(() => {
+            this.loading.style.display = 'none';
+            this.generateBtn.disabled = false;
+            
+            const plan = this.createWorkoutPlan(planData);
+            this.displayPlan(plan);
+        }, 2000);
+    }
+    
+    createWorkoutPlan(data) {
+        const workoutDays = parseInt(data.workoutDays);
+        const sessionDuration = parseInt(data.sessionDuration);
+        
+        // 根据目标生成训练计划
+        const plan = {
+            goal: data.goal,
+            fitnessLevel: data.fitnessLevel,
+            workoutDays: workoutDays,
+            sessionDuration: sessionDuration,
+            weeklyPlan: this.generateWeeklyPlan(data, workoutDays),
+            summary: this.generateSummary(data)
+        };
+        
+        return plan;
+    }
+    
+    generateWeeklyPlan(data, workoutDays) {
+        const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        const plan = [];
+        
+        // 根据目标生成不同的训练安排
+        const workoutTypes = this.getWorkoutTypesByGoal(data.goal);
+        
+        for (let i = 0; i < 7; i++) {
+            if (i < workoutDays) {
+                plan.push({
+                    day: weekDays[i],
+                    type: workoutTypes[i % workoutTypes.length],
+                    workouts: this.getWorkoutsByType(workoutTypes[i % workoutTypes.length], data)
+                });
+            } else {
+                plan.push({
+                    day: weekDays[i],
+                    type: 'rest',
+                    workouts: []
+                });
+            }
+        }
+        
+        return plan;
+    }
+    
+    getWorkoutTypesByGoal(goal) {
+        const types = {
+            'weight_loss': ['cardio', 'hiit', 'strength', 'cardio'],
+            'muscle_gain': ['strength', 'strength', 'cardio', 'strength', 'strength'],
+            'strength': ['strength', 'strength', 'cardio', 'strength'],
+            'endurance': ['cardio', 'cardio', 'strength', 'cardio', 'cardio'],
+            'flexibility': ['flexibility', 'strength', 'flexibility', 'cardio'],
+            'general': ['strength', 'cardio', 'strength', 'cardio']
+        };
+        
+        return types[goal] || ['strength', 'cardio', 'strength', 'cardio'];
+    }
+    
+    getWorkoutsByType(type, data) {
+        const workouts = {
+            'strength': [
+                { name: '深蹲', duration: '15分钟', sets: '3组 x 12次' },
+                { name: '卧推', duration: '15分钟', sets: '3组 x 10次' },
+                { name: '硬拉', duration: '15分钟', sets: '3组 x 8次' }
+            ],
+            'cardio': [
+                { name: '跑步', duration: '20分钟', intensity: '中等强度' },
+                { name: '椭圆机', duration: '15分钟', intensity: '中等强度' },
+                { name: '动感单车', duration: '10分钟', intensity: '高强度' }
+            ],
+            'hiit': [
+                { name: '波比跳', duration: '30秒', sets: '8组' },
+                { name: '高抬腿', duration: '30秒', sets: '8组' },
+                { name: '俯卧撑', duration: '30秒', sets: '8组' }
+            ],
+            'flexibility': [
+                { name: '瑜伽', duration: '20分钟', focus: '柔韧性' },
+                { name: '拉伸', duration: '15分钟', focus: '全身拉伸' },
+                { name: '普拉提', duration: '10分钟', focus: '核心控制' }
+            ]
+        };
+        
+        return workouts[type] || workouts['strength'];
+    }
+    
+    generateSummary(data) {
+        const workoutDays = parseInt(data.workoutDays);
+        const sessionDuration = parseInt(data.sessionDuration);
+        
+        return {
+            totalWorkouts: workoutDays,
+            totalDuration: workoutDays * sessionDuration,
+            weeklyCalories: workoutDays * sessionDuration * 8, // 估算卡路里消耗
+            goal: this.getGoalName(data.goal),
+            level: this.getLevelName(data.fitnessLevel)
+        };
+    }
+    
+    getGoalName(goal) {
+        const goals = {
+            'weight_loss': '减重减脂',
+            'muscle_gain': '增肌塑形',
+            'strength': '力量提升',
+            'endurance': '耐力提升',
+            'flexibility': '柔韧性改善',
+            'general': '一般健身'
+        };
+        return goals[goal] || '一般健身';
+    }
+    
+    getLevelName(level) {
+        const levels = {
+            'beginner': '初学者',
+            'intermediate': '中级',
+            'advanced': '高级'
+        };
+        return levels[level] || '中级';
+    }
+    
+    displayPlan(plan) {
+        // 显示计划摘要
+        const summary = document.getElementById('planSummary');
+        summary.innerHTML = `
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value">${plan.summary.totalWorkouts}</div>
+                    <div class="summary-label">每周训练天数</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${plan.summary.totalDuration}</div>
+                    <div class="summary-label">总训练时长 (分钟)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${plan.summary.weeklyCalories}</div>
+                    <div class="summary-label">预估消耗卡路里</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${plan.summary.goal}</div>
+                    <div class="summary-label">训练目标</div>
+                </div>
+            </div>
+        `;
+        
+        // 显示每周计划
+        const weekGrid = document.getElementById('weekGrid');
+        weekGrid.innerHTML = plan.weeklyPlan.map(day => `
+            <div class="day-card">
+                <div class="day-header">
+                    <div class="day-title">${day.day}</div>
+                    <div class="day-type">${this.getTypeName(day.type)}</div>
+                </div>
+                ${day.type === 'rest' ? 
+                    '<div class="rest-day">休息日 - 放松恢复</div>' :
+                    `<ul class="workout-list">
+                        ${day.workouts.map(workout => `
+                            <li class="workout-item">
+                                <div class="workout-name">${workout.name}</div>
+                                <div class="workout-duration">${workout.duration}${workout.sets ? ` • ${workout.sets}` : ''}</div>
+                            </li>
+                        `).join('')}
+                    </ul>`
+                }
+            </div>
+        `).join('');
+        
+        // 显示建议
+        const recommendations = document.getElementById('recommendations');
+        recommendations.innerHTML = `
+            <h3>训练建议</h3>
+            <ul>
+                <li>根据您的${plan.summary.level}水平，建议循序渐进，不要急于求成</li>
+                <li>每次训练前进行5-10分钟的热身，训练后进行拉伸放松</li>
+                <li>注意倾听身体信号，如有不适请及时调整或停止训练</li>
+                <li>配合合理的饮食计划，保证充足的营养摄入</li>
+                <li>建议每4-6周调整一次训练计划，避免平台期</li>
+                <li>保持充足的睡眠，有助于恢复和进步</li>
+            </ul>
+        `;
+        
+        // 显示计划区域
+        this.planSection.style.display = 'block';
+        
+        // 滚动到计划区域
+        this.planSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    getTypeName(type) {
+        const types = {
+            'strength': '力量训练',
+            'cardio': '有氧训练',
+            'hiit': 'HIIT训练',
+            'flexibility': '柔韧性',
+            'rest': '休息日'
+        };
+        return types[type] || '训练';
+    }
+}
+
+// 页面加载完成后初始化计划器
+document.addEventListener('DOMContentLoaded', function() {
+    new WorkoutPlanner();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}聊天室错误{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.error-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    color: white;
+}
+
+.error-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.error-title {
+    font-size: 2em;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.error-message {
+    font-size: 1.1em;
+    margin-bottom: 30px;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+.error-details {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.error-details h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #ffd700;
+}
+
+.error-details ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.error-details li {
+    margin-bottom: 5px;
+    opacity: 0.9;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-button {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    text-decoration: none;
+    color: white;
+}
+
+.action-button.secondary {
+    background: linear-gradient(45deg, #6c757d, #495057);
+}
+
+.action-button.danger {
+    background: linear-gradient(45deg, #dc3545, #c82333);
+}
+
+.action-button.success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.room-info {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-family: monospace;
+    font-size: 0.9em;
+    word-break: break-all;
+}
+
+.suggestions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.suggestions h4 {
+    margin-bottom: 15px;
+    color: #ffd700;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 8px 0;
+}
+
+.suggestion-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+}
+
+@media (max-width: 768px) {
+    .error-card {
+        padding: 30px 20px;
+    }
+    
+    .error-title {
+        font-size: 1.5em;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .action-button {
+        width: 100%;
+        max-width: 250px;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-icon">
+            {% if error_type == 'not_found' %}
+                🔍
+            {% elif error_type == 'ended' %}
+                ⏰
+            {% elif error_type == 'no_permission' %}
+                🚫
+            {% else %}
+                ❌
+            {% endif %}
+        </div>
+        
+        <h1 class="error-title">
+            {% if error_type == 'not_found' %}
+                聊天室不存在
+            {% elif error_type == 'ended' %}
+                聊天室已结束
+            {% elif error_type == 'no_permission' %}
+                访问被拒绝
+            {% else %}
+                聊天室错误
+            {% endif %}
+        </h1>
+        
+        <p class="error-message">
+            {% if error_type == 'not_found' %}
+                抱歉，您要访问的聊天室不存在或已被删除。
+            {% elif error_type == 'ended' %}
+                这个聊天室已经结束，无法继续访问。
+            {% elif error_type == 'no_permission' %}
+                您没有权限访问这个聊天室。
+            {% else %}
+                {{ error_message|default:"访问聊天室时发生错误。" }}
+            {% endif %}
+        </p>
+        
+        {% if room_id %}
+        <div class="room-info">
+            <strong>聊天室ID:</strong> {{ room_id }}
+        </div>
+        {% endif %}
+        
+        <div class="error-details">
+            <h4>可能的原因：</h4>
+            <ul>
+                {% if error_type == 'not_found' %}
+                    <li>聊天室ID输入错误</li>
+                    <li>聊天室已被管理员删除</li>
+                    <li>链接已过期</li>
+                {% elif error_type == 'ended' %}
+                    <li>聊天室超过最大时长限制</li>
+                    <li>所有参与者都已离开</li>
+                    <li>系统自动清理了不活跃的聊天室</li>
+                {% elif error_type == 'no_permission' %}
+                    <li>您不是该聊天室的参与者</li>
+                    <li>需要重新进行匹配</li>
+                    <li>聊天室权限设置已更改</li>
+                {% else %}
+                    <li>网络连接问题</li>
+                    <li>服务器暂时不可用</li>
+                    <li>请稍后重试</li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'tools:heart_link' %}" class="action-button">
+                <i class="fas fa-heart"></i>
+                重新匹配
+            </a>
+            
+            <a href="{% url 'tools:chat_entrance' %}" class="action-button secondary">
+                <i class="fas fa-comments"></i>
+                聊天入口
+            </a>
+            
+            <a href="{% url 'tools:number_match' %}" class="action-button success">
+                <i class="fas fa-hashtag"></i>
+                数字匹配
+            </a>
+            
+            <a href="{% url 'home' %}" class="action-button">
+                <i class="fas fa-home"></i>
+                返回首页
+            </a>
+        </div>
+        
+        <div class="suggestions">
+            <h4>💡 建议：</h4>
+            <div class="suggestion-item">
+                <div class="suggestion-icon">1</div>
+                <span>尝试重新进行心动链接匹配</span>
+            </div>
+            <div class="suggestion-item">
+                <div class="suggestion-icon">2</div>
+                <span>使用数字匹配功能快速找到聊天对象</span>
+            </div>
+            <div class="suggestion-item">
+                <div class="suggestion-icon">3</div>
+                <span>检查网络连接是否正常</span>
+            </div>
+            <div class="suggestion-item">
+                <div class="suggestion-icon">4</div>
+                <span>如果问题持续，请联系管理员</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 页面加载时的动画效果
+document.addEventListener('DOMContentLoaded', function() {
+    const errorCard = document.querySelector('.error-card');
+    errorCard.style.opacity = '0';
+    errorCard.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+        errorCard.style.transition = 'all 0.5s ease';
+        errorCard.style.opacity = '1';
+        errorCard.style.transform = 'translateY(0)';
+    }, 100);
+});
+
+// 添加按钮点击效果
+document.querySelectorAll('.action-button').forEach(button => {
+    button.addEventListener('click', function(e) {
+        // 添加点击波纹效果
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+});
+
+// 添加键盘快捷键
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        // ESC键返回首页
+        window.location.href = "{% url 'home' %}";
+    } else if (e.key === 'Enter') {
+        // Enter键重新匹配
+        window.location.href = "{% url 'tools:heart_link' %}";
+    }
+});
+
+// 显示错误详情（如果存在）
+{% if error_details %}
+console.log('错误详情:', {{ error_details|safe }});
+{% endif %}
+</script>
+{% endblock %}
