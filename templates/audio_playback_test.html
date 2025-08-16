@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频播放测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .audio-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .audio-section h3 {
+            margin-top: 0;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .audio-section h3::before {
+            content: "🎵";
+            font-size: 1.2em;
+        }
+        
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .play-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .play-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .play-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+        
+        .status.error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .status.info {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid #3498db;
+            color: #3498db;
+        }
+        
+        .file-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .time-display {
+            font-size: 14px;
+            color: #ddd;
+            margin: 5px 0;
+        }
+        
+        .debug-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .format-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .format-mp3 { background: #e74c3c; color: white; }
+        .format-wav { background: #3498db; color: white; }
+        .format-flac { background: #9b59b6; color: white; }
+        .format-m4a { background: #f39c12; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 音频播放测试页面</h1>
+        
+        <div class="audio-section">
+            <h3>MP3 格式测试 <span class="format-badge format-mp3">MP3</span></h3>
+            <div class="file-info">
+                文件: /static/audio/meditation/MISTERK_fixed_test.mp3<br>
+                大小: 8.5 MB
+            </div>
+            <div class="audio-controls">
+                <button class="play-button" onclick="testAudio('mp3')">播放 MP3</button>
+                <button class="play-button" onclick="stopAudio('mp3')">停止</button>
+            </div>
+            <div id="status-mp3" class="status info">等待测试...</div>
+            <div class="progress-bar">
+                <div id="progress-mp3" class="progress-fill"></div>
+            </div>
+            <div id="time-mp3" class="time-display">00:00 / 00:00</div>
+            <div id="debug-mp3" class="debug-info"></div>
+        </div>
+        
+        <div class="audio-section">
+            <h3>WAV 格式测试 <span class="format-badge format-wav">WAV</span></h3>
+            <div class="file-info">
+                文件: /static/audio/meditation/MISTERK_ncmdump_decrypted.mp3<br>
+                大小: 705 KB
+            </div>
+            <div class="audio-controls">
+                <button class="play-button" onclick="testAudio('wav')">播放 WAV</button>
+                <button class="play-button" onclick="stopAudio('wav')">停止</button>
+            </div>
+            <div id="status-wav" class="status info">等待测试...</div>
+            <div class="progress-bar">
+                <div id="progress-wav" class="progress-fill"></div>
+            </div>
+            <div id="time-wav" class="time-display">00:00 / 00:00</div>
+            <div id="debug-wav" class="debug-info"></div>
+        </div>
+        
+        <div class="audio-section">
+            <h3>FLAC 格式测试 <span class="format-badge format-flac">FLAC</span></h3>
+            <div class="file-info">
+                文件: /static/audio/meditation/MISTERK_new_decrypted.mp3<br>
+                大小: 8.5 MB
+            </div>
+            <div class="audio-controls">
+                <button class="play-button" onclick="testAudio('flac')">播放 FLAC</button>
+                <button class="play-button" onclick="stopAudio('flac')">停止</button>
+            </div>
+            <div id="status-flac" class="status info">等待测试...</div>
+            <div class="progress-bar">
+                <div id="progress-flac" class="progress-fill"></div>
+            </div>
+            <div id="time-flac" class="time-display">00:00 / 00:00</div>
+            <div id="debug-flac" class="debug-info"></div>
+        </div>
+        
+        <div class="audio-section">
+            <h3>M4A 格式测试 <span class="format-badge format-m4a">M4A</span></h3>
+            <div class="file-info">
+                文件: /static/audio/meditation/MISTERK_new_converted.mp3<br>
+                大小: 8.5 MB
+            </div>
+            <div class="audio-controls">
+                <button class="play-button" onclick="testAudio('m4a')">播放 M4A</button>
+                <button class="play-button" onclick="stopAudio('m4a')">停止</button>
+            </div>
+            <div id="status-m4a" class="status info">等待测试...</div>
+            <div class="progress-bar">
+                <div id="progress-m4a" class="progress-fill"></div>
+            </div>
+            <div id="time-m4a" class="time-display">00:00 / 00:00</div>
+            <div id="debug-m4a" class="debug-info"></div>
+        </div>
+        
+        <div class="audio-section">
+            <h3>🎯 浏览器兼容性测试</h3>
+            <div id="browser-info" class="file-info">
+                正在检测浏览器信息...
+            </div>
+            <div id="codec-support" class="file-info">
+                正在检测编解码器支持...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audioElements = {};
+        const audioFiles = {
+            mp3: '/static/audio/meditation/MISTERK_fixed_test.mp3',
+            wav: '/static/audio/meditation/MISTERK_ncmdump_decrypted.mp3',
+            flac: '/static/audio/meditation/MISTERK_new_decrypted.mp3',
+            m4a: '/static/audio/meditation/MISTERK_new_converted.mp3'
+        };
+
+        function updateStatus(format, message, type = 'info') {
+            const statusEl = document.getElementById(`status-${format}`);
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function updateProgress(format, current, duration) {
+            const progressEl = document.getElementById(`progress-${format}`);
+            const timeEl = document.getElementById(`time-${format}`);
+            
+            if (duration > 0) {
+                const percentage = (current / duration) * 100;
+                progressEl.style.width = `${percentage}%`;
+            }
+            
+            const currentTime = formatTime(current);
+            const totalTime = formatTime(duration);
+            timeEl.textContent = `${currentTime} / ${totalTime}`;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function logDebug(format, message) {
+            const debugEl = document.getElementById(`debug-${format}`);
+            const timestamp = new Date().toLocaleTimeString();
+            debugEl.innerHTML += `[${timestamp}] ${message}\n`;
+            debugEl.scrollTop = debugEl.scrollHeight;
+        }
+
+        function testAudio(format) {
+            const audio = new Audio();
+            audioElements[format] = audio;
+            
+            updateStatus(format, '正在加载音频文件...', 'info');
+            logDebug(format, `开始加载音频文件: ${audioFiles[format]}`);
+            
+            // 设置音频事件监听器
+            audio.addEventListener('loadstart', () => {
+                logDebug(format, 'loadstart: 开始加载');
+            });
+            
+            audio.addEventListener('durationchange', () => {
+                logDebug(format, `durationchange: 时长 = ${audio.duration}s`);
+                updateProgress(format, 0, audio.duration);
+            });
+            
+            audio.addEventListener('loadedmetadata', () => {
+                logDebug(format, 'loadedmetadata: 元数据加载完成');
+                updateStatus(format, '音频加载完成，准备播放', 'success');
+            });
+            
+            audio.addEventListener('canplay', () => {
+                logDebug(format, 'canplay: 可以开始播放');
+            });
+            
+            audio.addEventListener('canplaythrough', () => {
+                logDebug(format, 'canplaythrough: 可以流畅播放');
+            });
+            
+            audio.addEventListener('play', () => {
+                logDebug(format, 'play: 开始播放');
+                updateStatus(format, '正在播放...', 'success');
+            });
+            
+            audio.addEventListener('playing', () => {
+                logDebug(format, 'playing: 播放中');
+            });
+            
+            audio.addEventListener('pause', () => {
+                logDebug(format, 'pause: 暂停播放');
+                updateStatus(format, '播放已暂停', 'info');
+            });
+            
+            audio.addEventListener('ended', () => {
+                logDebug(format, 'ended: 播放结束');
+                updateStatus(format, '播放完成', 'success');
+            });
+            
+            audio.addEventListener('timeupdate', () => {
+                updateProgress(format, audio.currentTime, audio.duration);
+            });
+            
+            audio.addEventListener('error', (e) => {
+                const error = audio.error;
+                let errorMessage = '未知错误';
+                
+                if (error) {
+                    switch (error.code) {
+                        case MediaError.MEDIA_ERR_ABORTED:
+                            errorMessage = '播放被用户中止';
+                            break;
+                        case MediaError.MEDIA_ERR_NETWORK:
+                            errorMessage = '网络错误';
+                            break;
+                        case MediaError.MEDIA_ERR_DECODE:
+                            errorMessage = '解码错误';
+                            break;
+                        case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                            errorMessage = '不支持的音频格式';
+                            break;
+                        default:
+                            errorMessage = `错误代码: ${error.code}, 消息: ${error.message}`;
+                    }
+                }
+                
+                logDebug(format, `error: ${errorMessage}`);
+                updateStatus(format, `播放失败: ${errorMessage}`, 'error');
+            });
+            
+            audio.addEventListener('stalled', () => {
+                logDebug(format, 'stalled: 播放停滞');
+            });
+            
+            audio.addEventListener('suspend', () => {
+                logDebug(format, 'suspend: 播放暂停');
+            });
+            
+            audio.addEventListener('waiting', () => {
+                logDebug(format, 'waiting: 等待数据');
+            });
+            
+            // 设置音频源并开始播放
+            audio.src = audioFiles[format];
+            audio.load();
+            
+            audio.play().then(() => {
+                logDebug(format, '播放成功启动');
+            }).catch((error) => {
+                logDebug(format, `播放启动失败: ${error.message}`);
+                updateStatus(format, `播放启动失败: ${error.message}`, 'error');
+            });
+        }
+
+        function stopAudio(format) {
+            const audio = audioElements[format];
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                updateStatus(format, '播放已停止', 'info');
+                logDebug(format, '手动停止播放');
+            }
+        }
+
+        function detectBrowserInfo() {
+            const browserInfo = document.getElementById('browser-info');
+            const userAgent = navigator.userAgent;
+            
+            let browserName = '未知浏览器';
+            if (userAgent.includes('Chrome')) browserName = 'Chrome';
+            else if (userAgent.includes('Firefox')) browserName = 'Firefox';
+            else if (userAgent.includes('Safari')) browserName = 'Safari';
+            else if (userAgent.includes('Edge')) browserName = 'Edge';
+            
+            browserInfo.innerHTML = `
+                浏览器: ${browserName}<br>
+                User Agent: ${userAgent}<br>
+                平台: ${navigator.platform}<br>
+                语言: ${navigator.language}
+            `;
+        }
+
+        function testCodecSupport() {
+            const codecSupport = document.getElementById('codec-support');
+            const audio = new Audio();
+            
+            const codecs = [
+                'audio/mpeg',
+                'audio/wav',
+                'audio/flac',
+                'audio/mp4',
+                'audio/aac',
+                'audio/ogg'
+            ];
+            
+            let supportInfo = '';
+            codecs.forEach(codec => {
+                const canPlay = audio.canPlayType(codec);
+                const status = canPlay ? '✅ 支持' : '❌ 不支持';
+                supportInfo += `${codec}: ${status} (${canPlay || '不支持'})<br>`;
+            });
+            
+            codecSupport.innerHTML = supportInfo;
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', () => {
+            detectBrowserInfo();
+            testCodecSupport();
+        });
+    </script>
+</body>
+</html>
