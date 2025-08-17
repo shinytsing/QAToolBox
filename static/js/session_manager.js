@@ -22,12 +22,12 @@ class SessionManager {
     
     init() {
         // 检查用户是否已登录
-        this.checkLoginStatus();
-        
-        // 如果已登录，开始session管理
-        if (this.isLoggedIn) {
-            this.startSessionManagement();
-        }
+        this.checkLoginStatus().then(() => {
+            // 如果已登录，开始session管理
+            if (this.isLoggedIn) {
+                this.startSessionManagement();
+            }
+        });
     }
     
     async checkLoginStatus() {
@@ -44,23 +44,36 @@ class SessionManager {
                 if (data.success) {
                     this.isLoggedIn = true;
                     this.sessionData = data.data;
-                    console.log('Session状态检查成功:', this.sessionData);
+                    if (!this.initialCheckDone) {
+                        console.log('Session状态检查成功:', this.sessionData);
+                        this.initialCheckDone = true;
+                    }
                 } else {
                     this.isLoggedIn = false;
-                    console.log('用户未登录');
+                    if (!this.initialCheckDone) {
+                        console.log('用户未登录');
+                        this.initialCheckDone = true;
+                    }
                 }
             } else if (response.status === 401) {
                 // 401状态码表示未登录，这是正常的
                 this.isLoggedIn = false;
-                console.log('用户未登录 (401)');
+                if (!this.initialCheckDone) {
+                    console.log('用户未登录 (401)');
+                    this.initialCheckDone = true;
+                }
             } else {
                 // 其他错误状态码
                 this.isLoggedIn = false;
-                console.log('Session状态检查失败，状态码:', response.status);
+                if (!this.initialCheckDone) {
+                    console.log('Session状态检查失败，状态码:', response.status);
+                    this.initialCheckDone = true;
+                }
             }
         } catch (error) {
             console.error('检查登录状态失败:', error);
             this.isLoggedIn = false;
+            this.initialCheckDone = true;
         }
     }
     
