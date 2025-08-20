@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.conf import settings
 from . import consumers
 
 # =============================================================================
@@ -13,7 +14,7 @@ from . import consumers
 from .views.basic_tools_views import (
     test_case_generator, redbook_generator, pdf_converter, pdf_converter_test, 
     fortune_analyzer, web_crawler, self_analysis, storyboard, 
-    fitness_center, training_plan_editor, deepseek_api, self_analysis_api, storyboard_api,
+    fitness_center, training_plan_editor, self_analysis_api, storyboard_api,
     location_api, update_location_api
 )
 
@@ -188,43 +189,18 @@ from .time_capsule_views import (
     get_nearby_capsules as get_nearby_capsules_api,
 )
 
-from .missing_views import (
-    # 功能推荐系统页面视图函数
-    feature_discovery_view, my_recommendations_view, admin_feature_management_view,
-    # 成就相关API
-    achievements_api,
-    # DeepSeek API
-    deepseek_api,
-    # Food相关API
-    api_foods, api_food_photo_bindings, api_save_food_photo_bindings, api_photos,
-    # MeeSomeone相关API
-    get_dashboard_stats_api, get_relationship_tags_api, get_person_profiles_api, create_person_profile_api,
-    get_interactions_api, create_interaction_api, create_important_moment_api, get_timeline_data_api, get_graph_data_api,
-    # Food Image Crawler相关API
-    food_image_crawler_api,
-    # Food List相关API
-    get_food_list_api,
-    # Food Image Compare相关API
-    compare_food_images_api,
-    # Food Image Update相关API
-    update_food_image_api,
-    # 签到相关API
-    checkin_add_api, checkin_delete_api_simple, checkin_delete_api,
-    # 塔罗牌相关API
-    initialize_tarot_data_api, tarot_spreads_api, tarot_create_reading_api, tarot_readings_api, tarot_daily_energy_api,
-    # 食物随机选择器相关API
-    food_randomizer_pure_random_api, food_randomizer_statistics_api, food_randomizer_history_api,
-)
+# 注意：原本从missing_views导入的函数已经在各自专门的视图文件中有了更好的实现
 
 # 从测试用例生成API导入
 from .generate_test_cases_api import GenerateTestCasesAPI
 from .generate_redbook_api import GenerateRedBookAPI
 
-# 从missing_views导入存在的API
-from .missing_views import (
-    create_job_search_request_api, get_job_search_requests_api,
-    pdf_converter_rating_api,
-)
+# 从missing_views只导入仍需要的函数（避免重复）
+# from .missing_views import (
+#     feature_discovery_view, my_recommendations_view, admin_feature_management_view,
+#     create_job_search_request_api, get_job_search_requests_api,
+#     pdf_converter_rating_api,
+# )
 
 # 从主题相关视图导入
 from .views.theme_views import (
@@ -466,9 +442,9 @@ urlpatterns = [
     path('meetsomeone/graph/', meetsomeone_graph_view, name='meetsomeone_graph'),
     
     # 功能推荐系统页面路由
-    path('feature_discovery/', feature_discovery_view, name='feature_discovery_page'),
-    path('my_recommendations/', my_recommendations_view, name='my_recommendations_page'),
-    path('admin/feature_management/', admin_feature_management_view, name='admin_feature_management'),
+    #     path('feature_discovery/', feature_discovery_view, name='feature_discovery_page'),
+    #     path('my_recommendations/', my_recommendations_view, name='my_recommendations_page'),
+    #     path('admin/feature_management/', admin_feature_management_view, name='admin_feature_management'),
     
     # 吉他训练系统路由
     path('guitar-training/', guitar_training_dashboard, name='guitar_training_dashboard'),
@@ -532,8 +508,8 @@ urlpatterns = [
     path('api/boss/crawler_status/', get_crawler_status_api, name='get_crawler_status_api'),
     
     # 求职相关API
-    path('api/job_search/create_request/', create_job_search_request_api, name='create_job_search_request_api'),
-    path('api/job_search/requests/', get_job_search_requests_api, name='get_job_search_requests_api'),
+    #     path('api/job_search/create_request/', create_job_search_request_api, name='create_job_search_request_api'),
+    #     path('api/job_search/requests/', get_job_search_requests_api, name='get_job_search_requests_api'),
     # path('api/job_search/applications/', get_job_applications_api, name='get_job_applications_api'),
     # path('api/job_search/profile/', get_job_profile_api, name='get_job_profile_api'),
     # path('api/job_search/profile/save/', save_job_profile_api, name='save_job_profile_api'),
@@ -721,13 +697,7 @@ urlpatterns = [
     path('api/user_generated_travel_guide/<int:guide_id>/use/', user_generated_travel_guide_use_api, name='user_generated_travel_guide_use_api'),
     path('api/user_generated_travel_guide/<int:guide_id>/upload_attachment/', user_generated_travel_guide_upload_attachment_api, name='user_generated_travel_guide_upload_attachment_api'),
     
-    # Food相关API路由
-    path('api/food-randomizer/start/', start_food_randomization_api, name='start_food_randomization_api'),
-    path('api/food-randomizer/pause/', pause_food_randomization_api, name='pause_food_randomization_api'),
-    path('api/food-randomizer/rate/', rate_food_api, name='rate_food_api'),
-    path('api/foods/', api_foods, name='api_foods'),
-    path('api/food-photo-bindings/', api_food_photo_bindings, name='api_food_photo_bindings'),
-    path('api/food-photo-bindings/save/', api_save_food_photo_bindings, name='api_save_food_photo_bindings'),
+    # Food相关API路由（已合并到上面的食物相关API路由部分）
     
     # MeeSomeone相关API路由
     path('api/meetsomeone/dashboard-stats/', get_dashboard_stats_api, name='get_dashboard_stats_api'),
@@ -740,11 +710,7 @@ urlpatterns = [
     path('api/meetsomeone/timeline/', get_timeline_data_api, name='get_timeline_data_api'),
     path('api/meetsomeone/graph/', get_graph_data_api, name='get_graph_data_api'),
     
-    # Food Image Crawler相关API路由
-    path('api/food-image-crawler/', food_image_crawler_api, name='food_image_crawler_api'),
-    
-    # Food List相关API路由
-    path('api/food-list/', get_food_list_api, name='get_food_list_api'),
+    # Food Image Crawler和Food List相关API路由（已合并到上面的食物相关API路由部分）
     
     # Food Image Compare相关API路由
     path('api/compare-food-images/', compare_food_images_api, name='compare_food_images_api'),

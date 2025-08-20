@@ -83,78 +83,7 @@ def training_plan_editor(request):
     return render(request, 'tools/training_plan_editor.html')
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def deepseek_api(request):
-    """DeepSeek API接口"""
-    try:
-        data = json.loads(request.body)
-        prompt = data.get('prompt', '')
-        max_tokens = data.get('max_tokens', 500)
-        temperature = data.get('temperature', 0.8)
-        
-        if not prompt:
-            return JsonResponse({'success': False, 'error': '提示词不能为空'}, content_type='application/json')
-        
-        # DeepSeek API配置
-        api_key = os.getenv('DEEPSEEK_API_KEY')
-        if not api_key:
-            return JsonResponse({'success': False, 'error': 'DeepSeek API密钥未配置'}, content_type='application/json')
-        
-        # 调用DeepSeek API
-        headers = {
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
-        }
-        
-        payload = {
-            'messages': [
-                {
-                    'role': 'user',
-                    'content': prompt
-                }
-            ],
-            'model': 'deepseek-chat',
-            'max_tokens': max_tokens,
-            'temperature': temperature
-        }
-        
-        response = requests.post(
-            'https://api.deepseek.com/v1/chat/completions',
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            content = result['choices'][0]['message']['content']
-            return JsonResponse({
-                'success': True,
-                'content': content,
-                'usage': result.get('usage', {})
-            }, content_type='application/json')
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': f'API调用失败: {response.status_code}'
-            }, content_type='application/json')
-            
-    except requests.exceptions.Timeout:
-        return JsonResponse({
-            'success': False,
-            'error': '请求超时，请稍后重试'
-        }, content_type='application/json')
-    except requests.exceptions.RequestException as e:
-        return JsonResponse({
-            'success': False,
-            'error': f'网络请求失败: {str(e)}'
-        }, content_type='application/json')
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': f'处理失败: {str(e)}'
-        }, content_type='application/json')
+# deepseek_api函数已移除 - 使用base_views.py中的实现
 
 
 @login_required

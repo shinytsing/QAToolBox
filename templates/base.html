@@ -3381,81 +3381,82 @@
             }, 150); // 150ms后恢复
         }, { passive: true }); // 使用passive监听器提高性能
     }
-            // 暂停所有动画
-        function pauseAnimations() {
-            const animatedElements = document.querySelectorAll('*');
-            animatedElements.forEach(element => {
-                const computedStyle = window.getComputedStyle(element);
-                if (computedStyle.animationName !== 'none') {
-                    element.style.animationPlayState = 'paused';
-                }
-            });
-        }
-        
-        // 恢复所有动画
-        function resumeAnimations() {
-            const animatedElements = document.querySelectorAll('*');
-            animatedElements.forEach(element => {
-                const computedStyle = window.getComputedStyle(element);
-                if (computedStyle.animationName !== 'none') {
-                    element.style.animationPlayState = 'running';
-                }
-            });
-        }
-        
-        // 公告相关函数
-        function loadAnnouncements() {
-            fetch('/content/api/announcements/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.announcements.length > 0) {
-                        // 过滤出需要弹窗显示的公告
-                        const popupAnnouncements = data.announcements.filter(a => a.is_popup);
-                        if (popupAnnouncements.length > 0) {
-                            showAnnouncementPopup(popupAnnouncements);
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading announcements:', error);
-                });
-        }
-        
-        function showAnnouncementPopup(announcements) {
-            const overlay = document.getElementById('announcement-overlay');
-            const body = document.getElementById('announcement-body');
-            
-            if (!overlay || !body) return;
-            
-            // 渲染公告内容
-            let html = '';
-            announcements.forEach(announcement => {
-                html += `
-                    <div class="announcement-item priority-${announcement.priority}">
-                        <div class="announcement-title">${announcement.title}</div>
-                        <div class="announcement-text">${announcement.content}</div>
-                        <div class="announcement-time">${announcement.created_at}</div>
-                    </div>
-                `;
-            });
-            
-            body.innerHTML = html;
-            
-            // 显示弹窗
-            overlay.classList.add('active');
-            
-            // 5秒后自动消失
-            setTimeout(function() {
-                closeAnnouncement();
-            }, 5000);
-        }
-        
-        function closeAnnouncement() {
-            const overlay = document.getElementById('announcement-overlay');
-            if (overlay) {
-                overlay.classList.remove('active');
+    
+    // 暂停所有动画
+    function pauseAnimations() {
+        const animatedElements = document.querySelectorAll('*');
+        animatedElements.forEach(element => {
+            const computedStyle = window.getComputedStyle(element);
+            if (computedStyle.animationName !== 'none') {
+                element.style.animationPlayState = 'paused';
             }
+        });
+    }
+    
+    // 恢复所有动画
+    function resumeAnimations() {
+        const animatedElements = document.querySelectorAll('*');
+        animatedElements.forEach(element => {
+            const computedStyle = window.getComputedStyle(element);
+            if (computedStyle.animationName !== 'none') {
+                element.style.animationPlayState = 'running';
+            }
+        });
+    }
+    
+    // 公告相关函数
+    function loadAnnouncements() {
+        fetch('/content/api/announcements/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.announcements.length > 0) {
+                    // 过滤出需要弹窗显示的公告
+                    const popupAnnouncements = data.announcements.filter(a => a.is_popup);
+                    if (popupAnnouncements.length > 0) {
+                        showAnnouncementPopup(popupAnnouncements);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading announcements:', error);
+            });
+    }
+    
+    function showAnnouncementPopup(announcements) {
+        const overlay = document.getElementById('announcement-overlay');
+        const body = document.getElementById('announcement-body');
+        
+        if (!overlay || !body) return;
+        
+        // 渲染公告内容
+        let html = '';
+        announcements.forEach(announcement => {
+            html += `
+                <div class="announcement-item priority-${announcement.priority}">
+                    <div class="announcement-title">${announcement.title}</div>
+                    <div class="announcement-text">${announcement.content}</div>
+                    <div class="announcement-time">${announcement.created_at}</div>
+                </div>
+            `;
+        });
+        
+        body.innerHTML = html;
+        
+        // 显示弹窗
+        overlay.classList.add('active');
+        
+        // 5秒后自动消失
+        setTimeout(function() {
+            closeAnnouncement();
+        }, 5000);
+    }
+    
+    function closeAnnouncement() {
+        const overlay = document.getElementById('announcement-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
         }
+    }
         
         // 添加点击黑幕关闭公告的功能
         document.addEventListener('DOMContentLoaded', function() {
@@ -3476,39 +3477,40 @@
                 });
             }
         });
-        // 简化的音乐控制函数
-        function toggleMusic() {
-            var audio = document.getElementById('theme-music');
-            
-            if (audio.paused) {
-                audio.play();
-                showNotification('音乐已开启', 'success');
-            } else {
-                audio.pause();
-                showNotification('音乐已暂停', 'info');
-            }
-        }
+    
+    // 简化的音乐控制函数
+    function toggleMusic() {
+        var audio = document.getElementById('theme-music');
         
-        // 优化的主题音乐设置函数
-        function setThemeMusic(theme) {
-            var audio = document.getElementById('theme-music');
-            var source = document.getElementById('music-source');
-            
-            if (themeMusic[theme] && source.src !== themeMusic[theme]) {
-                // 只有在音乐文件不同时才切换，避免重复加载
-                source.src = themeMusic[theme];
-                audio.load();
-                // 异步播放，不阻塞UI
-                setTimeout(() => {
-                    audio.play().catch(function(error) {
-                        console.log('音乐自动播放被阻止:', error);
-                    });
-                }, 0);
-            }
+        if (audio.paused) {
+            audio.play();
+            showNotification('音乐已开启', 'success');
+        } else {
+            audio.pause();
+            showNotification('音乐已暂停', 'info');
         }
+    }
+    
+    // 优化的主题音乐设置函数
+    function setThemeMusic(theme) {
+        var audio = document.getElementById('theme-music');
+        var source = document.getElementById('music-source');
         
-        // 显示通知
-        function showNotification(message, type) {
+        if (themeMusic[theme] && source.src !== themeMusic[theme]) {
+            // 只有在音乐文件不同时才切换，避免重复加载
+            source.src = themeMusic[theme];
+            audio.load();
+            // 异步播放，不阻塞UI
+            setTimeout(() => {
+                audio.play().catch(function(error) {
+                    console.log('音乐自动播放被阻止:', error);
+                });
+            }, 0);
+        }
+    }
+    
+    // 显示通知
+    function showNotification(message, type) {
             // 创建通知元素
             var notification = document.createElement('div');
             notification.style.cssText = `
@@ -3535,8 +3537,8 @@
             }, 3000);
         }
         
-        // 显示上传详细信息
-        function showUploadDetails(uploadInfo) {
+    // 显示上传详细信息
+    function showUploadDetails(uploadInfo) {
             // 移除之前的详细提示
             const existingDetails = document.querySelector('.upload-details-toast');
             if (existingDetails) {
@@ -3611,8 +3613,8 @@
             });
         });
 
-        // 显示建议界面 - 极客风格
-        function showSuggestions() {
+    // 显示建议界面 - 极客风格
+    function showSuggestions() {
             // 先获取现有建议
             fetch('/content/api/suggestions/')
                 .then(response => response.json())
@@ -3803,8 +3805,8 @@
                 });
         }
         
-        // 关闭建议界面
-        function closeSuggestions() {
+    // 关闭建议界面
+    function closeSuggestions() {
             console.log('关闭建议界面被调用');
             const suggestions = document.querySelector('div[style*="z-index: 10000"]');
             if (suggestions) {
@@ -3825,8 +3827,8 @@
             }
         });
         
-        // Tab切换功能
-        function switchTab(tabName) {
+    // Tab切换功能
+    function switchTab(tabName) {
             // 隐藏所有tab内容
             document.getElementById('tab-content-existing').style.display = 'none';
             document.getElementById('tab-content-new').style.display = 'none';
@@ -6683,7 +6685,6 @@
         }
         
         // 这些函数现在在 top_ui_functions.js 中定义
-    }
     
     // 创建设置模态框
     function createSettingsModal() {
@@ -7195,7 +7196,6 @@
     
     <!-- 全局分享按钮 -->
     {% include 'tools/share_button.html' %}
-    
     <script>
     // 全局隐藏顶部栏功能
     function hideTopUI() {

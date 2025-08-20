@@ -159,8 +159,26 @@ class PDFConverter:
                 
                 # 使用pdf2docx进行转换，改进页面布局处理
                 cv = Converter(temp_pdf_path)
-                # 改进转换参数，优化页面布局
-                cv.convert(temp_docx_path, start=0, end=None, pages=None, zoom_x=1.0, zoom_y=1.0, crop=(0, 0, 0, 0))
+                
+                try:
+                    # 改进转换参数，优化页面布局，并添加错误处理
+                    import logging
+                    # 临时抑制pdf2docx的WARNING和ERROR日志，只保留CRITICAL
+                    pdf2docx_logger = logging.getLogger('pdf2docx')
+                    original_level = pdf2docx_logger.getEffectiveLevel()
+                    pdf2docx_logger.setLevel(logging.CRITICAL)
+                    
+                    try:
+                        cv.convert(temp_docx_path, start=0, end=None, pages=None, zoom_x=1.0, zoom_y=1.0, crop=(0, 0, 0, 0))
+                    finally:
+                        # 恢复原始日志级别
+                        pdf2docx_logger.setLevel(original_level)
+                        
+                except Exception as conv_error:
+                    cv.close()
+                    logger.warning(f"pdf2docx转换时出现警告（但可能仍然成功）: {conv_error}")
+                    # 继续检查是否产生了输出文件
+                
                 cv.close()
                 
                 # 检查输出文件是否存在
@@ -174,18 +192,49 @@ class PDFConverter:
                 if len(docx_content) == 0:
                     return False, "转换后的文件为空，可能是扫描版PDF或内容无法识别", None
                 
-                # 检查转换结果是否包含实际内容
+                # 检查转换结果是否包含实际内容，并设置中文字体
                 try:
                     from docx import Document
                     doc = Document(io.BytesIO(docx_content))
+                    
+                    # 设置文档的中文字体
+                    from docx.oxml.shared import qn
+                    for paragraph in doc.paragraphs:
+                        for run in paragraph.runs:
+                            run.font.name = '宋体'
+                            run._element.rPr.rFonts.set(qn('w:eastAsia'), '宋体')
+                            run._element.rPr.rFonts.set(qn('w:ascii'), 'Times New Roman')
+                            run._element.rPr.rFonts.set(qn('w:hAnsi'), 'Times New Roman')
+                    
                     text_content = ""
                     for paragraph in doc.paragraphs:
                         text_content += paragraph.text + "\n"
                     
-                    if len(text_content.strip()) < 10:  # 如果文本内容太少，可能是扫描版PDF
+                    logger.info(f"pdf2docx提取的文本长度: {len(text_content.strip())}")
+                    
+                    # 检查内容质量 - 如果内容太少、包含乱码或不合理，切换到OCR
+                    content_length = len(text_content.strip())
+                    
+                    # 检查是否包含乱码或不合理内容
+                    suspicious_patterns = ['BERBER', 'x1', '23450m', 'ERROR']
+                    contains_suspicious = any(pattern in text_content for pattern in suspicious_patterns)
+                    
+                    # 检查是否主要是数字或特殊字符（可能是提取错误）
+                    non_space_chars = text_content.replace(' ', '').replace('\n', '')
+                    if non_space_chars:
+                        alpha_ratio = sum(c.isalpha() for c in non_space_chars) / len(non_space_chars)
+                    else:
+                        alpha_ratio = 0
+                    
+                    logger.info(f"内容质量检查: 长度={content_length}, 包含可疑内容={contains_suspicious}, 字母比例={alpha_ratio:.2f}")
+                    
+                    # 如果内容太少、包含可疑内容或字母比例太低，切换到OCR
+                    if content_length < 50 or contains_suspicious or alpha_ratio < 0.3:
+                        logger.info("pdf2docx提取内容不足，切换到OCR模式")
                         # 自动启用 OCR 降级为扫描件识别
                         ocr_success, ocr_result, ocr_type = self._ocr_pdf_to_word_from_path(temp_pdf_path)
                         if ocr_success:
+                            logger.info("OCR转换成功，使用OCR结果")
                             # 清理临时文件
                             try:
                                 os.unlink(temp_pdf_path)
@@ -195,18 +244,46 @@ class PDFConverter:
                                 pass
                             return True, ocr_result, "pdf_to_word"
                         else:
-                            # OCR 失败则返回具体原因
-                            # 清理临时文件
-                            try:
-                                os.unlink(temp_pdf_path)
-                                if os.path.exists(temp_docx_path):
-                                    os.unlink(temp_docx_path)
-                            except:
-                                pass
-                            return False, ocr_result, None
+                            logger.warning(f"OCR转换也失败: {ocr_result}")
+                            # 如果OCR也失败，但pdf2docx有输出，继续使用pdf2docx结果
+                            if len(docx_content) > 1000:  # 文件不为空
+                                logger.info("使用pdf2docx结果，尽管内容较少")
+                            else:
+                                # 清理临时文件
+                                try:
+                                    os.unlink(temp_pdf_path)
+                                    if os.path.exists(temp_docx_path):
+                                        os.unlink(temp_docx_path)
+                                except:
+                                    pass
+                                return False, f"转换失败: pdf2docx提取内容不足，OCR也失败: {ocr_result}", None
+                    else:
+                        logger.info("pdf2docx提取内容充足，使用pdf2docx结果")
+                    
+                    # 保存修改后的文档（包含中文字体设置）
+                    import io as _bio
+                    doc_buffer = _bio.BytesIO()
+                    doc.save(doc_buffer)
+                    docx_content = doc_buffer.getvalue()
                         
                 except Exception as check_error:
                     logger.warning(f"转换结果检查失败: {check_error}")
+                    # 如果检查失败但有输出文件，尝试使用OCR
+                    if len(docx_content) < 1000:
+                        logger.info("由于检查失败且文件较小，尝试OCR转换")
+                        try:
+                            ocr_success, ocr_result, ocr_type = self._ocr_pdf_to_word_from_path(temp_pdf_path)
+                            if ocr_success:
+                                # 清理临时文件
+                                try:
+                                    os.unlink(temp_pdf_path)
+                                    if os.path.exists(temp_docx_path):
+                                        os.unlink(temp_docx_path)
+                                except:
+                                    pass
+                                return True, ocr_result, "pdf_to_word"
+                        except Exception as ocr_error:
+                            logger.warning(f"OCR备用转换失败: {ocr_error}")
                     # 继续处理，不因为检查失败而中断
                 
                 # 清理临时文件
@@ -280,10 +357,17 @@ class PDFConverter:
 
                 # 语言优先中文+英文（若未安装对应语言，pytesseract会回退或报错）
                 try:
-                    text = pytesseract.image_to_string(img, lang="chi_sim+eng")
-                except Exception:
-                    # 回退英文
-                    text = pytesseract.image_to_string(img, lang="eng")
+                    # 使用中文+英文OCR，移除字符白名单限制以支持更多中文字符
+                    config = '--oem 3 --psm 6'
+                    text = pytesseract.image_to_string(img, lang="chi_sim+eng", config=config)
+                except Exception as ocr_error:
+                    logger.warning(f"中文OCR失败，回退到英文: {ocr_error}")
+                    try:
+                        # 回退英文
+                        text = pytesseract.image_to_string(img, lang="eng")
+                    except Exception as eng_error:
+                        logger.warning(f"英文OCR也失败: {eng_error}")
+                        text = ""
 
                 text = text.strip()
                 if text:
@@ -295,57 +379,69 @@ class PDFConverter:
 
             # 生成docx，改进的页面结构处理 - 优化版本
             document = Document()
+            
+            # 设置文档的默认字体和编码
             style = document.styles['Normal']
             font = style.font
-            font.name = '宋体'
+            font.name = '宋体'  # 中文字体
             font.size = Pt(12)
+            
+            # 设置中文字体备选方案
+            from docx.oxml.shared import qn
+            try:
+                font.element.set(qn('w:eastAsia'), '宋体')
+                font.element.set(qn('w:ascii'), 'Times New Roman')
+                font.element.set(qn('w:hAnsi'), 'Times New Roman')
+                font.element.set(qn('w:cs'), '宋体')
+            except Exception as font_error:
+                logger.warning(f"设置字体时出现警告: {font_error}")
+                # 继续处理，不中断转换
 
-            # 改进的文本处理：智能合并页面内容，减少不必要的页面分割
+                            # 优化的文本处理：保持原始页面结构，减少不必要的分页
             all_text = ""
             for page_index, page_text in enumerate(ocr_texts):
                 if page_text.strip():
-                    # 如果不是第一页，添加页面分隔符
                     if page_index > 0 and all_text:
-                        all_text += "\n\n" + "="*50 + "\n\n"  # 页面分隔符
-                    all_text += page_text.strip()
-
-            # 进一步优化：减少页面分隔符的使用
-            # 如果页面内容较少，尝试合并相邻页面
-            if len(ocr_texts) > 1:
-                # 检查是否有页面内容很少，如果是则合并
-                merged_text = ""
-                for i, page_text in enumerate(ocr_texts):
-                    if page_text.strip():
-                        if i > 0 and merged_text:
-                            # 只有当页面内容较多时才添加分隔符
-                            if len(page_text.strip()) > 200:  # 页面内容超过200字符才分隔
-                                merged_text += "\n\n" + "="*50 + "\n\n"
+                        # 检查页面连接性，如果内容较短或看起来连续，直接连接
+                        last_char = all_text.strip()[-1] if all_text.strip() else ''
+                        first_char = page_text.strip()[0] if page_text.strip() else ''
+                        
+                        # 智能连接：如果是连续内容或短页面，使用空格连接
+                        # 改进中文文本连接逻辑
+                        if (last_char.isalnum() and first_char.islower()) or len(page_text.strip()) < 200:
+                            # 中文之间不需要空格，英文之间需要空格
+                            # 修复字符编码检测逻辑
+                            if last_char.isalpha() and first_char.isalpha():
+                                # 如果都是中文字符，直接连接
+                                if ord(last_char) > 127 and ord(first_char) > 127:
+                                    all_text += page_text.strip()
+                                else:
+                                    all_text += " " + page_text.strip()
                             else:
-                                merged_text += "\n\n"  # 内容少时只添加简单换行
-                        merged_text += page_text.strip()
-                all_text = merged_text
+                                all_text += " " + page_text.strip()
+                        else:
+                            # 否则使用简单的段落分隔
+                            all_text += "\n\n" + page_text.strip()
+                    else:
+                        all_text += page_text.strip()
 
-            # 智能分段处理，避免过度分割
+            # 简化的分段处理：保持原始结构
             if all_text:
-                # 按段落分割，但保持合理的段落长度
+                # 按自然段落分割
                 paragraphs = []
-                lines = all_text.split('\n')
                 current_paragraph = ""
                 
+                # 按行处理，但避免过度分割
+                lines = all_text.split('\n')
                 for line in lines:
                     line = line.strip()
                     if not line:
-                        # 空行表示段落结束
-                        if current_paragraph:
-                            paragraphs.append(current_paragraph)
-                            current_paragraph = ""
-                    elif line.startswith('='*50):
-                        # 页面分隔符，强制分段
+                        # 空行：结束当前段落
                         if current_paragraph:
                             paragraphs.append(current_paragraph)
                             current_paragraph = ""
                     else:
-                        # 累积当前段落
+                        # 累积段落内容
                         if current_paragraph:
                             current_paragraph += " " + line
                         else:
@@ -355,24 +451,12 @@ class PDFConverter:
                 if current_paragraph:
                     paragraphs.append(current_paragraph)
                 
-                # 将段落添加到文档中，避免过度分割
+                # 将段落添加到文档中
                 for paragraph_text in paragraphs:
                     if paragraph_text.strip():
-                        # 检查段落长度，如果太长则适当分割
-                        if len(paragraph_text) > 1000:  # 进一步增加长段落阈值，减少分割
-                            # 按句号分割长段落
-                            sentences = paragraph_text.split('。')
-                            for sentence in sentences:
-                                if sentence.strip():
-                                    p = document.add_paragraph()
-                                    p.add_run(sentence.strip() + ('。' if sentence.strip() else ''))
-                        else:
-                            p = document.add_paragraph()
-                            p.add_run(paragraph_text)
-                        
-                        # 进一步减少段落间距，避免过度分页
-                        if len(paragraph_text) > 300:  # 只有较长段落才添加间距
-                            document.add_paragraph()  # 空段落作为间距
+                        # 直接添加段落，不再进行复杂的分割
+                        p = document.add_paragraph()
+                        p.add_run(paragraph_text.strip())
 
             import io as _bio
             buffer = _bio.BytesIO()
@@ -475,6 +559,50 @@ class PDFConverter:
                         normal_style.leading = 14
                         normal_style.alignment = 0
                         logger.warning(f"无法加载中文字体，将使用默认字体: {str(e2)}")
+                
+                # 简化的图片处理 - 直接从文档关系中提取所有图片
+                total_images_added = 0
+                logger.info("开始处理Word文档中的图片...")
+                
+                # 直接从文档的关系部分提取所有图片
+                if hasattr(doc.part, 'related_parts'):
+                    for rel_id, rel_part in doc.part.related_parts.items():
+                        if hasattr(rel_part, 'blob') and rel_part.blob:
+                            try:
+                                content_type = getattr(rel_part, 'content_type', '')
+                                # 检查是否是图片类型
+                                if any(img_type in content_type.lower() for img_type in ['image', 'jpeg', 'png', 'gif', 'bmp', 'tiff']):
+                                    img_buffer = io.BytesIO(rel_part.blob)
+                                    try:
+                                        from PIL import Image as PILImage
+                                        from reportlab.platypus import Image as RLImage
+                                        
+                                        # 验证并打开图片
+                                        pil_img = PILImage.open(img_buffer)
+                                        img_width, img_height = pil_img.size
+                                        
+                                        # 计算合适的PDF尺寸
+                                        max_width = 450
+                                        max_height = 350
+                                        ratio = min(max_width / img_width, max_height / img_height, 1.0)  # 不放大
+                                        pdf_width = img_width * ratio
+                                        pdf_height = img_height * ratio
+                                        
+                                        # 添加图片到PDF
+                                        img_buffer.seek(0)
+                                        img = RLImage(img_buffer, width=pdf_width, height=pdf_height)
+                                        story.append(img)
+                                        story.append(Spacer(1, 12))
+                                        total_images_added += 1
+                                        logger.info(f"成功添加图片 {total_images_added}: {rel_id}, 尺寸: {pdf_width:.1f}x{pdf_height:.1f}")
+                                        
+                                    except Exception as img_err:
+                                        logger.warning(f"处理图片 {rel_id} 失败: {img_err}")
+                                        
+                            except Exception as rel_err:
+                                logger.debug(f"处理关系 {rel_id} 失败: {rel_err}")
+                
+                logger.info(f"图片处理完成，共添加 {total_images_added} 个图片")
                 
                 # 检查文档是否有内容
                 if not doc.paragraphs and not doc.inline_shapes:
@@ -772,7 +900,7 @@ class PDFConverter:
                                                         story.append(img)
                                                         story.append(Spacer(1, 12))
                                                         logger.info(f"从关系部分找到图片: {rel_id}, 类型: {content_type}")
-                                                        break
+                                                        # 不要break，继续查找更多图片
                                                     except Exception as e:
                                                         logger.warning(f"处理关系部分图片失败: {e}")
                                                         continue
@@ -1043,8 +1171,25 @@ class PDFConverter:
     def txt_to_pdf(self, txt_file):
         """TXT文件转PDF"""
         try:
-            # 读取txt文件内容
-            txt_content = txt_file.read().decode('utf-8')
+            # 智能编码检测和读取txt文件内容
+            raw_content = txt_file.read()
+            
+            # 尝试多种编码方式
+            encodings = ['utf-8', 'gbk', 'gb2312', 'utf-16', 'latin-1']
+            txt_content = None
+            
+            for encoding in encodings:
+                try:
+                    txt_content = raw_content.decode(encoding)
+                    logger.info(f"成功使用 {encoding} 编码读取文件")
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if txt_content is None:
+                # 如果所有编码都失败，使用错误替换模式
+                txt_content = raw_content.decode('utf-8', errors='replace')
+                logger.warning("使用utf-8错误替换模式读取文件")
             
             # 调用text_to_pdf方法
             return self.text_to_pdf(txt_content)

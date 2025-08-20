@@ -2235,7 +2235,9 @@ function enterCurrentModeTools(event) {
   event.preventDefault();
   
   // 检查用户是否已登录
-  {% if user.is_authenticated %}
+  var isAuthenticated = {% if user.is_authenticated %}true{% else %}false{% endif %};
+  
+  if (isAuthenticated) {
     // 用户已登录，获取当前主题
     let currentTheme = 'work'; // 默认极客模式
     
@@ -2252,18 +2254,18 @@ function enterCurrentModeTools(event) {
     // 主题页面映射
     const themePageMapping = {
       'life': '/tools/life_mode/',
-'work': '/tools/work_mode/',
-'training': '/tools/training_mode/',
+      'work': '/tools/work_mode/',
+      'training': '/tools/training_mode/',
       'emo': '/tools/emo_mode/'
     };
     
     // 跳转到对应的工具页面
     const targetPage = themePageMapping[currentTheme] || '/tools/work_mode/';
     window.location.href = targetPage;
-  {% else %}
+  } else {
     // 用户未登录，跳转到登录页面
     window.location.href = '/users/login/';
-  {% endif %}
+  }
 }
 
 // 初始化极客主题
