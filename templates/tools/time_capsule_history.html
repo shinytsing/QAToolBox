@@ -99,6 +99,250 @@ body {
   font-weight: 500;
 }
 
+/* 媒体内容预览样式 */
+.capsule-media-preview {
+  margin: 15px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.media-images {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.media-item {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+}
+
+.media-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.media-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+.media-more {
+  width: 60px;
+  height: 60px;
+  background: var(--bg-accent);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.media-audio,
+.media-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-accent);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.media-audio i {
+  color: #e74c3c;
+}
+
+.media-location i {
+  color: #3498db;
+}
+
+/* 详情模态框样式 */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: var(--bg-primary);
+  margin: 5%;
+  padding: 0;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+}
+
+.modal-header {
+  padding: 20px 30px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close {
+  color: var(--text-secondary);
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.capsule-detail {
+  color: var(--text-primary);
+}
+
+.detail-date {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+.detail-content {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+}
+
+.detail-emotions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-media-section {
+  margin-bottom: 25px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.detail-media-section h4 {
+  margin: 0 0 15px 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.detail-image-item {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.detail-image-item:hover {
+  transform: scale(1.05);
+}
+
+.detail-image-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.detail-audio {
+  display: flex;
+  justify-content: center;
+}
+
+.detail-audio audio {
+  width: 100%;
+  max-width: 400px;
+}
+
+.detail-location,
+.detail-weather {
+  color: var(--text-secondary);
+}
+
+.detail-location p,
+.detail-weather p {
+  margin: 8px 0;
+  font-size: 0.95rem;
+}
+
+.detail-meta {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.detail-meta div {
+  margin: 5px 0;
+}
+
+/* 图片查看模态框样式 */
+.image-modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+}
+
+.image-modal-content .modal-body {
+  padding: 20px;
+  text-align: center;
+}
+
+.image-modal-content img {
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+}
+
 /* 胶囊列表 */
 .capsules-section {
   background: var(--bg-primary);
@@ -416,6 +660,38 @@ body {
           
           <div class="capsule-content">{{ capsule.content|truncatechars:150 }}</div>
           
+          <!-- 媒体内容预览 -->
+          <div class="capsule-media-preview">
+            {% if capsule.images %}
+              <div class="media-images">
+                {% for image in capsule.images|slice:":3" %}
+                  <div class="media-item">
+                    <img src="{{ image }}" alt="胶囊图片" class="media-thumbnail">
+                  </div>
+                {% endfor %}
+                {% if capsule.images|length > 3 %}
+                  <div class="media-more">
+                    <span>+{{ capsule.images|length|add:"-3" }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+            
+            {% if capsule.audio %}
+              <div class="media-audio">
+                <i class="fas fa-music"></i>
+                <span>音频文件</span>
+              </div>
+            {% endif %}
+            
+            {% if capsule.location %}
+              <div class="media-location">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>位置信息</span>
+              </div>
+            {% endif %}
+          </div>
+          
           <div class="capsule-emotions">
             {% for emotion in capsule.emotions %}
             <span class="emotion-tag">{{ emotion }}</span>
@@ -492,6 +768,19 @@ body {
     </div>
   </div>
 </div>
+
+<!-- 图片查看模态框 -->
+<div id="imageModal" class="modal" style="display: none;">
+  <div class="modal-content image-modal-content">
+    <div class="modal-header">
+      <h3>图片查看</h3>
+      <span class="close" onclick="closeImageModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <img id="fullImage" src="" alt="完整图片" style="width: 100%; height: auto; max-height: 70vh; object-fit: contain;">
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -546,7 +835,7 @@ class TimeCapsuleHistory {
 
   async unlockCapsule(capsuleId) {
     try {
-      const response = await fetch(`/tools/unlock-capsule/${capsuleId}/`, {
+      const response = await fetch(`/tools/api/unlock-capsule/${capsuleId}/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -570,7 +859,7 @@ class TimeCapsuleHistory {
 
   async viewCapsule(capsuleId) {
     try {
-      const response = await fetch(`/tools/capsule-detail/${capsuleId}/`);
+      const response = await fetch(`/tools/api/capsule-detail/${capsuleId}/`);
       const data = await response.json();
       
       if (data.success) {
@@ -587,6 +876,66 @@ class TimeCapsuleHistory {
     const modal = document.getElementById('capsuleModal');
     const modalBody = document.getElementById('modalBody');
     
+    // 构建媒体内容HTML
+    let mediaHtml = '';
+    
+    // 图片内容
+    if (capsule.images && capsule.images.length > 0) {
+      mediaHtml += `
+        <div class="detail-media-section">
+          <h4><i class="fas fa-images"></i> 图片</h4>
+          <div class="detail-images">
+            ${capsule.images.map(image => `
+              <div class="detail-image-item">
+                <img src="${image}" alt="胶囊图片" onclick="openImageModal('${image}')">
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    // 音频内容
+    if (capsule.audio) {
+      mediaHtml += `
+        <div class="detail-media-section">
+          <h4><i class="fas fa-music"></i> 音频</h4>
+          <div class="detail-audio">
+            <audio controls>
+              <source src="${capsule.audio}" type="audio/mpeg">
+              您的浏览器不支持音频播放
+            </audio>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 位置信息
+    if (capsule.location && Object.keys(capsule.location).length > 0) {
+      mediaHtml += `
+        <div class="detail-media-section">
+          <h4><i class="fas fa-map-marker-alt"></i> 位置信息</h4>
+          <div class="detail-location">
+            <p><strong>地址:</strong> ${capsule.location.address || '未知'}</p>
+            <p><strong>坐标:</strong> ${capsule.location.lat || '未知'}, ${capsule.location.lng || '未知'}</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 天气信息
+    if (capsule.weather && Object.keys(capsule.weather).length > 0) {
+      mediaHtml += `
+        <div class="detail-media-section">
+          <h4><i class="fas fa-cloud-sun"></i> 天气信息</h4>
+          <div class="detail-weather">
+            <p><strong>温度:</strong> ${capsule.weather.temperature || '未知'}°C</p>
+            <p><strong>天气:</strong> ${capsule.weather.condition || '未知'}</p>
+          </div>
+        </div>
+      `;
+    }
+    
     modalBody.innerHTML = `
       <div class="capsule-detail">
         <div class="detail-date">创建时间: ${capsule.created_at}</div>
@@ -594,6 +943,7 @@ class TimeCapsuleHistory {
         <div class="detail-emotions">
           ${capsule.emotions.map(emotion => `<span class="emotion-tag">${emotion}</span>`).join('')}
         </div>
+        ${mediaHtml}
         <div class="detail-meta">
           <div>解锁条件: ${capsule.unlock_condition}</div>
           <div>可见性: ${capsule.visibility}</div>
@@ -607,41 +957,63 @@ class TimeCapsuleHistory {
   closeModal() {
     document.getElementById('capsuleModal').style.display = 'none';
   }
+}
 
-  showNotification(message, type = 'info') {
-    // 创建通知元素
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
-      position: fixed; top: 20px; right: 20px; padding: 15px 20px; 
-      border-radius: 8px; color: white; z-index: 10000; 
-      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#6366f1'};
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      if (notification.parentNode) {
-        document.body.removeChild(notification);
-      }
-    }, 3000);
-  }
+// 全局函数 - 图片查看
+function openImageModal(imageSrc) {
+  const imageModal = document.getElementById('imageModal');
+  const fullImage = document.getElementById('fullImage');
+  
+  fullImage.src = imageSrc;
+  imageModal.style.display = 'block';
+  
+  // 点击背景关闭
+  imageModal.onclick = function(e) {
+    if (e.target === imageModal) {
+      closeImageModal();
+    }
+  };
+}
 
-  getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
+function closeImageModal() {
+  const imageModal = document.getElementById('imageModal');
+  imageModal.style.display = 'none';
+}
+
+// 全局函数
+function showNotification(message, type = 'info') {
+  // 创建通知元素
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed; top: 20px; right: 20px; padding: 15px 20px; 
+    border-radius: 8px; color: white; z-index: 10000; 
+    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#6366f1'};
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentNode) {
+      document.body.removeChild(notification);
+    }
+  }, 3000);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
       }
     }
-    return cookieValue;
   }
+  return cookieValue;
 }
 
 // 初始化

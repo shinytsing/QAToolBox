@@ -1,11 +1,16 @@
 import time
 import json
+import logging
 from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
 from django.contrib.sessions.backends.cache import SessionStore
+from django.core.cache import cache
+from django.contrib.auth.models import AnonymousUser
 from .models import UserActivityLog, APIUsageStats, UserSessionStats
 from django.utils import timezone
 from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 class UserActivityMiddleware(MiddlewareMixin):
     """用户活动监控中间件"""
@@ -178,5 +183,83 @@ class SessionExtensionMiddleware(MiddlewareMixin):
             # 确保session被保存
             if request.session.modified:
                 request.session.save()
+        
+        return response
+
+
+class SessionPersistenceMiddleware(MiddlewareMixin):
+    """会话持久化中间件 - 确保服务器重启时登录态保存"""
+    
+    def process_request(self, request):
+        # 如果用户未登录但有会话cookie，尝试恢复会话
+        if (isinstance(request.user, AnonymousUser) and 
+            hasattr(request, 'session') and 
+            request.session):
+            
+            try:
+                session_key = request.session.session_key
+                if session_key:
+                    # 从Redis中恢复会话数据
+                    cache_key = f"session:{session_key}"
+                    session_data = cache.get(cache_key)
+                    
+                    if session_data and session_data.get('is_authenticated'):
+                        # 恢复用户信息
+                        from django.contrib.auth.models import User
+                        user_id = session_data.get('user_id')
+                        
+                        if user_id:
+                            try:
+                                user = User.objects.get(id=user_id)
+                                request.user = user
+                                
+                                # 更新会话数据
+                                request.session.update(session_data)
+                                request.session.save()
+                                
+                                logger.info(f"会话已恢复: {session_key} -> 用户 {user.username}")
+                                
+                            except User.DoesNotExist:
+                                logger.warning(f"会话中的用户不存在: {user_id}")
+                                # 清理无效会话
+                                cache.delete(cache_key)
+                                request.session.flush()
+                    
+            except Exception as e:
+                logger.error(f"会话恢复失败: {e}")
+    
+    def process_response(self, request, response):
+        # 如果用户已登录，确保会话数据持久化
+        if (hasattr(request, 'user') and 
+            not isinstance(request.user, AnonymousUser) and 
+            hasattr(request, 'session') and 
+            request.session):
+            
+            try:
+                session_key = request.session.session_key
+                if session_key:
+                    # 在Redis中持久化会话数据
+                    session_data = request.session.get_decoded()
+                    
+                    # 添加用户信息到会话数据
+                    session_data.update({
+                        'user_id': request.user.id,
+                        'username': request.user.username,
+                        'is_authenticated': True,
+                        'last_activity': timezone.now().isoformat(),
+                    })
+                    
+                    # 保存到Redis，设置30天过期
+                    cache_key = f"session:{session_key}"
+                    cache.set(cache_key, session_data, 60 * 60 * 24 * 30)
+                    
+                    # 同时保存用户会话映射
+                    user_session_key = f"user_session:{request.user.id}"
+                    cache.set(user_session_key, session_key, 60 * 60 * 24 * 30)
+                    
+                    logger.debug(f"会话已持久化: {session_key} -> 用户 {request.user.username}")
+                    
+            except Exception as e:
+                logger.error(f"会话持久化失败: {e}")
         
         return response

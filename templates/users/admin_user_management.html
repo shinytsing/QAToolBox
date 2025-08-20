@@ -75,10 +75,10 @@ button, a, input, select, textarea {
                         <i class="fas fa-users-cog text-primary"></i> 用户管理
                     </h4>
                     <div>
-                        <a href="{% url 'admin_suggestions' %}" class="btn btn-outline-warning btn-sm">
+                        <a href="{% url 'content:admin_suggestions' %}" class="btn btn-outline-warning btn-sm">
                             <i class="fas fa-lightbulb"></i> 建议管理
                         </a>
-                        <a href="{% url 'admin_feedback' %}" class="btn btn-outline-info btn-sm">
+                        <a href="{% url 'content:admin_feedback' %}" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-comments"></i> 反馈管理
                         </a>
                         <a href="{% url 'admin_user_logs' %}" class="btn btn-outline-secondary btn-sm">
@@ -207,7 +207,7 @@ button, a, input, select, textarea {
                                         <td>{{ user_role.user.id }}</td>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="{% if user_role.user.profile.avatar %}{{ user_role.user.profile.avatar.url %}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 40px; height: 40px; min-width: 40px; min-height: 40px; border-radius: 4px; object-fit: cover; border: 1px solid #ddd; margin-right: 10px;">
+                                                <img src="{% if user_role.user.profile.avatar %}{{ user_role.user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 40px; height: 40px; min-width: 40px; min-height: 40px; border-radius: 4px; object-fit: cover; border: 1px solid #ddd; margin-right: 10px;">
                                                 <div>
                                                     <strong>{{ user_role.user.username }}</strong>
                                                     {% if user_role.user.profile.phone %}

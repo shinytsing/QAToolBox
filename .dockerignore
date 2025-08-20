@@ -1,6 +1,7 @@
 # Git
 .git
 .gitignore
+.gitattributes
 
 # Python
 __pycache__
@@ -25,13 +26,15 @@ coverage.xml
 .hypothesis
 
 # Virtual environments
-venv/
+.env
+.venv
 env/
+venv/
 ENV/
 env.bak/
 venv.bak/
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -48,24 +51,36 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
-db.sqlite3
 media/
 staticfiles/
 logs/
 *.log
-.env
 .env.local
+.env.development
+.env.test
 .env.production
 
 # Documentation
-*.md
 docs/
+*.md
+README*
 
 # Tests
-test_*.py
-*_test.py
 tests/
+test_*
+*_test.py
+
+# Development files
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.test.yml
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+.cache/ 

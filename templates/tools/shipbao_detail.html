@@ -1,0 +1,797 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ item.title }} - 船宝{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 船宝详情页面样式 */
+.shipbao-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 动态背景效果 */
+.shipbao-detail-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    z-index: -1;
+    animation: shipbaoPulse 8s ease-in-out infinite;
+}
+
+@keyframes shipbaoPulse {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: scale(1.1) rotate(1deg);
+        opacity: 1;
+    }
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.item-detail-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    animation: cardSlideIn 0.6s ease-out;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.item-images {
+    position: relative;
+    height: 400px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+}
+
+.main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-nav {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+.image-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.image-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+.item-info {
+    padding: 30px;
+}
+
+.item-header {
+    margin-bottom: 20px;
+}
+
+.item-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+
+.item-price {
+    font-size: 32px;
+    font-weight: bold;
+    color: #e74c3c;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+}
+
+.item-meta {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.item-description {
+    color: #2c3e50;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+.item-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.item-tag {
+    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+    color: #2c3e50;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.seller-info {
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.seller-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.seller-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.seller-details h4 {
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-size: 18px;
+}
+
+.seller-details p {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin: 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.btn {
+    flex: 1;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #229954, #1e8449);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.btn-outline {
+    background: transparent;
+    color: #3498db;
+    border: 2px solid #3498db;
+}
+
+.btn-outline:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.location-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.location-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.location-icon {
+    color: #3498db;
+    font-size: 20px;
+}
+
+.location-title {
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.location-info {
+    color: #7f8c8d;
+    margin-bottom: 15px;
+}
+
+.map-picker-btn {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.map-picker-btn:hover {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    transform: translateY(-2px);
+}
+
+/* 地图选择器模态框 */
+.map-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.map-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-content {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.map-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #7f8c8d;
+}
+
+.map-close:hover {
+    color: #e74c3c;
+}
+
+.map-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.location-search {
+    margin-bottom: 20px;
+}
+
+.location-search input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #ecf0f1;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.location-search input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+}
+
+.location-suggestions {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ecf0f1;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.location-suggestion {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #ecf0f1;
+    transition: background 0.3s ease;
+}
+
+.location-suggestion:hover {
+    background: #f8f9fa;
+}
+
+.location-suggestion:last-child {
+    border-bottom: none;
+}
+
+.map-container {
+    width: 100%;
+    height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7f8c8d;
+}
+
+.map-confirm-btn {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.map-confirm-btn:hover {
+    background: linear-gradient(135deg, #229954, #1e8449);
+    transform: translateY(-2px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .item-detail-card {
+        margin: 10px;
+    }
+    
+    .item-images {
+        height: 300px;
+    }
+    
+    .item-info {
+        padding: 20px;
+    }
+    
+    .item-title {
+        font-size: 24px;
+    }
+    
+    .item-price {
+        font-size: 28px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .map-content {
+        margin: 20px;
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="shipbao-detail-container">
+    <button class="back-btn" onclick="history.back()">← 返回</button>
+    
+    <div class="item-detail-card">
+        <!-- 商品图片 -->
+        <div class="item-images">
+            <img src="{{ item.main_image|default:'/static/img/default-item.jpg' }}" alt="{{ item.title }}" class="main-image" id="main-image">
+            <div class="image-nav" id="image-nav">
+                <!-- 图片导航点将通过JavaScript生成 -->
+            </div>
+        </div>
+        
+        <!-- 商品信息 -->
+        <div class="item-info">
+            <div class="item-header">
+                <h1 class="item-title">{{ item.title }}</h1>
+                <div class="item-price">¥{{ item.price }}</div>
+                <div class="item-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-star"></i>
+                        <span>{{ item.condition_stars }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="item-distance">{{ item.distance|default:"距离未知" }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ item.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="item-description">
+                {{ item.description|linebreaks }}
+            </div>
+            
+            <div class="item-tags">
+                <span class="item-tag">{{ item.category_display }}</span>
+                {% if item.can_bargain %}
+                    <span class="item-tag">💬 可议价</span>
+                {% endif %}
+                <span class="item-tag">
+                    {% if item.delivery_option == 'pickup' %}
+                        📦 自提
+                    {% elif item.delivery_option == 'delivery' %}
+                        🚚 送货
+                    {% else %}
+                        📦🚚 自提/送货
+                    {% endif %}
+                </span>
+            </div>
+            
+            <!-- 卖家信息 -->
+            <div class="seller-info">
+                <div class="seller-header">
+                    <div class="seller-avatar">
+                        {{ item.seller.username|first|upper }}
+                    </div>
+                    <div class="seller-details">
+                        <h4>{{ item.seller.username }}</h4>
+                        <p>注册时间：{{ item.seller.date_joined|date:"Y-m-d" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 位置信息 -->
+            <div class="location-section">
+                <div class="location-header">
+                    <i class="fas fa-map-marker-alt location-icon"></i>
+                    <h3 class="location-title">位置信息</h3>
+                </div>
+                <div class="location-info">
+                    <p id="current-location">正在获取位置信息...</p>
+                </div>
+                <button class="map-picker-btn" onclick="openMapPicker()">
+                    <i class="fas fa-map"></i> 选择地址
+                </button>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="contactSeller()">
+                    <i class="fas fa-comments"></i> 联系卖家
+                </button>
+                <button class="btn btn-secondary" onclick="makeOffer()">
+                    <i class="fas fa-handshake"></i> 发起交易
+                </button>
+                <button class="btn btn-outline" onclick="addToFavorites()">
+                    <i class="fas fa-heart"></i> 收藏
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 地图选择器模态框 -->
+<div class="map-modal" id="mapModal">
+    <div class="map-content">
+        <button class="map-close" onclick="closeMapPicker()">&times;</button>
+        <h2 class="map-title">选择地址</h2>
+        
+        <div class="location-search">
+            <input type="text" id="locationSearch" placeholder="搜索地址或城市..." oninput="searchLocation(this.value)">
+        </div>
+        
+        <div class="location-suggestions" id="locationSuggestions">
+            <!-- 地址建议将通过JavaScript生成 -->
+        </div>
+        
+        <div class="map-container" id="mapContainer">
+            <div>
+                <i class="fas fa-map" style="font-size: 48px; margin-bottom: 10px;"></i>
+                <p>地图加载中...</p>
+            </div>
+        </div>
+        
+        <button class="map-confirm-btn" onclick="confirmLocation()">
+            确认选择此地址
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentLocation = null;
+let selectedLocation = null;
+let userLocation = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    getLocationInfo();
+    loadItemImages();
+});
+
+// 获取位置信息
+function getLocationInfo() {
+    // 尝试从localStorage获取保存的位置
+    const savedLocation = localStorage.getItem('user_location');
+    if (savedLocation) {
+        userLocation = JSON.parse(savedLocation);
+        updateLocationDisplay(userLocation);
+    }
+    
+    // 获取IP定位信息
+    fetch('/tools/api/location/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.location) {
+                userLocation = data.location;
+                updateLocationDisplay(userLocation);
+                localStorage.setItem('user_location', JSON.stringify(userLocation));
+            }
+        })
+        .catch(error => {
+            console.error('获取位置信息失败:', error);
+        });
+}
+
+// 更新位置显示
+function updateLocationDisplay(location) {
+    const locationElement = document.getElementById('current-location');
+    if (location && location.city && location.city !== '未知') {
+        locationElement.textContent = `当前位置：${location.city}，${location.region}`;
+    } else {
+        locationElement.textContent = '位置信息获取失败，请手动选择';
+    }
+}
+
+// 加载商品图片
+function loadItemImages() {
+    // 这里可以根据实际的图片数据来生成图片导航
+    const imageNav = document.getElementById('image-nav');
+    // 示例：如果有多个图片，可以在这里生成导航点
+}
+
+// 打开地图选择器
+function openMapPicker() {
+    const modal = document.getElementById('mapModal');
+    modal.classList.add('show');
+    
+    // 加载地图（这里可以集成实际的地图API）
+    loadMap();
+    
+    // 预填充当前位置
+    if (userLocation) {
+        document.getElementById('locationSearch').value = `${userLocation.city}，${userLocation.region}`;
+    }
+}
+
+// 关闭地图选择器
+function closeMapPicker() {
+    const modal = document.getElementById('mapModal');
+    modal.classList.remove('show');
+    selectedLocation = null;
+}
+
+// 搜索位置
+function searchLocation(query) {
+    if (query.length < 2) {
+        document.getElementById('locationSuggestions').innerHTML = '';
+        return;
+    }
+    
+    // 模拟位置搜索
+    const suggestions = [
+        `${query}市中心`,
+        `${query}火车站`,
+        `${query}机场`,
+        `${query}大学`,
+        `${query}购物中心`
+    ];
+    
+    const suggestionsContainer = document.getElementById('locationSuggestions');
+    suggestionsContainer.innerHTML = suggestions.map(suggestion => 
+        `<div class="location-suggestion" onclick="selectLocation('${suggestion}')">${suggestion}</div>`
+    ).join('');
+}
+
+// 选择位置
+function selectLocation(location) {
+    selectedLocation = location;
+    document.getElementById('locationSearch').value = location;
+    document.getElementById('locationSuggestions').innerHTML = '';
+    
+    // 更新地图显示
+    updateMapDisplay(location);
+}
+
+// 加载地图
+function loadMap() {
+    const mapContainer = document.getElementById('mapContainer');
+    mapContainer.innerHTML = `
+        <div style="text-align: center;">
+            <i class="fas fa-map-marked-alt" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
+            <p>地图功能开发中...</p>
+            <p style="font-size: 12px; color: #7f8c8d;">您可以搜索并选择地址</p>
+        </div>
+    `;
+}
+
+// 更新地图显示
+function updateMapDisplay(location) {
+    const mapContainer = document.getElementById('mapContainer');
+    mapContainer.innerHTML = `
+        <div style="text-align: center;">
+            <i class="fas fa-map-pin" style="font-size: 48px; color: #e74c3c; margin-bottom: 15px;"></i>
+            <p><strong>已选择地址：</strong></p>
+            <p>${location}</p>
+        </div>
+    `;
+}
+
+// 确认位置选择
+function confirmLocation() {
+    if (selectedLocation) {
+        // 更新用户位置
+        userLocation = {
+            city: selectedLocation.split('，')[0],
+            region: selectedLocation.split('，')[1] || '用户选择',
+            country: '中国',
+            lat: 39.9042,
+            lon: 116.4074
+        };
+        
+        // 保存到localStorage
+        localStorage.setItem('user_location', JSON.stringify(userLocation));
+        
+        // 更新显示
+        updateLocationDisplay(userLocation);
+        
+        // 关闭模态框
+        closeMapPicker();
+        
+        // 显示成功消息
+        alert('地址选择成功！');
+    } else {
+        alert('请先选择一个地址');
+    }
+}
+
+// 联系卖家
+function contactSeller() {
+    // 这里可以实现聊天功能
+    alert('联系卖家功能开发中...');
+}
+
+// 发起交易
+function makeOffer() {
+    // 这里可以实现交易功能
+    alert('发起交易功能开发中...');
+}
+
+// 收藏商品
+function addToFavorites() {
+    // 这里可以实现收藏功能
+    alert('收藏功能开发中...');
+}
+
+// 点击模态框外部关闭
+document.getElementById('mapModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeMapPicker();
+    }
+});
+</script>
+{% endblock %}

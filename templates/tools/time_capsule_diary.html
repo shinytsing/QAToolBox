@@ -1970,6 +1970,27 @@ class TimeCapsuleDiary {
     }
   }
 
+  updateUnlockSettings(condition) {
+    const unlockTimeContainer = document.getElementById('unlock-time-container');
+    const unlockTimeInput = document.getElementById('unlock-time');
+    
+    if (!unlockTimeContainer || !unlockTimeInput) {
+      console.warn('解锁时间相关元素不存在');
+      return;
+    }
+    
+    if (condition === 'time') {
+      unlockTimeContainer.style.display = 'block';
+      unlockTimeInput.required = true;
+    } else {
+      unlockTimeContainer.style.display = 'none';
+      unlockTimeInput.required = false;
+      unlockTimeInput.value = '';
+    }
+    
+    console.log('解锁设置已更新:', condition);
+  }
+
   async getCurrentLocation() {
     try {
       if (navigator.geolocation) {

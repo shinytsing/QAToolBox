@@ -13,7 +13,8 @@ import random
 import logging
 from functools import wraps
 
-from .models import TimeCapsule, CapsuleUnlock, MemoryFragment, Achievement, ParallelMatch, User
+from .models import TimeCapsule, CapsuleUnlock, MemoryFragment, Achievement, ParallelMatch
+from django.contrib.auth.models import User
 
 # 设置日志
 logger = logging.getLogger(__name__)
@@ -1119,8 +1120,25 @@ def time_capsule_diary_view(request):
 
 def time_capsule_history_view(request):
     """时光胶囊历史页面"""
-    context = {
-        'websocket_available': hasattr(settings, 'CHANNEL_LAYERS'),
-    }
+    try:
+        # 获取用户的胶囊列表
+        capsules = TimeCapsule.objects.filter(user=request.user).order_by('-created_at')
+        
+        # 获取用户的成就
+        achievements = Achievement.objects.filter(user=request.user).order_by('-unlocked_at')
+        
+        context = {
+            'capsules': capsules,
+            'achievements': achievements,
+            'websocket_available': hasattr(settings, 'CHANNEL_LAYERS'),
+        }
+        
+    except Exception as e:
+        logger.error(f"获取时光胶囊历史数据失败: {str(e)}")
+        context = {
+            'capsules': [],
+            'achievements': [],
+            'websocket_available': hasattr(settings, 'CHANNEL_LAYERS'),
+        }
     
     return render(request, 'tools/time_capsule_history.html', context)

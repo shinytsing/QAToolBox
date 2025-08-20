@@ -1,0 +1,1139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}🚀 PDF转换引擎{% endblock %}
+{% block tool_title_display %}🚀 PDF转换引擎{% endblock %}
+
+{% block extra_css %}
+<style>
+/* PDF转换器专用样式 - 支持主题切换 */
+.pdf-converter-modern {
+  min-height: 100vh;
+  color: var(--text-color, #ffffff);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Inter', 'SF Pro Display', -apple-system, sans-serif;
+  transition: all 0.3s ease;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+}
+
+/* 极客主题样式 */
+.work-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  color: #00ff41;
+}
+
+/* 生活主题样式 */
+.life-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+  color: #2c3e50;
+}
+
+/* 狂暴主题样式 */
+.training-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #ff3838 0%, #ff6b6b 50%, #ff3838 100%);
+  color: #ffffff;
+}
+
+/* Emo主题样式 */
+.emo-theme .pdf-converter-modern {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 50%, #6c5ce7 100%);
+  color: #ffffff;
+}
+
+.converter-header-modern {
+  text-align: center;
+  padding: 4rem 0 2rem;
+  position: relative;
+}
+
+.converter-header-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  border-radius: 2px;
+}
+
+.converter-title-modern {
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  letter-spacing: -0.03em;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 3px solid;
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #00d4ff; }
+}
+
+/* 极客主题 */
+.work-theme .converter-title-modern {
+  background: linear-gradient(135deg, #00ff41 0%, #00cc33 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 生活主题 */
+.life-theme .converter-title-modern {
+  background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 狂暴主题 */
+.training-theme .converter-title-modern {
+  background: linear-gradient(135deg, #ff3838 0%, #ff6b6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Emo主题 */
+.emo-theme .converter-title-modern {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.converter-subtitle-modern {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 3rem;
+  font-weight: 300;
+}
+
+/* 转换类型选择区域 */
+.conversion-types-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+  padding: 0 2rem;
+}
+
+.type-card-modern {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.type-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.type-card-modern:hover::before {
+  left: 100%;
+}
+
+.type-card-modern:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 212, 255, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+}
+
+.type-card-modern.selected {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.type-icon-modern {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #00d4ff;
+  transition: all 0.3s ease;
+}
+
+.type-card-modern:hover .type-icon-modern {
+  transform: scale(1.1);
+}
+
+.type-title-modern {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.type-description-modern {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+
+/* 文件上传区域 */
+.upload-area-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 3px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+  margin: 2rem 0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.upload-area-modern:hover {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.upload-area-modern.dragover {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+  transform: scale(1.02);
+}
+
+.upload-icon-modern {
+  font-size: 4rem;
+  color: #00d4ff;
+  margin-bottom: 1rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.upload-text-modern {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.upload-hint-modern {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 文件信息显示 */
+.file-info-modern {
+  background: rgba(0, 212, 255, 0.1);
+  border: 2px solid rgba(0, 212, 255, 0.3);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  display: none;
+}
+
+.file-name-modern {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.file-size-modern {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 转换按钮 */
+.convert-btn-modern {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  border: none;
+  border-radius: 50px;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+  display: none;
+  margin: 2rem auto;
+}
+
+.convert-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+}
+
+.convert-btn-modern:active {
+  transform: translateY(0);
+}
+
+/* 转换进度 */
+.conversion-progress-modern {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 2rem;
+  margin: 2rem 0;
+  display: none;
+  text-align: center;
+}
+
+.progress-bar-modern {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.progress-fill-modern {
+  height: 100%;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  border-radius: 5px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.progress-text-modern {
+  font-size: 1rem;
+  color: #ffffff;
+  margin-top: 1rem;
+}
+
+/* 转换结果 */
+.conversion-result-modern {
+  background: rgba(0, 255, 0, 0.1);
+  border: 2px solid rgba(0, 255, 0, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  margin: 2rem 0;
+  display: none;
+  text-align: center;
+}
+
+.result-icon-modern {
+  font-size: 4rem;
+  color: #00ff00;
+  margin-bottom: 1rem;
+}
+
+.result-title-modern {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.result-description-modern {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.result-actions-modern {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.download-btn-modern {
+  background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(0, 255, 0, 0.3);
+}
+
+.download-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 255, 0, 0.4);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.convert-again-btn-modern {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff3838 100%);
+  border: none;
+  border-radius: 50px;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(255, 107, 107, 0.3);
+}
+
+.convert-again-btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+}
+
+/* 通知系统 */
+.notification-modern {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.9);
+  color: #ffffff;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  max-width: 400px;
+}
+
+.notification-modern.show {
+  transform: translateX(0);
+}
+
+.notification-modern.success {
+  border-left: 4px solid #00ff00;
+}
+
+.notification-modern.error {
+  border-left: 4px solid #ff0000;
+}
+
+.notification-modern.info {
+  border-left: 4px solid #00d4ff;
+}
+
+.notification-modern.warning {
+  border-left: 4px solid #ffaa00;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .converter-title-modern {
+    font-size: 2.5rem;
+  }
+  
+  .conversion-types-modern {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .type-card-modern {
+    padding: 1.5rem;
+  }
+  
+  .upload-area-modern {
+    padding: 2rem 1rem;
+  }
+  
+  .result-actions-modern {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.conversion-types-modern {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.type-card-modern {
+  animation: slideIn 0.6s ease-out;
+}
+
+.type-card-modern:nth-child(1) { animation-delay: 0.1s; }
+.type-card-modern:nth-child(2) { animation-delay: 0.2s; }
+.type-card-modern:nth-child(3) { animation-delay: 0.3s; }
+.type-card-modern:nth-child(4) { animation-delay: 0.4s; }
+.type-card-modern:nth-child(5) { animation-delay: 0.5s; }
+.type-card-modern:nth-child(6) { animation-delay: 0.6s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pdf-converter-modern">
+  <!-- 页面头部 -->
+  <div class="converter-header-modern">
+    <h1 class="converter-title-modern">🚀 PDF转换引擎</h1>
+    <p class="converter-subtitle-modern">强大的文档转换工具，支持多种格式互转</p>
+  </div>
+
+  <!-- 转换类型选择 -->
+  <div class="conversion-types-modern">
+    <div class="type-card-modern" onclick="selectType('pdf-to-word')">
+      <div class="type-icon-modern">📄➡️📝</div>
+      <div class="type-title-modern">PDF转Word</div>
+      <div class="type-description-modern">将PDF文档转换为可编辑的Word文档，保持原有格式</div>
+    </div>
+    
+    <div class="type-card-modern" onclick="selectType('word-to-pdf')">
+      <div class="type-icon-modern">📝➡️📄</div>
+      <div class="type-title-modern">Word转PDF</div>
+      <div class="type-description-modern">将Word文档转换为PDF格式，确保文档安全</div>
+    </div>
+    
+    <div class="type-card-modern" onclick="selectType('pdf-to-image')">
+      <div class="type-icon-modern">📄➡️🖼️</div>
+      <div class="type-title-modern">PDF转图片</div>
+      <div class="type-description-modern">将PDF页面转换为高质量图片格式</div>
+    </div>
+    
+    <div class="type-card-modern" onclick="selectType('image-to-pdf')">
+      <div class="type-icon-modern">🖼️➡️📄</div>
+      <div class="type-title-modern">图片转PDF</div>
+      <div class="type-description-modern">将多张图片合并为单个PDF文档</div>
+    </div>
+    
+    <div class="type-card-modern" onclick="selectType('text-to-pdf')">
+      <div class="type-icon-modern">📝➡️📄</div>
+      <div class="type-title-modern">文本转PDF</div>
+      <div class="type-description-modern">将纯文本内容转换为PDF文档</div>
+    </div>
+    
+    <div class="type-card-modern" onclick="selectType('pdf-to-text')">
+      <div class="type-icon-modern">📄➡️📝</div>
+      <div class="type-title-modern">PDF转文本</div>
+      <div class="type-description-modern">提取PDF文档中的文本内容</div>
+    </div>
+  </div>
+
+  <!-- 文件上传区域 -->
+  <div class="upload-area-modern" id="uploadArea" onclick="safeClick('fileInput')">
+    <div class="upload-icon-modern">
+      <i class="fas fa-cloud-upload-alt"></i>
+    </div>
+    <div class="upload-text-modern">拖拽文件到此处或点击选择文件</div>
+    <div class="upload-hint-modern" id="uploadHint">支持多种格式文件</div>
+    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" style="display: none;">
+  </div>
+
+  <!-- 文本输入区域（用于文本转PDF） -->
+  <div id="textInputArea" style="display: none; margin: 2rem 0;">
+    <textarea id="textInput" placeholder="请输入要转换的文本内容..." style="width: 100%; min-height: 200px; padding: 1rem; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #ffffff; font-size: 1rem; resize: vertical;"></textarea>
+  </div>
+
+  <!-- 文件信息显示 -->
+  <div class="file-info-modern" id="fileInfo">
+    <div class="file-name-modern" id="fileName"></div>
+    <div class="file-size-modern" id="fileSize"></div>
+  </div>
+
+  <!-- 转换按钮 -->
+  <button class="convert-btn-modern" id="convertBtn" onclick="convertFile()">
+    <i class="fas fa-cogs"></i>
+    <span>开始转换</span>
+  </button>
+
+  <!-- 转换进度 -->
+  <div class="conversion-progress-modern" id="conversionProgress">
+    <h3>正在转换...</h3>
+    <div class="progress-bar-modern">
+      <div class="progress-fill-modern" id="progressFill"></div>
+    </div>
+    <div class="progress-text-modern" id="progressText">正在分析文件...</div>
+  </div>
+
+  <!-- 转换结果 -->
+  <div class="conversion-result-modern" id="conversionResult">
+    <div id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+// 全局变量
+let selectedType = '';
+let selectedFile = null;
+
+// 数字动画函数
+function animateNumber(element, target, duration = 2000) {
+  const start = 0;
+  const increment = target / (duration / 16);
+  let current = start;
+  
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) {
+      current = target;
+      clearInterval(timer);
+    }
+    element.textContent = Math.floor(current).toLocaleString();
+  }, 16);
+}
+
+// 选择转换类型
+function selectType(type) {
+  selectedType = type;
+  
+  // 移除所有选中状态
+  document.querySelectorAll('.type-card-modern').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  // 添加选中状态到当前卡片
+  event.currentTarget.classList.add('selected');
+  
+  // 更新上传提示
+  updateUploadHint(type);
+  
+  // 如果是文本转PDF，显示文本输入区域
+  if (type === 'text-to-pdf') {
+    showTextInput();
+  } else {
+    hideTextInput();
+  }
+  
+  // 显示转换按钮
+  const convertBtn = document.getElementById('convertBtn');
+  if (convertBtn) {
+    convertBtn.style.display = 'block';
+  }
+  
+  console.log('选择的转换类型:', type);
+}
+
+// 获取类型名称
+function getTypeName(type) {
+  const nameMap = {
+    'pdf-to-word': 'Word文档',
+    'word-to-pdf': 'PDF文档',
+    'pdf-to-image': '图片',
+    'image-to-pdf': 'PDF文档',
+    'text-to-pdf': 'PDF文档',
+    'pdf-to-text': '文本文件'
+  };
+  return nameMap[type] || type;
+}
+
+// 获取输出文件名
+function getOutputFileName(originalFileName, conversionType) {
+  const name = originalFileName.replace(/\.[^/.]+$/, '');
+  const extension = getOutputExtension(conversionType);
+  return `${name}_converted.${extension}`;
+}
+
+// 获取输出文件扩展名
+function getOutputExtension(conversionType) {
+  const extensionMap = {
+    'pdf-to-word': 'docx',
+    'word-to-pdf': 'pdf',
+    'pdf-to-image': 'zip',
+    'image-to-pdf': 'pdf',
+    'text-to-pdf': 'pdf',
+    'pdf-to-text': 'txt'
+  };
+  return extensionMap[conversionType] || 'pdf';
+}
+
+// 更新上传提示
+function updateUploadHint(type) {
+  const uploadHint = document.getElementById('uploadHint');
+  if (uploadHint) {
+    const hints = {
+      'pdf-to-word': '支持PDF文件',
+      'word-to-pdf': '支持Word文档(.doc, .docx)',
+      'pdf-to-image': '支持PDF文件',
+      'image-to-pdf': '支持图片文件(.jpg, .jpeg, .png)',
+      'text-to-pdf': '请输入文本内容',
+      'pdf-to-text': '支持PDF文件'
+    };
+    uploadHint.textContent = hints[type] || '支持多种格式文件';
+  }
+}
+
+// 显示文本输入区域
+function showTextInput() {
+  const textInputArea = document.getElementById('textInputArea');
+  const uploadArea = document.getElementById('uploadArea');
+  if (textInputArea) textInputArea.style.display = 'block';
+  if (uploadArea) uploadArea.style.display = 'none';
+}
+
+// 隐藏文本输入区域
+function hideTextInput() {
+  const textInputArea = document.getElementById('textInputArea');
+  const uploadArea = document.getElementById('uploadArea');
+  if (textInputArea) textInputArea.style.display = 'none';
+  if (uploadArea) uploadArea.style.display = 'block';
+}
+
+// 处理文件上传
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFile = file;
+    displayFileInfo(file);
+    
+    // 显示转换按钮
+    const convertBtn = document.getElementById('convertBtn');
+    if (convertBtn) {
+      convertBtn.style.display = 'block';
+    }
+  }
+}
+
+// 显示文件信息
+function displayFileInfo(file) {
+  const fileInfo = document.getElementById('fileInfo');
+  const fileName = document.getElementById('fileName');
+  const fileSize = document.getElementById('fileSize');
+  
+  if (fileInfo && fileName && fileSize) {
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileInfo.style.display = 'block';
+  }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 移除文件
+function removeFile() {
+  selectedFile = null;
+  const fileInfo = document.getElementById('fileInfo');
+  const fileInput = document.getElementById('fileInput');
+  const convertBtn = document.getElementById('convertBtn');
+  
+  if (fileInfo) fileInfo.style.display = 'none';
+  if (fileInput) fileInput.value = '';
+  if (convertBtn) convertBtn.style.display = 'none';
+}
+
+// 转换文件
+function convertFile() {
+  if (!selectedType) {
+    showNotification('请先选择转换类型！', 'error');
+    return;
+  }
+  
+  // 检查文本转PDF的特殊情况
+  if (selectedType === 'text-to-pdf') {
+    const textInput = document.getElementById('textInput');
+    if (!textInput || !textInput.value.trim()) {
+      showNotification('请输入要转换的文本内容！', 'error');
+      return;
+    }
+    performTextToPdfConversion(textInput.value.trim());
+    return;
+  }
+  
+  if (!selectedFile) {
+    showNotification('请先选择文件！', 'error');
+    return;
+  }
+  
+  // 显示转换进度
+  const fileUpload = document.getElementById('fileUpload');
+  const conversionProgress = document.getElementById('conversionProgress');
+  
+  if (fileUpload) fileUpload.style.display = 'none';
+  if (conversionProgress) conversionProgress.style.display = 'block';
+  
+  // 执行实际转换
+  performConversion();
+}
+
+// 执行文件转换
+function performConversion() {
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  formData.append('type', selectedType);
+  
+  // 显示进度
+  simulateProgress();
+  
+  // 发送API请求
+  fetch('/tools/api/pdf-converter/', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      throw new Error('服务器返回非JSON响应，会话可能已过期，请重新登录后重试');
+    }
+  })
+  .then(data => {
+    if (data.success) {
+      showConversionResult(data);
+    } else {
+      showNotification(data.error || '转换失败', 'error');
+      const conversionProgress = document.getElementById('conversionProgress');
+      if (conversionProgress) conversionProgress.style.display = 'none';
+    }
+  })
+  .catch(error => {
+    console.error('转换错误:', error);
+    let errorMessage = error.message;
+    
+    if (error.message.includes('Unexpected token')) {
+      errorMessage = '会话已过期，请重新登录后重试';
+    } else if (error.message.includes('非JSON响应')) {
+      errorMessage = '会话已过期，请重新登录后重试';
+    }
+    
+    showNotification('转换过程中发生错误: ' + errorMessage, 'error');
+    const conversionProgress = document.getElementById('conversionProgress');
+    if (conversionProgress) conversionProgress.style.display = 'none';
+  });
+}
+
+// 模拟转换进度
+function simulateProgress() {
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  let progress = 0;
+  
+  const interval = setInterval(() => {
+    progress += Math.random() * 15;
+    if (progress > 90) progress = 90;
+    
+    if (progressFill) progressFill.style.width = progress + '%';
+    
+    if (progressText) {
+      if (progress < 30) {
+        progressText.textContent = '正在分析文件...';
+      } else if (progress < 60) {
+        progressText.textContent = '正在转换格式...';
+      } else {
+        progressText.textContent = '正在优化输出...';
+      }
+    }
+  }, 200);
+  
+  window.progressInterval = interval;
+}
+
+// 显示转换结果
+function showConversionResult(data) {
+  if (window.progressInterval) {
+    clearInterval(window.progressInterval);
+  }
+  
+  const conversionProgress = document.getElementById('conversionProgress');
+  const resultContent = document.getElementById('resultContent');
+  const conversionResult = document.getElementById('conversionResult');
+  
+  if (conversionProgress) conversionProgress.style.display = 'none';
+  
+  const fileName = selectedFile ? selectedFile.name : '文本内容';
+  const conversionType = data.conversion_type || selectedType || 'unknown';
+  const outputFileName = getOutputFileName(fileName, conversionType);
+  
+  if (resultContent) {
+    resultContent.innerHTML = `
+      <div class="result-icon-modern">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="result-title-modern">✅ 转换完成</div>
+      <div class="result-description-modern">
+        ${conversionType === 'text-to-pdf' ? '文本内容' : `文件 <strong>${fileName}</strong>`} 已成功转换为 ${getTypeName(conversionType)} 格式
+        <br><strong>输出文件名: ${outputFileName}</strong>
+      </div>
+      <div class="result-actions-modern">
+        <a href="${data.download_url}" class="download-btn-modern" download="${outputFileName}" id="autoDownloadLink">
+          <i class="fas fa-download"></i>
+          下载文件
+        </a>
+        <button class="convert-again-btn-modern" onclick="convertAgain()">
+          <i class="fas fa-redo"></i>
+          转换其他文件
+        </button>
+      </div>
+    `;
+  }
+  
+  if (conversionResult) conversionResult.style.display = 'block';
+  showNotification('文件转换完成！', 'success');
+  
+  // 自动触发下载
+  setTimeout(() => {
+    if (typeof downloadFile === 'function') {
+      downloadFile(data.download_url, outputFileName);
+      showNotification(`文件 "${outputFileName}" 正在下载...`, 'info');
+    }
+  }, 1000);
+}
+
+// 重新转换
+function convertAgain() {
+  selectedFile = null;
+  selectedType = '';
+  
+  const conversionResult = document.getElementById('conversionResult');
+  const fileUpload = document.getElementById('fileUpload');
+  const conversionProgress = document.getElementById('conversionProgress');
+  const fileInfo = document.getElementById('fileInfo');
+  const convertBtn = document.getElementById('convertBtn');
+  
+  if (conversionResult) conversionResult.style.display = 'none';
+  if (fileUpload) fileUpload.style.display = 'block';
+  if (conversionProgress) conversionProgress.style.display = 'none';
+  if (fileInfo) fileInfo.style.display = 'none';
+  if (convertBtn) convertBtn.style.display = 'none';
+  
+  document.querySelectorAll('.type-card-modern').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) fileInput.value = '';
+  
+  const textInput = document.getElementById('textInput');
+  if (textInput) textInput.value = '';
+  
+  hideTextInput();
+  
+  showNotification('已重置转换界面，可以开始新的转换', 'success');
+}
+
+// 文本转PDF转换
+function performTextToPdfConversion(textContent) {
+  const fileUpload = document.getElementById('fileUpload');
+  const conversionProgress = document.getElementById('conversionProgress');
+  
+  if (fileUpload) fileUpload.style.display = 'none';
+  if (conversionProgress) conversionProgress.style.display = 'block';
+  
+  const formData = new FormData();
+  formData.append('type', 'text-to-pdf');
+  formData.append('text_content', textContent);
+  
+  simulateProgress();
+  
+  fetch('/tools/api/pdf-converter/', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      throw new Error('服务器返回非JSON响应，会话可能已过期，请重新登录后重试');
+    }
+  })
+  .then(data => {
+    if (data.success) {
+      showConversionResult(data);
+    } else {
+      showNotification(data.error || '转换失败', 'error');
+      if (conversionProgress) conversionProgress.style.display = 'none';
+    }
+  })
+  .catch(error => {
+    console.error('转换错误:', error);
+    let errorMessage = error.message;
+    
+    if (error.message.includes('Unexpected token')) {
+      errorMessage = '会话已过期，请重新登录后重试';
+    } else if (error.message.includes('非JSON响应')) {
+      errorMessage = '会话已过期，请重新登录后重试';
+    }
+    
+    showNotification('转换过程中发生错误: ' + errorMessage, 'error');
+    if (conversionProgress) conversionProgress.style.display = 'none';
+  });
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification-modern ${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+    <span>${message}</span>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 100);
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 3000);
+}
+
+// 安全的点击函数
+function safeClick(elementId) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.click();
+  } else {
+    console.warn(`Element with id '${elementId}' not found`);
+  }
+}
+
+// 下载文件函数
+function downloadFile(url, filename) {
+  console.log(`开始下载: ${url}, 文件名: ${filename}`);
+  
+  if (!url) {
+    console.error('下载URL为空');
+    showNotification('下载链接无效', 'error');
+    return;
+  }
+  
+  if (!url.startsWith('http')) {
+    url = window.location.origin + url;
+  }
+  
+  console.log(`完整下载URL: ${url}`);
+  
+  fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': '*/*',
+    },
+    credentials: 'same-origin'
+  })
+  .then(response => {
+    console.log('Download response status:', response.status);
+    console.log('Download response headers:', response.headers);
+    
+    if (response.ok) {
+      return response.blob();
+    }
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  })
+  .then(blob => {
+    console.log('Download blob size:', blob.size);
+    
+    if (blob.size === 0) {
+      throw new Error('下载的文件大小为0');
+    }
+    
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    link.click();
+    
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+    
+    console.log(`下载成功: ${filename}`);
+    showNotification(`文件 "${filename}" 下载成功`, 'success');
+  })
+  .catch(error => {
+    console.error(`下载失败: ${error.message}`);
+    
+    console.log('尝试备用下载方法...');
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.target = '_blank';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log(`使用备用方法下载: ${filename}`);
+    showNotification(`使用备用方法下载: ${filename}`, 'info');
+    
+    setTimeout(() => {
+      showNotification(`如果下载失败，请右键点击链接选择"另存为"`, 'warning');
+    }, 2000);
+  });
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+  // 绑定文件上传事件
+  const fileInput = document.getElementById('fileInput');
+  if (fileInput) {
+    fileInput.addEventListener('change', handleFileUpload);
+  }
+  
+  // 绑定拖拽上传事件
+  const uploadArea = document.getElementById('uploadArea');
+  if (uploadArea) {
+    uploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+          fileInput.files = files;
+          handleFileUpload({ target: { files: files } });
+        }
+      }
+    });
+  }
+  
+  console.log('PDF转换器页面已加载');
+});
+</script>
+{% endblock %}

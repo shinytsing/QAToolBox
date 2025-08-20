@@ -583,7 +583,7 @@
                 }
             }
 
-            saveCapsule() {
+            async saveCapsule() {
                 const content = document.getElementById('diary-content').value.trim();
                 if (!content) {
                     this.showNotification('请先写下今天的故事', 'warning');
@@ -596,16 +596,63 @@
                 }
 
                 const capsuleData = {
-                    id: Date.now(),
                     content: content,
                     emotions: this.selectedEmotions,
-                    created_at: new Date().toISOString()
+                    unlock_time: null,  // 默认立即解锁
+                    unlock_condition: 'time',
+                    visibility: 'private',
+                    images: [],
+                    audio: '',
+                    location: {},
+                    weather: {}
                 };
 
-                this.capsules.push(capsuleData);
-                this.showNotification('时光胶囊保存成功！', 'success');
-                this.resetForm();
-                this.updateAchievements();
+                try {
+                    // 调用后端API保存时光胶囊
+                    const response = await fetch('/tools/api/save-capsule/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(capsuleData)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 添加到本地数组
+                        this.capsules.push({
+                            ...capsuleData,
+                            id: result.capsule_id,
+                            created_at: new Date().toISOString()
+                        });
+                        
+                        this.showNotification(result.message || '时光胶囊保存成功！', 'success');
+                        this.resetForm();
+                        this.updateAchievements();
+                    } else {
+                        this.showNotification(result.message || '保存失败，请重试', 'error');
+                    }
+                } catch (error) {
+                    console.error('❌ 胶囊保存失败:', error);
+                    this.showNotification('网络错误，保存失败，请重试', 'error');
+                }
+            }
+
+            getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
             }
 
             resetForm() {

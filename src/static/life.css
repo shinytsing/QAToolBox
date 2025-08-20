@@ -188,53 +188,272 @@ body.life-theme::before {
   box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
-/* 生活模式导航栏 */
+/* 生活模式导航栏 - 现代化设计 */
 .life-navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 0.5px solid var(--life-border);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 249, 250, 0.98) 50%, 
+    rgba(255, 255, 255, 0.95) 100%) !important;
+  backdrop-filter: blur(25px) saturate(180%) !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(40, 167, 69, 0.15) !important;
+  box-shadow: 
+    0 8px 32px rgba(40, 167, 69, 0.1), 
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 2px 20px rgba(40, 167, 69, 0.08) !important;
+  position: relative !important;
+  overflow: visible !important;
+  width: 100% !important;
+  padding: 0 !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 生活模式导航栏悬浮效果 */
+.life-navbar:hover {
+  box-shadow: 
+    0 12px 40px rgba(40, 167, 69, 0.15), 
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 4px 25px rgba(40, 167, 69, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 生活模式导航栏容器 */
+.life-navbar .container-fluid {
+  padding: 0.75rem 2rem !important;
+  max-width: none !important;
+}
+
+.life-navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.03) 0%, 
+    rgba(23, 162, 184, 0.02) 50%, 
+    rgba(255, 193, 7, 0.03) 100%);
+  z-index: -1;
+}
+
+.life-navbar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(40, 167, 69, 0.1), 
+    transparent);
+  transition: left 3s ease;
+  z-index: -1;
+}
+
+.life-navbar:hover::after {
+  left: 100%;
 }
 
 .life-navbar .navbar-brand {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--life-text) !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  font-size: 1.4rem !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 0.6rem 1rem !important;
+  border-radius: 12px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.1) 0%, 
+    rgba(23, 162, 184, 0.08) 100%) !important;
+  border: 1px solid rgba(40, 167, 69, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  min-height: 48px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.life-navbar .navbar-brand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(40, 167, 69, 0.2), 
+    transparent);
+  transition: left 0.6s ease;
+  z-index: 0;
+}
+
+.life-navbar .navbar-brand:hover::before {
+  left: 100%;
+}
+
+.life-navbar .navbar-brand:hover {
+  transform: translateY(-2px) scale(1.02) !important;
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.15) 0%, 
+    rgba(23, 162, 184, 0.12) 100%) !important;
+  border-color: rgba(40, 167, 69, 0.25) !important;
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15) !important;
+  color: var(--life-primary) !important;
+}
+
+.life-navbar .navbar-brand i {
+  font-size: 1.2rem !important;
+  color: var(--life-primary) !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+.life-navbar .navbar-brand .theme-subtitle {
+  z-index: 1 !important;
+  position: relative !important;
 }
 
 .life-navbar .nav-link {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-weight: 500;
-  transition: color 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  line-height: 1;
+  color: var(--life-text) !important;
+  font-weight: 500 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  line-height: 1 !important;
+  padding: 0.6rem 1rem !important;
+  border-radius: 10px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  text-decoration: none !important;
+  margin: 0 4px !important;
+}
+
+.life-navbar .nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.08) 0%, 
+    rgba(23, 162, 184, 0.06) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.life-navbar .nav-link:hover::before {
+  opacity: 1;
 }
 
 .life-navbar .nav-link i {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  line-height: 1;
-  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  color: var(--life-text) !important;
+  z-index: 1 !important;
+  position: relative !important;
+  transition: all 0.3s ease !important;
 }
 
 .life-navbar .nav-link span {
-  display: flex;
-  align-items: center;
-  line-height: 1;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  color: var(--life-text) !important;
+  z-index: 1 !important;
+  position: relative !important;
+  transition: all 0.3s ease !important;
 }
 
 .life-navbar .nav-link:hover {
-  color: var(--life-primary);
+  color: var(--life-primary) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1) !important;
+}
+
+.life-navbar .nav-link:hover i,
+.life-navbar .nav-link:hover span {
+  color: var(--life-primary) !important;
+  transform: scale(1.05) !important;
 }
 
 /* 生活模式用户菜单 */
+.life-navbar .dropdown-menu {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(40, 167, 69, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 40px rgba(40, 167, 69, 0.08), 
+              0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: blur(20px) !important;
+  padding: 8px !important;
+  margin-top: 8px !important;
+}
+
+.life-navbar .dropdown-item {
+  color: var(--life-text) !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin: 2px 0 !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.life-navbar .dropdown-item:hover {
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.1) 0%, 
+    rgba(23, 162, 184, 0.08) 100%) !important;
+  color: var(--life-primary) !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1) !important;
+}
+
+.life-navbar .dropdown-divider {
+  border-color: rgba(40, 167, 69, 0.1) !important;
+  margin: 8px 0 !important;
+}
+
 .life-user-menu {
   background: var(--life-card-bg);
   border: 1px solid var(--life-border);
   border-radius: var(--life-radius);
   box-shadow: var(--life-shadow);
+}
+
+/* 生活模式设置按钮 */
+.life-navbar .btn-outline-secondary {
+  color: var(--life-text) !important;
+  border-color: rgba(40, 167, 69, 0.2) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-weight: 500 !important;
+}
+
+.life-navbar .btn-outline-secondary:hover {
+  background: linear-gradient(135deg, 
+    rgba(40, 167, 69, 0.1) 0%, 
+    rgba(23, 162, 184, 0.08) 100%) !important;
+  border-color: rgba(40, 167, 69, 0.3) !important;
+  color: var(--life-primary) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1) !important;
 }
 
 .life-mode-indicator {
@@ -245,6 +464,67 @@ body.life-theme::before {
   font-size: 0.8rem;
   font-weight: 500;
   margin-left: 8px;
+}
+
+/* 生活模式移动端导航栏优化 */
+.life-navbar .navbar-toggler {
+  border: 1px solid rgba(40, 167, 69, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 6px 8px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.life-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3e%3cpath stroke='%2328a745' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+  transition: transform 0.3s ease !important;
+}
+
+.life-navbar .navbar-toggler:hover .navbar-toggler-icon {
+  transform: scale(1.1) !important;
+}
+
+.life-navbar .navbar-collapse {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  border-radius: 12px !important;
+  margin-top: 12px !important;
+  padding: 16px !important;
+  border: 1px solid rgba(40, 167, 69, 0.1) !important;
+  box-shadow: 0 8px 32px rgba(40, 167, 69, 0.08) !important;
+}
+
+/* 生活模式主题徽章优化 */
+.life-mode-indicator {
+  background: var(--life-gradient) !important;
+  color: white !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  margin-left: 8px !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2) !important;
+  animation: lifePulse 3s ease-in-out infinite !important;
+}
+
+@keyframes lifePulse {
+  0%, 100% { 
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    transform: scale(1.02);
+  }
+}
+
+/* 生活模式导航栏焦点状态 */
+.life-navbar .nav-link:focus,
+.life-navbar .navbar-brand:focus,
+.life-navbar .btn-outline-secondary:focus {
+  outline: 2px solid rgba(40, 167, 69, 0.4) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1) !important;
 }
 
 /* 生活模式响应式设计 */
@@ -260,6 +540,23 @@ body.life-theme::before {
   
   .life-subtitle {
     font-size: 1rem;
+  }
+  
+  .life-navbar .navbar-brand {
+    font-size: 1.2rem !important;
+    padding: 0.5rem 0.8rem !important;
+    gap: 8px !important;
+  }
+  
+  .life-navbar .nav-link {
+    padding: 0.8rem 1rem !important;
+    margin: 2px 0 !important;
+    border-radius: 8px !important;
+  }
+  
+  .life-navbar .dropdown-menu {
+    margin-top: 4px !important;
+    border-radius: 8px !important;
   }
 }
 
@@ -283,4 +580,25 @@ body.life-theme::before {
   background: var(--life-primary);
   color: white;
   box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-} 
+}
+
+/* 生活模式首页导航栏特殊效果 */
+.home-page .life-navbar .navbar-nav .nav-item {
+  transform: translateY(-8px) scale(0.95);
+  opacity: 0;
+}
+
+.home-page .life-navbar:hover .navbar-nav .nav-item {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* 生活模式悬浮背景动画 */
+.home-page .life-navbar::before {
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(40, 167, 69, 0.08), 
+    rgba(23, 162, 184, 0.06),
+    rgba(255, 193, 7, 0.04),
+    transparent) !important;
+}

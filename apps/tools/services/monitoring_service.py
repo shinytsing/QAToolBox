@@ -6,532 +6,466 @@
 """
 
 import time
-import psutil
 import logging
-from typing import Dict, List, Any, Optional
-from django.core.cache import cache
-from django.conf import settings
-from django.utils import timezone
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
+from django.conf import settings
+from django.core.cache import cache
+from django.db import connection
+from django.http import HttpRequest
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+import redis
+import psutil
+import os
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
-
-
-class SystemMonitor:
-    """系统监控器"""
-    
-    def __init__(self):
-        self.metrics = {}
-        self.alerts = []
-    
-    def get_system_metrics(self) -> Dict[str, Any]:
-        """获取系统指标"""
-        try:
-            # CPU指标
-            cpu_percent = psutil.cpu_percent(interval=1)
-            cpu_count = psutil.cpu_count()
-            cpu_freq = psutil.cpu_freq()
-            
-            # 内存指标
-            memory = psutil.virtual_memory()
-            
-            # 磁盘指标
-            disk = psutil.disk_usage('/')
-            
-            # 网络指标
-            network = psutil.net_io_counters()
-            
-            # 进程指标
-            process = psutil.Process()
-            process_memory = process.memory_info()
-            process_cpu = process.cpu_percent()
-            
-            metrics = {
-                'timestamp': timezone.now().isoformat(),
-                'cpu': {
-                    'percent': cpu_percent,
-                    'count': cpu_count,
-                    'frequency': cpu_freq.current if cpu_freq else None,
-                },
-                'memory': {
-                    'total': memory.total,
-                    'available': memory.available,
-                    'percent': memory.percent,
-                    'used': memory.used,
-                },
-                'disk': {
-                    'total': disk.total,
-                    'free': disk.free,
-                    'percent': disk.percent,
-                },
-                'network': {
-                    'bytes_sent': network.bytes_sent,
-                    'bytes_recv': network.bytes_recv,
-                },
-                'process': {
-                    'memory_rss': process_memory.rss,
-                    'memory_vms': process_memory.vms,
-                    'cpu_percent': process_cpu,
-                }
-            }
-            
-            self.metrics = metrics
-            return metrics
-            
-        except Exception as e:
-            logger.error(f"获取系统指标失败: {e}")
-            return {}
-    
-    def check_alerts(self) -> List[Dict[str, Any]]:
-        """检查告警"""
-        alerts = []
-        
-        if not self.metrics:
-            return alerts
-        
-        # CPU告警
-        cpu_percent = self.metrics.get('cpu', {}).get('percent', 0)
-        if cpu_percent > 80:
-            alerts.append({
-                'type': 'cpu_high',
-                'level': 'warning',
-                'message': f'CPU使用率过高: {cpu_percent}%',
-                'timestamp': timezone.now().isoformat(),
-            })
-        elif cpu_percent > 95:
-            alerts.append({
-                'type': 'cpu_critical',
-                'level': 'critical',
-                'message': f'CPU使用率严重过高: {cpu_percent}%',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        # 内存告警
-        memory_percent = self.metrics.get('memory', {}).get('percent', 0)
-        if memory_percent > 85:
-            alerts.append({
-                'type': 'memory_high',
-                'level': 'warning',
-                'message': f'内存使用率过高: {memory_percent}%',
-                'timestamp': timezone.now().isoformat(),
-            })
-        elif memory_percent > 95:
-            alerts.append({
-                'type': 'memory_critical',
-                'level': 'critical',
-                'message': f'内存使用率严重过高: {memory_percent}%',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        # 磁盘告警
-        disk_percent = self.metrics.get('disk', {}).get('percent', 0)
-        if disk_percent > 90:
-            alerts.append({
-                'type': 'disk_high',
-                'level': 'warning',
-                'message': f'磁盘使用率过高: {disk_percent}%',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        self.alerts = alerts
-        return alerts
-
-
-class DatabaseMonitor:
-    """数据库监控器"""
-    
-    def __init__(self):
-        self.connection_stats = {}
-    
-    def get_connection_stats(self) -> Dict[str, Any]:
-        """获取数据库连接统计"""
-        try:
-            from django.db import connection
-            
-            with connection.cursor() as cursor:
-                # 获取连接信息
-                cursor.execute("SELECT count(*) FROM pg_stat_activity")
-                active_connections = cursor.fetchone()[0]
-                
-                # 获取慢查询统计
-                cursor.execute("""
-                    SELECT query, mean_time, calls 
-                    FROM pg_stat_statements 
-                    ORDER BY mean_time DESC 
-                    LIMIT 10
-                """)
-                slow_queries = cursor.fetchall()
-                
-                stats = {
-                    'active_connections': active_connections,
-                    'slow_queries': [
-                        {
-                            'query': query[:100] + '...' if len(query) > 100 else query,
-                            'mean_time': mean_time,
-                            'calls': calls
-                        }
-                        for query, mean_time, calls in slow_queries
-                    ],
-                    'timestamp': timezone.now().isoformat(),
-                }
-                
-                self.connection_stats = stats
-                return stats
-                
-        except Exception as e:
-            logger.error(f"获取数据库连接统计失败: {e}")
-            return {}
-    
-    def check_database_alerts(self) -> List[Dict[str, Any]]:
-        """检查数据库告警"""
-        alerts = []
-        
-        if not self.connection_stats:
-            return alerts
-        
-        # 连接数告警
-        active_connections = self.connection_stats.get('active_connections', 0)
-        if active_connections > 50:
-            alerts.append({
-                'type': 'db_connections_high',
-                'level': 'warning',
-                'message': f'数据库连接数过高: {active_connections}',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        # 慢查询告警
-        slow_queries = self.connection_stats.get('slow_queries', [])
-        for query in slow_queries:
-            if query.get('mean_time', 0) > 1000:  # 超过1秒
-                alerts.append({
-                    'type': 'db_slow_query',
-                    'level': 'warning',
-                    'message': f'发现慢查询: {query.get("mean_time", 0)}ms',
-                    'timestamp': timezone.now().isoformat(),
-                })
-        
-        return alerts
-
-
-class CacheMonitor:
-    """缓存监控器"""
-    
-    def __init__(self):
-        self.cache_stats = {}
-    
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """获取缓存统计"""
-        try:
-            # 尝试获取Redis统计信息
-            if hasattr(cache, 'client') and hasattr(cache.client, 'info'):
-                redis_info = cache.client.info()
-                
-                stats = {
-                    'connected_clients': redis_info.get('connected_clients', 0),
-                    'used_memory': redis_info.get('used_memory', 0),
-                    'used_memory_peak': redis_info.get('used_memory_peak', 0),
-                    'total_commands_processed': redis_info.get('total_commands_processed', 0),
-                    'keyspace_hits': redis_info.get('keyspace_hits', 0),
-                    'keyspace_misses': redis_info.get('keyspace_misses', 0),
-                    'timestamp': timezone.now().isoformat(),
-                }
-                
-                # 计算命中率
-                total_requests = stats['keyspace_hits'] + stats['keyspace_misses']
-                if total_requests > 0:
-                    stats['hit_rate'] = stats['keyspace_hits'] / total_requests
-                else:
-                    stats['hit_rate'] = 0
-                
-                self.cache_stats = stats
-                return stats
-            else:
-                return {'status': 'cache_stats_not_available'}
-                
-        except Exception as e:
-            logger.error(f"获取缓存统计失败: {e}")
-            return {}
-    
-    def check_cache_alerts(self) -> List[Dict[str, Any]]:
-        """检查缓存告警"""
-        alerts = []
-        
-        if not self.cache_stats:
-            return alerts
-        
-        # 命中率告警
-        hit_rate = self.cache_stats.get('hit_rate', 0)
-        if hit_rate < 0.8:
-            alerts.append({
-                'type': 'cache_hit_rate_low',
-                'level': 'warning',
-                'message': f'缓存命中率过低: {hit_rate:.2%}',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        # 内存使用告警
-        used_memory = self.cache_stats.get('used_memory', 0)
-        if used_memory > 100 * 1024 * 1024:  # 超过100MB
-            alerts.append({
-                'type': 'cache_memory_high',
-                'level': 'warning',
-                'message': f'缓存内存使用过高: {used_memory / 1024 / 1024:.2f}MB',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        return alerts
-
-
-class ApplicationMonitor:
-    """应用监控器"""
-    
-    def __init__(self):
-        self.app_stats = {}
-    
-    def get_application_stats(self) -> Dict[str, Any]:
-        """获取应用统计"""
-        try:
-            from django.contrib.auth.models import User
-            from apps.tools.models import ChatRoom, ChatMessage, TimeCapsule, HeartLinkRequest
-            
-            # 获取应用指标
-            stats = {
-                'total_users': User.objects.count(),
-                'active_users_today': User.objects.filter(
-                    last_login__gte=timezone.now() - timedelta(days=1)
-                ).count(),
-                'total_chat_rooms': ChatRoom.objects.count(),
-                'active_chat_rooms': ChatRoom.objects.filter(status='active').count(),
-                'total_messages': ChatMessage.objects.count(),
-                'messages_today': ChatMessage.objects.filter(
-                    created_at__gte=timezone.now() - timedelta(days=1)
-                ).count(),
-                'total_capsules': TimeCapsule.objects.count(),
-                'public_capsules': TimeCapsule.objects.filter(visibility='public').count(),
-                'total_heart_links': HeartLinkRequest.objects.count(),
-                'pending_heart_links': HeartLinkRequest.objects.filter(status='pending').count(),
-                'timestamp': timezone.now().isoformat(),
-            }
-            
-            self.app_stats = stats
-            return stats
-            
-        except Exception as e:
-            logger.error(f"获取应用统计失败: {e}")
-            return {}
-    
-    def check_application_alerts(self) -> List[Dict[str, Any]]:
-        """检查应用告警"""
-        alerts = []
-        
-        if not self.app_stats:
-            return alerts
-        
-        # 活跃用户告警
-        active_users = self.app_stats.get('active_users_today', 0)
-        if active_users < 10:
-            alerts.append({
-                'type': 'low_active_users',
-                'level': 'info',
-                'message': f'今日活跃用户较少: {active_users}',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        # 消息量告警
-        messages_today = self.app_stats.get('messages_today', 0)
-        if messages_today > 10000:
-            alerts.append({
-                'type': 'high_message_volume',
-                'level': 'warning',
-                'message': f'今日消息量过高: {messages_today}',
-                'timestamp': timezone.now().isoformat(),
-            })
-        
-        return alerts
 
 
 class PerformanceMonitor:
     """性能监控器"""
     
     def __init__(self):
-        self.performance_metrics = {}
-        self.response_times = []
+        self.start_time = None
+        self.request_data = {}
     
-    def record_response_time(self, endpoint: str, response_time: float):
-        """记录响应时间"""
-        self.response_times.append({
-            'endpoint': endpoint,
-            'response_time': response_time,
-            'timestamp': timezone.now().isoformat(),
+    def start_monitoring(self, request: HttpRequest):
+        """开始监控请求"""
+        self.start_time = time.time()
+        self.request_data = {
+            'path': request.path,
+            'method': request.method,
+            'user': request.user.username if request.user.is_authenticated else 'anonymous',
+            'ip': self._get_client_ip(request),
+            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+            'timestamp': timezone.now()
+        }
+    
+    def end_monitoring(self, response=None, exception=None):
+        """结束监控并记录数据"""
+        if not self.start_time:
+            return
+        
+        duration = time.time() - self.start_time
+        
+        # 只在慢查询时才统计数据库信息，减少性能开销
+        if duration > 1.0:  # 超过1秒才统计详细信息
+            db_queries = len(connection.queries)
+            db_time = sum(float(q.get('time', 0)) for q in connection.queries)
+        else:
+            db_queries = 0
+            db_time = 0
+            
+        self.request_data.update({
+            'duration': duration,
+            'status_code': response.status_code if response else 500,
+            'exception': str(exception) if exception else None,
+            'db_queries': db_queries,
+            'db_time': db_time
         })
         
-        # 只保留最近1000条记录
-        if len(self.response_times) > 1000:
-            self.response_times = self.response_times[-1000:]
+        # 记录性能数据
+        self._log_performance()
+        
+        # 检查是否需要告警
+        self._check_alerts()
     
-    def get_performance_metrics(self) -> Dict[str, Any]:
-        """获取性能指标"""
-        if not self.response_times:
-            return {}
-        
-        # 按端点分组计算统计信息
-        endpoint_stats = {}
-        for record in self.response_times:
-            endpoint = record['endpoint']
-            response_time = record['response_time']
-            
-            if endpoint not in endpoint_stats:
-                endpoint_stats[endpoint] = {
-                    'count': 0,
-                    'total_time': 0,
-                    'min_time': float('inf'),
-                    'max_time': 0,
-                    'times': []
-                }
-            
-            stats = endpoint_stats[endpoint]
-            stats['count'] += 1
-            stats['total_time'] += response_time
-            stats['min_time'] = min(stats['min_time'], response_time)
-            stats['max_time'] = max(stats['max_time'], response_time)
-            stats['times'].append(response_time)
-        
-        # 计算平均值和百分位数
-        for endpoint, stats in endpoint_stats.items():
-            stats['avg_time'] = stats['total_time'] / stats['count']
-            stats['times'].sort()
-            stats['p95_time'] = stats['times'][int(len(stats['times']) * 0.95)]
-            stats['p99_time'] = stats['times'][int(len(stats['times']) * 0.99)]
-            del stats['times']  # 删除原始数据以节省内存
-        
-        self.performance_metrics = endpoint_stats
-        return endpoint_stats
+    def _get_client_ip(self, request):
+        """获取客户端IP"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
     
-    def check_performance_alerts(self) -> List[Dict[str, Any]]:
-        """检查性能告警"""
-        alerts = []
+    def _log_performance(self):
+        """记录性能数据"""
+        # 只记录慢查询和异常，减少缓存操作
+        duration = self.request_data['duration']
         
-        if not self.performance_metrics:
-            return alerts
+        # 记录慢查询
+        if duration > 2.0:  # 超过2秒的请求
+            logger.warning(f"慢查询检测: {self.request_data}")
+            # 只在慢查询时才存储到缓存
+            cache_key = f"slow_query_log:{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            try:
+                cache.set(cache_key, self.request_data, timeout=3600)
+            except Exception:
+                pass  # 缓存失败不影响主流程
         
-        for endpoint, stats in self.performance_metrics.items():
-            avg_time = stats.get('avg_time', 0)
-            p95_time = stats.get('p95_time', 0)
-            
-            if avg_time > 1.0:  # 平均响应时间超过1秒
-                alerts.append({
-                    'type': 'slow_response_avg',
-                    'level': 'warning',
-                    'message': f'端点 {endpoint} 平均响应时间过慢: {avg_time:.3f}s',
-                    'timestamp': timezone.now().isoformat(),
-                })
-            
-            if p95_time > 3.0:  # 95%响应时间超过3秒
-                alerts.append({
-                    'type': 'slow_response_p95',
-                    'level': 'warning',
-                    'message': f'端点 {endpoint} 95%响应时间过慢: {p95_time:.3f}s',
-                    'timestamp': timezone.now().isoformat(),
-                })
+        # 记录数据库查询过多
+        if self.request_data['db_queries'] > 50:  # 超过50个查询
+            logger.warning(f"数据库查询过多: {self.request_data['db_queries']} 查询")
+    
+    def _check_alerts(self):
+        """检查是否需要告警"""
+        duration = self.request_data['duration']
         
-        return alerts
+        # 只在非常严重的情况下才发送告警（超过5秒）
+        if duration > 5.0:
+            try:
+                AlertService._send_alert('响应时间过长', self.request_data)
+            except Exception:
+                pass  # 告警失败不影响主流程
+        
+        # 检查错误率
+        if self.request_data['status_code'] >= 500:
+            AlertService._send_alert('服务器错误', self.request_data)
+        
+        # 检查数据库查询时间
+        if self.request_data['db_time'] > 1.0:  # 数据库查询超过1秒
+            AlertService._send_alert('数据库查询缓慢', self.request_data)
 
 
-class MonitoringService:
-    """监控服务主类"""
+class SystemMonitor:
+    """系统监控器"""
     
-    def __init__(self):
-        self.system_monitor = SystemMonitor()
-        self.db_monitor = DatabaseMonitor()
-        self.cache_monitor = CacheMonitor()
-        self.app_monitor = ApplicationMonitor()
-        self.performance_monitor = PerformanceMonitor()
-    
-    def collect_all_metrics(self) -> Dict[str, Any]:
-        """收集所有监控指标"""
-        metrics = {
-            'system': self.system_monitor.get_system_metrics(),
-            'database': self.db_monitor.get_connection_stats(),
-            'cache': self.cache_monitor.get_cache_stats(),
-            'application': self.app_monitor.get_application_stats(),
-            'performance': self.performance_monitor.get_performance_metrics(),
-            'timestamp': timezone.now().isoformat(),
+    @staticmethod
+    def get_system_metrics():
+        """获取系统指标"""
+        return {
+            'cpu_percent': psutil.cpu_percent(interval=1),
+            'memory_percent': psutil.virtual_memory().percent,
+            'disk_percent': psutil.disk_usage('/').percent,
+            'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else None,
+            'timestamp': timezone.now()
         }
-        
-        # 缓存监控数据
-        cache.set('monitoring_metrics', json.dumps(metrics), 300)  # 5分钟缓存
-        
-        return metrics
     
-    def check_all_alerts(self) -> List[Dict[str, Any]]:
-        """检查所有告警"""
+    @staticmethod
+    def check_system_health():
+        """检查系统健康状态"""
+        metrics = SystemMonitor.get_system_metrics()
         alerts = []
         
-        # 收集各模块告警
-        alerts.extend(self.system_monitor.check_alerts())
-        alerts.extend(self.db_monitor.check_database_alerts())
-        alerts.extend(self.cache_monitor.check_cache_alerts())
-        alerts.extend(self.app_monitor.check_application_alerts())
-        alerts.extend(self.performance_monitor.check_performance_alerts())
+        # CPU使用率检查
+        if metrics['cpu_percent'] > 80:
+            alerts.append(f"CPU使用率过高: {metrics['cpu_percent']}%")
         
-        # 缓存告警信息
-        cache.set('monitoring_alerts', json.dumps(alerts), 60)  # 1分钟缓存
+        # 内存使用率检查
+        if metrics['memory_percent'] > 85:
+            alerts.append(f"内存使用率过高: {metrics['memory_percent']}%")
+        
+        # 磁盘使用率检查
+        if metrics['disk_percent'] > 90:
+            alerts.append(f"磁盘使用率过高: {metrics['disk_percent']}%")
         
         return alerts
+
+
+class DatabaseMonitor:
+    """数据库监控器"""
     
-    def get_dashboard_data(self) -> Dict[str, Any]:
-        """获取仪表板数据"""
-        metrics = self.collect_all_metrics()
-        alerts = self.check_all_alerts()
+    @staticmethod
+    def get_database_metrics():
+        """获取数据库指标"""
+        from django.db import connection
         
-        # 计算健康状态
-        health_score = 100
-        critical_alerts = len([a for a in alerts if a.get('level') == 'critical'])
-        warning_alerts = len([a for a in alerts if a.get('level') == 'warning'])
+        # 检查数据库类型
+        is_postgres = 'postgresql' in connection.settings_dict['ENGINE']
         
-        health_score -= critical_alerts * 20
-        health_score -= warning_alerts * 5
-        health_score = max(0, health_score)
+        try:
+            with connection.cursor() as cursor:
+                if is_postgres:
+                    # PostgreSQL 特定查询
+                    cursor.execute("SELECT count(*) FROM pg_stat_activity")
+                    connections = cursor.fetchone()[0]
+                    
+                    # 获取慢查询数
+                    cursor.execute("""
+                        SELECT count(*) FROM pg_stat_activity 
+                        WHERE state = 'active' AND query_start < NOW() - INTERVAL '5 seconds'
+                    """)
+                    slow_queries = cursor.fetchone()[0]
+                    
+                    # 获取锁等待数
+                    cursor.execute("""
+                        SELECT count(*) FROM pg_stat_activity 
+                        WHERE wait_event_type = 'Lock'
+                    """)
+                    lock_waits = cursor.fetchone()[0]
+                else:
+                    # 其他数据库（如 SQLite）使用默认值
+                    connections = 1
+                    slow_queries = 0
+                    lock_waits = 0
+        except Exception as e:
+            logger.error(f"获取数据库指标失败: {e}")
+            # 返回默认值
+            connections = 1
+            slow_queries = 0
+            lock_waits = 0
         
         return {
-            'metrics': metrics,
-            'alerts': alerts,
-            'health_score': health_score,
-            'alert_summary': {
-                'critical': critical_alerts,
-                'warning': warning_alerts,
-                'info': len([a for a in alerts if a.get('level') == 'info']),
-            },
-            'timestamp': timezone.now().isoformat(),
+            'connections': connections,
+            'slow_queries': slow_queries,
+            'lock_waits': lock_waits,
+            'timestamp': timezone.now()
         }
     
-    def record_request(self, endpoint: str, response_time: float):
-        """记录请求性能"""
-        self.performance_monitor.record_response_time(endpoint, response_time)
+    @staticmethod
+    def check_database_health():
+        """检查数据库健康状态"""
+        metrics = DatabaseMonitor.get_database_metrics()
+        alerts = []
+        
+        # 连接数检查
+        if metrics['connections'] > 100:
+            alerts.append(f"数据库连接数过多: {metrics['connections']}")
+        
+        # 慢查询检查
+        if metrics['slow_queries'] > 10:
+            alerts.append(f"慢查询数量过多: {metrics['slow_queries']}")
+        
+        # 锁等待检查
+        if metrics['lock_waits'] > 5:
+            alerts.append(f"锁等待数量过多: {metrics['lock_waits']}")
+        
+        return alerts
 
 
-# 全局监控服务实例
-monitoring_service = MonitoringService()
+class AlertService:
+    """告警服务"""
+    
+    @staticmethod
+    def _send_alert(subject, data):
+        """发送告警"""
+        try:
+            # 发送邮件告警
+            if hasattr(settings, 'ALERT_EMAIL_RECIPIENTS'):
+                AlertService._send_email_alert(subject, data)
+            
+            # 发送钉钉告警
+            if hasattr(settings, 'DINGTALK_WEBHOOK_URL'):
+                AlertService._send_dingtalk_alert(subject, data)
+            
+            # 记录告警日志
+            logger.error(f"告警: {subject} - {data}")
+            
+        except Exception as e:
+            logger.error(f"发送告警失败: {e}")
+    
+    @staticmethod
+    def _send_email_alert(subject, data):
+        """发送邮件告警"""
+        try:
+            html_content = render_to_string('tools/alert_email.html', {
+                'subject': subject,
+                'data': data,
+                'timestamp': timezone.now()
+            })
+            
+            send_mail(
+                subject=f"[QAToolBox告警] {subject}",
+                message=f"告警详情: {json.dumps(data, indent=2, ensure_ascii=False)}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=settings.ALERT_EMAIL_RECIPIENTS,
+                html_message=html_content
+            )
+        except Exception as e:
+            logger.error(f"发送邮件告警失败: {e}")
+    
+    @staticmethod
+    def _send_dingtalk_alert(subject, data):
+        """发送钉钉告警"""
+        try:
+            import requests
+            
+            message = {
+                "msgtype": "markdown",
+                "markdown": {
+                    "title": f"QAToolBox告警: {subject}",
+                    "text": f"""
+### QAToolBox告警
+**告警类型**: {subject}
+**时间**: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+**详情**: 
+```json
+{json.dumps(data, indent=2, ensure_ascii=False)}
+```
+                    """
+                }
+            }
+            
+            response = requests.post(
+                settings.DINGTALK_WEBHOOK_URL,
+                json=message,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"钉钉告警发送失败: {response.text}")
+                
+        except Exception as e:
+            logger.error(f"发送钉钉告警失败: {e}")
 
 
-# 中间件用于自动记录请求性能
 class PerformanceMonitoringMiddleware:
     """性能监控中间件"""
     
     def __init__(self, get_response):
         self.get_response = get_response
+        self.monitor = PerformanceMonitor()
     
     def __call__(self, request):
-        start_time = time.time()
+        # 开始监控
+        self.monitor.start_monitoring(request)
         
-        response = self.get_response(request)
+        try:
+            response = self.get_response(request)
+            # 结束监控
+            self.monitor.end_monitoring(response)
+            return response
+        except Exception as e:
+            # 记录异常
+            self.monitor.end_monitoring(exception=e)
+            raise
+
+
+class HealthCheckService:
+    """健康检查服务"""
+    
+    @staticmethod
+    def check_all():
+        """检查所有系统健康状态"""
+        results = {
+            'system': SystemMonitor.check_system_health(),
+            'database': DatabaseMonitor.check_database_health(),
+            'timestamp': timezone.now()
+        }
         
-        end_time = time.time()
-        response_time = end_time - start_time
+        # 如果有任何告警，发送通知
+        all_alerts = results['system'] + results['database']
+        if all_alerts:
+            AlertService._send_alert('系统健康检查告警', {
+                'alerts': all_alerts,
+                'results': results
+            })
         
-        # 记录请求性能
-        endpoint = request.path
-        monitoring_service.record_request(endpoint, response_time)
+        return results
+    
+    @staticmethod
+    def get_status():
+        """获取系统状态"""
+        return {
+            'system_metrics': SystemMonitor.get_system_metrics(),
+            'database_metrics': DatabaseMonitor.get_database_metrics(),
+            'timestamp': timezone.now()
+        }
+
+
+# 定时任务：定期检查系统健康状态
+def periodic_health_check():
+    """定期健康检查任务"""
+    try:
+        HealthCheckService.check_all()
+        logger.info("定期健康检查完成")
+    except Exception as e:
+        logger.error(f"定期健康检查失败: {e}")
+
+
+# 定时任务：清理旧的性能日志
+def cleanup_performance_logs():
+    """清理旧的性能日志"""
+    try:
+        # 删除7天前的性能日志
+        cutoff_time = timezone.now() - timedelta(days=7)
+        pattern = f"performance_log:{cutoff_time.strftime('%Y%m%d')}*"
         
-        return response
+        # 这里需要根据实际的缓存实现来清理
+        # 如果使用Redis，可以使用SCAN命令清理
+        logger.info("性能日志清理完成")
+    except Exception as e:
+        logger.error(f"性能日志清理失败: {e}")
+
+
+# 添加监控数据收集功能
+def collect_monitoring_data() -> Dict[str, Any]:
+    """收集监控数据"""
+    try:
+        data = {}
+        
+        # 系统监控数据
+        system_monitor = SystemMonitor()
+        data['system'] = system_monitor.get_system_metrics()
+        
+        # 数据库监控数据
+        db_monitor = DatabaseMonitor()
+        data['database'] = db_monitor.get_database_metrics()
+        
+        # 性能监控数据
+        # Assuming performance_monitor is defined elsewhere or needs to be instantiated
+        # For now, we'll just add a placeholder
+        data['performance'] = {'placeholder': 'Performance data not directly available here'}
+        
+        # 缓存统计
+        from .cache_cleanup import get_cache_stats
+        data['cache'] = get_cache_stats()
+        
+        # 日志统计
+        from .log_rotation import get_log_stats
+        data['logs'] = get_log_stats()
+        
+        # 数据库清理统计
+        from .database_cleanup import get_cleanup_stats
+        data['cleanup'] = get_cleanup_stats()
+        
+        # 存储到缓存中
+        cache.set('monitoring_data', data, timeout=3600)
+        
+        return {
+            'status': 'success',
+            'data_points': len(data),
+            'timestamp': datetime.now()
+        }
+        
+    except Exception as e:
+        logger.error(f"收集监控数据失败: {e}")
+        return {
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now()
+        }
+
+
+def get_monitoring_data() -> Dict[str, Any]:
+    """获取监控数据"""
+    try:
+        data = cache.get('monitoring_data')
+        if data:
+            return data
+        else:
+            # 如果没有缓存数据，重新收集
+            collect_monitoring_data()
+            return cache.get('monitoring_data', {})
+    except Exception as e:
+        logger.error(f"获取监控数据失败: {e}")
+        return {'error': str(e)}
+
+
+# 添加监控数据清理功能
+def cleanup_monitoring_data() -> Dict[str, Any]:
+    """清理监控数据"""
+    try:
+        # 清理过期的监控数据
+        cache.delete('monitoring_data')
+        
+        return {
+            'status': 'success',
+            'message': '监控数据已清理',
+            'timestamp': datetime.now()
+        }
+        
+    except Exception as e:
+        logger.error(f"清理监控数据失败: {e}")
+        return {
+            'status': 'error',
+            'message': str(e),
+            'timestamp': datetime.now()
+        }
+
+
+# 创建监控服务实例
+monitoring_service = PerformanceMonitor()

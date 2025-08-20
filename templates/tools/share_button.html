@@ -1,5 +1,5 @@
 <!-- 全局分享按钮组件 -->
-<div class="share-button-container" id="shareButtonContainer" style="display: none;">
+<div class="share-button-container" id="shareButtonContainer" style="display: block;">
     <div class="share-button-wrapper">
         <button class="share-button" id="shareButton" onclick="toggleShareMenu()">
             <i class="fas fa-share-alt"></i>
@@ -70,7 +70,8 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 9999;
+    pointer-events: auto;
 }
 
 .share-button-wrapper {
@@ -90,6 +91,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    pointer-events: auto;
+    z-index: 10000;
 }
 
 .share-button:hover {

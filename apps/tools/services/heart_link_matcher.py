@@ -17,7 +17,7 @@ class HeartLinkMatcher:
     """心动链接智能匹配器"""
     
     def __init__(self):
-        self.max_wait_time = 10  # 最大等待时间（分钟）
+        self.max_wait_time = 10  # 最大等待时间（分钟）- 统一设置为10分钟
         self.min_online_time = 5  # 最小在线时间（分钟）
     
     def get_user_score(self, user):
@@ -129,9 +129,26 @@ class HeartLinkMatcher:
                     print(f"用户 {best_match_request.requester.username} 的状态不是matching，可能是被其他用户匹配了")
                     return None, None
                 
-                # 创建匹配
-                chat_room = self.create_match(current_user, best_match_request.requester)
-                print(f"创建聊天室: {chat_room.room_id}")
+                # 优先使用对方的聊天室，如果没有则使用自己的，都没有则创建新的
+                chat_room = None
+                if best_match_request.chat_room:
+                    # 使用对方的聊天室
+                    chat_room = best_match_request.chat_room
+                    chat_room.user2 = current_user
+                    chat_room.status = 'active'
+                    chat_room.save()
+                    print(f"使用对方聊天室: {chat_room.room_id}")
+                elif current_request.chat_room:
+                    # 使用自己的聊天室
+                    chat_room = current_request.chat_room
+                    chat_room.user2 = best_match_request.requester
+                    chat_room.status = 'active'
+                    chat_room.save()
+                    print(f"使用自己聊天室: {chat_room.room_id}")
+                else:
+                    # 创建新的聊天室
+                    chat_room = self.create_match(current_user, best_match_request.requester)
+                    print(f"创建新聊天室: {chat_room.room_id}")
                 
                 # 更新两个请求的状态
                 current_request.status = 'matched'
@@ -143,7 +160,9 @@ class HeartLinkMatcher:
                 best_match_request.status = 'matched'
                 best_match_request.matched_with = current_user
                 best_match_request.matched_at = timezone.now()
-                best_match_request.chat_room = chat_room
+                # 如果best_match_request没有聊天室，也使用同一个聊天室
+                if not best_match_request.chat_room:
+                    best_match_request.chat_room = chat_room
                 best_match_request.save()
                 
                 print(f"匹配成功: {current_user.username} <-> {best_match_request.requester.username}")
@@ -170,8 +189,8 @@ class HeartLinkMatcher:
                 return None, None
     
     def cleanup_expired_requests(self):
-        """清理过期的请求"""
-        expired_time = timezone.now() - timedelta(minutes=self.max_wait_time)
+        """清理过期的请求（10分钟）"""
+        expired_time = timezone.now() - timedelta(minutes=10)  # 统一设置为10分钟
         expired_requests = HeartLinkRequest.objects.filter(
             status='pending',
             created_at__lt=expired_time

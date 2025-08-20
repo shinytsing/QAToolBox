@@ -50,17 +50,22 @@
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
     font-size: 14px;
-    transition: border-color 0.3s;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: rgba(52, 152, 219, 0.8);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+    background: rgba(255, 255, 255, 1);
 }
 
 .form-group textarea {
@@ -135,6 +140,15 @@
 
 .price-input input {
     padding-left: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #333;
+}
+
+.price-input input:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(52, 152, 219, 0.8);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
 }
 
 .price-input::before {
@@ -184,6 +198,15 @@
 
 .location-input input {
     padding-right: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #333;
+}
+
+.location-input input:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(52, 152, 219, 0.8);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
 }
 
 .location-input .map-btn {

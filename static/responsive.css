@@ -30,8 +30,16 @@ body {
     }
     
     /* 导航栏移动端优化 */
-    .navbar {
+    .navbar:not(.unified-navbar) {
         padding: 0.5rem 1rem;
+    }
+    
+    .unified-navbar {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+        backdrop-filter: blur(20px) !important;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(102, 126, 234, 0.2) !important;
+        padding: 0.5rem 1rem !important;
     }
     
     .navbar-brand {

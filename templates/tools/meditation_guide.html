@@ -1069,7 +1069,9 @@ function startTimer() {
 function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    // 将秒数格式化为小数点后两位
+    const formattedSeconds = remainingSeconds.toFixed(2);
+    return `${minutes.toString().padStart(2, '0')}:${formattedSeconds}`;
 }
 
 function completeMeditation() {

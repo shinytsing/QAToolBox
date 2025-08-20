@@ -4546,7 +4546,7 @@ function displayGuidesList(guides) {
         <div class="guide-card" onclick="loadGuideDetail(${guide.id})">
           <div class="guide-card-header">
             <div class="guide-destination">${guide.destination}</div>
-            <div class="guide-favorite" onclick="event.stopPropagation(); toggleFavoriteGuide(${guide.id})">
+            <div class="guide-favorite" onclick="arguments[0].stopPropagation(); toggleFavoriteGuide(${guide.id})">
               <i class="fas fa-heart ${guide.is_favorite ? 'text-danger' : ''}"></i>
             </div>
           </div>
@@ -5224,10 +5224,10 @@ function displayGoodPeopleGuidesList(guides) {
             </div>
           </div>
           <div class="guide-actions">
-            <button class="action-btn small" onclick="event.stopPropagation(); downloadGoodPeopleGuide(${guide.id})" ${!guide.has_attachment ? 'disabled' : ''}>
+            <button class="action-btn small" onclick="arguments[0].stopPropagation(); downloadGoodPeopleGuide(${guide.id})" ${!guide.has_attachment ? 'disabled' : ''}>
               <i class="fas fa-download"></i> 下载
             </button>
-            <button class="action-btn small primary" onclick="event.stopPropagation(); useGoodPeopleGuide(${guide.id})">
+            <button class="action-btn small primary" onclick="arguments[0].stopPropagation(); useGoodPeopleGuide(${guide.id})">
               <i class="fas fa-magic"></i> 使用
             </button>
           </div>

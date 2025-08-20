@@ -624,8 +624,10 @@ function updateTimer() {
     elapsedTime++;
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
+    // 将秒数格式化为小数点后两位
+    const formattedSeconds = seconds.toFixed(2);
     document.getElementById('timerDisplay').textContent = 
-        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        `${minutes.toString().padStart(2, '0')}:${formattedSeconds}`;
     
     updateProgress();
 }

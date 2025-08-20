@@ -267,7 +267,7 @@ def pwa_manifest(request):
 
 def service_worker(request):
     """Service Worker文件"""
-    sw_content = """
+    sw_content = '''
     const CACHE_NAME = 'qatoolbox-v1';
     const urlsToCache = [
         '/',
@@ -292,10 +292,10 @@ def service_worker(request):
                         return response;
                     }
                     return fetch(event.request);
-                }
+                })
             )
         );
     });
-    """
+    '''
     
     return HttpResponse(sw_content, content_type='application/javascript')

@@ -2149,8 +2149,10 @@ function updateTimer() {
 function updateTimerDisplay() {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
+  // 将秒数格式化为小数点后两位
+  const formattedSeconds = seconds.toFixed(2);
   document.getElementById('timerDisplay').textContent = 
-    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    `${minutes.toString().padStart(2, '0')}:${formattedSeconds}`;
 }
 
 // 营养计算器功能

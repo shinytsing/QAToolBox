@@ -374,22 +374,63 @@ class TimeCapsuleSimple {
         const capsuleData = {
             content: content,
             emotions: this.selectedEmotions,
-            created_at: new Date().toISOString()
+            unlock_time: null,  // 默认立即解锁
+            unlock_condition: 'time',
+            visibility: 'private',
+            images: [],
+            audio: '',
+            location: {},
+            weather: {}
         };
 
         try {
-            // 保存到本地存储
-            const capsules = JSON.parse(localStorage.getItem('timeCapsules') || '[]');
-            capsules.push(capsuleData);
-            localStorage.setItem('timeCapsules', JSON.stringify(capsules));
+            // 调用后端API保存时光胶囊
+            const response = await fetch('/tools/api/save-capsule/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify(capsuleData)
+            });
+
+            const result = await response.json();
             
-            this.showNotification('时光胶囊保存成功！', 'success');
-            this.resetForm();
-            this.updateAchievements();
+            if (result.success) {
+                this.showNotification(result.message || '时光胶囊保存成功！', 'success');
+                this.resetForm();
+                this.updateAchievements();
+                
+                // 同时保存到本地存储作为备份
+                const capsules = JSON.parse(localStorage.getItem('timeCapsules') || '[]');
+                capsules.push({
+                    ...capsuleData,
+                    id: result.capsule_id,
+                    created_at: new Date().toISOString()
+                });
+                localStorage.setItem('timeCapsules', JSON.stringify(capsules));
+            } else {
+                this.showNotification(result.message || '保存失败，请重试', 'error');
+            }
         } catch (error) {
             console.error('❌ 胶囊保存失败:', error);
-            this.showNotification('保存失败，请重试', 'error');
+            this.showNotification('网络错误，保存失败，请重试', 'error');
         }
+    }
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 
     resetForm() {

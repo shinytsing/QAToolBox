@@ -5,27 +5,62 @@
 
 {% block extra_css %}
 <style>
+/* 运动激情主题样式 */
+:root {
+    --fitness-primary: #ff6b35;
+    --fitness-secondary: #f7931e;
+    --fitness-accent: #ff4757;
+    --fitness-success: #2ed573;
+    --fitness-warning: #ffa502;
+    --fitness-dark: #2f3542;
+    --fitness-light: #f1f2f6;
+    --fitness-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    --fitness-gradient-hover: linear-gradient(135deg, #ff4757 0%, #ff6b35 100%);
+}
+
 .profile-container {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
+    background: var(--rage-bg, linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%));
+    min-height: 100vh;
 }
 
 .profile-header {
     text-align: center;
     margin-bottom: 50px;
+    position: relative;
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: var(--fitness-gradient);
+    border-radius: 2px;
 }
 
 .profile-header h1 {
-    color: var(--primary-color, #667eea);
-    font-size: 2.5rem;
+    color: var(--rage-primary, #ff6b35);
+    font-size: 3.5rem;
     margin-bottom: 15px;
+    font-weight: 800;
+    text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+    letter-spacing: 2px;
 }
 
 .profile-header p {
-    color: #666;
-    font-size: 1.1rem;
+    color: var(--rage-text-muted, #a8a8a8);
+    font-size: 1.3rem;
     line-height: 1.6;
+    font-weight: 500;
+    font-family: var(--rage-font-mono, 'JetBrains Mono', monospace);
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 .profile-content {
@@ -35,11 +70,25 @@
 }
 
 .profile-sidebar {
-    background: white;
-    border-radius: 12px;
+    background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.9) 0%, rgba(22,33,62,0.9) 100%));
+    border-radius: 16px;
     padding: 30px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     height: fit-content;
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
 }
 
 .profile-avatar {
@@ -48,18 +97,20 @@
 }
 
 .avatar-circle {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
-    background: var(--primary-color, #667eea);
+    background: var(--fitness-gradient);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: bold;
     margin: 0 auto 15px;
     position: relative;
+    box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+    border: 4px solid rgba(255, 255, 255, 0.3);
 }
 
 .avatar-edit {
@@ -104,21 +155,48 @@
 
 .stat-item {
     text-align: center;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    padding: 20px 15px;
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(255, 107, 53, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-item:hover::before {
+    left: 100%;
+}
+
+.stat-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(255, 107, 53, 0.2);
+    border-color: rgba(255, 107, 53, 0.4);
 }
 
 .stat-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--fitness-primary);
     margin-bottom: 5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 .stat-label {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--fitness-dark);
+    font-weight: 600;
 }
 
 .profile-actions {
@@ -128,77 +206,152 @@
 }
 
 .action-btn {
-    padding: 12px 20px;
+    padding: 15px 25px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.action-btn:hover::before {
+    left: 100%;
 }
 
 .action-btn.primary {
-    background: var(--primary-color, #667eea);
+    background: var(--fitness-gradient);
     color: white;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
 }
 
 .action-btn.primary:hover {
-    background: var(--primary-dark, #5a6fd8);
+    background: var(--fitness-gradient-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(255, 107, 53, 0.4);
 }
 
 .action-btn.secondary {
-    background: #f8f9fa;
-    color: #333;
-    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--fitness-dark);
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    backdrop-filter: blur(10px);
 }
 
 .action-btn.secondary:hover {
-    background: #e9ecef;
+    background: rgba(255, 255, 255, 1);
+    border-color: var(--fitness-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
+}
+
+.action-btn.export {
+    background: linear-gradient(135deg, #2ed573 0%, #7bed9f 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(46, 213, 115, 0.3);
+}
+
+.action-btn.export:hover {
+    background: linear-gradient(135deg, #26de81 0%, #2ed573 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(46, 213, 115, 0.4);
 }
 
 .profile-main {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
 }
 
 .profile-section {
-    background: white;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: var(--rage-gradient-card, linear-gradient(135deg, rgba(26,26,46,0.9) 0%, rgba(22,33,62,0.9) 100%));
+    border-radius: 16px;
+    padding: 35px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--rage-border, rgba(255, 107, 53, 0.3));
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--rage-gradient, linear-gradient(135deg, #ff6b35 0%, #f7931e 100%));
 }
 
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 107, 53, 0.2);
 }
 
 .section-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #333;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--fitness-dark);
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: var(--fitness-gradient);
+    border-radius: 2px;
 }
 
 .edit-btn {
-    background: none;
+    background: var(--fitness-gradient);
     border: none;
-    color: var(--primary-color, #667eea);
+    color: white;
     cursor: pointer;
     font-size: 14px;
-    transition: color 0.3s ease;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
 }
 
 .edit-btn:hover {
-    color: var(--primary-dark, #5a6fd8);
+    background: var(--fitness-gradient-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
 }
 
 .personal-info {
@@ -807,7 +960,7 @@
                     <i class="fas fa-edit"></i>
                     编辑资料
                 </button>
-                <button class="action-btn secondary" onclick="exportData()">
+                <button class="action-btn export" onclick="exportData()">
                     <i class="fas fa-download"></i>
                     导出数据
                 </button>
@@ -1621,6 +1774,392 @@ function animateProgressBars() {
             bar.style.width = width;
         }, 500);
     });
+}
+
+// 编辑资料功能
+function editProfile() {
+    const modal = document.createElement('div');
+    modal.className = 'edit-profile-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> 编辑健身资料</h3>
+                <button class="close-btn" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>健身水平</label>
+                            <select name="fitness_level" required>
+                                <option value="beginner" ${profile.fitness_level === 'beginner' ? 'selected' : ''}>初学者</option>
+                                <option value="intermediate" ${profile.fitness_level === 'intermediate' ? 'selected' : ''}>进阶者</option>
+                                <option value="advanced" ${profile.fitness_level === 'advanced' ? 'selected' : ''}>高级者</option>
+                                <option value="expert" ${profile.fitness_level === 'expert' ? 'selected' : ''}>专家级</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>主要目标</label>
+                            <select name="primary_goals" multiple>
+                                <option value="weight_loss">减重</option>
+                                <option value="muscle_gain">增肌</option>
+                                <option value="strength">力量训练</option>
+                                <option value="endurance">耐力训练</option>
+                                <option value="flexibility">柔韧性</option>
+                                <option value="general_fitness">一般健身</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>喜欢的运动</label>
+                        <input type="text" name="favorite_workouts" value="${profile.favorite_workouts || ''}" placeholder="例如：深蹲、卧推、跑步...">
+                    </div>
+                    <div class="form-group">
+                        <label>个人简介</label>
+                        <textarea name="bio" rows="4" placeholder="分享您的健身理念和目标...">${profile.bio || ''}</textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                        <button type="submit" class="btn-primary">保存更改</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    // 添加模态框样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .edit-profile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            border-bottom: 2px solid rgba(255, 107, 53, 0.2);
+            background: var(--fitness-gradient);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .close-btn:hover {
+            transform: scale(1.1);
+        }
+        .modal-body {
+            padding: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--fitness-dark);
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--fitness-primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        .btn-primary,
+        .btn-secondary {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: var(--fitness-gradient);
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+        .btn-primary:hover {
+            background: var(--fitness-gradient-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.4);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--fitness-dark);
+            border: 2px solid rgba(255, 107, 53, 0.3);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 1);
+            border-color: var(--fitness-primary);
+            transform: translateY(-2px);
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+    
+    // 处理表单提交
+    document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        // 发送API请求
+        fetch('/tools/fitness/update_profile/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showNotification('资料更新成功！', 'success');
+                closeEditModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('更新失败：' + result.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('更新失败，请重试', 'error');
+        });
+    });
+}
+
+// 关闭编辑模态框
+function closeEditModal() {
+    const modal = document.querySelector('.edit-profile-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// 导出数据功能
+function exportData() {
+    showNotification('正在准备导出数据...', 'info');
+    
+    // 收集所有数据
+    const exportData = {
+        profile: {
+            name: '{{ profile.get_display_name }}',
+            level: '{{ profile.fitness_level }}',
+            goals: '{{ profile.primary_goals|join:", " }}',
+            bio: '{{ profile.bio|default:"" }}'
+        },
+        stats: {
+            total_workouts: {{ profile.total_workouts|default:0 }},
+            current_streak: {{ current_streak|default:0 }},
+            total_duration: {{ total_duration_hours|default:0 }},
+            achievements: {{ total_achievements|default:0 }}
+        },
+        body_data: {
+            gender: '{{ body_data.gender|default:"" }}',
+            age: {{ body_data.age|default:0 }},
+            height: {{ body_data.height|default:0 }},
+            weight: {{ body_data.weight|default:0 }},
+            bmi: {{ body_data.bmi|default:0 }}
+        },
+        strength_records: {
+            squat: {{ strength_profile.squat_1rm|default:0 }},
+            bench_press: {{ strength_profile.bench_press_1rm|default:0 }},
+            deadlift: {{ strength_profile.deadlift_1rm|default:0 }}
+        },
+        export_date: new Date().toISOString()
+    };
+    
+    // 创建CSV内容
+    const csvContent = createCSVContent(exportData);
+    
+    // 创建下载链接
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `fitness_profile_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('数据导出成功！', 'success');
+}
+
+// 创建CSV内容
+function createCSVContent(data) {
+    const headers = [
+        '健身档案数据',
+        '姓名', '健身水平', '主要目标', '个人简介',
+        '训练次数', '连续天数', '总时长(小时)', '成就数量',
+        '性别', '年龄', '身高(cm)', '体重(kg)', 'BMI',
+        '深蹲1RM(kg)', '卧推1RM(kg)', '硬拉1RM(kg)',
+        '导出日期'
+    ];
+    
+    const values = [
+        '',
+        data.profile.name,
+        data.profile.level,
+        data.profile.goals,
+        data.profile.bio,
+        data.stats.total_workouts,
+        data.stats.current_streak,
+        data.stats.total_duration,
+        data.stats.achievements,
+        data.body_data.gender,
+        data.body_data.age,
+        data.body_data.height,
+        data.body_data.weight,
+        data.body_data.bmi,
+        data.strength_records.squat,
+        data.strength_records.bench_press,
+        data.strength_records.deadlift,
+        data.export_date
+    ];
+    
+    return headers.join(',') + '\n' + values.join(',');
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // 添加通知样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .notification-success {
+            background: var(--fitness-success);
+        }
+        .notification-error {
+            background: var(--fitness-accent);
+        }
+        .notification-info {
+            background: var(--fitness-primary);
+        }
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    
+    if (!document.querySelector('.notification-style')) {
+        style.className = 'notification-style';
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// 分享档案功能
+function shareProfile() {
+    const shareData = {
+        title: '我的健身档案',
+        text: '查看我的健身历程和成就！',
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(shareData);
+    } else {
+        // 复制链接到剪贴板
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('链接已复制到剪贴板！', 'success');
+        });
+    }
 }
 </script>
 {% endblock %}

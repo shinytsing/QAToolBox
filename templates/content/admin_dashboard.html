@@ -362,7 +362,7 @@
                         <a href="{% url 'admin_user_management' %}" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-users"></i> 用户管理
                         </a>
-                        <a href="{% url 'admin_announcements' %}" class="btn btn-outline-success btn-sm">
+                                                    <a href="{% url 'content:admin_announcements' %}" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-bullhorn"></i> 公告管理
                         </a>
                     </div>
@@ -395,7 +395,7 @@
                     <div class="stats-number" id="pendingSuggestions">{{ pending_suggestions }}</div>
                     <div class="stats-label">待处理建议</div>
                     <div class="stats-footer">
-                        <a href="{% url 'admin_suggestions' %}" class="stats-link">
+                                                    <a href="{% url 'content:admin_suggestions' %}" class="stats-link">
                             <i class="fas fa-arrow-right"></i> 查看建议
                         </a>
                     </div>
@@ -410,7 +410,7 @@
                     <div class="stats-number" id="pendingFeedbacks">{{ pending_feedbacks }}</div>
                     <div class="stats-label">待处理反馈</div>
                     <div class="stats-footer">
-                        <a href="{% url 'admin_feedback' %}" class="stats-link">
+                                                    <a href="{% url 'content:admin_feedback' %}" class="stats-link">
                             <i class="fas fa-arrow-right"></i> 查看反馈
                         </a>
                     </div>

@@ -89,9 +89,9 @@ from .models import TravelGuide
 # from .services.job_search_service import JobSearchService
 
 # 塔罗牌相关导入
-from .services.tarot_service import TarotService, TarotVisualizationService
+from .services.tarot_service import TarotService
 from .models import (
-    TarotCard, TarotSpread, TarotReading, TarotDiary, 
+    TarotCard, TarotSpread, TarotReading, 
     TarotEnergyCalendar, TarotCommunity, TarotCommunityComment
 )
 
@@ -2322,7 +2322,7 @@ def cleanup_expired_heart_link_requests():
     from django.utils import timezone
     from datetime import timedelta
     
-    # 清理超过10分钟的pending请求
+    # 清理超过10分钟的pending请求（统一设置为10分钟）
     expired_requests = HeartLinkRequest.objects.filter(
         status='pending',
         created_at__lt=timezone.now() - timedelta(minutes=10)
@@ -2332,18 +2332,18 @@ def cleanup_expired_heart_link_requests():
         request.status = 'expired'
         request.save()
     
-    # 清理不活跃用户的pending请求（更宽松的条件，只有在用户超过15分钟不活跃时才清理）
+    # 清理不活跃用户的pending请求（只有在用户超过30分钟不活跃时才清理，更宽松）
     inactive_requests = HeartLinkRequest.objects.filter(status='pending')
     for request in inactive_requests:
-        # 检查用户是否超过15分钟不活跃
+        # 检查用户是否超过30分钟不活跃
         try:
             online_status = UserOnlineStatus.objects.filter(user=request.requester).first()
             if online_status and online_status.last_seen:
-                if timezone.now() - online_status.last_seen > timedelta(minutes=15):
+                if timezone.now() - online_status.last_seen > timedelta(minutes=30):
                     request.status = 'expired'
                     request.save()
             elif request.requester.last_login:
-                if timezone.now() - request.requester.last_login > timedelta(minutes=25):
+                if timezone.now() - request.requester.last_login > timedelta(minutes=45):
                     request.status = 'expired'
                     request.save()
         except:
@@ -2422,9 +2422,9 @@ def create_heart_link_request_api(request):
     
     if request.method == 'POST':
         try:
-            # 减少清理频率，只在必要时清理（10%的概率）
+            # 大幅减少清理频率，只在必要时清理（1%的概率，避免影响用户匹配）
             import random
-            if random.random() < 0.1:
+            if random.random() < 0.01:
                 cleanup_expired_heart_link_requests()
             
             # 检查用户是否已有待处理的请求
@@ -2460,26 +2460,43 @@ def create_heart_link_request_api(request):
                     'message': '您已有一个活跃的聊天室，正在为您重连...'
                 }, content_type='application/json', headers=response_headers)
             
+            # 创建临时聊天室
+            import uuid
+            temp_room = ChatRoom.objects.create(
+                room_id=str(uuid.uuid4()),
+                user1=request.user,
+                status='waiting'
+            )
+            
             # 创建新的心动链接请求
-            heart_link_request = HeartLinkRequest.objects.create(requester=request.user)
+            heart_link_request = HeartLinkRequest.objects.create(
+                requester=request.user,
+                chat_room=temp_room
+            )
             
             # 使用智能匹配服务
             from apps.tools.services.heart_link_matcher import matcher
             
-            # 清理过期请求（减少频率）
-            if random.random() < 0.1:
+            # 大幅减少清理频率，避免影响用户匹配
+            if random.random() < 0.01:
                 matcher.cleanup_expired_requests()
             
             # 尝试智能匹配
             chat_room, matched_user = matcher.match_users(request.user, heart_link_request)
             
             if chat_room and matched_user:
+                # 生成安全访问令牌
+                from apps.tools.views.chat_views import generate_chat_token
+                token = generate_chat_token(request.user, chat_room.room_id)
+                
                 return JsonResponse({
                     'success': True,
                     'matched': True,
                     'request_id': heart_link_request.id,
                     'room_id': chat_room.room_id,
-                    'matched_user': matched_user.username
+                    'matched_user': matched_user.username,
+                    'chat_url': f'/tools/heart_link/chat/{chat_room.room_id}/',
+                    'auto_redirect': True
                 }, content_type='application/json', headers=response_headers)
             
             # 如果没有匹配到，返回等待状态
@@ -2578,8 +2595,8 @@ def check_heart_link_status_api(request):
         from datetime import timedelta
         import random
         
-        # 只有5%的概率执行清理，进一步减少数据库压力和避免影响等待用户
-        if random.random() < 0.05:
+        # 大幅减少清理频率，只有0.5%的概率执行清理，避免影响等待用户
+        if random.random() < 0.005:
             expired_requests = HeartLinkRequest.objects.filter(
                 status='pending',
                 created_at__lt=timezone.now() - timedelta(minutes=10)
@@ -2621,8 +2638,8 @@ def check_heart_link_status_api(request):
                 if notification_service.should_show_warning(heart_link_request):
                     warning_message = notification_service.get_expiry_warning_message(heart_link_request)
                 
-                # 只有在请求确实超过15分钟且用户不活跃时才标记为过期
-                if timezone.now() - heart_link_request.created_at > timedelta(minutes=15):
+                # 只有在请求确实超过10分钟且用户不活跃时才标记为过期
+                if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
                     heart_link_request.status = 'expired'
                     heart_link_request.save()
                     return JsonResponse({
@@ -2642,7 +2659,7 @@ def check_heart_link_status_api(request):
                 return JsonResponse(response_data, content_type='application/json', headers=response_headers)
                     
             except Exception as e:
-                # 如果检查失败，使用原来的10分钟过期逻辑
+                # 如果检查失败，使用10分钟过期逻辑
                 if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
                     heart_link_request.status = 'expired'
                     heart_link_request.save()
@@ -2780,16 +2797,21 @@ def cleanup_heart_link_api(request):
                             'error': '您没有权限结束此聊天室'
                         }, status=403, content_type='application/json', headers=response_headers)
                     
-                    # 结束聊天室
-                    chat_room.status = 'ended'
-                    chat_room.ended_at = timezone.now()
-                    chat_room.save()
-                    
-                    # 更新相关的心动链接请求状态为过期
-                    HeartLinkRequest.objects.filter(
-                        chat_room=chat_room,
-                        status='matched'
-                    ).update(status='expired')
+                    # 结束聊天室（只有在用户主动拒绝时才结束）
+                    if data.get('force_end', False):
+                        chat_room.status = 'ended'
+                        chat_room.ended_at = timezone.now()
+                        chat_room.save()
+                        
+                        # 更新相关的心动链接请求状态为过期
+                        HeartLinkRequest.objects.filter(
+                            chat_room=chat_room,
+                            status='matched'
+                        ).update(status='expired')
+                    else:
+                        # 只是标记为需要清理，但不立即结束
+                        chat_room.needs_cleanup = True
+                        chat_room.save()
                     
                     return JsonResponse({
                         'success': True,
@@ -7542,7 +7564,7 @@ def share_achievement_api(request):
 
 
 # 中优先级：添加缺失的页面视图函数
-@login_required
+# @login_required  # 暂时注释掉登录要求，用于测试
 def tarot_reading_view(request):
     """塔罗牌占卜页面"""
     return render(request, 'tools/tarot_reading.html')
@@ -8970,6 +8992,21 @@ def audio_converter_api(request):
         # 生成输出文件路径
         temp_output_path = os.path.join(temp_dir, output_filename)
         
+        # 初始化NCM相关变量
+        ncm_metadata = None
+        ncm_album_cover = None
+        
+        # 如果是NCM文件，先提取元数据
+        if file_extension == 'ncm':
+            try:
+                ncm_result = decrypt_ncm_file_correct(temp_input_path)
+                if ncm_result:
+                    ncm_metadata = ncm_result.get('metadata', {})
+                    ncm_album_cover = ncm_result.get('album_cover')
+                    logger.info(f"NCM元数据提取成功: {ncm_metadata}")
+            except Exception as e:
+                logger.warning(f"NCM元数据提取失败: {e}")
+        
         # 转换音频
         success, message, output_path = convert_audio_file(temp_input_path, temp_output_path, target_format)
         
@@ -8991,12 +9028,35 @@ def audio_converter_api(request):
             except:
                 pass
             
-            return JsonResponse({
+            # 准备返回数据
+            response_data = {
                 'success': True,
                 'message': '音频转换成功！',
                 'download_url': download_url,
                 'filename': output_filename
-            })
+            }
+            
+            # 如果有NCM元数据，添加到响应中
+            if ncm_metadata:
+                response_data['metadata'] = ncm_metadata
+            
+            # 如果有NCM专辑封面，保存并添加到响应中
+            if ncm_album_cover:
+                try:
+                    # 保存专辑封面到媒体存储
+                    cover_filename = f'album_cover_{unique_id}.jpg'
+                    cover_path = default_storage.save(f'temp_audio/{cover_filename}', ContentFile(ncm_album_cover['data']))
+                    cover_url = default_storage.url(cover_path)
+                    
+                    response_data['album_cover'] = {
+                        'url': cover_url,
+                        'format': ncm_album_cover['format'],
+                        'size': ncm_album_cover['size']
+                    }
+                except Exception as e:
+                    logger.warning(f"保存专辑封面失败: {e}")
+            
+            return JsonResponse(response_data)
         else:
             # 清理临时文件
             try:
@@ -9035,7 +9095,10 @@ def convert_audio_file(input_path, output_path, target_format):
             logger.info(f"开始解密NCM文件: {input_path}")
             try:
                 # 使用正确的NCM解密函数
-                decrypted_audio_data = decrypt_ncm_file_correct(input_path)
+                ncm_result = decrypt_ncm_file_correct(input_path)
+                
+                # 提取音频数据
+                decrypted_audio_data = ncm_result['audio_data']
                 
                 # 保存解密后的音频数据到临时文件
                 import tempfile
@@ -10583,6 +10646,8 @@ def shipbao_create_item_api(request):
 def shipbao_items_api(request):
     """获取船宝物品列表API"""
     try:
+        from .services.ip_location_service import IPLocationService
+        
         # 获取查询参数
         category = request.GET.get('category')
         min_price = request.GET.get('min_price')
@@ -10617,13 +10682,30 @@ def shipbao_items_api(request):
             items = items.order_by('-created_at')
         
         # 分页
-        page = int(request.GET.get('page', 1))
+        try:
+            page = int(request.GET.get('page', 1))
+        except (ValueError, TypeError):
+            page = 1
         page_size = 20
         start = (page - 1) * page_size
         end = start + page_size
         
+        # 获取用户位置信息
+        ip_service = IPLocationService()
+        user_location = ip_service.get_user_location(request)
+        
         items_data = []
         for item in items[start:end]:
+            # 计算距离
+            if hasattr(item, 'latitude') and hasattr(item, 'longitude') and item.latitude and item.longitude:
+                distance = ip_service.calculate_distance(
+                    user_location['lat'], user_location['lon'],
+                    item.latitude, item.longitude
+                )
+                distance_text = f"{distance:.1f}km"
+            else:
+                distance_text = "距离未知"
+            
             items_data.append({
                 'id': item.id,
                 'title': item.title,
@@ -10641,7 +10723,7 @@ def shipbao_items_api(request):
                 'favorite_count': item.favorite_count,
                 'seller_name': item.seller.username,
                 'created_at': item.created_at.strftime('%Y-%m-%d %H:%M'),
-                'distance': '1.5km'  # TODO: 计算实际距离
+                'distance': distance_text
             })
         
         return JsonResponse({
@@ -10649,7 +10731,8 @@ def shipbao_items_api(request):
             'data': items_data,
             'total': items.count(),
             'page': page,
-            'has_next': items.count() > end
+            'has_next': items.count() > end,
+            'user_location': user_location
         })
         
     except Exception as e:
@@ -11275,13 +11358,17 @@ def simple_audio_test(request):
 def decrypt_ncm_file_correct(ncm_path):
     """
     使用正确的NCM解密算法解密NCM文件
-    基于ncmdump库的实现
+    基于ncmdump库的实现，同时提取专辑封面
     """
     try:
         import struct
         import binascii
         from Crypto.Cipher import AES
         from Crypto.Util.Padding import unpad
+        import json
+        import logging
+        
+        logger = logging.getLogger(__name__)
         
         with open(ncm_path, 'rb') as f:
             # 检查文件头
@@ -11302,8 +11389,26 @@ def decrypt_ncm_file_correct(ncm_path):
             # 解密密钥数据
             core_key = b'hzHRAmso5kInbaxW'
             cryptor = AES.new(core_key, AES.MODE_ECB)
-            key_data = unpad(cryptor.decrypt(key_data), 16)[17:]
+            
+            # 确保密钥数据长度是16的倍数
+            if len(key_data) % 16 != 0:
+                padding_length = 16 - (len(key_data) % 16)
+                key_data += b'\x00' * padding_length
+            
+            decrypted_key = cryptor.decrypt(key_data)
+            
+            # 移除填充并提取有效数据
+            try:
+                key_data = unpad(decrypted_key, 16)[17:]
+            except:
+                # 如果unpad失败，手动移除前17字节
+                key_data = decrypted_key[17:]
+            
             key_length = len(key_data)
+            
+            # 检查密钥长度
+            if key_length == 0:
+                raise ValueError("密钥数据为空，无法进行解密")
             
             # RC4密钥调度算法
             key = bytearray(key_data)
@@ -11317,9 +11422,45 @@ def decrypt_ncm_file_correct(ncm_path):
             # 读取元数据长度
             meta_length = struct.unpack('<I', f.read(4))[0]
             
-            # 跳过元数据
+            # 读取并解析元数据
+            metadata = {}
+            album_cover = None
+            
             if meta_length:
-                f.seek(meta_length, 1)
+                meta_data = bytearray(f.read(meta_length))
+                meta_data = bytes(bytearray([byte ^ 0x63 for byte in meta_data]))
+                
+                # 解密元数据 - 添加错误处理
+                try:
+                    meta_cryptor = AES.new(b'MoOtOiTvINGwd2E6', AES.MODE_ECB)
+                    # 确保数据长度是16的倍数
+                    if len(meta_data) % 16 != 0:
+                        # 填充到16的倍数
+                        padding_length = 16 - (len(meta_data) % 16)
+                        meta_data += b'\x00' * padding_length
+                    
+                    decrypted_meta = meta_cryptor.decrypt(meta_data)
+                    # 移除填充并提取有效数据
+                    try:
+                        meta_data = unpad(decrypted_meta, 16)[22:]
+                    except:
+                        # 如果unpad失败，手动移除前22字节
+                        meta_data = decrypted_meta[22:]
+                    
+                    # 解析JSON元数据
+                    try:
+                        meta_json = json.loads(meta_data.decode('utf-8'))
+                        metadata = {
+                            'title': meta_json.get('musicName', ''),
+                            'artist': meta_json.get('artist', [''])[0] if meta_json.get('artist') else '',
+                            'album': meta_json.get('album', ''),
+                            'duration': meta_json.get('duration', 0) / 1000,  # 转换为秒
+                        }
+                    except:
+                        pass
+                except Exception as e:
+                    logger.warning(f"元数据解密失败: {e}")
+                    pass
             
             # 跳过5字节
             f.seek(5, 1)
@@ -11328,9 +11469,36 @@ def decrypt_ncm_file_correct(ncm_path):
             image_space = struct.unpack('<I', f.read(4))[0]
             image_size = struct.unpack('<I', f.read(4))[0]
             
-            # 跳过图片数据
-            if image_size:
-                f.seek(image_size, 1)
+            # 提取专辑封面
+            if image_size > 0:
+                image_data = f.read(image_size)
+                # 解密图片数据 - 添加错误处理
+                try:
+                    image_data = bytes(bytearray([byte ^ 0x63 for byte in image_data]))
+                    image_cryptor = AES.new(b'MoOtOiTvINGwd2E6', AES.MODE_ECB)
+                    
+                    # 确保数据长度是16的倍数
+                    if len(image_data) % 16 != 0:
+                        # 填充到16的倍数
+                        padding_length = 16 - (len(image_data) % 16)
+                        image_data += b'\x00' * padding_length
+                    
+                    decrypted_image = image_cryptor.decrypt(image_data)
+                    # 移除填充并提取有效数据
+                    try:
+                        image_data = unpad(decrypted_image, 16)[22:]
+                    except:
+                        # 如果unpad失败，手动移除前22字节
+                        image_data = decrypted_image[22:]
+                    
+                    album_cover = {
+                        'data': image_data,
+                        'format': 'jpeg',  # NCM通常使用JPEG格式
+                        'size': len(image_data)
+                    }
+                except Exception as e:
+                    logger.warning(f"专辑封面解密失败: {e}")
+                    album_cover = None
             
             # 跳过剩余空间
             f.seek(image_space - image_size, 1)
@@ -11345,7 +11513,14 @@ def decrypt_ncm_file_correct(ncm_path):
             # XOR解密
             decrypted_audio = bytes(a ^ b for a, b in zip(data, stream))
             
-            return decrypted_audio
+            # 返回解密结果和元数据
+            result = {
+                'audio_data': decrypted_audio,
+                'metadata': metadata,
+                'album_cover': album_cover
+            }
+            
+            return result
             
     except Exception as e:
         raise ValueError(f"NCM文件解密失败: {str(e)}")

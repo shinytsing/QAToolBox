@@ -1,0 +1,633 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: qatoolbox
+  labels:
+    name: qatoolbox
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qatoolbox-config
+  namespace: qatoolbox
+data:
+  DJANGO_SETTINGS_MODULE: "config.settings.production"
+  DJANGO_DEBUG: "False"
+  ALLOWED_HOSTS: "shenyiqing.xin,localhost,127.0.0.1"
+  DATABASE_URL: "postgresql://qatoolbox:password@qatoolbox-postgres:5432/qatoolbox"
+  REDIS_URL: "redis://qatoolbox-redis:6379/0"
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: qatoolbox-secrets
+  namespace: qatoolbox
+type: Opaque
+data:
+  DJANGO_SECRET_KEY: <base64-encoded-secret-key>
+  DB_PASSWORD: <base64-encoded-db-password>
+  REDIS_PASSWORD: <base64-encoded-redis-password>
+  GRAFANA_PASSWORD: <base64-encoded-grafana-password>
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qatoolbox-postgres
+  namespace: qatoolbox
+spec:
+  serviceName: qatoolbox-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qatoolbox-postgres
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "qatoolbox"
+        - name: POSTGRES_USER
+          value: "qatoolbox"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: qatoolbox-secrets
+              key: DB_PASSWORD
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - qatoolbox
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - qatoolbox
+          initialDelaySeconds: 5
+          periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+# Redis StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qatoolbox-redis
+  namespace: qatoolbox
+spec:
+  serviceName: qatoolbox-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qatoolbox-redis
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --maxmemory
+        - "256mb"
+        - --maxmemory-policy
+        - "allkeys-lru"
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
+---
+# Web Application Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qatoolbox-web
+  namespace: qatoolbox
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: qatoolbox-web
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-web
+    spec:
+      containers:
+      - name: web
+        image: qatoolbox:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DJANGO_SETTINGS_MODULE
+        - name: DJANGO_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DJANGO_DEBUG
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: qatoolbox-secrets
+              key: DJANGO_SECRET_KEY
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - name: static-files
+          mountPath: /app/staticfiles
+        - name: media-files
+          mountPath: /app/media
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: static-files
+        emptyDir: {}
+      - name: media-files
+        persistentVolumeClaim:
+          claimName: qatoolbox-media-pvc
+      - name: logs
+        emptyDir: {}
+---
+# Celery Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qatoolbox-celery
+  namespace: qatoolbox
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qatoolbox-celery
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-celery
+    spec:
+      containers:
+      - name: celery
+        image: qatoolbox:latest
+        command: ["celery", "-A", "QAToolBox", "worker", "-l", "info", "--concurrency=4"]
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DJANGO_SETTINGS_MODULE
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: qatoolbox-secrets
+              key: DJANGO_SECRET_KEY
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+        volumeMounts:
+        - name: media-files
+          mountPath: /app/media
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: media-files
+        persistentVolumeClaim:
+          claimName: qatoolbox-media-pvc
+      - name: logs
+        emptyDir: {}
+---
+# Celery Beat Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qatoolbox-celery-beat
+  namespace: qatoolbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qatoolbox-celery-beat
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-celery-beat
+    spec:
+      containers:
+      - name: celery-beat
+        image: qatoolbox:latest
+        command: ["celery", "-A", "QAToolBox", "beat", "-l", "info"]
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DJANGO_SETTINGS_MODULE
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: qatoolbox-secrets
+              key: DJANGO_SECRET_KEY
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: DATABASE_URL
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+---
+# Microservices Deployments
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qatoolbox-user-service
+  namespace: qatoolbox
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qatoolbox-user-service
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-user-service
+    spec:
+      containers:
+      - name: user-service
+        image: qatoolbox_user_service:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: SERVICE_PORT
+          value: "8001"
+        - name: DATABASE_URL
+          value: "postgresql://qatoolbox:password@qatoolbox-postgres:5432/qatoolbox_users"
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qatoolbox-tool-service
+  namespace: qatoolbox
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qatoolbox-tool-service
+  template:
+    metadata:
+      labels:
+        app: qatoolbox-tool-service
+    spec:
+      containers:
+      - name: tool-service
+        image: qatoolbox_tool_service:latest
+        ports:
+        - containerPort: 8002
+        env:
+        - name: SERVICE_PORT
+          value: "8002"
+        - name: DATABASE_URL
+          value: "postgresql://qatoolbox:password@qatoolbox-postgres:5432/qatoolbox_tools"
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: qatoolbox-config
+              key: REDIS_URL
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "300m"
+          limits:
+            memory: "1Gi"
+            cpu: "600m"
+        livenessProbe:
+          httpGet:
+            path: /health/
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health/
+            port: 8002
+          initialDelaySeconds: 10
+          periodSeconds: 10
+---
+# Services
+apiVersion: v1
+kind: Service
+metadata:
+  name: qatoolbox-postgres
+  namespace: qatoolbox
+spec:
+  selector:
+    app: qatoolbox-postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qatoolbox-redis
+  namespace: qatoolbox
+spec:
+  selector:
+    app: qatoolbox-redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qatoolbox-web
+  namespace: qatoolbox
+spec:
+  selector:
+    app: qatoolbox-web
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qatoolbox-user-service
+  namespace: qatoolbox
+spec:
+  selector:
+    app: qatoolbox-user-service
+  ports:
+  - port: 80
+    targetPort: 8001
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qatoolbox-tool-service
+  namespace: qatoolbox
+spec:
+  selector:
+    app: qatoolbox-tool-service
+  ports:
+  - port: 80
+    targetPort: 8002
+  type: ClusterIP
+---
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qatoolbox-ingress
+  namespace: qatoolbox
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - shenyiqing.xin
+    secretName: qatoolbox-tls
+  rules:
+  - host: shenyiqing.xin
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: qatoolbox-web
+            port:
+              number: 80
+      - path: /api/users/
+        pathType: Prefix
+        backend:
+          service:
+            name: qatoolbox-user-service
+            port:
+              number: 80
+      - path: /api/tools/
+        pathType: Prefix
+        backend:
+          service:
+            name: qatoolbox-tool-service
+            port:
+              number: 80
+---
+# Persistent Volume Claims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qatoolbox-media-pvc
+  namespace: qatoolbox
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: qatoolbox-web-hpa
+  namespace: qatoolbox
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: qatoolbox-web
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: qatoolbox-tool-service-hpa
+  namespace: qatoolbox
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: qatoolbox-tool-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

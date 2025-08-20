@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周安排按钮测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .week-settings-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .week-settings-btn:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>周安排按钮测试</h1>
+        
+        <button class="week-settings-btn" id="weekSettingsBtn">
+            <i class="fas fa-cog"></i> 修改周安排
+        </button>
+        
+        <div class="log" id="log">
+            点击按钮查看日志...
+        </div>
+        
+        <div>
+            <h3>测试说明：</h3>
+            <ul>
+                <li>点击上面的"修改周安排"按钮</li>
+                <li>查看下方日志区域的输出</li>
+                <li>如果看到"showWeekSettings方法被调用"，说明按钮工作正常</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 模拟TrainingPlanEditor类
+        class TrainingPlanEditor {
+            constructor() {
+                this.init();
+            }
+            
+            init() {
+                this.setupButtonEventListeners();
+                console.log('训练计划编辑器初始化完成');
+            }
+            
+            setupButtonEventListeners() {
+                // 使用事件委托，确保按钮点击事件能正常工作
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('#weekSettingsBtn')) {
+                        e.preventDefault();
+                        this.showWeekSettings();
+                    }
+                });
+                
+                // 也尝试直接绑定，以防事件委托不工作
+                setTimeout(() => {
+                    const weekSettingsBtn = document.getElementById('weekSettingsBtn');
+                    if (weekSettingsBtn) {
+                        weekSettingsBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            this.showWeekSettings();
+                        });
+                        this.log('周安排按钮事件绑定成功');
+                    } else {
+                        this.log('未找到周安排按钮元素');
+                    }
+                }, 100);
+            }
+            
+            showWeekSettings() {
+                console.log('showWeekSettings方法被调用');
+                this.log('showWeekSettings方法被调用');
+                this.showNotification('周安排设置功能开发中...', 'info');
+            }
+            
+            showNotification(message, type) {
+                this.log(`通知: ${message} (类型: ${type})`);
+            }
+            
+            log(message) {
+                const logElement = document.getElementById('log');
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+                logElement.scrollTop = logElement.scrollHeight;
+                console.log(message);
+            }
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            window.editor = new TrainingPlanEditor();
+        });
+    </script>
+</body>
+</html>

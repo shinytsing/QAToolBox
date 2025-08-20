@@ -1,185 +1,86 @@
+"""
+塔罗牌服务类
+处理塔罗牌相关的业务逻辑
+"""
+
 import random
-import json
-from datetime import datetime, date
-from django.db import transaction
-from django.utils import timezone
-from ..models import (
-    TarotCard, TarotSpread, TarotReading, TarotDiary, 
-    TarotEnergyCalendar, TarotCommunity, TarotCommunityComment
-)
+import logging
+from datetime import datetime, timedelta
+from django.core.cache import cache
+from django.conf import settings
+from django.db import models
+import requests
+
+from ..models.tarot_models import TarotCard, TarotSpread, TarotReading, TarotEnergyCalendar
+
+logger = logging.getLogger(__name__)
 
 
 class TarotService:
     """塔罗牌服务类"""
     
     def __init__(self):
-        self.major_arcana = [
-            "愚者", "魔术师", "女祭司", "女皇", "皇帝", "教皇", "恋人", "战车",
-            "力量", "隐者", "命运之轮", "正义", "倒吊人", "死神", "节制", "恶魔",
-            "高塔", "星星", "月亮", "太阳", "审判", "世界"
-        ]
+        self.all_cards = None
+        self.spreads = None
+    
+    def get_all_cards(self):
+        """获取所有塔罗牌"""
+        if self.all_cards is None:
+            self.all_cards = list(TarotCard.objects.all())
+        return self.all_cards
+    
+    def get_spreads(self):
+        """获取所有牌阵"""
+        if self.spreads is None:
+            self.spreads = list(TarotSpread.objects.filter(is_active=True))
+        return self.spreads
+    
+    def draw_cards(self, spread, count=None):
+        """抽取塔罗牌"""
+        all_cards = self.get_all_cards()
+        if not all_cards:
+            raise ValueError("没有可用的塔罗牌")
         
-        self.minor_arcana = {
-            "wands": ["权杖王牌", "权杖二", "权杖三", "权杖四", "权杖五", "权杖六", "权杖七", "权杖八", "权杖九", "权杖十", "权杖侍从", "权杖骑士", "权杖皇后", "权杖国王"],
-            "cups": ["圣杯王牌", "圣杯二", "圣杯三", "圣杯四", "圣杯五", "圣杯六", "圣杯七", "圣杯八", "圣杯九", "圣杯十", "圣杯侍从", "圣杯骑士", "圣杯皇后", "圣杯国王"],
-            "swords": ["宝剑王牌", "宝剑二", "宝剑三", "宝剑四", "宝剑五", "宝剑六", "宝剑七", "宝剑八", "宝剑九", "宝剑十", "宝剑侍从", "宝剑骑士", "宝剑皇后", "宝剑国王"],
-            "pentacles": ["钱币王牌", "钱币二", "钱币三", "钱币四", "钱币五", "钱币六", "钱币七", "钱币八", "钱币九", "钱币十", "钱币侍从", "钱币骑士", "钱币皇后", "钱币国王"]
-        }
-    
-    def initialize_tarot_deck(self):
-        """初始化塔罗牌数据库"""
-        with transaction.atomic():
-            # 创建大阿卡纳
-            for i, name in enumerate(self.major_arcana):
-                TarotCard.objects.get_or_create(
-                    name=name,
-                    defaults={
-                        'name_en': f"Major Arcana {i}",
-                        'card_type': 'major',
-                        'suit': 'major',
-                        'number': i,
-                        'upright_meaning': f"{name}的正位含义",
-                        'reversed_meaning': f"{name}的逆位含义",
-                        'keywords': [name, "神秘", "命运"],
-                        'description': f"{name}的详细描述",
-                        'symbolism': f"{name}的象征意义",
-                        'advice': f"关于{name}的建议"
-                    }
-                )
-            
-            # 创建小阿卡纳
-            for suit, cards in self.minor_arcana.items():
-                for i, name in enumerate(cards):
-                    TarotCard.objects.get_or_create(
-                        name=name,
-                        defaults={
-                            'name_en': f"{suit.title()} {i+1}",
-                            'card_type': 'minor',
-                            'suit': suit,
-                            'number': i + 1,
-                            'upright_meaning': f"{name}的正位含义",
-                            'reversed_meaning': f"{name}的逆位含义",
-                            'keywords': [name, suit, "小阿卡纳"],
-                            'description': f"{name}的详细描述",
-                            'symbolism': f"{name}的象征意义",
-                            'advice': f"关于{name}的建议"
-                        }
-                    )
-    
-    def create_default_spreads(self):
-        """创建默认牌阵"""
-        default_spreads = [
-            {
-                'name': '三张牌阵',
-                'spread_type': 'classic',
-                'description': '经典的三张牌阵，代表过去、现在、未来',
-                'card_count': 3,
-                'positions': [
-                    {'position': 1, 'name': '过去', 'description': '代表过去的影响'},
-                    {'position': 2, 'name': '现在', 'description': '代表当前的状况'},
-                    {'position': 3, 'name': '未来', 'description': '代表未来的发展'}
-                ]
-            },
-            {
-                'name': '凯尔特十字',
-                'spread_type': 'classic',
-                'description': '经典的凯尔特十字牌阵，提供全面的解读',
-                'card_count': 10,
-                'positions': [
-                    {'position': 1, 'name': '中心', 'description': '当前状况'},
-                    {'position': 2, 'name': '挑战', 'description': '面临的挑战'},
-                    {'position': 3, 'name': '基础', 'description': '问题的基础'},
-                    {'position': 4, 'name': '过去', 'description': '过去的影响'},
-                    {'position': 5, 'name': '可能', 'description': '可能的结果'},
-                    {'position': 6, 'name': '未来', 'description': '未来的发展'},
-                    {'position': 7, 'name': '自我', 'description': '自我认知'},
-                    {'position': 8, 'name': '环境', 'description': '外部环境'},
-                    {'position': 9, 'name': '希望', 'description': '希望和恐惧'},
-                    {'position': 10, 'name': '结果', 'description': '最终结果'}
-                ]
-            },
-            {
-                'name': '爱情牌阵',
-                'spread_type': 'situation',
-                'description': '专门用于爱情问题的牌阵',
-                'card_count': 5,
-                'positions': [
-                    {'position': 1, 'name': '你的感受', 'description': '你对这段关系的感受'},
-                    {'position': 2, 'name': '对方感受', 'description': '对方对这段关系的感受'},
-                    {'position': 3, 'name': '关系现状', 'description': '当前关系的状况'},
-                    {'position': 4, 'name': '挑战', 'description': '关系中的挑战'},
-                    {'position': 5, 'name': '建议', 'description': '如何改善关系'}
-                ]
-            },
-            {
-                'name': '事业牌阵',
-                'spread_type': 'situation',
-                'description': '专门用于事业发展的牌阵',
-                'card_count': 6,
-                'positions': [
-                    {'position': 1, 'name': '当前工作', 'description': '当前工作状况'},
-                    {'position': 2, 'name': '技能优势', 'description': '你的技能和优势'},
-                    {'position': 3, 'name': '发展机会', 'description': '职业发展机会'},
-                    {'position': 4, 'name': '挑战障碍', 'description': '面临的挑战和障碍'},
-                    {'position': 5, 'name': '建议行动', 'description': '建议采取的行动'},
-                    {'position': 6, 'name': '未来前景', 'description': '职业发展前景'}
-                ]
-            }
-        ]
+        # 确定抽取数量
+        if count is None:
+            count = spread.card_count
         
-        with transaction.atomic():
-            for spread_data in default_spreads:
-                TarotSpread.objects.get_or_create(
-                    name=spread_data['name'],
-                    defaults=spread_data
-                )
+        # 随机抽取牌
+        selected_cards = random.sample(all_cards, min(count, len(all_cards)))
+        drawn_cards = []
+        
+        for i, card in enumerate(selected_cards):
+            is_reversed = random.choice([True, False])
+            position = spread.positions[i] if i < len(spread.positions) else f'位置{i+1}'
+            
+            drawn_cards.append({
+                'card': {
+                    'id': card.id,
+                    'name': card.name,
+                    'name_en': card.name_en,
+                    'card_type': card.card_type,
+                    'suit': card.suit,
+                    'number': card.number,
+                    'image_url': card.image_url
+                },
+                'position': position,
+                'is_reversed': is_reversed,
+                'meaning': card.reversed_meaning if is_reversed else card.upright_meaning,
+                'keywords': card.keywords
+            })
+        
+        return drawn_cards
     
-    def draw_cards(self, spread_id, card_count=None):
-        """抽牌"""
-        try:
-            spread = TarotSpread.objects.get(id=spread_id)
-            if card_count is None:
-                card_count = spread.card_count
-            
-            # 获取所有可用的牌
-            all_cards = list(TarotCard.objects.all())
-            
-            # 随机抽牌
-            drawn_cards = random.sample(all_cards, min(card_count, len(all_cards)))
-            
-            # 为每张牌随机决定正逆位
-            card_results = []
-            for i, card in enumerate(drawn_cards):
-                is_reversed = random.choice([True, False])
-                card_results.append({
-                    'card': {
-                        'id': card.id,
-                        'name': card.name,
-                        'name_en': card.name_en,
-                        'suit': card.suit,
-                        'card_type': card.card_type,
-                        'number': card.number,
-                        'image_url': card.image_url
-                    },
-                    'position': i + 1,
-                    'is_reversed': is_reversed,
-                    'meaning': card.reversed_meaning if is_reversed else card.upright_meaning,
-                    'keywords': card.keywords
-                })
-            
-            return card_results
-        except TarotSpread.DoesNotExist:
-            return None
-    
-    def create_reading(self, user, spread_id, reading_type, question, mood_before=None):
+    def create_reading(self, user, spread, reading_type, question, mood_before=None):
         """创建占卜记录"""
         try:
-            spread = TarotSpread.objects.get(id=spread_id)
-            drawn_cards = self.draw_cards(spread_id)
+            # 抽取牌
+            drawn_cards = self.draw_cards(spread)
             
-            if not drawn_cards:
-                return None
+            # 生成AI解读
+            ai_interpretation = self.generate_ai_interpretation(spread, drawn_cards, question, reading_type)
             
+            # 保存占卜记录
             reading = TarotReading.objects.create(
                 user=user,
                 spread=spread,
@@ -187,190 +88,270 @@ class TarotService:
                 question=question,
                 drawn_cards=drawn_cards,
                 card_positions=spread.positions,
+                ai_interpretation=ai_interpretation,
                 mood_before=mood_before
             )
             
             return reading
-        except TarotSpread.DoesNotExist:
-            return None
+            
+        except Exception as e:
+            logger.error(f"创建占卜记录失败: {str(e)}")
+            raise
     
-    def generate_ai_interpretation(self, reading):
+    def generate_ai_interpretation(self, spread, drawn_cards, question, reading_type):
         """生成AI解读"""
-        # 这里可以集成AI服务，目前返回基础解读
-        interpretation = f"基于您的问题：{reading.question}\n\n"
-        interpretation += f"使用{reading.spread.name}为您进行占卜，以下是详细解读：\n\n"
+        try:
+            # 构建提示词
+            prompt = self._build_interpretation_prompt(spread, drawn_cards, question, reading_type)
+            
+            # 调用AI API
+            interpretation = self._call_ai_api(prompt)
+            
+            if interpretation:
+                return interpretation
+            
+            # 如果AI API不可用，返回默认解读
+            return self._generate_default_interpretation(spread, drawn_cards, question, reading_type)
+            
+        except Exception as e:
+            logger.error(f"生成AI解读失败: {str(e)}")
+            return self._generate_default_interpretation(spread, drawn_cards, question, reading_type)
+    
+    def _build_interpretation_prompt(self, spread, drawn_cards, question, reading_type):
+        """构建解读提示词"""
+        prompt = f"""
+作为一位经验丰富的塔罗牌解读师，请为以下占卜提供专业的解读：
+
+占卜类型：{reading_type}
+问题：{question}
+牌阵：{spread.name}（{spread.card_count}张牌）
+
+抽到的牌：
+"""
         
-        for card_data in reading.drawn_cards:
+        for card_data in drawn_cards:
             card = card_data['card']
             position = card_data['position']
             is_reversed = card_data['is_reversed']
+            meaning = card_data['meaning']
             
-            # 找到对应的位置描述
-            position_desc = ""
-            for pos in reading.card_positions:
-                if pos['position'] == position:
-                    position_desc = pos['description']
-                    break
-            
-            interpretation += f"第{position}张牌：{card['name']}"
-            if is_reversed:
-                interpretation += "（逆位）"
-            interpretation += f"\n位置含义：{position_desc}\n"
-            interpretation += f"牌义：{card_data['meaning']}\n\n"
+            prompt += f"- {position}：{card['name']}（{'逆位' if is_reversed else '正位'}）\n"
+            prompt += f"  含义：{meaning}\n"
         
-        interpretation += "总体建议：请根据牌面含义，结合您的具体情况来理解这次占卜的结果。"
+        prompt += """
+请提供：
+1. 整体解读：结合所有牌面，给出对问题的整体分析
+2. 各位置解读：详细解释每张牌在对应位置的含义
+3. 建议指导：基于解读结果，给出具体的建议和指导
+4. 注意事项：提醒需要注意的方面
+
+请用温暖、专业且易懂的语言进行解读。
+"""
+        
+        return prompt
+    
+    def _call_ai_api(self, prompt):
+        """调用AI API"""
+        try:
+            # 获取API密钥
+            api_key = getattr(settings, 'DEEPSEEK_API_KEY', None)
+            if not api_key:
+                return None
+            
+            headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            payload = {
+                'model': 'deepseek-chat',
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': prompt
+                    }
+                ],
+                'max_tokens': 2000,
+                'temperature': 0.7
+            }
+            
+            response = requests.post(
+                'https://api.deepseek.com/v1/chat/completions',
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                return result['choices'][0]['message']['content']
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"调用AI API失败: {str(e)}")
+            return None
+    
+    def _generate_default_interpretation(self, spread, drawn_cards, question, reading_type):
+        """生成默认解读"""
+        interpretation = f"基于{spread.name}的占卜结果，为您解读如下：\n\n"
+        
+        # 整体解读
+        interpretation += "【整体解读】\n"
+        interpretation += f"您的问题是关于{reading_type}的，通过{spread.name}的指引，我们可以看到一些重要的信息。\n\n"
+        
+        # 各位置解读
+        interpretation += "【各位置解读】\n"
+        for card_data in drawn_cards:
+            card = card_data['card']
+            position = card_data['position']
+            is_reversed = card_data['is_reversed']
+            meaning = card_data['meaning']
+            
+            interpretation += f"{position}：{card['name']}（{'逆位' if is_reversed else '正位'}）\n"
+            interpretation += f"{meaning}\n\n"
+        
+        # 建议指导
+        interpretation += "【建议指导】\n"
+        interpretation += "请保持开放的心态，相信自己的直觉。塔罗牌是指导而非决定，最终的选择权在您手中。\n\n"
+        
+        # 注意事项
+        interpretation += "【注意事项】\n"
+        interpretation += "塔罗牌解读仅供参考，请理性对待。重要的决定需要结合实际情况综合考虑。"
         
         return interpretation
     
-    def save_reading_with_interpretation(self, reading):
-        """保存占卜记录并生成解读"""
-        interpretation = self.generate_ai_interpretation(reading)
-        reading.ai_interpretation = interpretation
-        reading.save()
-        return reading
+    def get_daily_energy(self, date=None):
+        """获取每日能量"""
+        if date is None:
+            date = datetime.now().date()
+        
+        # 检查缓存
+        cache_key = f'tarot_daily_energy_{date}'
+        daily_energy = cache.get(cache_key)
+        
+        if daily_energy:
+            return daily_energy
+        
+        # 获取今日能量日历
+        try:
+            energy_calendar = TarotEnergyCalendar.objects.get(date=date)
+            daily_energy = {
+                'date': date.isoformat(),
+                'energy_type': energy_calendar.get_energy_type_display(),
+                'energy_level': energy_calendar.energy_level,
+                'description': energy_calendar.description,
+                'recommended_cards': energy_calendar.recommended_cards,
+                'special_reading': energy_calendar.special_reading
+            }
+        except TarotEnergyCalendar.DoesNotExist:
+            # 生成默认每日能量
+            all_cards = self.get_all_cards()
+            daily_card = random.choice(all_cards) if all_cards else None
+            
+            daily_energy = {
+                'date': date.isoformat(),
+                'energy_type': '日常能量',
+                'energy_level': random.randint(6, 10),
+                'description': f'今天是充满活力的一天，适合尝试新事物，保持开放的心态。',
+                'recommended_cards': [daily_card.name] if daily_card else [],
+                'special_reading': '今天是一个适合突破自我的日子，勇敢地面对挑战吧！',
+                'lucky_color': random.choice(['红色', '蓝色', '绿色', '黄色', '紫色']),
+                'lucky_number': random.randint(1, 99)
+            }
+        
+        # 缓存24小时
+        cache.set(cache_key, daily_energy, 86400)
+        
+        return daily_energy
     
-    def get_user_readings(self, user, limit=10):
-        """获取用户的占卜记录"""
+    def get_user_readings(self, user, limit=20):
+        """获取用户占卜历史"""
         return TarotReading.objects.filter(user=user).order_by('-created_at')[:limit]
     
-    def get_daily_energy(self, target_date=None):
-        """获取每日能量"""
-        if target_date is None:
-            target_date = date.today()
-        
+    def get_reading_detail(self, reading_id, user):
+        """获取占卜详情"""
         try:
-            energy = TarotEnergyCalendar.objects.get(date=target_date, energy_type='daily')
-            return energy
-        except TarotEnergyCalendar.DoesNotExist:
-            # 如果没有预设的能量，生成一个
-            energy_level = random.randint(1, 10)
-            energy_desc = f"{target_date}的能量等级为{energy_level}，适合进行{self._get_energy_description(energy_level)}的占卜。"
-            
-            energy = TarotEnergyCalendar.objects.create(
-                date=target_date,
-                energy_type='daily',
-                energy_level=energy_level,
-                description=energy_desc
-            )
-            return energy
-    
-    def _get_energy_description(self, level):
-        """根据能量等级获取描述"""
-        if level <= 3:
-            return "内省和反思"
-        elif level <= 6:
-            return "平衡和稳定"
-        else:
-            return "积极和行动"
-    
-    def create_tarot_diary(self, user, reading_id, title, content, tags=None, is_public=False):
-        """创建塔罗日记"""
-        try:
-            reading = TarotReading.objects.get(id=reading_id, user=user)
-            diary = TarotDiary.objects.create(
-                user=user,
-                reading=reading,
-                title=title,
-                content=content,
-                tags=tags or [],
-                is_public=is_public
-            )
-            return diary
+            return TarotReading.objects.get(id=reading_id, user=user)
         except TarotReading.DoesNotExist:
             return None
     
-    def get_community_posts(self, post_type=None, limit=20):
-        """获取社区帖子"""
-        queryset = TarotCommunity.objects.filter(is_featured=True)
-        if post_type:
-            queryset = queryset.filter(post_type=post_type)
-        return queryset.order_by('-created_at')[:limit]
-    
-    def create_community_post(self, user, post_type, title, content, tags=None, is_anonymous=False):
-        """创建社区帖子"""
-        post = TarotCommunity.objects.create(
-            user=user,
-            post_type=post_type,
-            title=title,
-            content=content,
-            tags=tags or [],
-            is_anonymous=is_anonymous
-        )
-        return post
-    
-    def add_community_comment(self, user, post_id, content, parent_comment_id=None):
-        """添加社区评论"""
+    def submit_feedback(self, reading_id, user, feedback, rating, mood_after):
+        """提交反馈"""
         try:
-            post = TarotCommunity.objects.get(id=post_id)
-            parent_comment = None
-            if parent_comment_id:
-                parent_comment = TarotCommunityComment.objects.get(id=parent_comment_id)
+            reading = TarotReading.objects.get(id=reading_id, user=user)
+            reading.user_feedback = feedback
+            reading.accuracy_rating = rating
+            reading.mood_after = mood_after
+            reading.save()
+            return True
+        except TarotReading.DoesNotExist:
+            return False
+    
+    def get_reading_statistics(self, user):
+        """获取占卜统计"""
+        readings = TarotReading.objects.filter(user=user)
+        
+        stats = {
+            'total_readings': readings.count(),
+            'reading_types': {},
+            'average_rating': 0,
+            'favorite_spreads': {},
+            'mood_changes': {}
+        }
+        
+        if readings.exists():
+            # 统计占卜类型
+            for reading in readings:
+                reading_type = reading.get_reading_type_display()
+                stats['reading_types'][reading_type] = stats['reading_types'].get(reading_type, 0) + 1
             
-            comment = TarotCommunityComment.objects.create(
-                post=post,
-                user=user,
-                content=content,
-                parent_comment=parent_comment
-            )
+            # 统计平均评分
+            rated_readings = readings.exclude(accuracy_rating__isnull=True)
+            if rated_readings.exists():
+                stats['average_rating'] = rated_readings.aggregate(
+                    avg_rating=models.Avg('accuracy_rating')
+                )['avg_rating']
             
-            # 更新帖子评论数
-            post.comments_count = post.comments.count()
-            post.save()
+            # 统计常用牌阵
+            for reading in readings:
+                spread_name = reading.spread.name
+                stats['favorite_spreads'][spread_name] = stats['favorite_spreads'].get(spread_name, 0) + 1
             
-            return comment
-        except (TarotCommunity.DoesNotExist, TarotCommunityComment.DoesNotExist):
+            # 统计心情变化
+            for reading in readings:
+                if reading.mood_before and reading.mood_after:
+                    mood_pair = f"{reading.mood_before} → {reading.mood_after}"
+                    stats['mood_changes'][mood_pair] = stats['mood_changes'].get(mood_pair, 0) + 1
+        
+        return stats
+    
+    def get_card_meaning(self, card_id):
+        """获取牌面含义"""
+        try:
+            card = TarotCard.objects.get(id=card_id)
+            return {
+                'name': card.name,
+                'name_en': card.name_en,
+                'upright_meaning': card.upright_meaning,
+                'reversed_meaning': card.reversed_meaning,
+                'keywords': card.keywords,
+                'description': card.description
+            }
+        except TarotCard.DoesNotExist:
             return None
-
-
-class TarotVisualizationService:
-    """塔罗牌可视化服务"""
     
-    def __init__(self):
-        self.colors = {
-            'major': '#8B4513',  # 棕色
-            'wands': '#FF4500',  # 橙红色
-            'cups': '#4169E1',   # 蓝色
-            'swords': '#708090',  # 灰色
-            'pentacles': '#FFD700'  # 金色
-        }
+    def search_cards(self, keyword):
+        """搜索塔罗牌"""
+        return TarotCard.objects.filter(
+            models.Q(name__icontains=keyword) |
+            models.Q(name_en__icontains=keyword) |
+            models.Q(keywords__contains=[keyword])
+        )
     
-    def get_card_color(self, suit):
-        """获取牌的颜色"""
-        return self.colors.get(suit, '#000000')
-    
-    def generate_spread_layout(self, spread):
-        """生成牌阵布局"""
-        positions = spread.positions
-        layout = {
-            'type': 'grid',
-            'positions': []
-        }
-        
-        for pos in positions:
-            layout['positions'].append({
-                'id': pos['position'],
-                'name': pos['name'],
-                'description': pos['description'],
-                'x': 0,  # 这里可以根据牌阵类型计算具体位置
-                'y': 0
-            })
-        
-        return layout
-    
-    def get_energy_visualization(self, energy):
-        """获取能量可视化数据"""
-        return {
-            'level': energy.energy_level,
-            'color': self._get_energy_color(energy.energy_level),
-            'description': energy.description,
-            'recommended_cards': energy.recommended_cards
-        }
-    
-    def _get_energy_color(self, level):
-        """根据能量等级获取颜色"""
-        if level <= 3:
-            return '#FF6B6B'  # 红色
-        elif level <= 6:
-            return '#4ECDC4'  # 青色
-        else:
-            return '#45B7D1'  # 蓝色 
+    def get_spread_detail(self, spread_id):
+        """获取牌阵详情"""
+        try:
+            return TarotSpread.objects.get(id=spread_id)
+        except TarotSpread.DoesNotExist:
+            return None 

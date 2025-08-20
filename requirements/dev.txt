@@ -1,28 +1,25 @@
 # 开发环境依赖
 -r base.txt
 
-# 开发工具
-django-debug-toolbar==4.4.0
-django-extensions==3.2.3
-ipython==8.25.0
-ipdb==0.13.13
-
-# 代码质量
-black==24.10.0
-flake8==7.0.0
+# 代码质量检查工具
+flake8==6.1.0
+black==23.12.1
 isort==5.13.2
-pylint==3.1.0
+mypy==1.8.0
+bandit==1.7.5
+safety==2.3.5
 
 # 测试工具
-pytest==8.0.2
-pytest-django==4.8.0
-pytest-cov==5.0.0
+pytest==7.4.4
+pytest-django==4.7.0
+pytest-cov==4.1.0
+coverage==7.3.2
 factory-boy==3.3.0
 
-# 文档生成
-sphinx==7.2.6
-sphinx-rtd-theme==2.0.0
+# 调试工具
+django-debug-toolbar==4.2.0
+ipython==8.18.1
 
-# 性能分析
-django-silk==5.1.0
-memory-profiler==0.61.0 
+# 文档工具
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0 

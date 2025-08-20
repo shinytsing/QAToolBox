@@ -1,5 +1,5 @@
-# QAToolBox Docker部署文件
-FROM python:3.9-slim
+# 使用官方Python运行时作为基础镜像
+FROM python:3.11-slim
 
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -10,46 +10,43 @@ ENV DJANGO_SETTINGS_MODULE=config.settings.production
 WORKDIR /app
 
 # 安装系统依赖
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        gcc \
-        g++ \
-        libpq-dev \
-        libjpeg-dev \
-        libpng-dev \
-        libfreetype6-dev \
-        libxml2-dev \
-        libxslt-dev \
-        git \
-        curl \
-        wget \
-        unzip \
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    postgresql-client \
+    redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制requirements文件
-COPY requirements/ requirements/
+COPY requirements/ /app/requirements/
 
 # 安装Python依赖
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements/prod.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements/production.txt
 
-# 复制项目代码
-COPY . .
+# 复制项目文件
+COPY . /app/
 
-# 收集静态文件
-RUN python manage.py collectstatic --noinput
+# 创建必要的目录
+RUN mkdir -p /app/logs /app/media /app/staticfiles
+
+# 设置权限
+RUN chmod +x /app/scripts/start_with_tests.sh
 
 # 创建非root用户
-RUN useradd --create-home --shell /bin/bash qatoolbox \
-    && chown -R qatoolbox:qatoolbox /app
+RUN useradd --create-home --shell /bin/bash qatoolbox && \
+    chown -R qatoolbox:qatoolbox /app
+
+# 切换到非root用户
 USER qatoolbox
 
 # 暴露端口
 EXPOSE 8000
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/tools/health/ || exit 1
 
 # 启动命令
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "config.wsgi:application"] 
+CMD ["/app/scripts/start_with_tests.sh", "production"] 

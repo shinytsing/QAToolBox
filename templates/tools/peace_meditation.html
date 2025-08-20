@@ -651,7 +651,9 @@ function setTimer(minutes) {
     timerInterval = setInterval(() => {
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
-        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // 将秒数格式化为小数点后两位
+        const formattedSeconds = seconds.toFixed(2);
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${formattedSeconds}`;
         
         if (timeLeft <= 0) {
             stopTimer();

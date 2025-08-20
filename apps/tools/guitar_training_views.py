@@ -7,7 +7,8 @@ from django.db.models import Q, Count, Avg
 import json
 import random
 from datetime import datetime, timedelta
-from .models import User, ToolUsageLog
+from .models import ToolUsageLog
+from django.contrib.auth.models import User
 
 
 class GuitarTrainingSystem:
@@ -1334,204 +1335,16 @@ def time_capsule_diary_view(request):
 
 
 @login_required
-@csrf_exempt
-def save_time_capsule_api(request):
-    """保存时光胶囊API"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            content = data.get('content', '').strip()
-            emotions = data.get('emotions', [])
-            unlock_time = data.get('unlock_time')
-            unlock_condition = data.get('unlock_condition', 'time')
-            visibility = data.get('visibility', 'private')
-            
-            # 处理媒体文件
-            images = data.get('images', [])
-            audio = data.get('audio', '')
-            location = data.get('location', {})
-            weather = data.get('weather', {})
-            
-            if not content:
-                return JsonResponse({'success': False, 'message': '请先写下内容'})
-            
-            if not emotions:
-                return JsonResponse({'success': False, 'message': '请选择至少一种情绪'})
-            
-            # 创建时光胶囊
-            from .models import TimeCapsule
-            from django.core.exceptions import ValidationError
-            
-            try:
-                # 先创建模型实例进行验证
-                capsule = TimeCapsule(
-                    user=request.user,
-                    content=content,
-                    emotions=emotions,
-                    unlock_condition=unlock_condition,
-                    visibility=visibility,
-                    unlock_time=unlock_time if unlock_time else None,
-                    keywords=[],  # 明确设置默认值
-                    images=images,  # 设置图片列表
-                    audio=audio,    # 设置音频URL
-                    location=location,  # 设置位置信息
-                    weather=weather     # 设置天气信息
-                )
-                
-                # 验证模型
-                capsule.full_clean()
-                
-                # 保存到数据库
-                capsule.save()
-                
-            except ValidationError as e:
-                # 处理验证错误
-                error_messages = []
-                for field, errors in e.message_dict.items():
-                    for error in errors:
-                        if '请输入合法的URL' in error:
-                            error_messages.append('音频URL格式不正确')
-                        elif '此字段不能为空' in error:
-                            error_messages.append(f'{field}字段不能为空')
-                        else:
-                            error_messages.append(error)
-                
-                return JsonResponse({
-                    'success': False, 
-                    'message': '; '.join(error_messages)
-                })
-            
-            # 检查并授予成就
-            check_time_capsule_achievements(request.user)
-            
-            return JsonResponse({
-                'success': True,
-                'message': '时光胶囊保存成功！',
-                'capsule_id': capsule.id
-            })
-            
-        except Exception as e:
-            error_message = str(e)
-            
-            # 处理URL验证错误
-            if '请输入合法的URL' in error_message or 'pattern' in error_message.lower():
-                return JsonResponse({
-                    'success': False, 
-                    'message': '音频URL格式不正确，请检查URL格式'
-                })
-            
-            # 处理其他验证错误
-            if '此字段不能为空' in error_message:
-                return JsonResponse({
-                    'success': False, 
-                    'message': '请填写所有必需字段'
-                })
-            
-            return JsonResponse({'success': False, 'message': f'保存失败: {error_message}'})
-    
-    return JsonResponse({'success': False, 'message': '无效请求'})
+# 时间胶囊API已移动到 time_capsule_views.py
 
 
-@login_required
-def get_time_capsules_api(request):
-    """获取用户的时光胶囊列表API"""
-    try:
-        from .models import TimeCapsule
-        
-        # 获取用户的所有胶囊
-        capsules = TimeCapsule.objects.filter(user=request.user).order_by('-created_at')
-        
-        capsule_list = []
-        for capsule in capsules:
-            capsule_data = {
-                'id': capsule.id,
-                'content': capsule.content[:100] + '...' if len(capsule.content) > 100 else capsule.content,
-                'emotions': capsule.emotions,
-                'created_at': capsule.created_at.strftime('%Y-%m-%d %H:%M'),
-                'unlock_time': capsule.unlock_time.strftime('%Y-%m-%d %H:%M') if capsule.unlock_time else None,
-                'unlock_condition': capsule.unlock_condition,
-                'visibility': capsule.visibility,
-                'is_unlocked': capsule.is_unlocked,
-                'can_unlock': capsule.can_be_unlocked_by(request.user)
-            }
-            capsule_list.append(capsule_data)
-        
-        return JsonResponse({
-            'success': True,
-            'capsules': capsule_list,
-            'total_count': len(capsule_list)
-        })
-        
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'获取失败: {str(e)}'})
+# 时间胶囊API已移动到 time_capsule_views.py
 
 
-@login_required
-def get_time_capsule_detail_api(request, capsule_id):
-    """获取时光胶囊详情API"""
-    try:
-        from .models import TimeCapsule
-        
-        capsule = get_object_or_404(TimeCapsule, id=capsule_id, user=request.user)
-        
-        capsule_data = {
-            'id': capsule.id,
-            'content': capsule.content,
-            'emotions': capsule.emotions,
-            'created_at': capsule.created_at.strftime('%Y-%m-%d %H:%M'),
-            'unlock_time': capsule.unlock_time.strftime('%Y-%m-%d %H:%M') if capsule.unlock_time else None,
-            'unlock_condition': capsule.unlock_condition,
-            'visibility': capsule.visibility,
-            'is_unlocked': capsule.is_unlocked,
-            'can_unlock': capsule.can_be_unlocked_by(request.user)
-        }
-        
-        return JsonResponse({
-            'success': True,
-            'capsule': capsule_data
-        })
-        
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': f'获取失败: {str(e)}'})
+# 时间胶囊API已移动到 time_capsule_views.py
 
 
-@login_required
-@csrf_exempt
-def unlock_time_capsule_api(request, capsule_id):
-    """解锁时光胶囊API"""
-    if request.method == 'POST':
-        try:
-            from .models import TimeCapsule, CapsuleUnlock
-            
-            capsule = get_object_or_404(TimeCapsule, id=capsule_id)
-            
-            if not capsule.can_be_unlocked_by(request.user):
-                return JsonResponse({'success': False, 'message': '无法解锁此胶囊'})
-            
-            # 创建解锁记录
-            unlock_record, created = CapsuleUnlock.objects.get_or_create(
-                capsule=capsule,
-                user=request.user
-            )
-            
-            if not created:
-                return JsonResponse({'success': False, 'message': '此胶囊已经被解锁过了'})
-            
-            return JsonResponse({
-                'success': True,
-                'message': '胶囊解锁成功！',
-                'capsule': {
-                    'id': capsule.id,
-                    'content': capsule.content,
-                    'emotions': capsule.emotions,
-                    'created_at': capsule.created_at.strftime('%Y-%m-%d %H:%M')
-                }
-            })
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': f'解锁失败: {str(e)}'})
-    
-    return JsonResponse({'success': False, 'message': '无效请求'})
+# 时间胶囊API已移动到 time_capsule_views.py
 
 
 @login_required

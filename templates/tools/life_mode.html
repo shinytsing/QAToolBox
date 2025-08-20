@@ -7,6 +7,10 @@
 {% block extra_css %}
 <style>
 
+/* 生活模式特殊样式 */
+.life-mode-container {
+  padding-top: 0;
+}
 
 /* 生活模式点击计数器 */
 .life-mode-click-counter {
@@ -551,15 +555,6 @@ function goToLifeDiary() {
     console.log('点击生活日记按钮');
     
     try {
-        // 添加点击反馈
-        const button = event.target;
-        if (button) {
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 150);
-        }
-        
         // 跳转到生活日记页面
         window.location.href = '{% url "tools:diary" %}';
     } catch (error) {
@@ -598,15 +593,6 @@ function goToMeditationGuide() {
     console.log('点击冥想指导按钮');
     
     try {
-        // 添加点击反馈
-        const button = event.target;
-        if (button) {
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 150);
-        }
-        
         // 跳转到冥想指导页面
         window.location.href = '{% url "tools:meditation_guide" %}';
     } catch (error) {
@@ -621,15 +607,6 @@ function goToHeartLink() {
     console.log('点击心动链接按钮');
     
     try {
-        // 添加点击反馈
-        const button = event.target;
-        if (button) {
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 150);
-        }
-        
         // 跳转到心动链接页面
         window.location.href = '{% url "tools:heart_link" %}';
     } catch (error) {
@@ -692,21 +669,40 @@ function goToFoodRandomizer() {
     console.log('点击食物随机选择器按钮');
     
     try {
-        // 添加点击反馈
-        const button = event.target;
-        if (button) {
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 150);
-        }
-        
         // 跳转到食物随机选择器页面
         window.location.href = '{% url "tools:food_randomizer" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
         window.open('/tools/food_randomizer/', '_self');
+    }
+}
+
+// 船宝按钮点击处理函数
+function goToShipBao() {
+    console.log('点击船宝按钮');
+    
+    try {
+        // 跳转到船宝页面
+        window.location.href = '{% url "tools:shipbao_home" %}';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/shipbao/', '_self');
+    }
+}
+
+// 搭子按钮点击处理函数
+function goToBuddy() {
+    console.log('点击搭子按钮');
+    
+    try {
+        // 跳转到搭子页面
+        window.location.href = '{% url "tools:buddy_home" %}';
+    } catch (error) {
+        console.error('跳转失败:', error);
+        // 备用跳转方式
+        window.open('/tools/buddy/', '_self');
     }
 }
 
@@ -1004,6 +1000,22 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
                           <h3 class="training-title">中午吃什么</h3>
                     <p class="training-description">我其实一直有三个问题</p>
+    </div>
+
+    <div class="training-card" onclick="goToShipBao()">
+      <div class="training-icon">
+        <i class="fas fa-ship"></i>
+      </div>
+      <h3 class="training-title">船宝</h3>
+      <p class="training-description">同城二手交易，让闲置物品找到新主人</p>
+    </div>
+
+    <div class="training-card" onclick="goToBuddy()">
+      <div class="training-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <h3 class="training-title">搭子</h3>
+      <p class="training-description">同城活动匹配，找到志同道合的伙伴</p>
     </div>
   </div>
 </div>

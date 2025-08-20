@@ -5,150 +5,431 @@
 
 {% block extra_css %}
 <style>
+/* 现代化搭子页面样式 */
 .buddy-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 动态背景粒子效果 */
+.buddy-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    z-index: -1;
+    animation: buddyPulse 8s ease-in-out infinite;
+}
+
+@keyframes buddyPulse {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: scale(1.1) rotate(1deg);
+        opacity: 1;
+    }
+}
+
+/* 浮动元素动画 */
+.floating-elements {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.floating-element {
+    position: absolute;
+    opacity: 0.1;
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-element:nth-child(1) {
+    top: 10%;
+    left: 10%;
+    font-size: 2rem;
+    animation-delay: 0s;
+}
+
+.floating-element:nth-child(2) {
+    top: 20%;
+    right: 15%;
+    font-size: 1.5rem;
+    animation-delay: 2s;
+}
+
+.floating-element:nth-child(3) {
+    bottom: 30%;
+    left: 20%;
+    font-size: 1.8rem;
+    animation-delay: 4s;
+}
+
+.floating-element:nth-child(4) {
+    bottom: 20%;
+    right: 10%;
+    font-size: 1.3rem;
+    animation-delay: 1s;
+}
+
+@keyframes float {
+    0%, 100% { 
+        transform: translateY(0px) rotate(0deg); 
+        opacity: 0.1;
+    }
+    50% { 
+        transform: translateY(-20px) rotate(10deg); 
+        opacity: 0.3;
+    }
 }
 
 .buddy-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
 }
 
 .buddy-header h1 {
-    color: #2c3e50;
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    color: white;
+    font-size: 4rem;
+    margin-bottom: 15px;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    animation: buddyTitleFloat 3s ease-in-out infinite;
+    background: linear-gradient(45deg, #fff, #f0f0f0, #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+@keyframes buddyTitleFloat {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-10px) scale(1.05); }
 }
 
 .buddy-header p {
-    color: #7f8c8d;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.3rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-weight: 300;
+    letter-spacing: 0.5px;
+}
+
+/* 位置信息显示 */
+.location-display {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 15px 20px;
+    margin: 20px auto;
+    max-width: 400px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.location-display .location-text {
+    color: white;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.location-display .location-icon {
+    color: #4facfe;
     font-size: 1.1rem;
 }
 
+.location-input-container {
+    margin-top: 10px;
+    display: none;
+}
+
+.location-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.location-input:focus {
+    outline: none;
+    border-color: #4facfe;
+    box-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+}
+
+.edit-location-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+.edit-location-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
 .filter-section {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 30px;
+    border-radius: 25px;
+    margin-bottom: 40px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    animation: filterSlideIn 0.8s ease-out;
+}
+
+@keyframes filterSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .filter-row {
     display: flex;
-    gap: 15px;
+    gap: 20px;
     flex-wrap: wrap;
     align-items: center;
 }
 
 .filter-item {
     flex: 1;
-    min-width: 150px;
+    min-width: 160px;
 }
 
 .filter-item label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     font-weight: 600;
-    color: #2c3e50;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
 }
 
 .filter-item select {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
     font-size: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.filter-item select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
 }
 
 .search-box {
     flex: 2;
-    min-width: 200px;
+    min-width: 250px;
 }
 
 .search-box input {
     width: 100%;
-    padding: 10px 15px;
-    border: 2px solid #3498db;
+    padding: 15px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
     border-radius: 25px;
     font-size: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
 }
 
 .search-btn {
-    background: #3498db;
-    color: white;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    color: #333;
     border: none;
-    padding: 10px 20px;
+    padding: 15px 25px;
     border-radius: 25px;
     cursor: pointer;
     font-size: 16px;
-    transition: background 0.3s;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .search-btn:hover {
-    background: #2980b9;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .events-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
 }
 
 .event-card {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    animation: cardSlideIn 0.6s ease-out;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .event-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.event-card:hover::before {
+    opacity: 1;
 }
 
 .event-image {
     width: 100%;
-    height: 180px;
+    height: 220px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     color: white;
-    font-size: 3rem;
+    font-size: 4rem;
+    overflow: hidden;
+}
+
+.event-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    animation: shine 3s ease-in-out infinite;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 .event-info {
-    padding: 20px;
+    padding: 30px;
+    position: relative;
 }
 
 .event-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 10px;
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 15px;
     line-height: 1.4;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .event-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     font-size: 14px;
     color: #7f8c8d;
 }
 
 .event-type {
-    background: #3498db;
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 15px;
     font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
 }
 
 .event-time {
@@ -158,15 +439,16 @@
 
 .event-location {
     color: #3498db;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     font-size: 14px;
+    font-weight: 500;
 }
 
 .event-stats {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     font-size: 14px;
 }
 
@@ -182,79 +464,112 @@
 
 .event-tags {
     display: flex;
-    gap: 5px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .event-tag {
-    background: #ecf0f1;
+    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
     color: #2c3e50;
-    padding: 2px 8px;
-    border-radius: 12px;
+    padding: 4px 10px;
+    border-radius: 15px;
     font-size: 11px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .join-btn {
-    background: #27ae60;
+    background: linear-gradient(135deg, #27ae60, #229954);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
+    padding: 12px 24px;
+    border-radius: 25px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     width: 100%;
-    transition: background 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
 }
 
 .join-btn:hover {
-    background: #229954;
+    background: linear-gradient(135deg, #229954, #1e8449);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
 }
 
 .join-btn:disabled {
-    background: #bdc3c7;
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .create-btn {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background: #e74c3c;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 15px 25px;
+    padding: 20px 35px;
     border-radius: 50px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-    transition: all 0.3s;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    animation: createBtnPulse 2s ease-in-out infinite;
+}
+
+@keyframes createBtnPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+    }
 }
 
 .create-btn:hover {
-    background: #c0392b;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.6);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.create-btn:active {
+    transform: translateY(-1px) scale(1.02);
 }
 
 .loading {
     text-align: center;
-    padding: 40px;
-    color: #7f8c8d;
+    padding: 60px;
+    color: white;
+    font-size: 1.1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
 }
 
 .no-events {
     text-align: center;
-    padding: 60px 20px;
-    color: #7f8c8d;
+    padding: 80px 20px;
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
 }
 
 .no-events h3 {
-    margin-bottom: 10px;
-    color: #2c3e50;
+    margin-bottom: 15px;
+    color: white;
+    font-size: 1.5rem;
 }
 
 .pagination {
@@ -265,94 +580,140 @@
 }
 
 .pagination button {
-    padding: 8px 15px;
-    border: 1px solid #ddd;
-    background: white;
-    color: #2c3e50;
-    border-radius: 5px;
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s;
+    backdrop-filter: blur(10px);
 }
 
 .pagination button:hover {
-    background: #3498db;
-    color: white;
-    border-color: #3498db;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
 }
 
 .pagination button.active {
-    background: #3498db;
-    color: white;
-    border-color: #3498db;
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .pagination button:disabled {
-    background: #ecf0f1;
-    color: #bdc3c7;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
     cursor: not-allowed;
+    transform: none;
 }
 
 .event-type-icon {
-    font-size: 2rem;
-    margin-bottom: 10px;
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .buddy-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .filter-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .events-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .create-btn {
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        font-size: 14px;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="buddy-container">
+    <!-- 浮动元素 -->
+    <div class="floating-elements">
+        <div class="floating-element">🤝</div>
+        <div class="floating-element">🎯</div>
+        <div class="floating-element">🌟</div>
+        <div class="floating-element">💫</div>
+    </div>
+
     <!-- 头部 -->
     <div class="buddy-header">
         <h1>🤝 搭子</h1>
         <p>同城活动匹配，找到志同道合的伙伴</p>
+        
+        <!-- 位置信息显示 -->
+        <div class="location-display" id="location-display" style="display: none;">
+            <div class="location-text">
+                <i class="fas fa-map-marker-alt location-icon"></i>
+                <span id="location-text">正在获取位置信息...</span>
+                <button class="edit-location-btn" onclick="toggleLocationInput()">编辑</button>
+            </div>
+            <div class="location-input-container" id="location-input-container">
+                <input type="text" class="location-input" id="location-input" placeholder="请输入您的城市，如：北京、上海、深圳...">
+                <button class="edit-location-btn" onclick="saveLocation()" style="margin-top: 8px;">保存</button>
+            </div>
+        </div>
     </div>
 
     <!-- 筛选器 -->
     <div class="filter-section">
         <div class="filter-row">
             <div class="filter-item">
-                <label>活动类型</label>
+                <label>🎯 活动类型</label>
                 <select id="event-type-filter">
                     <option value="">全部类型</option>
-                    <option value="meal">饭搭</option>
-                    <option value="sports">球搭</option>
-                    <option value="travel">旅行搭</option>
-                    <option value="study">学习搭</option>
-                    <option value="game">游戏搭</option>
-                    <option value="movie">电影搭</option>
-                    <option value="shopping">购物搭</option>
-                    <option value="coffee">咖啡搭</option>
-                    <option value="other">其他</option>
+                    <option value="meal">🍽️ 饭搭</option>
+                    <option value="sports">⚽ 球搭</option>
+                    <option value="travel">✈️ 旅行搭</option>
+                    <option value="study">📚 学习搭</option>
+                    <option value="game">🎮 游戏搭</option>
+                    <option value="movie">🎬 电影搭</option>
+                    <option value="shopping">🛍️ 购物搭</option>
+                    <option value="coffee">☕ 咖啡搭</option>
+                    <option value="other">🎯 其他</option>
                 </select>
             </div>
             <div class="filter-item">
-                <label>费用类型</label>
+                <label>💰 费用类型</label>
                 <select id="cost-type-filter">
                     <option value="">全部费用</option>
-                    <option value="free">免费</option>
-                    <option value="aa">AA制</option>
+                    <option value="free">🆓 免费</option>
+                    <option value="aa">💸 AA制</option>
                 </select>
             </div>
             <div class="filter-item">
-                <label>性别限制</label>
+                <label>👥 性别限制</label>
                 <select id="gender-filter">
                     <option value="">不限性别</option>
-                    <option value="male">仅限男性</option>
-                    <option value="female">仅限女性</option>
+                    <option value="male">👨 仅限男性</option>
+                    <option value="female">👩 仅限女性</option>
                 </select>
             </div>
             <div class="filter-item">
-                <label>排序</label>
+                <label>📊 排序</label>
                 <select id="sort-filter">
-                    <option value="created_at">最新发布</option>
-                    <option value="start_time">开始时间</option>
-                    <option value="distance">距离最近</option>
+                    <option value="created_at">🕐 最新发布</option>
+                    <option value="start_time">📅 开始时间</option>
+                    <option value="distance">📍 距离最近</option>
                 </select>
             </div>
         </div>
-        <div class="filter-row" style="margin-top: 15px;">
+        <div class="filter-row" style="margin-top: 20px;">
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="搜索活动标题、描述...">
+                <input type="text" id="search-input" placeholder="🔍 搜索活动标题、描述...">
             </div>
             <button class="search-btn" onclick="searchEvents()">搜索</button>
         </div>
@@ -372,8 +733,8 @@
     </div>
 
     <!-- 创建按钮 -->
-    <button class="create-btn" onclick="location.href='{% url 'buddy_create' %}'">
-        ➕ 发起活动
+    <button class="create-btn" onclick="location.href='{% url 'tools:buddy_create' %}'">
+        ✨ 发起活动
     </button>
 </div>
 {% endblock %}
@@ -382,10 +743,12 @@
 <script>
 let currentPage = 1;
 let currentFilters = {};
+let userLocation = null;
 
 // 页面加载完成后获取活动列表
 document.addEventListener('DOMContentLoaded', function() {
     loadEvents();
+    getLocationInfo();
     
     // 绑定筛选器事件
     document.getElementById('event-type-filter').addEventListener('change', loadEvents);
@@ -401,6 +764,108 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// 获取位置信息
+function getLocationInfo() {
+    // 尝试从localStorage获取保存的位置
+    const savedLocation = localStorage.getItem('user_location');
+    if (savedLocation) {
+        userLocation = JSON.parse(savedLocation);
+        showLocationInfo(userLocation);
+    }
+    
+    // 获取IP定位信息
+    fetch('/tools/api/location/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.location) {
+                userLocation = data.location;
+                showLocationInfo(userLocation);
+                localStorage.setItem('user_location', JSON.stringify(userLocation));
+            }
+        })
+        .catch(error => {
+            console.error('获取位置信息失败:', error);
+        });
+}
+
+// 显示位置信息
+function showLocationInfo(location) {
+    const locationDisplay = document.getElementById('location-display');
+    const locationText = document.getElementById('location-text');
+    
+    if (location && location.city && location.city !== '未知') {
+        locationText.textContent = `当前位置：${location.city}，${location.region}`;
+        locationDisplay.style.display = 'block';
+    } else {
+        locationDisplay.style.display = 'none';
+    }
+}
+
+// 切换位置输入框
+function toggleLocationInput() {
+    const inputContainer = document.getElementById('location-input-container');
+    const input = document.getElementById('location-input');
+    
+    if (inputContainer.style.display === 'none' || !inputContainer.style.display) {
+        inputContainer.style.display = 'block';
+        input.focus();
+        if (userLocation && userLocation.city) {
+            input.value = userLocation.city;
+        }
+    } else {
+        inputContainer.style.display = 'none';
+    }
+}
+
+// 保存位置信息
+function saveLocation() {
+    const input = document.getElementById('location-input');
+    const city = input.value.trim();
+    
+    if (city) {
+        // 使用位置服务获取更准确的位置信息
+        fetch('/tools/api/location/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ city: city })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                userLocation = data.location;
+                showLocationInfo(userLocation);
+                localStorage.setItem('user_location', JSON.stringify(userLocation));
+                
+                // 隐藏输入框
+                document.getElementById('location-input-container').style.display = 'none';
+                
+                // 重新加载活动列表以应用新的位置信息
+                loadEvents();
+            } else {
+                alert('位置更新失败：' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('位置更新失败:', error);
+            // 使用默认位置信息
+            userLocation = {
+                city: city,
+                region: '用户设置',
+                country: '中国',
+                lat: 39.9042,
+                lon: 116.4074
+            };
+            showLocationInfo(userLocation);
+            localStorage.setItem('user_location', JSON.stringify(userLocation));
+            document.getElementById('location-input-container').style.display = 'none';
+            loadEvents();
+        });
+    }
+}
+
 // 加载活动列表
 function loadEvents(page = 1) {
     currentPage = page;
@@ -413,6 +878,13 @@ function loadEvents(page = 1) {
         sort_by: document.getElementById('sort-filter').value,
         page: page
     };
+    
+    // 添加位置信息
+    if (userLocation && userLocation.city) {
+        filters.city = userLocation.city;
+        filters.lat = userLocation.lat;
+        filters.lon = userLocation.lon;
+    }
     
     currentFilters = filters;
     
@@ -490,10 +962,10 @@ function displayEvents(events) {
                     <div class="event-tags">
                         <span class="event-tag">${event.cost_type_display}</span>
                         ${event.gender_restriction !== 'none' ? 
-                            `<span class="event-tag">${event.gender_restriction === 'male' ? '仅限男性' : '仅限女性'}</span>` : ''}
+                            `<span class="event-tag">${event.gender_restriction === 'male' ? '👨 仅限男性' : '👩 仅限女性'}</span>` : ''}
                         <span class="event-tag">${event.distance}</span>
                     </div>
-                    <button class="join-btn" ${isFull ? 'disabled' : ''} onclick="event.stopPropagation(); joinEvent(${event.id})">
+                    <button class="join-btn" ${isFull ? 'disabled' : ''} onclick="arguments[0].stopPropagation(); joinEvent(${event.id})">
                         ${isFull ? '人数已满' : '立即加入'}
                     </button>
                 </div>

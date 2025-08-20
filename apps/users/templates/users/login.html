@@ -97,7 +97,7 @@
       </button>
       
       <div class="geek-auth-links">
-        <a href="{% url 'register' %}" class="geek-link">
+        <a href="{% url 'users:register' %}" class="geek-link">
           <i class="fas fa-user-plus"></i>
           <span data-zh="创建新账号" data-en="Create new account">创建新账号</span>
         </a>
@@ -783,7 +783,7 @@ function loadProgressiveCaptcha() {
   statusDiv.className = 'geek-captcha-status info';
   statusDiv.textContent = currentLanguage === 'en' ? 'Loading...' : '加载中...';
   
-  fetch('{% url "generate_progressive_captcha" %}')
+  fetch('{% url "users:generate_progressive_captcha" %}')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
@@ -928,7 +928,7 @@ function autoVerifyMathCaptcha() {
   showMathHint('正在验证...', 'info');
   
   // 调用验证接口
-  fetch('{% url "verify_progressive_captcha" %}', {
+  fetch('{% url "users:verify_progressive_captcha" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1052,7 +1052,7 @@ function verifyCurrentCaptcha() {
   
   showStatus('info', '验证中...');
   
-  fetch('{% url "verify_progressive_captcha" %}', {
+  fetch('{% url "users:verify_progressive_captcha" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

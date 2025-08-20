@@ -261,17 +261,40 @@ body.emo-theme::before {
 
 /* EMO模式导航栏 */
 .emo-navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(15px);
-  border-bottom: 0.5px solid var(--emo-border);
+  background: linear-gradient(135deg, var(--emo-bg) 0%, var(--emo-card-bg) 50%, rgba(245, 240, 255, 0.95) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 2px solid var(--emo-border) !important;
+  box-shadow: 0 8px 32px rgba(156, 39, 176, 0.1), 0 0 20px rgba(156, 39, 176, 0.2) !important;
+  width: 100% !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* EMO模式导航栏容器 */
+.emo-navbar .container-fluid {
+  padding: 0.75rem 2rem !important;
+  max-width: none !important;
 }
 
 .emo-navbar .navbar-brand {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--emo-text) !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  font-size: 1.2rem !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0.4rem 0.6rem !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease !important;
+  background: rgba(156, 39, 176, 0.05) !important;
+  border: 1px solid transparent !important;
+  min-height: 40px !important;
 }
 
 .emo-navbar .nav-link {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--emo-text) !important;
   font-weight: 500;
   transition: all 0.3s ease;
   font-style: italic;
@@ -295,6 +318,7 @@ body.emo-theme::before {
   display: flex;
   align-items: center;
   line-height: 1;
+  color: #ffffff !important;
 }
 
 .emo-navbar .nav-link:hover {

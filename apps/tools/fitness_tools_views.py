@@ -46,6 +46,11 @@ def workout_planner(request):
     """训练计划器页面"""
     return render(request, 'tools/workout_planner.html')
 
+@login_required
+def one_rm_calculator(request):
+    """1RM计算器页面"""
+    return render(request, 'tools/one_rm_calculator.html')
+
 # API视图函数
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -789,4 +794,184 @@ def calculate_body_composition_api(request):
         return JsonResponse({
             'success': False,
             'message': '分析过程中出现错误'
+        })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def calculate_one_rm_api(request):
+    """1RM计算API"""
+    try:
+        data = json.loads(request.body)
+        weight = float(data.get('weight', 0))  # 公斤
+        reps = int(data.get('reps', 0))  # 重复次数
+        formula = data.get('formula', 'epley')  # 计算公式
+        
+        if weight <= 0 or reps <= 0:
+            return JsonResponse({
+                'success': False,
+                'message': '请输入有效的重量和重复次数'
+            })
+        
+        # 不同公式的1RM计算
+        formulas = {
+            'epley': {
+                'name': '埃普勒公式',
+                'description': '最常用、最通用的公式',
+                'formula': lambda w, r: w * (1 + r / 30)
+            },
+            'brzycki': {
+                'name': '布日奇克公式',
+                'description': '在次数较高时（>10次）可能更准确',
+                'formula': lambda w, r: w * (36 / (37 - r))
+            },
+            'lombardi': {
+                'name': '隆巴迪公式',
+                'description': '适用于各种重复次数',
+                'formula': lambda w, r: w * (r ** 0.1)
+            },
+            'oconner': {
+                'name': '奥康纳公式',
+                'description': '简单易用的公式',
+                'formula': lambda w, r: w * (1 + r * 0.025)
+            }
+        }
+        
+        selected_formula = formulas.get(formula, formulas['epley'])
+        one_rm = selected_formula['formula'](weight, reps)
+        
+        # 计算不同重复次数的重量
+        rep_percentages = {
+            1: 100,
+            2: 95,
+            3: 90,
+            5: 85,
+            8: 80,
+            10: 75,
+            12: 70,
+            15: 65,
+            20: 60
+        }
+        
+        rep_weights = {}
+        for rep, percentage in rep_percentages.items():
+            rep_weights[rep] = round(one_rm * percentage / 100, 1)
+        
+        # 训练建议
+        training_recommendations = {
+            'strength': {
+                'reps': '1-5次',
+                'weight': f'{rep_weights.get(5, 0)}kg',
+                'description': '力量训练，提高最大力量'
+            },
+            'hypertrophy': {
+                'reps': '8-12次',
+                'weight': f'{rep_weights.get(10, 0)}kg',
+                'description': '增肌训练，促进肌肉生长'
+            },
+            'endurance': {
+                'reps': '15-20次',
+                'weight': f'{rep_weights.get(15, 0)}kg',
+                'description': '耐力训练，提高肌肉耐力'
+            }
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'input_weight': weight,
+                'input_reps': reps,
+                'formula_used': selected_formula['name'],
+                'formula_description': selected_formula['description'],
+                'one_rep_max': round(one_rm, 1),
+                'rep_weights': rep_weights,
+                'training_recommendations': training_recommendations
+            }
+        })
+        
+    except (ValueError, TypeError) as e:
+        return JsonResponse({
+            'success': False,
+            'message': '输入数据格式错误'
+        })
+    except Exception as e:
+        logger.error(f"1RM计算错误: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': '计算过程中出现错误'
+        })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def predict_reps_api(request):
+    """预测重复次数API"""
+    try:
+        data = json.loads(request.body)
+        target_weight = float(data.get('target_weight', 0))  # 目标重量
+        one_rep_max = data.get('one_rep_max', None)  # 已知1RM
+        known_weight = data.get('known_weight', None)  # 已知重量
+        known_reps = data.get('known_reps', None)  # 已知重复次数
+        formula = data.get('formula', 'epley')  # 计算公式
+        
+        if target_weight <= 0:
+            return JsonResponse({
+                'success': False,
+                'message': '请输入有效的目标重量'
+            })
+        
+        # 如果没有提供1RM，但有已知重量和重复次数，先计算1RM
+        if one_rep_max is None and known_weight and known_reps:
+            formulas = {
+                'epley': lambda w, r: w * (1 + r / 30),
+                'brzycki': lambda w, r: w * (36 / (37 - r)),
+                'lombardi': lambda w, r: w * (r ** 0.1),
+                'oconner': lambda w, r: w * (1 + r * 0.025)
+            }
+            selected_formula = formulas.get(formula, formulas['epley'])
+            one_rep_max = selected_formula(known_weight, known_reps)
+        
+        if one_rep_max is None or one_rep_max <= 0:
+            return JsonResponse({
+                'success': False,
+                'message': '请提供有效的1RM或已知重量和重复次数'
+            })
+        
+        # 根据公式反推重复次数
+        formulas_reverse = {
+            'epley': lambda w, rm: (rm / w - 1) * 30,
+            'brzycki': lambda w, rm: 37 - (36 * w / rm),
+            'lombardi': lambda w, rm: (rm / w) ** 10,
+            'oconner': lambda w, rm: (rm / w - 1) / 0.025
+        }
+        
+        selected_formula_reverse = formulas_reverse.get(formula, formulas_reverse['epley'])
+        predicted_reps = selected_formula_reverse(target_weight, one_rep_max)
+        
+        # 确保重复次数为正数
+        predicted_reps = max(0, predicted_reps)
+        
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'target_weight': target_weight,
+                'one_rep_max': round(one_rep_max, 1),
+                'predicted_reps': round(predicted_reps, 1),
+                'formula_used': {
+                    'epley': '埃普勒公式',
+                    'brzycki': '布日奇克公式',
+                    'lombardi': '隆巴迪公式',
+                    'oconner': '奥康纳公式'
+                }.get(formula, '埃普勒公式')
+            }
+        })
+        
+    except (ValueError, TypeError) as e:
+        return JsonResponse({
+            'success': False,
+            'message': '输入数据格式错误'
+        })
+    except Exception as e:
+        logger.error(f"重复次数预测错误: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': '计算过程中出现错误'
         })

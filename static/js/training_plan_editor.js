@@ -14,6 +14,7 @@ class TrainingPlanEditor {
       this.renderExerciseLibrary();
       this.setupEventListeners();
       this.updateCurrentDayDisplay();
+      this.setupButtonEventListeners();
       console.log('训练计划编辑器初始化完成');
     } catch (error) {
       console.error('训练计划编辑器初始化失败:', error);
@@ -466,6 +467,57 @@ class TrainingPlanEditor {
         }
       });
     });
+  }
+  
+  setupButtonEventListeners() {
+    // 使用事件委托，确保按钮点击事件能正常工作
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#weekSettingsBtn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.showWeekSettings();
+        return false;
+      }
+    });
+    
+    // 也尝试直接绑定，以防事件委托不工作
+    const bindButton = () => {
+      const weekSettingsBtn = document.getElementById('weekSettingsBtn');
+      if (weekSettingsBtn) {
+        // 移除可能存在的旧事件监听器
+        weekSettingsBtn.removeEventListener('click', this.handleWeekSettingsClick);
+        
+        // 添加新的事件监听器
+        this.handleWeekSettingsClick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.showWeekSettings();
+          return false;
+        };
+        
+        weekSettingsBtn.addEventListener('click', this.handleWeekSettingsClick);
+        console.log('周安排按钮事件绑定成功');
+        return true;
+      } else {
+        console.warn('未找到周安排按钮元素，将在100ms后重试');
+        return false;
+      }
+    };
+    
+    // 立即尝试绑定
+    if (!bindButton()) {
+      // 如果立即绑定失败，延迟重试
+      setTimeout(() => {
+        if (!bindButton()) {
+          setTimeout(bindButton, 500); // 再次重试
+        }
+      }, 100);
+    }
+  }
+  
+  showWeekSettings() {
+    console.log('showWeekSettings方法被调用');
+    this.showNotification('周安排设置功能开发中...', 'info');
   }
   
   changeMode(mode) {
@@ -961,6 +1013,8 @@ function addExerciseToModule(module) {
   }
 }
 
+
+
 function searchExercises() {
   const searchTerm = document.getElementById('exerciseSearch').value.toLowerCase();
   const exerciseItems = document.querySelectorAll('.exercise-item');
@@ -973,6 +1027,16 @@ function searchExercises() {
       item.style.display = 'none';
     }
   });
+}
+
+// 全局备用函数
+function showWeekSettings() {
+  console.log('全局showWeekSettings函数被调用');
+  if (window.editor && typeof window.editor.showWeekSettings === 'function') {
+    window.editor.showWeekSettings();
+  } else {
+    alert('周安排设置功能开发中...');
+  }
 }
 
 // 初始化编辑器

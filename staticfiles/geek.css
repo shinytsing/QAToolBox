@@ -297,23 +297,113 @@ body.geek-theme::before {
   50% { opacity: 0.5; }
 }
 
-/* 极客模式导航栏 */
+/* 极客模式导航栏 - 现代化设计 */
 .geek-navbar {
-  background: rgba(26, 31, 46, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 0.5px solid var(--geek-border);
+  background: linear-gradient(135deg, var(--geek-bg) 0%, var(--geek-card-bg) 50%, #16213e 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid var(--geek-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 255, 231, 0.15) !important;
+  width: 100% !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+}
+
+/* 极客模式导航栏悬浮效果 */
+.geek-navbar:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 255, 231, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 极客模式导航栏背景动画 */
+.geek-navbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.1), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.geek-navbar:hover::before {
+  left: 100%;
+}
+
+/* 极客模式导航栏容器 */
+.geek-navbar .container-fluid {
+  padding: 0.75rem 2rem !important;
+  max-width: none !important;
+}
+
+.geek-navbar .navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(0, 255, 231, 0.1) !important;
+  border: 1px solid rgba(0, 255, 231, 0.2) !important;
+  border-radius: 8px !important;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.geek-navbar .navbar-brand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.geek-navbar .navbar-brand:hover {
+  background: rgba(0, 255, 231, 0.15) !important;
+  border-color: rgba(0, 255, 231, 0.3) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 255, 231, 0.2) !important;
+}
+
+.geek-navbar .navbar-brand:hover::before {
+  left: 100%;
 }
 
 .geek-navbar .nav-link {
-  color: var(--geek-text);
-  font-weight: 500;
-  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   font-family: var(--geek-font-mono);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  line-height: 1;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  line-height: 1 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  background: rgba(0, 255, 231, 0.08) !important;
+  border: 1px solid rgba(0, 255, 231, 0.15) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  margin: 0 0.25rem !important;
+}
+
+.geek-navbar .nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 231, 0.15), transparent);
+  transition: left 0.4s ease;
+}
+
+.geek-navbar .nav-link:hover::before {
+  left: 100%;
 }
 
 .geek-navbar .nav-link i {
@@ -322,6 +412,7 @@ body.geek-theme::before {
   justify-content: center;
   font-size: 1rem;
   line-height: 1;
+  color: #ffffff !important;
 }
 
 .geek-navbar .nav-link span {

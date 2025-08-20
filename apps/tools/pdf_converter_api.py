@@ -46,10 +46,14 @@ class PDFConverter:
         if not file:
             return False, "文件不能为空"
         
+        # 检查file对象是否有name属性
+        if not hasattr(file, 'name') or not file.name:
+            return False, "无效的文件对象"
+        
         file_ext = os.path.splitext(file.name)[1].lower()
         
         # 检查文件大小 (限制为50MB)
-        if file.size > 50 * 1024 * 1024:
+        if hasattr(file, 'size') and file.size > 50 * 1024 * 1024:
             return False, "文件大小不能超过50MB"
         
         # 检查文件格式兼容性
@@ -63,6 +67,10 @@ class PDFConverter:
     
     def _get_conversion_suggestion(self, file_ext, current_type):
         """获取转换类型建议"""
+        # 检查file_ext是否为字符串
+        if not isinstance(file_ext, str):
+            return f"无效的文件扩展名: {file_ext}"
+        
         # 定义文件类型到转换类型的映射
         file_type_mapping = {
             '.pdf': 'pdf',
@@ -149,9 +157,10 @@ class PDFConverter:
                 if not os.path.exists(temp_pdf_path):
                     return False, "临时PDF文件创建失败", None
                 
-                # 使用pdf2docx进行转换
+                # 使用pdf2docx进行转换，改进页面布局处理
                 cv = Converter(temp_pdf_path)
-                cv.convert(temp_docx_path)
+                # 改进转换参数，优化页面布局
+                cv.convert(temp_docx_path, start=0, end=None, pages=None, zoom_x=1.0, zoom_y=1.0, crop=(0, 0, 0, 0))
                 cv.close()
                 
                 # 检查输出文件是否存在
@@ -161,13 +170,6 @@ class PDFConverter:
                 # 读取转换后的文件
                 with open(temp_docx_path, 'rb') as docx_file:
                     docx_content = docx_file.read()
-                
-                # 清理临时文件
-                try:
-                    os.unlink(temp_pdf_path)
-                    os.unlink(temp_docx_path)
-                except:
-                    pass
                 
                 if len(docx_content) == 0:
                     return False, "转换后的文件为空，可能是扫描版PDF或内容无法识别", None
@@ -181,11 +183,38 @@ class PDFConverter:
                         text_content += paragraph.text + "\n"
                     
                     if len(text_content.strip()) < 10:  # 如果文本内容太少，可能是扫描版PDF
-                        return False, "检测到扫描版PDF，无法提取文本内容。请使用OCR工具处理。", None
+                        # 自动启用 OCR 降级为扫描件识别
+                        ocr_success, ocr_result, ocr_type = self._ocr_pdf_to_word_from_path(temp_pdf_path)
+                        if ocr_success:
+                            # 清理临时文件
+                            try:
+                                os.unlink(temp_pdf_path)
+                                if os.path.exists(temp_docx_path):
+                                    os.unlink(temp_docx_path)
+                            except:
+                                pass
+                            return True, ocr_result, "pdf_to_word"
+                        else:
+                            # OCR 失败则返回具体原因
+                            # 清理临时文件
+                            try:
+                                os.unlink(temp_pdf_path)
+                                if os.path.exists(temp_docx_path):
+                                    os.unlink(temp_docx_path)
+                            except:
+                                pass
+                            return False, ocr_result, None
                         
                 except Exception as check_error:
                     logger.warning(f"转换结果检查失败: {check_error}")
                     # 继续处理，不因为检查失败而中断
+                
+                # 清理临时文件
+                try:
+                    os.unlink(temp_pdf_path)
+                    os.unlink(temp_docx_path)
+                except:
+                    pass
                 
                 return True, docx_content, "pdf_to_word"
                 
@@ -211,6 +240,148 @@ class PDFConverter:
         except Exception as e:
             logger.error(f"PDF转Word失败: {str(e)}")
             return False, f"转换失败: {str(e)}", None
+
+    def _ocr_pdf_to_word_from_path(self, pdf_path: str):
+        """对扫描版PDF执行OCR识别并输出Word（docx字节）
+        依赖: pytesseract + 系统 tesseract 二进制
+        """
+        try:
+            try:
+                import pytesseract
+                from docx import Document
+                from docx.shared import Pt
+            except ImportError:
+                return False, "OCR依赖未安装：需要 pytesseract（以及系统 tesseract）。请安装后重试。", None
+
+            # 检查系统 tesseract 是否可用
+            try:
+                _ = pytesseract.get_tesseract_version()
+            except Exception:
+                return False, "系统未安装 tesseract 或未在PATH中，无法进行OCR。请安装 tesseract 后重试。", None
+
+            # 打开PDF并逐页渲染为图片
+            if not FITZ_AVAILABLE:
+                return False, "PyMuPDF未安装，无法进行OCR渲染", None
+
+            doc = fitz.open(pdf_path)
+            ocr_texts = []
+            # 使用较高的DPI 提升识别率
+            zoom = 300 / 72.0
+            mat = fitz.Matrix(zoom, zoom)
+
+            from PIL import Image as PILImage  # 避免命名冲突
+            import io as _io
+
+            for page_index in range(len(doc)):
+                page = doc.load_page(page_index)
+                pix = page.get_pixmap(matrix=mat)
+                img_bytes = pix.tobytes("png")
+                img = PILImage.open(_io.BytesIO(img_bytes))
+
+                # 语言优先中文+英文（若未安装对应语言，pytesseract会回退或报错）
+                try:
+                    text = pytesseract.image_to_string(img, lang="chi_sim+eng")
+                except Exception:
+                    # 回退英文
+                    text = pytesseract.image_to_string(img, lang="eng")
+
+                text = text.strip()
+                if text:
+                    ocr_texts.append(text)
+                else:
+                    ocr_texts.append("")
+
+            doc.close()
+
+            # 生成docx，改进的页面结构处理 - 优化版本
+            document = Document()
+            style = document.styles['Normal']
+            font = style.font
+            font.name = '宋体'
+            font.size = Pt(12)
+
+            # 改进的文本处理：智能合并页面内容，减少不必要的页面分割
+            all_text = ""
+            for page_index, page_text in enumerate(ocr_texts):
+                if page_text.strip():
+                    # 如果不是第一页，添加页面分隔符
+                    if page_index > 0 and all_text:
+                        all_text += "\n\n" + "="*50 + "\n\n"  # 页面分隔符
+                    all_text += page_text.strip()
+
+            # 进一步优化：减少页面分隔符的使用
+            # 如果页面内容较少，尝试合并相邻页面
+            if len(ocr_texts) > 1:
+                # 检查是否有页面内容很少，如果是则合并
+                merged_text = ""
+                for i, page_text in enumerate(ocr_texts):
+                    if page_text.strip():
+                        if i > 0 and merged_text:
+                            # 只有当页面内容较多时才添加分隔符
+                            if len(page_text.strip()) > 200:  # 页面内容超过200字符才分隔
+                                merged_text += "\n\n" + "="*50 + "\n\n"
+                            else:
+                                merged_text += "\n\n"  # 内容少时只添加简单换行
+                        merged_text += page_text.strip()
+                all_text = merged_text
+
+            # 智能分段处理，避免过度分割
+            if all_text:
+                # 按段落分割，但保持合理的段落长度
+                paragraphs = []
+                lines = all_text.split('\n')
+                current_paragraph = ""
+                
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        # 空行表示段落结束
+                        if current_paragraph:
+                            paragraphs.append(current_paragraph)
+                            current_paragraph = ""
+                    elif line.startswith('='*50):
+                        # 页面分隔符，强制分段
+                        if current_paragraph:
+                            paragraphs.append(current_paragraph)
+                            current_paragraph = ""
+                    else:
+                        # 累积当前段落
+                        if current_paragraph:
+                            current_paragraph += " " + line
+                        else:
+                            current_paragraph = line
+                
+                # 添加最后一个段落
+                if current_paragraph:
+                    paragraphs.append(current_paragraph)
+                
+                # 将段落添加到文档中，避免过度分割
+                for paragraph_text in paragraphs:
+                    if paragraph_text.strip():
+                        # 检查段落长度，如果太长则适当分割
+                        if len(paragraph_text) > 1000:  # 进一步增加长段落阈值，减少分割
+                            # 按句号分割长段落
+                            sentences = paragraph_text.split('。')
+                            for sentence in sentences:
+                                if sentence.strip():
+                                    p = document.add_paragraph()
+                                    p.add_run(sentence.strip() + ('。' if sentence.strip() else ''))
+                        else:
+                            p = document.add_paragraph()
+                            p.add_run(paragraph_text)
+                        
+                        # 进一步减少段落间距，避免过度分页
+                        if len(paragraph_text) > 300:  # 只有较长段落才添加间距
+                            document.add_paragraph()  # 空段落作为间距
+
+            import io as _bio
+            buffer = _bio.BytesIO()
+            document.save(buffer)
+            return True, buffer.getvalue(), "pdf_to_word"
+
+        except Exception as e:
+            logger.error(f"OCR转换失败: {str(e)}")
+            return False, f"OCR转换失败: {str(e)}", None
     
     def word_to_pdf(self, word_file):
         """Word转PDF - 真实实现"""
@@ -218,11 +389,30 @@ class PDFConverter:
             # 重置文件指针
             word_file.seek(0)
             
-            # 使用python-docx和reportlab进行转换
+            # 检查必要的库
+            try:
+                from docx import Document
+                from reportlab.pdfgen import canvas
+                from reportlab.lib.pagesizes import A4
+                from reportlab.pdfbase import pdfmetrics
+                from reportlab.pdfbase.ttfonts import TTFont
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.units import inch
+                from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+            except ImportError as e:
+                error_msg = f"缺少必要的库: {str(e)}\\n"
+                error_msg += "请安装以下依赖:\\n"
+                error_msg += "1. python-docx: pip install python-docx\\n"
+                error_msg += "2. reportlab: pip install reportlab\\n"
+                error_msg += "3. 如果已安装，请重启服务器\\n"
+                error_msg += "4. 检查Python环境是否正确"
+                return False, error_msg, None
+            
+            # 创建临时文件
             import tempfile
             import os
             
-            # 创建临时文件
             with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_docx:
                 temp_docx.write(word_file.read())
                 temp_docx_path = temp_docx.name
@@ -231,11 +421,6 @@ class PDFConverter:
             temp_pdf_path = temp_docx_path.replace('.docx', '.pdf')
             
             try:
-                # 使用python-docx和reportlab进行转换
-                from docx import Document
-                from reportlab.pdfgen import canvas
-                from reportlab.lib.pagesizes import letter
-                
                 # 检查临时文件是否存在
                 if not os.path.exists(temp_docx_path):
                     return False, "临时Word文件创建失败", None
@@ -243,57 +428,371 @@ class PDFConverter:
                 # 读取Word文档
                 doc = Document(temp_docx_path)
                 
-                # 创建PDF
-                c = canvas.Canvas(temp_pdf_path, pagesize=letter)
-                y = 750  # 起始Y坐标
+                # 创建PDF缓冲区
+                pdf_buffer = io.BytesIO()
+                
+                # 创建PDF文档
+                pdf_doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
+                story = []
+                
+                # 获取样式
+                styles = getSampleStyleSheet()
+                normal_style = styles['Normal']
+                
+                # 设置中文字体支持
+                try:
+                    # 使用reportlab内置的中文字体
+                    pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
+                    normal_style.fontName = 'STSong-Light'
+                    normal_style.fontSize = 12
+                    normal_style.leading = 14
+                    normal_style.alignment = 0  # 左对齐
+                except Exception as e:
+                    try:
+                        # 尝试使用系统中文字体
+                        import platform
+                        if platform.system() == 'Darwin':  # macOS
+                            try:
+                                pdfmetrics.registerFont(TTFont('PingFang', '/System/Library/Fonts/PingFang.ttc'))
+                                normal_style.fontName = 'PingFang'
+                            except:
+                                pdfmetrics.registerFont(TTFont('HiraginoSans', '/System/Library/Fonts/STHeiti Light.ttc'))
+                                normal_style.fontName = 'HiraginoSans'
+                        elif platform.system() == 'Windows':
+                            pdfmetrics.registerFont(TTFont('SimSun', 'C:/Windows/Fonts/simsun.ttc'))
+                            normal_style.fontName = 'SimSun'
+                        else:  # Linux
+                            pdfmetrics.registerFont(TTFont('DejaVuSans', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+                            normal_style.fontName = 'DejaVuSans'
+                        
+                        normal_style.fontSize = 12
+                        normal_style.leading = 14
+                        normal_style.alignment = 0
+                    except Exception as e2:
+                        # 如果都不可用，使用默认字体
+                        normal_style.fontName = 'Helvetica'
+                        normal_style.fontSize = 12
+                        normal_style.leading = 14
+                        normal_style.alignment = 0
+                        logger.warning(f"无法加载中文字体，将使用默认字体: {str(e2)}")
                 
                 # 检查文档是否有内容
-                if not doc.paragraphs:
-                    c.drawString(72, y, "空文档")
+                if not doc.paragraphs and not doc.inline_shapes:
+                    paragraph = Paragraph("空文档", normal_style)
+                    story.append(paragraph)
                 else:
-                    for paragraph in doc.paragraphs:
-                        if paragraph.text.strip():
-                            # 处理长文本换行
-                            text = paragraph.text
-                            words = text.split()
-                            line = ""
-                            
-                            for word in words:
-                                test_line = line + " " + word if line else word
-                                if len(test_line) * 7 < 500:  # 简单的字符宽度估算
-                                    line = test_line
-                                else:
-                                    if line:
-                                        c.drawString(72, y, line)
-                                        y -= 20
-                                        line = word
-                                        
-                                        if y < 50:  # 如果页面空间不足，添加新页面
-                                            c.showPage()
-                                            y = 750
-                            
-                            if line:
-                                c.drawString(72, y, line)
-                                y -= 20
+                    # 处理段落和图片
+                    for element in doc.element.body:
+                        if element.tag.endswith('p'):  # 段落
+                            paragraph = doc.paragraphs[len([e for e in doc.element.body[:doc.element.body.index(element)] if e.tag.endswith('p')])]
+                            if paragraph.text.strip():
+                                # 创建段落
+                                para = Paragraph(paragraph.text, normal_style)
+                                story.append(para)
+                                story.append(Spacer(1, 6))  # 添加间距
+                            else:
+                                # 空行
+                                story.append(Spacer(1, 12))
+                        elif element.tag.endswith('drawing'):  # 图片
+                            try:
+                                # 改进的图片提取逻辑
+                                from reportlab.platypus import Image as RLImage
                                 
-                                if y < 50:  # 如果页面空间不足，添加新页面
-                                    c.showPage()
-                                    y = 750
+                                # 查找所有可能的图片元素 - 改进的检测算法
+                                image_elements = []
+                                
+                                # 方法1: 查找pic:pic元素（带命名空间）
+                                pic_elements = element.findall('.//pic:pic', namespaces={'pic': 'http://schemas.openxmlformats.org/drawingml/2006/picture'})
+                                if pic_elements:
+                                    image_elements.extend(pic_elements)
+                                
+                                # 方法2: 查找无命名空间的pic元素
+                                if not image_elements:
+                                    pic_elements = element.findall('.//pic:pic')
+                                    if pic_elements:
+                                        image_elements.extend(pic_elements)
+                                
+                                # 方法3: 查找所有可能的图片引用
+                                if not image_elements:
+                                    # 查找所有包含图片引用的元素
+                                    for img_elem in element.iter():
+                                        if 'embed' in img_elem.attrib or 'link' in img_elem.attrib:
+                                            image_elements.append(img_elem)
+                                
+                                # 方法4: 查找blip元素（带命名空间）
+                                if not image_elements:
+                                    blip_elements = element.findall('.//a:blip', namespaces={'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'})
+                                    if blip_elements:
+                                        image_elements.extend(blip_elements)
+                                
+                                # 方法5: 查找无命名空间的blip元素
+                                if not image_elements:
+                                    blip_elements = element.findall('.//blip')
+                                    if blip_elements:
+                                        image_elements.extend(blip_elements)
+                                
+                                # 方法6: 查找所有可能的图片关系引用
+                                if not image_elements:
+                                    for img_elem in element.iter():
+                                        # 检查所有可能的图片引用属性
+                                        for attr_name, attr_value in img_elem.attrib.items():
+                                            if 'embed' in attr_name or 'link' in attr_name or 'r:embed' in attr_name or 'r:link' in attr_name:
+                                                image_elements.append(img_elem)
+                                                break
+                                
+                                # 方法7: 直接从文档的关系中查找图片
+                                if not image_elements and hasattr(doc.part, 'related_parts'):
+                                    # 如果没找到图片元素，但文档有关系部分，尝试直接处理
+                                    for rel_id, rel_part in doc.part.related_parts.items():
+                                        if hasattr(rel_part, 'content_type') and 'image' in rel_part.content_type:
+                                            # 创建一个虚拟的图片元素
+                                            from lxml.etree import Element
+                                            virtual_elem = Element('virtual_image')
+                                            virtual_elem.set('embed', rel_id)
+                                            image_elements.append(virtual_elem)
+                                
+                                # 处理找到的图片元素
+                                for shape in image_elements:
+                                    # 改进的图片引用获取算法
+                                    rId = None
+                                    
+                                    # 尝试多种方式获取图片引用
+                                    if 'embed' in shape.attrib:
+                                        rId = shape.get('embed')
+                                    elif 'link' in shape.attrib:
+                                        rId = shape.get('link')
+                                    else:
+                                        # 查找子元素中的引用
+                                        blip = shape.find('.//a:blip', namespaces={'a': 'http://schemas.openxmlformats.org/drawingml/2006/main'})
+                                        if not blip:
+                                            blip = shape.find('.//a:blip')
+                                        
+                                        if blip is not None:
+                                            rId = blip.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                                            if not rId:
+                                                rId = blip.get('embed')
+                                            if not rId:
+                                                rId = blip.get('link')
+                                    
+                                    # 如果还是没找到，遍历所有子元素查找
+                                    if not rId:
+                                        for elem in shape.iter():
+                                            if 'embed' in elem.attrib:
+                                                rId = elem.get('embed')
+                                                break
+                                            elif 'link' in elem.attrib:
+                                                rId = elem.get('link')
+                                                break
+                                    
+                                    # 如果还是没找到，尝试从父元素查找
+                                    if not rId:
+                                        parent = shape.getparent()
+                                        if parent is not None:
+                                            for elem in parent.iter():
+                                                if 'embed' in elem.attrib:
+                                                    rId = elem.get('embed')
+                                                    break
+                                                elif 'link' in elem.attrib:
+                                                    rId = elem.get('link')
+                                                    break
+                                    
+                                    if rId and rId in doc.part.related_parts:
+                                        try:
+                                            # 获取图片数据
+                                            image_part = doc.part.related_parts[rId]
+                                            image_data = image_part.blob
+                                            
+                                            # 验证图片数据
+                                            if image_data and len(image_data) > 0:
+                                                # 创建图片对象，自动计算尺寸
+                                                img_buffer = io.BytesIO(image_data)
+                                                
+                                                # 尝试获取图片尺寸
+                                                try:
+                                                    from PIL import Image as PILImage
+                                                    pil_img = PILImage.open(img_buffer)
+                                                    img_width, img_height = pil_img.size
+                                                    
+                                                    # 计算合适的PDF尺寸（保持宽高比）
+                                                    max_width = 400
+                                                    max_height = 300
+                                                    ratio = min(max_width / img_width, max_height / img_height)
+                                                    pdf_width = img_width * ratio
+                                                    pdf_height = img_height * ratio
+                                                    
+                                                    # 重置缓冲区
+                                                    img_buffer.seek(0)
+                                                    img = RLImage(img_buffer, width=pdf_width, height=pdf_height)
+                                                except Exception:
+                                                    # 如果无法获取尺寸，使用默认尺寸
+                                                    img_buffer.seek(0)
+                                                    img = RLImage(img_buffer, width=400, height=300)
+                                                
+                                                story.append(img)
+                                                story.append(Spacer(1, 12))
+                                                logger.info(f"成功添加图片，大小: {len(image_data)} bytes")
+                                            else:
+                                                logger.warning("图片数据为空")
+                                                story.append(Paragraph("[图片数据为空]", normal_style))
+                                                story.append(Spacer(1, 12))
+                                        except Exception as img_data_error:
+                                            logger.warning(f"处理图片数据时出错: {img_data_error}")
+                                            story.append(Paragraph("[图片处理失败]", normal_style))
+                                            story.append(Spacer(1, 12))
+                                    else:
+                                        logger.warning(f"无法找到图片关系ID: {rId}")
+                                        story.append(Paragraph("[图片引用无效]", normal_style))
+                                        story.append(Spacer(1, 12))
+                                
+                                # 如果没有找到任何图片元素，尝试其他方法
+                                if not image_elements:
+                                    # 尝试从文档的图片集合中获取
+                                    try:
+                                        for rel_id, rel_part in doc.part.related_parts.items():
+                                            if hasattr(rel_part, 'blob') and rel_part.blob:
+                                                # 检查是否是图片类型
+                                                content_type = getattr(rel_part, 'content_type', '')
+                                                if 'image' in content_type or rel_id.startswith('rId'):
+                                                    try:
+                                                        img_buffer = io.BytesIO(rel_part.blob)
+                                                        from PIL import Image as PILImage
+                                                        pil_img = PILImage.open(img_buffer)
+                                                        
+                                                        # 计算合适的PDF尺寸
+                                                        img_width, img_height = pil_img.size
+                                                        max_width = 400
+                                                        max_height = 300
+                                                        ratio = min(max_width / img_width, max_height / img_height)
+                                                        pdf_width = img_width * ratio
+                                                        pdf_height = img_height * ratio
+                                                        
+                                                        img_buffer.seek(0)
+                                                        img = RLImage(img_buffer, width=pdf_width, height=pdf_height)
+                                                        story.append(img)
+                                                        story.append(Spacer(1, 12))
+                                                        logger.info(f"从文档图片集合中找到图片: {rel_id}")
+                                                        break
+                                                    except Exception:
+                                                        continue
+                                    except Exception as e:
+                                        logger.warning(f"从文档图片集合获取图片失败: {e}")
+                                
+                                # 方法6: 直接从inline_shapes获取图片
+                                if not image_elements and hasattr(doc, 'inline_shapes') and doc.inline_shapes:
+                                    try:
+                                        for shape in doc.inline_shapes:
+                                            if hasattr(shape, '_element'):
+                                                # 尝试从inline shape获取图片
+                                                shape_element = shape._element
+                                                for elem in shape_element.iter():
+                                                    if 'embed' in elem.attrib:
+                                                        rId = elem.get('embed')
+                                                        if rId and rId in doc.part.related_parts:
+                                                            try:
+                                                                image_part = doc.part.related_parts[rId]
+                                                                image_data = image_part.blob
+                                                                
+                                                                if image_data and len(image_data) > 0:
+                                                                    img_buffer = io.BytesIO(image_data)
+                                                                    from PIL import Image as PILImage
+                                                                    pil_img = PILImage.open(img_buffer)
+                                                                    
+                                                                    img_width, img_height = pil_img.size
+                                                                    max_width = 400
+                                                                    max_height = 300
+                                                                    ratio = min(max_width / img_width, max_height / img_height)
+                                                                    pdf_width = img_width * ratio
+                                                                    pdf_height = img_height * ratio
+                                                                    
+                                                                    img_buffer.seek(0)
+                                                                    img = RLImage(img_buffer, width=pdf_width, height=pdf_height)
+                                                                    story.append(img)
+                                                                    story.append(Spacer(1, 12))
+                                                                    logger.info(f"从inline_shapes中找到图片: {rId}")
+                                                                    break
+                                                            except Exception as e:
+                                                                logger.warning(f"处理inline shape图片失败: {e}")
+                                                                continue
+                                                    elif 'link' in elem.attrib:
+                                                        rId = elem.get('link')
+                                                        if rId and rId in doc.part.related_parts:
+                                                            # 处理链接图片
+                                                            try:
+                                                                image_part = doc.part.related_parts[rId]
+                                                                image_data = image_part.blob
+                                                                
+                                                                if image_data and len(image_data) > 0:
+                                                                    img_buffer = io.BytesIO(image_data)
+                                                                    from PIL import Image as PILImage
+                                                                    pil_img = PILImage.open(img_buffer)
+                                                                    
+                                                                    img_width, img_height = pil_img.size
+                                                                    max_width = 400
+                                                                    max_height = 300
+                                                                    ratio = min(max_width / img_width, max_height / img_height)
+                                                                    pdf_width = img_width * ratio
+                                                                    pdf_height = img_height * ratio
+                                                                    
+                                                                    img_buffer.seek(0)
+                                                                    img = RLImage(img_buffer, width=pdf_width, height=pdf_height)
+                                                                    story.append(img)
+                                                                    story.append(Spacer(1, 12))
+                                                                    logger.info(f"从inline_shapes链接中找到图片: {rId}")
+                                                                    break
+                                                            except Exception as e:
+                                                                logger.warning(f"处理inline shape链接图片失败: {e}")
+                                                                continue
+                                    except Exception as e:
+                                        logger.warning(f"处理inline_shapes失败: {e}")
+                                
+                                # 方法7: 从文档的所有关系部分查找图片
+                                if not image_elements:
+                                    try:
+                                        # 遍历所有关系部分，查找图片
+                                        for rel_id, rel_part in doc.part.related_parts.items():
+                                            if hasattr(rel_part, 'blob') and rel_part.blob:
+                                                content_type = getattr(rel_part, 'content_type', '')
+                                                # 检查是否是图片类型
+                                                if any(img_type in content_type.lower() for img_type in ['image', 'jpeg', 'png', 'gif', 'bmp', 'tiff']):
+                                                    try:
+                                                        img_buffer = io.BytesIO(rel_part.blob)
+                                                        from PIL import Image as PILImage
+                                                        pil_img = PILImage.open(img_buffer)
+                                                        
+                                                        # 计算合适的PDF尺寸
+                                                        img_width, img_height = pil_img.size
+                                                        max_width = 400
+                                                        max_height = 300
+                                                        ratio = min(max_width / img_width, max_height / img_height)
+                                                        pdf_width = img_width * ratio
+                                                        pdf_height = img_height * ratio
+                                                        
+                                                        img_buffer.seek(0)
+                                                        img = RLImage(img_buffer, width=pdf_width, height=pdf_height)
+                                                        story.append(img)
+                                                        story.append(Spacer(1, 12))
+                                                        logger.info(f"从关系部分找到图片: {rel_id}, 类型: {content_type}")
+                                                        break
+                                                    except Exception as e:
+                                                        logger.warning(f"处理关系部分图片失败: {e}")
+                                                        continue
+                                    except Exception as e:
+                                        logger.warning(f"从关系部分查找图片失败: {e}")
+                                        
+                            except Exception as img_error:
+                                logger.warning(f"处理图片时出错: {img_error}")
+                                # 如果图片处理失败，添加占位符
+                                story.append(Paragraph("[图片处理异常]", normal_style))
+                                story.append(Spacer(1, 12))
                 
-                c.save()
-                
-                # 检查输出文件是否存在
-                if not os.path.exists(temp_pdf_path):
-                    return False, "转换失败：输出PDF文件未生成", None
-                
-                # 读取转换后的文件
-                with open(temp_pdf_path, 'rb') as pdf_file:
-                    pdf_content = pdf_file.read()
+                # 生成PDF
+                pdf_doc.build(story)
+                pdf_content = pdf_buffer.getvalue()
+                pdf_buffer.close()
                 
                 # 清理临时文件
                 try:
                     os.unlink(temp_docx_path)
-                    os.unlink(temp_pdf_path)
                 except:
                     pass
                 
@@ -307,8 +806,6 @@ class PDFConverter:
                 try:
                     if os.path.exists(temp_docx_path):
                         os.unlink(temp_docx_path)
-                    if os.path.exists(temp_pdf_path):
-                        os.unlink(temp_pdf_path)
                 except:
                     pass
                 
@@ -556,27 +1053,45 @@ class PDFConverter:
             logger.error(f"TXT文件转PDF失败: {str(e)}")
             return False, f"转换失败: {str(e)}", None
 
-# 全局转换器实例
-converter = PDFConverter()
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def pdf_converter_api(request):
     """PDF转换API主入口"""
     try:
         # 导入模型
-        from .models import PDFConversionRecord
+        from .models.legacy_models import PDFConversionRecord
         import time
+        
+        # 创建转换器实例
+        converter = PDFConverter()
         
         # 添加调试信息
         logger.info(f"PDF转换API请求: POST数据={dict(request.POST)}, FILES={list(request.FILES.keys())}")
+        
+        # 支持JSON和表单数据
+        if request.content_type and 'application/json' in request.content_type:
+            try:
+                data = json.loads(request.body)
+                conversion_type = data.get('type', '')
+                text_content = data.get('text_content', '')
+                logger.info(f"JSON数据: type={conversion_type}, text_content_length={len(text_content) if text_content else 0}")
+            except json.JSONDecodeError:
+                return JsonResponse({
+                    'success': False,
+                    'error': '无效的JSON数据'
+                }, status=400)
+        else:
+            # 表单数据
+            conversion_type = request.POST.get('type', '')
+            text_content = request.POST.get('text_content', '')
+            logger.info(f"表单数据: type={conversion_type}, text_content_length={len(text_content) if text_content else 0}")
         
         # 添加更详细的调试信息
         if 'file' in request.FILES:
             file = request.FILES['file']
             logger.info(f"上传文件信息: 名称={file.name}, 大小={file.size}, 类型={file.content_type}")
         
-        conversion_type = request.POST.get('type', '')
+        conversion_type = conversion_type or ''
         
         # 检查是否有文件上传（文本转PDF除外）
         if conversion_type != 'text-to-pdf':
@@ -624,7 +1139,7 @@ def pdf_converter_api(request):
         # 根据转换类型验证文件格式
         if conversion_type == 'text-to-pdf':
             # 文本转PDF不需要文件验证
-            text_content = request.POST.get('text_content', '')
+            # text_content已经在上面从JSON或表单数据中获取
             if not text_content.strip():
                 is_valid, message = False, "请输入要转换的文本内容"
             else:
@@ -671,7 +1186,7 @@ def pdf_converter_api(request):
         
         # 执行转换
         if conversion_type == 'text-to-pdf':
-            text_content = request.POST.get('text_content', '')
+            # text_content已经在上面从JSON或表单数据中获取
             success, result, file_type = converter.text_to_pdf(text_content)
         elif conversion_type == 'pdf-to-word':
             success, result, file_type = converter.pdf_to_word(file)
@@ -715,11 +1230,27 @@ def pdf_converter_api(request):
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
             # 设置下载链接
             download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+            
+            # 更新转换记录为成功状态（如果存在）
+            if conversion_record:
+                conversion_record.status = 'success'
+                conversion_record.output_filename = output_filename
+                conversion_record.conversion_time = conversion_time
+                conversion_record.download_url = download_url
+                conversion_record.save()
         elif file_type == 'word_to_pdf':
             output_filename += '.pdf'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
             # 设置下载链接
             download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+            
+            # 更新转换记录为成功状态（如果存在）
+            if conversion_record:
+                conversion_record.status = 'success'
+                conversion_record.output_filename = output_filename
+                conversion_record.conversion_time = conversion_time
+                conversion_record.download_url = download_url
+                conversion_record.save()
         elif file_type == 'pdf_to_images':
             # 创建ZIP文件包含所有图片
             import zipfile
@@ -767,683 +1298,40 @@ def pdf_converter_api(request):
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
             # 设置下载链接
             download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+            
+            # 更新转换记录为成功状态（如果存在）
+            if conversion_record:
+                conversion_record.status = 'success'
+                conversion_record.output_filename = output_filename
+                conversion_record.conversion_time = conversion_time
+                conversion_record.download_url = download_url
+                conversion_record.save()
         elif file_type == 'text_to_pdf':
             output_filename += '.pdf'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
             # 设置下载链接
             download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+            
+            # 更新转换记录为成功状态（如果存在）
+            if conversion_record:
+                conversion_record.status = 'success'
+                conversion_record.output_filename = output_filename
+                conversion_record.conversion_time = conversion_time
+                conversion_record.download_url = download_url
+                conversion_record.save()
         elif file_type == 'pdf_to_text':
             output_filename += '.txt'
             file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result.encode('utf-8')))
             # 设置下载链接
             download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': '未知的文件类型'
-            }, status=500)
-        
-        # 更新转换记录为成功状态（如果存在）
-        if conversion_record:
-            conversion_record.status = 'success'
-            conversion_record.output_filename = output_filename
-            conversion_record.conversion_time = conversion_time
-            conversion_record.download_url = download_url
-            conversion_record.save()
-        
-        # 确定原始文件名
-        if conversion_type == 'text-to-pdf':
-            original_filename = '文本内容'
-        elif conversion_type == 'pdf-to-text':
-            original_filename = file.name
-        else:
-            original_filename = file.name
-        
-        return JsonResponse({
-            'success': True,
-            'type': 'file',
-            'download_url': download_url,
-            'filename': output_filename,
-            'original_filename': original_filename,
-            'conversion_type': conversion_type
-        })
-        
-    except Exception as e:
-        logger.error(f"PDF转换API错误: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': f'服务器错误: {str(e)}'
-        }, status=500)
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def pdf_converter_status(request):
-    """获取转换状态和功能支持情况"""
-    try:
-        # 检查依赖库状态
-        import sys
-        from datetime import datetime
-        
-        # 检查各种库的可用性
-        pdf2docx_available = False
-        docx2pdf_available = False
-        pil_available = False
-        
-        try:
-            from pdf2docx import Converter
-            pdf2docx_available = True
-        except ImportError:
-            pass
-        
-        try:
-            from docx2pdf import convert
-            docx2pdf_available = True
-        except ImportError:
-            pass
-        
-        try:
-            from PIL import Image
-            pil_available = True
-        except ImportError:
-            pass
-        
-        status_info = {
-            'pdf_to_word': pdf2docx_available or FITZ_AVAILABLE,
-            'word_to_pdf': docx2pdf_available,
-            'pdf_to_image': FITZ_AVAILABLE and pil_available,
-            'image_to_pdf': pil_available,
-            'pdf_to_text': FITZ_AVAILABLE,
-            'pdf_processing': FITZ_AVAILABLE,
-            'word_processing': pdf2docx_available or docx2pdf_available,
-            'image_processing': pil_available,
-            'python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-            'server_time': datetime.now().isoformat(),
-            'supported_formats': converter.supported_formats
-        }
-        
-        return JsonResponse({
-            'success': True,
-            'status': 'ready',
-            'features': status_info
-        })
-        
-    except Exception as e:
-        logger.error(f"PDF转换器状态检查失败: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': f'状态检查失败: {str(e)}'
-        }, status=500)
-
-@csrf_exempt
-@require_http_methods(["GET"])
-@login_required
-def pdf_converter_stats_api(request):
-    """获取PDF转换统计数据的API"""
-    try:
-        from .models import PDFConversionRecord
-        from django.db.models import Count, Avg, Sum
-        from django.utils import timezone
-        from datetime import timedelta
-        
-        # 获取用户的所有转换记录
-        user_records = PDFConversionRecord.objects.filter(user=request.user)
-        
-        # 总转换次数
-        total_conversions = user_records.count()
-        
-        # 成功转换次数
-        successful_conversions = user_records.filter(status='success').count()
-        
-        # 处理文件数（去重）
-        total_files = user_records.values('original_filename').distinct().count()
-        
-        # 平均转换时间
-        avg_conversion_time = user_records.filter(status='success').aggregate(
-            avg_time=Avg('conversion_time')
-        )['avg_time'] or 0.0
-        
-        # 用户满意度（基于用户评分）
-        rated_conversions = user_records.filter(status='success', satisfaction_rating__isnull=False)
-        if rated_conversions.exists():
-            avg_rating = rated_conversions.aggregate(avg_rating=Avg('satisfaction_rating'))['avg_rating']
-            user_satisfaction = (avg_rating / 5.0) * 100  # 转换为百分比
-        else:
-            # 如果没有评分记录，使用成功率作为默认值
-            user_satisfaction = (successful_conversions / total_conversions * 100) if total_conversions > 0 else 0.0
-        
-        # 最近转换记录
-        recent_conversions = user_records.filter(status='success').order_by('-created_at')[:5]
-        recent_data = []
-        
-        for record in recent_conversions:
-            recent_data.append({
-                'id': record.id,
-                'filename': record.original_filename,
-                'conversion_type': record.get_conversion_type_display(),
-                'file_size': record.get_file_size_display(),
-                'conversion_time': record.get_conversion_time_display(),
-                'created_at': record.created_at.strftime('%m-%d %H:%M'),
-                'status': record.status,
-                'satisfaction_rating': record.satisfaction_rating
-            })
-        
-        return JsonResponse({
-            'success': True,
-            'stats': {
-                'total_conversions': total_conversions,
-                'total_files': total_files,
-                'avg_speed': f"{avg_conversion_time:.1f}s",
-                'user_satisfaction': f"{user_satisfaction:.1f}%"
-            },
-            'recent_conversions': recent_data
-        })
-        
-    except Exception as e:
-        logger.error(f"获取转换统计失败: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def pdf_converter_rating_api(request):
-    """更新PDF转换满意度评分的API"""
-    try:
-        from .models import PDFConversionRecord
-        import json
-        
-        data = json.loads(request.body)
-        record_id = data.get('record_id')
-        rating = data.get('rating')
-        
-        if not record_id or not rating:
-            return JsonResponse({
-                'success': False,
-                'error': '缺少必要参数'
-            }, status=400)
-        
-        if not isinstance(rating, int) or rating < 1 or rating > 5:
-            return JsonResponse({
-                'success': False,
-                'error': '评分必须在1-5之间'
-            }, status=400)
-        
-        # 查找转换记录
-        try:
-            record = PDFConversionRecord.objects.get(id=record_id, user=request.user)
-        except PDFConversionRecord.DoesNotExist:
-            return JsonResponse({
-                'success': False,
-                'error': '转换记录不存在'
-            }, status=404)
-        
-        # 更新评分
-        record.satisfaction_rating = rating
-        record.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': '评分更新成功',
-            'rating': rating
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': '无效的JSON数据'
-        }, status=400)
-    except Exception as e:
-        logger.error(f"更新满意度评分失败: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': f'服务器错误: {str(e)}'
-        }, status=500)
-
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def pdf_converter_batch(request):
-    """批量PDF转换API"""
-    try:
-        from .models import PDFConversionRecord
-        import time
-        
-        # 添加调试信息
-        logger.info(f"批量PDF转换API请求: POST数据={dict(request.POST)}, FILES数量={len(request.FILES.getlist('files', []))}")
-        
-        files = request.FILES.getlist('files')
-        conversion_type = request.POST.get('type', '')
-        
-        if not files:
-            return JsonResponse({
-                'success': False,
-                'error': '没有上传文件'
-            }, status=400)
-        
-        if len(files) > 10:
-            return JsonResponse({
-                'success': False,
-                'error': '一次最多只能转换10个文件'
-            }, status=400)
-        
-        results = []
-        converter = PDFConverter()
-        
-        for file in files:
-            # 验证文件
-            if conversion_type == 'pdf-to-word':
-                is_valid, message = converter.validate_file(file, 'pdf')
-            elif conversion_type == 'word-to-pdf':
-                is_valid, message = converter.validate_file(file, 'word')
-            elif conversion_type == 'pdf-to-image':
-                is_valid, message = converter.validate_file(file, 'pdf')
-            elif conversion_type == 'image-to-pdf':
-                is_valid, message = converter.validate_file(file, 'image')
-            elif conversion_type == 'pdf-to-text':
-                is_valid, message = converter.validate_file(file, 'pdf')
-            else:
-                is_valid, message = True, "文件验证通过"
             
-            if not is_valid:
-                # 检查是否包含转换建议
-                if "建议的转换类型" in message:
-                    # 解析建议的转换类型
-                    suggested_types = []
-                    lines = message.split('\n')
-                    for line in lines:
-                        if line.strip().startswith('•'):
-                            # 提取转换类型
-                            conv_type = line.split('(')[1].split(')')[0] if '(' in line else None
-                            if conv_type:
-                                suggested_types.append(conv_type)
-                    
-                    results.append({
-                        'filename': file.name,
-                        'success': False,
-                        'error': message,
-                        'suggested_types': suggested_types,
-                        'needs_type_switch': True
-                    })
-                else:
-                    results.append({
-                        'filename': file.name,
-                        'success': False,
-                        'error': message
-                    })
-                continue
-            
-            # 创建转换记录
-            conversion_record = None
-            if request.user.is_authenticated:
-                conversion_record = PDFConversionRecord.objects.create(
-                    user=request.user,
-                    conversion_type=conversion_type.replace('-', '_'),
-                    original_filename=file.name,
-                    file_size=file.size,
-                    status='processing'
-                )
-            
-            start_time = time.time()
-            
-            # 执行转换
-            if conversion_type == 'pdf-to-word':
-                success, result, file_type = converter.pdf_to_word(file)
-            elif conversion_type == 'word-to-pdf':
-                success, result, file_type = converter.word_to_pdf(file)
-            elif conversion_type == 'pdf-to-image':
-                success, result, file_type = converter.pdf_to_images(file)
-            elif conversion_type == 'image-to-pdf':
-                success, result, file_type = converter.images_to_pdf([file])
-            elif conversion_type == 'pdf-to-text':
-                success, result, file_type = converter.pdf_to_text(file)
-            else:
-                success, result, file_type = False, "不支持的转换类型", None
-            
-            # 计算转换时间
-            conversion_time = time.time() - start_time
-            
-            if success:
-                # 处理不同类型的输出
-                if file_type == 'pdf_to_images':
-                    # 创建ZIP文件包含所有图片
-                    import zipfile
-                    from io import BytesIO
-                    import base64
-                    
-                    zip_buffer = BytesIO()
-                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                        for i, img_data in enumerate(result):
-                            # 解码base64图片数据
-                            img_bytes = base64.b64decode(img_data['data'])
-                            # 添加到ZIP文件
-                            zip_file.writestr(f'{file.name}_page_{i+1}.png', img_bytes)
-                    
-                    zip_content = zip_buffer.getvalue()
-                    zip_buffer.close()
-                    
-                    # 保存ZIP文件
-                    output_filename = f"{uuid.uuid4()}_{conversion_type.replace('-', '_')}_images.zip"
-                    file_path = default_storage.save(f'converted/{output_filename}', ContentFile(zip_content))
-                    download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-                    
-                    # 更新转换记录
-                    if conversion_record:
-                        conversion_record.status = 'success'
-                        conversion_record.output_filename = output_filename
-                        conversion_record.conversion_time = conversion_time
-                        conversion_record.download_url = download_url
-                        conversion_record.save()
-                    
-                    results.append({
-                        'filename': file.name,
-                        'success': True,
-                        'download_url': download_url,
-                        'output_filename': output_filename,
-                        'total_pages': len(result),
-                        'message': f'已转换{len(result)}页，打包为ZIP文件供下载'
-                    })
-                    continue
-                
-                # 保存文件
-                output_filename = f"{uuid.uuid4()}_{conversion_type.replace('-', '_')}"
-                if file_type == 'pdf_to_word':
-                    output_filename += '.docx'
-                elif file_type == 'word_to_pdf':
-                    output_filename += '.pdf'
-                elif file_type == 'images_to_pdf':
-                    output_filename += '.pdf'
-                elif file_type == 'pdf_to_text':
-                    output_filename += '.txt'
-                    result = result.encode('utf-8')
-                
-                file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
-                download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-                
-                # 更新转换记录
-                if conversion_record:
-                    conversion_record.status = 'success'
-                    conversion_record.output_filename = output_filename
-                    conversion_record.conversion_time = conversion_time
-                    conversion_record.download_url = download_url
-                    conversion_record.save()
-                
-                results.append({
-                    'filename': file.name,
-                    'success': True,
-                    'download_url': download_url,
-                    'output_filename': output_filename
-                })
-            else:
-                # 更新转换记录为失败状态
-                if conversion_record:
-                    conversion_record.status = 'failed'
-                    conversion_record.error_message = result
-                    conversion_record.conversion_time = conversion_time
-                    conversion_record.save()
-                
-                results.append({
-                    'filename': file.name,
-                    'success': False,
-                    'error': result
-                })
-        
-        return JsonResponse({
-            'success': True,
-            'results': results,
-            'total_files': len(files),
-            'successful_conversions': len([r for r in results if r['success']])
-        })
-        
-    except Exception as e:
-        logger.error(f"批量PDF转换API错误: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': f'服务器错误: {str(e)}'
-        }, status=500) 
-
-@csrf_exempt
-@require_http_methods(["GET"])
-def pdf_download_view(request, filename):
-    """
-    专门的PDF文件下载视图，解决Google浏览器下载问题
-    """
-    try:
-        from django.http import FileResponse, Http404, HttpResponse
-        from django.conf import settings
-        import os
-        import mimetypes
-        
-        # 构建文件路径
-        file_path = os.path.join(settings.MEDIA_ROOT, 'converted', filename)
-        
-        # 检查文件是否存在
-        if not os.path.exists(file_path):
-            logger.error(f"文件不存在: {file_path}")
-            raise Http404("文件不存在")
-        
-        # 获取文件大小
-        file_size = os.path.getsize(file_path)
-        
-        # 确定MIME类型
-        mime_types = {
-            '.pdf': 'application/pdf',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            '.doc': 'application/msword',
-            '.txt': 'text/plain',
-            '.zip': 'application/zip',
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.bmp': 'image/bmp',
-            '.tiff': 'image/tiff'
-        }
-        
-        file_ext = os.path.splitext(filename)[1].lower()
-        content_type = mime_types.get(file_ext, 'application/octet-stream')
-        
-        # 如果MIME类型未知，尝试自动检测
-        if content_type == 'application/octet-stream':
-            detected_type, _ = mimetypes.guess_type(filename)
-            if detected_type:
-                content_type = detected_type
-        
-        logger.info(f"下载文件: {filename}, 路径: {file_path}, 大小: {file_size}, 类型: {content_type}")
-        
-        # 打开文件并创建响应
-        try:
-            file_handle = open(file_path, 'rb')
-            response = FileResponse(file_handle, content_type=content_type)
-        except Exception as e:
-            logger.error(f"打开文件失败: {str(e)}")
-            raise Http404("文件读取失败")
-        
-        # 设置下载头信息
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        response['Content-Length'] = file_size
-        
-        # 添加缓存控制头，防止浏览器缓存
-        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response['Pragma'] = 'no-cache'
-        response['Expires'] = '0'
-        
-        # 添加CORS头，允许跨域下载
-        response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-        response['Access-Control-Allow-Headers'] = 'Content-Type, Content-Disposition'
-        
-        # 添加额外的下载头
-        response['X-Content-Type-Options'] = 'nosniff'
-        response['X-Frame-Options'] = 'DENY'
-        
-        logger.info(f"文件下载响应已创建: {filename}")
-        return response
-            
-    except Http404 as e:
-        logger.error(f"文件不存在: {filename}")
-        return HttpResponse(f"文件不存在: {filename}", status=404)
-    except Exception as e:
-        logger.error(f"PDF下载视图错误: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': f'下载失败: {str(e)}'
-        }, status=500) 
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def pdf_converter_test_api(request):
-    """PDF转换测试API（无需登录）"""
-    try:
-        import time
-        
-        # 添加调试信息
-        logger.info(f"PDF转换测试API请求: POST数据={dict(request.POST)}, FILES={list(request.FILES.keys())}")
-        
-        conversion_type = request.POST.get('type', '')
-        
-        # 检查是否有文件上传（文本转PDF除外）
-        if conversion_type != 'text-to-pdf':
-            if 'file' not in request.FILES:
-                logger.warning("PDF转换测试API: 没有上传文件")
-                return JsonResponse({
-                    'success': False,
-                    'error': '没有上传文件'
-                }, status=400)
-            file = request.FILES['file']
-        else:
-            # 文本转PDF不需要文件上传
-            file = None
-        
-        start_time = time.time()
-        
-        # 验证转换类型
-        valid_types = ['pdf-to-word', 'word-to-pdf', 'pdf-to-image', 'image-to-pdf', 'text-to-pdf', 'pdf-to-text', 'txt-to-pdf']
-        if conversion_type not in valid_types:
-            return JsonResponse({
-                'success': False,
-                'error': f'不支持的转换类型: {conversion_type}'
-            }, status=400)
-        
-        # 根据转换类型验证文件格式
-        if conversion_type == 'text-to-pdf':
-            # 文本转PDF不需要文件验证
-            text_content = request.POST.get('text_content', '')
-            if not text_content.strip():
-                is_valid, message = False, "请输入要转换的文本内容"
-            else:
-                is_valid, message = True, "文本内容验证通过"
-        elif conversion_type == 'pdf-to-word':
-            is_valid, message = converter.validate_file(file, 'pdf')
-        elif conversion_type == 'word-to-pdf':
-            is_valid, message = converter.validate_file(file, 'word')
-        elif conversion_type == 'pdf-to-image':
-            is_valid, message = converter.validate_file(file, 'pdf')
-        elif conversion_type == 'image-to-pdf':
-            is_valid, message = converter.validate_file(file, 'image')
-        elif conversion_type == 'pdf-to-text':
-            is_valid, message = converter.validate_file(file, 'pdf')
-        elif conversion_type == 'txt-to-pdf':
-            is_valid, message = converter.validate_file(file, 'text')
-        else:
-            is_valid, message = True, "文件验证通过"
-        
-        if not is_valid:
-            return JsonResponse({
-                'success': False,
-                'error': message
-            }, status=400)
-        
-        # 执行转换
-        if conversion_type == 'pdf-to-word':
-            success, result, file_type = converter.pdf_to_word(file)
-        elif conversion_type == 'word-to-pdf':
-            success, result, file_type = converter.word_to_pdf(file)
-        elif conversion_type == 'pdf-to-image':
-            success, result, file_type = converter.pdf_to_images(file)
-        elif conversion_type == 'image-to-pdf':
-            success, result, file_type = converter.images_to_pdf([file])
-        elif conversion_type == 'pdf-to-text':
-            success, result, file_type = converter.pdf_to_text(file)
-        elif conversion_type == 'text-to-pdf':
-            success, result, file_type = converter.text_to_pdf(request.POST.get('text_content', ''))
-        elif conversion_type == 'txt-to-pdf':
-            success, result, file_type = converter.txt_to_pdf(file)
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': f'不支持的转换类型: {conversion_type}'
-            }, status=400)
-        
-        if not success:
-            return JsonResponse({
-                'success': False,
-                'error': result
-            }, status=500)
-        
-        # 保存转换结果
-        output_filename = f"{uuid.uuid4()}_{conversion_type.replace('-', '_')}"
-        
-        if file_type == 'pdf_to_word':
-            output_filename += '.docx'
-            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
-            # 设置下载链接
-            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-        elif file_type == 'word_to_pdf':
-            output_filename += '.pdf'
-            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
-            # 设置下载链接
-            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-        elif file_type == 'images_to_pdf':
-            # 创建ZIP文件包含所有图片
-            import zipfile
-            from io import BytesIO
-            import base64
-            
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                for i, img_data in enumerate(result):
-                    # 解码base64图片数据
-                    img_bytes = base64.b64decode(img_data['data'])
-                    # 添加到ZIP文件
-                    zip_file.writestr(f'page_{i+1}.png', img_bytes)
-            
-            zip_content = zip_buffer.getvalue()
-            zip_buffer.close()
-            
-            # 保存ZIP文件
-            output_filename += '_images.zip'
-            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(zip_content))
-            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-            
-            # 返回下载链接
-            return JsonResponse({
-                'success': True,
-                'type': 'file',
-                'download_url': download_url,
-                'filename': output_filename,
-                'original_filename': file.name if file else '图片集合',
-                'file_size': len(zip_content),
-                'total_pages': len(result),
-                'message': f'已转换{len(result)}页，打包为ZIP文件供下载',
-                'conversion_type': conversion_type
-            })
-        elif file_type == 'images_to_pdf':
-            output_filename += '.pdf'
-            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
-            # 设置下载链接
-            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-        elif file_type == 'text_to_pdf':
-            output_filename += '.pdf'
-            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result))
-            # 设置下载链接
-            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
-        elif file_type == 'pdf_to_text':
-            output_filename += '.txt'
-            file_path = default_storage.save(f'converted/{output_filename}', ContentFile(result.encode('utf-8')))
-            # 设置下载链接
-            download_url = f'/tools/api/pdf-converter/download/{output_filename}/'
+            # 更新转换记录为成功状态（如果存在）
+            if conversion_record:
+                conversion_record.status = 'success'
+                conversion_record.output_filename = output_filename
+                conversion_record.conversion_time = conversion_time
+                conversion_record.download_url = download_url
+                conversion_record.save()
         else:
             return JsonResponse({
                 'success': False,

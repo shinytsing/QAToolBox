@@ -454,9 +454,19 @@ body.cyberpunk-theme.glitch-level-3 .cyber-title {
 
 /* 赛博哥特导航栏 */
 .cyber-navbar {
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 0.5px solid var(--cyber-border);
+  background: linear-gradient(135deg, var(--cyber-bg) 0%, var(--cyber-card-bg) 50%, #1a1a1a 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 2px solid var(--cyber-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 0, 64, 0.2) !important;
+  width: 100% !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* 赛博哥特导航栏容器 */
+.cyber-navbar .container-fluid {
+  padding: 0.75rem 2rem !important;
+  max-width: none !important;
 }
 
 .cyber-navbar .nav-link {

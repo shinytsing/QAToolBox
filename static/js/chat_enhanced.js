@@ -1,675 +1,844 @@
-// 聊天增强功能JavaScript
-// 确保在正确的上下文中运行
-(function() {
-    'use strict';
+// 增强版聊天功能 - 支持重连机制和消息压缩
+class EnhancedChatManager {
+    constructor(roomId, options = {}) {
+        this.roomId = roomId;
+        this.options = {
+            heartbeatInterval: 30000, // 30秒心跳
+            reconnectDelay: 1000,     // 1秒重连延迟
+            maxReconnectDelay: 30000, // 最大30秒重连延迟
+            maxReconnectAttempts: 10, // 最大重连次数
+            enableCompression: true,  // 启用消息压缩
+            compressionThreshold: 1024, // 1KB以上压缩
+            ...options
+        };
+        
+        this.socket = null;
+        this.reconnectAttempts = 0;
+        this.lastReconnectTime = 0;
+        this.heartbeatTimer = null;
+        this.reconnectTimer = null;
+        this.messageQueue = [];
+        this.sentMessages = new Map();
+        this.receivedMessages = new Set();
+        this.isOnline = navigator.onLine;
+        this.connectionState = 'disconnected';
+        
+        // 事件回调
+        this.onMessage = options.onMessage || (() => {});
+        this.onStateChange = options.onStateChange || (() => {});
+        this.onUserJoined = options.onUserJoined || (() => {});
+        this.onUserLeft = options.onUserLeft || (() => {});
+        this.onTyping = options.onTyping || (() => {});
+        this.onReadStatus = options.onReadStatus || (() => {});
+        
+        // 初始化
+        this.init();
+    }
     
-    let socket = null;
-    let roomId = null;
-    let currentUser = null;
-    let participants = {};
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let recordingTimer = null;
-    let recordingStartTime = null;
+    init() {
+        // 监听网络状态变化
+        window.addEventListener('online', () => this.handleNetworkChange(true));
+        window.addEventListener('offline', () => this.handleNetworkChange(false));
+        
+        // 页面可见性变化处理
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.checkConnection();
+            }
+        });
+        
+        // 连接WebSocket
+        this.connect();
+    }
+    
+    connect() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            return;
+        }
+        
+        this.updateState('connecting');
+        
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/chat/${this.roomId}/`;
+        
+        try {
+            this.socket = new WebSocket(wsUrl);
+            
+            this.socket.onopen = (event) => {
+                console.log('WebSocket连接成功');
+                this.updateState('connected');
+                this.reconnectAttempts = 0;
+                this.startHeartbeat();
+                this.sendQueuedMessages();
+            };
+            
+            this.socket.onmessage = (event) => {
+                this.handleMessage(event.data);
+            };
+            
+            this.socket.onclose = (event) => {
+                console.log('WebSocket连接关闭:', event.code, event.reason);
+                this.updateState('disconnected');
+                this.stopHeartbeat();
+                
+                // 如果不是正常关闭，尝试重连
+                if (event.code !== 1000 && this.reconnectAttempts < this.options.maxReconnectAttempts) {
+                    this.scheduleReconnect();
+                }
+            };
+            
+            this.socket.onerror = (error) => {
+                console.error('WebSocket错误:', error);
+                this.updateState('error');
+            };
+            
+        } catch (error) {
+            console.error('创建WebSocket失败:', error);
+            this.updateState('error');
+            this.scheduleReconnect();
+        }
+    }
+    
+    disconnect() {
+        if (this.socket) {
+            this.socket.close(1000, '用户主动断开');
+            this.socket = null;
+        }
+        this.stopHeartbeat();
+        this.updateState('disconnected');
+    }
+    
+    scheduleReconnect() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+        }
+        
+        const delay = Math.min(
+            this.options.reconnectDelay * Math.pow(2, this.reconnectAttempts),
+            this.options.maxReconnectDelay
+        );
+        
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectAttempts++;
+            console.log(`尝试重连 (${this.reconnectAttempts}/${this.options.maxReconnectAttempts})`);
+            this.connect();
+        }, delay);
+    }
+    
+    startHeartbeat() {
+        this.stopHeartbeat();
+        this.heartbeatTimer = setInterval(() => {
+            this.sendHeartbeat();
+        }, this.options.heartbeatInterval);
+    }
+    
+    stopHeartbeat() {
+        if (this.heartbeatTimer) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+        }
+    }
+    
+    sendHeartbeat() {
+        this.sendMessage('heartbeat', { timestamp: Date.now() });
+    }
+    
+    sendMessage(type, content, options = {}) {
+        const messageId = this.generateMessageId();
+        const message = {
+            id: messageId,
+            type: type,
+            content: content,
+            timestamp: Date.now(),
+            retryCount: 0,
+            maxRetries: options.maxRetries || 3
+        };
+        
+        // 添加到队列
+        this.messageQueue.push(message);
+        
+        // 如果连接正常，立即发送
+        if (this.connectionState === 'connected') {
+            this.sendMessageImmediate(message);
+        } else {
+            console.log('连接未建立，消息已加入队列:', messageId);
+        }
+        
+        return messageId;
+    }
+    
+    sendMessageImmediate(message) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        
+        try {
+            const data = {
+                id: message.id,
+                type: message.type,
+                content: message.content,
+                timestamp: message.timestamp
+            };
+            
+            let dataStr = JSON.stringify(data);
+            
+            // 消息压缩
+            if (this.options.enableCompression && dataStr.length > this.options.compressionThreshold) {
+                const compressed = this.compressMessage(dataStr);
+                this.socket.send(compressed);
+            } else {
+                this.socket.send(dataStr);
+            }
+            
+            // 标记为已发送
+            this.sentMessages.set(message.id, message);
+            this.removeFromQueue(message.id);
+            
+            console.log('消息发送成功:', message.id);
+            
+        } catch (error) {
+            console.error('发送消息失败:', error);
+            // 消息发送失败，会在下次重连时重试
+        }
+    }
+    
+    sendQueuedMessages() {
+        // 发送队列中的消息
+        const messages = [...this.messageQueue];
+        this.messageQueue = [];
+        
+        for (const message of messages) {
+            this.sendMessageImmediate(message);
+        }
+        
+        // 重试未确认的消息
+        this.retryUnacknowledgedMessages();
+    }
+    
+    retryUnacknowledgedMessages() {
+        const currentTime = Date.now();
+        for (const [messageId, message] of this.sentMessages) {
+            if (!message.acknowledged && 
+                message.retryCount < message.maxRetries &&
+                currentTime - message.timestamp > 5000) { // 5秒后重试
+                
+                message.retryCount++;
+                message.timestamp = currentTime;
+                this.messageQueue.push(message);
+                this.sentMessages.delete(messageId);
+            }
+        }
+    }
+    
+    handleMessage(data) {
+        try {
+            // 尝试解压消息
+            let messageData;
+            if (typeof data === 'string') {
+                messageData = JSON.parse(data);
+            } else if (data instanceof ArrayBuffer) {
+                const decompressed = this.decompressMessage(data);
+                messageData = JSON.parse(decompressed);
+            } else {
+                console.error('未知消息格式:', data);
+                return;
+            }
+            
+            const messageId = messageData.id;
+            const messageType = messageData.type;
+            const content = messageData.content;
+            
+            // 标记消息已接收
+            if (messageId) {
+                this.receivedMessages.add(messageId);
+                this.markMessageAcknowledged(messageId);
+            }
+            
+            // 处理心跳消息
+            if (messageType === 'heartbeat') {
+                this.sendMessage('heartbeat_ack', { timestamp: Date.now() });
+                return;
+            }
+            
+            if (messageType === 'heartbeat_ack') {
+                return;
+            }
+            
+            // 处理连接状态
+            if (messageType === 'connection_state') {
+                this.updateState(content.state);
+                return;
+            }
+            
+            // 处理连接建立
+            if (messageType === 'connection_established') {
+                console.log('连接已建立:', content);
+                return;
+            }
+            
+            // 处理聊天消息
+            if (messageType === 'chat_message') {
+                this.onMessage(content);
+                return;
+            }
+            
+            // 处理用户加入
+            if (messageType === 'user_joined') {
+                this.onUserJoined(content);
+                return;
+            }
+            
+            // 处理用户离开
+            if (messageType === 'user_left') {
+                this.onUserLeft(content);
+                return;
+            }
+            
+            // 处理打字状态
+            if (messageType === 'typing_status') {
+                this.onTyping(content);
+                return;
+            }
+            
+            // 处理已读状态
+            if (messageType === 'read_status_update') {
+                this.onReadStatus(content);
+                return;
+            }
+            
+            console.log('收到消息:', messageData);
+            
+        } catch (error) {
+            console.error('处理消息失败:', error);
+        }
+    }
+    
+    markMessageAcknowledged(messageId) {
+        if (this.sentMessages.has(messageId)) {
+            const message = this.sentMessages.get(messageId);
+            message.acknowledged = true;
+            this.sentMessages.delete(messageId);
+        }
+    }
+    
+    removeFromQueue(messageId) {
+        const index = this.messageQueue.findIndex(msg => msg.id === messageId);
+        if (index !== -1) {
+            this.messageQueue.splice(index, 1);
+        }
+    }
+    
+    updateState(newState) {
+        if (this.connectionState !== newState) {
+            this.connectionState = newState;
+            this.onStateChange(newState);
+        }
+    }
+    
+    handleNetworkChange(isOnline) {
+        this.isOnline = isOnline;
+        
+        if (isOnline && this.connectionState === 'disconnected') {
+            console.log('网络恢复，尝试重连');
+            this.connect();
+        } else if (!isOnline) {
+            console.log('网络断开');
+            this.updateState('error');
+        }
+    }
+    
+    checkConnection() {
+        if (this.connectionState !== 'connected' && this.isOnline) {
+            console.log('检查连接状态，尝试重连');
+            this.connect();
+        }
+    }
+    
+    // 消息压缩/解压
+    compressMessage(data) {
+        try {
+            const encoder = new TextEncoder();
+            const dataArray = encoder.encode(data);
+            
+            // 使用简单的压缩算法（在实际应用中可以使用更高效的压缩）
+            const compressed = new Uint8Array(dataArray.length);
+            let compressedIndex = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                if (i > 0 && dataArray[i] === dataArray[i - 1]) {
+                    // 简单的重复字符压缩
+                    compressed[compressedIndex - 1]++;
+                } else {
+                    compressed[compressedIndex] = dataArray[i];
+                    compressedIndex++;
+                }
+            }
+            
+            return compressed.slice(0, compressedIndex);
+        } catch (error) {
+            console.error('消息压缩失败:', error);
+            return new TextEncoder().encode(data);
+        }
+    }
+    
+    decompressMessage(data) {
+        try {
+            const decoder = new TextDecoder();
+            return decoder.decode(data);
+        } catch (error) {
+            console.error('消息解压失败:', error);
+            return '';
+        }
+    }
+    
+    generateMessageId() {
+        return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    // 公共方法
+    sendChatMessage(content, messageType = 'text') {
+        return this.sendMessage('message', {
+            content: content,
+            message_type: messageType
+        });
+    }
+    
+    sendTypingStatus(isTyping) {
+        return this.sendMessage('typing', { typing: isTyping });
+    }
+    
+    sendReadStatus(messageId) {
+        return this.sendMessage('read_status', { message_id: messageId });
+    }
+    
+    sendFileUpload(fileData) {
+        return this.sendMessage('file_upload', { file_data: fileData });
+    }
+    
+    sendImageMessage(imageData) {
+        return this.sendMessage('image_message', { image_data: imageData });
+    }
+    
+    sendVoiceMessage(voiceData) {
+        return this.sendMessage('voice_message', { voice_data: voiceData });
+    }
+    
+    sendVideoMessage(videoData) {
+        return this.sendMessage('video_message', { video_data: videoData });
+    }
+    
+    getConnectionState() {
+        return this.connectionState;
+    }
+    
+    getQueueSize() {
+        return this.messageQueue.length;
+    }
+    
+    getUnacknowledgedCount() {
+        return this.sentMessages.size;
+    }
+}
 
 // 表情数据
 const emojiData = {
-    smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕'],
-    animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🐣', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🐘', '🦛', '🦏', '🐪', '🐫', '🦙', '🦒', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡', '🦫', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔'],
-    food: ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🥑', '🥦', '🥬', '🥒', '🌶️', '🫑', '🌽', '🥕', '🫒', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🦴', '🌭', '🍔', '🍟', '🍕', '🥪', '🥙', '🧆', '🌮', '🌯', '🫔', '🥗', '🥘', '🫕', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '🫖', '☕', '🍵', '🧃', '🥤', '🧋', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🧉', '🍾', '🧊', '🥄', '🍴', '🍽️', '🥄', '🥡', '🥢', '🧂'],
-    activities: ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂', '🏋️‍♀️', '🏋️', '🏋️‍♂️', '🤼‍♀️', '🤼', '🤼‍♂️', '🤸‍♀️', '🤸', '🤸‍♂️', '⛹️‍♀️', '⛹️', '⛹️‍♂️', '🤺', '🤾‍♀️', '🤾', '🤾‍♂️', '🏊‍♀️', '🏊', '🏊‍♂️', '🤽‍♀️', '🤽', '🤽‍♂️', '🚣‍♀️', '🚣', '🚣‍♂️', '🧗‍♀️', '🧗', '🧗‍♂️', '🚵‍♀️', '🚵', '🚵‍♂️', '🚴‍♀️', '🚴', '🚴‍♂️', '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️', '🏵️', '🎗️', '🎫', '🎟️', '🎪', '🤹‍♀️', '🤹', '🤹‍♂️', '🎭', '🩰', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩', '🎨', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '💽', '💾', '💿', '📀', '🧮', '🎥', '📹', '📼', '📷', '📸', '📹', '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', '🔋', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷', '🪙', '💰', '💳', '💎', '⚖️', '🪜', '🧰', '🪛', '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🪚', '🔩', '⚙️', '🪤', '🧱', '⛓️', '🧲', '🔫', '💣', '🪃', '🏹', '🪄', '🔮', '🧿', '🪬', '📿', '🧸', '🪆', '🪅', '🪩', '🪩', '🎊', '🎉', '🎈', '🎂', '🎁', '🎀', '🎗️', '🎟️', '🎫', '🎠', '🎡', '🎢', '🎪', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩'],
-    objects: ['💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷', '🪙', '💰', '💳', '💎', '⚖️', '🪜', '🧰', '🪛', '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🪚', '🔩', '⚙️', '🪤', '🧱', '⛓️', '🧲', '🔫', '💣', '🪃', '🏹', '🪄', '🔮', '🧿', '🪬', '📿', '🧸', '🪆', '🪅', '🪩', '🪩', '🎊', '🎉', '🎈', '🎂', '🎁', '🎀', '🎗️', '🎟️', '🎫', '🎠', '🎡', '🎢', '🎪', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '💽', '💾', '💿', '📀', '🧮', '🎥', '📹', '📼', '📷', '📸', '📹', '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', '🔋', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷', '🪙', '💰', '💳', '💎', '⚖️', '🪜', '🧰', '🪛', '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🪚', '🔩', '⚙️', '🪤', '🧱', '⛓️', '🧲', '🔫', '💣', '🪃', '🏹', '🪄', '🔮', '🧿', '🪬', '📿', '🧸', '🪆', '🪅', '🪩', '🪩', '🎊', '🎉', '🎈', '🎂', '🎁', '🎀', '🎗️', '🎟️', '🎫', '🎠', '🎡', '🎢', '🎪', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🪘', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩'],
+    smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠'],
+    gestures: ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄', '💋', '🩸'],
+    people: ['👶', '👧', '🧒', '👦', '👩', '🧑', '👨', '👩‍🦱', '🧑‍🦱', '👨‍🦱', '👩‍🦰', '🧑‍🦰', '👨‍🦰', '👱‍♀️', '👱', '👱‍♂️', '👩‍🦳', '🧑‍🦳', '👨‍🦳', '👩‍🦲', '🧑‍🦲', '👨‍🦲', '🧔‍♀️', '🧔', '🧔‍♂️', '👵', '🧓', '👴', '👮‍♀️', '👮', '👮‍♂️', '🕵️‍♀️', '🕵️', '🕵️‍♂️', '💂‍♀️', '💂', '💂‍♂️', '👷‍♀️', '👷', '👷‍♂️', '🫅', '🤴', '👸', '👳‍♀️', '👳', '👳‍♂️', '👲', '🧕‍♀️', '🧕', '🧕‍♂️', '🤵‍♀️', '🤵', '🤵‍♂️', '👰‍♀️', '👰', '👰‍♂️', '🤰‍♀️', '🤰', '🤰‍♂️', '🤱‍♀️', '🤱', '🤱‍♂️', '👼', '🎅', '🤶', '🦸‍♀️', '🦸', '🦸‍♂️', '🦹‍♀️', '🦹', '🦹‍♂️', '🧙‍♀️', '🧙', '🧙‍♂️', '🧚‍♀️', '🧚', '🧚‍♂️', '🧛‍♀️', '🧛', '🧛‍♂️', '🧜‍♀️', '🧜', '🧜‍♂️', '🧝‍♀️', '🧝', '🧝‍♂️', '🧞‍♀️', '🧞', '🧞‍♂️', '🧟‍♀️', '🧟', '🧟‍♂️', '🧌', '🙍‍♀️', '🙍', '🙍‍♂️', '🙎‍♀️', '🙎', '🙎‍♂️', '🙅‍♀️', '🙅', '🙅‍♂️', '🙆‍♀️', '🙆', '🙆‍♂️', '💁‍♀️', '💁', '💁‍♂️', '🙋‍♀️', '🙋', '🙋‍♂️', '🧏‍♀️', '🧏', '🧏‍♂️', '🙇‍♀️', '🙇', '🙇‍♂️', '🤦‍♀️', '🤦', '🤦‍♂️', '🤷‍♀️', '🤷', '🤷‍♂️', '👩‍⚕️', '🧑‍⚕️', '👨‍⚕️', '👩‍🎓', '🧑‍🎓', '👨‍🎓', '👩‍🏫', '🧑‍🏫', '👨‍🏫', '👩‍⚖️', '🧑‍⚖️', '👨‍⚖️', '👩‍🌾', '🧑‍🌾', '👨‍🌾', '👩‍🍳', '🧑‍🍳', '👨‍🍳', '👩‍🔧', '🧑‍🔧', '👨‍🔧', '👩‍🏭', '🧑‍🏭', '👨‍🏭', '👩‍💼', '🧑‍💼', '👨‍💼', '👩‍🔬', '🧑‍🔬', '👨‍🔬', '👩‍💻', '🧑‍💻', '👨‍💻', '👩‍🎤', '🧑‍🎤', '👨‍🎤', '👩‍🎨', '🧑‍🎨', '👨‍🎨', '👩‍✈️', '🧑‍✈️', '👨‍✈️', '👩‍🚀', '🧑‍🚀', '👨‍🚀', '👩‍🚒', '🧑‍🚒', '👨‍🚒', '👮‍♀️', '👮', '👮‍♂️', '🕵️‍♀️', '🕵️', '🕵️‍♂️', '💂‍♀️', '💂', '💂‍♂️', '🥷‍♀️', '🥷', '🥷‍♂️', '👷‍♀️', '👷', '👷‍♂️', '🫅', '🤴', '👸', '👳‍♀️', '👳', '👳‍♂️', '👲', '🧕‍♀️', '🧕', '🧕‍♂️', '🤵‍♀️', '🤵', '🤵‍♂️', '👰‍♀️', '👰', '👰‍♂️', '🤰‍♀️', '🤰', '🤰‍♂️', '🤱‍♀️', '🤱', '🤱‍♂️', '👼', '🎅', '🤶', '🦸‍♀️', '🦸', '🦸‍♂️', '🦹‍♀️', '🦹', '🦹‍♂️', '🧙‍♀️', '🧙', '🧙‍♂️', '🧚‍♀️', '🧚', '🧚‍♂️', '🧛‍♀️', '🧛', '🧛‍♂️', '🧜‍♀️', '🧜', '🧜‍♂️', '🧝‍♀️', '🧝', '🧝‍♂️', '🧞‍♀️', '🧞', '🧞‍♂️', '🧟‍♀️', '🧟', '🧟‍♂️', '🧌', '🙍‍♀️', '🙍', '🙍‍♂️', '🙎‍♀️', '🙎', '🙎‍♂️', '🙅‍♀️', '🙅', '🙅‍♂️', '🙆‍♀️', '🙆', '🙆‍♂️', '💁‍♀️', '💁', '💁‍♂️', '🙋‍♀️', '🙋', '🙋‍♂️', '🧏‍♀️', '🧏', '🧏‍♂️', '🙇‍♀️', '🙇', '🙇‍♂️', '🤦‍♀️', '🤦', '🤦‍♂️', '🤷‍♀️', '🤷', '🤷‍♂️'],
     symbols: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🛗', '🛂', '🛃', '🛄', '🛅', '🚹', '🚺', '🚼', '🚻', '🚮', '🎦', '📶', '🈁', '🔣', 'ℹ️', '🔤', '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', '#️⃣', '*️⃣', '⏏️', '▶️', '⏸️', '⏯️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️', '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔀', '🔁', '🔂', '🔄', '🔃', '🎵', '🎶', '➕', '➖', '➗', '✖️', '♾️', '💲', '💱', '™️', '©️', '®️', '👁️‍🗨️', '🔚', '🔙', '🔛', '🔝', '🔜', '〰️', '➰', '➿', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🔸', '🔹', '🔶', '🔷', '🔳', '🔲', '▪️', '▫️', '◾', '◽', '◼️', '◻️', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '⬛', '⬜', '🟫', '🔈', '🔇', '🔉', '🔊', '🔔', '🔕', '📣', '📢', '💬', '💭', '🗯️', '♠️', '♣️', '♥️', '♦️', '🃏', '🎴', '🀄', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛', '🕜', '🕝', '🕞', '🕟', '🕠', '🕡', '🕢', '🕣', '🕤', '🕥', '🕦', '🕧']
 };
+
+// 全局变量
+let chatManager = null;
+let roomId = null;
+let typingTimer = null;
+let isTyping = false;
 
 // 初始化聊天功能
 function initChat() {
     roomId = document.querySelector('[data-room-id]')?.dataset.roomId || 'test-room-' + Date.now();
-    connectWebSocket();
+    
+    // 创建聊天管理器
+    chatManager = new EnhancedChatManager(roomId, {
+        onMessage: handleChatMessage,
+        onStateChange: handleConnectionStateChange,
+        onUserJoined: handleUserJoined,
+        onUserLeft: handleUserLeft,
+        onTyping: handleTyping,
+        onReadStatus: handleReadStatus
+    });
+    
     initEmojiPanel();
     initToolButtons();
     loadParticipants();
-}
-
-// 连接WebSocket
-function connectWebSocket() {
-    const wsUrl = `ws://${window.location.host}/ws/chat/${roomId}/`;
-    
-    updateConnectionStatus('connecting', '连接中...');
-    
-    socket = new WebSocket(wsUrl);
-    
-    socket.onopen = function(event) {
-        updateConnectionStatus('connected', '已连接');
-        console.log('WebSocket连接成功');
-    };
-    
-    socket.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        handleWebSocketMessage(data);
-    };
-    
-    socket.onclose = function(event) {
-        updateConnectionStatus('disconnected', '连接已断开');
-        console.log('WebSocket连接已关闭');
-        
-        // 显示重连选项
-        showReconnectOptions();
-    };
-    
-    socket.onerror = function(error) {
-        updateConnectionStatus('disconnected', '连接错误');
-        console.error('WebSocket错误:', error);
-    };
-}
-
-// 显示重连选项
-function showReconnectOptions() {
-    const statusElement = document.getElementById('connectionStatus');
-    if (statusElement) {
-        statusElement.innerHTML = `
-            <div class="reconnect-options">
-                <span><i class="fas fa-wifi"></i> 连接已断开</span>
-                <div class="reconnect-buttons">
-                    <button class="reconnect-btn" onclick="reconnectWebSocket()">
-                        <i class="fas fa-redo"></i> 重新连接
-                    </button>
-                    <button class="refresh-btn" onclick="refreshPage()">
-                        <i class="fas fa-sync"></i> 刷新页面
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-}
-
-// 重新连接WebSocket
-function reconnectWebSocket() {
-    updateConnectionStatus('connecting', '重新连接中...');
-    
-    setTimeout(() => {
-        if (socket.readyState === WebSocket.CLOSED) {
-            connectWebSocket();
-        }
-    }, 1000);
-}
-
-// 刷新页面
-function refreshPage() {
-    window.location.reload();
-}
-
-// 更新连接状态
-function updateConnectionStatus(status, message) {
-    const statusElement = document.getElementById('connectionStatus');
-    if (statusElement) {
-        statusElement.className = `connection-status ${status}`;
-        statusElement.innerHTML = `<i class="fas fa-wifi"></i> ${message}`;
-    }
-}
-
-// 处理WebSocket消息
-function handleWebSocketMessage(data) {
-    switch(data.type) {
-        case 'connection_established':
-            handleConnectionEstablished(data);
-            break;
-        case 'chat_message':
-            handleChatMessage(data.message);
-            break;
-        case 'user_joined':
-            handleUserJoined(data);
-            break;
-        case 'user_left':
-            handleUserLeft(data);
-            break;
-        case 'user_typing':
-            handleUserTyping(data);
-            break;
-        case 'read_status_update':
-            handleReadStatusUpdate(data);
-            break;
-    }
-}
-
-// 处理连接建立
-function handleConnectionEstablished(data) {
-    currentUser = data.user;
-    if (data.user_profile) {
-        participants[data.user] = data.user_profile;
-        updateParticipantsList();
-    }
-    addSystemMessage(`${data.user} 已连接到聊天室`);
+    initFileUpload();
+    initVoiceRecording();
+    initVideoCall();
 }
 
 // 处理聊天消息
 function handleChatMessage(message) {
-    addMessage(message);
+    const messagesContainer = document.getElementById('chatMessages');
+    if (!messagesContainer) return;
+    
+    const messageElement = createMessageElement(message);
+    messagesContainer.appendChild(messageElement);
+    scrollToBottom();
+}
+
+// 处理连接状态变化
+function handleConnectionStateChange(state) {
+    const statusElement = document.getElementById('connectionStatus');
+    if (!statusElement) return;
+    
+    const statusMap = {
+        'connecting': { text: '连接中...', class: 'connecting' },
+        'connected': { text: '已连接', class: 'connected' },
+        'disconnected': { text: '连接已断开', class: 'disconnected' },
+        'reconnecting': { text: '重连中...', class: 'reconnecting' },
+        'error': { text: '连接错误', class: 'error' }
+    };
+    
+    const status = statusMap[state] || { text: '未知状态', class: 'unknown' };
+    statusElement.textContent = status.text;
+    statusElement.className = `connection-status ${status.class}`;
+    
+    // 更新发送按钮状态
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) {
+        sendBtn.disabled = state !== 'connected';
+    }
 }
 
 // 处理用户加入
-function handleUserJoined(data) {
-    if (data.user_profile) {
-        participants[data.username] = data.user_profile;
-        updateParticipantsList();
-    }
-    addSystemMessage(`${data.username} 加入了聊天室`);
+function handleUserJoined(user) {
+    addSystemMessage(`${user.username} 加入了聊天室`);
+    updateParticipants();
 }
 
 // 处理用户离开
-function handleUserLeft(data) {
-    if (participants[data.username]) {
-        participants[data.username].is_online = false;
-        updateParticipantsList();
-    }
-    addSystemMessage(`${data.username} 离开了聊天室`);
+function handleUserLeft(user) {
+    addSystemMessage(`${user.username} 离开了聊天室`);
+    updateParticipants();
 }
 
-// 处理用户输入状态
-function handleUserTyping(data) {
+// 处理打字状态
+function handleTyping(data) {
     const typingIndicator = document.getElementById('typingIndicator');
-    if (typingIndicator) {
-        if (data.is_typing) {
-            typingIndicator.textContent = `${data.username} 正在输入...`;
-            typingIndicator.style.display = 'block';
-        } else {
-            typingIndicator.style.display = 'none';
-        }
+    if (!typingIndicator) return;
+    
+    if (data.typing) {
+        typingIndicator.textContent = `${data.username} 正在输入...`;
+        typingIndicator.style.display = 'block';
+    } else {
+        typingIndicator.style.display = 'none';
     }
 }
 
-// 处理已读状态更新
-function handleReadStatusUpdate(data) {
-    console.log('消息已读状态更新:', data);
+// 处理已读状态
+function handleReadStatus(data) {
+    // 可以在这里更新消息的已读状态
+    console.log('消息已读:', data);
 }
 
-// 添加消息到聊天区域
-function addMessage(message) {
-    const messagesContainer = document.getElementById('chatMessages');
+// 创建消息元素
+function createMessageElement(message) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${message.is_own ? 'own' : ''}`;
+    messageDiv.className = 'message';
     
-    const avatar = participants[message.sender]?.avatar_url || '/static/img/default-avatar.svg';
-    const displayName = participants[message.sender]?.display_name || message.sender;
+    const isOwnMessage = message.username === getCurrentUsername();
+    messageDiv.classList.add(isOwnMessage ? 'own-message' : 'other-message');
     
-    let messageContent = '';
+    let content = '';
     
-    // 根据消息类型生成不同的内容
-    switch(message.message_type) {
+    switch (message.message_type) {
         case 'image':
-            messageContent = `<img src="${message.content}" alt="图片" class="message-image" onclick="openImageModal('${message.content}')">`;
-            break;
-        case 'video':
-            messageContent = `<video src="${message.content}" controls class="message-video"></video>`;
-            break;
-        case 'audio':
-            messageContent = `
-                <div class="message-audio">
-                    <button class="audio-play-button" onclick="playAudio('${message.content}')">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <span>语音消息</span>
-                </div>`;
+            content = `<img src="${message.content}" alt="图片消息" class="message-image">`;
             break;
         case 'file':
-            messageContent = `
-                <div class="message-file">
-                    <div class="file-icon">
-                        <i class="fas fa-file"></i>
-                    </div>
-                    <div class="file-info">
-                        <div class="file-name">${message.file_name || '文件'}</div>
-                        <div class="file-size">${message.file_size || ''}</div>
-                    </div>
-                    <button onclick="downloadFile('${message.content}', '${message.file_name}')">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>`;
+            content = `<div class="file-message">
+                <i class="fas fa-file"></i>
+                <span>${message.content}</span>
+                <button onclick="downloadFile('${message.content}')">下载</button>
+            </div>`;
+            break;
+        case 'voice':
+            content = `<div class="voice-message">
+                <i class="fas fa-microphone"></i>
+                <audio controls src="${message.content}"></audio>
+            </div>`;
+            break;
+        case 'video':
+            content = `<div class="video-message">
+                <video controls src="${message.content}"></video>
+            </div>`;
             break;
         default:
-            messageContent = `<div class="message-text">${escapeHtml(message.content)}</div>`;
+            content = `<span class="message-text">${escapeHtml(message.content)}</span>`;
     }
     
     messageDiv.innerHTML = `
-        <img src="${avatar}" alt="${displayName}" class="message-avatar">
+        <div class="message-header">
+            <span class="username">${message.username}</span>
+            <span class="timestamp">${formatTime(message.timestamp)}</span>
+        </div>
         <div class="message-content">
-            <div class="message-header">
-                <span class="message-sender">${displayName}</span>
-                <span class="message-time">${formatTime(message.created_at)}</span>
-            </div>
-            ${messageContent}
+            ${content}
         </div>
     `;
     
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-// 添加系统消息
-function addSystemMessage(text) {
-    const messagesContainer = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message system';
-    messageDiv.innerHTML = `
-        <div class="message-content" style="background: #f8f9fa; color: #666; text-align: center; font-style: italic;">
-            ${escapeHtml(text)}
-        </div>
-    `;
-    
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-// 更新参与者列表
-function updateParticipantsList() {
-    const participantsList = document.getElementById('participantsList');
-    if (!participantsList) return;
-    
-    participantsList.innerHTML = '';
-    
-    Object.values(participants).forEach(participant => {
-        const participantCard = document.createElement('div');
-        participantCard.className = `participant-card ${participant.is_online ? 'online' : ''}`;
-        
-        const avatar = participant.avatar_url || '/static/img/default-avatar.svg';
-        
-        participantCard.innerHTML = `
-            <div class="participant-header">
-                <img src="${avatar}" alt="${participant.display_name}" class="participant-avatar">
-                <div class="participant-info">
-                    <div class="participant-name">${escapeHtml(participant.display_name)}</div>
-                    <div class="participant-status">
-                        <div class="status-indicator ${participant.is_online ? 'online' : 'offline'}"></div>
-                        ${participant.is_online ? '在线' : '离线'}
-                    </div>
-                </div>
-            </div>
-            <div class="participant-details">
-                ${participant.bio ? `<div class="participant-bio">${escapeHtml(participant.bio)}</div>` : ''}
-                <div class="participant-membership">${escapeHtml(participant.membership_type)}</div>
-                <div class="participant-tags">
-                    ${participant.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        participantsList.appendChild(participantCard);
-    });
+    return messageDiv;
 }
 
 // 发送消息
 function sendMessage() {
-    const input = document.getElementById('messageInput');
-    const message = input.value.trim();
+    const messageInput = document.getElementById('messageInput');
+    if (!messageInput || !chatManager) return;
     
-    if (!message || !socket || socket.readyState !== WebSocket.OPEN) {
-        return;
-    }
+    const content = messageInput.value.trim();
+    if (!content) return;
     
-    const data = {
-        type: 'message',
-        content: message,
-        message_type: 'text'
-    };
+    // 发送消息
+    chatManager.sendChatMessage(content);
     
-    socket.send(JSON.stringify(data));
-    input.value = '';
+    // 清空输入框
+    messageInput.value = '';
+    
+    // 停止打字状态
+    stopTyping();
 }
 
-// 发送文件消息
-function sendFileMessage(file, messageType) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert('连接已断开，无法发送文件');
-        return;
+// 发送表情
+function sendEmoji(emoji) {
+    if (!chatManager) return;
+    chatManager.sendChatMessage(emoji, 'emoji');
+}
+
+// 处理按键事件
+function handleKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    } else {
+        startTyping();
+    }
+}
+
+// 开始打字
+function startTyping() {
+    if (isTyping) return;
+    
+    isTyping = true;
+    if (chatManager) {
+        chatManager.sendTypingStatus(true);
     }
     
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('message_type', messageType);
+    // 3秒后停止打字状态
+    if (typingTimer) {
+        clearTimeout(typingTimer);
+    }
+    typingTimer = setTimeout(stopTyping, 3000);
+}
+
+// 停止打字
+function stopTyping() {
+    if (!isTyping) return;
     
-    fetch(`/tools/api/chat/${roomId}/send-${messageType}/`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // 文件上传成功，消息会通过WebSocket接收
-            console.log('文件发送成功');
-        } else {
-            alert('文件发送失败: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('发送文件错误:', error);
-        alert('发送文件失败');
-    });
+    isTyping = false;
+    if (chatManager) {
+        chatManager.sendTypingStatus(false);
+    }
+    
+    if (typingTimer) {
+        clearTimeout(typingTimer);
+        typingTimer = null;
+    }
 }
 
 // 初始化表情面板
 function initEmojiPanel() {
-    const emojiPanel = document.getElementById('emojiPanel');
-    const emojiList = document.getElementById('emojiList');
     const emojiButton = document.getElementById('emojiButton');
+    if (!emojiButton) return;
     
-    if (!emojiPanel || !emojiList || !emojiButton) return;
-    
-    // 加载默认表情
-    loadEmojis('smileys');
-    
-    // 表情按钮点击事件
-    emojiButton.addEventListener('click', function() {
-        emojiPanel.style.display = emojiPanel.style.display === 'none' ? 'block' : 'none';
-    });
-    
-    // 表情分类点击事件
-    document.querySelectorAll('.emoji-category').forEach(button => {
-        button.addEventListener('click', function() {
-            const category = this.dataset.category;
-            
-            // 更新活跃状态
-            document.querySelectorAll('.emoji-category').forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            // 加载对应分类的表情
-            loadEmojis(category);
-        });
-    });
-    
-    // 点击外部关闭表情面板
-    document.addEventListener('click', function(event) {
-        if (!emojiPanel.contains(event.target) && !emojiButton.contains(event.target)) {
-            emojiPanel.style.display = 'none';
+    emojiButton.addEventListener('click', () => {
+        const emojiPanel = document.getElementById('emojiPanel');
+        if (emojiPanel) {
+            emojiPanel.style.display = emojiPanel.style.display === 'none' ? 'block' : 'none';
         }
     });
+    
+    // 创建表情面板
+    createEmojiPanel();
 }
 
-// 加载表情
-function loadEmojis(category) {
-    const emojiList = document.getElementById('emojiList');
-    if (!emojiList) return;
+// 创建表情面板
+function createEmojiPanel() {
+    let emojiPanel = document.getElementById('emojiPanel');
+    if (!emojiPanel) {
+        emojiPanel = document.createElement('div');
+        emojiPanel.id = 'emojiPanel';
+        emojiPanel.className = 'emoji-panel';
+        document.body.appendChild(emojiPanel);
+    }
     
-    const emojis = emojiData[category] || emojiData.smileys;
+    let emojiHtml = '';
+    for (const [category, emojis] of Object.entries(emojiData)) {
+        emojiHtml += `<div class="emoji-category">
+            <h4>${category}</h4>
+            <div class="emoji-list">`;
+        
+        emojis.forEach(emoji => {
+            emojiHtml += `<span class="emoji" onclick="sendEmoji('${emoji}')">${emoji}</span>`;
+        });
+        
+        emojiHtml += `</div></div>`;
+    }
     
-    emojiList.innerHTML = emojis.map(emoji => `
-        <button class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</button>
-    `).join('');
-}
-
-// 插入表情
-function insertEmoji(emoji) {
-    const input = document.getElementById('messageInput');
-    const cursorPos = input.selectionStart;
-    const textBefore = input.value.substring(0, cursorPos);
-    const textAfter = input.value.substring(cursorPos);
-    
-    input.value = textBefore + emoji + textAfter;
-    input.focus();
-    input.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
-    
-    // 关闭表情面板
-    document.getElementById('emojiPanel').style.display = 'none';
+    emojiPanel.innerHTML = emojiHtml;
 }
 
 // 初始化工具按钮
 function initToolButtons() {
-    // 图片按钮
-    const imageButton = document.getElementById('imageButton');
-    const imageInput = document.getElementById('imageInput');
-    
-    if (imageButton && imageInput) {
-        imageButton.addEventListener('click', () => imageInput.click());
-        imageInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                sendFileMessage(this.files[0], 'image');
-            }
-        });
-    }
-    
-    // 文件按钮
+    // 文件上传
     const fileButton = document.getElementById('fileButton');
-    const fileInput = document.getElementById('fileInput');
-    
-    if (fileButton && fileInput) {
-        fileButton.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                sendFileMessage(this.files[0], 'file');
-            }
+    if (fileButton) {
+        fileButton.addEventListener('click', () => {
+            document.getElementById('fileInput').click();
         });
     }
     
-    // 视频按钮
-    const videoButton = document.getElementById('videoButton');
-    const videoInput = document.getElementById('videoInput');
-    
-    if (videoButton && videoInput) {
-        videoButton.addEventListener('click', () => videoInput.click());
-        videoInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                sendFileMessage(this.files[0], 'video');
-            }
-        });
-    }
-    
-    // 语音按钮
+    // 语音录制
     const voiceButton = document.getElementById('voiceButton');
     if (voiceButton) {
-        voiceButton.addEventListener('click', startVoiceRecording);
+        voiceButton.addEventListener('click', toggleVoiceRecording);
     }
     
-    // 发送按钮
-    const sendButton = document.getElementById('sendButton');
-    if (sendButton) {
-        sendButton.addEventListener('click', sendMessage);
+    // 视频通话
+    const videoButton = document.getElementById('videoButton');
+    if (videoButton) {
+        videoButton.addEventListener('click', toggleVideoCall);
     }
+}
+
+// 初始化文件上传
+function initFileUpload() {
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput) return;
     
-    // 输入框事件
-    const messageInput = document.getElementById('messageInput');
-    if (messageInput) {
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
+    fileInput.addEventListener('change', handleFileUpload);
+}
+
+// 处理文件上传
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !chatManager) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const fileData = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            data: e.target.result
+        };
         
-        // 输入状态
-        let typingTimeout;
-        messageInput.addEventListener('input', function() {
-            sendTypingStatus(true);
-            
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                sendTypingStatus(false);
-            }, 1000);
-        });
+        chatManager.sendFileUpload(fileData);
+    };
+    reader.readAsDataURL(file);
+}
+
+// 初始化语音录制
+function initVoiceRecording() {
+    // 语音录制功能实现
+    console.log('语音录制功能初始化');
+}
+
+// 切换语音录制
+function toggleVoiceRecording() {
+    console.log('切换语音录制');
+}
+
+// 初始化视频通话
+function initVideoCall() {
+    // 视频通话功能实现
+    console.log('视频通话功能初始化');
+}
+
+// 切换视频通话
+function toggleVideoCall() {
+    console.log('切换视频通话');
+}
+
+// 加载参与者
+function loadParticipants() {
+    // 这里可以从服务器加载参与者列表
+    console.log('加载参与者列表');
+}
+
+// 更新参与者
+function updateParticipants() {
+    // 更新参与者列表显示
+    console.log('更新参与者列表');
+}
+
+// 添加系统消息
+function addSystemMessage(message) {
+    const messagesContainer = document.getElementById('chatMessages');
+    if (!messagesContainer) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'system-message';
+    messageDiv.textContent = message;
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+// 滚动到底部
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chatMessages');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
 
-// 发送输入状态
-function sendTypingStatus(isTyping) {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: 'typing',
-            is_typing: isTyping
-        }));
-    }
+// 获取当前用户名
+function getCurrentUsername() {
+    // 从页面或全局变量获取当前用户名
+    return document.querySelector('[data-username]')?.dataset.username || 'Unknown';
 }
 
-// 开始语音录制
-function startVoiceRecording() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('您的浏览器不支持语音录制');
-        return;
-    }
-    
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            
-            mediaRecorder.ondataavailable = function(event) {
-                audioChunks.push(event.data);
-            };
-            
-            mediaRecorder.onstop = function() {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                sendFileMessage(audioBlob, 'audio');
-                
-                // 停止所有轨道
-                stream.getTracks().forEach(track => track.stop());
-                
-                // 隐藏录制器
-                document.getElementById('voiceRecorder').classList.remove('recording');
-                clearInterval(recordingTimer);
-            };
-            
-            // 开始录制
-            mediaRecorder.start();
-            recordingStartTime = Date.now();
-            
-            // 显示录制器
-            const recorder = document.getElementById('voiceRecorder');
-            recorder.classList.add('recording');
-            
-            // 开始计时
-            recordingTimer = setInterval(updateRecordingTime, 1000);
-            
-            // 停止录制按钮
-            document.getElementById('stopRecording').onclick = () => {
-                mediaRecorder.stop();
-            };
-            
-            // 取消录制按钮
-            document.getElementById('cancelRecording').onclick = () => {
-                mediaRecorder.stop();
-                stream.getTracks().forEach(track => track.stop());
-                recorder.classList.remove('recording');
-                clearInterval(recordingTimer);
-            };
-        })
-        .catch(error => {
-            console.error('获取麦克风权限失败:', error);
-            alert('无法访问麦克风，请检查权限设置');
-        });
+// 格式化时间
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString();
 }
 
-// 更新录制时间
-function updateRecordingTime() {
-    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
-    const timeElement = document.getElementById('recordingTime');
-    if (timeElement) {
-        timeElement.textContent = timeString;
-    }
-}
-
-// 播放音频
-function playAudio(audioUrl) {
-    const audio = new Audio(audioUrl);
-    audio.play().catch(error => {
-        console.error('播放音频失败:', error);
-        alert('播放音频失败');
-    });
-}
-
-// 下载文件
-function downloadFile(fileUrl, fileName) {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName || 'download';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// 打开图片模态框
-function openImageModal(imageUrl) {
-    // 创建模态框
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 3000;
-        cursor: pointer;
-    `;
-    
-    const img = document.createElement('img');
-    img.src = imageUrl;
-    img.style.cssText = `
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
-    `;
-    
-    modal.appendChild(img);
-    document.body.appendChild(modal);
-    
-    // 点击关闭
-    modal.addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-}
-
-// 加载参与者信息
-async function loadParticipants() {
-    try {
-        const response = await fetch(`/tools/api/chat/${roomId}/participants/`);
-        const data = await response.json();
-        
-        if (data.success) {
-            data.data.participants.forEach(participant => {
-                participants[participant.username] = participant;
-            });
-            updateParticipantsList();
-        }
-    } catch (error) {
-        console.error('加载参与者信息失败:', error);
-    }
-}
-
-// 工具函数
-function formatTime(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-}
-
+// HTML转义
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
+// 下载文件
+function downloadFile(fileUrl) {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     initChat();
 });
-})();
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', function() {
+    if (chatManager) {
+        chatManager.disconnect();
+    }
+});

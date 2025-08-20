@@ -1,93 +1,173 @@
-# QAToolbox/apps/tools/urls.py
-from django.urls import path
+# QAToolbox/apps/tools/urls.py - 优化版本
+from django.urls import path, include
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.conf import settings
+from . import consumers
 
-from .views import (
+# =============================================================================
+# 📋 优化的导入结构 - 按功能分组
+# =============================================================================
+
+# 🔧 基础工具视图
+from .views.basic_tools_views import (
     test_case_generator, redbook_generator, pdf_converter, pdf_converter_test, 
     fortune_analyzer, web_crawler, self_analysis, storyboard, 
-    fitness_center, training_plan_editor, 
-    emo_diary, creative_writer, meditation_guide, peace_meditation_view, music_healing,
-    heart_link, heart_link_chat, chat_enhanced, chat_debug_view, douyin_analyzer, triple_awakening_dashboard, copilot_page,
-    desire_dashboard, vanity_os_dashboard, vanity_rewards, sponsor_hall_of_fame,
-    based_dev_avatar, vanity_todo_list, travel_guide, fitness_community,
-    fitness_profile, fitness_tools, get_vanity_wealth_api, add_sin_points_api, music_api,
-    # 添加缺失的API函数导入
-    next_song_api, get_fitness_community_posts_api, create_fitness_community_post_api,
-    like_fitness_post_api, comment_fitness_post_api, get_fitness_user_profile_api,
-    # get_job_profile_api,
-    # get_job_search_statistics_api, update_application_status_api, add_application_notes_api,
-    generate_boss_qr_code_api, get_boss_login_page_url_api, get_boss_user_token_api,
-    check_boss_login_status_selenium_api, boss_logout_api, send_contact_request_api,
-    start_crawler_api, get_crawler_status_api,
-    # Heart Link相关API
-    create_heart_link_request_api, cancel_heart_link_request_api, check_heart_link_status_api,
-    cleanup_heart_link_api,
-    # 聊天相关API
-    get_chat_messages_api, send_message_api, send_image_api, send_audio_api, send_file_api, send_video_api,
-    delete_message_api, mark_messages_read_api, update_online_status_api, get_online_users_api, get_active_chat_rooms_api,
-    # 用户资料相关API
-    get_user_profile_api, get_chat_room_participants_api,
-    # 数字匹配API
-    number_match_api, cancel_number_match_api,
-    # Desire相关API
-    get_desire_dashboard_api, add_desire_api, check_desire_fulfillment_api, generate_ai_image_api,
-    get_desire_progress_api, get_fulfillment_history_api, get_desire_todos_api, add_desire_todo_api,
-    # 冥想音频API
-    meditation_audio_api,
-    complete_desire_todo_api, delete_desire_todo_api, edit_desire_todo_api, get_desire_todo_stats_api,
-    # Vanity相关API
-    get_vanity_tasks_api, add_vanity_task_api, complete_vanity_task_api, get_sponsors_api, add_sponsor_api,
-    # Based Dev相关API
+    fitness_center, training_plan_editor, deepseek_api, self_analysis_api, storyboard_api,
+    location_api, update_location_api
+)
+
+# 🎵 音乐相关视图
+from .views.music_views import (
+    music_healing, music_api, next_song_api, meditation_guide, peace_meditation_view
+)
+
+from .views.vanity_views import (
+    vanity_os_dashboard, vanity_rewards, sponsor_hall_of_fame, based_dev_avatar, vanity_todo_list,
+    get_vanity_wealth_api, add_sin_points_api, get_sponsors_api, add_sponsor_api,
+    get_vanity_tasks_api, add_vanity_task_api, complete_vanity_task_api,
     create_based_dev_avatar_api, get_based_dev_avatar_api, update_based_dev_stats_api,
-    like_based_dev_avatar_api, get_based_dev_achievements_api,
-    # 旅游相关API
-    check_local_travel_data_api, travel_guide_api, get_travel_guides_api, get_travel_guide_detail_api,
-    toggle_favorite_guide_api, delete_travel_guide_api, export_travel_guide_api,
-    # 抖音相关API
-    douyin_analysis_api, get_douyin_analysis_api, generate_product_preview_api, get_douyin_analysis_list_api,
-    # 社交订阅相关API
-    add_social_subscription_api, get_subscriptions_api, update_subscription_api, get_notifications_api,
-    mark_notification_read_api, get_subscription_stats_api,
-    # 健身相关API
-    fitness_api, follow_fitness_user_api, get_fitness_achievements_api, share_achievement_api, add_weight_record_api,
-    # 模式相关API
-    record_mode_click_api, get_user_preferred_mode_api,
-    # 三重觉醒相关API
-    create_fitness_workout_api, create_code_workout_api, complete_daily_task_api,
-    get_workout_dashboard_api, get_ai_dependency_api, get_pain_currency_api,
-    record_exhaustion_audio_api, create_exhaustion_proof_api, create_copilot_collaboration_api,
-    # 生活日记相关API
-    emo_diary_api, creative_writer_api, self_analysis_api, storyboard_api,
-    # 添加缺失的页面视图函数导入
-    tarot_reading_view, tarot_diary_view, meetsomeone_dashboard_view,
-    chat_entrance_view, heart_link_test_view, click_test_view, number_match_view, video_chat_view, multi_video_chat_view, multi_video_test_view, chat_room_error_view, active_chat_rooms_view,
-    meetsomeone_timeline_view, meetsomeone_graph_view,
-    # 功能推荐系统API视图函数
-    feature_recommendations_api, feature_list_api, recommendation_stats_api, resolve_url_api,
-    # 打卡相关API
-    get_checkin_calendar_api,
-    # 食物随机选择器相关API
-    start_food_randomization_api, pause_food_randomization_api, rate_food_api,
-    # 食物随机选择器页面视图函数
-    food_randomizer,
-    # 食品图像识别相关
-    food_image_recognition_view, food_image_recognition_api,
-    # 音频转换器相关
-    audio_converter_view, audio_converter_api,
-    user_generated_travel_guide_api, user_generated_travel_guide_detail_api,
-    user_generated_travel_guide_download_api, user_generated_travel_guide_use_api,
-    user_generated_travel_guide_upload_attachment_api,
-    # 船宝（二手线下交易）相关视图
-    shipbao_home, shipbao_publish, shipbao_detail, shipbao_transactions, shipbao_chat,
+    like_based_dev_avatar_api, get_based_dev_achievements_api
+)
+
+from .views.desire_views import (
+    desire_dashboard, get_desire_dashboard_api, add_desire_api, check_desire_fulfillment_api,
+    generate_ai_image_api, get_desire_progress_api, get_fulfillment_history_api,
+    get_desire_todos_api, add_desire_todo_api, complete_desire_todo_api,
+    delete_desire_todo_api, edit_desire_todo_api, get_desire_todo_stats_api
+)
+
+from .views.travel_views import (
+    travel_guide, check_local_travel_data_api, travel_guide_api, get_travel_guides_api,
+    get_travel_guide_detail_api, toggle_favorite_guide_api, delete_travel_guide_api,
+    export_travel_guide_api
+)
+
+from .views.fitness_views import (
+    fitness_community, fitness_profile, fitness_tools, add_weight_record_api,
+    get_fitness_community_posts_api, create_fitness_community_post_api,
+    like_fitness_post_api, comment_fitness_post_api, get_fitness_user_profile_api,
+    follow_fitness_user_api, get_fitness_achievements_api, share_achievement_api
+)
+
+# 从食物相关视图导入
+from .views.food_views import (
+    api_foods, api_food_photo_bindings, api_save_food_photo_bindings,
+    get_food_list_api, food_image_crawler_api
+)
+
+# 从成就相关视图导入
+from .views.achievement_views import (
+    achievements_api, get_fitness_achievements_api, share_achievement_api
+)
+
+# 从基础视图导入
+from .views.base_views import (
+    deepseek_api, get_boss_login_page_screenshot_api, create_job_search_request_api, 
+    get_job_search_requests_api, get_vanity_tasks_stats_api, delete_vanity_task_api, 
+    follow_fitness_user_api
+)
+
+# 从PDF转换器视图导入
+from .views.pdf_converter_views import (
+    pdf_converter_status_api, pdf_converter_stats_api, 
+    pdf_converter_rating_api, pdf_converter_batch, pdf_download_view
+)
+
+# 从PDF转换器API导入
+from .pdf_converter_api import pdf_converter_api
+
+# 从签到视图导入
+from .views.checkin_views import (
+    checkin_add_api, checkin_delete_api_simple, checkin_delete_api
+)
+
+# 从塔罗牌视图导入
+from .views.tarot_views import (
+    initialize_tarot_data_api, tarot_spreads_api, tarot_create_reading_api, 
+    tarot_readings_api, tarot_reading_detail_api, tarot_feedback_api, tarot_daily_energy_api
+)
+
+# 从食物随机器视图导入
+from .views.food_randomizer_views import (
+    food_randomizer_pure_random_api, food_randomizer_statistics_api, food_randomizer_history_api
+)
+
+# 从MeeSomeone视图导入
+from .views.meetsomeone_views import (
+    get_dashboard_stats_api, get_relationship_tags_api, get_person_profiles_api, 
+    create_person_profile_api, get_interactions_api, create_interaction_api, 
+    create_important_moment_api, get_timeline_data_api, get_graph_data_api
+)
+
+# 从食物图片视图导入
+from .views.food_image_views import (
+    food_image_crawler_api, compare_food_images_api, update_food_image_api, api_photos
+)
+
+# 从原来的views.py文件导入剩余的函数
+# from . import views  # 已删除，避免循环导入
+
+# 测试视图
+from .views.test_views import test_tarot_view, test_api_view, test_tarot_template_view, test_tarot_reading_view, test_tarot_spreads_api
+
+# 从重命名的legacy_views文件导入剩余函数
+from .legacy_views import (
+    video_chat_view, multi_video_chat_view, multi_video_test_view, 
+    douyin_analyzer, triple_awakening_dashboard, copilot_page,
+    chat_room_error_view, meetsomeone_dashboard_view, 
+    tarot_reading_view, tarot_diary_view, meetsomeone_timeline_view, 
+    meetsomeone_graph_view, food_randomizer, food_image_recognition_view,
+    audio_converter_view, audio_playback_test, shipbao_home, shipbao_publish, shipbao_detail,
+    shipbao_transactions, shipbao_chat, buddy_home, buddy_create,
+    buddy_detail, buddy_manage, buddy_chat, feature_recommendations_api,
+    feature_list_api, recommendation_stats_api, resolve_url_api,
+    get_checkin_calendar_api, start_food_randomization_api,
+    pause_food_randomization_api, rate_food_api, food_image_recognition_api,
+    audio_converter_api, user_generated_travel_guide_api,
+    user_generated_travel_guide_detail_api, user_generated_travel_guide_download_api,
+    user_generated_travel_guide_use_api, user_generated_travel_guide_upload_attachment_api,
     shipbao_create_item_api, shipbao_items_api, shipbao_initiate_transaction_api,
-    shipbao_send_message_api, shipbao_messages_api,
-    # 搭子（同城活动匹配）相关视图
-    buddy_home, buddy_create, buddy_detail, buddy_manage, buddy_chat,
-    buddy_create_event_api, buddy_events_api, buddy_join_event_api,
-    buddy_approve_member_api, buddy_send_message_api, buddy_messages_api
+    shipbao_send_message_api, shipbao_messages_api, buddy_create_event_api,
+    buddy_events_api, buddy_join_event_api, buddy_approve_member_api,
+    buddy_send_message_api, buddy_messages_api, generate_boss_qr_code_api,
+    get_boss_login_page_url_api, get_boss_user_token_api, 
+    check_boss_login_status_selenium_api, boss_logout_api, send_contact_request_api,
+    start_crawler_api, get_crawler_status_api, create_heart_link_request_api,
+    cancel_heart_link_request_api, check_heart_link_status_api, cleanup_heart_link_api,
+    get_chat_messages_api, send_message_api, send_image_api, send_audio_api,
+    send_file_api, send_video_api, delete_message_api, mark_messages_read_api,
+    update_online_status_api, get_online_users_api, get_active_chat_rooms_api,
+    get_user_profile_api, get_chat_room_participants_api, number_match_api,
+    cancel_number_match_api, meditation_audio_api, douyin_analysis_api,
+    get_douyin_analysis_api, generate_product_preview_api, get_douyin_analysis_list_api,
+    add_social_subscription_api, get_subscriptions_api, update_subscription_api,
+    get_notifications_api, mark_notification_read_api, get_subscription_stats_api,
+    record_mode_click_api, get_user_preferred_mode_api, create_fitness_workout_api,
+    create_code_workout_api, complete_daily_task_api, get_workout_dashboard_api,
+    get_ai_dependency_api, get_pain_currency_api, record_exhaustion_audio_api,
+    create_exhaustion_proof_api, create_copilot_collaboration_api,
+    fitness_api, life_diary_api
+)
+
+# 从日记相关视图导入
+from .views.diary_views import (
+    emo_diary, emo_diary_api, creative_writer, creative_writer_api
+)
+
+# 从聊天相关视图导入
+from .views.chat_views import (
+    heart_link, heart_link_chat, heart_link_test_view, click_test_view, test_two_users_chat_view,
+    secure_chat_entrance, secure_chat_enhanced,
+    chat_entrance_view, chat_enhanced, chat_debug_view, active_chat_rooms_view,
+    number_match_view
+)
+
+# 从ZIP相关视图导入
+from .views.zip_views import (
+    zip_tool_view, create_zip_from_files_api, create_zip_from_directory_api,
+    compress_single_file_api, extract_zip_api, get_zip_info_api, download_zip_file,
+    create_zip_from_uploaded_files_api, compress_uploaded_file_api
 )
 
 # 导入健身营养定制系统视图
@@ -128,22 +208,27 @@ from .missing_views import (
     compare_food_images_api,
     # Food Image Update相关API
     update_food_image_api,
-    # BOSS直聘相关API
-    get_boss_login_page_screenshot_api,
-    # 求职相关API
-    create_job_search_request_api, get_job_search_requests_api,
-    # Vanity相关API
-    get_vanity_tasks_stats_api, delete_vanity_task_api,
-    # 健身相关API
-    follow_fitness_user_api, get_fitness_achievements_api, share_achievement_api,
-    # PDF转换器相关API
-    pdf_converter_api, pdf_converter_status_api, pdf_converter_rating_api,
     # 签到相关API
     checkin_add_api, checkin_delete_api_simple, checkin_delete_api,
     # 塔罗牌相关API
     initialize_tarot_data_api, tarot_spreads_api, tarot_create_reading_api, tarot_readings_api, tarot_daily_energy_api,
     # 食物随机选择器相关API
     food_randomizer_pure_random_api, food_randomizer_statistics_api, food_randomizer_history_api,
+)
+
+# 从测试用例生成API导入
+from .generate_test_cases_api import GenerateTestCasesAPI
+from .generate_redbook_api import GenerateRedBookAPI
+
+# 从missing_views导入存在的API
+from .missing_views import (
+    create_job_search_request_api, get_job_search_requests_api,
+    pdf_converter_rating_api,
+)
+
+# 从主题相关视图导入
+from .views.theme_views import (
+    switch_theme_api, get_user_theme_api, save_user_theme_api, test_theme_api
 )
 
 from .time_capsule_views import (
@@ -163,19 +248,26 @@ from .guitar_training_views import (
 
 from .fitness_tools_views import (
     fitness_tools_dashboard, bmi_calculator, workout_timer, nutrition_calculator,
-    workout_tracker, body_analyzer, workout_planner,
+    workout_tracker, body_analyzer, workout_planner, one_rm_calculator,
     calculate_bmi_api, calculate_heart_rate_api, calculate_calories_api,
-    calculate_protein_api, calculate_water_api, calculate_rm_api, calculate_pace_api,
-    save_workout_record_api, get_workout_records_api, calculate_body_composition_api
+    calculate_protein_api, calculate_water_api, calculate_rm_api, calculate_one_rm_api,
+    predict_reps_api, calculate_pace_api, save_workout_record_api, 
+    get_workout_records_api, calculate_body_composition_api
 )
 
-from .pdf_converter_api import pdf_converter_batch, pdf_download_view, pdf_converter_stats_api, pdf_converter_test_api
+# PDF转换器API已移动到 pdf_converter_views.py
 
 # 导入监控视图
 from .monitoring_views import (
     monitoring_dashboard, get_monitoring_data, get_system_metrics,
     get_alerts, get_cache_stats, clear_cache, warm_up_cache,
     MonitoringAPIView
+)
+
+from .views.health_views import (
+    health_check, auto_test_status, run_auto_tests, system_status,
+    performance_status, shard_status, detailed_health_check,
+    legacy_health_check, HealthCheckView
 )
 
 # 时光胶囊测试页面
@@ -230,6 +322,14 @@ def emo_mode_view(request):
     """情感模式主页面"""
     return render(request, 'tools/emo_mode.html')
 
+def test_user_dropdown_view(request):
+    """用户下拉菜单和主题切换测试页面"""
+    return render(request, 'test_user_dropdown_and_theme.html')
+
+def simple_test_view(request):
+    """简单测试页面"""
+    return render(request, 'simple_test.html')
+
 def anti_programmer_profile_view(request):
     """反程序员形象页面"""
     return render(request, 'tools/anti_programmer_profile.html')
@@ -239,9 +339,12 @@ def desire_todo_enhanced_view(request):
     return render(request, 'tools/desire_todo_enhanced.html')
 
 # Tools主页面视图函数
-@login_required
 def tools_index_view(request):
     """工具主页面"""
+    # 快速检查用户登录状态，避免慢查询
+    if not request.user.is_authenticated:
+        from django.contrib.auth.views import redirect_to_login
+        return redirect_to_login(request.get_full_path())
     return render(request, 'tools/index.html')
 
 # 应用名称（命名空间）
@@ -263,6 +366,8 @@ urlpatterns = [
     path('cyberpunk_mode/', cyberpunk_mode_view, name='cyberpunk_mode'),
     path('emo/', emo_mode_view, name='emo'),  # 添加emo路径以修复齿轮图标404错误
     path('emo_mode/', emo_mode_view, name='emo_mode'),
+    path('test_user_dropdown/', test_user_dropdown_view, name='test_user_dropdown'),
+    path('simple_test/', simple_test_view, name='simple_test'),
     path('guitar_training/', guitar_training_view, name='guitar_training'),
     path('anti_programmer_profile/', anti_programmer_profile_view, name='anti_programmer_profile'),
     path('desire_todo_enhanced/', desire_todo_enhanced_view, name='desire_todo_enhanced'),
@@ -276,6 +381,10 @@ urlpatterns = [
     path('web_crawler/', web_crawler, name='web_crawler'),
     path('self_analysis/', self_analysis, name='self_analysis'),
     path('storyboard/', storyboard, name='storyboard'),
+    
+    # 测试用例生成API路由
+    path('api/generate-testcases/', GenerateTestCasesAPI.as_view(), name='generate_test_cases_api'),
+    path('api/generate-redbook/', GenerateRedBookAPI.as_view(), name='generate_redbook_api'),
     path('fitness_center/', fitness_center, name='fitness_center'),
     path('training_plan_editor/', training_plan_editor, name='training_plan_editor'),
 
@@ -302,6 +411,9 @@ urlpatterns = [
     path('multi-video-chat/<str:room_id>/', multi_video_chat_view, name='multi_video_chat'), # 多人视频聊天页面
     path('multi-video-test/', multi_video_test_view, name='multi_video_test'), # 多人视频测试页面
     path('chat-room-error/<str:error_type>/<str:room_id>/', chat_room_error_view, name='chat_room_error'), # 聊天室错误页面
+    path('chat/test-two-users/<str:room_id>/', test_two_users_chat_view, name='test_two_users_chat'), # 两个人聊天测试页面
+    path('chat/secure/', secure_chat_entrance, name='secure_chat_entrance'), # 安全聊天室入口
+    path('chat/secure/<str:room_id>/<str:token>/', secure_chat_enhanced, name='secure_chat_enhanced'), # 安全聊天室页面
     path('douyin_analyzer/', douyin_analyzer, name='douyin_analyzer'),
     path('triple_awakening/', triple_awakening_dashboard, name='triple_awakening_dashboard'),
     path('copilot/', copilot_page, name='copilot_page'),
@@ -318,6 +430,8 @@ urlpatterns = [
     
     # 音频转换器
     path('audio_converter/', audio_converter_view, name='audio_converter'),
+    path('audio_playback_test/', audio_playback_test, name='audio_playback_test'),
+
     path('food_image_correction/', food_image_correction_view, name='food_image_correction'),
     path('fitness/', fitness_center, name='fitness'),  # 添加fitness主页面
     path('fitness/community/', fitness_community, name='fitness_community'),
@@ -335,6 +449,14 @@ urlpatterns = [
     path('fitness/tools/workout-tracker/', workout_tracker, name='workout_tracker'),
     path('fitness/tools/body-analyzer/', body_analyzer, name='body_analyzer'),
     path('fitness/tools/workout-planner/', workout_planner, name='workout_planner'),
+    path('fitness/tools/one-rm-calculator/', one_rm_calculator, name='one_rm_calculator'),
+    
+    # 测试路由
+    path('test/tarot/', test_tarot_view, name='test_tarot'),
+    path('test/api/', test_api_view, name='test_api'),
+    path('test/tarot-template/', test_tarot_template_view, name='test_tarot_template'),
+    path('test/tarot-reading/', test_tarot_reading_view, name='test_tarot_reading'),
+    path('test/tarot-spreads/', test_tarot_spreads_api, name='test_tarot_spreads'),
     
     # 中优先级：添加缺失的页面路由
     path('tarot/reading/', tarot_reading_view, name='tarot_reading'),
@@ -376,6 +498,10 @@ urlpatterns = [
     path('api/recommendation_stats/', recommendation_stats_api, name='recommendation_stats_api'),
     path('api/achievements/', achievements_api, name='achievements_api'),
     path('api/deepseek/', deepseek_api, name='deepseek_api'),
+    
+    # 位置API
+    path('api/location/', location_api, name='location_api'),
+    path('api/location/update/', update_location_api, name='update_location_api'),
     
     # 旅游攻略API
     path('api/travel_guide/', travel_guide_api, name='travel_guide_api'),
@@ -438,6 +564,17 @@ urlpatterns = [
     # 用户资料相关API路由
     path('api/user/<int:user_id>/profile/', get_user_profile_api, name='get_user_profile_api'),
     
+    # 食物相关API路由
+    path('api/foods/', api_foods, name='api_foods'),
+    path('api/food_photo_bindings/', api_food_photo_bindings, name='api_food_photo_bindings'),
+    path('api/save_food_photo_bindings/', api_save_food_photo_bindings, name='api_save_food_photo_bindings'),
+    path('api/food_list/', get_food_list_api, name='get_food_list_api'),
+    path('api/food_image_crawler/', food_image_crawler_api, name='food_image_crawler_api'),
+    
+    # 成就相关API路由
+    path('api/fitness_community/achievements/', get_fitness_achievements_api, name='get_fitness_achievements_api'),
+    path('api/share_achievement/', share_achievement_api, name='share_achievement_api'),
+    
     # Desire相关API路由
     path('api/desire_dashboard/', get_desire_dashboard_api, name='get_desire_dashboard_api'),
     path('api/desire_dashboard/add/', add_desire_api, name='add_desire_api'),
@@ -496,6 +633,8 @@ urlpatterns = [
     path('api/fitness/protein/', calculate_protein_api, name='calculate_protein_api'),
     path('api/fitness/water/', calculate_water_api, name='calculate_water_api'),
     path('api/fitness/rm/', calculate_rm_api, name='calculate_rm_api'),
+    path('api/fitness/one-rm/', calculate_one_rm_api, name='calculate_one_rm_api'),
+    path('api/fitness/predict-reps/', predict_reps_api, name='predict_reps_api'),
     path('api/fitness/pace/', calculate_pace_api, name='calculate_pace_api'),
     path('api/fitness/body-composition/', calculate_body_composition_api, name='calculate_body_composition_api'),
     path('api/fitness/workout/save/', save_workout_record_api, name='save_workout_record_api'),
@@ -504,6 +643,12 @@ urlpatterns = [
     # Mode相关API路由
     path('api/mode/record_click/', record_mode_click_api, name='record_mode_click_api'),
     path('api/mode/preferred/', get_user_preferred_mode_api, name='get_user_preferred_mode_api'),
+    
+    # 主题切换API路由
+    path('api/theme/switch/', switch_theme_api, name='switch_theme_api'),
+    path('api/theme/get/', get_user_theme_api, name='get_user_theme_api'),
+    path('api/theme/save/', save_user_theme_api, name='save_user_theme_api'),
+    path('api/theme/test/', test_theme_api, name='test_theme_api'),
     
     # Triple Awakening相关API路由
     path('api/triple_awakening/fitness_workout/', create_fitness_workout_api, name='create_fitness_workout_api'),
@@ -530,7 +675,6 @@ urlpatterns = [
     
     # PDF Converter相关API路由
     path('api/pdf-converter/', pdf_converter_api, name='pdf_converter_api'),
-    path('api/pdf-converter-test/', pdf_converter_test_api, name='pdf_converter_test_api'),
     path('api/pdf-converter/status/', pdf_converter_status_api, name='pdf_converter_status'),
     path('api/pdf-converter/stats/', pdf_converter_stats_api, name='pdf_converter_stats_api'),
     path('api/pdf-converter/rating/', pdf_converter_rating_api, name='pdf_converter_rating_api'),
@@ -552,6 +696,8 @@ urlpatterns = [
     path('api/tarot/spreads/', tarot_spreads_api, name='tarot_spreads_api'),
     path('api/tarot/create-reading/', tarot_create_reading_api, name='tarot_create_reading_api'),
     path('api/tarot/readings/', tarot_readings_api, name='tarot_readings_api'),
+    path('api/tarot/reading/<int:reading_id>/', tarot_reading_detail_api, name='tarot_reading_detail_api'),
+    path('api/tarot/reading/<int:reading_id>/feedback/', tarot_feedback_api, name='tarot_feedback_api'),
     path('api/tarot/daily-energy/', tarot_daily_energy_api, name='tarot_daily_energy_api'),
     
     # 冥想音频API
@@ -692,4 +838,36 @@ urlpatterns = [
     path('api/buddy/approve-member/', buddy_approve_member_api, name='buddy_approve_member_api'),
     path('api/buddy/send-message/', buddy_send_message_api, name='buddy_send_message_api'),
     path('api/buddy/messages/', buddy_messages_api, name='buddy_messages_api'),
+
+    # 健康检查相关URL
+    path('health/', health_check, name='health_check'),
+    path('health/legacy/', legacy_health_check, name='legacy_health_check'),
+    path('health/detailed/', detailed_health_check, name='detailed_health_check'),
+    path('health/class/', HealthCheckView.as_view(), name='health_check_class'),
+    
+    # 自动化测试相关URL
+    path('auto-test/status/', auto_test_status, name='auto_test_status'),
+    path('auto-test/run/', run_auto_tests, name='run_auto_tests'),
+    
+    # 系统状态相关URL
+    path('system/status/', system_status, name='system_status'),
+    path('system/performance/', performance_status, name='performance_status'),
+    path('system/shards/', shard_status, name='shard_status'),
+    
+    # ZIP文件处理工具路由
+    path('zip-tool/', zip_tool_view, name='zip_tool'),
+    path('api/zip/create-from-files/', create_zip_from_files_api, name='create_zip_from_files_api'),
+    path('api/zip/create-from-uploaded-files/', create_zip_from_uploaded_files_api, name='create_zip_from_uploaded_files_api'),
+    path('api/zip/create-from-directory/', create_zip_from_directory_api, name='create_zip_from_directory_api'),
+    path('api/zip/compress-single/', compress_single_file_api, name='compress_single_file_api'),
+    path('api/zip/compress-uploaded-file/', compress_uploaded_file_api, name='compress_uploaded_file_api'),
+    path('api/zip/extract/', extract_zip_api, name='extract_zip_api'),
+    path('api/zip/info/', get_zip_info_api, name='get_zip_info_api'),
+    path('api/zip/download/<path:file_path>/', download_zip_file, name='download_zip_file'),
+    
+    # API版本控制
+    # path('api/v1/', include('apps.tools.services.api_version_control')),  # 临时注释
+    
+    # WebSocket路由
+    path('ws/chat/<str:room_id>/', consumers.ChatConsumer.as_asgi(), name='chat_websocket'),
 ]

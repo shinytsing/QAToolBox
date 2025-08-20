@@ -255,13 +255,27 @@ body.rage-theme::before {
 
 /* 狂暴模式导航栏 */
 .rage-navbar {
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 0.5px solid var(--rage-border);
+  background: linear-gradient(135deg, var(--rage-bg) 0%, var(--rage-card-bg) 50%, rgba(26, 26, 26, 0.95) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: 2px solid var(--rage-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 68, 68, 0.2) !important;
+  width: 100% !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* 狂暴模式导航栏容器 */
+.rage-navbar .container-fluid {
+  padding: 0.75rem 2rem !important;
+  max-width: none !important;
+}
+
+.rage-navbar .navbar-brand {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .rage-navbar .nav-link {
-  color: var(--rage-text);
+  color: rgba(255, 255, 255, 0.9) !important;
   font-weight: 600;
   transition: all 0.3s ease;
   text-transform: uppercase;
@@ -279,6 +293,7 @@ body.rage-theme::before {
   justify-content: center;
   font-size: 1rem;
   line-height: 1;
+  color: #ffffff !important;
 }
 
 .rage-navbar .nav-link span {

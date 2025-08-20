@@ -25,6 +25,37 @@
         justify-content: space-between;
         align-items: center;
     }
+    
+    .chat-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .video-chat-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 50%;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .video-chat-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .video-chat-btn i {
+        font-size: 1.2em;
+    }
 
     .chat-header h3 {
         margin: 0;
@@ -401,6 +432,11 @@
             <div class="status-indicator" id="status-indicator"></div>
             <span id="status-text">连接中...</span>
         </div>
+        <div class="chat-actions">
+            <a href="/tools/video-chat/{{ room_id }}/" class="video-chat-btn" title="开始视频通话">
+                <i class="fas fa-video"></i>
+            </a>
+        </div>
     </div>
 
     <!-- 聊天消息区域 -->
@@ -547,14 +583,29 @@ function initializeEventListeners() {
     const emojiBtn = document.getElementById('emoji-btn');
     if (emojiBtn) {
         console.log('绑定表情按钮事件');
-        emojiBtn.addEventListener('click', function(e) {
-            console.log('表情按钮被点击');
-            e.preventDefault();
-            e.stopPropagation();
-            toggleEmojiPicker();
-        });
+        
+        // 确保按钮可点击
+        emojiBtn.style.pointerEvents = 'auto';
+        emojiBtn.style.cursor = 'pointer';
+        emojiBtn.style.zIndex = '1000';
+        
+        // 移除可能存在的旧事件监听器
+        emojiBtn.removeEventListener('click', handleEmojiClick);
+        
+        // 添加新的事件监听器
+        emojiBtn.addEventListener('click', handleEmojiClick);
+        
+        console.log('表情按钮事件绑定完成');
     } else {
         console.error('表情按钮未找到');
+    }
+    
+    // 表情按钮点击处理函数
+    function handleEmojiClick(e) {
+        console.log('表情按钮被点击!', e);
+        e.preventDefault();
+        e.stopPropagation();
+        toggleEmojiPicker();
     }
 
     // 发送按钮
@@ -733,7 +784,10 @@ function addMessageToChat(message) {
     
     let contentHtml = '';
     if (message.message_type === 'image') {
-        contentHtml = `<img src="${message.file_url}" alt="图片" class="message-image" onclick="openImageModal('${message.file_url}')">`;
+        // 确保图片URL是完整的
+        const imageUrl = message.file_url.startsWith('http') ? message.file_url : window.location.origin + '/media/' + message.file_url;
+        contentHtml = `<img src="${imageUrl}" alt="图片" class="message-image" onclick="openImageModal('${imageUrl}')" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="image-error" style="display: none; color: #dc3545; font-size: 12px;">图片加载失败</div>`;
     } else if (message.message_type === 'audio') {
         contentHtml = `
             <div class="message-audio">
@@ -745,7 +799,7 @@ function addMessageToChat(message) {
         `;
     } else if (message.message_type === 'file') {
         // 确保文件URL是完整的
-        const fileUrl = message.file_url.startsWith('http') ? message.file_url : window.location.origin + message.file_url;
+        const fileUrl = message.file_url.startsWith('http') ? message.file_url : window.location.origin + '/media/' + message.file_url;
         contentHtml = `
             <div class="message-file">
                 <i class="fas fa-file"></i>

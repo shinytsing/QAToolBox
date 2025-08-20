@@ -74,11 +74,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    # 自定义中间件
-    'apps.users.middleware.UserActivityMiddleware',
+    # 会话持久化中间件 - 暂时禁用，避免Redis依赖问题
+    # 'apps.users.middleware.SessionPersistenceMiddleware',
     'apps.users.middleware.SessionExtensionMiddleware',  # Session延长中间件
     
-    # 性能监控中间件
+    # 性能监控中间件（已优化）
     'apps.tools.services.monitoring_service.PerformanceMonitoringMiddleware',
 ]
 
@@ -203,10 +203,36 @@ LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# 会话配置
+# 缓存配置
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+        },
+        'KEY_PREFIX': 'qatoolbox',
+        'TIMEOUT': 60 * 60 * 24 * 7,  # 7天
+    }
+}
+
+# 会话配置 - 暂时使用数据库存储，避免Redis依赖问题
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30天（1个月）
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True  # 每次请求都保存session，延长过期时间
+SESSION_COOKIE_SECURE = False  # 开发环境设为False，生产环境设为True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# 会话序列化器
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 # DRF配置
 REST_FRAMEWORK = {
@@ -261,13 +287,14 @@ CACHEOPS = {
 # 性能监控
 if DEBUG:
     INSTALLED_APPS += [
-        'debug_toolbar',
+        # 'debug_toolbar',  # 暂时禁用以提升性能
         'django_extensions',
     ]
     
-    MIDDLEWARE += [
-        'debug_toolbar.middleware.DebugToolbarMiddleware',
-    ]
+    # 暂时禁用Debug Toolbar以提升性能
+    # MIDDLEWARE += [
+    #     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # ]
     
     INTERNAL_IPS = [
         '127.0.0.1',

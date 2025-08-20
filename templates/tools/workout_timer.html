@@ -632,7 +632,9 @@ class WorkoutTimer {
     updateDisplay() {
         const minutes = Math.floor(this.timeLeft / 60);
         const seconds = this.timeLeft % 60;
-        this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // 将秒数格式化为小数点后两位
+        const formattedSeconds = seconds.toFixed(2);
+        this.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${formattedSeconds}`;
         
         // 更新进度条
         const progress = ((this.totalTime - this.timeLeft) / this.totalTime) * 100;

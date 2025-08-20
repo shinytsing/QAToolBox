@@ -1,4 +1,8 @@
 from django.urls import path
+from . import views
+
+app_name = 'content'
+
 from .views import (
     article_list, article_detail, article_create, article_edit, article_delete,
     suggestions_api, feedback_api, upload_media_api, admin_suggestions, admin_feedback,

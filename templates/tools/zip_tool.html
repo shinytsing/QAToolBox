@@ -1,0 +1,1381 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.zip-tool-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.zip-header {
+    text-align: center;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.zip-header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
+
+.zip-header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.zip-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.zip-tab {
+    flex: 1;
+    padding: 15px 20px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #666;
+}
+
+.zip-tab.active {
+    background: white;
+    color: #667eea;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.input-method-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.method-tab {
+    padding: 10px 20px;
+    border: 2px solid #e1e5e9;
+    background: white;
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.method-tab:hover {
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-1px);
+}
+
+.method-tab.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.zip-tab:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.zip-content {
+    display: none;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.zip-content.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 15px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    color: #333333;
+    font-weight: 500;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), inset 0 1px 3px rgba(0,0,0,0.1);
+    background: #ffffff;
+    transform: translateY(-1px);
+    color: #333333;
+}
+
+.form-control:hover {
+    border-color: #5a6fd8;
+    background: #f8f9fa;
+    color: #333333;
+}
+
+        /* 选择框特殊样式 */
+        select.form-control {
+            background-image: linear-gradient(45deg, transparent 50%, #667eea 50%), 
+                              linear-gradient(135deg, #667eea 50%, transparent 50%);
+            background-position: calc(100% - 30px) calc(1em + 2px), calc(100% - 25px) calc(1em + 2px);
+            background-size: 5px 5px, 5px 5px;
+            background-repeat: no-repeat;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: #ffffff;
+            color: #333333;
+            font-weight: 600;
+            padding-right: 40px; /* 为下拉箭头留出更多空间 */
+            font-size: 15px;
+        }
+
+select.form-control:focus {
+    background-image: linear-gradient(45deg, transparent 50%, #5a6fd8 50%), 
+                      linear-gradient(135deg, #5a6fd8 50%, transparent 50%);
+    background-color: #ffffff;
+    color: #333333;
+}
+
+select.form-control:hover {
+    background-color: #f8f9fa;
+    color: #333333;
+}
+
+/* 输入框占位符样式 */
+.form-control::placeholder {
+    color: #666666;
+    opacity: 1;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.file-input-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.file-input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-input-label {
+    display: block;
+    padding: 20px;
+    border: 2px dashed #667eea;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(102, 126, 234, 0.1) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.file-input-label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.file-input-label:hover::before {
+    left: 100%;
+}
+
+.file-input-label:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.15) 100%);
+    border-color: #5a6fd8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.file-list {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.file-item:last-child {
+    margin-bottom: 0;
+}
+
+.remove-file {
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.compression-slider {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.compression-value {
+    text-align: center;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-top: 5px;
+    font-size: 16px;
+}
+
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.result-container {
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 10px;
+    display: none;
+}
+
+.result-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.result-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.zip-info {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.zip-info h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.info-value {
+    color: #333;
+}
+
+.progress-container {
+    margin: 20px 0;
+    display: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e1e5e9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.feature-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+    color: #667eea;
+}
+
+.feature-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+ .feature-description {
+     color: #666;
+     line-height: 1.6;
+ }
+ 
+ /* 全局操作按钮 */
+ .global-actions {
+     position: fixed;
+     bottom: 30px;
+     right: 30px;
+     display: flex;
+     gap: 15px;
+     z-index: 1000;
+     background: rgba(255, 255, 255, 0.95);
+     padding: 15px;
+     border-radius: 15px;
+     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+     backdrop-filter: blur(10px);
+ }
+ 
+ .global-btn {
+     padding: 12px 20px;
+     border: none;
+     border-radius: 10px;
+     font-weight: 600;
+     cursor: pointer;
+     transition: all 0.3s ease;
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     font-size: 14px;
+     text-decoration: none;
+ }
+ 
+ .global-btn.primary {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     color: white;
+ }
+ 
+ .global-btn.primary:hover {
+     transform: translateY(-3px);
+     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+ }
+ 
+ .global-btn.secondary {
+     background: #4a90e2;
+     color: white;
+ }
+ 
+ .global-btn.secondary:hover {
+     background: #357abd;
+     transform: translateY(-3px);
+     box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+ }
+ 
+ .global-btn.danger {
+     background: #e74c3c;
+     color: white;
+ }
+ 
+ .global-btn.danger:hover {
+     background: #c0392b;
+     transform: translateY(-3px);
+     box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+ }
+
+@media (max-width: 768px) {
+    .zip-tool-container {
+        padding: 10px;
+    }
+    
+    .zip-header h1 {
+        font-size: 2em;
+    }
+    
+    .zip-tabs {
+        flex-direction: column;
+    }
+    
+    .zip-content {
+        padding: 20px;
+    }
+    
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="zip-tool-container">
+    <div class="zip-header">
+        <h1>📦 ZIP文件处理工具</h1>
+        <p>{{ description }}</p>
+    </div>
+
+    <div class="zip-tabs">
+        <div class="zip-tab active" data-tab="multi-files">
+            📁 多文件打包
+        </div>
+        <div class="zip-tab" data-tab="directory">
+            📂 目录打包
+        </div>
+        <div class="zip-tab" data-tab="single-file">
+            📄 单文件压缩
+        </div>
+        <div class="zip-tab" data-tab="extract">
+            🔓 解压文件
+        </div>
+    </div>
+
+    <!-- 多文件打包 -->
+    <div class="zip-content active" id="multi-files">
+        <h3>📁 多文件打包</h3>
+        <p>选择多个文件进行打包压缩</p>
+        
+        <div class="form-group">
+            <label>选择文件：</label>
+            <div class="file-input-container">
+                <input type="file" class="file-input" id="multiFileInput" multiple>
+                <label for="multiFileInput" class="file-input-label">
+                    📁 点击选择文件或拖拽文件到此处
+                </label>
+            </div>
+            <div class="file-list" id="multiFileList"></div>
+        </div>
+
+        <div class="form-group">
+            <label>ZIP文件名（可选）：</label>
+            <input type="text" class="form-control" id="multiZipName" placeholder="留空将自动生成文件名">
+        </div>
+
+        <div class="form-group">
+            <label>压缩级别：<span id="multiCompressionValue">6</span></label>
+            <input type="range" class="compression-slider" id="multiCompressionLevel" min="0" max="9" value="6">
+        </div>
+
+        <div class="form-group">
+            <label>压缩方法：</label>
+            <select class="form-control" id="multiCompressionMethod">
+                <option value="auto">自动选择（推荐）</option>
+                <option value="zip">ZIP - 通用压缩</option>
+                <option value="gz">GZIP - 文本文件优化</option>
+                <option value="bz2">BZIP2 - 高压缩比</option>
+                <option value="xz">XZ - 最高压缩比</option>
+                <option value="7z">7Z - 专业压缩</option>
+                <option value="tar.gz">TAR+GZ - 归档压缩</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="multiIncludePaths" checked>
+                包含文件路径结构
+            </label>
+        </div>
+
+        <button class="btn btn-primary" onclick="createMultiFileZip()">
+            📦 创建ZIP包
+        </button>
+
+        <div class="progress-container" id="multiProgress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="multiProgressFill"></div>
+            </div>
+            <div class="progress-text" id="multiProgressText">处理中...</div>
+        </div>
+
+        <div class="result-container" id="multiResult"></div>
+    </div>
+
+    <!-- 目录打包 -->
+    <div class="zip-content" id="directory">
+        <h3>📂 目录打包</h3>
+        <p>将整个目录打包成ZIP文件</p>
+        
+        <div class="form-group">
+            <label>目录路径：</label>
+            <input type="text" class="form-control" id="directoryPath" placeholder="请输入目录路径，如：/path/to/directory">
+        </div>
+
+        <div class="form-group">
+            <label>ZIP文件名（可选）：</label>
+            <input type="text" class="form-control" id="dirZipName" placeholder="留空将使用目录名">
+        </div>
+
+        <div class="form-group">
+            <label>压缩级别：<span id="dirCompressionValue">6</span></label>
+            <input type="range" class="compression-slider" id="dirCompressionLevel" min="0" max="9" value="6">
+        </div>
+
+        <div class="form-group">
+            <label>排除模式（可选）：</label>
+            <input type="text" class="form-control" id="excludePatterns" placeholder="用逗号分隔，如：*.log,*.tmp,__pycache__">
+        </div>
+
+        <button class="btn btn-primary" onclick="createDirectoryZip()">
+            📦 创建目录ZIP包
+        </button>
+
+        <div class="progress-container" id="dirProgress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="dirProgressFill"></div>
+            </div>
+            <div class="progress-text" id="dirProgressText">处理中...</div>
+        </div>
+
+        <div class="result-container" id="dirResult"></div>
+    </div>
+
+    <!-- 单文件压缩 -->
+    <div class="zip-content" id="single-file">
+        <h3>📄 单文件压缩</h3>
+        <p>压缩单个文件</p>
+        
+        <div class="form-group">
+            <label>选择文件：</label>
+            <div class="file-input-container">
+                <input type="file" class="file-input" id="singleFileInput">
+                <label for="singleFileInput" class="file-input-label">
+                    📄 点击选择要压缩的文件
+                </label>
+            </div>
+            <div class="file-list" id="singleFileList"></div>
+        </div>
+
+        <div class="form-group">
+            <label>压缩级别：<span id="singleCompressionValue">9</span></label>
+            <input type="range" class="compression-slider" id="singleCompressionLevel" min="0" max="9" value="9">
+        </div>
+
+        <div class="form-group">
+            <label>压缩方法：</label>
+            <select class="form-control" id="singleCompressionMethod">
+                <option value="auto">自动选择（推荐）</option>
+                <option value="zip">ZIP - 通用压缩</option>
+                <option value="gz">GZIP - 文本文件优化</option>
+                <option value="bz2">BZIP2 - 高压缩比</option>
+                <option value="xz">XZ - 最高压缩比</option>
+                <option value="7z">7Z - 专业压缩</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" onclick="compressSingleFile()">
+            📦 压缩文件
+        </button>
+
+        <div class="progress-container" id="singleProgress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="singleProgressFill"></div>
+            </div>
+            <div class="progress-text" id="singleProgressText">压缩中...</div>
+        </div>
+
+        <div class="result-container" id="singleResult"></div>
+    </div>
+
+    <!-- 解压文件 -->
+    <div class="zip-content" id="extract">
+        <h3>🔓 解压ZIP文件</h3>
+        <p>解压ZIP文件到指定目录</p>
+        
+        <div class="form-group">
+            <label>ZIP文件路径：</label>
+            <input type="text" class="form-control" id="extractZipPath" placeholder="请输入ZIP文件路径">
+        </div>
+
+        <div class="form-group">
+            <label>解压目标目录（可选）：</label>
+            <input type="text" class="form-control" id="extractToPath" placeholder="留空将解压到临时目录">
+        </div>
+
+        <button class="btn btn-success" onclick="extractZip()">
+            🔓 解压文件
+        </button>
+
+        <div class="progress-container" id="extractProgress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="extractProgressFill"></div>
+            </div>
+            <div class="progress-text" id="extractProgressText">解压中...</div>
+        </div>
+
+        <div class="result-container" id="extractResult"></div>
+    </div>
+
+         <!-- 全局操作按钮 -->
+     <div class="global-actions" id="globalActions" style="display: none;">
+         <button class="global-btn primary" id="downloadZipBtn">
+             <i class="fas fa-download"></i>
+             下载ZIP文件
+         </button>
+         <button class="global-btn secondary" id="createNewZipBtn">
+             <i class="fas fa-plus"></i>
+             创建新ZIP
+         </button>
+         <button class="global-btn danger" id="clearAllBtn">
+             <i class="fas fa-trash"></i>
+             清空所有
+         </button>
+     </div>
+
+     <!-- 功能特性展示 -->
+     <div class="feature-grid">
+         <div class="feature-card">
+             <div class="feature-icon">📦</div>
+             <div class="feature-title">多文件打包</div>
+             <div class="feature-description">
+                 支持同时选择多个文件进行打包，保持文件结构或扁平化存储
+             </div>
+         </div>
+         
+         <div class="feature-card">
+             <div class="feature-icon">📂</div>
+             <div class="feature-title">目录打包</div>
+             <div class="feature-description">
+                 将整个目录及其子目录打包，支持排除特定文件类型
+             </div>
+         </div>
+         
+         <div class="feature-card">
+             <div class="feature-icon">📄</div>
+             <div class="feature-title">单文件压缩</div>
+             <div class="feature-description">
+                 对单个文件进行高压缩比压缩，节省存储空间
+             </div>
+         </div>
+         
+         <div class="feature-card">
+             <div class="feature-icon">🔓</div>
+             <div class="feature-title">文件解压</div>
+             <div class="feature-description">
+                 解压ZIP文件到指定目录，支持查看压缩信息
+             </div>
+         </div>
+         
+         <div class="feature-card">
+             <div class="feature-icon">⚙️</div>
+             <div class="feature-title">压缩级别</div>
+             <div class="feature-description">
+                 支持0-9级压缩，平衡压缩比和处理速度
+             </div>
+         </div>
+         
+         <div class="feature-card">
+             <div class="feature-icon">📊</div>
+             <div class="feature-title">详细信息</div>
+             <div class="feature-description">
+                 显示文件数量、大小、压缩比等详细信息
+             </div>
+         </div>
+     </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 全局变量
+let selectedFiles = {
+    multi: [],
+    single: null
+};
+
+// 标签页切换
+document.querySelectorAll('.zip-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        // 移除所有活动状态
+        document.querySelectorAll('.zip-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.zip-content').forEach(c => c.classList.remove('active'));
+        
+        // 添加活动状态
+        this.classList.add('active');
+        document.getElementById(this.dataset.tab).classList.add('active');
+    });
+});
+
+// 压缩级别滑块
+document.querySelectorAll('.compression-slider').forEach(slider => {
+    slider.addEventListener('input', function() {
+        const value = this.value;
+        const valueDisplay = this.parentElement.querySelector('.compression-value') || 
+                           this.parentElement.querySelector('span');
+        if (valueDisplay) {
+            valueDisplay.textContent = value;
+        }
+    });
+});
+
+// 多文件选择
+document.getElementById('multiFileInput').addEventListener('change', function(e) {
+    selectedFiles.multi = Array.from(e.target.files);
+    displayFileList('multiFileList', selectedFiles.multi);
+});
+
+// 单文件选择
+document.getElementById('singleFileInput').addEventListener('change', function(e) {
+    selectedFiles.single = e.target.files[0];
+    displayFileList('singleFileList', selectedFiles.single ? [selectedFiles.single] : []);
+});
+
+// 显示文件列表
+function displayFileList(containerId, files) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    files.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <span>${file.name} (${formatFileSize(file.size)})</span>
+            <span class="remove-file" onclick="removeFile('${containerId}', ${index})">×</span>
+        `;
+        container.appendChild(fileItem);
+    });
+}
+
+// 移除文件
+function removeFile(containerId, index) {
+    if (containerId === 'multiFileList') {
+        selectedFiles.multi.splice(index, 1);
+        displayFileList(containerId, selectedFiles.multi);
+    } else if (containerId === 'singleFileList') {
+        selectedFiles.single = null;
+        displayFileList(containerId, []);
+    }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 显示进度条
+function showProgress(progressId, textId, fillId) {
+    document.getElementById(progressId).style.display = 'block';
+    document.getElementById(textId).textContent = '处理中...';
+    document.getElementById(fillId).style.width = '0%';
+    
+    // 模拟进度
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        document.getElementById(fillId).style.width = progress + '%';
+    }, 200);
+    
+    return interval;
+}
+
+// 隐藏进度条
+function hideProgress(progressId) {
+    document.getElementById(progressId).style.display = 'none';
+}
+
+ // 显示结果
+ function showResult(containerId, success, message, data = null) {
+     const container = document.getElementById(containerId);
+     container.style.display = 'block';
+     container.className = `result-container ${success ? 'result-success' : 'result-error'}`;
+     
+     let html = `<h4>${success ? '✅ 成功' : '❌ 失败'}</h4><p>${message}</p>`;
+     
+     if (success && data) {
+         if (data.file_url) {
+             html += `<p><a href="${data.file_url}" class="btn btn-success" download>📥 下载压缩文件</a></p>`;
+             
+             // 保存当前压缩文件信息并显示全局按钮
+             currentZipFile = {
+                 file_url: data.file_url,
+                 file_name: data.file_path ? data.file_path.split('/').pop() : 'download.zip',
+                 compression_info: data.compression_info
+             };
+             showGlobalActions();
+         }
+         
+         if (data.compression_info && typeof data.compression_info === 'object') {
+             const info = data.compression_info;
+             console.log('压缩信息:', info); // 添加调试信息
+             html += `
+                 <div class="zip-info">
+                     <h4>📊 压缩文件信息</h4>
+                     <div class="info-item">
+                         <span class="info-label">压缩方法：</span>
+                         <span class="info-value">${info.compression_method || '未知'}</span>
+                     </div>
+                     ${info.file_count ? `
+                     <div class="info-item">
+                         <span class="info-label">文件数量：</span>
+                         <span class="info-value">${info.file_count}</span>
+                     </div>
+                     ` : ''}
+                     ${info.original_size ? `
+                     <div class="info-item">
+                         <span class="info-label">原始大小：</span>
+                         <span class="info-value">${formatFileSize(info.original_size)}</span>
+                     </div>
+                     ` : ''}
+                     ${info.compressed_size ? `
+                     <div class="info-item">
+                         <span class="info-label">压缩后大小：</span>
+                         <span class="info-value">${formatFileSize(info.compressed_size)}</span>
+                     </div>
+                     ` : ''}
+                     ${info.compression_ratio !== undefined && info.compression_ratio !== null ? `
+                     <div class="info-item">
+                         <span class="info-label">压缩率：</span>
+                         <span class="info-value">${parseFloat(info.compression_ratio).toFixed(1)}%</span>
+                     </div>
+                     ` : ''}
+                     <div class="info-item">
+                         <span class="info-label">文件大小：</span>
+                         <span class="info-value">${formatFileSize(info.file_size)}</span>
+                     </div>
+                     ${info.files && info.files.length > 0 ? `
+                     <div class="info-item">
+                         <span class="info-label">包含文件：</span>
+                         <span class="info-value">${info.files.slice(0, 5).join(', ')}${info.files.length > 5 ? '...' : ''}</span>
+                     </div>
+                     ` : ''}
+                 </div>
+             `;
+         }
+     }
+     
+     container.innerHTML = html;
+     
+     // 显示通知
+     if (success) {
+         showNotification(message, 'success');
+     } else {
+         showNotification(message, 'error');
+     }
+ }
+
+// 创建多文件ZIP
+async function createMultiFileZip() {
+    if (selectedFiles.multi.length === 0) {
+        alert('请选择要打包的文件');
+        return;
+    }
+    
+    const zipName = document.getElementById('multiZipName').value;
+    const compressionLevel = parseInt(document.getElementById('multiCompressionLevel').value);
+    const compressionMethod = document.getElementById('multiCompressionMethod').value;
+    const includePaths = document.getElementById('multiIncludePaths').checked;
+    
+    // 显示进度条
+    const progressInterval = showProgress('multiProgress', 'multiProgressText', 'multiProgressFill');
+    
+    try {
+        // 创建FormData对象
+        const formData = new FormData();
+        
+        // 添加文件
+        selectedFiles.multi.forEach(file => {
+            formData.append('files', file);
+        });
+        
+        // 添加其他参数
+        formData.append('zip_name', zipName);
+        formData.append('compression_level', compressionLevel);
+        formData.append('compression_method', compressionMethod);
+        formData.append('include_paths', includePaths);
+        
+        // 发送请求
+        const response = await fetch('/tools/api/zip/create-from-uploaded-files/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        // 隐藏进度条
+        clearInterval(progressInterval);
+        hideProgress('multiProgress');
+        
+        // 显示结果
+        showResult('multiResult', result.success, result.message, result);
+        
+    } catch (error) {
+        clearInterval(progressInterval);
+        hideProgress('multiProgress');
+        showResult('multiResult', false, '请求失败: ' + error.message);
+    }
+}
+
+// 创建目录ZIP
+async function createDirectoryZip() {
+    const directoryPath = document.getElementById('directoryPath').value.trim();
+    if (!directoryPath) {
+        alert('请输入目录路径');
+        return;
+    }
+    
+    const zipName = document.getElementById('dirZipName').value;
+    const compressionLevel = parseInt(document.getElementById('dirCompressionLevel').value);
+    const excludePatterns = document.getElementById('excludePatterns').value
+        .split(',').map(p => p.trim()).filter(p => p);
+    
+    // 显示进度条
+    const progressInterval = showProgress('dirProgress', 'dirProgressText', 'dirProgressFill');
+    
+    try {
+                 const response = await fetch('/tools/api/zip/create-from-directory/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                directory_path: directoryPath,
+                zip_name: zipName,
+                compression_level: compressionLevel,
+                exclude_patterns: excludePatterns
+            })
+        });
+        
+        const result = await response.json();
+        
+        // 隐藏进度条
+        clearInterval(progressInterval);
+        hideProgress('dirProgress');
+        
+        // 显示结果
+        showResult('dirResult', result.success, result.message, result);
+        
+    } catch (error) {
+        clearInterval(progressInterval);
+        hideProgress('dirProgress');
+        showResult('dirResult', false, '请求失败: ' + error.message);
+    }
+}
+
+// 压缩单个文件
+async function compressSingleFile() {
+    if (!selectedFiles.single) {
+        alert('请选择要压缩的文件');
+        return;
+    }
+    
+    const compressionLevel = parseInt(document.getElementById('singleCompressionLevel').value);
+    const compressionMethod = document.getElementById('singleCompressionMethod').value;
+    
+    // 显示进度条
+    const progressInterval = showProgress('singleProgress', 'singleProgressText', 'singleProgressFill');
+    
+    try {
+        // 创建FormData对象
+        const formData = new FormData();
+        
+        // 添加文件
+        formData.append('file', selectedFiles.single);
+        formData.append('compression_level', compressionLevel);
+        formData.append('compression_method', compressionMethod);
+        
+        // 发送请求
+        const response = await fetch('/tools/api/zip/compress-uploaded-file/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        // 隐藏进度条
+        clearInterval(progressInterval);
+        hideProgress('singleProgress');
+        
+        // 显示结果
+        showResult('singleResult', result.success, result.message, result);
+        
+    } catch (error) {
+        clearInterval(progressInterval);
+        hideProgress('singleProgress');
+        showResult('singleResult', false, '请求失败: ' + error.message);
+    }
+}
+
+// 解压ZIP文件
+async function extractZip() {
+    const zipPath = document.getElementById('extractZipPath').value.trim();
+    if (!zipPath) {
+        alert('请输入ZIP文件路径');
+        return;
+    }
+    
+    const extractTo = document.getElementById('extractToPath').value.trim();
+    
+    // 显示进度条
+    const progressInterval = showProgress('extractProgress', 'extractProgressText', 'extractProgressFill');
+    
+    try {
+                 const response = await fetch('/tools/api/zip/extract/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                zip_path: zipPath,
+                extract_to: extractTo
+            })
+        });
+        
+        const result = await response.json();
+        
+        // 隐藏进度条
+        clearInterval(progressInterval);
+        hideProgress('extractProgress');
+        
+        // 显示结果
+        showResult('extractResult', result.success, result.message, result);
+        
+    } catch (error) {
+        clearInterval(progressInterval);
+        hideProgress('extractProgress');
+        showResult('extractResult', false, '请求失败: ' + error.message);
+    }
+}
+
+ // 获取CSRF Token
+ function getCookie(name) {
+     let cookieValue = null;
+     if (document.cookie && document.cookie !== '') {
+         const cookies = document.cookie.split(';');
+         for (let i = 0; i < cookies.length; i++) {
+             const cookie = cookies[i].trim();
+             if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                 break;
+             }
+         }
+     }
+     return cookieValue;
+ }
+ 
+ // 全局按钮功能
+ let currentZipFile = null;
+ 
+ // 显示全局按钮
+ function showGlobalActions() {
+     document.getElementById('globalActions').style.display = 'flex';
+ }
+ 
+ // 隐藏全局按钮
+ function hideGlobalActions() {
+     document.getElementById('globalActions').style.display = 'none';
+ }
+ 
+ // 下载ZIP文件
+ document.getElementById('downloadZipBtn').addEventListener('click', function() {
+     if (currentZipFile && currentZipFile.file_url) {
+         const link = document.createElement('a');
+         link.href = currentZipFile.file_url;
+         link.download = currentZipFile.file_name || 'download.zip';
+         document.body.appendChild(link);
+         link.click();
+         document.body.removeChild(link);
+     } else {
+         alert('没有可下载的ZIP文件');
+     }
+ });
+ 
+ // 创建新ZIP
+ document.getElementById('createNewZipBtn').addEventListener('click', function() {
+     // 清空所有表单
+     clearAllForms();
+     // 隐藏全局按钮
+     hideGlobalActions();
+     // 重置当前ZIP文件
+     currentZipFile = null;
+     // 显示成功消息
+     showNotification('已清空表单，可以创建新的ZIP文件', 'success');
+ });
+ 
+ // 清空所有
+ document.getElementById('clearAllBtn').addEventListener('click', function() {
+     if (confirm('确定要清空所有内容吗？')) {
+         clearAllForms();
+         hideGlobalActions();
+         currentZipFile = null;
+         showNotification('已清空所有内容', 'success');
+     }
+ });
+ 
+ // 清空所有表单
+ function clearAllForms() {
+     // 清空文件选择
+     selectedFiles.multi = [];
+     selectedFiles.single = null;
+     displayFileList('multiFileList', []);
+     displayFileList('singleFileList', []);
+     
+     // 清空输入框
+     document.getElementById('multiZipName').value = '';
+     document.getElementById('directoryPath').value = '';
+     document.getElementById('dirZipName').value = '';
+     document.getElementById('excludePatterns').value = '';
+     document.getElementById('extractZipPath').value = '';
+     document.getElementById('extractToPath').value = '';
+     
+     // 重置滑块
+     document.getElementById('multiCompressionLevel').value = 6;
+     document.getElementById('dirCompressionLevel').value = 6;
+     document.getElementById('singleCompressionLevel').value = 9;
+     document.querySelectorAll('.compression-slider').forEach(slider => {
+         const valueDisplay = slider.parentElement.querySelector('.compression-value') || 
+                            slider.parentElement.querySelector('span');
+         if (valueDisplay) {
+             valueDisplay.textContent = slider.value;
+         }
+     });
+     
+     // 清空结果容器
+     document.querySelectorAll('.result-container').forEach(container => {
+         container.style.display = 'none';
+         container.innerHTML = '';
+     });
+     
+     // 重置复选框
+     document.getElementById('multiIncludePaths').checked = true;
+ }
+ 
+ // 显示通知
+ function showNotification(message, type = 'info') {
+     const notification = document.createElement('div');
+     notification.className = `notification notification-${type}`;
+     notification.innerHTML = `
+         <div class="notification-content">
+             <span class="notification-message">${message}</span>
+             <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+         </div>
+     `;
+     
+     // 添加通知样式
+     notification.style.cssText = `
+         position: fixed;
+         top: 20px;
+         right: 20px;
+         background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+         color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+         padding: 15px 20px;
+         border-radius: 8px;
+         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+         z-index: 1001;
+         max-width: 300px;
+         animation: slideIn 0.3s ease;
+     `;
+     
+     document.body.appendChild(notification);
+     
+     // 自动移除通知
+     setTimeout(() => {
+         if (notification.parentElement) {
+             notification.remove();
+         }
+     }, 5000);
+ }
+ 
+ // 添加通知动画样式
+ const style = document.createElement('style');
+ style.textContent = `
+     @keyframes slideIn {
+         from {
+             transform: translateX(100%);
+             opacity: 0;
+         }
+         to {
+             transform: translateX(0);
+             opacity: 1;
+         }
+     }
+     
+     .notification-content {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+     }
+     
+     .notification-close {
+         background: none;
+         border: none;
+         font-size: 18px;
+         cursor: pointer;
+         margin-left: 10px;
+         opacity: 0.7;
+     }
+     
+     .notification-close:hover {
+         opacity: 1;
+     }
+ `;
+ document.head.appendChild(style);
+
+// 拖拽上传支持
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZones = document.querySelectorAll('.file-input-label');
+    
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.background = 'rgba(102, 126, 234, 0.2)';
+        });
+        
+        zone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.background = 'rgba(102, 126, 234, 0.05)';
+        });
+        
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.background = 'rgba(102, 126, 234, 0.05)';
+            
+            const files = Array.from(e.dataTransfer.files);
+            const input = this.previousElementSibling;
+            
+            if (input.id === 'multiFileInput') {
+                selectedFiles.multi = files;
+                displayFileList('multiFileList', files);
+            } else if (input.id === 'singleFileInput') {
+                selectedFiles.single = files[0];
+                displayFileList('singleFileList', files[0] ? [files[0]] : []);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

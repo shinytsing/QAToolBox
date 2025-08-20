@@ -100,12 +100,20 @@ def create_initial_data():
                 'sort_order': 2
             },
             {
+                'name': 'RoboNeo',
+                'url': 'https://www.roboneo.com/home',
+                'category': 'visual',
+                'description': 'AI视觉创作平台，提供先进的图像生成和编辑功能',
+                'icon_url': 'https://www.google.com/s2/favicons?domain=roboneo.com',
+                'sort_order': 3
+            },
+            {
                 'name': 'GitHub Copilot',
                 'url': 'https://github.com/features/copilot',
                 'category': 'programming',
                 'description': 'AI编程助手',
                 'icon_url': 'https://github.githubassets.com/images/modules/copilot/cp-head-square.png',
-                'sort_order': 3
+                'sort_order': 4
             },
             {
                 'name': 'Notion AI',
@@ -113,21 +121,21 @@ def create_initial_data():
                 'category': 'other',
                 'description': 'AI驱动的笔记和协作工具',
                 'icon_url': 'https://www.notion.so/images/favicon.ico',
-                'sort_order': 4
+                'sort_order': 5
             },
             {
                 'name': 'Viggle AI',
                 'url': 'https://viggle.ai/home',
                 'category': 'image',
                 'description': 'AI视频生成工具，创建动态视频内容',
-                'sort_order': 5
+                'sort_order': 6
             },
             {
                 'name': 'MiniMax',
                 'url': 'https://www.minimaxi.com/',
                 'category': 'other',
                 'description': '全栈自研的新一代AI模型矩阵，包含文本、视频、音频等多种AI能力',
-                'sort_order': 6
+                'sort_order': 7
             }
         ]
         
