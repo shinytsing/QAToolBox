@@ -1,10 +1,10 @@
-# 生产环境依赖
+# 生产环境依赖 - Python 3.9兼容
 -r base.txt
 
 # 生产环境特有依赖
 gevent==23.9.1
 psycopg2-binary==2.9.9
-sentry-sdk[django]==1.40.4
+sentry-sdk[django]==1.38.0
 structlog==23.2.0
 django-csp==3.7
 whitenoise==6.6.0
