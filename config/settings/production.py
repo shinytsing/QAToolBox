@@ -81,6 +81,14 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.shenyiqing.xin",
 ]
 
+# 允许的主机
+ALLOWED_HOSTS = [
+    'shenyiqing.xin',
+    'www.shenyiqing.xin',
+    '47.103.143.152',
+    'localhost',
+]
+
 # 生产环境安全头
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'

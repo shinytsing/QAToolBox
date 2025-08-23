@@ -1,0 +1,56 @@
+# 简化版Dockerfile，用于快速部署
+FROM python:3.11-slim
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    netcat-traditional \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制requirements文件并安装Python依赖
+COPY requirements/ /app/requirements/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements/production.txt
+
+# 复制项目文件
+COPY . /app/
+
+# 创建必要的目录
+RUN mkdir -p /app/logs /app/media /app/staticfiles
+
+# 创建启动脚本
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "等待数据库..."\n\
+while ! nc -z db 5432; do sleep 1; done\n\
+echo "运行迁移..."\n\
+python manage.py migrate --noinput\n\
+echo "收集静态文件..."\n\
+python manage.py collectstatic --noinput --clear\n\
+echo "创建管理员用户..."\n\
+python manage.py shell -c "\
+from django.contrib.auth import get_user_model;\
+User = get_user_model();\
+if not User.objects.filter(username=\"admin\").exists():\
+    User.objects.create_superuser(\"admin\", \"admin@shenyiqing.xin\", \"admin123456\")\
+"\n\
+echo "启动服务..."\n\
+exec gunicorn --bind 0.0.0.0:8000 --workers 2 config.wsgi:application\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["/app/start.sh"]
