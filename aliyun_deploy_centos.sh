@@ -54,13 +54,50 @@ print_info "域名: shenyiqing.xin"
 print_info "包管理器: $PKG_MANAGER"
 echo ""
 
-# 1. 更新系统
-print_step "1/15 更新系统包..."
+# 1. 检查并修复CentOS 8源问题
+print_step "1/16 检查系统版本和修复源配置..."
+CENTOS_VERSION=""
+if [ -f /etc/centos-release ]; then
+    CENTOS_VERSION=$(cat /etc/centos-release | grep -oE '[0-9]+' | head -1)
+    print_info "检测到CentOS版本: $CENTOS_VERSION"
+    
+    if [ "$CENTOS_VERSION" = "8" ]; then
+        print_warning "检测到CentOS 8，正在修复源配置..."
+        
+        # 备份原始源
+        sudo mkdir -p /etc/yum.repos.d.backup
+        sudo cp /etc/yum.repos.d/*.repo /etc/yum.repos.d.backup/ 2>/dev/null || true
+        
+        # 替换为vault源
+        sudo sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+        sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+        
+        # 修复EPEL源
+        if [ -f /etc/yum.repos.d/CentOS-epel.repo ]; then
+            sudo sed -i '/failovermethod/d' /etc/yum.repos.d/CentOS-epel.repo
+        fi
+        
+        print_info "CentOS 8源配置已修复"
+    fi
+fi
+
+# 2. 更新系统
+print_step "2/16 更新系统包..."
+sudo $PKG_MANAGER clean all
 sudo $PKG_MANAGER update -y
 
-# 2. 安装基础软件
-print_step "2/15 安装基础软件..."
-sudo $PKG_MANAGER install -y curl wget git unzip epel-release
+# 3. 安装基础软件
+print_step "3/16 安装基础软件..."
+sudo $PKG_MANAGER install -y curl wget git unzip
+
+# 安装EPEL仓库
+if [ "$CENTOS_VERSION" = "8" ]; then
+    # CentOS 8使用powertools仓库
+    sudo $PKG_MANAGER config-manager --set-enabled powertools 2>/dev/null || sudo $PKG_MANAGER config-manager --set-enabled PowerTools 2>/dev/null || true
+    sudo $PKG_MANAGER install -y epel-release
+else
+    sudo $PKG_MANAGER install -y epel-release
+fi
 
 # 安装额外仓库
 if [ "$PKG_MANAGER" = "yum" ]; then
@@ -72,8 +109,8 @@ fi
 sudo $PKG_MANAGER groupinstall -y "Development Tools"
 sudo $PKG_MANAGER install -y openssl-devel libffi-devel python3-devel
 
-# 3. 安装Docker
-print_step "3/15 安装Docker..."
+# 4. 安装Docker
+print_step "4/16 安装Docker..."
 if ! command -v docker &> /dev/null; then
     # 卸载旧版本
     sudo $PKG_MANAGER remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
@@ -99,8 +136,8 @@ else
     print_info "Docker已安装"
 fi
 
-# 4. 安装Docker Compose
-print_step "4/15 安装Docker Compose..."
+# 5. 安装Docker Compose
+print_step "5/16 安装Docker Compose..."
 if ! command -v docker-compose &> /dev/null; then
     sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
@@ -110,12 +147,12 @@ else
 fi
 
 # 5. 安装Nginx
-print_step "5/15 安装Nginx..."
+print_step "6/16 安装Nginx..."
 sudo $PKG_MANAGER install -y nginx
 sudo systemctl enable nginx
 
 # 6. 安装Certbot (SSL证书)
-print_step "6/15 安装Certbot..."
+print_step "7/16 安装Certbot..."
 if [ "$PKG_MANAGER" = "dnf" ]; then
     sudo $PKG_MANAGER install -y certbot python3-certbot-nginx
 else
@@ -124,7 +161,7 @@ else
 fi
 
 # 7. 配置防火墙
-print_step "7/15 配置防火墙..."
+print_step "8/16 配置防火墙..."
 if command -v firewall-cmd &> /dev/null; then
     # 使用firewalld
     sudo systemctl enable firewalld
@@ -158,7 +195,7 @@ fi
 
 # 8. 安装SELinux工具（如果启用了SELinux）
 if command -v getenforce &> /dev/null && [ "$(getenforce)" != "Disabled" ]; then
-    print_step "8/15 配置SELinux..."
+    print_step "9/16 配置SELinux..."
     sudo $PKG_MANAGER install -y policycoreutils-python-utils
     
     # 允许nginx连接网络
@@ -169,11 +206,11 @@ if command -v getenforce &> /dev/null && [ "$(getenforce)" != "Disabled" ]; then
     
     print_info "SELinux配置完成"
 else
-    print_step "8/15 跳过SELinux配置（未启用或已禁用）"
+    print_step "9/16 跳过SELinux配置（未启用或已禁用）"
 fi
 
-# 9. 克隆项目
-print_step "9/15 克隆QAToolBox项目..."
+# 10. 克隆项目
+print_step "10/16 克隆QAToolBox项目..."
 cd /home/$USER
 if [ -d "QAToolbox" ]; then
     print_warning "项目目录已存在，正在更新..."
@@ -184,8 +221,8 @@ else
     cd QAToolbox
 fi
 
-# 10. 创建环境变量文件
-print_step "10/15 创建环境变量文件..."
+# 11. 创建环境变量文件
+print_step "11/16 创建环境变量文件..."
 cat > .env << EOF
 # 数据库配置
 DB_NAME=qatoolbox
@@ -223,8 +260,8 @@ EOF
 
 print_info "环境变量文件创建完成"
 
-# 11. 创建生产环境Docker Compose文件
-print_step "11/15 创建生产环境配置..."
+# 12. 创建生产环境Docker Compose文件
+print_step "12/16 创建生产环境配置..."
 cat > docker-compose.prod.yml << 'EOF'
 version: '3.8'
 
@@ -332,8 +369,8 @@ volumes:
   media_volume:
 EOF
 
-# 12. 创建生产环境Dockerfile
-print_step "12/15 创建生产环境Dockerfile..."
+# 13. 创建生产环境Dockerfile
+print_step "13/16 创建生产环境Dockerfile..."
 cat > Dockerfile.prod << 'EOF'
 # 多阶段构建
 FROM python:3.11-slim as builder
@@ -411,8 +448,8 @@ RUN chmod +x /app/start_prod.sh
 CMD ["/app/start_prod.sh"]
 EOF
 
-# 13. 创建启动脚本
-print_step "13/15 创建启动脚本..."
+# 14. 创建启动脚本
+print_step "14/16 创建启动脚本..."
 cat > start_prod.sh << 'EOF'
 #!/bin/bash
 
@@ -469,8 +506,8 @@ EOF
 
 chmod +x start_prod.sh
 
-# 14. 创建Nginx配置
-print_step "14/15 创建Nginx配置..."
+# 15. 创建Nginx配置
+print_step "15/16 创建Nginx配置..."
 mkdir -p nginx
 
 cat > nginx/nginx.conf << 'EOF'
@@ -652,8 +689,8 @@ http {
 }
 EOF
 
-# 15. 创建管理脚本
-print_step "15/15 创建管理脚本..."
+# 16. 创建管理脚本
+print_step "16/16 创建管理脚本..."
 cat > manage_service.sh << 'EOF'
 #!/bin/bash
 
