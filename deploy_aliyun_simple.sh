@@ -70,8 +70,8 @@ create_env_file() {
     if [ ! -f .env ]; then
         log_info "创建 .env 文件..."
         
-        # 生成随机密钥
-        SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
+        # 生成随机密钥（不依赖Python3）
+        SECRET_KEY=$(openssl rand -base64 50 | tr -d "=+/" | cut -c1-50)
         DB_PASSWORD=$(openssl rand -base64 32)
         
         cat > .env << EOF
