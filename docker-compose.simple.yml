@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # 主应用服务
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qatoolbox:latest
+    container_name: qatoolbox_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key-here}
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-password123}@db:5432/qatoolbox
+      - REDIS_URL=redis://redis:6379/0
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - qatoolbox_network
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL数据库
+  db:
+    image: postgres:15-alpine
+    container_name: qatoolbox_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=qatoolbox
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - qatoolbox_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d qatoolbox"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: qatoolbox_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - qatoolbox_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery后台任务（可选）
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qatoolbox:latest
+    container_name: qatoolbox_celery
+    restart: unless-stopped
+    command: celery -A QAToolBox worker -l info --concurrency=2
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key-here}
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-password123}@db:5432/qatoolbox
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - media_volume:/app/media
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - qatoolbox_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+networks:
+  qatoolbox_network:
+    driver: bridge
