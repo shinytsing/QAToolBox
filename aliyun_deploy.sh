@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # QAToolBox 阿里云一键部署脚本
-# 使用方法: curl -fsSL https://raw.githubusercontent.com/gaojie058/QAToolBox/main/aliyun_deploy.sh | bash
+# 使用方法: curl -fsSL https://raw.githubusercontent.com/shinytsing/QAToolbox/main/aliyun_deploy.sh | bash
 
 set -e
 
@@ -101,13 +101,13 @@ sudo ufw --force enable
 # 8. 克隆项目
 print_step "8/15 克隆QAToolBox项目..."
 cd /home/$USER
-if [ -d "QAToolBox" ]; then
+if [ -d "QAToolbox" ]; then
     print_warning "项目目录已存在，正在更新..."
-    cd QAToolBox
+    cd QAToolbox
     git pull origin main
 else
-    git clone https://github.com/gaojie058/QAToolBox.git
-    cd QAToolBox
+    git clone https://github.com/shinytsing/QAToolbox.git
+    cd QAToolbox
 fi
 
 # 9. 创建环境变量文件
@@ -585,7 +585,7 @@ cat > manage_service.sh << 'EOF'
 
 # QAToolBox服务管理脚本
 
-PROJECT_DIR="/home/$USER/QAToolBox"
+PROJECT_DIR="/home/$USER/QAToolbox"
 COMPOSE_FILE="docker-compose.prod.yml"
 
 cd $PROJECT_DIR
@@ -683,7 +683,7 @@ After=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/home/$USER/QAToolBox
+WorkingDirectory=/home/$USER/QAToolbox
 ExecStart=/usr/local/bin/docker-compose -f docker-compose.prod.yml up -d
 ExecStop=/usr/local/bin/docker-compose -f docker-compose.prod.yml down
 TimeoutStartSec=0

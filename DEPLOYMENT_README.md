@@ -5,7 +5,7 @@
 在你的阿里云服务器上运行以下命令即可完成部署：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/gaojie058/QAToolBox/main/aliyun_deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/shinytsing/QAToolbox/main/aliyun_deploy.sh | bash
 ```
 
 ## 服务器信息
@@ -68,7 +68,7 @@ curl -fsSL https://raw.githubusercontent.com/gaojie058/QAToolBox/main/aliyun_dep
 
 ```bash
 # 进入项目目录
-cd ~/QAToolBox
+cd ~/QAToolbox
 
 # 启动服务
 ./manage_service.sh start
@@ -100,7 +100,7 @@ cd ~/QAToolBox
 如需启用HTTPS，请执行：
 
 ```bash
-cd ~/QAToolBox
+cd ~/QAToolbox
 ./manage_service.sh ssl
 ```
 
@@ -237,7 +237,7 @@ docker-compose -f docker-compose.prod.yml exec web python manage.py collectstati
 ## 更新部署
 
 ```bash
-cd ~/QAToolBox
+cd ~/QAToolbox
 
 # 拉取最新代码
 git pull origin main
