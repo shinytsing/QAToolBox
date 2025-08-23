@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iframe编码测试</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background-color: #f5f5f5; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .test-iframe { 
+            width: 100%; 
+            height: 600px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 4px; 
+            margin: 20px 0; 
+        }
+        .test-content {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .log {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 iframe内容编码测试</h1>
+        
+        <div class="test-content">
+            <h3>测试不同编码的内容显示：</h3>
+            <button class="test-button" onclick="testUtf8Content()">测试UTF-8中文内容</button>
+            <button class="test-button" onclick="testGBKContent()">测试GBK编码内容</button>
+            <button class="test-button" onclick="testBlobUrl()">测试Blob URL方式</button>
+            <button class="test-button" onclick="testSrcdoc()">测试srcdoc方式</button>
+            <button class="test-button" onclick="testYouTube()">测试YouTube页面</button>
+            <button class="test-button" onclick="clearFrame()">清空iframe</button>
+        </div>
+
+        <iframe id="testFrame" class="test-iframe" sandbox="allow-same-origin allow-scripts"></iframe>
+        
+        <div id="log" class="log">📋 测试日志：\n</div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function testUtf8Content() {
+            log('测试UTF-8中文内容...');
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>UTF-8测试</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #333; }
+                        p { line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <h1>🌟 UTF-8编码测试</h1>
+                    <p>这是一段中文内容，包含各种字符：</p>
+                    <ul>
+                        <li>中文字符：你好世界</li>
+                        <li>英文字符：Hello World</li>
+                        <li>数字：123456789</li>
+                        <li>特殊符号：！@#￥%……&*（）</li>
+                        <li>Emoji：😀🎉🔥💻🌈</li>
+                    </ul>
+                    <p>如果您能正确看到所有内容，说明UTF-8编码工作正常。</p>
+                </body>
+                </html>
+            `;
+            
+            const iframe = document.getElementById('testFrame');
+            iframe.srcdoc = content;
+            log('✅ UTF-8内容已加载到iframe');
+        }
+
+        function testGBKContent() {
+            log('测试GBK编码内容...');
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="GBK">
+                    <title>GBK测试</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <h1>GBK编码测试</h1>
+                    <p>这是使用GBK编码的内容</p>
+                    <p>如果显示正常，说明编码处理正确</p>
+                </body>
+                </html>
+            `;
+            
+            const iframe = document.getElementById('testFrame');
+            iframe.srcdoc = content;
+            log('✅ GBK内容已加载到iframe');
+        }
+
+        function testBlobUrl() {
+            log('测试Blob URL方式...');
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Blob URL测试</title>
+                    <style>
+                        body { 
+                            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+                            padding: 20px; 
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                        }
+                        .card {
+                            background: rgba(255,255,255,0.1);
+                            padding: 20px;
+                            border-radius: 10px;
+                            backdrop-filter: blur(10px);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="card">
+                        <h1>🎨 Blob URL测试</h1>
+                        <p>这个内容通过Blob URL加载，可以避免编码问题。</p>
+                        <p>中文内容：代理浏览器测试页面</p>
+                        <p>特殊字符：©®™€£¥</p>
+                        <p>如果显示正常，说明Blob URL方式工作良好。</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const iframe = document.getElementById('testFrame');
+            const blob = new Blob([content], { type: 'text/html; charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            iframe.onload = () => {
+                URL.revokeObjectURL(blobUrl);
+                log('✅ Blob URL内容加载完成');
+            };
+            
+            iframe.src = blobUrl;
+            log('🔄 正在加载Blob URL内容...');
+        }
+
+        function testSrcdoc() {
+            log('测试srcdoc方式...');
+            const content = `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>srcdoc测试</title>
+                    <style>
+                        body { 
+                            font-family: 'Segoe UI', sans-serif; 
+                            padding: 20px;
+                            background: #f0f2f5;
+                        }
+                        .content {
+                            background: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="content">
+                        <h1>📄 srcdoc方式测试</h1>
+                        <p>使用iframe的srcdoc属性直接设置HTML内容</p>
+                        <p>中文测试：这是中文内容</p>
+                        <p>如果显示正常，说明srcdoc方式有效。</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const iframe = document.getElementById('testFrame');
+            iframe.src = '';
+            iframe.srcdoc = content;
+            log('✅ srcdoc内容已设置');
+        }
+
+        function testYouTube() {
+            log('测试YouTube页面（模拟）...');
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>YouTube模拟页面</title>
+                    <style>
+                        body { 
+                            font-family: Roboto, Arial, sans-serif; 
+                            margin: 0; 
+                            padding: 20px;
+                            background-color: #0f0f0f;
+                            color: white;
+                        }
+                        .header {
+                            background-color: #212121;
+                            padding: 10px 20px;
+                            margin: -20px -20px 20px -20px;
+                        }
+                        .logo {
+                            color: #ff0000;
+                            font-size: 24px;
+                            font-weight: bold;
+                        }
+                        .video-item {
+                            background-color: #1a1a1a;
+                            padding: 15px;
+                            margin: 10px 0;
+                            border-radius: 8px;
+                        }
+                        .video-title {
+                            color: #ffffff;
+                            font-size: 16px;
+                            margin-bottom: 5px;
+                        }
+                        .video-desc {
+                            color: #aaaaaa;
+                            font-size: 14px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="logo">📺 YouTube (模拟)</div>
+                    </div>
+                    
+                    <div class="video-item">
+                        <div class="video-title">代理浏览器测试视频</div>
+                        <div class="video-desc">这是一个模拟的YouTube页面，用来测试iframe显示效果。</div>
+                    </div>
+                    
+                    <div class="video-item">
+                        <div class="video-title">中文内容测试</div>
+                        <div class="video-desc">测试中文字符显示：你好世界！这是代理服务器测试。</div>
+                    </div>
+                    
+                    <div class="video-item">
+                        <div class="video-title">编码测试</div>
+                        <div class="video-desc">特殊字符：©®™ Emoji：🎥🎬🎭 如果都能正确显示，说明编码处理正确。</div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const iframe = document.getElementById('testFrame');
+            const blob = new Blob([content], { type: 'text/html; charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            iframe.onload = () => {
+                URL.revokeObjectURL(blobUrl);
+                log('✅ YouTube模拟页面加载完成');
+            };
+            
+            iframe.src = blobUrl;
+            log('🔄 正在加载YouTube模拟页面...');
+        }
+
+        function clearFrame() {
+            log('清空iframe...');
+            const iframe = document.getElementById('testFrame');
+            iframe.src = '';
+            iframe.srcdoc = '';
+            log('✅ iframe已清空');
+        }
+
+        // 页面加载完成时的初始化
+        window.onload = function() {
+            log('📋 iframe编码测试页面已加载');
+            log('👆 点击上方按钮来测试不同的内容加载方式');
+        };
+    </script>
+</body>
+</html>

@@ -18,7 +18,7 @@ Including another URLconf
 import time
 from django.contrib import admin
 from django.urls import include, path
-from views import home_view, tool_view, welcome_view, theme_demo_view, version_history_view, help_page_view, custom_static_serve
+from views import home_view, tool_view, welcome_view, theme_demo_view, version_history_view, help_page_view, custom_static_serve, secure_media_serve
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
@@ -65,8 +65,14 @@ if settings.DEBUG:
     urlpatterns += [
         path('static/<path:path>', custom_static_serve, name='custom_static'),
     ]
+    # 开发环境添加debug_toolbar
     try:
         import debug_toolbar
         urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
     except ImportError:
         pass
+else:
+    # 生产环境使用安全的媒体文件服务
+    urlpatterns += [
+        path('media/<path:path>', secure_media_serve, name='secure_media'),
+    ]

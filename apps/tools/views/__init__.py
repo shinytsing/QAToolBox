@@ -6,8 +6,20 @@ from .music_views import *
 from .vanity_views import *
 from .desire_views import *
 from .travel_views import *
-from .chat_views import *
-from .social_media_views import *
+# from .chat_views import *  # 暂时注释掉，直到修复导入问题
+from .social_media_views import (
+    social_subscription_demo,
+    add_social_subscription_api,
+    get_subscriptions_api,
+    update_subscription_api,
+    get_notifications_api,
+    mark_notification_read_api,
+    get_subscription_stats_api,
+    delete_subscription_api,
+    batch_update_subscriptions_api,
+    batch_delete_subscriptions_api,
+    SocialMediaAPIView,
+)
 from .diary_views import *
 from .goal_views import *
 from .health_views import *
@@ -102,3 +114,6 @@ from ..legacy_views import (
     admin_required,
     validate_budget_range,
 )
+
+# 通用文件下载视图
+from .file_download_views import generic_file_download

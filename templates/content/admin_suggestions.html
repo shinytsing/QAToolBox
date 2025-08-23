@@ -719,13 +719,13 @@ button, a, input, select, textarea {
                             <p class="mb-0 mt-2 opacity-75 geek-subtitle" data-zh="高效管理用户建议，快速响应反馈" data-en="Efficiently manage user suggestions and respond to feedback quickly">高效管理用户建议，快速响应反馈</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="{% url 'admin_dashboard' %}" class="btn-modern btn-secondary-modern">
+                            <a href="{% url 'content:admin_dashboard' %}" class="btn-modern btn-secondary-modern">
                                 <i class="fas fa-tachometer-alt"></i> <span data-zh="仪表盘" data-en="Dashboard">仪表盘</span>
                             </a>
-                            <a href="{% url 'admin_user_management' %}" class="btn-modern btn-secondary-modern">
+                            <a href="{% url 'users:admin_user_management' %}" class="btn-modern btn-secondary-modern">
                                 <i class="fas fa-users-cog"></i> <span data-zh="用户管理" data-en="User Management">用户管理</span>
                             </a>
-                            <a href="{% url 'admin_feedback' %}" class="btn-modern btn-secondary-modern">
+                            <a href="{% url 'content:admin_feedback' %}" class="btn-modern btn-secondary-modern">
                                 <i class="fas fa-comments"></i> <span data-zh="反馈管理" data-en="Feedback Management">反馈管理</span>
                             </a>
                         </div>

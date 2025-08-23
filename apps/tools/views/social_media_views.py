@@ -60,15 +60,8 @@ def add_social_subscription_api(request):
             subscription_types=data.get('subscription_types', ['newPosts']),
             check_frequency=data.get('check_frequency', 30),
             status='active',
-            last_check_time=timezone.now(),
-            next_check_time=timezone.now() + timedelta(minutes=data.get('check_frequency', 30)),
-            notification_enabled=data.get('notification_enabled', True),
-            email_notification=data.get('email_notification', False),
-            custom_keywords=data.get('custom_keywords', []),
-            exclude_keywords=data.get('exclude_keywords', []),
-            max_posts_per_check=data.get('max_posts_per_check', 10),
-            auto_archive_old_posts=data.get('auto_archive_old_posts', True),
-            archive_after_days=data.get('archive_after_days', 30),
+            # 使用模型中存在的字段
+            # last_check 字段会自动设置为当前时间（auto_now=True）
         )
         
         # 清除相关缓存
@@ -147,12 +140,9 @@ def update_subscription_api(request):
                                        id=data['subscription_id'], 
                                        user=user)
         
-        # 更新字段
+        # 更新字段 - 只更新模型中存在的字段
         update_fields = [
-            'subscription_types', 'check_frequency', 'status',
-            'notification_enabled', 'email_notification', 'custom_keywords',
-            'exclude_keywords', 'max_posts_per_check', 'auto_archive_old_posts',
-            'archive_after_days'
+            'subscription_types', 'check_frequency', 'status'
         ]
         
         for field in update_fields:
@@ -239,7 +229,6 @@ def mark_notification_read_api(request):
                                        subscription__user=user)
         
         notification.is_read = True
-        notification.read_at = timezone.now()
         notification.save()
         
         # 清除相关缓存

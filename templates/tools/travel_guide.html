@@ -103,6 +103,258 @@
   opacity: 0.8;
 }
 
+/* 好心人攻略相关样式 */
+.guides-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.create-guide-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.create-guide-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.create-guide-form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.form-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.form-file {
+  width: 100%;
+  padding: 1rem;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-file:hover {
+  border-color: #4CAF50;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.form-file:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.good-people-guide {
+  border-left: 4px solid #4CAF50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+}
+
+.good-people-guide:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.1));
+}
+
+.guide-badge.featured {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+}
+
+.guide-badge {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 好心人攻略详情页面样式 */
+.guide-detail-info {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.guide-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.info-item i {
+  color: #4CAF50;
+  width: 16px;
+}
+
+.guide-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.guide-tag {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.guide-summary-section,
+.guide-content-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.guide-summary-section h3,
+.guide-content-section h3 {
+  color: #ffffff;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.guide-summary-section p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.guide-content {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.8;
+}
+
+.guide-content h1,
+.guide-content h2,
+.guide-content h3 {
+  color: #ffffff;
+  margin: 1.5rem 0 1rem 0;
+}
+
+.guide-content h1 {
+  font-size: 1.5rem;
+}
+
+.guide-content h2 {
+  font-size: 1.3rem;
+}
+
+.guide-content h3 {
+  font-size: 1.1rem;
+}
+
+.guide-content p {
+  margin-bottom: 1rem;
+}
+
+.guide-content ul {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.guide-content li {
+  margin-bottom: 0.5rem;
+}
+
+.guide-content a {
+  color: #4CAF50;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.guide-content a:hover {
+  color: #45a049;
+  border-bottom-color: #45a049;
+}
+
+.guide-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.guide-content em {
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
 .travel-header {
   text-align: center;
   margin-bottom: 3rem;
@@ -2296,7 +2548,7 @@
   </div>
 
   <!-- 导航按钮 -->
-  <div class="nav-buttons">
+  <div class="nav-buttons" style="display: none;">
     <button class="nav-btn active" onclick="showTravelForm()">新建攻略</button>
     <button class="nav-btn" onclick="showGuidesList()">我的攻略</button>
     <button class="nav-btn" onclick="showGoodPeopleGuides()">好心人攻略</button>
@@ -2511,15 +2763,20 @@
   </div>
 
   <!-- 攻略列表 -->
-  <div id="guidesList" class="guide-result" style="display: none;">
+  <div id="guidesList" class="guide-result" style="display: none !important;">
     <h2 class="guide-title">我的旅游攻略</h2>
     <div id="guidesContainer"></div>
   </div>
 
   <!-- 好心人攻略列表 -->
-  <div id="goodPeopleGuidesList" class="guide-result" style="display: none;">
+  <div id="goodPeopleGuidesList" class="guide-result" style="display: none !important;">
     <div class="guides-header">
       <h2 class="guide-title">好心人攻略</h2>
+      <div class="guides-actions">
+        <button class="create-guide-btn" onclick="showCreateGuideForm()">
+          <i class="fas fa-plus"></i> 创建攻略
+        </button>
+      </div>
       <div class="search-filters">
         <input type="text" id="searchDestination" placeholder="搜索目的地..." class="search-input">
         <select id="filterTravelStyle" class="filter-select">
@@ -2542,8 +2799,106 @@
     </div>
   </div>
 
+  <!-- 创建好心人攻略表单 -->
+  <div id="createGuideForm" class="guide-result" style="display: none !important;">
+    <div class="guide-detail-header">
+      <button class="back-btn" onclick="showGoodPeopleGuides()">
+        <i class="fas fa-arrow-left"></i> 返回列表
+      </button>
+      <h2 class="guide-title">创建好心人攻略</h2>
+    </div>
+    
+    <div class="create-guide-form">
+      <div class="form-group">
+        <label class="form-label">攻略标题 *</label>
+        <input type="text" id="createGuideTitle" class="form-input" placeholder="请输入攻略标题，如：北京3日游完美攻略" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">目的地 *</label>
+        <input type="text" id="createGuideDestination" class="form-input" placeholder="请输入目的地，如：北京、上海、重庆..." required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">旅行风格</label>
+        <select id="createGuideTravelStyle" class="form-select">
+          <option value="general">通用型</option>
+          <option value="adventure">冒险型</option>
+          <option value="leisure">休闲型</option>
+          <option value="cultural">文化型</option>
+          <option value="foodie">美食型</option>
+          <option value="shopping">购物型</option>
+          <option value="photography">摄影型</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">预算范围</label>
+        <select id="createGuideBudgetRange" class="form-select">
+          <option value="budget">经济型 (3000元以下)</option>
+          <option value="medium" selected>舒适型 (3000-8000元)</option>
+          <option value="luxury">豪华型 (8000-15000元)</option>
+          <option value="premium">奢华型 (15000元以上)</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">旅行时长</label>
+        <select id="createGuideTravelDuration" class="form-select">
+          <option value="1-2天">1-2天</option>
+          <option value="3-5天" selected>3-5天</option>
+          <option value="1周">1周</option>
+          <option value="2周">2周</option>
+          <option value="1个月">1个月</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">兴趣偏好 (可多选)</label>
+        <div class="interests-container" id="createGuideInterests">
+          <div class="interest-tag" data-interest="美食">美食</div>
+          <div class="interest-tag" data-interest="文化">文化</div>
+          <div class="interest-tag" data-interest="自然">自然</div>
+          <div class="interest-tag" data-interest="购物">购物</div>
+          <div class="interest-tag" data-interest="历史">历史</div>
+          <div class="interest-tag" data-interest="艺术">艺术</div>
+          <div class="interest-tag" data-interest="运动">运动</div>
+          <div class="interest-tag" data-interest="摄影">摄影</div>
+          <div class="interest-tag" data-interest="夜生活">夜生活</div>
+          <div class="interest-tag" data-interest="温泉">温泉</div>
+          <div class="interest-tag" data-interest="海滩">海滩</div>
+          <div class="interest-tag" data-interest="登山">登山</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">攻略摘要</label>
+        <textarea id="createGuideSummary" class="form-textarea" placeholder="请输入攻略摘要，简要描述攻略的亮点和特色..." rows="3"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">攻略内容 *</label>
+        <textarea id="createGuideContent" class="form-textarea" placeholder="请输入详细的攻略内容，包括行程安排、景点推荐、美食推荐、住宿建议、交通指南、预算明细等..." rows="15" required></textarea>
+        <small class="form-hint">支持Markdown格式，可以使用**粗体**、*斜体*、[链接](url)等格式</small>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">附件上传 (可选)</label>
+        <input type="file" id="createGuideAttachment" class="form-file" accept=".pdf,.doc,.docx,.txt,.md">
+        <small class="form-hint">支持PDF、Word、TXT、Markdown格式，最大10MB</small>
+      </div>
+      
+      <div class="form-actions">
+        <button class="action-btn secondary" onclick="showGoodPeopleGuides()">取消</button>
+        <button class="action-btn primary" onclick="submitCreateGuide()">
+          <i class="fas fa-save"></i> 发布攻略
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 好心人攻略详情 -->
-  <div id="goodPeopleGuideDetail" class="guide-result" style="display: none;">
+  <div id="goodPeopleGuideDetail" class="guide-result" style="display: none !important;">
     <div class="guide-detail-header">
       <button class="back-btn" onclick="showGoodPeopleGuides()">
         <i class="fas fa-arrow-left"></i> 返回列表
@@ -2563,7 +2918,9 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 let currentGuide = null;
 let selectedInterests = [];
@@ -4482,26 +4839,9 @@ function showTravelForm() {
 
 // 显示攻略列表
 function showGuidesList() {
-  const travelForm = document.getElementById('travelForm');
-  const guideResult = document.getElementById('guideResult');
-  const guidesList = document.getElementById('guidesList');
-  const loading = document.getElementById('loading');
-  
-  if (travelForm) travelForm.style.display = 'none';
-  if (guideResult) guideResult.style.display = 'none';
-  if (guidesList) guidesList.style.display = 'block';
-  if (loading) loading.style.display = 'none';
-  
-  // 更新导航按钮状态
-  const navBtns = document.querySelectorAll('.nav-btn');
-  if (navBtns && navBtns.length > 1) {
-    navBtns.forEach(btn => {
-      if (btn) btn.classList.remove('active');
-    });
-    if (navBtns[1]) navBtns[1].classList.add('active');
-  }
-  
-  loadTravelGuides();
+  // 功能已隐藏
+  console.log('我的攻略功能已隐藏');
+  return;
 }
 
 // 加载旅游攻略列表
@@ -5126,30 +5466,9 @@ let currentGoodPeopleGuide = null;
 
 // 显示好心人攻略列表
 function showGoodPeopleGuides() {
-  const travelForm = document.getElementById('travelForm');
-  const guideResult = document.getElementById('guideResult');
-  const guidesList = document.getElementById('guidesList');
-  const goodPeopleGuidesList = document.getElementById('goodPeopleGuidesList');
-  const goodPeopleGuideDetail = document.getElementById('goodPeopleGuideDetail');
-  const loading = document.getElementById('loading');
-  
-  if (travelForm) travelForm.style.display = 'none';
-  if (guideResult) guideResult.style.display = 'none';
-  if (guidesList) guidesList.style.display = 'none';
-  if (goodPeopleGuideDetail) goodPeopleGuideDetail.style.display = 'none';
-  if (goodPeopleGuidesList) goodPeopleGuidesList.style.display = 'block';
-  if (loading) loading.style.display = 'none';
-  
-  // 更新导航按钮状态
-  const navBtns = document.querySelectorAll('.nav-btn');
-  if (navBtns && navBtns.length > 2) {
-    navBtns.forEach(btn => {
-      if (btn) btn.classList.remove('active');
-    });
-    if (navBtns[2]) navBtns[2].classList.add('active');
-  }
-  
-  loadGoodPeopleGuides();
+  // 功能已隐藏
+  console.log('好心人攻略功能已隐藏');
+  return;
 }
 
 // 加载好心人攻略列表
@@ -5296,75 +5615,119 @@ async function loadGoodPeopleGuideDetail(guideId) {
 
 // 显示好心人攻略详情
 function displayGoodPeopleGuideDetail(guide) {
+  const container = document.getElementById('guideDetailContent');
   const titleElement = document.getElementById('guideDetailTitle');
-  const contentElement = document.getElementById('guideDetailContent');
   const downloadBtn = document.querySelector('.download-btn');
   
-  if (titleElement) {
-    titleElement.textContent = guide.title;
+  if (!container || !titleElement) {
+    console.warn('攻略详情容器不存在');
+    return;
   }
   
-  if (contentElement) {
-    contentElement.innerHTML = `
-      <div class="guide-detail-info">
-        <div class="guide-detail-meta">
-          <span class="meta-item">
-            <i class="fas fa-map-marker-alt"></i>
-            ${guide.destination}
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-user"></i>
-            ${guide.user_name}
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-calendar"></i>
-            ${guide.created_at}
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-eye"></i>
-            ${guide.view_count} 次查看
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-download"></i>
-            ${guide.download_count} 次下载
-          </span>
-          <span class="meta-item">
-            <i class="fas fa-magic"></i>
-            ${guide.use_count} 次使用
-          </span>
+  // 设置标题
+  titleElement.textContent = guide.title;
+  
+  // 显示或隐藏下载按钮
+  if (downloadBtn) {
+    downloadBtn.style.display = guide.has_attachment ? 'block' : 'none';
+  }
+  
+  // 格式化内容（支持Markdown）
+  const formattedContent = formatMarkdownContent(guide.content);
+  
+  container.innerHTML = `
+    <div class="guide-detail-info">
+      <div class="guide-info-grid">
+        <div class="info-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>目的地：${guide.destination}</span>
         </div>
-        
-        <div class="guide-detail-summary">
-          <h3>攻略摘要</h3>
-          <p>${guide.summary || '暂无摘要'}</p>
+        <div class="info-item">
+          <i class="fas fa-user"></i>
+          <span>作者：${guide.user_name}</span>
         </div>
-        
-        <div class="guide-detail-content">
-          <h3>详细内容</h3>
-          <div class="content-text">${guide.content.replace(/\n/g, '<br>')}</div>
+        <div class="info-item">
+          <i class="fas fa-calendar"></i>
+          <span>发布时间：${guide.created_at}</span>
         </div>
-        
-        <div class="guide-detail-tags">
-          <h3>攻略标签</h3>
-          <div class="tags-container">
-            <span class="tag">${guide.travel_style}</span>
-            <span class="tag">${guide.budget_range}</span>
-            <span class="tag">${guide.travel_duration}</span>
-            ${guide.interests.map(interest => `<span class="tag">${interest}</span>`).join('')}
-          </div>
+        <div class="info-item">
+          <i class="fas fa-eye"></i>
+          <span>查看次数：${guide.view_count}</span>
+        </div>
+        <div class="info-item">
+          <i class="fas fa-download"></i>
+          <span>下载次数：${guide.download_count}</span>
+        </div>
+        <div class="info-item">
+          <i class="fas fa-magic"></i>
+          <span>使用次数：${guide.use_count}</span>
         </div>
       </div>
-    `;
-  }
+      
+      <div class="guide-tags">
+        <span class="guide-tag">${getTravelStyleText(guide.travel_style)}</span>
+        <span class="guide-tag">${getBudgetRangeText(guide.budget_range)}</span>
+        <span class="guide-tag">${guide.travel_duration}</span>
+        ${guide.interests.map(interest => `<span class="guide-tag">${interest}</span>`).join('')}
+      </div>
+    </div>
+    
+    ${guide.summary ? `
+      <div class="guide-summary-section">
+        <h3>攻略摘要</h3>
+        <p>${guide.summary}</p>
+      </div>
+    ` : ''}
+    
+    <div class="guide-content-section">
+      <h3>详细攻略</h3>
+      <div class="guide-content">
+        ${formattedContent}
+      </div>
+    </div>
+  `;
+}
+
+// 格式化Markdown内容
+function formatMarkdownContent(content) {
+  if (!content) return '';
   
-  // 显示/隐藏下载按钮
-  if (downloadBtn) {
-    if (guide.has_attachment) {
-      downloadBtn.style.display = 'inline-block';
-    } else {
-      downloadBtn.style.display = 'none';
-    }
-  }
+  // 简单的Markdown格式化
+  let formatted = content
+    // 粗体
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // 斜体
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // 链接
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+    // 标题
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // 列表
+    .replace(/^\* (.*$)/gim, '<li>$1</li>')
+    .replace(/^- (.*$)/gim, '<li>$1</li>')
+    // 换行
+    .replace(/\n/g, '<br>');
+  
+  // 处理列表
+  formatted = formatted.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+  
+  return formatted;
+}
+
+// 获取旅行风格文本
+function getTravelStyleText(style) {
+  const styleMap = {
+    'general': '通用型',
+    'adventure': '冒险型',
+    'leisure': '休闲型',
+    'cultural': '文化型',
+    'foodie': '美食型',
+    'shopping': '购物型',
+    'photography': '摄影型'
+  };
+  return styleMap[style] || style;
 }
 
 // 下载好心人攻略
@@ -5468,28 +5831,233 @@ function updateInterestTags() {
     }
   });
 }
-              <i class="fas fa-book"></i>
-              <span>小红书</span>
-            </div>
-            <div class="share-platform-btn" onclick="shareTo('qq')">
-              <i class="fab fa-qq"></i>
-              <span>QQ</span>
-            </div>
-            <div class="share-platform-btn" onclick="copyCurrentUrl()">
-              <i class="fas fa-link"></i>
-              <span>复制链接</span>
-            </div>
-            <div class="share-platform-btn" onclick="showQRCode()">
-              <i class="fas fa-qrcode"></i>
-              <span>二维码</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+
+// 显示创建攻略表单
+function showCreateGuideForm() {
+  const goodPeopleGuidesList = document.getElementById('goodPeopleGuidesList');
+  const createGuideForm = document.getElementById('createGuideForm');
+  const goodPeopleGuideDetail = document.getElementById('goodPeopleGuideDetail');
   
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  if (goodPeopleGuidesList) goodPeopleGuidesList.style.display = 'none';
+  if (goodPeopleGuideDetail) goodPeopleGuideDetail.style.display = 'none';
+  if (createGuideForm) createGuideForm.style.display = 'block';
+  
+  // 初始化创建表单的兴趣标签
+  initCreateGuideInterests();
+}
+
+// 初始化创建攻略表单的兴趣标签
+function initCreateGuideInterests() {
+  const interestTags = document.querySelectorAll('#createGuideInterests .interest-tag');
+  interestTags.forEach(tag => {
+    tag.addEventListener('click', function() {
+      const interest = this.dataset.interest;
+      if (this.classList.contains('selected')) {
+        this.classList.remove('selected');
+      } else {
+        this.classList.add('selected');
+      }
+    });
+  });
+}
+
+// 提交好心人攻略
+async function submitCreateGuide() {
+  const title = document.getElementById('createGuideTitle').value.trim();
+  const destination = document.getElementById('createGuideDestination').value.trim();
+  const travelStyle = document.getElementById('createGuideTravelStyle').value;
+  const budgetRange = document.getElementById('createGuideBudgetRange').value;
+  const travelDuration = document.getElementById('createGuideTravelDuration').value;
+  const interests = Array.from(document.querySelectorAll('#createGuideInterests .interest-tag.selected'))
+    .map(tag => tag.dataset.interest);
+  const summary = document.getElementById('createGuideSummary').value.trim();
+  const content = document.getElementById('createGuideContent').value.trim();
+  const attachment = document.getElementById('createGuideAttachment').files[0];
+
+  // 验证必填字段
+  if (!title || !destination || !content) {
+    showToast('请填写攻略标题、目的地和内容');
+    return;
+  }
+
+  if (interests.length === 0) {
+    showToast('请至少选择一个兴趣偏好');
+    return;
+  }
+
+  try {
+    // 创建FormData对象用于文件上传
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('destination', destination);
+    formData.append('travel_style', travelStyle);
+    formData.append('budget_range', budgetRange);
+    formData.append('travel_duration', travelDuration);
+    formData.append('interests', JSON.stringify(interests));
+    formData.append('summary', summary);
+    formData.append('content', content);
+    
+    if (attachment) {
+      formData.append('attachment', attachment);
+    }
+
+    // 发送请求
+    const response = await fetch('/tools/api/user_generated_travel_guide/', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('攻略创建成功！');
+      resetCreateGuideForm();
+      showGoodPeopleGuides();
+    } else {
+      showToast('创建攻略失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('提交攻略失败:', error);
+    showToast('网络错误，请重试');
+  }
+}
+
+// 重置创建攻略表单
+function resetCreateGuideForm() {
+  document.getElementById('createGuideTitle').value = '';
+  document.getElementById('createGuideDestination').value = '';
+  document.getElementById('createGuideTravelStyle').value = 'general';
+  document.getElementById('createGuideBudgetRange').value = 'medium';
+  document.getElementById('createGuideTravelDuration').value = '3-5天';
+  document.querySelectorAll('#createGuideInterests .interest-tag').forEach(tag => tag.classList.remove('selected'));
+  document.getElementById('createGuideSummary').value = '';
+  document.getElementById('createGuideContent').value = '';
+  document.getElementById('createGuideAttachment').value = '';
+}
+
+// 下载好心人攻略
+async function downloadGoodPeopleGuide(guideId) {
+  try {
+    const response = await fetch(`/tools/api/user_generated_travel_guide/${guideId}/download/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `攻略_${guideId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showToast('下载成功！');
+    } else {
+      const data = await response.json();
+      showToast('下载失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('下载攻略失败:', error);
+    showToast('下载失败，请重试');
+  }
+}
+
+// 使用好心人攻略
+async function useGoodPeopleGuide(guideId) {
+  try {
+    const response = await fetch(`/tools/api/user_generated_travel_guide/${guideId}/use/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showToast('攻略已加载到新建攻略中！');
+      // 将攻略数据填充到新建攻略表单
+      fillTravelFormWithGuide(data.guide);
+      showTravelForm();
+    } else {
+      showToast('使用攻略失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('使用攻略失败:', error);
+    showToast('网络错误，请重试');
+  }
+}
+
+// 将好心人攻略数据填充到新建攻略表单
+function fillTravelFormWithGuide(guide) {
+  if (guide.destination) {
+    document.getElementById('destination').value = guide.destination;
+  }
+  if (guide.travel_style) {
+    document.getElementById('travelStyle').value = guide.travel_style;
+  }
+  if (guide.budget_range) {
+    // 根据预算范围设置预算输入框
+    const budgetMin = document.getElementById('budgetMin');
+    const budgetMax = document.getElementById('budgetMax');
+    
+    switch (guide.budget_range) {
+      case 'budget':
+        budgetMin.value = 1000;
+        budgetMax.value = 3000;
+        break;
+      case 'medium':
+        budgetMin.value = 3000;
+        budgetMax.value = 8000;
+        break;
+      case 'luxury':
+        budgetMin.value = 8000;
+        budgetMax.value = 15000;
+        break;
+      case 'premium':
+        budgetMin.value = 15000;
+        budgetMax.value = 50000;
+        break;
+    }
+  }
+  if (guide.travel_duration) {
+    document.getElementById('travelDuration').value = guide.travel_duration;
+  }
+  if (guide.interests && Array.isArray(guide.interests)) {
+    // 清除之前的选择
+    document.querySelectorAll('.interest-tag').forEach(tag => tag.classList.remove('selected'));
+    selectedInterests = [];
+    
+    // 设置新的选择
+    guide.interests.forEach(interest => {
+      const tag = document.querySelector(`.interest-tag[data-interest="${interest}"]`);
+      if (tag) {
+        tag.classList.add('selected');
+        selectedInterests.push(interest);
+      }
+    });
+  }
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
 </script>
 {% endblock %} 

@@ -13,14 +13,15 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def cleanup_inactive_chat_rooms():
-    """清理不活跃的聊天室任务"""
+    """清理不活跃的聊天室任务 - 12小时无活动自动删除"""
     try:
         from django.core.management import call_command
-        call_command('cleanup_chat_rooms', minutes=10)
-        logger.info('聊天室清理任务执行完成')
+        # 使用新的清理命令，清理12小时无活动的聊天室
+        call_command('cleanup_inactive_chatrooms', hours=12)
+        logger.info('🧹 聊天室清理任务执行完成：清理12小时无活动的聊天室')
         return True
     except Exception as e:
-        logger.error(f'聊天室清理任务执行失败: {e}')
+        logger.error(f'❌ 聊天室清理任务执行失败: {e}')
         return False
 
 @shared_task

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class GenerateTestCasesAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []  # 允许匿名访问
     # 增加批量生成的最大批次限制
     MAX_BATCH_COUNT = 10
 

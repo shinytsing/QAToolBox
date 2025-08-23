@@ -1,134 +1,183 @@
+"""
+pytest配置文件
+定义测试夹具和配置
+"""
+
+import os
+import django
 import pytest
 from django.conf import settings
-from django.test import RequestFactory
-from django.contrib.auth.models import User
-from django.core.cache import cache
+from django.test import Client
+from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from faker import Faker
 import factory
-from factory.django import DjangoModelFactory
+from unittest.mock import Mock, patch
+
+# 设置Django配置
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
+django.setup()
+
+User = get_user_model()
+fake = Faker('zh_CN')
 
 
 @pytest.fixture(scope='session')
-def django_db_setup(django_db_setup, django_db_blocker):
-    """设置测试数据库"""
-    with django_db_blocker.unblock():
-        # 创建测试数据库
-        from django.core.management import call_command
-        call_command('migrate', verbosity=0)
+def django_db_setup():
+    """数据库设置"""
+    settings.DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:'
+    }
 
 
 @pytest.fixture
-def db_access_without_rollback_and_truncate(django_db_setup, django_db_blocker):
-    """数据库访问，不回滚和截断"""
-    django_db_blocker.unblock()
-    yield
-    django_db_blocker.restore()
+def client():
+    """Django测试客户端"""
+    return Client()
 
 
 @pytest.fixture
-def user_factory():
-    """用户工厂"""
-    class UserFactory(DjangoModelFactory):
-        class Meta:
-            model = User
-        
-        username = factory.Sequence(lambda n: f'user{n}')
-        email = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
-        password = factory.PostGenerationMethodCall('set_password', 'password123')
-        is_active = True
-    
-    return UserFactory
-
-
-@pytest.fixture
-def user(user_factory):
+def user():
     """创建测试用户"""
-    return user_factory()
+    return User.objects.create_user(
+        username='testuser',
+        email='test@example.com',
+        password='testpass123'
+    )
 
 
 @pytest.fixture
-def admin_user(user_factory):
+def admin_user():
     """创建管理员用户"""
-    user = user_factory(username='admin', is_staff=True, is_superuser=True)
-    return user
+    return User.objects.create_superuser(
+        username='admin',
+        email='admin@example.com',
+        password='adminpass123'
+    )
 
 
 @pytest.fixture
-def request_factory():
-    """请求工厂"""
-    return RequestFactory()
+def authenticated_client(client, user):
+    """已登录的客户端"""
+    client.force_login(user)
+    return client
 
 
 @pytest.fixture
-def authenticated_request(request_factory, user):
-    """认证请求"""
-    request = request_factory.get('/')
-    request.user = user
-    return request
+def admin_client(client, admin_user):
+    """管理员客户端"""
+    client.force_login(admin_user)
+    return client
 
 
 @pytest.fixture
-def api_client():
-    """API客户端"""
-    from rest_framework.test import APIClient
-    return APIClient()
+def sample_data():
+    """示例数据"""
+    return {
+        'username': fake.user_name(),
+        'email': fake.email(),
+        'password': fake.password(),
+        'title': fake.sentence(),
+        'content': fake.text(),
+        'url': fake.url(),
+    }
 
 
 @pytest.fixture
-def authenticated_api_client(api_client, user):
-    """认证的API客户端"""
-    api_client.force_authenticate(user=user)
-    return api_client
+def mock_external_api():
+    """模拟外部API"""
+    with patch('requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {'status': 'success', 'data': {}}
+        mock_get.return_value = mock_response
+        yield mock_get
+
+
+@pytest.fixture
+def mock_redis():
+    """模拟Redis"""
+    with patch('django_redis.get_redis_connection') as mock_redis:
+        mock_connection = Mock()
+        mock_redis.return_value = mock_connection
+        yield mock_connection
 
 
 @pytest.fixture(autouse=True)
-def clear_cache():
-    """自动清理缓存"""
-    cache.clear()
-    yield
-    cache.clear()
+def enable_db_access_for_all_tests(db):
+    """为所有测试启用数据库访问"""
+    pass
 
 
-@pytest.fixture
-def mock_redis(mocker):
-    """模拟Redis"""
-    mock_redis = mocker.patch('django.core.cache.cache')
-    return mock_redis
-
-
-@pytest.fixture
-def mock_celery(mocker):
-    """模拟Celery"""
-    mock_celery = mocker.patch('celery.app.task.Task.delay')
-    return mock_celery
-
-
-@pytest.fixture
-def mock_requests(mocker):
-    """模拟HTTP请求"""
-    mock_requests = mocker.patch('requests.get')
-    mock_requests.return_value.status_code = 200
-    mock_requests.return_value.json.return_value = {}
-    return mock_requests
-
-
-# 标记定义
+# Pytest配置
 def pytest_configure(config):
-    """配置pytest标记"""
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-    )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "performance: marks tests as performance tests"
-    )
-    config.addinivalue_line(
-        "markers", "api: marks tests as API tests"
-    )
-    config.addinivalue_line(
-        "markers", "database: marks tests as database tests"
-    )
+    """pytest配置"""
+    # 禁用迁移以加速测试
+    settings.MIGRATION_MODULES = {
+        'auth': None,
+        'contenttypes': None,
+        'sessions': None,
+        'users': None,
+        'tools': None,
+        'content': None,
+    }
+    
+    # 测试数据库配置
+    settings.DATABASES['default']['NAME'] = ':memory:'
+    
+    # 禁用缓存
+    settings.CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+    
+    # 禁用Celery
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    
+    # 静态文件设置
+    settings.STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+    
+    # 邮件设置
+    settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+
+# 工厂类
+class UserFactory(factory.django.DjangoModelFactory):
+    """用户工厂"""
+    class Meta:
+        model = User
+    
+    username = factory.Sequence(lambda n: f'user{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
+    first_name = factory.Faker('first_name')
+    last_name = factory.Faker('last_name')
+    is_active = True
+
+
+class AdminUserFactory(UserFactory):
+    """管理员用户工厂"""
+    is_staff = True
+    is_superuser = True
+
+
+# 自定义标记
+pytest_plugins = []
+
+
+def pytest_collection_modifyitems(config, items):
+    """自定义测试收集"""
+    for item in items:
+        # 为慢速测试添加标记
+        if "slow" in item.keywords:
+            item.add_marker(pytest.mark.slow)
+        
+        # 为集成测试添加标记
+        if "integration" in item.keywords:
+            item.add_marker(pytest.mark.integration)
+        
+        # 为API测试添加标记
+        if "api" in item.keywords:
+            item.add_marker(pytest.mark.api)

@@ -1,0 +1,48 @@
+# 测试环境依赖
+-r base.txt
+
+# 单元测试框架
+pytest==8.3.3
+pytest-django==4.9.0
+pytest-cov==6.0.0
+pytest-mock==3.14.0
+pytest-xdist==3.6.0
+pytest-html==4.1.1
+
+# 集成测试
+requests-mock==1.12.1
+factory-boy==3.3.1
+faker==33.1.0
+
+# API测试
+pytest-httpserver==1.1.0
+responses==0.25.3
+
+# E2E测试
+playwright==1.48.0
+selenium==4.20.0
+
+# 性能测试
+locust==2.32.3
+
+# 代码质量
+flake8==7.1.1
+black==24.10.0
+isort==5.13.2
+mypy==1.13.0
+bandit==1.7.10
+safety==3.2.8
+
+# 测试数据库
+django-test-plus==2.2.4
+model-bakery==1.19.5
+
+# 测试覆盖率
+coverage==7.6.7
+
+# Mock外部服务
+freezegun==1.5.1
+time-machine==2.16.0
+
+# 浏览器测试
+pytest-playwright==0.5.2

@@ -1017,7 +1017,7 @@ class DesireTodoSystem {
       notification.remove();
     }, 3000);
   }
-}
+};
 
 // 全局函数
 function completeTodo(btn) {
@@ -1044,67 +1044,6 @@ document.addEventListener('DOMContentLoaded', function() {
   desireTodoSystem = new DesireTodoSystem();
 });
 
-// 完成代办
-function completeTodo(btn) {
-  const todoItem = btn.closest('.todo-item');
-  todoItem.classList.add('completed');
-  btn.textContent = '已完成';
-  btn.disabled = true;
-  
-  // 显示完成动画
-  todoItem.style.animation = 'rewardGlow 1s ease-in-out';
-  setTimeout(() => {
-    todoItem.style.animation = '';
-  }, 1000);
-  
-  // 更新统计
-  updateStats();
-  
-  // 检查奖励
-  checkRewards();
-}
 
-// 编辑代办
-function editTodo(btn) {
-  const todoItem = btn.closest('.todo-item');
-  const title = todoItem.querySelector('.todo-title').textContent;
-  const description = todoItem.querySelector('.todo-description').textContent;
-  
-  // 这里可以实现编辑功能
-  alert(`编辑代办: ${title}\n\n描述: ${description}\n\n编辑功能开发中...`);
-}
-
-// 删除代办
-function deleteTodo(btn) {
-  const todoItem = btn.closest('.todo-item');
-  if (confirm('确定要删除这个代办吗？')) {
-    todoItem.remove();
-    updateStats();
-  }
-}
-
-// 检查奖励
-function checkRewards() {
-  const completedTodos = document.querySelectorAll('.todo-item.completed').length;
-  const rewards = document.querySelectorAll('.reward-item');
-  
-  rewards.forEach((reward, index) => {
-    const required = [3, 5, 10, 20][index];
-    if (completedTodos >= required) {
-      reward.classList.add('unlocked');
-    }
-  });
-}
-
-// 更新统计函数（全局）
-function updateStats() {
-  const totalTodos = document.querySelectorAll('.todo-item').length;
-  const completedTodos = document.querySelectorAll('.todo-item.completed').length;
-  const pendingTodos = totalTodos - completedTodos;
-  
-  document.getElementById('totalTodos').textContent = totalTodos;
-  document.getElementById('completedTodos').textContent = completedTodos;
-  document.getElementById('pendingTodos').textContent = pendingTodos;
-}
 </script>
 {% endblock %} 

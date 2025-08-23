@@ -20,7 +20,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
 django.setup()
 
 # 导入WebSocket路由（在Django设置后导入）
-from apps.tools.routing import websocket_urlpatterns
+try:
+    from apps.tools.routing import websocket_urlpatterns
+    print(f"✅ WebSocket路由加载成功，路由数量: {len(websocket_urlpatterns)}")
+    for pattern in websocket_urlpatterns:
+        print(f"📍 WebSocket路由: {pattern.pattern.regex.pattern}")
+except Exception as e:
+    print(f"❌ WebSocket路由加载失败: {e}")
+    websocket_urlpatterns = []
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
@@ -30,3 +37,5 @@ application = ProtocolTypeRouter({
         )
     ),
 })
+
+print("🚀 ASGI应用已配置完成")

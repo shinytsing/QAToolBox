@@ -6,88 +6,12 @@ from django.db.models import Index, Q
 import random
 import json
 
+# 导入聊天模型以避免循环导入
+from .chat_models import ChatRoom, ChatMessage
+
 
 # ToolUsageLog 已移至 base_models.py，这里不再重复定义
-
-class LifeDiaryEntry(models.Model):
-    """生活日记条目模型"""
-    MOOD_CHOICES = [
-        ('happy', '开心'),
-        ('calm', '平静'),
-        ('excited', '兴奋'),
-        ('sad', '难过'),
-        ('angry', '生气'),
-        ('neutral', '一般'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户', db_index=True)
-    date = models.DateField(default=timezone.now, verbose_name='日期', db_index=True)
-    title = models.CharField(max_length=200, verbose_name='标题')
-    content = models.TextField(verbose_name='内容')
-    mood = models.CharField(max_length=20, choices=MOOD_CHOICES, verbose_name='心情', db_index=True)
-    mood_note = models.TextField(blank=True, null=True, verbose_name='心情备注')
-    tags = models.JSONField(default=list, verbose_name='标签')
-    question_answers = models.JSONField(default=list, verbose_name='问题回答')
-    music_recommendation = models.TextField(blank=True, null=True, verbose_name='音乐推荐')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间', db_index=True)
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-    
-    class Meta:
-        ordering = ['-date', '-created_at']
-        verbose_name = '生活日记'
-        verbose_name_plural = '生活日记'
-        indexes = [
-            models.Index(fields=['user', 'date']),
-            models.Index(fields=['user', 'mood']),
-            models.Index(fields=['date', 'mood']),
-            models.Index(fields=['user', 'created_at']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.date} - {self.title}"
-    
-    def get_mood_emoji(self):
-        """获取心情对应的表情符号"""
-        mood_emojis = {
-            'happy': '😊',
-            'calm': '😌',
-            'excited': '⭐',
-            'sad': '😢',
-            'angry': '😠',
-            'neutral': '😐'
-        }
-        return mood_emojis.get(self.mood, '😐')
-    
-    def get_word_count(self):
-        """获取内容字数"""
-        return len(self.content) if self.content else 0
-    
-    def get_tags_display(self):
-        """获取标签显示文本"""
-        return ', '.join(self.tags) if self.tags else '无标签'
-
-    @classmethod
-    def get_user_diary_stats(cls, user, days=30):
-        """获取用户日记统计，带缓存"""
-        cache_key = f"diary_stats_{user.id}_{days}"
-        stats = cache.get(cache_key)
-        
-        if stats is None:
-            from datetime import timedelta
-            start_date = timezone.now().date() - timedelta(days=days)
-            
-            queryset = cls.objects.filter(user=user, date__gte=start_date)
-            
-            stats = {
-                'total_entries': queryset.count(),
-                'mood_distribution': list(queryset.values('mood').annotate(count=models.Count('id'))),
-                'total_words': sum(entry.get_word_count() for entry in queryset),
-                'avg_words_per_entry': queryset.count() and sum(entry.get_word_count() for entry in queryset) / queryset.count() or 0,
-                'most_common_mood': queryset.values('mood').annotate(count=models.Count('id')).order_by('-count').first()
-            }
-            cache.set(cache_key, stats, 300)  # 缓存5分钟
-        
-        return stats
+# LifeDiaryEntry已移到diary_models.py，避免重复定义
 
 
 class LifeGoal(models.Model):
@@ -270,103 +194,162 @@ class LifeStatistics(models.Model):
         return f"{self.user.username} - {self.date} - 统计"
 
 
-class ChatRoom(models.Model):
-    """聊天室模型"""
-    ROOM_STATUS_CHOICES = [
-        ('waiting', '等待匹配'),
-        ('active', '活跃'),
-        ('ended', '已结束'),
+class ShipBaoInquiry(models.Model):
+    """船宝商品咨询队列模型"""
+    STATUS_CHOICES = [
+        ('pending', '待响应'),
+        ('responded', '已响应'),
+        ('ignored', '已忽略'),
+        ('cancelled', '已取消'),
     ]
     
-    room_id = models.CharField(max_length=100, unique=True, db_index=True)  # 添加索引
-    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_1', db_index=True)
-    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_2', null=True, blank=True, db_index=True)
-    status = models.CharField(max_length=20, default='active', db_index=True)  # 添加索引
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['status', 'created_at']),
-            models.Index(fields=['user1', 'status']),
-            models.Index(fields=['user2', 'status']),
-            models.Index(fields=['user1', 'user2']),
-        ]
-
-    def __str__(self):
-        return f"聊天室 {self.room_id}"
-    
-    @property
-    def is_full(self):
-        return self.user2 is not None
-    
-    @property
-    def participants(self):
-        participants = [self.user1]
-        if self.user2:
-            participants.append(self.user2)
-        return participants
-
-    @classmethod
-    def get_user_active_rooms(cls, user):
-        """获取用户活跃聊天室，带缓存"""
-        cache_key = f"active_rooms_{user.id}"
-        rooms = cache.get(cache_key)
-        
-        if rooms is None:
-            rooms = list(cls.objects.filter(
-                Q(user1=user) | Q(user2=user),
-                status='active'
-            ).select_related('user1', 'user2'))
-            cache.set(cache_key, rooms, 60)  # 缓存1分钟
-        
-        return rooms
-
-
-class ChatMessage(models.Model):
-    """聊天消息模型"""
-    MESSAGE_TYPES = [
-        ('text', '文本'),
-        ('image', '图片'),
-        ('file', '文件'),
-        ('emoji', '表情'),
-        ('video', '视频'),
-        ('audio', '语音'),
-    ]
-    
-    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='chat_messages', db_index=True)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages', db_index=True)
-    message_type = models.CharField(max_length=20, default='text', db_index=True)  # 添加索引
-    content = models.TextField()
-    file_url = models.URLField(blank=True, null=True, verbose_name='文件URL')
-    is_read = models.BooleanField(default=False, verbose_name='是否已读', db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
+    item = models.ForeignKey('ShipBaoItem', on_delete=models.CASCADE, verbose_name='商品', related_name='inquiries')
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='买家', related_name='shipbao_inquiries')
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='卖家', related_name='received_inquiries')
+    chat_room = models.ForeignKey('tools.ChatRoom', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='聊天室')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
+    initial_message = models.TextField(blank=True, verbose_name='初始消息')
+    priority_score = models.IntegerField(default=0, verbose_name='优先级分数')  # 基于买家信誉等计算
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    responded_at = models.DateTimeField(null=True, blank=True, verbose_name='响应时间')
     
     class Meta:
+        unique_together = ['item', 'buyer']  # 每个买家对每个商品只能咨询一次
+        ordering = ['-priority_score', 'created_at']
+        verbose_name = '商品咨询'
+        verbose_name_plural = '商品咨询'
         indexes = [
-            models.Index(fields=['room', 'created_at']),
-            models.Index(fields=['sender', 'created_at']),
-            models.Index(fields=['message_type', 'created_at']),
-            models.Index(fields=['room', 'is_read']),
+            models.Index(fields=['item', 'status']),
+            models.Index(fields=['seller', 'status', 'created_at']),
+            models.Index(fields=['buyer', 'status']),
         ]
-        verbose_name = '聊天消息'
-        verbose_name_plural = '聊天消息'
-        ordering = ['created_at']
     
     def __str__(self):
-        return f"{self.sender.username}: {self.content[:50]}"
+        return f"{self.buyer.username} 咨询 {self.item.title}"
+    
+    def calculate_priority_score(self):
+        """计算优先级分数"""
+        score = 0
+        
+        # 基于买家信誉
+        if hasattr(self.buyer, 'profile'):
+            profile = self.buyer.profile
+            # 假设有信誉分数字段
+            if hasattr(profile, 'reputation_score'):
+                score += profile.reputation_score * 10
+        
+        # 基于消息长度（更详细的咨询给更高优先级）
+        if self.initial_message:
+            score += min(len(self.initial_message) // 10, 50)
+        
+        # 基于时间（新咨询略微优先）
+        from django.utils import timezone
+        hours_ago = (timezone.now() - self.created_at).total_seconds() / 3600
+        score += max(0, 24 - hours_ago)  # 24小时内逐渐降低优先级
+        
+        self.priority_score = int(score)
+        return self.priority_score
 
-    @classmethod
-    def get_room_messages(cls, room, limit=50, offset=0):
-        """获取聊天室消息，带分页和缓存"""
-        cache_key = f"room_messages_{room.id}_{limit}_{offset}"
-        messages = cache.get(cache_key)
-        
-        if messages is None:
-            messages = list(cls.objects.filter(room=room).select_related('sender').order_by('-created_at')[offset:offset+limit])
-            cache.set(cache_key, messages, 30)  # 缓存30秒
-        
-        return messages
+
+# ChatRoom模型已移动到chat_models.py
+# class ChatRoom(models.Model):
+#     """聊天室模型"""
+#     ROOM_STATUS_CHOICES = [
+#         ('waiting', '等待匹配'),
+#         ('active', '活跃'),
+#         ('ended', '已结束'),
+#     ]
+#     
+#     room_id = models.CharField(max_length=100, unique=True, db_index=True)  # 添加索引
+#     user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_1', db_index=True)
+#     user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_2', null=True, blank=True, db_index=True)
+#     status = models.CharField(max_length=20, default='active', db_index=True)  # 添加索引
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
+#     updated_at = models.DateTimeField(auto_now=True)
+# 
+#     class Meta:
+#         indexes = [
+#             models.Index(fields=['status', 'created_at']),
+#             models.Index(fields=['user1', 'status']),
+#             models.Index(fields=['user2', 'status']),
+#             models.Index(fields=['user1', 'user2']),
+#         ]
+# 
+#     def __str__(self):
+#         return f"聊天室 {self.room_id}"
+#     
+#     @property
+#     def is_full(self):
+#         return self.user2 is not None
+#     
+#     @property
+#     def participants(self):
+#         participants = [self.user1]
+#         if self.user2:
+#             participants.append(self.user2)
+#         return participants
+# 
+#     @classmethod
+#     def get_user_active_rooms(cls, user):
+#         """获取用户活跃聊天室，带缓存"""
+#         cache_key = f"active_rooms_{user.id}"
+#         rooms = cache.get(cache_key)
+#         
+#         if rooms is None:
+#             rooms = list(cls.objects.filter(
+#                 Q(user1=user) | Q(user2=user),
+#                 status='active'
+#             ).select_related('user1', 'user2'))
+#             cache.set(cache_key, rooms, 60)  # 缓存1分钟
+#         
+#         return rooms
+
+
+# ChatMessage模型已移动到chat_models.py
+# class ChatMessage(models.Model):
+#     """聊天消息模型"""
+#     MESSAGE_TYPES = [
+#         ('text', '文本'),
+#         ('image', '图片'),
+#         ('file', '文件'),
+#         ('emoji', '表情'),
+#         ('video', '视频'),
+#         ('audio', '语音'),
+#     ]
+#     
+#     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='chat_messages', db_index=True)
+#     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages', db_index=True)
+#     message_type = models.CharField(max_length=20, default='text', db_index=True)  # 添加索引
+#     content = models.TextField()
+#     file_url = models.URLField(blank=True, null=True, verbose_name='文件URL')
+#     is_read = models.BooleanField(default=False, verbose_name='是否已读', db_index=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
+#     
+#     class Meta:
+#         indexes = [
+#             models.Index(fields=['room', 'created_at']),
+#             models.Index(fields=['sender', 'created_at']),
+#             models.Index(fields=['message_type', 'created_at']),
+#             models.Index(fields=['room', 'is_read']),
+#         ]
+#         verbose_name = '聊天消息'
+#         verbose_name_plural = '聊天消息'
+#         ordering = ['created_at']
+#     
+#     def __str__(self):
+#         return f"{self.sender.username}: {self.content[:50]}"
+# 
+#     @classmethod
+#     def get_room_messages(cls, room, limit=50, offset=0):
+#         """获取聊天室消息，带分页和缓存"""
+#         cache_key = f"room_messages_{room.id}_{limit}_{offset}"
+#         messages = cache.get(cache_key)
+#         
+#         if messages is None:
+#             messages = list(cls.objects.filter(room=room).select_related('sender').order_by('-created_at')[offset:offset+limit])
+#             cache.set(cache_key, messages, 30)  # 缓存30秒
+#         
+#         return messages
 
     @classmethod
     def get_unread_count(cls, user, room):
@@ -378,97 +361,99 @@ class ChatMessage(models.Model):
         ).exclude(sender=user).count()
 
 
-class UserOnlineStatus(models.Model):
-    """用户在线状态模型"""
-    STATUS_CHOICES = [
-        ('online', '在线'),
-        ('busy', '忙碌'),
-        ('away', '离开'),
-        ('offline', '离线'),
-    ]
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='online_status', verbose_name='用户')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline', verbose_name='在线状态', db_index=True)
-    last_seen = models.DateTimeField(auto_now=True, verbose_name='最后在线时间', db_index=True)
-    is_typing = models.BooleanField(default=False, verbose_name='是否正在输入')
-    current_room = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, null=True, blank=True, related_name='online_users', verbose_name='当前房间')
-    is_online = models.BooleanField(default=False, verbose_name='是否在线', db_index=True)
-    match_number = models.CharField(max_length=4, null=True, blank=True, verbose_name='匹配数字')
-    
-    class Meta:
-        verbose_name = '用户在线状态'
-        verbose_name_plural = '用户在线状态'
-        indexes = [
-            models.Index(fields=['status', 'last_seen']),
-            models.Index(fields=['is_online', 'last_seen']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.get_status_display()}"
+# UserOnlineStatus模型已移动到chat_models.py
+# class UserOnlineStatus(models.Model):
+#     """用户在线状态模型"""
+#     STATUS_CHOICES = [
+#         ('online', '在线'),
+#         ('busy', '忙碌'),
+#         ('away', '离开'),
+#         ('offline', '离线'),
+#     ]
+#     
+#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='online_status', verbose_name='用户')
+#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline', verbose_name='在线状态', db_index=True)
+#     last_seen = models.DateTimeField(auto_now=True, verbose_name='最后在线时间', db_index=True)
+#     is_typing = models.BooleanField(default=False, verbose_name='是否正在输入')
+#     current_room = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, null=True, blank=True, related_name='online_users', verbose_name='当前房间')
+#     is_online = models.BooleanField(default=False, verbose_name='是否在线', db_index=True)
+#     match_number = models.CharField(max_length=4, null=True, blank=True, verbose_name='匹配数字')
+#     
+#     class Meta:
+#         verbose_name = '用户在线状态'
+#         verbose_name_plural = '用户在线状态'
+#         indexes = [
+#             models.Index(fields=['status', 'last_seen']),
+#             models.Index(fields=['is_online', 'last_seen']),
+#         ]
+#     
+#     def __str__(self):
+#         return f"{self.user.username} - {self.get_status_display()}"
+# 
+#     @classmethod
+#     def get_online_users(cls):
+#         """获取在线用户列表，带缓存"""
+#         cache_key = "online_users"
+#         users = cache.get(cache_key)
+#         
+#         if users is None:
+#             users = list(cls.objects.filter(is_online=True).select_related('user'))
+#             cache.set(cache_key, users, 30)  # 缓存30秒
+#         
+#         return users
 
-    @classmethod
-    def get_online_users(cls):
-        """获取在线用户列表，带缓存"""
-        cache_key = "online_users"
-        users = cache.get(cache_key)
-        
-        if users is None:
-            users = list(cls.objects.filter(is_online=True).select_related('user'))
-            cache.set(cache_key, users, 30)  # 缓存30秒
-        
-        return users
 
-
-class HeartLinkRequest(models.Model):
-    """心动链接请求模型"""
-    STATUS_CHOICES = [
-        ('pending', '等待中'),
-        ('matching', '匹配中'),
-        ('matched', '已匹配'),
-        ('expired', '已过期'),
-        ('cancelled', '已取消'),
-    ]
-    
-    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='heart_link_requests', db_index=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)  # 添加索引
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
-    matched_at = models.DateTimeField(null=True, blank=True, verbose_name='匹配时间')
-    matched_with = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='matched_heart_links', verbose_name='匹配用户')
-    chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='heart_link_requests', db_index=True)
-    
-    class Meta:
-        indexes = [
-            models.Index(fields=['requester', 'status']),
-            models.Index(fields=['chat_room', 'status']),
-            models.Index(fields=['status', 'created_at']),
-            models.Index(fields=['matched_with', 'status']),
-        ]
-        verbose_name = '心动链接请求'
-        verbose_name_plural = '心动链接请求'
-        ordering = ['-created_at']
-        unique_together = ['requester', 'chat_room']
-    
-    def __str__(self):
-        return f"{self.requester.username} 的心动链接请求"
-    
-    @property
-    def is_expired(self):
-        """检查请求是否过期（10分钟）"""
-        from django.utils import timezone
-        from datetime import timedelta
-        return timezone.now() > self.created_at + timedelta(minutes=10)
-
-    @classmethod
-    def get_pending_requests(cls):
-        """获取待处理的请求，带缓存"""
-        cache_key = "pending_heart_requests"
-        requests = cache.get(cache_key)
-        
-        if requests is None:
-            requests = list(cls.objects.filter(status='pending').select_related('requester'))
-            cache.set(cache_key, requests, 30)  # 缓存30秒
-        
-        return requests
+# HeartLinkRequest模型已移动到chat_models.py
+# class HeartLinkRequest(models.Model):
+#     """心动链接请求模型"""
+#     STATUS_CHOICES = [
+#         ('pending', '等待中'),
+#         ('matching', '匹配中'),
+#         ('matched', '已匹配'),
+#         ('expired', '已过期'),
+#         ('cancelled', '已取消'),
+#     ]
+#     
+#     requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='heart_link_requests', db_index=True)
+#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)  # 添加索引
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
+#     matched_at = models.DateTimeField(null=True, blank=True, verbose_name='匹配时间')
+#     matched_with = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='matched_heart_links', verbose_name='匹配用户')
+#     chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='heart_link_requests', db_index=True)
+#     
+#     class Meta:
+#         indexes = [
+#             models.Index(fields=['requester', 'status']),
+#             models.Index(fields=['chat_room', 'status']),
+#             models.Index(fields=['status', 'created_at']),
+#             models.Index(fields=['matched_with', 'status']),
+#         ]
+#         verbose_name = '心动链接请求'
+#         verbose_name_plural = '心动链接请求'
+#         ordering = ['-created_at']
+#         unique_together = ['requester', 'chat_room']
+#     
+#     def __str__(self):
+#         return f"{self.requester.username} 的心动链接请求"
+#     
+#     @property
+#     def is_expired(self):
+#         """检查请求是否过期（10分钟）"""
+#         from django.utils import timezone
+#         from datetime import timedelta
+#         return timezone.now() > self.created_at + timedelta(minutes=10)
+# 
+#     @classmethod
+#     def get_pending_requests(cls):
+#         """获取待处理的请求，带缓存"""
+#         cache_key = "pending_heart_requests"
+#         requests = cache.get(cache_key)
+#         
+#         if requests is None:
+#             requests = list(cls.objects.filter(status='pending').select_related('requester'))
+#             cache.set(cache_key, requests, 30)  # 缓存30秒
+#         
+#         return requests
 
 
 class UserAchievement(models.Model):
@@ -770,6 +755,34 @@ class WorkoutDashboard(models.Model):
         return f"{self.user.username} - 训练仪表盘"
 
 
+class TrainingPlan(models.Model):
+    """周训练计划模型"""
+    PLAN_VISIBILITY_CHOICES = [
+        ('private', '私有'),
+        ('public', '公开'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    name = models.CharField(max_length=200, verbose_name='计划名称')
+    mode = models.CharField(max_length=50, default='五分化', verbose_name='训练模式')
+    cycle_weeks = models.IntegerField(default=8, verbose_name='周期(周)')
+    week_schedule = models.JSONField(default=list, verbose_name='周安排')
+    is_active = models.BooleanField(default=True, verbose_name='是否启用')
+    visibility = models.CharField(max_length=10, choices=PLAN_VISIBILITY_CHOICES, default='private', verbose_name='可见性')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = '训练计划'
+        verbose_name_plural = '训练计划'
+        indexes = [
+            models.Index(fields=['user', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.name}"
+
 class DesireDashboard(models.Model):
     """欲望仪表盘模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
@@ -978,160 +991,160 @@ class BasedDevAvatar(models.Model):
         return f"{self.user.username} - {self.caption[:50]}"
 
 
-class TravelGuide(models.Model):
-    """旅游攻略模型"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    destination = models.CharField(max_length=200, verbose_name='目的地')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
-    
-    # 攻略内容
-    must_visit_attractions = models.JSONField(default=list, verbose_name='必去景点')
-    food_recommendations = models.JSONField(default=list, verbose_name='美食推荐')
-    transportation_guide = models.JSONField(default=dict, verbose_name='交通指南')
-    hidden_gems = models.JSONField(default=list, verbose_name='隐藏玩法')
-    weather_info = models.JSONField(default=dict, verbose_name='天气信息')
-    
-    # Overview信息字段
-    destination_info = models.JSONField(default=dict, verbose_name='目的地基本信息')
-    currency_info = models.JSONField(default=dict, verbose_name='汇率信息') 
-    timezone_info = models.JSONField(default=dict, verbose_name='时区信息')
-    
-    best_time_to_visit = models.TextField(blank=True, null=True, verbose_name='最佳旅行时间')
-    budget_estimate = models.JSONField(default=dict, verbose_name='预算估算')
-    travel_tips = models.JSONField(default=list, verbose_name='旅行贴士')
-    
-    # 详细攻略
-    detailed_guide = models.JSONField(default=dict, verbose_name='详细攻略')
-    daily_schedule = models.JSONField(default=list, verbose_name='每日行程')
-    activity_timeline = models.JSONField(default=list, verbose_name='活动时间线')
-    cost_breakdown = models.JSONField(default=dict, verbose_name='费用明细')
-    
-    # 个性化设置
-    travel_style = models.CharField(max_length=50, default='general', verbose_name='旅行风格')
-    budget_min = models.IntegerField(default=3000, verbose_name='最低预算(元)')
-    budget_max = models.IntegerField(default=8000, verbose_name='最高预算(元)')
-    budget_amount = models.IntegerField(default=5000, verbose_name='预算金额(元)')
-    budget_range = models.CharField(max_length=50, default='medium', verbose_name='预算范围')
-    travel_duration = models.CharField(max_length=50, default='3-5天', verbose_name='旅行时长')
-    interests = models.JSONField(default=list, verbose_name='兴趣标签')
-    
-    # 状态
-    is_favorite = models.BooleanField(default=False, verbose_name='是否收藏')
-    is_exported = models.BooleanField(default=False, verbose_name='是否已导出')
-    
-    # 缓存相关
-    is_cached = models.BooleanField(default=False, verbose_name='是否缓存数据')
-    cache_source = models.CharField(max_length=50, blank=True, null=True, verbose_name='缓存来源')
-    cache_expires_at = models.DateTimeField(blank=True, null=True, verbose_name='缓存过期时间')
-    api_used = models.CharField(max_length=50, default='deepseek', verbose_name='使用的API')
-    generation_mode = models.CharField(max_length=20, default='standard', verbose_name='生成模式')
-    
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = '旅游攻略'
-        verbose_name_plural = '旅游攻略'
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.destination}"
-    
-    def get_attractions_count(self):
-        return len(self.must_visit_attractions)
-    
-    def get_food_count(self):
-        return len(self.food_recommendations)
-    
-    def get_hidden_gems_count(self):
-        return len(self.hidden_gems)
-    
-    def is_cache_valid(self):
-        """检查缓存是否有效"""
-        if not self.is_cached or not self.cache_expires_at:
-            return False
-        from django.utils import timezone
-        return timezone.now() < self.cache_expires_at
-    
-    def get_cache_status(self):
-        """获取缓存状态"""
-        if not self.is_cached:
-            return 'not_cached'
-        if self.is_cache_valid():
-            return 'valid'
-        return 'expired'
+# class TravelGuide(models.Model):
+#     """旅游攻略模型"""
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+#     destination = models.CharField(max_length=200, verbose_name='目的地')
+#     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+#     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+#     
+#     # 攻略内容
+#     must_visit_attractions = models.JSONField(default=list, verbose_name='必去景点')
+#     food_recommendations = models.JSONField(default=list, verbose_name='美食推荐')
+#     transportation_guide = models.JSONField(default=dict, verbose_name='交通指南')
+#     hidden_gems = models.JSONField(default=list, verbose_name='隐藏玩法')
+#     weather_info = models.JSONField(default=dict, verbose_name='天气信息')
+#     
+#     # Overview信息字段
+#     destination_info = models.JSONField(default=dict, verbose_name='目的地基本信息')
+#     currency_info = models.JSONField(default=dict, verbose_name='汇率信息') 
+#     timezone_info = models.JSONField(default=dict, verbose_name='时区信息')
+#     
+#     best_time_to_visit = models.TextField(blank=True, null=True, verbose_name='最佳旅行时间')
+#     budget_estimate = models.JSONField(default=dict, verbose_name='预算估算')
+#     travel_tips = models.JSONField(default=list, verbose_name='旅行贴士')
+#     
+#     # 详细攻略
+#     detailed_guide = models.JSONField(default=dict, verbose_name='详细攻略')
+#     daily_schedule = models.JSONField(default=list, verbose_name='每日行程')
+#     activity_timeline = models.JSONField(default=list, verbose_name='活动时间线')
+#     cost_breakdown = models.JSONField(default=dict, verbose_name='费用明细')
+#     
+#     # 个性化设置
+#     travel_style = models.CharField(max_length=50, default='general', verbose_name='旅行风格')
+#     budget_min = models.IntegerField(default=3000, verbose_name='最低预算(元)')
+#     budget_max = models.IntegerField(default=8000, verbose_name='最高预算(元)')
+#     budget_amount = models.IntegerField(default=5000, verbose_name='预算金额(元)')
+#     budget_range = models.CharField(max_length=50, default='medium', verbose_name='预算范围')
+#     travel_duration = models.CharField(max_length=50, default='3-5天', verbose_name='旅行时长')
+#     interests = models.JSONField(default=list, verbose_name='兴趣标签')
+#     
+#     # 状态
+#     is_favorite = models.BooleanField(default=False, verbose_name='是否收藏')
+#     is_exported = models.BooleanField(default=False, verbose_name='是否已导出')
+#     
+#     # 缓存相关
+#     is_cached = models.BooleanField(default=False, verbose_name='是否缓存数据')
+#     cache_source = models.CharField(max_length=50, blank=True, null=True, verbose_name='缓存来源')
+#     cache_expires_at = models.DateTimeField(blank=True, null=True, verbose_name='缓存过期时间')
+#     api_used = models.CharField(max_length=50, default='deepseek', verbose_name='使用的API')
+#     generation_mode = models.CharField(max_length=20, default='standard', verbose_name='生成模式')
+#     
+#     class Meta:
+#         ordering = ['-created_at']
+#         verbose_name = '旅游攻略'
+#         verbose_name_plural = '旅游攻略'
+#     
+#     def __str__(self):
+#         return f"{self.user.username} - {self.destination}"
+#     
+#     def get_attractions_count(self):
+#         return len(self.must_visit_attractions)
+#     
+#     def get_food_count(self):
+#         return len(self.food_recommendations)
+#     
+#     def get_hidden_gems_count(self):
+#         return len(self.hidden_gems)
+#     
+#     def is_cache_valid(self):
+#         """检查缓存是否有效"""
+#         if not self.is_cached or not self.cache_expires_at:
+#             return False
+#         from django.utils import timezone
+#         return timezone.now() < self.cache_expires_at
+#     
+#     def get_cache_status(self):
+#         """获取缓存状态"""
+#         if not self.is_cached:
+#             return 'not_cached'
+#         if self.is_cache_valid():
+#             return 'valid'
+#         return 'expired'
 
 
-class TravelGuideCache(models.Model):
-    """旅游攻略缓存模型"""
-    CACHE_SOURCE_CHOICES = [
-        ('standard_api', '标准API生成'),
-        ('fast_api', '快速API生成'),
-        ('cached_data', '缓存数据'),
-        ('fallback_data', '备用数据'),
-    ]
-    
-    API_SOURCE_CHOICES = [
-        ('deepseek', 'DeepSeek API'),
-        ('openai', 'OpenAI API'),
-        ('claude', 'Claude API'),
-        ('gemini', 'Gemini API'),
-        ('free_api_1', '免费API 1'),
-        ('free_api_2', '免费API 2'),
-        ('free_api_3', '免费API 3'),
-        ('fallback', '备用数据'),
-    ]
-    
-    # 缓存键（用于查找相同条件的攻略）
-    destination = models.CharField(max_length=200, verbose_name='目的地')
-    travel_style = models.CharField(max_length=50, verbose_name='旅行风格')
-    budget_min = models.IntegerField(default=3000, verbose_name='最低预算(元)')
-    budget_max = models.IntegerField(default=8000, verbose_name='最高预算(元)')
-    budget_amount = models.IntegerField(default=5000, verbose_name='预算金额(元)')
-    budget_range = models.CharField(max_length=50, verbose_name='预算范围')
-    travel_duration = models.CharField(max_length=50, verbose_name='旅行时长')
-    interests_hash = models.CharField(max_length=64, verbose_name='兴趣标签哈希')
-    
-    # 缓存数据
-    guide_data = models.JSONField(verbose_name='攻略数据')
-    api_used = models.CharField(max_length=50, choices=API_SOURCE_CHOICES, verbose_name='使用的API')
-    cache_source = models.CharField(max_length=50, choices=CACHE_SOURCE_CHOICES, verbose_name='缓存来源')
-    
-    # 缓存元数据
-    generation_time = models.FloatField(verbose_name='生成时间(秒)')
-    data_quality_score = models.FloatField(default=0.0, verbose_name='数据质量评分')
-    usage_count = models.IntegerField(default=0, verbose_name='使用次数')
-    
-    # 时间戳
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    expires_at = models.DateTimeField(verbose_name='过期时间')
-    last_accessed = models.DateTimeField(auto_now=True, verbose_name='最后访问时间')
-    
-    class Meta:
-        unique_together = ['destination', 'travel_style', 'budget_min', 'budget_max', 'budget_range', 'travel_duration', 'interests_hash']
-        ordering = ['-last_accessed']
-        verbose_name = '旅游攻略缓存'
-        verbose_name_plural = '旅游攻略缓存'
-        indexes = [
-            models.Index(fields=['destination', 'travel_style', 'budget_min', 'budget_max', 'travel_duration']),
-            models.Index(fields=['expires_at']),
-            models.Index(fields=['api_used']),
-        ]
-    
-    def __str__(self):
-        return f"{self.destination} - {self.travel_style} - {self.api_used}"
-    
-    def is_expired(self):
-        """检查缓存是否过期"""
-        from django.utils import timezone
-        return timezone.now() > self.expires_at
-    
-    def increment_usage(self):
-        """增加使用次数"""
-        self.usage_count += 1
-        self.save(update_fields=['usage_count', 'last_accessed'])
-    
-    def get_cache_key(self):
-        """获取缓存键"""
-        return f"{self.destination}_{self.travel_style}_{self.budget_min}_{self.budget_max}_{self.travel_duration}_{self.interests_hash}"
+# class TravelGuideCache(models.Model):
+#     """旅游攻略缓存模型"""
+#     CACHE_SOURCE_CHOICES = [
+#         ('standard_api', '标准API生成'),
+#         ('fast_api', '快速API生成'),
+#         ('cached_data', '缓存数据'),
+#         ('fallback_data', '备用数据'),
+#     ]
+#     
+#     API_SOURCE_CHOICES = [
+#         ('deepseek', 'DeepSeek API'),
+#         ('openai', 'OpenAI API'),
+#         ('claude', 'Claude API'),
+#         ('gemini', 'Gemini API'),
+#         ('free_api_1', '免费API 1'),
+#         ('free_api_2', '免费API 2'),
+#         ('free_api_3', '免费API 3'),
+#         ('fallback', '备用数据'),
+#     ]
+#     
+#     # 缓存键（用于查找相同条件的攻略）
+#     destination = models.CharField(max_length=200, verbose_name='目的地')
+#     travel_style = models.CharField(max_length=50, verbose_name='旅行风格')
+#     budget_min = models.IntegerField(default=3000, verbose_name='最低预算(元)')
+#     budget_max = models.IntegerField(default=8000, verbose_name='最高预算(元)')
+#     budget_amount = models.IntegerField(default=5000, verbose_name='预算金额(元)')
+#     budget_range = models.CharField(max_length=50, verbose_name='预算范围')
+#     travel_duration = models.CharField(max_length=50, verbose_name='旅行时长')
+#     interests_hash = models.CharField(max_length=64, verbose_name='兴趣标签哈希')
+#     
+#     # 缓存数据
+#     guide_data = models.JSONField(verbose_name='攻略数据')
+#     api_used = models.CharField(max_length=50, choices=API_SOURCE_CHOICES, verbose_name='使用的API')
+#     cache_source = models.CharField(max_length=50, choices=CACHE_SOURCE_CHOICES, verbose_name='缓存来源')
+#     
+#     # 缓存元数据
+#     generation_time = models.FloatField(verbose_name='生成时间(秒)')
+#     data_quality_score = models.FloatField(default=0.0, verbose_name='数据质量评分')
+#     usage_count = models.IntegerField(default=0, verbose_name='使用次数')
+#     
+#     # 时间戳
+#     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+#     expires_at = models.DateTimeField(verbose_name='过期时间')
+#     last_accessed = models.DateTimeField(auto_now=True, verbose_name='最后访问时间')
+#     
+#     class Meta:
+#         unique_together = ['destination', 'travel_style', 'budget_min', 'budget_max', 'budget_range', 'travel_duration', 'interests_hash']
+#         ordering = ['-last_accessed']
+#         verbose_name = '旅游攻略缓存'
+#         verbose_name_plural = '旅游攻略缓存'
+#         indexes = [
+#             models.Index(fields=['destination', 'travel_style', 'budget_min', 'budget_max', 'travel_duration']),
+#             models.Index(fields=['expires_at']),
+#             models.Index(fields=['api_used']),
+#         ]
+#     
+#     def __str__(self):
+#         return f"{self.destination} - {self.travel_style} - {self.api_used}"
+#     
+#     def is_expired(self):
+#         """检查缓存是否过期"""
+#         from django.utils import timezone
+#         return timezone.now() > self.expires_at
+#     
+#     def increment_usage(self):
+#         """增加使用次数"""
+#         self.usage_count += 1
+#         self.save(update_fields=['usage_count', 'last_accessed'])
+#     
+#     def get_cache_key(self):
+#         """获取缓存键"""
+#         return f"{self.destination}_{self.travel_style}_{self.budget_min}_{self.budget_max}_{self.travel_duration}_{self.interests_hash}"
 
 
 class TravelDestination(models.Model):
@@ -1155,22 +1168,22 @@ class TravelDestination(models.Model):
         return f"{self.name}, {self.country}"
 
 
-class TravelReview(models.Model):
-    """旅游攻略评价模型"""
-    travel_guide = models.ForeignKey(TravelGuide, on_delete=models.CASCADE, verbose_name='旅游攻略')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name='评分')
-    comment = models.TextField(blank=True, null=True, verbose_name='评价内容')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    
-    class Meta:
-        unique_together = ['travel_guide', 'user']
-        ordering = ['-created_at']
-        verbose_name = '旅游攻略评价'
-        verbose_name_plural = '旅游攻略评价'
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.travel_guide.destination} - {self.rating}星"
+# class TravelReview(models.Model):
+#     """旅游攻略评价模型"""
+#     travel_guide = models.ForeignKey(TravelGuide, on_delete=models.CASCADE, verbose_name='旅游攻略')
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+#     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)], verbose_name='评分')
+#     comment = models.TextField(blank=True, null=True, verbose_name='评价内容')
+#     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+#     
+#     class Meta:
+#         unique_together = ['travel_guide', 'user']
+#         ordering = ['-created_at']
+#         verbose_name = '旅游攻略评价'
+#         verbose_name_plural = '旅游攻略评价'
+#     
+#     def __str__(self):
+#         return f"{self.user.username} - {self.travel_guide.destination} - {self.rating}星"
 
 
 class JobSearchRequest(models.Model):
@@ -2617,6 +2630,7 @@ class FitnessUserProfile(models.Model):
     training_days_per_week = models.IntegerField(default=3, verbose_name='每周训练天数')
     training_intensity = models.CharField(max_length=20, default='moderate', verbose_name='训练强度')
     training_duration = models.IntegerField(default=60, verbose_name='训练时长(分钟)')
+    selected_badge = models.ForeignKey('FitnessAchievement', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='已佩戴徽章')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     
@@ -2626,6 +2640,17 @@ class FitnessUserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.get_goal_display()}"
+
+    def get_selected_badge_display(self):
+        if self.selected_badge:
+            return {
+                'name': self.selected_badge.name,
+                'description': self.selected_badge.description,
+                'icon': self.selected_badge.icon,
+                'color': self.selected_badge.color,
+                'level': self.selected_badge.level,
+            }
+        return None
 
 
 class DietPlan(models.Model):
@@ -2826,6 +2851,7 @@ class UserFitnessAchievement(models.Model):
     achievement = models.ForeignKey(FitnessAchievement, on_delete=models.CASCADE, verbose_name='成就')
     earned_at = models.DateTimeField(auto_now_add=True, verbose_name='获得时间')
     is_shared = models.BooleanField(default=False, verbose_name='是否已分享')
+    is_equipped = models.BooleanField(default=False, verbose_name='是否佩戴')
     
     class Meta:
         unique_together = ['user', 'achievement']
@@ -2853,173 +2879,7 @@ class FitnessFollow(models.Model):
         return f"{self.follower.username} 关注了 {self.following.username}"
 
 
-class TimeCapsule(models.Model):
-    """时光胶囊模型"""
-    CAPSULE_TYPES = [
-        ('memory', '记忆胶囊'),
-        ('wish', '愿望胶囊'),
-        ('secret', '秘密胶囊'),
-    ]
-    
-    UNLOCK_CONDITIONS = [
-        ('time', '时间解锁'),
-        ('location', '位置解锁'),
-        ('event', '事件解锁'),
-    ]
-    
-    VISIBILITY_CHOICES = [
-        ('private', '仅自己'),
-        ('public', '公开分享'),
-        ('anonymous', '匿名分享'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='time_capsules', db_index=True)
-    title = models.CharField(max_length=200, blank=True)
-    content = models.TextField()
-    emotions = models.JSONField(default=list)  # 存储情绪组合
-    location = models.JSONField(null=True, blank=True)  # 存储位置信息
-    weather = models.JSONField(null=True, blank=True)  # 存储天气信息
-    keywords = models.JSONField(default=list, blank=True)  # 存储AI生成的关键词
-    
-    # 胶囊设置
-    capsule_type = models.CharField(max_length=20, choices=CAPSULE_TYPES, default='memory')
-    unlock_condition = models.CharField(max_length=20, choices=UNLOCK_CONDITIONS, default='time')
-    unlock_time = models.DateTimeField(null=True, blank=True, db_index=True)  # 添加索引
-    unlock_location = models.JSONField(null=True, blank=True)  # 位置解锁条件
-    unlock_event = models.CharField(max_length=200, blank=True)  # 事件解锁条件
-    
-    # 可见性设置
-    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='private', db_index=True)  # 添加索引
-    is_anonymous = models.BooleanField(default=False)
-    
-    # 媒体文件
-    images = models.JSONField(default=list, blank=True)  # 存储图片URL列表
-    audio = models.URLField(blank=True)  # 音频文件URL
-    
-    # 状态
-    is_locked = models.BooleanField(default=True)
-    is_unlocked = models.BooleanField(default=False)
-    unlock_count = models.IntegerField(default=0)  # 被解锁次数
-    
-    # 时间戳
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # 添加索引
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = '时光胶囊'
-        verbose_name_plural = '时光胶囊'
-        indexes = [
-            models.Index(fields=['user', 'created_at']),
-            models.Index(fields=['visibility', 'created_at']),
-            models.Index(fields=['unlock_time', 'unlock_condition']),
-            models.Index(fields=['emotions'], name='timecapsule_emotions_gin'),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.username}的{self.get_capsule_type_display()} - {self.created_at.strftime('%Y-%m-%d')}"
-    
-    def can_be_unlocked_by(self, user):
-        """检查胶囊是否可以被指定用户解锁"""
-        if self.user == user:
-            return True
-        
-        if self.visibility == 'private':
-            return False
-        
-        # 检查时间解锁条件
-        if self.unlock_condition == 'time' and self.unlock_time:
-            return timezone.now() >= self.unlock_time
-        
-        # 检查位置解锁条件
-        if self.unlock_condition == 'location' and self.unlock_location:
-            # 这里需要实现位置距离计算
-            pass
-        
-        return False
-
-class CapsuleUnlock(models.Model):
-    """胶囊解锁记录"""
-    capsule = models.ForeignKey(TimeCapsule, on_delete=models.CASCADE, related_name='unlocks')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocked_capsules')
-    unlocked_at = models.DateTimeField(auto_now_add=True)
-    location = models.JSONField(null=True, blank=True)  # 解锁时的位置
-    
-    class Meta:
-        unique_together = ['capsule', 'user']
-        ordering = ['-unlocked_at']
-        verbose_name = '胶囊解锁记录'
-        verbose_name_plural = '胶囊解锁记录'
-    
-    def __str__(self):
-        return f"{self.user.username}解锁了{self.capsule.user.username}的胶囊"
-
-class MemoryFragment(models.Model):
-    """记忆碎片"""
-    FRAGMENT_TYPES = [
-        ('text', '文字碎片'),
-        ('image', '图片碎片'),
-        ('audio', '音频碎片'),
-        ('location', '位置碎片'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memory_fragments')
-    capsule = models.ForeignKey(TimeCapsule, on_delete=models.CASCADE, related_name='fragments')
-    fragment_type = models.CharField(max_length=20, choices=FRAGMENT_TYPES)
-    content = models.TextField()
-    metadata = models.JSONField(default=dict)  # 存储额外信息
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = '记忆碎片'
-        verbose_name_plural = '记忆碎片'
-    
-    def __str__(self):
-        return f"{self.user.username}的{self.get_fragment_type_display()}"
-
-class Achievement(models.Model):
-    """成就系统"""
-    ACHIEVEMENT_TYPES = [
-        ('traveler', '时光旅人'),
-        ('explorer', '城市探险家'),
-        ('prophet', '预言家'),
-        ('collector', '记忆收藏家'),
-    ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
-    achievement_type = models.CharField(max_length=20, choices=ACHIEVEMENT_TYPES)
-    unlocked_at = models.DateTimeField(auto_now_add=True)
-    progress = models.IntegerField(default=0)  # 进度值
-    
-    class Meta:
-        unique_together = ['user', 'achievement_type']
-        ordering = ['-unlocked_at']
-        verbose_name = '成就'
-        verbose_name_plural = '成就'
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.get_achievement_type_display()}"
-
-class ParallelMatch(models.Model):
-    """平行宇宙匹配"""
-    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='parallel_matches_1')
-    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='parallel_matches_2')
-    match_date = models.DateField(auto_now_add=True)
-    keywords = models.JSONField(default=list)  # 匹配的关键词
-    is_active = models.BooleanField(default=True)
-    
-    class Meta:
-        unique_together = ['user1', 'user2', 'match_date']
-        ordering = ['-match_date']
-        verbose_name = '平行匹配'
-        verbose_name_plural = '平行匹配'
-    
-    def __str__(self):
-        return f"{self.user1.username} ↔ {self.user2.username} ({self.match_date})"
-
-class UserGeneratedTravelGuide(models.Model):
+# class UserGeneratedTravelGuide(models.Model):
     """用户生成的旅游攻略模型 - 好心人的攻略"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='创建用户')
     title = models.CharField(max_length=200, verbose_name='攻略标题')
@@ -3085,10 +2945,10 @@ class UserGeneratedTravelGuide(models.Model):
         self.save(update_fields=['use_count'])
 
 
-class TravelGuideUsage(models.Model):
+# class TravelGuideUsage(models.Model):
     """旅游攻略使用记录模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    guide = models.ForeignKey(UserGeneratedTravelGuide, on_delete=models.CASCADE, verbose_name='攻略')
+    # guide = models.ForeignKey(UserGeneratedTravelGuide, on_delete=models.CASCADE, verbose_name='攻略')
     usage_type = models.CharField(max_length=20, choices=[
         ('view', '查看'),
         ('download', '下载'),
@@ -3157,8 +3017,11 @@ class ShipBaoItem(models.Model):
     delivery_option = models.CharField(max_length=20, choices=DELIVERY_CHOICES, default='pickup', verbose_name='交易方式')
     can_bargain = models.BooleanField(default=False, verbose_name='是否可议价')
     
-    # 地理位置
+    # 地理位置 - 增强位置信息
     location = models.CharField(max_length=200, verbose_name='交易地点')
+    location_city = models.CharField(max_length=100, blank=True, null=True, verbose_name='所在城市')
+    location_region = models.CharField(max_length=100, blank=True, null=True, verbose_name='所在地区')
+    location_address = models.CharField(max_length=500, blank=True, null=True, verbose_name='详细地址')
     latitude = models.FloatField(blank=True, null=True, verbose_name='纬度')
     longitude = models.FloatField(blank=True, null=True, verbose_name='经度')
     
@@ -3168,6 +3031,7 @@ class ShipBaoItem(models.Model):
     # 统计信息
     view_count = models.IntegerField(default=0, verbose_name='浏览次数')
     favorite_count = models.IntegerField(default=0, verbose_name='收藏次数')
+    want_count = models.IntegerField(default=0, verbose_name='想要人数')
     
     # 时间戳
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='发布时间')
@@ -3182,6 +3046,8 @@ class ShipBaoItem(models.Model):
             models.Index(fields=['seller', 'status']),
             models.Index(fields=['price']),
             models.Index(fields=['created_at']),
+            models.Index(fields=['location_city']),
+            models.Index(fields=['latitude', 'longitude']),
         ]
     
     def __str__(self):
@@ -3198,6 +3064,62 @@ class ShipBaoItem(models.Model):
     def get_image_count(self):
         """获取图片数量"""
         return len(self.images)
+    
+    def get_location_display(self):
+        """获取位置显示信息"""
+        if self.location_city and self.location_region:
+            return f"{self.location_city}，{self.location_region}"
+        elif self.location_city:
+            return self.location_city
+        elif self.location_address:
+            return self.location_address
+        return self.location or "位置未知"
+    
+    def calculate_distance_to(self, target_lat, target_lon):
+        """计算到指定位置的距离（公里）"""
+        if not self.latitude or not self.longitude:
+            return None
+        
+        from math import radians, cos, sin, asin, sqrt
+        
+        # 将经纬度转换为弧度
+        lat1, lon1, lat2, lon2 = map(radians, [
+            self.latitude, self.longitude, target_lat, target_lon
+        ])
+        
+        # Haversine公式
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a))
+        r = 6371  # 地球半径（公里）
+        
+        return c * r
+    
+    def increment_view_count(self):
+        """增加浏览次数"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+    
+    def increment_favorite_count(self):
+        """增加收藏次数"""
+        self.favorite_count += 1
+        self.save(update_fields=['favorite_count'])
+    
+    def increment_want_count(self):
+        """增加想要人数"""
+        self.want_count += 1
+        self.save(update_fields=['want_count'])
+    
+    def decrement_want_count(self):
+        """减少想要人数"""
+        self.want_count = max(0, self.want_count - 1)
+        self.save(update_fields=['want_count'])
+    
+    def increment_inquiry_count(self):
+        """增加咨询次数（如果有inquiry_count字段的话）"""
+        # 目前legacy模型没有inquiry_count字段，保留方法以保持兼容性
+        pass
 
 
 class ShipBaoTransaction(models.Model):
@@ -3943,3 +3865,36 @@ class FitnessStrengthProfile(models.Model):
             return 0
         
         return min(round((current / goal) * 100, 1), 100)
+
+
+class ShipBaoWantItem(models.Model):
+    """船宝商品想要记录模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    item = models.ForeignKey(ShipBaoItem, on_delete=models.CASCADE, related_name='want_users', verbose_name='商品')
+    message = models.TextField(blank=True, null=True, verbose_name='留言')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='想要时间')
+    
+    class Meta:
+        unique_together = ['user', 'item']
+        ordering = ['-created_at']
+        verbose_name = '商品想要记录'
+        verbose_name_plural = '商品想要记录'
+    
+    def __str__(self):
+        return f"{self.user.username} 想要 {self.item.title}"
+
+
+class ShipBaoFavorite(models.Model):
+    """船宝商品收藏模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    item = models.ForeignKey(ShipBaoItem, on_delete=models.CASCADE, verbose_name='商品')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='收藏时间')
+    
+    class Meta:
+        unique_together = ['user', 'item']
+        ordering = ['-created_at']
+        verbose_name = '商品收藏'
+        verbose_name_plural = '商品收藏'
+    
+    def __str__(self):
+        return f"{self.user.username} 收藏了 {self.item.title}"

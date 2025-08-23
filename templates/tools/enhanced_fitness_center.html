@@ -1,0 +1,778 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}增强版健身中心{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/fitness-enhanced.css' %}">
+<style>
+.fitness-dashboard {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-value {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.dashboard-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.section-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.section-title {
+    font-size: 1.4em;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.view-all-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.view-all-btn:hover {
+    transform: scale(1.05);
+    text-decoration: none;
+    color: white;
+}
+
+.achievement-badges {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    min-width: 80px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.badge-item:hover {
+    background: #e9ecef;
+    transform: scale(1.05);
+}
+
+.badge-icon {
+    font-size: 2em;
+    margin-bottom: 8px;
+}
+
+.badge-name {
+    font-size: 0.8em;
+    text-align: center;
+    font-weight: 500;
+}
+
+.plan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.plan-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.plan-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.plan-info h4 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+}
+
+.plan-meta {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.plan-progress {
+    width: 100px;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.plan-progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.exercise-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.exercise-card:hover {
+    background: #e9ecef;
+    transform: translateY(-3px);
+}
+
+.exercise-name {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.exercise-muscles {
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.action-card {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    text-decoration: none;
+    color: white;
+}
+
+.action-card.secondary {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+}
+
+.action-card.success {
+    background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+}
+
+.action-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+}
+
+.action-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.action-desc {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3em;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .dashboard-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .achievement-badges {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fitness-dashboard">
+    <!-- 仪表盘头部 -->
+    <div class="dashboard-header">
+        <h1><i class="fas fa-dumbbell"></i> 增强版健身中心</h1>
+        <p>全新的健身体验，智能的训练管理</p>
+    </div>
+
+    <!-- 统计数据 -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ achievement_stats.total_achievements }}</div>
+            <div class="stat-label">获得成就</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ achievement_stats.total_points }}</div>
+            <div class="stat-label">成就积分</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ current_plans|length }}</div>
+            <div class="stat-label">进行中计划</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ achievement_stats.equipped_badges }}</div>
+            <div class="stat-label">佩戴徽章</div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="dashboard-sections">
+        <!-- 成就徽章展示 -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title"><i class="fas fa-trophy"></i> 我的成就</h3>
+                <a href="/tools/fitness/achievements/" class="view-all-btn">查看全部</a>
+            </div>
+            
+            {% if profile.selected_badges %}
+                <div class="achievement-badges">
+                    {% for module, badge_info in profile.selected_badges.items %}
+                        <div class="badge-item" style="color: {{ badge_info.badge_color }}">
+                            <div class="badge-icon">
+                                <i class="{{ badge_info.icon }}"></i>
+                            </div>
+                            <div class="badge-name">{{ badge_info.achievement_name }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-medal"></i>
+                    <p>还没有佩戴的徽章</p>
+                    <p><small>完成训练获得成就，佩戴专属徽章！</small></p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 当前训练计划 -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title"><i class="fas fa-calendar-alt"></i> 当前计划</h3>
+                <a href="/tools/fitness/plan-library/" class="view-all-btn">计划库</a>
+            </div>
+            
+            {% if current_plans %}
+                <div class="plan-list">
+                    {% for user_plan in current_plans %}
+                        <div class="plan-item" onclick="viewPlanDetails({{ user_plan.plan.id }})">
+                            <div class="plan-info">
+                                <h4>{{ user_plan.plan.name }}</h4>
+                                <div class="plan-meta">
+                                    {{ user_plan.plan.get_plan_type_display }} · 
+                                    第{{ user_plan.current_week }}周 · 
+                                    {{ user_plan.completed_sessions }}/{{ user_plan.total_sessions }}次
+                                </div>
+                            </div>
+                            <div class="plan-progress">
+                                <div class="plan-progress-bar" style="width: {{ user_plan.completion_percentage }}%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>还没有进行中的训练计划</p>
+                    <p><small>从计划库选择一个适合的计划开始训练吧！</small></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 收藏的动作 -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title"><i class="fas fa-heart"></i> 收藏的动作</h3>
+            <a href="/tools/fitness/exercise-library/" class="view-all-btn">动作库</a>
+        </div>
+        
+        {% if favorite_exercises %}
+            <div class="exercise-grid">
+                {% for preference in favorite_exercises %}
+                    <div class="exercise-card" onclick="viewExerciseDetail({{ preference.exercise.id }})">
+                        <div class="exercise-name">{{ preference.exercise.name }}</div>
+                        <div class="exercise-muscles">
+                            {% for muscle in preference.exercise.primary_muscles.all %}
+                                {{ muscle.chinese_name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-dumbbell"></i>
+                <p>还没有收藏的动作</p>
+                <p><small>在动作库中收藏你喜欢的训练动作！</small></p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 快捷操作 -->
+    <div class="quick-actions">
+        <a href="/tools/training_plan_editor/" class="action-card">
+            <div class="action-icon"><i class="fas fa-edit"></i></div>
+            <div class="action-title">创建计划</div>
+            <div class="action-desc">设计专属的训练计划</div>
+        </a>
+        
+        <a href="/tools/fitness/exercise-library/" class="action-card secondary">
+            <div class="action-icon"><i class="fas fa-search"></i></div>
+            <div class="action-title">动作库</div>
+            <div class="action-desc">浏览所有训练动作</div>
+        </a>
+        
+        <a href="/tools/fitness/achievements/" class="action-card success">
+            <div class="action-icon"><i class="fas fa-trophy"></i></div>
+            <div class="action-title">成就中心</div>
+            <div class="action-desc">查看训练成就</div>
+        </a>
+        
+        <a href="/tools/fitness/plan-library/" class="action-card" style="background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);">
+            <div class="action-icon"><i class="fas fa-book"></i></div>
+            <div class="action-title">计划库</div>
+            <div class="action-desc">发现优质训练计划</div>
+        </a>
+    </div>
+</div>
+
+<!-- 计划详情模态框 -->
+<div id="planDetailModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="planDetailTitle">计划详情</h3>
+            <button class="close-btn" onclick="closePlanDetail()">&times;</button>
+        </div>
+        <div class="modal-body" id="planDetailContent">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> 加载中...
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/enhanced_training_plan_editor.js' %}"></script>
+<script>
+// 查看计划详情
+function viewPlanDetails(planId) {
+    const modal = document.getElementById('planDetailModal');
+    const content = document.getElementById('planDetailContent');
+    const title = document.getElementById('planDetailTitle');
+    
+    modal.style.display = 'block';
+    content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+    
+    fetch(`/api/fitness/workout-plan-details/${planId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                title.textContent = data.plan.name;
+                content.innerHTML = renderPlanDetail(data.plan, data.exercises);
+            } else {
+                content.innerHTML = '<div class="error">加载失败: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            content.innerHTML = '<div class="error">网络错误，请重试</div>';
+        });
+}
+
+function renderPlanDetail(plan, exercises) {
+    let html = `
+        <div class="plan-detail">
+            <div class="plan-info">
+                <p><strong>类型:</strong> ${plan.plan_type}</p>
+                <p><strong>难度:</strong> ${plan.difficulty}</p>
+                <p><strong>周期:</strong> ${plan.duration_weeks}周</p>
+                <p><strong>每周训练:</strong> ${plan.training_days_per_week}天</p>
+                <p><strong>单次时长:</strong> ${plan.session_duration}分钟</p>
+                <p><strong>使用次数:</strong> ${plan.usage_count}</p>
+            </div>
+            
+            <div class="plan-description">
+                <h4>计划描述</h4>
+                <p>${plan.description || '暂无描述'}</p>
+            </div>
+            
+            <div class="plan-schedule">
+                <h4>训练安排</h4>
+    `;
+    
+    if (plan.week_schedule && plan.week_schedule.length > 0) {
+        plan.week_schedule.forEach((day, index) => {
+            html += `
+                <div class="day-schedule">
+                    <h5>${day.weekday} - ${day.body_parts.join(', ')}</h5>
+                    <div class="day-exercises">
+            `;
+            
+            // 显示各个模块的动作
+            Object.entries(day.modules || {}).forEach(([module, moduleExercises]) => {
+                if (moduleExercises && moduleExercises.length > 0) {
+                    html += `<div class="module-section">
+                        <h6>${getModuleName(module)}</h6>
+                        <ul>`;
+                    
+                    moduleExercises.forEach(exercise => {
+                        const exerciseDetail = exercises[exercise.name];
+                        html += `<li>
+                            <strong>${exercise.name}</strong>
+                            ${exercise.sets ? ` - ${exercise.sets}组` : ''}
+                            ${exercise.reps ? ` x ${exercise.reps}次` : ''}
+                            ${exercise.rest ? ` (休息${exercise.rest})` : ''}
+                            ${exerciseDetail ? `<br><small>${exerciseDetail.description}</small>` : ''}
+                        </li>`;
+                    });
+                    
+                    html += '</ul></div>';
+                }
+            });
+            
+            html += '</div></div>';
+        });
+    }
+    
+    html += `
+            </div>
+            
+            <div class="plan-actions">
+                <button class="btn-primary" onclick="usePlanTemplate(${plan.id})">
+                    <i class="fas fa-play"></i> 开始使用这个计划
+                </button>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+function getModuleName(moduleType) {
+    const names = {
+        'warmup': '热身',
+        'main': '主要训练',
+        'accessory': '辅助训练',
+        'cooldown': '放松整理'
+    };
+    return names[moduleType] || moduleType;
+}
+
+function closePlanDetail() {
+    document.getElementById('planDetailModal').style.display = 'none';
+}
+
+function usePlanTemplate(planId) {
+    fetch('/api/fitness/use-plan-template/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ plan_id: planId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.created) {
+                showMessage('成功添加训练计划！', 'success');
+            } else {
+                showMessage('您已经有这个计划了', 'info');
+            }
+            closePlanDetail();
+            // 刷新页面显示新计划
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showMessage('操作失败: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误，请重试', 'error');
+    });
+}
+
+// 查看动作详情
+function viewExerciseDetail(exerciseId) {
+    window.location.href = `/fitness/exercise/${exerciseId}/`;
+}
+
+// 获取CSRF令牌
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// 显示消息
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${type}`;
+    messageDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // 添加样式
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    // 自动消失
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+
+// 点击模态框外部关闭
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('planDetailModal');
+    if (e.target === modal) {
+        closePlanDetail();
+    }
+});
+
+// 添加动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        margin: 20px;
+        animation: modalSlideIn 0.3s ease;
+    }
+    
+    @keyframes modalSlideIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    .modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        cursor: pointer;
+        color: #999;
+    }
+    
+    .close-btn:hover {
+        color: #333;
+    }
+    
+    .plan-detail .plan-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .day-schedule {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .module-section {
+        margin-bottom: 15px;
+    }
+    
+    .module-section h6 {
+        color: #667eea;
+        margin-bottom: 8px;
+    }
+    
+    .module-section ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .module-section li {
+        margin-bottom: 5px;
+    }
+    
+    .plan-actions {
+        text-align: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1.1em;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: scale(1.05);
+    }
+    
+    .loading, .error {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    
+    .error {
+        color: #dc3545;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

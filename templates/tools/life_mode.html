@@ -555,12 +555,12 @@ function goToLifeDiary() {
     console.log('点击生活日记按钮');
     
     try {
-        // 跳转到生活日记页面
-        window.location.href = '{% url "tools:diary" %}';
+        // 跳转到简单生活日记页面
+        window.location.href = '{% url "tools:simple_diary" %}';
     } catch (error) {
         console.error('跳转失败:', error);
         // 备用跳转方式
-        window.open('/tools/diary/', '_self');
+        window.open('/tools/simple-diary/', '_self');
     }
 }
 

@@ -414,8 +414,8 @@ class ThemeManager {
 }
 
 // 添加CSS动画
-const style = document.createElement('style');
-style.textContent = `
+const themeStyle = document.createElement('style');
+themeStyle.textContent = `
     @keyframes slideIn {
         from {
             transform: translateX(100%);
@@ -448,7 +448,7 @@ style.textContent = `
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(themeStyle);
 
 // 创建全局实例
 window.ThemeManager = new ThemeManager();

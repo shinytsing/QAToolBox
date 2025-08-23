@@ -339,6 +339,84 @@
     backdrop-filter: blur(5px);
 }
 
+/* 消息提示样式 */
+.message-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10001;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.message-toast.show {
+    transform: translateX(0);
+}
+
+.message-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.message-error {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.message-info {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* 位置建议样式增强 */
+.location-suggestion {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ecf0f1;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.location-suggestion:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.suggestion-address {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.loading-suggestion {
+    padding: 20px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+.no-suggestions {
+    padding: 20px;
+    text-align: center;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* 收藏按钮状态 */
+.btn-outline.favorited {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border-color: #e74c3c;
+}
+
 .map-modal.show {
     display: flex;
     align-items: center;
@@ -452,6 +530,117 @@
     transform: translateY(-2px);
 }
 
+/* 想要此商品的用户样式 */
+.want-count-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.want-count-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.interested-users h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.interested-user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.user-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.user-status {
+    color: #7f8c8d;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: #ecf0f1;
+    border-radius: 12px;
+}
+
+.btn-chat {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-chat:hover {
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+    transform: translateY(-1px);
+}
+
+/* 聊天通知样式 */
+.chat-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    z-index: 10002;
+    cursor: pointer;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+}
+
+.chat-notification.show {
+    transform: translateX(0);
+}
+
+.chat-notification-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-notification-icon {
+    font-size: 20px;
+}
+
+.chat-notification-text {
+    flex: 1;
+}
+
+.chat-notification-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.chat-notification-message {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .item-detail-card {
@@ -491,9 +680,19 @@
     <button class="back-btn" onclick="history.back()">← 返回</button>
     
     <div class="item-detail-card">
+        <!-- 调试信息 -->
+        <div style="background: #f8f9fa; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
+            <strong>调试信息：</strong><br>
+            商品ID: {{ item.id }}<br>
+            收藏状态: {{ is_favorited }}<br>
+            想要人数: {{ want_count }}<br>
+            是否卖家: {{ is_seller }}<br>
+            用户: {{ user.username }}
+        </div>
+        
         <!-- 商品图片 -->
         <div class="item-images">
-            <img src="{{ item.main_image|default:'/static/img/default-item.jpg' }}" alt="{{ item.title }}" class="main-image" id="main-image">
+            <img src="{% if item.get_main_image %}{{ item.get_main_image }}{% else %}/static/img/default-item.jpg{% endif %}" alt="{{ item.title }}" class="main-image" id="main-image">
             <div class="image-nav" id="image-nav">
                 <!-- 图片导航点将通过JavaScript生成 -->
             </div>
@@ -562,22 +761,95 @@
                 <div class="location-info">
                     <p id="current-location">正在获取位置信息...</p>
                 </div>
-                <button class="map-picker-btn" onclick="openMapPicker()">
-                    <i class="fas fa-map"></i> 选择地址
-                </button>
+                
+                <!-- 位置操作按钮 -->
+                <div class="location-actions">
+                    <button class="location-btn auto-locate-btn" onclick="autoLocateUser()">
+                        <i class="fas fa-crosshairs"></i> 自动定位
+                    </button>
+                    <button class="location-btn map-picker-btn" onclick="openMapPicker()">
+                        <i class="fas fa-map"></i> 选择地址
+                    </button>
+                </div>
+                
+                <!-- 位置输入容器 -->
+                <div class="location-input-container" id="location-input-container" style="display: none;">
+                    <div class="input-group">
+                        <input type="text" 
+                               id="location-search-input" 
+                               class="location-search-input" 
+                               placeholder="输入城市或地址进行搜索..."
+                               oninput="searchLocationSuggestions(this.value)">
+                        <button class="input-group-btn" onclick="searchCurrentInput()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 搜索建议列表 -->
+                    <div class="location-suggestions-list" id="location-suggestions-list">
+                        <!-- 搜索建议将通过JavaScript生成 -->
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="location-input-actions">
+                        <button class="btn-confirm" onclick="confirmManualLocation()">
+                            <i class="fas fa-check"></i> 确认
+                        </button>
+                        <button class="btn-cancel" onclick="cancelLocationInput()">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                    </div>
+                </div>
             </div>
+            
+            <!-- 想要此商品的人数 -->
+            {% if want_count > 0 %}
+            <div class="want-count-section">
+                <div class="want-count-header">
+                    <i class="fas fa-users"></i>
+                    <span>{{ want_count }} 人想要此商品</span>
+                </div>
+                {% if is_seller and interested_users %}
+                <div class="interested-users">
+                    <h4>想要此商品的用户：</h4>
+                    {% for user in interested_users %}
+                    <div class="interested-user-item">
+                        <span class="user-name">{{ user.buyer__username }}</span>
+                        <span class="user-status">{{ user.status }}</span>
+                        <button class="btn-chat" onclick="chatWithUser('{{ user.buyer__id }}', '{{ item.id }}')">
+                            <i class="fas fa-comments"></i> 联系
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
             
             <!-- 操作按钮 -->
             <div class="action-buttons">
-                <button class="btn btn-primary" onclick="contactSeller()">
-                    <i class="fas fa-comments"></i> 联系卖家
-                </button>
-                <button class="btn btn-secondary" onclick="makeOffer()">
+                {% if not is_seller %}
+                    <button class="btn btn-primary" onclick="contactSeller()">
+                        <i class="fas fa-comments"></i> 联系卖家
+                    </button>
+                                    <button class="btn btn-secondary transaction-btn" onclick="makeOffer()">
                     <i class="fas fa-handshake"></i> 发起交易
                 </button>
-                <button class="btn btn-outline" onclick="addToFavorites()">
-                    <i class="fas fa-heart"></i> 收藏
-                </button>
+                    <button class="btn btn-outline favorite-btn {% if is_favorited %}favorited{% endif %}" onclick="toggleFavorite()">
+                        <i class="fas fa-heart"></i> {% if is_favorited %}已收藏{% else %}收藏{% endif %}
+                    </button>
+                {% else %}
+                    <!-- 发布者操作按钮 -->
+                    <button class="btn btn-secondary" onclick="editProduct()">
+                        <i class="fas fa-edit"></i> 编辑商品
+                    </button>
+                    <button class="btn btn-outline" onclick="toggleProductStatus()">
+                        <i class="fas fa-archive"></i> 下架商品
+                    </button>
+                    <button class="btn btn-primary" onclick="markAsSold()">
+                        <i class="fas fa-check-circle"></i> 标记为已售
+                    </button>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -613,15 +885,117 @@
 
 {% block extra_js %}
 <script>
+// 全局变量
+const ITEM_ID = {% if item_id %}{{ item_id }}{% else %}null{% endif %};
 let currentLocation = null;
 let selectedLocation = null;
+let selectedLocationData = null;
 let userLocation = null;
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     getLocationInfo();
     loadItemImages();
+    initializeFavoriteButton();
+    initializeTransactionButton();
 });
+
+// 初始化收藏按钮状态
+function initializeFavoriteButton() {
+    console.log('initializeFavoriteButton 被调用');
+    
+    const favoriteBtn = document.querySelector('.favorite-btn');
+    const isFavorited = {% if is_favorited %}true{% else %}false{% endif %};
+    
+    console.log('初始化时找到的按钮:', favoriteBtn);
+    console.log('服务器传递的收藏状态:', isFavorited);
+    
+    if (favoriteBtn) {
+        console.log('调用updateFavoriteButton进行初始化');
+        updateFavoriteButton(isFavorited);
+    } else {
+        console.error('初始化时未找到收藏按钮');
+        // 延迟一段时间再尝试
+        setTimeout(() => {
+            console.log('延迟500ms后重试查找收藏按钮');
+            const retryBtn = document.querySelector('.favorite-btn');
+            if (retryBtn) {
+                console.log('重试成功找到按钮');
+                updateFavoriteButton(isFavorited);
+            } else {
+                console.error('重试后仍未找到收藏按钮');
+            }
+        }, 500);
+    }
+}
+
+// 初始化交易按钮状态
+function initializeTransactionButton() {
+    console.log('initializeTransactionButton 被调用');
+    
+    const transactionBtn = document.querySelector('.transaction-btn');
+    if (!transactionBtn) {
+        console.log('未找到交易按钮（可能是发布者视图）');
+        return;
+    }
+    
+    const itemId = ITEM_ID;
+    if (!itemId) {
+        console.error('商品ID无效');
+        return;
+    }
+    
+    console.log('检查交易状态，商品ID:', itemId);
+    
+    // 检查是否已经发起过交易
+    fetch(`/tools/api/shipbao/transaction-status/${itemId}/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('交易状态检查结果:', data);
+        if (data.has_transaction) {
+            updateTransactionButton(true, data.transaction_status);
+        } else {
+            updateTransactionButton(false);
+        }
+    })
+    .catch(error => {
+        console.error('检查交易状态失败:', error);
+        // 如果检查失败，保持默认状态
+    });
+}
+
+// 更新交易按钮状态
+function updateTransactionButton(hasTransaction, transactionStatus = null) {
+    console.log('updateTransactionButton 被调用，参数:', hasTransaction, transactionStatus);
+    
+    const transactionBtn = document.querySelector('.transaction-btn');
+    if (!transactionBtn) {
+        console.error('未找到交易按钮');
+        return;
+    }
+    
+    if (hasTransaction) {
+        // 已经发起过交易
+        transactionBtn.innerHTML = '<i class="fas fa-check-circle"></i> 已发起交易';
+        transactionBtn.classList.add('btn-success');
+        transactionBtn.classList.remove('btn-secondary');
+        transactionBtn.disabled = true;
+        console.log('设置为已发起交易状态');
+    } else {
+        // 未发起交易
+        transactionBtn.innerHTML = '<i class="fas fa-handshake"></i> 发起交易';
+        transactionBtn.classList.add('btn-secondary');
+        transactionBtn.classList.remove('btn-success');
+        transactionBtn.disabled = false;
+        console.log('设置为可发起交易状态');
+    }
+}
 
 // 获取位置信息
 function getLocationInfo() {
@@ -652,9 +1026,57 @@ function updateLocationDisplay(location) {
     const locationElement = document.getElementById('current-location');
     if (location && location.city && location.city !== '未知') {
         locationElement.textContent = `当前位置：${location.city}，${location.region}`;
+        
+        // 如果有坐标信息，计算与商品的距离
+        if (location.lat && location.lon) {
+            calculateDistance(location.lat, location.lon);
+        }
     } else {
         locationElement.textContent = '位置信息获取失败，请手动选择';
     }
+}
+
+// 计算距离
+function calculateDistance(userLat, userLon) {
+    // 获取商品位置信息（这些信息应该从后端传递）
+    const itemLat = {% if item.latitude %}{{ item.latitude }}{% else %}null{% endif %};
+    const itemLon = {% if item.longitude %}{{ item.longitude }}{% else %}null{% endif %};
+    
+    if (itemLat && itemLon) {
+        const distance = getDistance(userLat, userLon, itemLat, itemLon);
+        const distanceElement = document.getElementById('item-distance');
+        if (distanceElement) {
+            if (distance < 1) {
+                distanceElement.textContent = `距离 ${(distance * 1000).toFixed(0)}米`;
+            } else {
+                distanceElement.textContent = `距离 ${distance.toFixed(1)}公里`;
+            }
+        }
+    } else {
+        // 如果商品没有精确坐标，尝试使用地址进行估算
+        console.log('商品没有精确坐标，无法计算精确距离');
+        const distanceElement = document.getElementById('item-distance');
+        if (distanceElement) {
+            distanceElement.textContent = '距离未知';
+        }
+    }
+}
+
+// 使用Haversine公式计算两点间距离（公里）
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // 地球半径（公里）
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// 角度转弧度
+function toRadians(degrees) {
+    return degrees * (Math.PI / 180);
 }
 
 // 加载商品图片
@@ -692,7 +1114,41 @@ function searchLocation(query) {
         return;
     }
     
-    // 模拟位置搜索
+    // 显示加载状态
+    const suggestionsContainer = document.getElementById('locationSuggestions');
+    suggestionsContainer.innerHTML = '<div class="loading-suggestion">正在搜索位置...</div>';
+    
+    console.log('正在搜索位置:', query);
+    
+    // 调用地图选择器API
+    fetch(`/tools/api/map_picker/?query=${encodeURIComponent(query)}`)
+        .then(response => {
+            console.log('地图API响应状态:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('地图API响应数据:', data);
+            if (data.success && data.suggestions && data.suggestions.length > 0) {
+                console.log(`找到${data.suggestions.length}个位置建议`);
+                suggestionsContainer.innerHTML = data.suggestions.map(suggestion => 
+                    `<div class="location-suggestion" onclick="selectLocation('${suggestion.name}', ${JSON.stringify(suggestion).replace(/"/g, '&quot;')})">
+                        <div class="suggestion-name">${suggestion.name}</div>
+                        <div class="suggestion-address">${suggestion.address || suggestion.full_address || ''}</div>
+                    </div>`
+                ).join('');
+            } else {
+                console.log('API返回成功但无建议，生成备用建议');
+                generateFallbackSuggestions(query, suggestionsContainer);
+            }
+        })
+        .catch(error => {
+            console.error('搜索位置失败:', error);
+            generateFallbackSuggestions(query, suggestionsContainer);
+        });
+}
+
+// 生成备用位置建议
+function generateFallbackSuggestions(query, container) {
     const suggestions = [
         `${query}市中心`,
         `${query}火车站`,
@@ -701,57 +1157,174 @@ function searchLocation(query) {
         `${query}购物中心`
     ];
     
-    const suggestionsContainer = document.getElementById('locationSuggestions');
-    suggestionsContainer.innerHTML = suggestions.map(suggestion => 
+    container.innerHTML = suggestions.map(suggestion => 
         `<div class="location-suggestion" onclick="selectLocation('${suggestion}')">${suggestion}</div>`
     ).join('');
 }
 
 // 选择位置
-function selectLocation(location) {
+function selectLocation(location, locationData = null) {
     selectedLocation = location;
+    selectedLocationData = locationData;
     document.getElementById('locationSearch').value = location;
     document.getElementById('locationSuggestions').innerHTML = '';
     
     // 更新地图显示
-    updateMapDisplay(location);
+    updateMapDisplay(location, locationData);
 }
 
 // 加载地图
 function loadMap() {
     const mapContainer = document.getElementById('mapContainer');
+    
+    // 尝试加载高德地图API
+    if (typeof AMap !== 'undefined') {
+        // 高德地图已加载
+        initAMap();
+    } else {
+        // 加载高德地图API
+        const script = document.createElement('script');
+        script.src = 'https://webapi.amap.com/maps?v=1.4.15&key=YOUR_AMAP_KEY';
+        script.onload = function() {
+            initAMap();
+        };
+        script.onerror = function() {
+            // 回退到简单的地图显示
+            showSimpleMap();
+        };
+        document.head.appendChild(script);
+    }
+}
+
+// 初始化高德地图
+function initAMap() {
+    const mapContainer = document.getElementById('mapContainer');
+    
+    try {
+        // 创建地图实例
+        const map = new AMap.Map(mapContainer, {
+            zoom: 11,
+            center: [116.397428, 39.90923] // 默认北京
+        });
+        
+        // 添加控件
+        map.plugin(['AMap.ToolBar', 'AMap.Scale'], function() {
+            map.addControl(new AMap.ToolBar());
+            map.addControl(new AMap.Scale());
+        });
+        
+        // 如果有当前位置，设置为中心
+        if (userLocation && userLocation.lat && userLocation.lon) {
+            map.setCenter([userLocation.lon, userLocation.lat]);
+            new AMap.Marker({
+                position: [userLocation.lon, userLocation.lat],
+                title: '当前位置',
+                map: map
+            });
+        }
+        
+        // 保存地图实例
+        window.currentMap = map;
+        
+    } catch (error) {
+        console.error('地图初始化失败:', error);
+        showSimpleMap();
+    }
+}
+
+// 显示简单地图
+function showSimpleMap() {
+    const mapContainer = document.getElementById('mapContainer');
     mapContainer.innerHTML = `
-        <div style="text-align: center;">
+        <div style="text-align: center; padding: 40px;">
             <i class="fas fa-map-marked-alt" style="font-size: 48px; color: #3498db; margin-bottom: 15px;"></i>
-            <p>地图功能开发中...</p>
+            <p>地图加载中...</p>
             <p style="font-size: 12px; color: #7f8c8d;">您可以搜索并选择地址</p>
+            <div style="margin-top: 20px;">
+                <button onclick="showLocationPicker()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                    手动选择位置
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// 显示位置选择器
+function showLocationPicker() {
+    const locations = [
+        { name: '北京市朝阳区', lat: 39.9219, lon: 116.4551 },
+        { name: '上海市浦东新区', lat: 31.2304, lon: 121.4737 },
+        { name: '广州市天河区', lat: 23.1291, lon: 113.2644 },
+        { name: '深圳市南山区', lat: 22.5431, lon: 113.9344 },
+        { name: '杭州市西湖区', lat: 30.2741, lon: 120.1551 }
+    ];
+    
+    const mapContainer = document.getElementById('mapContainer');
+    mapContainer.innerHTML = `
+        <div style="padding: 20px;">
+            <h4 style="margin-bottom: 15px;">选择城市：</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                ${locations.map(loc => `
+                    <button onclick="selectLocation('${loc.name}', {lat: ${loc.lat}, lon: ${loc.lon}})" 
+                            style="background: #ecf0f1; border: 1px solid #bdc3c7; padding: 10px; border-radius: 8px; cursor: pointer; text-align: center;">
+                        ${loc.name}
+                    </button>
+                `).join('')}
+            </div>
         </div>
     `;
 }
 
 // 更新地图显示
-function updateMapDisplay(location) {
+function updateMapDisplay(location, locationData = null) {
     const mapContainer = document.getElementById('mapContainer');
-    mapContainer.innerHTML = `
-        <div style="text-align: center;">
-            <i class="fas fa-map-pin" style="font-size: 48px; color: #e74c3c; margin-bottom: 15px;"></i>
-            <p><strong>已选择地址：</strong></p>
-            <p>${location}</p>
-        </div>
-    `;
+    
+    if (locationData && locationData.lat && locationData.lon) {
+        // 显示坐标信息
+        mapContainer.innerHTML = `
+            <div style="text-align: center;">
+                <i class="fas fa-map-pin" style="font-size: 48px; color: #e74c3c; margin-bottom: 15px;"></i>
+                <p><strong>已选择地址：</strong></p>
+                <p>${location}</p>
+                <p style="font-size: 12px; color: #7f8c8d;">
+                    坐标：${locationData.lat.toFixed(4)}, ${locationData.lon.toFixed(4)}
+                </p>
+            </div>
+        `;
+    } else {
+        mapContainer.innerHTML = `
+            <div style="text-align: center;">
+                <i class="fas fa-map-pin" style="font-size: 48px; color: #e74c3c; margin-bottom: 15px;"></i>
+                <p><strong>已选择地址：</strong></p>
+                <p>${location}</p>
+            </div>
+        `;
+    }
 }
 
 // 确认位置选择
 function confirmLocation() {
     if (selectedLocation) {
         // 更新用户位置
-        userLocation = {
-            city: selectedLocation.split('，')[0],
-            region: selectedLocation.split('，')[1] || '用户选择',
-            country: '中国',
-            lat: 39.9042,
-            lon: 116.4074
-        };
+        if (selectedLocationData) {
+            userLocation = {
+                city: selectedLocationData.city || selectedLocation.split('，')[0],
+                region: selectedLocationData.region || selectedLocation.split('，')[1] || '用户选择',
+                country: selectedLocationData.country || '中国',
+                lat: selectedLocationData.lat || 39.9042,
+                lon: selectedLocationData.lon || 116.4074,
+                address: selectedLocation
+            };
+        } else {
+            userLocation = {
+                city: selectedLocation.split('，')[0],
+                region: selectedLocation.split('，')[1] || '用户选择',
+                country: '中国',
+                lat: 39.9042,
+                lon: 116.4074,
+                address: selectedLocation
+            };
+        }
         
         // 保存到localStorage
         localStorage.setItem('user_location', JSON.stringify(userLocation));
@@ -763,28 +1336,497 @@ function confirmLocation() {
         closeMapPicker();
         
         // 显示成功消息
-        alert('地址选择成功！');
+        showSuccessMessage('地址选择成功！');
     } else {
-        alert('请先选择一个地址');
+        showErrorMessage('请先选择一个地址');
     }
 }
 
 // 联系卖家
 function contactSeller() {
-    // 这里可以实现聊天功能
-    alert('联系卖家功能开发中...');
+    const itemId = ITEM_ID;
+    
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    console.log('开始联系卖家，商品ID:', itemId);
+    
+    // 获取用户输入的消息
+    const message = prompt('请输入您想对卖家说的话：') || '你好，我对您的商品感兴趣，想进一步了解。';
+    
+    fetch('/tools/api/shipbao/contact-seller/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            message: message
+        })
+    })
+    .then(response => {
+        console.log('API响应状态:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('API响应数据:', data);
+        
+        if (data.success) {
+            if (data.queue_info) {
+                // 加入队列
+                console.log('加入队列:', data.queue_info);
+                showQueueInfo(data.queue_info);
+            } else if (data.chat_url || data.redirect_url) {
+                // 直接进入聊天
+                const chatUrl = data.chat_url || data.redirect_url;
+                console.log('跳转到聊天室:', chatUrl);
+                
+                // 显示成功提示和聊天室链接
+                showChatRoomCreatedNotification(chatUrl);
+                
+                // 延迟跳转，让用户看到提示
+                setTimeout(() => {
+                    window.location.href = chatUrl;
+                }, 2000);
+            } else {
+                console.log('API返回成功但没有提供聊天URL');
+                showSuccessMessage(data.message || '联系卖家成功');
+            }
+        } else {
+            console.log('API返回失败:', data.error);
+            if (data.queue_info) {
+                showQueueInfo(data.queue_info);
+            } else {
+                showErrorMessage(data.error || '联系卖家失败');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('联系卖家失败:', error);
+        showErrorMessage('联系卖家失败，请稍后重试');
+    });
 }
 
 // 发起交易
 function makeOffer() {
-    // 这里可以实现交易功能
-    alert('发起交易功能开发中...');
+    const message = prompt('请输入您的交易意向：');
+    if (message === null) return; // 用户取消
+    
+    const itemId = ITEM_ID;
+    
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    fetch('/tools/api/shipbao/initiate-transaction/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('交易请求已发送！');
+            // 更新交易按钮状态
+            updateTransactionButton(true, 'initiated');
+            // 延迟刷新页面以更新想要人数
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showErrorMessage(data.error || '发起交易失败');
+            
+            // 特殊处理：如果错误是"已经发起过交易请求"，更新按钮状态
+            if (data.error && data.error.includes('已经发起过交易请求')) {
+                console.log('检测到已经发起过交易，更新按钮状态');
+                updateTransactionButton(true, 'initiated');
+                showSuccessMessage('您已经发起过交易请求');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('发起交易失败:', error);
+        showErrorMessage('发起交易失败，请稍后重试');
+    });
 }
 
-// 收藏商品
-function addToFavorites() {
-    // 这里可以实现收藏功能
-    alert('收藏功能开发中...');
+// 与用户聊天
+function chatWithUser(userId, itemId) {
+    // 这里可以跳转到聊天页面
+    window.open(`/tools/shipbao/chat/${itemId}/?user=${userId}`, '_blank');
+}
+
+// 获取Cookie值
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 切换收藏状态
+function toggleFavorite() {
+    console.log('toggleFavorite 函数被调用');
+    
+    const itemId = ITEM_ID;
+    console.log('商品ID:', itemId);
+    
+    if (!itemId) {
+        console.error('商品ID无效');
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    const favoriteBtn = document.querySelector('.favorite-btn');
+    console.log('找到的收藏按钮:', favoriteBtn);
+    
+    if (!favoriteBtn) {
+        console.error('收藏按钮未找到');
+        showErrorMessage('收藏按钮未找到');
+        return;
+    }
+    
+    const isCurrentlyFavorited = favoriteBtn.classList.contains('favorited');
+    console.log('当前收藏状态:', isCurrentlyFavorited);
+    console.log('按钮的所有类:', favoriteBtn.className);
+    
+    const action = isCurrentlyFavorited ? 'remove' : 'add';
+    console.log('执行操作:', action);
+    
+    // 立即更新按钮状态以提供即时反馈
+    favoriteBtn.disabled = true;
+    const originalHTML = favoriteBtn.innerHTML;
+    favoriteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+    
+    const newFavoritedState = !isCurrentlyFavorited;
+    console.log('新的收藏状态应该是:', newFavoritedState);
+    
+    console.log('准备发送请求到:', '/tools/api/shipbao/favorites/');
+    console.log('请求数据:', { item_id: itemId, action: action });
+    
+    fetch('/tools/api/shipbao/favorites/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            action: action
+        })
+    })
+    .then(response => {
+        console.log('API响应状态:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('API响应数据:', data);
+        
+        if (data.success) {
+            console.log('API调用成功');
+            showSuccessMessage(data.message);
+            console.log('调用updateFavoriteButton，参数:', data.is_favorited);
+            updateFavoriteButton(data.is_favorited);
+        } else {
+            console.error('API调用失败:', data.error);
+            
+            // 特殊处理：如果错误是"已经收藏过"，说明实际状态是已收藏
+            if (data.error && data.error.includes('已经收藏过')) {
+                console.log('检测到已经收藏过，更新为已收藏状态');
+                updateFavoriteButton(true);
+                showSuccessMessage('商品已在收藏列表中');
+            } 
+            // 特殊处理：如果错误是"尚未收藏"，说明实际状态是未收藏
+            else if (data.error && data.error.includes('尚未收藏')) {
+                console.log('检测到尚未收藏，更新为未收藏状态');
+                updateFavoriteButton(false);
+                showErrorMessage('商品尚未收藏');
+            }
+            else {
+                showErrorMessage(data.error || '操作失败');
+                // 恢复原始状态
+                console.log('恢复原始状态:', isCurrentlyFavorited);
+                updateFavoriteButton(isCurrentlyFavorited);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('请求出错:', error);
+        showErrorMessage('操作失败，请稍后重试');
+        // 恢复原始状态
+        console.log('网络错误，恢复原始状态:', isCurrentlyFavorited);
+        updateFavoriteButton(isCurrentlyFavorited);
+    })
+    .finally(() => {
+        // 重新启用按钮
+        console.log('重新启用按钮');
+        favoriteBtn.disabled = false;
+    });
+}
+
+// 更新收藏按钮状态
+function updateFavoriteButton(isFavorited) {
+    console.log('updateFavoriteButton 被调用，参数:', isFavorited);
+    
+    const favoriteBtn = document.querySelector('.favorite-btn');
+    console.log('在updateFavoriteButton中找到的按钮:', favoriteBtn);
+    
+    if (favoriteBtn) {
+        console.log('更新前按钮类名:', favoriteBtn.className);
+        console.log('更新前按钮HTML:', favoriteBtn.innerHTML);
+        
+        if (isFavorited) {
+            favoriteBtn.innerHTML = '<i class="fas fa-heart" style="color: #e74c3c;"></i> 已收藏';
+            favoriteBtn.classList.add('favorited');
+            console.log('设置为已收藏状态');
+        } else {
+            favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> 收藏';
+            favoriteBtn.classList.remove('favorited');
+            console.log('设置为未收藏状态');
+        }
+        
+        console.log('更新后按钮类名:', favoriteBtn.className);
+        console.log('更新后按钮HTML:', favoriteBtn.innerHTML);
+    } else {
+        console.error('updateFavoriteButton: 未找到收藏按钮');
+    }
+}
+
+// 编辑商品（发布者功能）
+function editProduct() {
+    const itemId = ITEM_ID;
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    // 跳转到编辑页面
+    window.location.href = `/tools/shipbao/edit/${itemId}/`;
+}
+
+// 下架商品（发布者功能）
+function toggleProductStatus() {
+    const itemId = ITEM_ID;
+    
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    if (!confirm('确定要下架这个商品吗？下架后其他用户将无法看到此商品。')) {
+        return;
+    }
+    
+    fetch('/tools/api/shipbao/remove-item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            action: 'remove'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('商品已下架');
+            setTimeout(() => {
+                window.location.href = '/tools/shipbao/';
+            }, 1500);
+        } else {
+            showErrorMessage(data.error || '下架失败');
+        }
+    })
+    .catch(error => {
+        console.error('下架商品失败:', error);
+        showErrorMessage('下架商品失败，请稍后重试');
+    });
+}
+
+// 标记为已售（发布者功能）
+function markAsSold() {
+    const itemId = ITEM_ID;
+    
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    if (!confirm('确定要标记此商品为已售吗？')) {
+        return;
+    }
+    
+    fetch('/tools/api/shipbao/mark-sold/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('商品已标记为已售');
+            setTimeout(() => {
+                window.location.href = '/tools/shipbao/';
+            }, 1500);
+        } else {
+            showErrorMessage(data.error || '标记失败');
+        }
+    })
+    .catch(error => {
+        console.error('标记为已售失败:', error);
+        showErrorMessage('标记为已售失败，请稍后重试');
+    });
+}
+
+// 显示成功消息
+function showSuccessMessage(message) {
+    showMessage(message, 'success');
+}
+
+// 显示错误消息
+function showErrorMessage(message) {
+    showMessage(message, 'error');
+}
+
+// 显示消息提示
+function showMessage(message, type = 'info') {
+    // 创建消息元素
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message-toast message-${type}`;
+    messageDiv.textContent = message;
+    
+    // 添加到页面
+    document.body.appendChild(messageDiv);
+    
+    // 显示动画
+    setTimeout(() => {
+        messageDiv.classList.add('show');
+    }, 100);
+    
+    // 自动隐藏
+    setTimeout(() => {
+        messageDiv.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(messageDiv);
+        }, 300);
+    }, 3000);
+}
+
+// 显示聊天室创建成功通知
+function showChatRoomCreatedNotification(chatUrl) {
+    // 创建特殊的聊天室创建通知
+    const notification = document.createElement('div');
+    notification.className = 'chat-room-created-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(39, 174, 96, 0.3);
+        z-index: 10003;
+        text-align: center;
+        min-width: 300px;
+        backdrop-filter: blur(10px);
+        animation: popIn 0.3s ease-out;
+    `;
+    
+    notification.innerHTML = `
+        <div style="margin-bottom: 15px;">
+            <i class="fas fa-check-circle" style="font-size: 48px; color: white; margin-bottom: 10px;"></i>
+            <h3 style="margin: 0; font-size: 18px;">聊天室创建成功！</h3>
+        </div>
+        <div style="margin-bottom: 15px; font-size: 14px; opacity: 0.9;">
+            正在为您跳转到聊天页面...
+        </div>
+        <div style="font-size: 12px; opacity: 0.8;">
+            聊天室ID: ${chatUrl.split('/').pop()}
+        </div>
+        <div style="margin-top: 15px;">
+            <button onclick="window.location.href='${chatUrl}'" style="
+                background: rgba(255,255,255,0.2);
+                border: 1px solid rgba(255,255,255,0.3);
+                color: white;
+                padding: 8px 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 12px;
+                margin-right: 10px;
+            ">立即进入</button>
+            <button onclick="closeNotification(this.parentElement.parentElement)" style="
+                background: transparent;
+                border: 1px solid rgba(255,255,255,0.3);
+                color: white;
+                padding: 8px 15px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 12px;
+            ">关闭</button>
+        </div>
+    `;
+    
+    // 添加动画样式
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    `;
+    if (!document.querySelector('style[data-chat-notification]')) {
+        style.setAttribute('data-chat-notification', 'true');
+        document.head.appendChild(style);
+    }
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 自动关闭
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            closeNotification(notification);
+        }
+    }, 5000);
+}
+
+// 关闭通知
+function closeNotification(element) {
+    if (element && document.body.contains(element)) {
+        element.style.animation = 'popOut 0.3s ease-in';
+        setTimeout(() => {
+            if (document.body.contains(element)) {
+                document.body.removeChild(element);
+            }
+        }, 300);
+    }
 }
 
 // 点击模态框外部关闭
@@ -793,5 +1835,799 @@ document.getElementById('mapModal').addEventListener('click', function(e) {
         closeMapPicker();
     }
 });
+
+// 聊天通知功能
+function showChatNotification(sender, message) {
+    const notification = document.createElement('div');
+    notification.className = 'chat-notification';
+    notification.innerHTML = `
+        <div class="chat-notification-content">
+            <div class="chat-notification-icon">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div class="chat-notification-text">
+                <div class="chat-notification-title">新消息</div>
+                <div class="chat-notification-message">${sender}: ${message}</div>
+            </div>
+        </div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 显示动画
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // 点击跳转到聊天
+    notification.addEventListener('click', function() {
+        window.location.href = '/tools/shipbao/chat/';
+    });
+    
+    // 自动隐藏
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// 初始化WebSocket连接（用于实时消息通知）
+function initWebSocket() {
+    // 暂时禁用WebSocket连接，避免shipbao聊天室不存在的问题
+    return;
+    
+    if ('WebSocket' in window) {
+        // 为shipbao使用固定的房间ID，或者基于商品ID生成
+        const roomId = ITEM_ID ? `shipbao-item-${ITEM_ID}` : 'shipbao-general';
+        const ws = new WebSocket(`ws://localhost:8000/ws/chat/${roomId}/`);
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'chat_message') {
+                showChatNotification(data.sender, data.message);
+            }
+        };
+        
+        ws.onerror = function(error) {
+            console.error('WebSocket连接错误:', error);
+        };
+        
+        // 保存WebSocket实例
+        window.chatWebSocket = ws;
+    }
+}
+
+// 检查队列状态
+async function checkQueueStatus() {
+    const itemId = ITEM_ID;
+    
+    if (!itemId) {
+        return null;
+    }
+    
+    try {
+        const response = await fetch(`/tools/api/shipbao/inquiry-queue/${itemId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (error) {
+        console.error('检查队列状态失败:', error);
+    }
+    
+    return null;
+}
+
+// 显示队列信息
+function showQueueInfo(queueInfo) {
+    // 移除现有的弹窗
+    closeQueueModal();
+    
+    const queueHtml = `
+        <div class="queue-info-modal" style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 400px;
+            width: 90%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        ">
+            <h3 style="margin-top: 0; color: #333;">📋 咨询队列状态</h3>
+            <div style="margin: 15px 0; color: #666;">
+                <p><strong>队列位置：</strong> 第 ${queueInfo.position} 位</p>
+                <p><strong>预计等待：</strong> ${queueInfo.estimated_wait}</p>
+                <p><strong>总排队人数：</strong> ${queueInfo.total_pending} 人</p>
+                ${queueInfo.priority_score ? `<p><strong>您的优先级分数：</strong> ${queueInfo.priority_score}</p>` : ''}
+            </div>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 15px 0; font-size: 14px;">
+                💡 <strong>提示：</strong> 详细的咨询消息可以提高优先级，卖家会优先回复高质量咨询。
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="closeQueueModal()" style="
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-right: 10px;
+                ">确定</button>
+                <button onclick="refreshQueueStatus()" style="
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                ">刷新状态</button>
+            </div>
+        </div>
+        <div class="queue-backdrop" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        " onclick="closeQueueModal()"></div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', queueHtml);
+}
+
+// 关闭队列信息弹窗
+function closeQueueModal() {
+    const modal = document.querySelector('.queue-info-modal');
+    const backdrop = document.querySelector('.queue-backdrop');
+    if (modal) modal.remove();
+    if (backdrop) backdrop.remove();
+}
+
+// 刷新队列状态
+async function refreshQueueStatus() {
+    const itemId = ITEM_ID;
+    
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    try {
+        const data = await checkQueueStatus();
+        
+        if (data && data.success && data.queue_info.user_inquiry) {
+            const userInquiry = data.queue_info.user_inquiry;
+            
+            if (userInquiry.status === 'responded' && userInquiry.chat_room_id) {
+                // 已响应，跳转到聊天室
+                closeQueueModal();
+                showSuccessMessage('🎉 卖家已响应，正在跳转到聊天室...');
+                setTimeout(() => {
+                    window.location.href = `/tools/heart_link/chat/${userInquiry.chat_room_id}/`;
+                }, 1500);
+            } else if (userInquiry.status === 'pending') {
+                // 更新队列信息
+                showQueueInfo({
+                    position: userInquiry.position,
+                    estimated_wait: userInquiry.estimated_wait,
+                    total_pending: data.queue_info.total_pending,
+                    priority_score: userInquiry.priority_score
+                });
+            }
+        } else {
+            showErrorMessage('获取队列状态失败');
+        }
+    } catch (error) {
+        showErrorMessage('检查状态失败，请稍后重试');
+    }
+}
+
+// 页面加载完成后初始化WebSocket
+document.addEventListener('DOMContentLoaded', function() {
+    getLocationInfo();
+    loadItemImages();
+    initializeFavoriteButton();
+    initWebSocket();
+});
+
+// ==================== 增强的位置管理功能 ====================
+
+let selectedLocationInfo = null;
+let searchTimeout = null;
+
+// 自动定位用户
+function autoLocateUser() {
+    console.log('开始自动定位用户');
+    
+    // 更新按钮状态
+    const autoBtn = document.querySelector('.auto-locate-btn');
+    if (autoBtn) {
+        autoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 定位中...';
+        autoBtn.disabled = true;
+    }
+    
+    // 更新位置显示
+    const locationElement = document.getElementById('current-location');
+    if (locationElement) {
+        locationElement.textContent = '正在自动定位中...';
+    }
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            // 成功回调
+            function(position) {
+                console.log('自动定位成功:', position.coords);
+                const coords = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude
+                };
+                
+                // 使用高德API反向地理编码
+                reverseGeocodeWithAmap(coords);
+            },
+            // 错误回调
+            function(error) {
+                console.error('自动定位失败:', error);
+                handleLocationError(error);
+                resetAutoLocateButton();
+            },
+            // 选项
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 60000 // 1分钟缓存
+            }
+        );
+    } else {
+        console.error('浏览器不支持地理位置');
+        showLocationError('浏览器不支持地理位置功能');
+        resetAutoLocateButton();
+    }
+}
+
+// 使用高德API反向地理编码
+function reverseGeocodeWithAmap(coords) {
+    console.log('使用高德API反向地理编码:', coords);
+    
+    fetch('/tools/api/map/reverse-geocode/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            lat: coords.lat,
+            lon: coords.lon
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('高德反向地理编码结果:', data);
+        
+        if (data.success && data.location) {
+            const locationInfo = {
+                city: data.location.city || '未知城市',
+                region: data.location.region || '',
+                address: data.location.address || '',
+                lat: coords.lat,
+                lon: coords.lon,
+                timestamp: Date.now(),
+                source: 'auto_locate'
+            };
+            
+            // 保存和更新位置
+            saveUserLocation(locationInfo);
+            updateLocationDisplay(locationInfo);
+            showSuccessMessage('自动定位成功！');
+        } else {
+            console.error('反向地理编码失败:', data.error);
+            showLocationError('位置解析失败，请手动选择');
+        }
+        
+        resetAutoLocateButton();
+    })
+    .catch(error => {
+        console.error('反向地理编码请求失败:', error);
+        showLocationError('定位服务暂时不可用');
+        resetAutoLocateButton();
+    });
+}
+
+// 重置自动定位按钮
+function resetAutoLocateButton() {
+    const autoBtn = document.querySelector('.auto-locate-btn');
+    if (autoBtn) {
+        autoBtn.innerHTML = '<i class="fas fa-crosshairs"></i> 自动定位';
+        autoBtn.disabled = false;
+    }
+}
+
+// 处理定位错误
+function handleLocationError(error) {
+    let errorMessage = '';
+    
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            errorMessage = '位置权限被拒绝，请允许获取位置权限';
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorMessage = '位置信息不可用，请检查网络连接';
+            break;
+        case error.TIMEOUT:
+            errorMessage = '位置获取超时，请重试';
+            break;
+        default:
+            errorMessage = '位置获取失败，请重试';
+            break;
+    }
+    
+    showLocationError(errorMessage);
+}
+
+// 显示位置错误
+function showLocationError(message) {
+    const locationElement = document.getElementById('current-location');
+    if (locationElement) {
+        locationElement.textContent = `❌ ${message}`;
+    }
+    showErrorMessage(message);
+}
+
+// 搜索位置建议
+function searchLocationSuggestions(query) {
+    console.log('搜索位置建议:', query);
+    
+    // 清除之前的搜索超时
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // 如果查询为空，清空建议列表
+    if (!query || query.trim().length === 0) {
+        clearLocationSuggestions();
+        return;
+    }
+    
+    // 延迟搜索避免频繁请求
+    searchTimeout = setTimeout(() => {
+        performLocationSearch(query.trim());
+    }, 300);
+}
+
+// 执行位置搜索
+function performLocationSearch(query) {
+    console.log('执行位置搜索:', query);
+    
+    fetch('/tools/api/map/search-location/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            query: query
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('位置搜索结果:', data);
+        
+        if (data.success && data.suggestions) {
+            displayLocationSuggestions(data.suggestions);
+        } else {
+            console.error('位置搜索失败:', data.error);
+            clearLocationSuggestions();
+        }
+    })
+    .catch(error => {
+        console.error('位置搜索请求失败:', error);
+        clearLocationSuggestions();
+    });
+}
+
+// 显示位置建议
+function displayLocationSuggestions(suggestions) {
+    const suggestionsContainer = document.getElementById('location-suggestions-list');
+    if (!suggestionsContainer) return;
+    
+    if (!suggestions || suggestions.length === 0) {
+        suggestionsContainer.innerHTML = '<div class="no-suggestions">未找到相关位置</div>';
+        suggestionsContainer.style.display = 'block';
+        return;
+    }
+    
+    const suggestionsHTML = suggestions.map(suggestion => `
+        <div class="location-suggestion-item" onclick="selectLocationSuggestion(this)" data-location='${JSON.stringify(suggestion)}'>
+            <div class="suggestion-main">${suggestion.name || suggestion.address}</div>
+            <div class="suggestion-detail">${suggestion.district || suggestion.city || ''}</div>
+        </div>
+    `).join('');
+    
+    suggestionsContainer.innerHTML = suggestionsHTML;
+    suggestionsContainer.style.display = 'block';
+}
+
+// 选择位置建议
+function selectLocationSuggestion(element) {
+    try {
+        const locationData = JSON.parse(element.getAttribute('data-location'));
+        console.log('选择的位置:', locationData);
+        
+        selectedLocationInfo = locationData;
+        
+        // 更新输入框
+        const input = document.getElementById('location-search-input');
+        if (input) {
+            input.value = locationData.name || locationData.address;
+        }
+        
+        // 高亮选中项
+        document.querySelectorAll('.location-suggestion-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        
+        // 隐藏建议列表
+        clearLocationSuggestions();
+        
+    } catch (error) {
+        console.error('选择位置建议失败:', error);
+    }
+}
+
+// 清空位置建议
+function clearLocationSuggestions() {
+    const suggestionsContainer = document.getElementById('location-suggestions-list');
+    if (suggestionsContainer) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+    }
+}
+
+// 搜索当前输入的内容
+function searchCurrentInput() {
+    const input = document.getElementById('location-search-input');
+    if (input && input.value.trim()) {
+        performLocationSearch(input.value.trim());
+    }
+}
+
+// 确认手动位置选择
+function confirmManualLocation() {
+    const input = document.getElementById('location-search-input');
+    if (!input || !input.value.trim()) {
+        showErrorMessage('请先输入或选择一个位置');
+        return;
+    }
+    
+    let locationInfo;
+    
+    if (selectedLocationInfo) {
+        // 使用选中的建议位置
+        locationInfo = {
+            city: selectedLocationInfo.city || selectedLocationInfo.name,
+            region: selectedLocationInfo.district || selectedLocationInfo.region || '',
+            address: selectedLocationInfo.address || selectedLocationInfo.name,
+            lat: selectedLocationInfo.lat || selectedLocationInfo.location?.[0],
+            lon: selectedLocationInfo.lon || selectedLocationInfo.location?.[1],
+            timestamp: Date.now(),
+            source: 'manual_select'
+        };
+    } else {
+        // 使用输入的文本
+        const inputText = input.value.trim();
+        locationInfo = {
+            city: inputText,
+            region: '',
+            address: inputText,
+            lat: null,
+            lon: null,
+            timestamp: Date.now(),
+            source: 'manual_input'
+        };
+        
+        // 尝试地理编码获取坐标
+        geocodeLocation(locationInfo);
+        return; // geocodeLocation会处理后续步骤
+    }
+    
+    // 保存和更新位置
+    saveUserLocation(locationInfo);
+    updateLocationDisplay(locationInfo);
+    cancelLocationInput();
+    showSuccessMessage('位置设置成功！');
+}
+
+// 地理编码位置
+function geocodeLocation(locationInfo) {
+    console.log('地理编码位置:', locationInfo);
+    
+    fetch('/tools/api/map/geocode/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            address: locationInfo.address
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('地理编码结果:', data);
+        
+        if (data.success && data.location) {
+            locationInfo.lat = data.location.lat;
+            locationInfo.lon = data.location.lon;
+            locationInfo.region = data.location.region || locationInfo.region;
+        }
+        
+        // 无论编码是否成功，都保存位置
+        saveUserLocation(locationInfo);
+        updateLocationDisplay(locationInfo);
+        cancelLocationInput();
+        showSuccessMessage('位置设置成功！');
+    })
+    .catch(error => {
+        console.error('地理编码失败:', error);
+        
+        // 即使编码失败，也保存位置
+        saveUserLocation(locationInfo);
+        updateLocationDisplay(locationInfo);
+        cancelLocationInput();
+        showSuccessMessage('位置设置成功！');
+    });
+}
+
+// 取消位置输入
+function cancelLocationInput() {
+    const container = document.getElementById('location-input-container');
+    if (container) {
+        container.style.display = 'none';
+    }
+    
+    // 清空输入和选择
+    const input = document.getElementById('location-search-input');
+    if (input) {
+        input.value = '';
+    }
+    
+    selectedLocationInfo = null;
+    clearLocationSuggestions();
+}
+
+// 保存用户位置
+function saveUserLocation(location) {
+    userLocation = location;
+    
+    // 保存到localStorage
+    try {
+        localStorage.setItem('user_location', JSON.stringify(location));
+        console.log('位置已保存到本地存储:', location);
+    } catch (error) {
+        console.error('保存位置到本地存储失败:', error);
+    }
+    
+    // 发送到服务器
+    fetch('/tools/api/user/save-location/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(location)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('位置已保存到服务器');
+        } else {
+            console.log('保存位置到服务器失败:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('保存位置到服务器失败:', error);
+    });
+}
+
+// 重写openMapPicker函数以使用新的输入容器
+function openMapPicker() {
+    const container = document.getElementById('location-input-container');
+    if (container) {
+        container.style.display = 'block';
+        
+        // 聚焦到输入框
+        const input = document.getElementById('location-search-input');
+        if (input) {
+            input.focus();
+        }
+    }
+}
 </script>
+
+<style>
+/* 位置操作按钮 */
+.location-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.location-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.location-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.location-btn:active {
+    transform: translateY(0);
+}
+
+.location-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 位置输入容器 */
+.location-input-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.input-group {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.location-search-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px 0 0 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 14px;
+    outline: none;
+}
+
+.location-search-input::placeholder {
+    color: #666;
+}
+
+.input-group-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    padding: 12px 15px;
+    border-radius: 0 8px 8px 0;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.input-group-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 搜索建议列表 */
+.location-suggestions-list {
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+.location-suggestion-item {
+    padding: 12px 15px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.location-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.location-suggestion-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.location-suggestion-item.selected {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.suggestion-main {
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.suggestion-detail {
+    font-size: 12px;
+    color: #666;
+}
+
+.no-suggestions {
+    padding: 15px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+/* 位置输入操作按钮 */
+.location-input-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-confirm, .btn-cancel {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.btn-confirm {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background: #2ecc71;
+}
+
+.btn-cancel {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+</style>
 {% endblock %}

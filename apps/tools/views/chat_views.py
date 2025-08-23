@@ -1,32 +1,48 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponseForbidden
-from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Q, Count
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views import View
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+import os
+import uuid
 import json
 import logging
-import uuid
+from datetime import datetime, timedelta
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse, Http404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.models import User
+from django.db.models import Q, Count
+from django.utils import timezone
+from django.core.cache import cache
+from django.conf import settings
+from django.core.paginator import Paginator
+from django.views.decorators.cache import cache_page
+from django.contrib import messages
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from .base import cache_response, BaseView, CachedViewMixin, PaginationMixin
+from django.views import View
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.http import FileResponse
+import mimetypes
 
-from ..models import ChatRoom, ChatMessage, UserOnlineStatus, HeartLinkRequest
-from .base import (
-    BaseView, CachedViewMixin, PaginationMixin, SearchMixin, 
-    FilterMixin, OrderMixin, success_response, error_response,
-    cache_response, validate_request_data, rate_limit
-)
+from apps.tools.models.chat_models import ChatRoom, ChatMessage, HeartLinkRequest
+
 
 logger = logging.getLogger(__name__)
-channel_layer = get_channel_layer()
+
+def success_response(data=None, message="success"):
+    """成功响应"""
+    response_data = {"success": True, "message": message}
+    if data is not None:
+        response_data.update(data)
+    return JsonResponse(response_data)
+
+def error_response(message="error", status=400):
+    """错误响应"""
+    return JsonResponse({"success": False, "message": message}, status=status)
 
 
 @login_required
-@cache_response(timeout=60)
 def chat_dashboard(request):
     """聊天仪表盘"""
     user = request.user
@@ -50,7 +66,6 @@ def chat_dashboard(request):
 
 
 @login_required
-@cache_response(timeout=30)
 def chat_room_list(request):
     """聊天室列表"""
     user = request.user
@@ -75,9 +90,9 @@ def chat_room_list(request):
         room_data.append({
             'room_id': room.room_id,
             'other_user': {
-                'id': other_user.id,
-                'username': other_user.username,
-                'is_online': getattr(other_user.online_status, 'is_online', False),
+                'id': other_user.id if other_user else None,
+                'username': other_user.username if other_user else '未知用户',
+                'is_online': getattr(other_user.online_status, 'is_online', False) if other_user else False,
             },
             'last_message': {
                 'content': last_message.content[:50] if last_message else '',
@@ -135,12 +150,10 @@ def chat_room_detail(request, room_id):
 @login_required
 @csrf_exempt
 @require_http_methods(["POST"])
-@validate_request_data(required_fields=['content'])
-@rate_limit(max_requests=100, window=60)  # 每分钟最多100条消息
 def send_message(request, room_id):
     """发送消息"""
     try:
-        data = request.validated_data
+        data = request.POST if request.method == 'POST' else request.GET
         user = request.user
         
         room = get_object_or_404(ChatRoom, room_id=room_id)
@@ -161,6 +174,10 @@ def send_message(request, room_id):
             message_type=data.get('message_type', 'text'),
             file_url=data.get('file_url', ''),
         )
+        
+        # 创建聊天通知
+        from ..views.notification_views import create_chat_notification
+        create_chat_notification(message)
         
         # 通过WebSocket发送消息
         async_to_sync(channel_layer.group_send)(
@@ -403,9 +420,10 @@ def create_heart_link_request(request):
         )
         
         # 创建心动链接请求
+        from django.utils import timezone
+        from datetime import timedelta
         heart_request = HeartLinkRequest.objects.create(
             requester=user,
-            chat_room=room,
             status='pending'
         )
         
@@ -626,6 +644,10 @@ class ChatAPIView(BaseView, CachedViewMixin, PaginationMixin):
                 message_type=data.get('message_type', 'text'),
                 file_url=data.get('file_url', ''),
             )
+            
+            # 创建聊天通知
+            from ..views.notification_views import create_chat_notification
+            create_chat_notification(message)
             
             # 通过WebSocket发送消息
             async_to_sync(channel_layer.group_send)(
@@ -982,3 +1004,70 @@ def test_two_users_chat_view(request, room_id):
         'room_id': room_id,
     }
     return render(request, 'tools/test_two_users_chat.html', context)
+
+
+@login_required
+def download_chat_file(request, room_id, message_id):
+    """下载聊天室文件"""
+    try:
+        # 获取消息
+        message = get_object_or_404(ChatMessage, id=message_id, room__room_id=room_id)
+        
+        # 检查用户权限
+        if request.user not in [message.room.user1, message.room.user2]:
+            return JsonResponse({'error': '无权访问此文件'}, status=403)
+        
+        # 检查消息类型
+        if message.message_type not in ['file', 'image', 'voice', 'video']:
+            return JsonResponse({'error': '此消息不包含文件'}, status=400)
+        
+        # 构建文件路径
+        if message.file_url.startswith('/media/'):
+            file_path = message.file_url[7:]  # 移除 '/media/' 前缀
+        else:
+            file_path = message.file_url
+        
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        
+        # 检查文件是否存在
+        if not os.path.exists(full_path):
+            return JsonResponse({'error': '文件不存在'}, status=404)
+        
+        # 获取文件信息
+        file_size = os.path.getsize(full_path)
+        file_name = os.path.basename(full_path)
+        
+        # 如果是图片消息，使用原始文件名
+        if message.message_type == 'image':
+            file_name = f"image_{message_id}.jpg"
+        elif message.message_type == 'voice':
+            file_name = f"voice_{message_id}.webm"
+        elif message.message_type == 'video':
+            file_name = f"video_{message_id}.mp4"
+        else:
+            # 文件消息使用原始文件名
+            file_name = message.content or file_name
+        
+        # 获取MIME类型
+        mime_type, _ = mimetypes.guess_type(full_path)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+        
+        # 创建文件响应
+        response = FileResponse(open(full_path, 'rb'), content_type=mime_type)
+        
+        # 对文件名进行URL编码以支持中文等特殊字符
+        from urllib.parse import quote
+        encoded_filename = quote(file_name, safe='')
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"; filename*=UTF-8\'\'{encoded_filename}'
+        response['Content-Length'] = file_size
+        
+        # 添加安全头
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f'下载文件失败: {e}')
+        return JsonResponse({'error': '下载文件失败'}, status=500)

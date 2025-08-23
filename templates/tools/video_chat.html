@@ -288,6 +288,9 @@
         <button id="screenShareButton" class="control-button" onclick="toggleScreenShare()" style="display: none;">
             <i class="fas fa-desktop"></i> 屏幕共享
         </button>
+        <button id="returnButton" class="control-button" onclick="returnToTextChat()">
+            <i class="fas fa-arrow-left"></i> 返回文本聊天
+        </button>
     </div>
     
     <div class="status-message" id="statusMessage" style="display: none;">
@@ -352,7 +355,129 @@ const configuration = {
 document.addEventListener('DOMContentLoaded', function() {
     loadDeviceOptions();
     updateConnectionStatus('offline');
+    connectWebSocket();
 });
+
+// 连接WebSocket
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socketUrl = `${protocol}//${window.location.host}/ws/chat/{{ room_id }}/`;
+    
+    socket = new WebSocket(socketUrl);
+    
+    socket.onopen = function(event) {
+        console.log('WebSocket连接已建立');
+        showStatus('连接已建立，等待对方加入...', 'success');
+    };
+    
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+    };
+    
+    socket.onclose = function(event) {
+        console.log('WebSocket连接已关闭');
+        if (event.code !== 1000) {
+            showStatus('连接已断开', 'error');
+        }
+    };
+    
+    socket.onerror = function(error) {
+        console.error('WebSocket错误:', error);
+        showStatus('连接错误', 'error');
+    };
+}
+
+// 处理WebSocket消息
+async function handleWebSocketMessage(data) {
+    console.log('收到WebSocket消息:', data);
+    
+    try {
+        switch (data.type) {
+            case 'video_offer':
+                await handleVideoOffer(data.offer);
+                break;
+                
+            case 'video_answer':
+                await handleVideoAnswer(data.answer);
+                break;
+                
+            case 'ice_candidate':
+                await handleIceCandidate(data.candidate);
+                break;
+                
+            case 'video_call_end':
+                showStatus('对方已结束通话', 'warning');
+                stopVideoChat();
+                break;
+                
+            default:
+                console.log('未知消息类型:', data.type);
+        }
+    } catch (error) {
+        console.error('处理WebSocket消息失败:', error);
+    }
+}
+
+// 处理视频offer
+async function handleVideoOffer(offer) {
+    console.log('收到视频offer');
+    
+    try {
+        if (!peerConnection) {
+            await initializeWebRTC(false); // 不创建offer，只初始化连接
+        }
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        
+        // 创建answer
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        // 发送answer
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'video_answer',
+                answer: answer,
+                room_id: '{{ room_id }}'
+            }));
+        }
+        
+        // 更新UI状态
+        document.getElementById('startButton').style.display = 'none';
+        document.getElementById('stopButton').style.display = 'inline-flex';
+        document.getElementById('muteButton').style.display = 'inline-flex';
+        document.getElementById('videoButton').style.display = 'inline-flex';
+        document.getElementById('screenShareButton').style.display = 'inline-flex';
+        
+        showStatus('正在连接对方...', 'waiting');
+        updateConnectionStatus('online');
+        startCallTimer();
+        
+    } catch (error) {
+        console.error('处理video offer失败:', error);
+        showStatus('连接失败', 'error');
+    }
+}
+
+// 处理视频answer
+async function handleVideoAnswer(answer) {
+    console.log('收到视频answer');
+    
+    if (peerConnection) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        showStatus('视频连接已建立', 'success');
+    }
+}
+
+// 处理ICE候选
+async function handleIceCandidate(candidate) {
+    console.log('收到ICE候选');
+    
+    if (peerConnection) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+}
 
 // 加载设备选项
 async function loadDeviceOptions() {
@@ -436,8 +561,25 @@ async function startVideoChat() {
 }
 
 // 初始化WebRTC连接
-async function initializeWebRTC() {
+async function initializeWebRTC(createOffer = true) {
     peerConnection = new RTCPeerConnection(configuration);
+    
+    // 如果还没有本地流，先获取
+    if (!localStream) {
+        const constraints = {
+            video: {
+                deviceId: document.getElementById('cameraSelect').value ? 
+                    { exact: document.getElementById('cameraSelect').value } : undefined
+            },
+            audio: {
+                deviceId: document.getElementById('microphoneSelect').value ? 
+                    { exact: document.getElementById('microphoneSelect').value } : undefined
+            }
+        };
+        
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('localVideo').srcObject = localStream;
+    }
     
     // 添加本地流
     localStream.getTracks().forEach(track => {
@@ -446,8 +588,10 @@ async function initializeWebRTC() {
     
     // 处理远程流
     peerConnection.ontrack = (event) => {
+        console.log('收到远程流');
         remoteStream = event.streams[0];
         document.getElementById('remoteVideo').srcObject = remoteStream;
+        showStatus('视频连接已建立', 'success');
     };
     
     // 处理ICE候选
@@ -464,17 +608,19 @@ async function initializeWebRTC() {
         }
     };
     
-    // 创建并发送offer
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    
-    // 通过WebSocket发送offer
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-            type: 'video_offer',
-            offer: offer,
-            room_id: '{{ room_id }}'
-        }));
+    // 只有主动发起方需要创建offer
+    if (createOffer) {
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        // 通过WebSocket发送offer
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'video_offer',
+                offer: offer,
+                room_id: '{{ room_id }}'
+            }));
+        }
     }
 }
 
@@ -504,9 +650,21 @@ function stopVideoChat() {
     document.getElementById('videoButton').style.display = 'none';
     document.getElementById('screenShareButton').style.display = 'none';
     
-    showStatus('视频通话已结束', 'error');
+    showStatus('视频通话已结束，即将返回文本聊天...', 'success');
     updateConnectionStatus('offline');
     stopCallTimer();
+    
+    // 延迟2秒后返回文本聊天页面
+    setTimeout(() => {
+        // 如果是从新窗口打开的，关闭当前窗口
+        if (window.opener) {
+            window.close();
+        } else {
+            // 返回到心连心聊天页面
+            const roomId = '{{ room_id }}';
+            window.location.href = `/tools/heart_link/chat/${roomId}/`;
+        }
+    }, 2000);
 }
 
 // 切换静音
@@ -651,6 +809,33 @@ function updateCallDuration() {
         const seconds = duration % 60;
         document.getElementById('callDuration').textContent = 
             `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+// 返回文本聊天页面
+function returnToTextChat() {
+    // 结束视频聊天
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
+    
+    // 直接返回文本聊天页面
+    if (window.opener) {
+        window.close();
+    } else {
+        const roomId = '{{ room_id }}';
+        window.location.href = `/tools/heart_link/chat/${roomId}/`;
     }
 }
 

@@ -49,8 +49,9 @@
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.3s ease;
-    font-weight: 500;
-    color: #666;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 16px;
 }
 
 .zip-tab.active {
@@ -66,14 +67,15 @@
 }
 
 .method-tab {
-    padding: 10px 20px;
-    border: 2px solid #e1e5e9;
+    padding: 12px 22px;
+    border: 2px solid #d1d9e0;
     background: white;
-    color: #666;
+    color: #2c3e50;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 15px;
 }
 
 .method-tab:hover {
@@ -112,23 +114,25 @@
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 15px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #1a252f;
+    font-size: 16px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .form-control {
     width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e1e5e9;
+    padding: 14px 16px;
+    border: 2px solid #d1d9e0;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 16px;
     transition: all 0.3s ease;
     background: #ffffff;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-    color: #333333;
-    font-weight: 500;
+    color: #1a252f;
+    font-weight: 600;
+    line-height: 1.5;
 }
 
 .form-control:focus {
@@ -151,16 +155,17 @@
             background-image: linear-gradient(45deg, transparent 50%, #667eea 50%), 
                               linear-gradient(135deg, #667eea 50%, transparent 50%);
             background-position: calc(100% - 30px) calc(1em + 2px), calc(100% - 25px) calc(1em + 2px);
-            background-size: 5px 5px, 5px 5px;
+            background-size: 6px 6px, 6px 6px;
             background-repeat: no-repeat;
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
             background-color: #ffffff;
-            color: #333333;
-            font-weight: 600;
-            padding-right: 40px; /* 为下拉箭头留出更多空间 */
-            font-size: 15px;
+            color: #1a252f;
+            font-weight: 700;
+            padding-right: 45px; /* 为下拉箭头留出更多空间 */
+            font-size: 16px;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
 
 select.form-control:focus {
@@ -177,10 +182,10 @@ select.form-control:hover {
 
 /* 输入框占位符样式 */
 .form-control::placeholder {
-    color: #666666;
+    color: #5a6c7d;
     opacity: 1;
     font-style: italic;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .file-input-container {
@@ -245,11 +250,14 @@ select.form-control:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    margin-bottom: 5px;
-    background: #f8f9fa;
-    border-radius: 5px;
-    font-size: 14px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    background: #f1f4f6;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #2c3e50;
+    font-weight: 500;
+    border: 1px solid #e6ebef;
 }
 
 .file-item:last-child {
@@ -269,10 +277,11 @@ select.form-control:hover {
 
 .compression-value {
     text-align: center;
-    font-weight: bold;
-    color: #2c3e50;
-    margin-top: 5px;
-    font-size: 16px;
+    font-weight: 700;
+    color: #1a252f;
+    margin-top: 6px;
+    font-size: 18px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .btn {
@@ -373,12 +382,15 @@ select.form-control:hover {
 }
 
 .info-label {
-    font-weight: 600;
-    color: #666;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 15px;
 }
 
 .info-value {
-    color: #333;
+    color: #1a252f;
+    font-weight: 600;
+    font-size: 15px;
 }
 
 .progress-container {
@@ -404,8 +416,9 @@ select.form-control:hover {
 .progress-text {
     text-align: center;
     margin-top: 10px;
-    font-size: 14px;
-    color: #666;
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
 }
 
 .feature-grid {
@@ -442,8 +455,10 @@ select.form-control:hover {
 }
 
  .feature-description {
-     color: #666;
+     color: #4a5568;
      line-height: 1.6;
+     font-size: 15px;
+     font-weight: 500;
  }
  
  /* 全局操作按钮 */

@@ -1,0 +1,598 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}计划库{% endblock %}
+
+{% block extra_css %}
+<style>
+.plan-library {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.library-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.library-header h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.filters-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.search-section {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+}
+
+.search-input {
+    flex: 1;
+}
+
+.filter-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.plan-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.plan-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.plan-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    position: relative;
+}
+
+.plan-type {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7em;
+}
+
+.plan-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin: 0 0 8px 0;
+}
+
+.plan-author {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.plan-content {
+    padding: 20px;
+}
+
+.plan-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.stat-label {
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.plan-description {
+    color: #6c757d;
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    height: 60px;
+    overflow: hidden;
+}
+
+.plan-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.tag {
+    background: #e9ecef;
+    color: #495057;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7em;
+}
+
+.tag.difficulty-beginner {
+    background: #d4edda;
+    color: #155724;
+}
+
+.tag.difficulty-intermediate {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.tag.difficulty-advanced {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.action-btn:hover {
+    transform: scale(1.05);
+}
+
+.pagination-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.page-link {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+}
+
+.page-link.current {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.rating-stars {
+    color: #ffc107;
+    margin-bottom: 10px;
+}
+
+.plan-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.view-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.collection-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="plan-library">
+    <!-- 页面头部 -->
+    <div class="library-header">
+        <h1><i class="fas fa-book"></i> 计划库</h1>
+        <p>发现和收藏优质的训练计划</p>
+    </div>
+
+    <!-- 筛选器 -->
+    <div class="filters-section">
+        <form method="GET" id="filterForm">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>计划类型</label>
+                    <select name="plan_type">
+                        <option value="">全部</option>
+                        <option value="strength" {% if current_filters.plan_type == 'strength' %}selected{% endif %}>力量训练</option>
+                        <option value="cardio" {% if current_filters.plan_type == 'cardio' %}selected{% endif %}>有氧运动</option>
+                        <option value="flexibility" {% if current_filters.plan_type == 'flexibility' %}selected{% endif %}>柔韧性</option>
+                        <option value="mixed" {% if current_filters.plan_type == 'mixed' %}selected{% endif %}>综合训练</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>难度</label>
+                    <select name="difficulty">
+                        <option value="">全部</option>
+                        <option value="beginner" {% if current_filters.difficulty == 'beginner' %}selected{% endif %}>初级</option>
+                        <option value="intermediate" {% if current_filters.difficulty == 'intermediate' %}selected{% endif %}>中级</option>
+                        <option value="advanced" {% if current_filters.difficulty == 'advanced' %}selected{% endif %}>高级</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>训练周期</label>
+                    <select name="duration">
+                        <option value="">全部</option>
+                        <option value="short" {% if current_filters.duration == 'short' %}selected{% endif %}>1-4周</option>
+                        <option value="medium" {% if current_filters.duration == 'medium' %}selected{% endif %}>5-8周</option>
+                        <option value="long" {% if current_filters.duration == 'long' %}selected{% endif %}>9周以上</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>排序</label>
+                    <select name="sort">
+                        <option value="popularity" {% if current_filters.sort == 'popularity' %}selected{% endif %}>热门度</option>
+                        <option value="rating" {% if current_filters.sort == 'rating' %}selected{% endif %}>评分</option>
+                        <option value="newest" {% if current_filters.sort == 'newest' %}selected{% endif %}>最新</option>
+                        <option value="usage" {% if current_filters.sort == 'usage' %}selected{% endif %}>使用次数</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <div class="filter-group search-input">
+                    <label>搜索</label>
+                    <input type="text" name="search" placeholder="输入计划名称或关键词..." value="{{ current_filters.search }}">
+                </div>
+                <button type="submit" class="filter-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 计划列表 -->
+    {% if page_obj %}
+        <div class="plans-grid">
+            {% for plan_library in page_obj %}
+                <div class="plan-card" onclick="viewPlanDetail({{ plan_library.plan_id }})">
+                    <div class="plan-header">
+                        <div class="plan-type">{{ plan_library.plan.get_plan_type_display }}</div>
+                        <h3 class="plan-name">{{ plan_library.plan.name }}</h3>
+                        <div class="plan-author">by {{ plan_library.plan.created_by.username }}</div>
+                    </div>
+                    
+                    <div class="plan-content">
+                        <div class="plan-meta">
+                            <div class="view-count">
+                                <i class="fas fa-eye"></i>
+                                <span>{{ plan_library.view_count }}</span>
+                            </div>
+                            <div class="collection-count">
+                                <i class="fas fa-bookmark"></i>
+                                <span>{{ plan_library.collection_count }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rating-stars">
+                            {% for i in "12345"|make_list %}
+                                <i class="fas fa-star{% if i|add:0 > plan_library.average_rating %} text-muted{% endif %}"></i>
+                            {% endfor %}
+                            <span class="rating-text">({{ plan_library.rating_count }})</span>
+                        </div>
+                        
+                        <div class="plan-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ plan_library.plan.duration_weeks }}</div>
+                                <div class="stat-label">周期</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ plan_library.plan.training_days_per_week }}</div>
+                                <div class="stat-label">每周</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ plan_library.plan.session_duration }}</div>
+                                <div class="stat-label">分钟</div>
+                            </div>
+                        </div>
+                        
+                        <div class="plan-description">
+                            {{ plan_library.plan.description|default:"暂无描述" }}
+                        </div>
+                        
+                        <div class="plan-tags">
+                            <span class="tag difficulty-{{ plan_library.plan.difficulty }}">
+                                {% if plan_library.plan.difficulty == 'beginner' %}初级
+                                {% elif plan_library.plan.difficulty == 'intermediate' %}中级
+                                {% elif plan_library.plan.difficulty == 'advanced' %}高级
+                                {% endif %}
+                            </span>
+                            {% if plan_library.plan.target_goals %}
+                                {% for goal in plan_library.plan.target_goals %}
+                                    <span class="tag">{{ goal }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="plan-actions">
+                            <button class="action-btn btn-primary" onclick="usePlan(event, {{ plan_library.plan.id }})">
+                                <i class="fas fa-play"></i> 开始使用
+                            </button>
+                            <button class="action-btn btn-secondary" onclick="collectPlan(event, {{ plan_library.plan.id }})">
+                                <i class="fas fa-bookmark"></i> 收藏
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 分页 -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-section">
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" class="page-link">首页</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="page-link">上一页</a>
+                    {% endif %}
+                    
+                    <span class="page-link current">{{ page_obj.number }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="page-link">下一页</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" class="page-link">末页</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>没有找到匹配的计划</h3>
+            <p>试试调整筛选条件或搜索关键词</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 查看计划详情
+function viewPlanDetail(planId) {
+    window.location.href = `/tools/fitness/plan/${planId}/`;
+}
+
+// 使用计划
+function usePlan(event, planId) {
+    event.stopPropagation();
+    
+    fetch('/tools/api/use-plan-template/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ plan_id: planId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.created) {
+                showMessage('成功添加训练计划！', 'success');
+            } else {
+                showMessage('您已经有这个计划了', 'info');
+            }
+        } else {
+            showMessage('操作失败: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误', 'error');
+    });
+}
+
+// 收藏计划
+function collectPlan(event, planId) {
+    event.stopPropagation();
+    
+    fetch('/tools/api/collect-plan/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ plan_id: planId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const btn = event.target.closest('.action-btn');
+            if (data.collected) {
+                btn.innerHTML = '<i class="fas fa-bookmark"></i> 已收藏';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-success');
+                showMessage('计划已收藏', 'success');
+            } else {
+                btn.innerHTML = '<i class="fas fa-bookmark"></i> 收藏';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-secondary');
+                showMessage('已取消收藏', 'info');
+            }
+        } else {
+            showMessage('操作失败: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误', 'error');
+    });
+}
+
+// 获取CSRF令牌
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// 显示消息
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${type}`;
+    messageDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+
+// 自动提交筛选表单
+document.querySelectorAll('#filterForm select').forEach(select => {
+    select.addEventListener('change', () => {
+        document.getElementById('filterForm').submit();
+    });
+});
+</script>
+{% endblock %}

@@ -35,4 +35,25 @@ django-celery-results==2.5.1
 structlog==24.1.0
 
 # 生产环境性能
-django-cacheops==8.0.0 
+django-cacheops==7.2
+
+# 移动端优化
+django-mobile==0.10.0
+
+# 响应式图片处理
+django-imagekit==5.0.0
+
+# CDN静态文件支持
+django-storages==1.14.2
+boto3==1.35.77
+
+# 安全增强
+django-security==0.19.1
+django-csp==3.8
+
+# 性能监控增强
+newrelic==11.0.0
+sentry-sdk[django]==2.17.0
+
+# 健康检查
+django-health-check==3.18.3 

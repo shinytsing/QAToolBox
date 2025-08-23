@@ -43,7 +43,7 @@ def check_local_travel_data_api(request):
         
         # 检查是否有本地数据
         try:
-            from .services.enhanced_travel_service_v2 import MultiAPITravelService
+            from ..services.enhanced_travel_service_v2 import MultiAPITravelService
             
             service = MultiAPITravelService()
             has_local_data = destination in service.real_travel_data
@@ -102,7 +102,7 @@ def travel_guide_api(request):
         # 生成旅游攻略内容
         try:
             # 使用新的多API服务 - 延迟创建实例以避免启动时的API调用
-            from .services.enhanced_travel_service_v2 import MultiAPITravelService
+            from ..services.enhanced_travel_service_v2 import MultiAPITravelService
             
             # 只在需要时创建服务实例
             service = None

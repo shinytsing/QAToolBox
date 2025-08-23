@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}动作库{% endblock %}
+
+{% block extra_css %}
+<style>
+.exercise-library {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.library-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.library-header h1 {
+    color: #2c3e50;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.filters-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.search-section {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+}
+
+.search-input {
+    flex: 1;
+}
+
+.filter-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+}
+
+.exercises-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.exercise-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.exercise-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.exercise-image {
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3em;
+}
+
+.exercise-content {
+    padding: 20px;
+}
+
+.exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.exercise-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.exercise-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.action-btn.favorite.active {
+    color: #e74c3c;
+}
+
+.action-btn.mastered.active {
+    color: #27ae60;
+}
+
+.exercise-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.meta-tag {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    color: #6c757d;
+}
+
+.meta-tag.difficulty-beginner {
+    background: #d4edda;
+    color: #155724;
+}
+
+.meta-tag.difficulty-intermediate {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.meta-tag.difficulty-advanced {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.exercise-description {
+    color: #6c757d;
+    font-size: 0.9em;
+    line-height: 1.4;
+    margin-bottom: 15px;
+}
+
+.exercise-muscles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.muscle-tag {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.7em;
+}
+
+.pagination-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.page-link {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+}
+
+.page-link.current {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="exercise-library">
+    <!-- 页面头部 -->
+    <div class="library-header">
+        <h1><i class="fas fa-dumbbell"></i> 动作库</h1>
+        <p>发现和学习各种训练动作</p>
+    </div>
+
+    <!-- 筛选器 -->
+    <div class="filters-section">
+        <form method="GET" id="filterForm">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>身体部位</label>
+                    <select name="body_part">
+                        <option value="">全部</option>
+                        {% for part in body_parts %}
+                            <option value="{{ part.name }}" {% if current_filters.body_part == part.name %}selected{% endif %}>
+                                {{ part.chinese_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>难度</label>
+                    <select name="difficulty">
+                        <option value="">全部</option>
+                        <option value="beginner" {% if current_filters.difficulty == 'beginner' %}selected{% endif %}>初级</option>
+                        <option value="intermediate" {% if current_filters.difficulty == 'intermediate' %}selected{% endif %}>中级</option>
+                        <option value="advanced" {% if current_filters.difficulty == 'advanced' %}selected{% endif %}>高级</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>器械</label>
+                    <select name="equipment">
+                        <option value="">全部</option>
+                        {% for equip in equipment_list %}
+                            <option value="{{ equip.name }}" {% if current_filters.equipment == equip.name %}selected{% endif %}>
+                                {{ equip.chinese_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>排序</label>
+                    <select name="sort">
+                        <option value="popularity" {% if current_filters.sort == 'popularity' %}selected{% endif %}>热门度</option>
+                        <option value="name" {% if current_filters.sort == 'name' %}selected{% endif %}>名称</option>
+                        <option value="difficulty" {% if current_filters.sort == 'difficulty' %}selected{% endif %}>难度</option>
+                        <option value="rating" {% if current_filters.sort == 'rating' %}selected{% endif %}>评分</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="search-section">
+                <div class="filter-group search-input">
+                    <label>搜索</label>
+                    <input type="text" name="search" placeholder="输入动作名称或关键词..." value="{{ current_filters.search }}">
+                </div>
+                <button type="submit" class="filter-btn">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 动作列表 -->
+    {% if page_obj %}
+        <div class="exercises-grid">
+            {% for exercise in page_obj %}
+                <div class="exercise-card" onclick="viewExerciseDetail({{ exercise.id }})">
+                    <div class="exercise-image">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <div class="exercise-content">
+                        <div class="exercise-header">
+                            <h3 class="exercise-name">{{ exercise.name }}</h3>
+                            <div class="exercise-actions">
+                                <button class="action-btn favorite {% if user_preferences|get_item:exercise.id.is_favorite %}active{% endif %}" 
+                                        onclick="toggleFavorite(event, {{ exercise.id }})" title="收藏">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                                <button class="action-btn mastered {% if user_preferences|get_item:exercise.id.is_mastered %}active{% endif %}" 
+                                        onclick="toggleMastered(event, {{ exercise.id }})" title="已掌握">
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="exercise-meta">
+                            <span class="meta-tag difficulty-{{ exercise.difficulty }}">
+                                {% if exercise.difficulty == 'beginner' %}初级
+                                {% elif exercise.difficulty == 'intermediate' %}中级
+                                {% elif exercise.difficulty == 'advanced' %}高级
+                                {% endif %}
+                            </span>
+                            {% if exercise.equipment.first %}
+                                <span class="meta-tag">{{ exercise.equipment.first.chinese_name }}</span>
+                            {% endif %}
+                            <span class="meta-tag">{{ exercise.usage_count }} 次使用</span>
+                        </div>
+                        
+                        <div class="exercise-description">
+                            {{ exercise.description|truncatewords:20 }}
+                        </div>
+                        
+                        <div class="exercise-muscles">
+                            {% for muscle in exercise.primary_muscles.all %}
+                                <span class="muscle-tag">{{ muscle.chinese_name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 分页 -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-section">
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" class="page-link">首页</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="page-link">上一页</a>
+                    {% endif %}
+                    
+                    <span class="page-link current">{{ page_obj.number }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="page-link">下一页</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" class="page-link">末页</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>没有找到匹配的动作</h3>
+            <p>试试调整筛选条件或搜索关键词</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 查看动作详情
+function viewExerciseDetail(exerciseId) {
+    window.location.href = `/tools/fitness/exercise/${exerciseId}/`;
+}
+
+// 切换收藏状态
+function toggleFavorite(event, exerciseId) {
+    event.stopPropagation();
+    const btn = event.target.closest('.action-btn');
+    
+    fetch('/tools/api/toggle-exercise-favorite/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ exercise_id: exerciseId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            btn.classList.toggle('active', data.is_favorite);
+            showMessage(data.is_favorite ? '已收藏' : '已取消收藏', 'success');
+        } else {
+            showMessage('操作失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误', 'error');
+    });
+}
+
+// 切换掌握状态
+function toggleMastered(event, exerciseId) {
+    event.stopPropagation();
+    const btn = event.target.closest('.action-btn');
+    
+    fetch('/tools/api/toggle-exercise-mastered/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ exercise_id: exerciseId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            btn.classList.toggle('active', data.is_mastered);
+            showMessage(data.is_mastered ? '标记为已掌握' : '取消掌握标记', 'success');
+        } else {
+            showMessage('操作失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('网络错误', 'error');
+    });
+}
+
+// 获取CSRF令牌
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+}
+
+// 显示消息
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message message-${type}`;
+    messageDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+
+// 自动提交筛选表单
+document.querySelectorAll('#filterForm select').forEach(select => {
+    select.addEventListener('change', () => {
+        document.getElementById('filterForm').submit();
+    });
+});
+</script>
+{% endblock %}

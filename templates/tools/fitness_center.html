@@ -6,6 +6,35 @@
 
 {% block content %}
 {% csrf_token %}
+<!-- 强制清除所有缓存 -->
+<script>
+// 检测是否存在旧函数，如果存在则强制清除所有缓存
+if (typeof renderActivePlan !== 'undefined' || typeof initCurrentPlan !== 'undefined') {
+  console.log('检测到旧版本函数，正在清除所有缓存...');
+  
+  // 清除localStorage
+  localStorage.clear();
+  
+  // 清除sessionStorage
+  sessionStorage.clear();
+  
+  // 清除所有缓存
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      return Promise.all(names.map(function(name) {
+        return caches.delete(name);
+      }));
+    }).then(function() {
+      console.log('所有缓存已清除，正在重新加载...');
+      // 强制重新加载，不使用缓存
+      window.location.reload(true);
+    });
+  } else {
+    // 如果不支持caches API，直接重新加载
+    window.location.reload(true);
+  }
+}
+</script>
 <div class="fitness-container">
 
 
@@ -120,8 +149,32 @@
         <div class="fitness-card-header">
           <i class="fas fa-calendar-alt"></i>
           <h3 data-zh="训练计划" data-en="Training Plan">训练计划</h3>
-          <button class="edit-plan-btn" onclick="openPlanEditor()" data-zh="编辑计划" data-en="Edit Plan">
+          <button class="edit-plan-btn" onclick="editActivePlan()" data-zh="编辑计划" data-en="Edit Plan">
             <i class="fas fa-edit"></i> 编辑计划
+          </button>
+          <button class="library-plan-btn" onclick="openPlanLibrary()" data-zh="计划库" data-en="Plan Library" style="
+            background: var(--rage-secondary, #2196F3);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 8px;
+          ">
+            <i class="fas fa-book"></i> 计划库
+          </button>
+          <button class="fullscreen-plan-btn" onclick="togglePlanFullscreen()" data-zh="全屏" data-en="Fullscreen" style="
+            background: var(--rage-accent, #9C27B0);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 8px;
+          ">
+            <i class="fas fa-expand"></i> 全屏
           </button>
         </div>
         <div class="fitness-card-content">
@@ -130,7 +183,7 @@
               <h4>当前计划：增肌分化训练</h4>
               <p>5天分化 • 胸背肩腿臂循环</p>
             </div>
-            <div class="workout-plan">
+            <div class="workout-plan" id="workoutPlan">
               <div class="plan-day active" data-day="1">
                 <span data-zh="周一" data-en="Mon">周一</span>
                 <span class="plan-type" data-zh="胸部" data-en="Chest">胸部</span>
@@ -176,6 +229,9 @@
               </button>
               <button class="action-btn secondary" onclick="openPlanTemplates()">
                 <i class="fas fa-star"></i> 模板推荐
+              </button>
+              <button class="action-btn enhanced" onclick="window.location.href='/tools/fitness/enhanced/'">
+                <i class="fas fa-rocket"></i> 增强版健身中心
               </button>
             </div>
           </div>
@@ -248,38 +304,7 @@
         </div>
       </div>
 
-      <!-- 运动视频 -->
-      <div class="fitness-card">
-        <div class="fitness-card-header">
-          <i class="fas fa-play-circle"></i>
-          <h3 data-zh="运动视频" data-en="Workout Videos">运动视频</h3>
-        </div>
-        <div class="fitness-card-content">
-          <div class="video-grid">
-            <div class="video-item">
-              <div class="video-thumbnail">
-                <i class="fas fa-play"></i>
-              </div>
-              <div class="video-title" data-zh="高强度间歇训练" data-en="HIIT Workout">高强度间歇训练</div>
-              <div class="video-duration">15分钟</div>
-            </div>
-            <div class="video-item">
-              <div class="video-thumbnail">
-                <i class="fas fa-play"></i>
-              </div>
-              <div class="video-title" data-zh="力量训练基础" data-en="Strength Basics">力量训练基础</div>
-              <div class="video-duration">30分钟</div>
-            </div>
-            <div class="video-item">
-              <div class="video-thumbnail">
-                <i class="fas fa-play"></i>
-              </div>
-              <div class="video-title" data-zh="有氧运动" data-en="Cardio">有氧运动</div>
-              <div class="video-duration">20分钟</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       <!-- 打卡日历 -->
       <div class="fitness-card checkin-calendar-card">
@@ -344,28 +369,40 @@
         </div>
       </div>
 
-      <!-- 成就系统 -->
+      <!-- 训练计划管理 -->
       <div class="fitness-card">
         <div class="fitness-card-header">
-          <i class="fas fa-trophy"></i>
-          <h3 data-zh="成就系统" data-en="Achievements">成就系统</h3>
+          <i class="fas fa-clipboard-list"></i>
+          <h3>训练计划管理</h3>
+          <button class="plan-action-btn" onclick="openTrainingPlanEditor()" title="创建新计划">
+            <i class="fas fa-plus"></i>
+          </button>
         </div>
         <div class="fitness-card-content">
-          <div class="achievements" id="achievementsContainer">
-            <div class="loading-message">正在加载成就数据...</div>
+          <div class="plan-management-section">
+            <div class="plan-library-header">
+              <h4>我的计划库</h4>
+              <button class="refresh-plans-btn" onclick="refreshPlanLibrary()" title="刷新计划库">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <div class="plan-library-container" id="planLibraryContainer">
+              <div class="loading-message">正在加载计划库...</div>
+            </div>
           </div>
-          <div class="achievement-stats" id="achievementStats">
+          
+          <div class="plan-stats" id="planStats">
             <div class="stat-item">
-              <span class="stat-label">已获得成就:</span>
-              <span class="stat-value" id="achievementCount">0</span>
+              <span class="stat-label">保存的计划:</span>
+              <span class="stat-value" id="totalPlansCount">0</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">连续打卡:</span>
-              <span class="stat-value" id="currentStreakStat">0</span>
+              <span class="stat-label">激活计划:</span>
+              <span class="stat-value" id="activePlanName">无</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">总计打卡:</span>
-              <span class="stat-value" id="totalCheckinsStat">0</span>
+              <span class="stat-label">计划完成度:</span>
+              <span class="stat-value" id="planCompletionRate">0%</span>
             </div>
           </div>
         </div>
@@ -676,6 +713,18 @@
   transform: translateY(-2px);
 }
 
+.action-btn.enhanced {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: bold;
+}
+
+.action-btn.enhanced:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
 .action-btn.secondary {
   background: rgba(255, 255, 255, 0.1);
   color: var(--rage-text, #e6e6e6);
@@ -861,67 +910,7 @@
 }
 
 /* 视频网格样式 */
-.video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-}
-
-.video-item {
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.video-item:hover {
-  transform: translateY(-3px);
-}
-
-.video-thumbnail {
-  width: 100%;
-  height: 100px;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.video-thumbnail i {
-  font-size: 2rem;
-  color: #000;
-  z-index: 2;
-}
-
-.video-thumbnail::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.video-item:hover .video-thumbnail::before {
-  opacity: 1;
-}
-
-.video-title {
-  color: var(--rage-text, #e6e6e6);
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.video-duration {
-  color: var(--rage-text-muted, #a8a8a8);
-  font-size: 0.8rem;
-}
+ 
 
 /* 成就系统样式 */
 .achievements {
@@ -1105,9 +1094,7 @@
     font-size: 0.8rem;
   }
   
-  .video-grid {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
+  
 }
 
 @media (max-width: 480px) {
@@ -1911,6 +1898,155 @@
   background: var(--rage-secondary, #ff5722);
   transform: translateY(-2px);
 }
+
+/* 训练计划管理样式 */
+.plan-management-section {
+  margin-bottom: 20px;
+}
+
+.plan-library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.plan-library-header h4 {
+  margin: 0;
+  color: var(--rage-text, #fff);
+  font-size: 1.1rem;
+}
+
+.refresh-plans-btn, .plan-action-btn {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.refresh-plans-btn:hover, .plan-action-btn:hover {
+  background: var(--rage-secondary, #e55a2b);
+  transform: translateY(-1px);
+}
+
+.plan-library-container {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--rage-border, #333);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--rage-surface, rgba(255, 255, 255, 0.05));
+}
+
+.plan-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--rage-card-bg, rgba(255, 255, 255, 0.1));
+  border-left: 4px solid var(--rage-border, #666);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.plan-item.active {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.1));
+  border-left-color: var(--rage-success, #28a745);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.plan-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--rage-glow, rgba(255, 107, 53, 0.2));
+  background: var(--rage-hover, rgba(255, 255, 255, 0.15));
+}
+
+.plan-info {
+  flex: 1;
+}
+
+.plan-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--rage-text, #fff);
+}
+
+.plan-details {
+  font-size: 0.9rem;
+  color: var(--rage-text-muted, #ccc);
+  display: flex;
+  gap: 15px;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.plan-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.plan-btn.edit {
+  background: var(--rage-info, #17a2b8);
+  color: white;
+}
+
+.plan-btn.edit:hover {
+  background: var(--rage-info-dark, #138496);
+}
+
+.plan-btn.apply {
+  background: var(--rage-success, #28a745);
+  color: white;
+}
+
+.plan-btn.apply:hover {
+  background: var(--rage-success-dark, #218838);
+}
+
+.plan-btn.preview {
+  background: var(--rage-secondary-alt, #6c757d);
+  color: white;
+}
+
+.plan-btn.preview:hover {
+  background: var(--rage-secondary-alt-dark, #545b62);
+}
+
+.plan-btn.delete {
+  background: var(--rage-danger, #dc3545);
+  color: white;
+}
+
+.plan-btn.delete:hover {
+  background: var(--rage-danger-dark, #c82333);
+}
+
+.no-plans-message {
+  text-align: center;
+  color: var(--rage-text-muted, #ccc);
+  font-style: italic;
+  padding: 20px;
+}
 </style>
 
 <script>
@@ -2040,9 +2176,319 @@ function initShortcutsHelp() {
   });
 }
 
+// 初始化当前训练计划
+async function initCurrentPlan() {
+  try {
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    
+    if (data.success && data.has_plan) {
+      renderActivePlan(data.plan);
+    } else {
+      renderNoPlan();
+    }
+  } catch (error) {
+    console.error('加载当前计划失败:', error);
+    renderNoPlan();
+  }
+}
+
+// 渲染激活的训练计划
+function renderActivePlan(plan) {
+  const planContainer = document.getElementById('workoutPlan');
+  if (!planContainer) return;
+  
+  const planPreview = document.querySelector('.current-plan-preview');
+  if (planPreview) {
+    planPreview.innerHTML = `
+      <h4>当前计划：${plan.name}</h4>
+      <p>${plan.mode} • ${plan.cycle_weeks}周周期</p>
+    `;
+  }
+  
+  // 渲染周计划
+  if (plan.week_schedule && Array.isArray(plan.week_schedule)) {
+    planContainer.innerHTML = plan.week_schedule.map((day, index) => {
+      const exerciseCount = day.modules ? 
+        Object.values(day.modules).reduce((sum, module) => sum + (module?.length || 0), 0) : 0;
+      const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
+        (day.body_parts.includes('休息') ? '恢复日' : '待添加');
+      
+      return `
+        <div class="plan-day ${index === 0 ? 'active' : ''}" data-day="${index + 1}" onclick="showDayDetails(${index})">
+          <span>${day.weekday}</span>
+          <span class="plan-type">${day.body_parts.join(' + ')}</span>
+          <span class="plan-exercises">${exerciseText}</span>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // 重新绑定点击事件
+  bindPlanDayEvents();
+}
+
+// 渲染无计划状态
+function renderNoPlan() {
+  const planContainer = document.getElementById('workoutPlan');
+  if (!planContainer) return;
+  
+  const planPreview = document.querySelector('.current-plan-preview');
+  if (planPreview) {
+    planPreview.innerHTML = `
+      <h4>暂无激活计划</h4>
+      <p>选择模板或创建新计划开始训练</p>
+    `;
+  }
+  
+  // 显示默认的周计划布局
+  planContainer.innerHTML = `
+    <div class="plan-day" data-day="1">
+      <span>周一</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+    <div class="plan-day" data-day="2">
+      <span>周二</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+    <div class="plan-day" data-day="3">
+      <span>周三</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+    <div class="plan-day" data-day="4">
+      <span>周四</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+    <div class="plan-day" data-day="5">
+      <span>周五</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+    <div class="plan-day" data-day="6">
+      <span>周六</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+    <div class="plan-day" data-day="7">
+      <span>周日</span>
+      <span class="plan-type">待安排</span>
+      <span class="plan-exercises">选择计划</span>
+    </div>
+  `;
+  
+  bindPlanDayEvents();
+}
+
+// 绑定计划天点击事件
+function bindPlanDayEvents() {
+  document.querySelectorAll('.plan-day').forEach(day => {
+    day.addEventListener('click', function() {
+      // 移除其他活动状态
+      document.querySelectorAll('.plan-day').forEach(d => d.classList.remove('active'));
+      // 添加当前活动状态
+      this.classList.add('active');
+    });
+  });
+}
+
+// 显示某天的训练详情
+async function showDayDetails(dayIndex) {
+  try {
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    
+    if (data.success && data.has_plan && data.plan.week_schedule) {
+      const dayData = data.plan.week_schedule[dayIndex];
+      if (dayData) {
+        showDayDetailsModal(dayData, dayIndex + 1);
+      }
+    } else {
+      showNoPlanModal();
+    }
+  } catch (error) {
+    console.error('获取训练详情失败:', error);
+    alert('获取训练详情失败，请重试');
+  }
+}
+
+// 显示训练日详情模态框
+function showDayDetailsModal(dayData, dayNumber) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  
+  // 计算总动作数
+  let totalExercises = 0;
+  
+  // 生成动作列表HTML
+  let exercisesHTML = '';
+  
+  if (dayData.exercises && Array.isArray(dayData.exercises)) {
+    // 新格式：exercises数组
+    totalExercises = dayData.exercises.length;
+    
+    if (totalExercises > 0) {
+      exercisesHTML = dayData.exercises.map((exercise, index) => {
+        const weight = exercise.weight ? `${exercise.weight}kg` : '自重';
+        const reps = exercise.reps || '10-12';
+        const sets = exercise.sets || 3;
+        const rest = exercise.rest || '90秒';
+        
+        return `
+          <div class="exercise-item" style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--rage-primary, #ff6b35);
+          ">
+            <div class="exercise-info">
+              <div class="exercise-name" style="font-weight: 500; color: #e6e6e6; margin-bottom: 4px;">
+                ${exercise.name}
+              </div>
+              <div class="exercise-params" style="font-size: 0.9rem; color: #a8a8a8;">
+                ${sets}组 × ${reps}次 × ${weight} | 休息: ${rest}
+              </div>
+            </div>
+            <div class="exercise-actions">
+              <button class="exercise-done-btn" onclick="markExerciseDone(${index})" style="
+                background: var(--rage-primary, #ff6b35);
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.85rem;
+              ">
+                <i class="fas fa-check"></i> 完成
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      exercisesHTML = `
+        <div class="no-exercises" style="
+          text-align: center;
+          padding: 40px 20px;
+          color: #a8a8a8;
+        ">
+          <i class="fas fa-dumbbell" style="font-size: 2rem; margin-bottom: 16px; opacity: 0.5;"></i>
+          <p>今天是休息日</p>
+          <p style="font-size: 0.9rem;">好好休息，为下次训练做准备！</p>
+        </div>
+      `;
+    }
+  } else if (dayData.modules) {
+    // 旧格式：modules对象
+    totalExercises = Object.values(dayData.modules).reduce((sum, module) => sum + (module?.length || 0), 0);
+    
+    if (dayData.modules && totalExercises > 0) {
+      const moduleNames = { warmup: '热身', main: '主训', accessory: '辅助', cooldown: '拉伸' };
+      
+      Object.entries(dayData.modules).forEach(([moduleType, exercises]) => {
+        if (exercises && Array.isArray(exercises) && exercises.length > 0) {
+          exercisesHTML += `
+            <div class="exercise-module">
+              <h5>${moduleNames[moduleType] || moduleType}</h5>
+              <div class="exercise-list">
+                ${exercises.map(exercise => `
+                  <div class="exercise-item-detail">
+                    <div class="exercise-name">${exercise.name || '未知动作'}</div>
+                    <div class="exercise-params">
+                      ${exercise.sets ? `${exercise.sets}组` : ''}
+                      ${exercise.reps ? ` × ${exercise.reps}次` : ''}
+                      ${exercise.weight ? ` @ ${exercise.weight}kg` : ''}
+                      ${exercise.rest ? ` (休息${exercise.rest})` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      });
+    } else {
+      exercisesHTML = `
+        <div class="no-exercises" style="
+          text-align: center;
+          padding: 40px 20px;
+          color: #a8a8a8;
+        ">
+          <i class="fas fa-dumbbell" style="font-size: 2rem; margin-bottom: 16px; opacity: 0.5;"></i>
+          <p>今天是休息日</p>
+          <p style="font-size: 0.9rem;">好好休息，为下次训练做准备！</p>
+        </div>
+      `;
+    }
+  }
+  
+  if (!exercisesHTML) {
+    if (dayData.body_parts.includes('休息')) {
+      exercisesHTML = '<div class="rest-day-info"><i class="fas fa-bed"></i> 今天是休息日，让身体恢复吧！</div>';
+    } else {
+      exercisesHTML = '<div class="no-exercises-info">暂未安排具体动作，可以前往计划编辑器添加</div>';
+    }
+  }
+  
+  modal.innerHTML = `
+    <div class="checkin-modal-content">
+      <h3>${dayData.weekday} - ${dayData.body_parts.join(' + ')}</h3>
+      <div class="day-details-content">
+        ${exercisesHTML}
+      </div>
+      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn-secondary" onclick="window.location.href='/tools/fitness/plan-editor/'">
+          <i class="fas fa-edit"></i> 编辑计划
+        </button>
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// 显示无计划模态框
+function showNoPlanModal() {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  modal.innerHTML = `
+    <div class="checkin-modal-content">
+      <h3>暂无训练计划</h3>
+      <div style="text-align: center; padding: 20px;">
+        <p>您还没有激活的训练计划</p>
+        <p>选择一个模板开始您的健身之旅吧！</p>
+      </div>
+      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn-primary" onclick="this.closest('.checkin-modal').remove(); openPlanTemplates();">
+          <i class="fas fa-star"></i> 选择模板
+        </button>
+        <button class="btn-secondary" onclick="this.closest('.checkin-modal').remove(); openPlanLibrary();">
+          <i class="fas fa-book"></i> 计划库
+        </button>
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
   initShortcutsHelp();
+  try { initCurrentPlan(); } catch (e) { console.warn('初始化当前计划失败', e); }
 });
 
 
@@ -2155,6 +2601,23 @@ function updateTimerDisplay() {
     `${minutes.toString().padStart(2, '0')}:${formattedSeconds}`;
 }
 
+// 显示计划详情（简单模态）
+function showPlanDetails(dayIndex) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  modal.innerHTML = `
+    <div class="checkin-modal-content">
+      <h3>计划详情 - 第${dayIndex}天</h3>
+      <div>该功能将展示该天的详细动作清单（待与计划库联动）</div>
+      <div class="form-actions" style="justify-content:center; margin-top: 20px;">
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
 // 营养计算器功能
 document.getElementById('calculateBMR').addEventListener('click', function() {
   const weight = parseFloat(document.getElementById('weight').value);
@@ -2175,12 +2638,7 @@ document.getElementById('calculateBMR').addEventListener('click', function() {
 });
 
 // 视频点击事件
-document.querySelectorAll('.video-item').forEach(item => {
-  item.addEventListener('click', function() {
-    const title = this.querySelector('.video-title').textContent;
-    alert(`开始播放视频: ${title}`);
-  });
-});
+
 
 // 打卡日历功能
 class CheckInCalendar {
@@ -2200,7 +2658,7 @@ class CheckInCalendar {
     this.renderCalendar();
     this.bindEvents();
     this.updateStats();
-    await this.loadAchievements();
+    await this.loadPlanLibrary();
   }
   
   async loadCalendarData() {
@@ -2258,7 +2716,12 @@ class CheckInCalendar {
       const dayElement = document.createElement('div');
       dayElement.className = 'calendar-day';
       
-      const dateStr = date.toISOString().split('T')[0];
+      // 使用本地时区生成日期字符串，避免时区问题
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
       const isCurrentMonth = date.getMonth() === this.currentMonth;
       const isToday = date.toDateString() === new Date().toDateString();
       const checkinData = this.calendarData[dateStr];
@@ -2292,6 +2755,9 @@ class CheckInCalendar {
   async handleDayClick(dateStr, checkinData) {
     const clickedDate = new Date(dateStr);
     const today = new Date();
+    
+    // 设置时间为0点，便于比较
+    clickedDate.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
     
     // 检查是否为未来日期
@@ -2638,7 +3104,7 @@ class CheckInCalendar {
 
 继续加油！💪`;
       
-      const response = await fetch('/tools/api/fitness_community/create-post/', {
+      const response = await fetch('/tools/api/fitness_community/create_post/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2768,131 +3234,1007 @@ class CheckInCalendar {
     }
   }
   
-  async loadAchievements() {
+  async loadPlanLibrary() {
     try {
-      const response = await fetch('/tools/api/achievements/?type=fitness');
+      console.log('开始加载计划库...');
+      const response = await fetch('/tools/api/training_plans/list/');
+      console.log('API响应状态:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      console.log('计划库数据:', data);
       
       if (data.success) {
-        this.renderAchievements(data.achievements || []);
-        this.updateAchievementStats(data.stats || {});
+        console.log('找到计划数量:', data.plans ? data.plans.length : 0);
+        this.renderPlanLibrary(data.plans || []);
+        this.updatePlanStats(data.plans || []);
       } else {
-        console.error('加载成就失败:', data.error);
-        this.showAchievementError();
+        console.error('加载计划库失败:', data.error);
+        this.showPlanLibraryError();
       }
     } catch (error) {
-      console.error('加载成就数据失败:', error);
-      this.showAchievementError();
+      console.error('加载计划库数据失败:', error);
+      this.showPlanLibraryError();
     }
   }
   
-  renderAchievements(achievements) {
-    const container = document.getElementById('achievementsContainer');
+  renderPlanLibrary(plans) {
+    const container = document.getElementById('planLibraryContainer');
     if (!container) return;
     
-    // 确保achievements是数组
-    if (!Array.isArray(achievements)) {
-      achievements = [];
-    }
-    
-    if (achievements.length === 0) {
+    if (plans.length === 0) {
       container.innerHTML = `
-        <div class="loading-message">
-          暂无成就数据，完成您的第一次打卡来获得成就吧！
+        <div class="no-plans-message">
+          <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+          还没有保存的训练计划
+          <br>
+          <small>点击上方"+"按钮创建您的第一个计划</small>
         </div>
       `;
       return;
     }
     
-    const achievementHTML = achievements.map(achievement => {
-      // 确保achievement对象存在且包含必要属性
-      if (!achievement) return '';
-      
-      const statusClass = achievement.is_achieved ? 'unlocked' : 'locked';
-      const progressBar = achievement.is_achieved ? '' : `
-        <div class="achievement-progress">
-          <div class="achievement-progress-bar" style="width: ${achievement.progress || 0}%"></div>
-        </div>
-      `;
-      const meta = achievement.is_achieved ? 
-        `<div class="achievement-meta">已获得</div>` : 
-        `<div class="achievement-meta">${achievement.current || 0}/${achievement.target || 0}</div>`;
+    const planHTML = plans.map(plan => {
+      const statusClass = plan.is_active ? 'active' : '';
+      const statusBadge = plan.is_active ? '<i class="fas fa-check-circle" style="color: #28a745; margin-left: 5px;"></i>' : '';
       
       return `
-        <div class="achievement ${statusClass}">
-          <i class="${achievement.icon || 'fas fa-trophy'}"></i>
-          <div class="achievement-info">
-            <div class="achievement-title">${achievement.title || '未知成就'}</div>
-            <div class="achievement-desc">${achievement.description || '暂无描述'}</div>
-            ${progressBar}
+        <div class="plan-item ${statusClass}">
+          <div class="plan-info">
+            <div class="plan-name">${plan.name}${statusBadge}</div>
+            <div class="plan-details">
+              <span><i class="fas fa-dumbbell"></i> ${plan.mode}</span>
+              <span><i class="fas fa-calendar"></i> ${plan.cycle_weeks}周</span>
+              <span><i class="fas fa-list"></i> ${plan.week_schedule ? plan.week_schedule.length : 0}天安排</span>
+            </div>
           </div>
-          ${meta}
+          <div class="plan-actions">
+            <button class="plan-btn edit" onclick="editPlan(${plan.id})" title="编辑计划">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="plan-btn preview" onclick="previewPlanFromLibrary(${plan.id})" title="预览计划">
+              <i class="fas fa-eye"></i>
+            </button>
+            ${!plan.is_active ? `
+              <button class="plan-btn apply" onclick="applyPlan(${plan.id}, '${plan.name}')" title="应用计划">
+                <i class="fas fa-play"></i>
+              </button>
+            ` : ''}
+            <button class="plan-btn delete" onclick="deletePlan(${plan.id}, '${plan.name}')" title="删除计划">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
         </div>
       `;
     }).join('');
     
-    container.innerHTML = achievementHTML;
+    container.innerHTML = planHTML;
   }
   
-  updateAchievementStats(stats) {
-    // 检查stats是否存在
-    if (!stats) {
-      console.warn('成就统计数据为空');
-      return;
-    }
-    
+  updatePlanStats(plans) {
     const elements = {
-      achievementCount: document.getElementById('achievementCount'),
-      currentStreakStat: document.getElementById('currentStreakStat'),
-      totalCheckinsStat: document.getElementById('totalCheckinsStat')
+      totalPlansCount: document.getElementById('totalPlansCount'),
+      activePlanName: document.getElementById('activePlanName'),
+      planCompletionRate: document.getElementById('planCompletionRate')
     };
     
-    if (elements.achievementCount) {
-      elements.achievementCount.textContent = stats.achievement_count || 0;
+    if (elements.totalPlansCount) {
+      elements.totalPlansCount.textContent = plans.length;
     }
-    if (elements.currentStreakStat) {
-      elements.currentStreakStat.textContent = stats.current_streak || 0;
+    
+    const activePlan = plans.find(plan => plan.is_active);
+    if (elements.activePlanName) {
+      elements.activePlanName.textContent = activePlan ? activePlan.name : '无';
     }
-    if (elements.totalCheckinsStat) {
-      elements.totalCheckinsStat.textContent = stats.total_checkins || 0;
+    
+    if (elements.planCompletionRate) {
+      // 计算计划完成度 (这里可以根据实际需要调整计算逻辑)
+      const completionRate = activePlan ? this.calculatePlanCompletion(activePlan) : 0;
+      elements.planCompletionRate.textContent = `${completionRate}%`;
     }
   }
   
-  showAchievementError() {
-    const container = document.getElementById('achievementsContainer');
+  calculatePlanCompletion(plan) {
+    // 简单的完成度计算：基于当前月份的打卡情况
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    
+    let completedDays = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (this.calendarData[dateStr]) {
+        completedDays++;
+      }
+    }
+    
+    return Math.round((completedDays / daysInMonth) * 100);
+  }
+  
+  showPlanLibraryError() {
+    const container = document.getElementById('planLibraryContainer');
     if (container) {
       container.innerHTML = `
-        <div class="loading-message" style="color: #ff6b6b;">
-          加载成就数据失败，请稍后重试
+        <div class="no-plans-message" style="color: #ff6b6b;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+          加载计划库失败，请稍后重试
         </div>
       `;
     }
   }
 }
 
+// 强制清除缓存的函数（已禁用，避免无限刷新）
+function forceClearCache() {
+  // 暂时禁用自动刷新功能
+  return false;
+}
+
+// 覆盖任何可能存在的旧函数
+window.renderActivePlan = undefined;
+window.initCurrentPlan = undefined;
+
+// 全屏训练计划功能
+function togglePlanFullscreen() {
+  const trainingCard = document.querySelector('.fitness-card');
+  const fullscreenBtn = document.querySelector('.fullscreen-plan-btn');
+  const fullscreenIcon = fullscreenBtn.querySelector('i');
+  
+  if (trainingCard.classList.contains('fullscreen')) {
+    // 退出全屏
+    trainingCard.classList.remove('fullscreen');
+    document.body.classList.remove('fullscreen-active');
+    fullscreenIcon.className = 'fas fa-expand';
+    fullscreenBtn.setAttribute('data-zh', '全屏');
+    fullscreenBtn.setAttribute('data-en', 'Fullscreen');
+    fullscreenBtn.title = '全屏';
+  } else {
+    // 进入全屏
+    trainingCard.classList.add('fullscreen');
+    document.body.classList.add('fullscreen-active');
+    fullscreenIcon.className = 'fas fa-compress';
+    fullscreenBtn.setAttribute('data-zh', '退出全屏');
+    fullscreenBtn.setAttribute('data-en', 'Exit Fullscreen');
+    fullscreenBtn.title = '退出全屏';
+  }
+}
+
+// ESC键退出全屏
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const trainingCard = document.querySelector('.fitness-card');
+    if (trainingCard && trainingCard.classList.contains('fullscreen')) {
+      togglePlanFullscreen();
+    }
+  }
+});
+
 // 初始化打卡日历
 document.addEventListener('DOMContentLoaded', function() {
-  new CheckInCalendar();
+  // 再次确保没有旧函数
+  if (typeof renderActivePlan !== 'undefined') {
+    console.error('仍然检测到旧函数 renderActivePlan，请清除浏览器缓存');
+    return;
+  }
+  if (typeof initCurrentPlan !== 'undefined') {
+    console.error('仍然检测到旧函数 initCurrentPlan，请清除浏览器缓存');
+    return;
+  }
+  
+  console.log('=== 开始初始化健身中心页面（新版本）===');
+  
+  try {
+    window.checkInCalendar = new CheckInCalendar();
+
+    // 绑定点击查看计划详情
+    document.querySelectorAll('.plan-day').forEach(day => {
+      day.addEventListener('click', () => showDayDetails(parseInt(day.getAttribute('data-day')) - 1));
+    });
+    
+    // 加载当前激活的训练计划
+    loadActivePlan();
+  } catch (error) {
+    console.error('初始化失败:', error);
+  }
 });
+
+// 加载当前激活的训练计划
+async function loadActivePlan() {
+  try {
+    console.log('开始加载激活的训练计划...');
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    console.log('API返回数据:', data);
+    
+    if (data.success && data.has_plan) {
+      console.log('找到激活计划:', data.plan);
+      updatePlanDisplay(data.plan);
+    } else {
+      console.log('没有激活的计划');
+      showNoPlanDisplay();
+    }
+  } catch (error) {
+    console.error('加载训练计划失败:', error);
+    showNoPlanDisplay();
+  }
+}
+
+// 更新计划显示
+function updatePlanDisplay(plan) {
+  console.log('开始更新计划显示:', plan);
+  console.log('计划的week_schedule:', plan.week_schedule);
+  
+  // 更新计划信息
+  const planInfo = document.querySelector('.plan-info h4');
+  const planDescription = document.querySelector('.plan-info p');
+  
+  if (planInfo) {
+    planInfo.textContent = `当前计划：${plan.name}`;
+  }
+  if (planDescription) {
+    planDescription.textContent = `${plan.mode} • ${plan.cycle_weeks}周计划`;
+  }
+  
+  // 更新训练日显示
+  const workoutPlan = document.getElementById('workoutPlan');
+  console.log('workoutPlan element:', workoutPlan);
+  console.log('plan.week_schedule:', plan.week_schedule);
+  
+  if (workoutPlan && plan.week_schedule) {
+    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    
+    workoutPlan.innerHTML = plan.week_schedule.map((dayData, index) => {
+      console.log(`处理第${index}天:`, dayData);
+      const exerciseCount = dayData.exercises ? dayData.exercises.length : 0;
+      const dayType = dayData.type || dayData.name || '休息';
+      console.log(`dayType: "${dayType}", exerciseCount: ${exerciseCount}`);
+      
+      // 更安全的休息日判断
+      let isRestDay = false;
+      if (exerciseCount === 0) {
+        isRestDay = true;
+      } else if (dayType && typeof dayType === 'string') {
+        isRestDay = dayType.includes('休息');
+      }
+      console.log(`isRestDay: ${isRestDay}`);
+      
+      // 生成训练动作列表
+      let exercisesList = '';
+      if (dayData.exercises && dayData.exercises.length > 0) {
+        exercisesList = dayData.exercises.map(exercise => {
+          return `
+            <div class="exercise-item">
+              <div class="exercise-name">${exercise.name}</div>
+              <div class="exercise-details">
+                ${exercise.sets}组 × ${exercise.reps}次
+                ${exercise.weight ? ` @ ${exercise.weight}` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        exercisesList = '<div class="rest-day-message">休息日，好好恢复体力</div>';
+      }
+      
+      return `
+        <div class="detailed-plan-day ${index === 0 ? 'active' : ''} ${isRestDay ? 'rest-day' : ''}" data-day="${index + 1}">
+          <div class="day-header">
+            <div class="day-name">${weekDays[index]}</div>
+            <div class="day-type">${dayType}</div>
+          </div>
+          <div class="day-exercises">
+            ${exercisesList}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // 重新绑定点击事件
+    workoutPlan.querySelectorAll('.detailed-plan-day').forEach(day => {
+      day.addEventListener('click', () => {
+        // 移除其他活动状态
+        workoutPlan.querySelectorAll('.detailed-plan-day').forEach(d => d.classList.remove('active'));
+        // 添加当前活动状态
+        day.classList.add('active');
+        // 显示详情
+        showDayDetails(parseInt(day.getAttribute('data-day')) - 1);
+      });
+    });
+  }
+}
+
+// 显示无计划状态
+function showNoPlanDisplay() {
+  const planInfo = document.querySelector('.plan-info h4');
+  const planDescription = document.querySelector('.plan-info p');
+  
+  if (planInfo) {
+    planInfo.textContent = '暂无训练计划';
+  }
+  if (planDescription) {
+    planDescription.textContent = '点击"编辑计划"开始创建你的训练计划';
+  }
+  
+  const workoutPlan = document.getElementById('workoutPlan');
+  if (workoutPlan) {
+    workoutPlan.innerHTML = `
+      <div class="no-plan-message" style="
+        text-align: center;
+        padding: 40px 20px;
+        color: #a8a8a8;
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+      ">
+        <i class="fas fa-plus-circle" style="font-size: 2rem; margin-bottom: 16px; opacity: 0.5;"></i>
+        <p>还没有训练计划</p>
+        <p style="font-size: 0.9rem;">点击上方"编辑计划"按钮开始创建</p>
+      </div>
+    `;
+  }
+}
 
 // 训练计划编辑器相关函数
 function openPlanEditor() {
   window.location.href = '/tools/fitness/plan-editor/';
 }
 
-function openPlanLibrary() {
-  alert('计划库功能即将推出！');
+// 编辑当前激活的训练计划
+async function editActivePlan() {
+  try {
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    
+    if (data.success && data.has_plan) {
+      // 跳转到编辑器并传递计划ID
+      window.location.href = `/tools/fitness/plan-editor/?plan_id=${data.plan.id}`;
+    } else {
+      // 没有激活的计划，创建新计划
+      openPlanEditor();
+    }
+  } catch (error) {
+    console.error('获取激活计划失败:', error);
+    // 出错时也跳转到编辑器
+    openPlanEditor();
+  }
 }
 
-function openPlanTemplates() {
-  alert('模板推荐功能即将推出！');
+// 打开计划库
+async function openPlanLibrary() {
+  try {
+    const response = await fetch('/tools/api/training_plans/list/');
+    const data = await response.json();
+    
+    if (data.success) {
+      showPlanLibraryModal(data.plans || []);
+    } else {
+      alert('加载计划库失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('加载计划库失败:', error);
+    alert('加载计划库失败，请重试');
+  }
+}
+
+// 显示计划库模态框
+function showPlanLibraryModal(plans) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  
+  let plansHTML = '';
+  if (plans.length === 0) {
+    plansHTML = '<div class="no-plans-message">您还没有保存的训练计划，快去创建一个吧！</div>';
+  } else {
+    plansHTML = plans.map(plan => `
+      <div class="plan-library-item" data-plan-id="${plan.id}">
+        <div class="plan-info">
+          <div class="plan-name">${plan.name}</div>
+          <div class="plan-meta">${plan.mode} • ${plan.cycle_weeks}周 • 更新于 ${new Date(plan.updated_at).toLocaleDateString()}</div>
+        </div>
+        <div class="plan-actions">
+          <button class="btn-apply" onclick="applyPlan(${plan.id}, '${plan.name}')">
+            <i class="fas fa-play"></i> 应用
+          </button>
+          <button class="btn-preview" onclick="previewPlan(${plan.id})">
+            <i class="fas fa-eye"></i> 预览
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  modal.innerHTML = `
+    <div class="checkin-modal-content" style="max-width: 600px;">
+      <h3><i class="fas fa-book"></i> 我的计划库</h3>
+      <div class="plan-library-content">
+        ${plansHTML}
+      </div>
+      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn-primary" onclick="window.location.href='/tools/fitness/plan-editor/'">
+          <i class="fas fa-plus"></i> 创建新计划
+        </button>
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// 打开模板推荐
+async function openPlanTemplates() {
+  try {
+    const response = await fetch('/tools/api/training_plans/templates/');
+    const data = await response.json();
+    
+    if (data.success) {
+      showPlanTemplatesModal(data.templates || []);
+    } else {
+      alert('加载模板失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('加载模板失败:', error);
+    alert('加载模板失败，请重试');
+  }
+}
+
+// 显示模板推荐模态框
+function showPlanTemplatesModal(templates) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  
+  const templatesHTML = templates.map(template => {
+    const difficultyColors = {
+      'beginner': '#4CAF50',
+      'intermediate': '#FF9800', 
+      'advanced': '#f44336',
+      'expert': '#9C27B0'
+    };
+    
+    const difficultyNames = {
+      'beginner': '初学者',
+      'intermediate': '中级',
+      'advanced': '高级',
+      'expert': '专家'
+    };
+    
+    return `
+      <div class="template-item" data-template-id="${template.id}">
+        <div class="template-header">
+          <div class="template-name">${template.name}</div>
+          <div class="template-difficulty" style="background: ${difficultyColors[template.difficulty] || '#666'}">
+            ${difficultyNames[template.difficulty] || template.difficulty}
+          </div>
+        </div>
+        <div class="template-description">${template.description}</div>
+        <div class="template-meta">
+          <span><i class="fas fa-calendar"></i> ${template.cycle_weeks}周</span>
+          <span><i class="fas fa-dumbbell"></i> ${template.mode}</span>
+          <span><i class="fas fa-target"></i> ${template.target_goals.join(', ')}</span>
+        </div>
+        <div class="template-actions">
+          <button class="btn-apply" onclick="applyTemplate('${template.id}', '${template.name}')">
+            <i class="fas fa-rocket"></i> 立即应用
+          </button>
+          <button class="btn-preview" onclick="previewTemplate('${template.id}')">
+            <i class="fas fa-eye"></i> 预览
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  modal.innerHTML = `
+    <div class="checkin-modal-content" style="max-width: 700px;">
+      <h3><i class="fas fa-star"></i> 模板推荐</h3>
+      <div class="templates-content">
+        ${templatesHTML}
+      </div>
+      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// 应用训练计划
+async function applyPlan(planId, planName) {
+  if (!confirm(`确定要应用计划"${planName}"吗？这将替换当前的激活计划。`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch('/tools/api/training_plans/apply/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ plan_id: planId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // 关闭模态框
+      document.querySelector('.checkin-modal').remove();
+      
+      // 刷新当前计划显示
+      await initCurrentPlan();
+      
+      // 显示成功消息
+      showNotification(data.message, 'success');
+    } else {
+      alert('应用计划失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('应用计划失败:', error);
+    alert('应用计划失败，请重试');
+  }
+}
+
+// 应用模板
+async function applyTemplate(templateId, templateName) {
+  const customName = prompt(`为新计划命名（留空使用默认名称"${templateName}"）:`, templateName);
+  
+  if (customName === null) return; // 用户取消
+  
+  try {
+    const response = await fetch('/tools/api/training_plans/templates/apply/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+      },
+      body: JSON.stringify({ 
+        template_id: templateId,
+        custom_name: customName.trim() || templateName
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // 关闭模态框
+      document.querySelector('.checkin-modal').remove();
+      
+      // 刷新当前计划显示
+      await loadActivePlan();
+      
+      // 显示成功消息
+      showNotification(data.message, 'success');
+    } else {
+      alert('应用模板失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('应用模板失败:', error);
+    alert('应用模板失败，请重试');
+  }
+}
+
+// 预览计划
+async function previewPlan(planId) {
+  try {
+    const response = await fetch(`/tools/api/training_plans/${planId}/`);
+    const data = await response.json();
+    
+    if (data.success) {
+      showPlanPreviewModal(data.plan);
+    } else {
+      alert('加载计划详情失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('加载计划详情失败:', error);
+    alert('加载计划详情失败，请重试');
+  }
+}
+
+// 预览模板
+function previewTemplate(templateId) {
+  // 从已加载的模板数据中查找
+  fetch('/tools/api/training_plans/templates/')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const template = data.templates.find(t => t.id === templateId);
+        if (template) {
+          showPlanPreviewModal(template);
+        }
+      }
+    })
+    .catch(error => {
+      console.error('预览模板失败:', error);
+      alert('预览模板失败，请重试');
+    });
+}
+
+// 显示计划预览模态框
+function showPlanPreviewModal(plan) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  
+  const weekScheduleHTML = plan.week_schedule.map((day, index) => {
+    const exerciseCount = day.modules ? 
+      Object.values(day.modules).reduce((sum, module) => sum + (module?.length || 0), 0) : 0;
+    const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
+      (day.body_parts.includes('休息') ? '恢复日' : '待添加');
+    
+    return `
+      <div class="preview-day">
+        <span class="day-name">${day.weekday}</span>
+        <span class="day-parts">${day.body_parts.join(' + ')}</span>
+        <span class="day-exercises">${exerciseText}</span>
+      </div>
+    `;
+  }).join('');
+  
+  modal.innerHTML = `
+    <div class="checkin-modal-content" style="max-width: 500px;">
+      <h3><i class="fas fa-eye"></i> 计划预览 - ${plan.name}</h3>
+      <div class="plan-preview-content">
+        <div class="preview-meta">
+          <div><strong>训练模式:</strong> ${plan.mode}</div>
+          <div><strong>训练周期:</strong> ${plan.cycle_weeks}周</div>
+        </div>
+        <div class="preview-schedule">
+          <h4>周安排:</h4>
+          ${weekScheduleHTML}
+        </div>
+      </div>
+      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// 显示通知消息
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+    <span>${message}</span>
+  `;
+  
+  Object.assign(notification.style, {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    padding: '12px 20px',
+    borderRadius: '6px',
+    color: 'white',
+    fontSize: '14px',
+    fontWeight: '500',
+    zIndex: '10000',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    minWidth: '250px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
+    animation: 'slideInRight 0.3s ease-out'
+  });
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease-in';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
 }
 
 // 页面加载完成后的其他初始化
 
-// 添加动画和样式
-const style = document.createElement('style');
-style.textContent = `
+// 添加新的样式
+const additionalStyles = `
+/* 计划库和模板样式 */
+.plan-library-content, .templates-content {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 20px 0;
+}
+
+.plan-library-item, .template-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  margin: 10px 0;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 107, 53, 0.05);
+  transition: all 0.3s ease;
+}
+
+.plan-library-item:hover, .template-item:hover {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--rage-primary, #ff6b35);
+}
+
+.plan-info, .template-header {
+  flex: 1;
+}
+
+.plan-name, .template-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 5px;
+}
+
+.plan-meta, .template-description, .template-meta {
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 5px;
+}
+
+.template-item {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.template-difficulty {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.template-meta {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.template-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.plan-actions, .template-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-apply, .btn-preview {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-apply {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+}
+
+.btn-apply:hover {
+  background: #e55a2b;
+  transform: translateY(-1px);
+}
+
+.btn-preview {
+  background: transparent;
+  color: var(--rage-primary, #ff6b35);
+  border: 1px solid var(--rage-primary, #ff6b35);
+}
+
+.btn-preview:hover {
+  background: var(--rage-primary, #ff6b35);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.no-plans-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #888;
+  font-style: italic;
+}
+
+/* 训练日详情样式 */
+.day-details-content {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 20px 0;
+}
+
+.exercise-module {
+  margin-bottom: 20px;
+}
+
+.exercise-module h5 {
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+.exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exercise-item-detail {
+  padding: 10px;
+  background: rgba(255, 107, 53, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid var(--rage-primary, #ff6b35);
+}
+
+.exercise-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.exercise-params {
+  font-size: 14px;
+  color: #ccc;
+}
+
+.rest-day-info, .no-exercises-info {
+  text-align: center;
+  padding: 40px 20px;
+  color: #888;
+  font-size: 16px;
+}
+
+.rest-day-info i {
+  font-size: 2em;
+  margin-bottom: 10px;
+  color: var(--rage-primary, #ff6b35);
+}
+
+/* 预览样式 */
+.plan-preview-content {
+  margin: 20px 0;
+}
+
+.preview-meta {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 107, 53, 0.05);
+  border-radius: 6px;
+}
+
+.preview-meta div {
+  margin-bottom: 8px;
+}
+
+.preview-schedule h4 {
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 15px;
+}
+
+.preview-day {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin: 5px 0;
+  background: rgba(255, 107, 53, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid var(--rage-primary, #ff6b35);
+}
+
+.day-name {
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.day-parts {
+  flex: 1;
+  text-align: center;
+  color: var(--rage-primary, #ff6b35);
+}
+
+.day-exercises {
+  font-size: 14px;
+  color: #ccc;
+  min-width: 80px;
+  text-align: right;
+}
+
+/* 全屏训练计划样式 */
+.fitness-card.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: var(--rage-bg, #0a0a0a);
+  border-radius: 0;
+  box-shadow: none;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.fitness-card.fullscreen .fitness-card-header {
+  position: sticky;
+  top: 0;
+  background: var(--rage-bg, #0a0a0a);
+  z-index: 10000;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--rage-border, #333);
+}
+
+.fitness-card.fullscreen .fitness-card-content {
+  max-height: none;
+  overflow: visible;
+}
+
+.fitness-card.fullscreen .current-plan-preview {
+  margin-bottom: 30px;
+}
+
+.fitness-card.fullscreen .detailed-plan-day {
+  margin-bottom: 25px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fitness-card.fullscreen .day-header {
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+}
+
+.fitness-card.fullscreen .exercise-item {
+  padding: 15px;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+/* 全屏按钮图标切换 */
+.fitness-card.fullscreen .fullscreen-plan-btn i {
+  transform: rotate(45deg);
+}
+
+/* 防止页面滚动 */
+body.fullscreen-active {
+  overflow: hidden;
+}
+`;
+
+// 添加样式到页面
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles + `
   @keyframes slideInRight {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
@@ -2955,8 +4297,306 @@ style.textContent = `
   .notification.notification-info {
     background-color: #2196F3;
   }
+  
+  /* 应用计划对话框样式 */
+  .apply-plan-info {
+    margin-bottom: 25px;
+  }
+  
+  .plan-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .plan-warning i {
+    color: #ffc107;
+    font-size: 1.2rem;
+    margin-top: 2px;
+  }
+  
+  .plan-warning p {
+    margin: 0;
+    color: #ffc107;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .week-schedule-preview {
+    margin: 20px 0;
+  }
+  
+  .week-schedule-preview h4 {
+    color: var(--rage-primary, #ff6b35);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+  
+  .apply-plan-day {
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: rgba(255, 107, 53, 0.05);
+    overflow: hidden;
+  }
+  
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .day-header:hover {
+    background: rgba(255, 107, 53, 0.1);
+  }
+  
+  .day-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .day-name {
+    font-weight: 600;
+    color: var(--rage-text, #e6e6e6);
+    font-size: 1rem;
+  }
+  
+  .day-type {
+    color: var(--rage-primary, #ff6b35);
+    font-size: 0.9rem;
+  }
+  
+  .day-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #a8a8a8;
+    font-size: 0.9rem;
+  }
+  
+  .toggle-icon {
+    transition: transform 0.3s ease;
+  }
+  
+  .day-content {
+    border-top: 1px solid rgba(255, 107, 53, 0.2);
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .exercise-module {
+    margin-bottom: 20px;
+  }
+  
+  .exercise-module:last-child {
+    margin-bottom: 0;
+  }
+  
+  .exercise-module h5 {
+    color: var(--rage-primary, #ff6b35);
+    margin-bottom: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 107, 53, 0.3);
+  }
+  
+  .exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .exercise-item-detail {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--rage-primary, #ff6b35);
+  }
+  
+  .exercise-item-detail .exercise-name {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--rage-text, #e6e6e6);
+  }
+  
+  .exercise-item-detail .exercise-params {
+    font-size: 0.9rem;
+    color: #a8a8a8;
+    line-height: 1.4;
+  }
+  
+  .rest-day-info {
+    text-align: center;
+    padding: 30px 20px;
+    color: #888;
+    font-size: 1rem;
+  }
+  
+  .rest-day-info i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: var(--rage-primary, #ff6b35);
+    display: block;
+  }
+  
+  /* 详细训练计划显示样式 */
+  .detailed-plan-day {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 107, 53, 0.3);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .detailed-plan-day:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2);
+  }
+  
+  .detailed-plan-day.active {
+    background: rgba(255, 107, 53, 0.15);
+    border-color: var(--rage-primary, #ff6b35);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+  }
+  
+  .detailed-plan-day.rest-day {
+    background: rgba(108, 117, 125, 0.1);
+    border-color: rgba(108, 117, 125, 0.3);
+  }
+  
+  .detailed-plan-day.rest-day:hover {
+    background: rgba(108, 117, 125, 0.2);
+    border-color: rgba(108, 117, 125, 0.5);
+  }
+  
+  .day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+  }
+  
+  .detailed-plan-day.rest-day .day-header {
+    border-bottom-color: rgba(108, 117, 125, 0.3);
+  }
+  
+  .day-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--rage-text, #e6e6e6);
+  }
+  
+  .day-type {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--rage-primary, #ff6b35);
+    background: rgba(255, 107, 53, 0.1);
+    padding: 4px 12px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 107, 53, 0.3);
+  }
+  
+  .detailed-plan-day.rest-day .day-type {
+    color: #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+    border-color: rgba(108, 117, 125, 0.3);
+  }
+  
+  .day-exercises {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .exercise-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+  }
+  
+  .exercise-item:hover {
+    background: rgba(255, 107, 53, 0.1);
+    border-color: rgba(255, 107, 53, 0.4);
+  }
+  
+  .exercise-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--rage-text, #e6e6e6);
+    margin-bottom: 4px;
+  }
+  
+  .exercise-details {
+    font-size: 0.9rem;
+    color: #a8a8a8;
+    font-weight: 500;
+  }
+  
+  .rest-day-message {
+    text-align: center;
+    padding: 30px 20px;
+    color: #6c757d;
+    font-size: 1.1rem;
+    font-style: italic;
+    background: rgba(108, 117, 125, 0.1);
+    border: 2px dashed rgba(108, 117, 125, 0.3);
+    border-radius: 8px;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .detailed-plan-day {
+      padding: 15px;
+      margin-bottom: 12px;
+    }
+    
+    .day-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .day-name {
+      font-size: 1.1rem;
+    }
+    
+    .day-type {
+      font-size: 0.9rem;
+      padding: 3px 10px;
+    }
+    
+    .exercise-item {
+      padding: 10px 12px;
+    }
+    
+    .exercise-name {
+      font-size: 0.95rem;
+    }
+    
+    .exercise-details {
+      font-size: 0.85rem;
+    }
+  }
 `;
-document.head.appendChild(style);
+document.head.appendChild(styleSheet);
 
 // 进入社区功能
 function openFitnessCommunity() {
@@ -2968,9 +4608,432 @@ function openFitnessProfile() {
   window.location.href = '/tools/fitness/profile/';
 }
 
+// 应用训练计划
+async function applyPlan(planId, planName) {
+  try {
+    if (!confirm(`确定要应用训练计划"${planName}"吗？这将替换当前的激活计划。`)) {
+      return;
+    }
+    
+    const response = await fetch('/tools/api/training_plans/apply/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+      },
+      body: JSON.stringify({ plan_id: planId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // 关闭模态框
+      document.querySelector('.checkin-modal')?.remove();
+      
+      // 显示成功消息
+      showNotification(`已应用训练计划"${planName}"！`, 'success');
+      
+      // 重新加载训练计划显示
+      setTimeout(() => {
+        loadActivePlan();
+      }, 1000);
+    } else {
+      alert('应用计划失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('应用计划失败:', error);
+    alert('应用计划失败，请重试');
+  }
+}
+
+// 预览训练计划
+async function previewPlan(planId) {
+  try {
+    const response = await fetch(`/tools/api/training_plans/${planId}/`);
+    const data = await response.json();
+    
+    if (data.success) {
+      showPlanPreviewModal(data.plan);
+    } else {
+      alert('加载计划详情失败: ' + data.error);
+    }
+  } catch (error) {
+    console.error('加载计划详情失败:', error);
+    alert('加载计划详情失败，请重试');
+  }
+}
+
+// 显示计划预览模态框
+function showPlanPreviewModal(plan) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  
+  let scheduleHTML = '';
+  if (plan.week_schedule && plan.week_schedule.length > 0) {
+    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    scheduleHTML = plan.week_schedule.map((dayData, index) => {
+      const dayName = weekDays[index] || `第${index + 1}天`;
+      const exerciseCount = dayData.exercises ? dayData.exercises.length : 0;
+      const isRestDay = exerciseCount === 0;
+      
+      return `
+        <div class="preview-day" style="
+          margin: 10px 0;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 6px;
+          border-left: 4px solid ${isRestDay ? '#666' : 'var(--rage-primary, #ff6b35)'};
+        ">
+          <div class="day-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>${dayName}</strong>
+            <span style="color: #a8a8a8; font-size: 0.9rem;">
+              ${isRestDay ? '休息日' : `${exerciseCount}个动作`}
+            </span>
+          </div>
+          ${dayData.type ? `<div style="color: #a8a8a8; font-size: 0.85rem; margin-top: 4px;">${dayData.type}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } else {
+    scheduleHTML = '<div style="text-align: center; color: #a8a8a8; padding: 20px;">暂无训练安排</div>';
+  }
+  
+  modal.innerHTML = `
+    <div class="checkin-modal-content" style="max-width: 500px;">
+      <h3><i class="fas fa-eye"></i> ${plan.name}</h3>
+      <div class="plan-preview-content">
+        <div class="plan-meta" style="margin-bottom: 20px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
+          <div><strong>训练模式：</strong>${plan.mode}</div>
+          <div><strong>计划周期：</strong>${plan.cycle_weeks}周</div>
+          <div><strong>创建时间：</strong>${new Date(plan.created_at).toLocaleDateString()}</div>
+          <div><strong>状态：</strong>${plan.is_active ? '已激活' : '未激活'}</div>
+        </div>
+        <div class="plan-schedule">
+          <h4 style="margin-bottom: 10px;">周安排</h4>
+          ${scheduleHTML}
+        </div>
+      </div>
+      <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn-primary" onclick="applyPlan(${plan.id}, '${plan.name}')">
+          <i class="fas fa-play"></i> 应用此计划
+        </button>
+        <button class="btn-secondary" onclick="window.location.href='/tools/fitness/plan-editor/?plan_id=${plan.id}'">
+          <i class="fas fa-edit"></i> 编辑计划
+        </button>
+        <button class="btn-cancel">关闭</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+// 显示通知消息
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+    <span>${message}</span>
+  `;
+  
+  Object.assign(notification.style, {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    padding: '12px 20px',
+    borderRadius: '6px',
+    color: 'white',
+    fontSize: '14px',
+    fontWeight: '500',
+    zIndex: '10000',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    minWidth: '250px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    backgroundColor: type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3',
+    animation: 'slideInRight 0.3s ease-out'
+  });
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease-in';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
+
 // 更多工具功能
 function openFitnessTools() {
   window.location.href = '/tools/fitness/tools/';
 }
+
+// 全局函数：计划管理
+function openTrainingPlanEditor() {
+  window.open('/tools/training_plan_editor/', '_blank');
+}
+
+function refreshPlanLibrary() {
+  const calendar = window.checkInCalendar;
+  if (calendar) {
+    calendar.loadPlanLibrary();
+    showNotification('计划库已刷新', 'success');
+  }
+}
+
+function editPlan(planId) {
+  window.open(`/tools/training_plan_editor/?plan_id=${planId}`, '_blank');
+}
+
+async function previewPlanFromLibrary(planId) {
+  try {
+    const response = await fetch(`/tools/api/training_plans/${planId}/`);
+    const data = await response.json();
+    
+    if (data.success) {
+      showPlanPreviewModal(data.plan);
+    } else {
+      showNotification('预览失败: ' + data.error, 'error');
+    }
+  } catch (error) {
+    console.error('预览计划失败:', error);
+    showNotification('预览失败，请重试', 'error');
+  }
+}
+
+// 显示应用计划确认对话框（带详细内容）
+async function showApplyPlanModal(planId, planName) {
+  try {
+    const response = await fetch(`/tools/api/training_plans/${planId}/`);
+    const data = await response.json();
+    
+    if (!data.success) {
+      showNotification('获取计划详情失败: ' + data.error, 'error');
+      return;
+    }
+    
+    const plan = data.plan;
+    const modal = document.createElement('div');
+    modal.className = 'checkin-modal';
+    
+    // 生成每日训练详情
+    const weekScheduleHTML = plan.week_schedule.map((dayData, index) => {
+      const dayNumber = index + 1;
+      const dayName = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][index] || `第${dayNumber}天`;
+      
+      let exercisesHTML = '';
+      if (dayData.exercises && dayData.exercises.length > 0) {
+        // 按模块分组显示动作
+        const moduleGroups = {
+          warmup: [],
+          main: [],
+          accessory: [],
+          cooldown: []
+        };
+        
+        dayData.exercises.forEach(exercise => {
+          const module = exercise.module || 'main';
+          if (moduleGroups[module]) {
+            moduleGroups[module].push(exercise);
+          } else {
+            moduleGroups.main.push(exercise);
+          }
+        });
+        
+        const moduleNames = {
+          warmup: '热身',
+          main: '主训',
+          accessory: '辅助',
+          cooldown: '放松'
+        };
+        
+        Object.keys(moduleGroups).forEach(moduleKey => {
+          const exercises = moduleGroups[moduleKey];
+          if (exercises.length > 0) {
+            exercisesHTML += `
+              <div class="exercise-module">
+                <h5>${moduleNames[moduleKey]}</h5>
+                <div class="exercise-list">
+                  ${exercises.map(exercise => `
+                    <div class="exercise-item-detail">
+                      <div class="exercise-name">${exercise.name}</div>
+                      <div class="exercise-params">
+                        ${exercise.sets}组 × ${exercise.reps}次
+                        ${exercise.weight ? ` @ ${exercise.weight}` : ''}
+                        ${exercise.rest ? ` | 休息${exercise.rest}` : ''}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }
+        });
+      } else {
+        exercisesHTML = '<div class="rest-day-info"><i class="fas fa-bed"></i><br>休息日</div>';
+      }
+      
+      return `
+        <div class="apply-plan-day" data-day="${dayNumber}">
+          <div class="day-header" onclick="toggleDayContent(${dayNumber})">
+            <div class="day-info">
+              <span class="day-name">${dayName}</span>
+              <span class="day-type">${dayData.type || dayData.name || '训练'}</span>
+            </div>
+            <div class="day-summary">
+              ${dayData.exercises ? dayData.exercises.length : 0}个动作
+              <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+          </div>
+          <div class="day-content" style="display: none;">
+            ${exercisesHTML}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    modal.innerHTML = `
+      <div class="checkin-modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header">
+          <h3>应用训练计划</h3>
+          <button class="modal-close" onclick="this.closest('.checkin-modal').remove()">×</button>
+        </div>
+        
+        <div class="apply-plan-info">
+          <div class="plan-meta">
+            <h4>${plan.name}</h4>
+            <div class="plan-details">
+              <span><i class="fas fa-dumbbell"></i> ${plan.mode}</span>
+              <span><i class="fas fa-calendar"></i> ${plan.cycle_weeks}周</span>
+              <span><i class="fas fa-list"></i> ${plan.week_schedule.length}天安排</span>
+            </div>
+          </div>
+          
+          <div class="plan-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>应用此计划将替换当前的激活计划。点击下方每一天可以查看详细训练内容。</p>
+          </div>
+        </div>
+        
+        <div class="week-schedule-preview">
+          <h4>训练安排预览</h4>
+          ${weekScheduleHTML}
+        </div>
+        
+        <div class="form-actions" style="justify-content: center; margin-top: 30px; gap: 15px;">
+          <button class="btn-cancel" onclick="this.closest('.checkin-modal').remove()">取消</button>
+          <button class="btn-confirm" onclick="confirmApplyPlan(${planId}, '${planName}')">
+            <i class="fas fa-check"></i> 确认应用
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 点击模态框外部关闭
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+    
+  } catch (error) {
+    console.error('显示应用计划对话框失败:', error);
+    showNotification('显示计划详情失败，请重试', 'error');
+  }
+}
+
+// 切换每日内容显示
+function toggleDayContent(dayNumber) {
+  const dayElement = document.querySelector(`[data-day="${dayNumber}"]`);
+  const content = dayElement.querySelector('.day-content');
+  const icon = dayElement.querySelector('.toggle-icon');
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+}
+
+// 确认应用计划
+async function confirmApplyPlan(planId, planName) {
+  try {
+    const response = await fetch('/tools/api/training_plans/apply/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({ plan_id: planId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification(`已将"${planName}"设为激活计划`, 'success');
+      // 关闭模态框
+      document.querySelector('.checkin-modal').remove();
+      // 刷新计划库和激活计划显示
+      const calendar = window.checkInCalendar;
+      if (calendar) {
+        await calendar.loadPlanLibrary();
+      }
+      await loadActivePlan();
+    } else {
+      showNotification('应用失败: ' + data.error, 'error');
+    }
+  } catch (error) {
+    console.error('应用计划失败:', error);
+    showNotification('应用失败，请重试', 'error');
+  }
+}
+
+async function applyPlan(planId, planName) {
+  // 显示详细的应用计划对话框
+  await showApplyPlanModal(planId, planName);
+}
+
+async function deletePlan(planId, planName) {
+  if (!confirm(`确定要删除训练计划"${planName}"吗？此操作不可恢复。`)) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/tools/api/training_plans/${planId}/delete/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification(`已删除训练计划"${planName}"`, 'success');
+      // 刷新计划库
+      const calendar = window.checkInCalendar;
+      if (calendar) {
+        calendar.loadPlanLibrary();
+      }
+    } else {
+      showNotification('删除失败: ' + data.error, 'error');
+    }
+  } catch (error) {
+    console.error('删除计划失败:', error);
+    showNotification('删除失败，请重试', 'error');
+  }
+}
+
+// 保存全局引用以便其他函数访问
+window.checkInCalendar = null;
 </script>
 {% endblock %} 

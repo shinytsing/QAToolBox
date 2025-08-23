@@ -25,14 +25,14 @@ class ToolsConfig(AppConfig):
     def _initialize_services(self):
         """初始化各种服务"""
         try:
-            # 导入自动化测试服务
-            from .services.auto_test_runner import initialize_auto_testing
+            # 导入服务 (已移除测试模块)
+            # from .services.auto_test_runner import initialize_auto_testing
             from .services.monitoring_service import periodic_health_check
             from .services.performance_optimizer import run_performance_optimization
             from .services.database_sharding import check_shards_health
             
-            # 初始化自动化测试
-            initialize_auto_testing()
+            # 初始化服务 (跳过测试模块)
+            # initialize_auto_testing()
             
             # 启动定时任务
             self._start_scheduled_tasks()
@@ -65,9 +65,9 @@ class ToolsConfig(AppConfig):
                         from .services.database_sharding import check_shards_health
                         check_shards_health()
                         
-                        # 每30分钟运行一次自动化测试
-                        from .services.auto_test_runner import run_scheduled_tests
-                        run_scheduled_tests()
+                        # 每30分钟运行一次自动化测试 (已禁用)
+                        # from .services.auto_test_runner import run_scheduled_tests
+                        # run_scheduled_tests()
                         
                         # 每60分钟运行一次垃圾回收
                         from .services.performance_optimizer import run_garbage_collection

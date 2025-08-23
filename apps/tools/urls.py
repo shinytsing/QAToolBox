@@ -56,7 +56,8 @@ from .views.fitness_views import (
     follow_fitness_user_api, get_fitness_achievements_api, share_achievement_api,
     save_training_plan_api, list_training_plans_api, get_training_plan_api, equip_badge_api,
     get_active_training_plan_api, apply_training_plan_api, get_training_plan_templates_api,
-    apply_training_plan_template_api, save_training_plan_editor_api, delete_training_plan_api
+    apply_training_plan_template_api, save_training_plan_editor_api, delete_training_plan_api,
+    import_training_mode_api, get_training_modes_api, training_mode_selector
 )
 
 # 从食物相关视图导入
@@ -136,7 +137,7 @@ from .legacy_views import (
     audio_converter_api, user_generated_travel_guide_api,
     user_generated_travel_guide_detail_api, user_generated_travel_guide_download_api,
     user_generated_travel_guide_use_api, user_generated_travel_guide_upload_attachment_api,
-    shipbao_create_item_api, shipbao_items_api, shipbao_initiate_transaction_api,
+    shipbao_create_item_api, shipbao_initiate_transaction_api,
     shipbao_send_message_api, shipbao_messages_api, buddy_create_event_api,
     buddy_events_api, buddy_join_event_api, buddy_approve_member_api,
     buddy_send_message_api, buddy_messages_api, generate_boss_qr_code_api,
@@ -161,7 +162,30 @@ from .legacy_views import (
 )
 
 # 从shipbao视图导入
-from .views.shipbao_views import shipbao_favorites_api
+from .views.shipbao_views import (
+    shipbao_favorites_api, shipbao_items_api, 
+    shipbao_initiate_transaction_api, shipbao_contact_seller_api,
+    shipbao_inquiry_queue_api, shipbao_want_item_api, shipbao_want_list_api, shipbao_contact_wanter_api,
+    shipbao_remove_item_api, shipbao_mark_sold_api, shipbao_transaction_status_api, save_user_location_api,
+    map_search_location_api, map_reverse_geocode_api, map_geocode_api
+)
+
+# 从legacy_views导入缺失的shipbao函数
+from .legacy_views import (
+    shipbao_home, shipbao_publish, shipbao_detail, 
+    shipbao_transactions, shipbao_chat, shipbao_create_item_api
+)
+
+# 从地图基础视图导入
+from .views.map_base_views import (
+    location_api, map_picker_api, save_user_location_api
+)
+
+# 从通知视图导入
+from .views.notification_views import (
+    get_unread_notifications_api, mark_notifications_read_api,
+    clear_all_notifications_api, get_notification_summary_api
+)
 
 # 从日记相关视图导入
 from .views.diary_views import (
@@ -434,6 +458,7 @@ urlpatterns = [
     path('fitness/add_weight_record/', add_weight_record_api, name='add_weight_record_api'),
     path('fitness/tools/', fitness_tools, name='fitness_tools'),
     path('fitness/plan-editor/', training_plan_editor, name='training_plan_editor'),
+    path('fitness/mode-selector/', training_mode_selector, name='training_mode_selector'),
 
     
     # 健身工具详细页面
@@ -526,14 +551,14 @@ urlpatterns = [
     path('api/travel_cities/', travel_city_list_api, name='travel_city_list_api'),
     path('api/user/favorites/', user_favorites_api, name='user_favorites_api'),
     
-    # 地图选择器API
+    # 地图相关API
+    path('api/location/', location_api, name='location_api'),
     path('api/map_picker/', map_picker_api, name='map_picker_api'),
+    path('api/save_user_location/', save_user_location_api, name='save_user_location_api'),
     
-    # 船宝相关API
+    # 船宝页面路由
     path('shipbao/', shipbao_home, name='shipbao_home'),
     path('shipbao/item/<int:item_id>/', shipbao_detail, name='shipbao_detail'),
-    path('api/shipbao/items/', shipbao_items_api, name='shipbao_items_api'),
-    path('api/shipbao/favorites/', shipbao_favorites_api, name='shipbao_favorites_api'),
     
     # 高优先级：添加缺失的API路由
     # 健身社区相关API
@@ -578,6 +603,12 @@ urlpatterns = [
     path('api/chat/<str:room_id>/send-file/', send_file_api, name='send_file_api'),
     path('api/chat/<str:room_id>/send-video/', send_video_api, name='send_video_api'),
     path('api/chat/<str:room_id>/delete-message/<int:message_id>/', delete_message_api, name='delete_message_api'),
+    
+    # 通知相关API路由
+    path('api/notifications/unread/', get_unread_notifications_api, name='get_unread_notifications_api'),
+    path('api/notifications/mark-read/', mark_notifications_read_api, name='mark_notifications_read_api'),
+    path('api/notifications/clear-all/', clear_all_notifications_api, name='clear_all_notifications_api'),
+    path('api/notifications/summary/', get_notification_summary_api, name='get_notification_summary_api'),
     path('api/chat/<str:room_id>/mark-read/', mark_messages_read_api, name='mark_messages_read_api'),
     path('api/chat/<str:room_id>/download/<int:message_id>/', download_chat_file, name='download_chat_file'),
     path('api/chat/online_status/', update_online_status_api, name='update_online_status_api'),
@@ -827,9 +858,22 @@ urlpatterns = [
     # 船宝API路由
     path('api/shipbao/create-item/', shipbao_create_item_api, name='shipbao_create_item_api'),
     path('api/shipbao/items/', shipbao_items_api, name='shipbao_items_api'),
+    path('api/shipbao/favorites/', shipbao_favorites_api, name='shipbao_favorites_api'),
     path('api/shipbao/initiate-transaction/', shipbao_initiate_transaction_api, name='shipbao_initiate_transaction_api'),
-    path('api/shipbao/send-message/', shipbao_send_message_api, name='shipbao_send_message_api'),
-    path('api/shipbao/messages/', shipbao_messages_api, name='shipbao_messages_api'),
+    path('api/shipbao/contact-seller/', shipbao_contact_seller_api, name='shipbao_contact_seller_api'),
+    path('api/shipbao/inquiry-queue/<int:item_id>/', shipbao_inquiry_queue_api, name='shipbao_inquiry_queue_api'),
+    path('api/shipbao/want-item/', shipbao_want_item_api, name='shipbao_want_item_api'),
+    path('api/shipbao/want-list/<int:item_id>/', shipbao_want_list_api, name='shipbao_want_list_api'),
+    path('api/shipbao/contact-wanter/', shipbao_contact_wanter_api, name='shipbao_contact_wanter_api'),
+    path('api/shipbao/remove-item/', shipbao_remove_item_api, name='shipbao_remove_item_api'),
+    path('api/shipbao/mark-sold/', shipbao_mark_sold_api, name='shipbao_mark_sold_api'),
+    path('api/shipbao/transaction-status/<int:item_id>/', shipbao_transaction_status_api, name='shipbao_transaction_status_api'),
+    path('api/user/save-location/', save_user_location_api, name='save_user_location_api'),
+    
+    # ==================== 地图API相关路由 ====================
+    path('api/map/search-location/', map_search_location_api, name='map_search_location_api'),
+    path('api/map/reverse-geocode/', map_reverse_geocode_api, name='map_reverse_geocode_api'),
+    path('api/map/geocode/', map_geocode_api, name='map_geocode_api'),
     
     # ==================== 搭子（同城活动匹配）相关路由 ====================
     path('buddy/', buddy_home, name='buddy_home'),
@@ -902,4 +946,8 @@ urlpatterns = [
     path('api/fitness/save-custom-plan/', save_custom_plan_api, name='save_custom_plan_api'),
     path('api/fitness/workout-plan-details/<int:plan_id>/', get_workout_plan_details_api, name='get_workout_plan_details_api'),
     path('api/fitness/training-plan-templates/', get_training_plan_templates_api, name='get_training_plan_templates_api'),
+    
+    # 训练模式导入API
+    path('api/fitness/training-modes/', get_training_modes_api, name='get_training_modes_api'),
+    path('api/fitness/import-training-mode/', import_training_mode_api, name='import_training_mode_api'),
 ]

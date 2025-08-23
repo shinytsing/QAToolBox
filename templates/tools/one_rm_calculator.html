@@ -501,7 +501,7 @@ document.getElementById('predictRepsForm').addEventListener('submit', function(e
 function calculateOneRM(data) {
     showLoading('oneRmResult', '正在计算1RM...');
     
-    fetch('/api/fitness/one-rm/', {
+    fetch('/tools/api/fitness/one-rm/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -526,7 +526,7 @@ function calculateOneRM(data) {
 function predictReps(data) {
     showLoading('predictResult', '正在预测重复次数...');
     
-    fetch('/api/fitness/predict-reps/', {
+    fetch('/tools/api/fitness/predict-reps/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

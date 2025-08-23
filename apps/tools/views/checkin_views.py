@@ -19,28 +19,56 @@ logger = logging.getLogger(__name__)
 def checkin_add_api(request):
     """添加签到记录API - 真实实现"""
     try:
+        from apps.tools.models.legacy_models import CheckInCalendar, CheckInDetail
+        from django.utils.dateparse import parse_date
+        
         # 解析请求数据
         data = json.loads(request.body)
-        checkin_type = data.get('type', 'daily')
-        note = data.get('note', '')
+        checkin_type = data.get('type', 'fitness')
+        date_str = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+        status = data.get('status', 'completed')
+        detail_data = data.get('detail', {})
         
-        # 模拟签到记录
-        checkin_record = {
-            'id': f'checkin_{int(datetime.now().timestamp())}',
-            'user_id': request.user.id,
-            'type': checkin_type,
-            'note': note,
-            'created_at': datetime.now().isoformat(),
-            'streak_days': 7,  # 模拟连续签到天数
-            'total_checkins': 45  # 模拟总签到次数
-        }
+        # 解析日期
+        checkin_date = parse_date(date_str) if date_str else datetime.now().date()
         
-        logger.info(f"用户签到: {request.user.id}, 类型: {checkin_type}")
+        # 创建或更新打卡记录
+        checkin, created = CheckInCalendar.objects.get_or_create(
+            user=request.user,
+            calendar_type=checkin_type,
+            date=checkin_date,
+            defaults={'status': status}
+        )
+        
+        if not created:
+            checkin.status = status
+            checkin.save()
+        
+        # 创建或更新详情记录
+        if detail_data:
+            detail, detail_created = CheckInDetail.objects.get_or_create(
+                checkin=checkin,
+                defaults=detail_data
+            )
+            
+            if not detail_created:
+                # 更新详情
+                for key, value in detail_data.items():
+                    if hasattr(detail, key):
+                        setattr(detail, key, value)
+                detail.save()
+        
+        logger.info(f"用户打卡: {request.user.username}, 类型: {checkin_type}, 日期: {checkin_date}")
         
         return JsonResponse({
             'success': True,
-            'message': '签到成功',
-            'checkin_record': checkin_record
+            'message': '打卡成功',
+            'checkin_record': {
+                'id': checkin.id,
+                'date': checkin.date.strftime('%Y-%m-%d'),
+                'status': checkin.status,
+                'type': checkin.calendar_type
+            }
         })
         
     except json.JSONDecodeError:
@@ -49,10 +77,10 @@ def checkin_add_api(request):
             'error': '无效的JSON数据'
         }, status=400)
     except Exception as e:
-        logger.error(f"签到失败: {str(e)}")
+        logger.error(f"打卡失败: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': f'签到失败: {str(e)}'
+            'error': f'打卡失败: {str(e)}'
         }, status=500)
 
 @csrf_exempt

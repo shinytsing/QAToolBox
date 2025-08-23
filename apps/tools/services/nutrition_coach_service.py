@@ -1,3 +1,7 @@
+# NutriCoach Pro服务已隐藏 - 此服务暂时停用
+# 如需重新启用，请取消注释相关代码并在urls.py中重新启用路由
+
+"""
 import json
 import requests
 from datetime import datetime, timedelta
@@ -312,3 +316,4 @@ class NutritionCoachService:
             'plan_adjustment_needed': False,
             'recommendations': []
         }
+"""

@@ -100,6 +100,62 @@
   font-weight: 500;
 }
 
+.tool-card.enhanced-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card.enhanced-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.tool-card.enhanced-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.3);
+}
+
+.tool-card.enhanced-card .tool-icon {
+  color: #fff;
+  font-size: 3rem;
+}
+
+.tool-card.enhanced-card .tool-title {
+  color: #fff;
+  font-weight: bold;
+}
+
+.tool-card.enhanced-card .tool-description {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tool-card.enhanced-card .tool-category {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.tool-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #ff4757;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
 .modes-section {
   margin-top: 40px;
 }
@@ -434,6 +490,35 @@
         <div class="tool-icon">💪</div>
         <div class="tool-title">健身中心</div>
         <div class="tool-description">全面的健身指导和社区交流平台</div>
+        <div class="tool-category">健康工具</div>
+      </div>
+      
+      <div class="tool-card enhanced-card" onclick="window.location.href='/tools/fitness/enhanced/'">
+        <div class="tool-icon">🚀</div>
+        <div class="tool-title">增强版健身中心</div>
+        <div class="tool-description">智能成就系统、动作库、计划管理</div>
+        <div class="tool-category">健康工具</div>
+        <div class="tool-badge">NEW</div>
+      </div>
+      
+      <div class="tool-card" onclick="window.location.href='/tools/fitness/achievements/'">
+        <div class="tool-icon">🏆</div>
+        <div class="tool-title">成就面板</div>
+        <div class="tool-description">追踪健身成就，佩戴专属徽章</div>
+        <div class="tool-category">健康工具</div>
+      </div>
+      
+      <div class="tool-card" onclick="window.location.href='/tools/fitness/exercise-library/'">
+        <div class="tool-icon">🎯</div>
+        <div class="tool-title">动作库</div>
+        <div class="tool-description">完整的健身动作数据库和指导</div>
+        <div class="tool-category">健康工具</div>
+      </div>
+      
+      <div class="tool-card" onclick="window.location.href='/tools/fitness/plan-library/'">
+        <div class="tool-icon">📚</div>
+        <div class="tool-title">计划库</div>
+        <div class="tool-description">发现和收藏优质训练计划</div>
         <div class="tool-category">健康工具</div>
       </div>
       

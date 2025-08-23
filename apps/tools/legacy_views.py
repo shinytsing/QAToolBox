@@ -103,7 +103,7 @@ from .models import (
 # 船宝（二手线下交易）相关模型导入
 from .models import (
     ShipBaoItem, ShipBaoTransaction, ShipBaoMessage, 
-    ShipBaoUserProfile, ShipBaoReport
+    ShipBaoUserProfile
 )
 
 # 搭子（同城活动匹配）相关模型导入
@@ -329,9 +329,13 @@ def chat_entrance_view(request):
     """聊天入口页面"""
     return render(request, 'tools/chat_entrance.html')
 
+@login_required
 def heart_link_test_view(request):
-    """心动链接测试页面（无需登录）"""
-    return render(request, 'tools/heart_link_test.html')
+    """心动链接测试页面"""
+    context = {
+        'room_id': '0c38a502-25ad-47e7-9a37-15660a57d135'
+    }
+    return render(request, 'tools/heart_link_test.html', context)
 
 def click_test_view(request):
     """点击测试页面（无需登录）"""
@@ -2435,7 +2439,7 @@ def create_heart_link_request_api(request):
             
             if existing_request:
                 # 检查请求是否过期
-                if existing_request.is_expired:
+                if existing_request.is_expired():
                     existing_request.status = 'expired'
                     existing_request.save()
                 else:
@@ -2452,11 +2456,13 @@ def create_heart_link_request_api(request):
             
             if active_chat_room:
                 # 如果用户已有活跃的聊天室，直接返回重连信息
+                matched_user = active_chat_room.user2 if active_chat_room.user1 == request.user else active_chat_room.user1
+                
                 return JsonResponse({
                     'success': True,
                     'reconnect': True,
                     'room_id': active_chat_room.room_id,
-                    'matched_user': active_chat_room.user2.username if active_chat_room.user1 == request.user else active_chat_room.user1.username,
+                    'matched_user': matched_user.username if matched_user else '未知用户',
                     'message': '您已有一个活跃的聊天室，正在为您重连...'
                 }, content_type='application/json', headers=response_headers)
             
@@ -2469,9 +2475,10 @@ def create_heart_link_request_api(request):
             )
             
             # 创建新的心动链接请求
+            # 注意：HeartLinkRequest模型使用requester字段
             heart_link_request = HeartLinkRequest.objects.create(
                 requester=request.user,
-                chat_room=temp_room
+                status='pending'
             )
             
             # 使用智能匹配服务
@@ -2903,6 +2910,19 @@ def get_chat_messages_api(request, room_id):
             if file_url and not file_url.startswith('http') and not file_url.startswith('/'):
                 file_url = f'/media/{file_url}'
             
+            # 对于两人聊天，已读状态的逻辑：
+            # 1. 如果是自己发送的消息，显示对方是否已读
+            # 2. 如果是对方发送的消息，检查自己是否已读
+            is_read = False
+            if message.sender == request.user:
+                # 自己发送的消息：检查对方是否已读
+                # 尝试两种方式检查已读状态
+                other_user = chat_room.user2 if request.user == chat_room.user1 else chat_room.user1
+                is_read = message.is_read_by_user(other_user) or message.is_read
+            else:
+                # 对方发送的消息：检查自己是否已读
+                is_read = message.is_read_by_user(request.user) or message.is_read
+            
             message_list.append({
                 'id': message.id,
                 'sender': message.sender.username,
@@ -2911,7 +2931,7 @@ def get_chat_messages_api(request, room_id):
                 'file_url': file_url,
                 'created_at': message.created_at.isoformat(),
                 'is_own': message.sender == request.user,
-                'is_read': message.is_read
+                'is_read': is_read
             })
         
         return JsonResponse({
@@ -4644,7 +4664,7 @@ def send_image_api(request, room_id):
                     'sender': message.sender.username,
                     'content': message.content,
                     'message_type': message.message_type,
-                    'file_url': f'/media/{filename}',
+                    'file_url': filename,
                     'created_at': message.created_at.isoformat(),
                     'is_own': True
                 },
@@ -4719,16 +4739,31 @@ def send_audio_api(request, room_id):
                 'error': '音频文件大小不能超过10MB'
             }, status=400, content_type='application/json', headers=response_headers)
         
-        # 检查文件类型
-        allowed_types = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/ogg']
+        # 检查文件类型 - 支持更多音频格式
+        allowed_types = [
+            'audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/webm',
+            'audio/mp4', 'audio/aac', 'audio/flac', 'audio/x-m4a'
+        ]
         if audio_file.content_type not in allowed_types:
             return JsonResponse({
                 'success': False,
-                'error': '只支持WAV、MP3、OGG格式的音频文件'
+                'error': f'不支持的音频格式: {audio_file.content_type}。支持的格式: WAV、MP3、OGG、WebM、AAC、FLAC、M4A'
             }, status=400, content_type='application/json', headers=response_headers)
         
-        # 生成文件名
-        filename = f"chat_audio/{uuid.uuid4()}.wav"
+        # 生成文件名，保留原始格式
+        original_filename = audio_file.name
+        file_extension = os.path.splitext(original_filename)[1] if original_filename else '.webm'
+        if not file_extension:
+            # 根据Content-Type判断扩展名
+            if 'webm' in audio_file.content_type:
+                file_extension = '.webm'
+            elif 'wav' in audio_file.content_type:
+                file_extension = '.wav'
+            elif 'mp3' in audio_file.content_type:
+                file_extension = '.mp3'
+            else:
+                file_extension = '.webm'  # 默认为webm
+        filename = f"chat_audio/{uuid.uuid4()}{file_extension}"
         
         # 创建消息
         message = ChatMessage.objects.create(
@@ -4754,7 +4789,7 @@ def send_audio_api(request, room_id):
                 'sender': message.sender.username,
                 'content': message.content,
                 'message_type': message.message_type,
-                'file_url': f'/media/{filename}',
+                'file_url': filename,
                 'created_at': message.created_at.isoformat(),
                 'is_own': True
             },
@@ -4852,7 +4887,7 @@ def send_file_api(request, room_id):
                 'sender': message.sender.username,
                 'content': message.content,
                 'message_type': message.message_type,
-                'file_url': f'/media/{filename}',
+                'file_url': filename,
                 'created_at': message.created_at.isoformat(),
                 'is_own': True
             },
@@ -5100,7 +5135,15 @@ def mark_messages_read_api(request, room_id):
             is_read=False
         )
         
-        count = unread_messages.update(is_read=True)
+        # 使用两种方式同时标记已读状态，确保数据一致性
+        count = 0
+        for message in unread_messages:
+            # 方式1：更新is_read字段
+            message.is_read = True
+            message.save()
+            # 方式2：使用MessageRead模型
+            message.mark_as_read(request.user)
+            count += 1
         
         return JsonResponse({
             'success': True,
@@ -8539,7 +8582,7 @@ def get_user_profile_data(user):
 def get_checkin_calendar_api(request):
     """获取打卡日历数据"""
     try:
-        from .models import CheckInCalendar
+        from .models.legacy_models import CheckInCalendar
         
         checkin_type = request.GET.get('type', 'diary')
         year = int(request.GET.get('year', datetime.now().year))
@@ -8563,11 +8606,25 @@ def get_checkin_calendar_api(request):
         calendar_data = {}
         for checkin in checkins:
             date_str = checkin.date.strftime('%Y-%m-%d')
+            # 构建详情数据
+            detail_data = {}
+            if hasattr(checkin, 'detail') and checkin.detail:
+                detail_data = {
+                    'workout_type': getattr(checkin.detail, 'workout_type', None),
+                    'duration': getattr(checkin.detail, 'duration', None),
+                    'intensity': getattr(checkin.detail, 'intensity', None),
+                    'training_parts': getattr(checkin.detail, 'training_parts', []),
+                    'feeling_rating': getattr(checkin.detail, 'feeling_rating', None),
+                    'notes': getattr(checkin.detail, 'notes', ''),
+                    'mood': getattr(checkin.detail, 'mood', None),
+                    'practice_type': getattr(checkin.detail, 'practice_type', None),
+                    'song_name': getattr(checkin.detail, 'song_name', ''),
+                }
+            
             calendar_data[date_str] = {
                 'id': checkin.id,
                 'status': checkin.status,
-                'mood': getattr(checkin.detail, 'mood', None) if hasattr(checkin, 'detail') else None,
-                'note': getattr(checkin.detail, 'note', '') if hasattr(checkin, 'detail') else ''
+                'detail': detail_data
             }
         
         # 计算连续打卡
@@ -10272,15 +10329,21 @@ def user_generated_travel_guide_api(request):
                     'error': '请先登录后再创建攻略'
                 }, status=401)
             
-            data = json.loads(request.body)
-            title = data.get('title', '').strip()
-            destination = data.get('destination', '').strip()
-            content = data.get('content', '').strip()
-            summary = data.get('summary', '').strip()
-            travel_style = data.get('travel_style', 'general')
-            budget_range = data.get('budget_range', 'medium')
-            travel_duration = data.get('travel_duration', '3-5天')
-            interests = data.get('interests', [])
+            # 处理表单数据（支持文件上传）
+            title = request.POST.get('title', '').strip()
+            destination = request.POST.get('destination', '').strip()
+            content = request.POST.get('content', '').strip()
+            summary = request.POST.get('summary', '').strip()
+            travel_style = request.POST.get('travel_style', 'general')
+            budget_range = request.POST.get('budget_range', 'medium')
+            travel_duration = request.POST.get('travel_duration', '3-5天')
+            interests_str = request.POST.get('interests', '[]')
+            
+            # 解析兴趣标签
+            try:
+                interests = json.loads(interests_str)
+            except:
+                interests = []
             
             # 验证必填字段
             if not title or not destination or not content:
@@ -10292,6 +10355,30 @@ def user_generated_travel_guide_api(request):
             # 创建攻略
             from .models import UserGeneratedTravelGuide
             
+            # 处理文件上传
+            attachment = request.FILES.get('attachment')
+            attachment_name = None
+            
+            if attachment:
+                # 验证文件类型
+                allowed_types = ['.pdf', '.doc', '.docx', '.txt', '.md']
+                file_ext = os.path.splitext(attachment.name)[1].lower()
+                
+                if file_ext not in allowed_types:
+                    return JsonResponse({
+                        'success': False,
+                        'error': '不支持的文件类型，请上传PDF、Word、TXT或Markdown文件'
+                    }, status=400)
+                
+                # 验证文件大小（10MB）
+                if attachment.size > 10 * 1024 * 1024:
+                    return JsonResponse({
+                        'success': False,
+                        'error': '文件大小不能超过10MB'
+                    }, status=400)
+                
+                attachment_name = attachment.name
+            
             guide = UserGeneratedTravelGuide.objects.create(
                 user=request.user,
                 title=title,
@@ -10301,7 +10388,9 @@ def user_generated_travel_guide_api(request):
                 travel_style=travel_style,
                 budget_range=budget_range,
                 travel_duration=travel_duration,
-                interests=interests
+                interests=interests,
+                attachment=attachment,
+                attachment_name=attachment_name
             )
             
             return JsonResponse({
@@ -10469,7 +10558,7 @@ def user_generated_travel_guide_use_api(request, guide_id):
         return JsonResponse({
             'success': True,
             'message': '攻略已加载到新建攻略中',
-            'guide_data': {
+            'guide': {
                 'destination': guide.destination,
                 'travel_style': guide.travel_style,
                 'budget_range': guide.budget_range,
@@ -10563,12 +10652,14 @@ def shipbao_publish(request):
     return render(request, 'tools/shipbao_publish.html')
 
 
-@login_required
 def shipbao_detail(request, item_id):
     """船宝物品详情页面"""
     try:
         item = ShipBaoItem.objects.get(id=item_id)
-        return render(request, 'tools/shipbao_detail.html', {'item': item})
+        return render(request, 'tools/shipbao_detail.html', {
+            'item': item,
+            'item_id': item_id  # 添加item_id到模板上下文
+        })
     except ShipBaoItem.DoesNotExist:
         messages.error(request, '物品不存在')
         return redirect('shipbao_home')
@@ -10889,7 +10980,7 @@ def shipbao_messages_api(request):
             })
         
         # 获取消息列表
-        messages = ShipBaoMessage.objects.filter(transaction=transaction).order_by('created_at')
+        messages = ShipBaoMessage.objects.filter(item=transaction.item).order_by('created_at')
         
         messages_data = []
         for msg in messages:
@@ -11524,3 +11615,76 @@ def decrypt_ncm_file_correct(ncm_path):
             
     except Exception as e:
         raise ValueError(f"NCM文件解密失败: {str(e)}")
+
+
+@login_required
+def check_video_room_status_api(request, room_id):
+    """检查视频聊天室状态API"""
+    try:
+        if request.method != 'GET':
+            return JsonResponse({
+                'success': False,
+                'error': '仅支持GET请求'
+            }, status=405)
+        
+        # 获取聊天室
+        from .models.chat_models import ChatRoom
+        
+        try:
+            chat_room = ChatRoom.objects.get(room_id=room_id)
+        except ChatRoom.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室不存在',
+                'status': 'not_found'
+            }, status=404)
+        
+        # 检查用户是否有权限访问
+        if request.user not in [chat_room.user1, chat_room.user2]:
+            return JsonResponse({
+                'success': False,
+                'error': '没有权限访问此聊天室',
+                'status': 'forbidden'
+            }, status=403)
+        
+        # 检查聊天室状态
+        if chat_room.status != 'active':
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室未激活',
+                'status': 'inactive'
+            })
+        
+        # 获取参与者信息
+        participants = []
+        if chat_room.user1:
+            participants.append({
+                'id': chat_room.user1.id,
+                'username': chat_room.user1.username,
+                'is_online': getattr(chat_room.user1, 'is_online', False)
+            })
+        if chat_room.user2:
+            participants.append({
+                'id': chat_room.user2.id,
+                'username': chat_room.user2.username,
+                'is_online': getattr(chat_room.user2, 'is_online', False)
+            })
+        
+        # 检查是否有人拒绝了视频通话（这里可以根据实际需求添加逻辑）
+        # 比如检查最近的消息或者特定的状态标记
+        
+        return JsonResponse({
+            'success': True,
+            'status': 'active',
+            'participants': participants,
+            'room_id': room_id,
+            'participant_count': len(participants)
+        })
+        
+    except Exception as e:
+        logger.error(f"检查视频聊天室状态失败: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'检查状态失败: {str(e)}',
+            'status': 'error'
+        }, status=500)

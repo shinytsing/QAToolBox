@@ -17,6 +17,7 @@
       <button class="toolbar-btn" onclick="loadTemplate()">
         <i class="fas fa-magic"></i> 加载模板
       </button>
+
     </div>
     <div class="toolbar-right">
       <button class="toolbar-btn" onclick="manageWeights()">
@@ -491,6 +492,37 @@
 .week-card .day-parts {
   font-size: 0.8rem;
   opacity: 0.8;
+}
+
+.week-card .day-parts.editable {
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition: all 0.2s ease;
+  cursor: text !important;
+  min-height: 16px;
+  outline: none;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  pointer-events: auto !important;
+}
+
+.week-card .day-parts.editable:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.week-card .day-parts.editable:focus {
+  background: rgba(255, 107, 53, 0.2);
+  border: 1px solid var(--rage-primary, #ff6b35);
+  opacity: 1;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.week-card.active .day-parts.editable:focus {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .week-settings-btn {
@@ -974,10 +1006,230 @@
   
   .plan-editor-container .editor-toolbar {
     padding: 10px 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .plan-editor-container .toolbar-left,
+  .plan-editor-container .toolbar-center,
+  .plan-editor-container .toolbar-right {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .plan-editor-container .toolbar-center {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .plan-editor-container .plan-name-input {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .plan-editor-container .toolbar-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .plan-editor-container .toolbar-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px; /* 触摸友好 */
   }
   
   .plan-editor-container .editor-title {
     font-size: 1.2rem;
+  }
+  
+  .plan-editor-container .mode-selector {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .plan-editor-container .mode-option {
+    padding: 12px 8px;
+    font-size: 0.8rem;
+    min-height: 60px;
+  }
+  
+  .plan-editor-container .mode-option i {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+  }
+  
+  .plan-editor-container .mode-option span {
+    display: block;
+    text-align: center;
+  }
+  
+  .plan-editor-container .week-card {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .plan-editor-container .body-part {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    margin: 3px;
+  }
+  
+  .plan-editor-container .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .plan-editor-container .stat-value {
+    font-size: 1.3rem;
+  }
+  
+  .plan-editor-container .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .plan-editor-container .exercise-item {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .plan-editor-container .exercise-name {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  
+  .plan-editor-container .exercise-params {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .plan-editor-container .exercise-input {
+    font-size: 0.9rem;
+    padding: 12px 8px;
+    min-height: 44px; /* 触摸友好 */
+  }
+  
+  .plan-editor-container .exercise-actions {
+    margin-top: 8px;
+    justify-content: center;
+  }
+  
+  .plan-editor-container .exercise-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  
+  /* 训练日编辑区域移动端优化 */
+  .plan-editor-container .day-editor {
+    padding: 15px;
+  }
+  
+  .plan-editor-container .day-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .plan-editor-container .day-title {
+    font-size: 1.3rem;
+  }
+  
+  .plan-editor-container .body-parts-selector {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .plan-editor-container .module-section {
+    margin-bottom: 20px;
+  }
+  
+  .plan-editor-container .module-header {
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+}
+
+/* 更小屏幕的额外优化 */
+@media (max-width: 480px) {
+  .plan-editor-container {
+    padding: 0;
+  }
+  
+  .plan-editor-container .editor-toolbar {
+    padding: 8px 10px;
+    border-radius: 0;
+  }
+  
+  .plan-editor-container .toolbar-btn {
+    min-width: 100px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .plan-editor-container .editor-main {
+    padding: 8px;
+    gap: 8px;
+    border-radius: 0;
+  }
+  
+  .plan-editor-container .mode-selector {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .plan-editor-container .mode-option {
+    padding: 16px;
+    font-size: 0.9rem;
+  }
+  
+  .plan-editor-container .week-cards {
+    gap: 8px;
+  }
+  
+  .plan-editor-container .exercise-params {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .plan-editor-container .exercise-input {
+    padding: 14px 10px;
+    font-size: 0.9rem;
+  }
+  
+  .plan-editor-container .plan-name-input {
+    font-size: 1rem;
+    padding: 12px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .plan-editor-container .mode-option:hover,
+  .plan-editor-container .week-card:hover,
+  .plan-editor-container .exercise-item:hover {
+    transform: none;
+  }
+  
+  .plan-editor-container .mode-option:active {
+    transform: scale(0.98);
+  }
+  
+  .plan-editor-container .toolbar-btn:hover {
+    transform: none;
+  }
+  
+  .plan-editor-container .toolbar-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .plan-editor-container .exercise-btn:hover {
+    transform: none;
+  }
+  
+  .plan-editor-container .exercise-btn:active {
+    transform: scale(0.9);
   }
 }
 
@@ -1157,6 +1409,83 @@
   @keyframes slideOutRight {
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* 导入计划模态框样式 */
+  .import-plan-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+    transition: all 0.3s ease;
+  }
+
+  .import-plan-item:hover {
+    background: #f0f0f0;
+    border-color: #ff6b35;
+  }
+
+  .plan-info h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1.1rem;
+  }
+
+  .plan-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .plan-details span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .active-badge {
+    color: #28a745 !important;
+    font-weight: 500;
+  }
+
+  .import-btn {
+    background: #ff6b35;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .import-btn:hover {
+    background: #e55a2b;
+    transform: translateY(-1px);
+  }
+
+  .import-loading, .no-plans, .error-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+  }
+
+  .no-plans i, .error-message i {
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  .import-loading i {
+    font-size: 2rem;
+    color: #ff6b35;
   }
 </style>
 

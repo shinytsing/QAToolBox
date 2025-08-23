@@ -289,6 +289,43 @@
     color: white;
 }
 
+.plan-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.import-plan-btn,
+.save-plan-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.import-plan-btn:hover,
+.save-plan-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.save-plan-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.save-plan-btn:hover {
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
 .template-icon {
     font-size: 2rem;
     margin-bottom: 15px;
@@ -555,6 +592,7 @@
 <script>
 class WorkoutPlanner {
     constructor() {
+        this.currentPlan = null; // 存储当前生成的计划
         this.initializeElements();
         this.bindEvents();
     }
@@ -655,6 +693,7 @@ class WorkoutPlanner {
             this.generateBtn.disabled = false;
             
             const plan = this.createWorkoutPlan(planData);
+            this.currentPlan = plan; // 存储当前计划
             this.displayPlan(plan);
         }, 2000);
     }
@@ -822,9 +861,17 @@ class WorkoutPlanner {
             </div>
         `).join('');
         
-        // 显示建议
+        // 显示建议和导入按钮
         const recommendations = document.getElementById('recommendations');
         recommendations.innerHTML = `
+            <div class="plan-actions">
+                <button class="import-plan-btn" onclick="workoutPlanner.importToEditor()">
+                    <i class="fas fa-download"></i> 导入到训练计划编辑器
+                </button>
+                <button class="save-plan-btn" onclick="workoutPlanner.savePlan()">
+                    <i class="fas fa-save"></i> 保存训练计划
+                </button>
+            </div>
             <h3>训练建议</h3>
             <ul>
                 <li>根据您的${plan.summary.level}水平，建议循序渐进，不要急于求成</li>
@@ -853,11 +900,158 @@ class WorkoutPlanner {
         };
         return types[type] || '训练';
     }
+
+    // 导入到训练计划编辑器
+    importToEditor() {
+        if (!this.currentPlan) {
+            alert('请先生成训练计划');
+            return;
+        }
+
+        try {
+            // 转换为编辑器格式
+            const editorPlan = this.convertToEditorFormat(this.currentPlan);
+            
+            // 将计划数据存储到localStorage
+            localStorage.setItem('importedPlan', JSON.stringify(editorPlan));
+            
+            // 跳转到训练计划编辑器
+            window.open('/tools/fitness/plan-editor/?import=true', '_blank');
+            
+        } catch (error) {
+            console.error('导入失败:', error);
+            alert('导入失败，请重试');
+        }
+    }
+
+    // 转换为编辑器格式
+    convertToEditorFormat(plan) {
+        const weekSchedule = [];
+        const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        
+        for (let i = 0; i < 7; i++) {
+            const dayPlan = plan.weeklyPlan[i];
+            const bodyParts = dayPlan.type === 'rest' ? ['休息'] : this.getBodyPartsByType(dayPlan.type);
+            
+            const modules = {
+                warmup: [],
+                main: [],
+                accessory: [],
+                cooldown: []
+            };
+
+            // 将动作分配到不同模块
+            if (dayPlan.workouts && dayPlan.workouts.length > 0) {
+                dayPlan.workouts.forEach((workout, index) => {
+                    const exercise = {
+                        name: workout.name,
+                        sets: this.extractSets(workout.sets || '3组'),
+                        reps: this.extractReps(workout.sets || '12次'),
+                        weight: '适中',
+                        rest: '90秒'
+                    };
+
+                    // 根据索引分配到不同模块
+                    if (index === 0) {
+                        modules.warmup.push(exercise);
+                    } else if (index < dayPlan.workouts.length - 1) {
+                        modules.main.push(exercise);
+                    } else {
+                        modules.accessory.push(exercise);
+                    }
+                });
+            }
+
+            weekSchedule.push({
+                weekday: weekDays[i],
+                body_parts: bodyParts,
+                modules: modules
+            });
+        }
+
+        return {
+            plan_name: `${plan.summary.goal}计划`,
+            mode: this.getModeByGoal(plan.goal),
+            cycle_weeks: 8,
+            week_schedule: weekSchedule
+        };
+    }
+
+    // 根据训练类型获取身体部位
+    getBodyPartsByType(type) {
+        const bodyParts = {
+            'strength': ['全身力量'],
+            'cardio': ['有氧'],
+            'hiit': ['HIIT'],
+            'flexibility': ['柔韧性'],
+            'rest': ['休息']
+        };
+        return bodyParts[type] || ['全身'];
+    }
+
+    // 根据目标获取模式
+    getModeByGoal(goal) {
+        const modes = {
+            'weight_loss': '减脂',
+            'muscle_gain': '增肌',
+            'strength': '力量',
+            'endurance': '耐力',
+            'flexibility': '柔韧',
+            'general': '综合'
+        };
+        return modes[goal] || '自定义';
+    }
+
+    // 提取组数
+    extractSets(setsString) {
+        const match = setsString.match(/(\d+)组/);
+        return match ? match[1] : '3';
+    }
+
+    // 提取次数
+    extractReps(setsString) {
+        const match = setsString.match(/(\d+)次/);
+        return match ? match[1] : '12';
+    }
+
+    // 保存训练计划
+    async savePlan() {
+        if (!this.currentPlan) {
+            alert('请先生成训练计划');
+            return;
+        }
+
+        try {
+            const editorPlan = this.convertToEditorFormat(this.currentPlan);
+            
+            const response = await fetch('/tools/api/training_plans/editor/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify(editorPlan)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert('训练计划保存成功！');
+            } else {
+                throw new Error('保存失败');
+            }
+        } catch (error) {
+            console.error('保存失败:', error);
+            alert('保存失败，请重试');
+        }
+    }
 }
+
+// 全局变量，供按钮调用
+let workoutPlanner;
 
 // 页面加载完成后初始化计划器
 document.addEventListener('DOMContentLoaded', function() {
-    new WorkoutPlanner();
+    workoutPlanner = new WorkoutPlanner();
 });
 </script>
 {% endblock %}

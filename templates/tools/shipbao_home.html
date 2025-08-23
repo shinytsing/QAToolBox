@@ -6,14 +6,19 @@
 {% block extra_css %}
 <style>
 /* 现代化船宝页面样式 */
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
 .shipbao-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
     min-height: 100vh;
     position: relative;
-    overflow: hidden;
 }
 
 /* 动态背景效果 */
@@ -104,15 +109,19 @@
     margin-bottom: 40px;
     position: relative;
     z-index: 1;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 30px;
+    border: 1px solid #e9ecef;
 }
 
 .shipbao-header h1 {
-    color: white;
-    font-size: 4rem;
+    color: #2c3e50;
+    font-size: 3.5rem;
     margin-bottom: 15px;
-    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
     animation: shipbaoTitleFloat 3s ease-in-out infinite;
-    background: linear-gradient(45deg, #fff, #f0f0f0, #fff);
+    background: linear-gradient(45deg, #667eea, #764ba2, #667eea);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -199,13 +208,12 @@
 }
 
 .filter-section {
-    background: rgba(255, 255, 255, 0.15);
+    background: #ffffff;
     padding: 30px;
-    border-radius: 25px;
+    border-radius: 20px;
     margin-bottom: 40px;
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     position: relative;
     z-index: 1;
     animation: filterSlideIn 0.8s ease-out;
@@ -238,34 +246,32 @@
     display: block;
     margin-bottom: 10px;
     font-weight: 600;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    font-size: 0.95rem;
-    letter-spacing: 0.5px;
+    color: #2c3e50;
+    font-size: 16px;
+    letter-spacing: 0.3px;
 }
 
 .filter-item select,
 .filter-item input {
     width: 100%;
-    padding: 12px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 12px;
-    font-size: 14px;
-    background: rgba(255, 255, 255, 0.9);
-    color: #333;
-    backdrop-filter: blur(10px);
+    padding: 14px 16px;
+    border: 2px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 16px;
+    background: #ffffff;
+    color: #2c3e50;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     cursor: pointer;
 }
 
 .filter-item select:focus,
 .filter-item input:focus {
     outline: none;
-    border-color: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 1);
-    transform: translateY(-2px);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #ffffff;
+    transform: translateY(-1px);
 }
 
 .search-box {
@@ -295,24 +301,23 @@
 }
 
 .search-btn {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-    color: #333;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
     border: none;
     padding: 15px 25px;
-    border-radius: 25px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    margin-left: 15px;
 }
 
 .search-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4c93 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .items-grid {
@@ -654,11 +659,30 @@
                 </select>
             </div>
             <div class="filter-item">
+                <label>📍 地区筛选</label>
+                <select id="location-filter">
+                    <option value="">全部地区</option>
+                    <option value="nearby">📍 附近</option>
+                    <option value="same-city">🏙️ 同城</option>
+                    <option value="same-region">🗺️ 同省</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label>📏 距离范围</label>
+                <select id="distance-filter">
+                    <option value="50">50公里内</option>
+                    <option value="20">20公里内</option>
+                    <option value="10">10公里内</option>
+                    <option value="5">5公里内</option>
+                </select>
+            </div>
+            <div class="filter-item">
                 <label>📊 排序</label>
                 <select id="sort-filter">
                     <option value="created_at">🕐 最新发布</option>
                     <option value="price">💰 价格从低到高</option>
                     <option value="price_desc">💰 价格从高到低</option>
+                    <option value="favorite_count">❤️ 收藏最多</option>
                     <option value="distance">📍 距离最近</option>
                 </select>
             </div>
@@ -703,10 +727,12 @@ document.addEventListener('DOMContentLoaded', function() {
     getLocationInfo();
     
     // 绑定筛选器事件
-    document.getElementById('category-filter').addEventListener('change', loadItems);
-    document.getElementById('price-filter').addEventListener('change', loadItems);
-    document.getElementById('delivery-filter').addEventListener('change', loadItems);
-    document.getElementById('sort-filter').addEventListener('change', loadItems);
+    document.getElementById('category-filter').addEventListener('change', () => loadItems(1));
+    document.getElementById('price-filter').addEventListener('change', () => loadItems(1));
+    document.getElementById('delivery-filter').addEventListener('change', () => loadItems(1));
+    document.getElementById('location-filter').addEventListener('change', () => loadItems(1));
+    document.getElementById('distance-filter').addEventListener('change', () => loadItems(1));
+    document.getElementById('sort-filter').addEventListener('change', () => loadItems(1));
     
     // 绑定搜索框回车事件
     document.getElementById('search-input').addEventListener('keypress', function(e) {
@@ -830,6 +856,12 @@ function loadItems(page = 1) {
         page: page
     };
     
+    // 添加搜索条件
+    const searchInput = document.getElementById('search-input');
+    if (searchInput && searchInput.value.trim()) {
+        filters.search = searchInput.value.trim();
+    }
+    
     // 处理价格筛选
     const priceFilter = document.getElementById('price-filter').value;
     if (priceFilter) {
@@ -850,6 +882,12 @@ function loadItems(page = 1) {
     // 显示加载状态
     document.getElementById('items-container').innerHTML = '<div class="loading">正在加载物品...</div>';
     
+    // 添加用户位置信息用于距离计算
+    if (userLocation && userLocation.lat && userLocation.lon) {
+        filters.user_lat = userLocation.lat;
+        filters.user_lon = userLocation.lon;
+    }
+    
     // 构建查询参数
     const params = new URLSearchParams(filters);
     
@@ -858,11 +896,11 @@ function loadItems(page = 1) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                displayItems(data.data);
+                displayItems(data.items || []);
                 updatePagination(data.total, data.page, data.has_next);
             } else {
                 document.getElementById('items-container').innerHTML = 
-                    `<div class="no-items"><h3>加载失败</h3><p>${data.message}</p></div>`;
+                    `<div class="no-items"><h3>加载失败</h3><p>${data.message || '未知错误'}</p></div>`;
             }
         })
         .catch(error => {
@@ -874,20 +912,16 @@ function loadItems(page = 1) {
 
 // 搜索物品
 function searchItems() {
-    const searchTerm = document.getElementById('search-input').value.trim();
-    if (searchTerm) {
-        // TODO: 实现搜索功能
-        alert('搜索功能开发中...');
-    } else {
-        loadItems(1);
-    }
+    // 直接重新加载第一页，loadItems函数会自动读取搜索框的值
+    loadItems(1);
 }
 
 // 显示物品列表
 function displayItems(items) {
     const container = document.getElementById('items-container');
     
-    if (items.length === 0) {
+    // 检查items是否为有效数组
+    if (!items || !Array.isArray(items) || items.length === 0) {
         container.innerHTML = `
             <div class="no-items">
                 <h3>暂无物品</h3>
@@ -897,30 +931,45 @@ function displayItems(items) {
         return;
     }
     
-    const itemsHTML = items.map(item => `
-        <div class="item-card" onclick="location.href='/tools/shipbao/item/${item.id}/'">
+    const itemsHTML = items.map(item => {
+        // 添加安全检查避免undefined值
+        const safeItem = {
+            id: item?.id || 0,
+            title: item?.title || '未知商品',
+            price: item?.price || 0,
+            main_image: item?.main_image || null,
+            condition_stars: item?.condition_stars || '未知',
+            distance: item?.distance || '未知距离',
+            category_display: item?.category_display || '其他',
+            can_bargain: item?.can_bargain || false,
+            delivery_option: item?.delivery_option || 'pickup'
+        };
+        
+        return `
+        <div class="item-card" onclick="location.href='/tools/shipbao/item/${safeItem.id}/'">
             <div class="item-image">
-                ${item.main_image ? 
-                    `<img src="${item.main_image}" alt="${item.title}">` : 
+                ${safeItem.main_image ? 
+                    `<img src="${safeItem.main_image}" alt="${safeItem.title}">` : 
                     `<div class="no-image">📦</div>`
                 }
             </div>
             <div class="item-info">
-                <div class="item-title">${item.title}</div>
-                <div class="item-price">¥${item.price}</div>
+                <div class="item-title">${safeItem.title}</div>
+                <div class="item-price">¥${safeItem.price}</div>
                 <div class="item-meta">
-                    <span class="item-condition">${item.condition_stars}</span>
-                    <span class="item-location">${item.distance}</span>
+                    <span class="item-condition">${safeItem.condition_stars}</span>
+                    <span class="item-location">${safeItem.distance}</span>
                 </div>
                 <div class="item-tags">
-                    <span class="item-tag">${item.category_display}</span>
-                    ${item.can_bargain ? '<span class="item-tag">💬 可议价</span>' : ''}
-                    <span class="item-tag">${item.delivery_option === 'pickup' ? '📦 自提' : 
-                        item.delivery_option === 'delivery' ? '🚚 送货' : '📦🚚 自提/送货'}</span>
+                    <span class="item-tag">${safeItem.category_display}</span>
+                    ${safeItem.can_bargain ? '<span class="item-tag">💬 可议价</span>' : ''}
+                    <span class="item-tag">${safeItem.delivery_option === 'pickup' ? '📦 自提' : 
+                        safeItem.delivery_option === 'delivery' ? '🚚 送货' : '📦🚚 自提/送货'}</span>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
     
     container.innerHTML = itemsHTML;
 }
@@ -929,8 +978,9 @@ function displayItems(items) {
 function updatePagination(total, currentPage, hasNext) {
     const pagination = document.getElementById('pagination');
     
-    if (total <= 20) {
-        pagination.style.display = 'none';
+    // 添加安全检查
+    if (!pagination || !total || total <= 20) {
+        if (pagination) pagination.style.display = 'none';
         return;
     }
     
@@ -987,6 +1037,362 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+// ==================== 位置获取和管理功能 ====================
+
+let userLocation = null;
+let isLocationInputVisible = false;
+
+// 页面加载时初始化位置
+document.addEventListener('DOMContentLoaded', function() {
+    initializeLocation();
+});
+
+// 初始化位置信息
+function initializeLocation() {
+    console.log('开始初始化位置信息');
+    
+    // 显示位置区域
+    const locationDisplay = document.getElementById('location-display');
+    if (locationDisplay) {
+        locationDisplay.style.display = 'block';
+    }
+    
+    // 尝试从localStorage获取保存的位置
+    const savedLocation = localStorage.getItem('shipbao_user_location');
+    if (savedLocation) {
+        try {
+            userLocation = JSON.parse(savedLocation);
+            console.log('从本地存储加载位置:', userLocation);
+            updateLocationDisplay(userLocation);
+            return;
+        } catch (e) {
+            console.error('解析保存的位置数据失败:', e);
+        }
+    }
+    
+    // 如果没有保存的位置，尝试获取用户位置
+    requestUserLocation();
+}
+
+// 请求用户位置
+function requestUserLocation() {
+    console.log('请求用户位置权限');
+    const locationText = document.getElementById('location-text');
+    
+    if (locationText) {
+        locationText.textContent = '正在获取位置信息...';
+    }
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            // 成功回调
+            function(position) {
+                console.log('成功获取地理位置:', position.coords);
+                const coords = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude
+                };
+                
+                // 使用坐标获取详细地址信息
+                getLocationDetails(coords);
+            },
+            // 错误回调
+            function(error) {
+                console.error('获取位置失败:', error);
+                handleLocationError(error);
+            },
+            // 选项
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5分钟缓存
+            }
+        );
+    } else {
+        console.error('浏览器不支持地理位置');
+        showLocationInput('浏览器不支持地理位置，请手动输入');
+    }
+}
+
+// 使用坐标获取详细地址信息
+function getLocationDetails(coords) {
+    console.log('使用坐标获取地址详情:', coords);
+    
+    fetch('/tools/api/map/reverse-geocode/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            lat: coords.lat,
+            lon: coords.lon
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('地址解析结果:', data);
+        
+        if (data.success && data.location) {
+            const locationInfo = {
+                city: data.location.city || '未知城市',
+                region: data.location.region || '',
+                address: data.location.address || '',
+                lat: coords.lat,
+                lon: coords.lon,
+                timestamp: Date.now()
+            };
+            
+            // 保存位置信息
+            saveLocationToStorage(locationInfo);
+            updateLocationDisplay(locationInfo);
+        } else {
+            console.error('地址解析失败:', data.error);
+            showLocationInput('位置解析失败，请手动输入');
+        }
+    })
+    .catch(error => {
+        console.error('地址解析请求失败:', error);
+        showLocationInput('位置服务不可用，请手动输入');
+    });
+}
+
+// 处理位置获取错误
+function handleLocationError(error) {
+    let errorMessage = '';
+    
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            errorMessage = '位置权限被拒绝，请手动输入位置';
+            break;
+        case error.POSITION_UNAVAILABLE:
+            errorMessage = '位置信息不可用，请手动输入';
+            break;
+        case error.TIMEOUT:
+            errorMessage = '位置获取超时，请手动输入';
+            break;
+        default:
+            errorMessage = '位置获取失败，请手动输入';
+            break;
+    }
+    
+    console.log('位置错误:', errorMessage);
+    showLocationInput(errorMessage);
+}
+
+// 显示手动输入位置
+function showLocationInput(message) {
+    const locationText = document.getElementById('location-text');
+    if (locationText) {
+        locationText.textContent = message;
+    }
+    
+    // 自动显示输入框
+    toggleLocationInput();
+}
+
+// 更新位置显示
+function updateLocationDisplay(location) {
+    const locationText = document.getElementById('location-text');
+    if (locationText && location) {
+        userLocation = location;
+        
+        let displayText = '';
+        if (location.city && location.city !== '未知城市') {
+            displayText = `📍 ${location.city}`;
+            if (location.region && location.region !== location.city) {
+                displayText += `，${location.region}`;
+            }
+        } else {
+            displayText = '📍 位置未知';
+        }
+        
+        locationText.textContent = displayText;
+    }
+}
+
+// 切换位置输入框显示
+function toggleLocationInput() {
+    const inputContainer = document.getElementById('location-input-container');
+    if (!inputContainer) return;
+    
+    isLocationInputVisible = !isLocationInputVisible;
+    
+    if (isLocationInputVisible) {
+        inputContainer.style.display = 'block';
+        // 聚焦到输入框
+        const input = document.getElementById('location-input');
+        if (input) {
+            input.focus();
+            // 如果有当前位置，预填充
+            if (userLocation && userLocation.city) {
+                input.value = userLocation.city;
+            }
+        }
+    } else {
+        inputContainer.style.display = 'none';
+    }
+}
+
+// 保存位置
+function saveLocation() {
+    const input = document.getElementById('location-input');
+    if (!input || !input.value.trim()) {
+        alert('请输入位置信息');
+        return;
+    }
+    
+    const cityName = input.value.trim();
+    console.log('手动保存位置:', cityName);
+    
+    // 创建位置对象
+    const locationInfo = {
+        city: cityName,
+        region: '',
+        address: '',
+        lat: null,
+        lon: null,
+        timestamp: Date.now(),
+        manual: true
+    };
+    
+    // 尝试获取该城市的坐标（可选）
+    geocodeCity(cityName, locationInfo);
+}
+
+// 地理编码城市名称
+function geocodeCity(cityName, locationInfo) {
+    console.log('对城市进行地理编码:', cityName);
+    
+    fetch('/tools/api/map/geocode/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            address: cityName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('城市编码结果:', data);
+        
+        if (data.success && data.location) {
+            locationInfo.lat = data.location.lat;
+            locationInfo.lon = data.location.lon;
+            locationInfo.region = data.location.region || '';
+            locationInfo.address = data.location.address || '';
+        }
+        
+        // 无论编码是否成功，都保存位置信息
+        saveLocationToStorage(locationInfo);
+        updateLocationDisplay(locationInfo);
+        toggleLocationInput(); // 隐藏输入框
+        
+        // 重新加载商品列表以应用新的位置
+        loadItems(1);
+    })
+    .catch(error => {
+        console.error('城市编码失败:', error);
+        
+        // 即使编码失败，也保存位置信息
+        saveLocationToStorage(locationInfo);
+        updateLocationDisplay(locationInfo);
+        toggleLocationInput();
+        
+        // 重新加载商品列表
+        loadItems(1);
+    });
+}
+
+// 保存位置到本地存储
+function saveLocationToStorage(location) {
+    try {
+        localStorage.setItem('shipbao_user_location', JSON.stringify(location));
+        console.log('位置已保存到本地存储:', location);
+        
+        // 同时发送到服务器保存（如果用户已登录）
+        saveLocationToServer(location);
+    } catch (e) {
+        console.error('保存位置到本地存储失败:', e);
+    }
+}
+
+// 保存位置到服务器
+function saveLocationToServer(location) {
+    fetch('/tools/api/user/save-location/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(location)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('位置已保存到服务器');
+        } else {
+            console.log('保存位置到服务器失败:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('保存位置到服务器请求失败:', error);
+    });
+}
+
+// 获取当前用户位置（供其他功能使用）
+function getCurrentUserLocation() {
+    return userLocation;
+}
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('页面初始化...');
+    
+    // 初始化位置信息
+    initializeLocation();
+    
+    // 初始化物品列表
+    loadItems();
+    
+    // 绑定筛选器事件
+    const filterElements = document.querySelectorAll('#category-filter, #delivery-filter, #sort-filter, #price-filter');
+    filterElements.forEach(element => {
+        if (element) {
+            element.addEventListener('change', () => {
+                console.log('筛选条件改变，重新加载物品');
+                loadItems();
+            });
+        }
+    });
+    
+    // 绑定搜索框事件
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(() => {
+            console.log('搜索条件改变，重新加载物品');
+            loadItems();
+        }, 500));
+    }
+    
+    console.log('页面初始化完成');
+});
+
+// 防抖函数
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 </script>
 {% endblock %}

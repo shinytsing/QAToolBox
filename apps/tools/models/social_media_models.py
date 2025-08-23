@@ -105,6 +105,29 @@ class SocialMediaSubscription(models.Model):
         from datetime import timedelta
         return timezone.now() - self.last_check > timedelta(minutes=self.check_frequency)
 
+    @classmethod
+    def get_user_subscription_stats(cls, user):
+        """获取用户订阅统计信息"""
+        from django.db.models import Count, Q
+        
+        total_subscriptions = cls.objects.filter(user=user).count()
+        active_subscriptions = cls.objects.filter(user=user, status='active').count()
+        paused_subscriptions = cls.objects.filter(user=user, status='paused').count()
+        error_subscriptions = cls.objects.filter(user=user, status='error').count()
+        
+        # 按平台统计
+        platform_stats = cls.objects.filter(user=user).values('platform').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        return {
+            'total_subscriptions': total_subscriptions,
+            'active_subscriptions': active_subscriptions,
+            'paused_subscriptions': paused_subscriptions,
+            'error_subscriptions': error_subscriptions,
+            'platform_stats': list(platform_stats)
+        }
+
 
 class SocialMediaNotification(models.Model):
     """社交媒体通知模型"""
@@ -123,6 +146,28 @@ class SocialMediaNotification(models.Model):
     is_read = models.BooleanField(default=False, verbose_name='是否已读', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间', db_index=True)
     
+    # Additional fields added in migration 0014
+    external_url = models.URLField(blank=True, null=True, verbose_name='外部链接')
+    follower_avatar = models.URLField(blank=True, null=True, verbose_name='粉丝头像')
+    follower_count = models.IntegerField(blank=True, default=0, null=True, verbose_name='当前粉丝总数')
+    follower_id = models.CharField(blank=True, max_length=100, null=True, verbose_name='粉丝ID')
+    follower_name = models.CharField(blank=True, max_length=200, null=True, verbose_name='粉丝名称')
+    following_avatar = models.URLField(blank=True, null=True, verbose_name='关注对象头像')
+    following_count = models.IntegerField(blank=True, default=0, null=True, verbose_name='当前关注总数')
+    following_id = models.CharField(blank=True, max_length=100, null=True, verbose_name='关注对象ID')
+    following_name = models.CharField(blank=True, max_length=200, null=True, verbose_name='关注对象名称')
+    new_profile_data = models.JSONField(blank=True, default=dict, null=True, verbose_name='变化后资料')
+    old_profile_data = models.JSONField(blank=True, default=dict, null=True, verbose_name='变化前资料')
+    platform_specific_data = models.JSONField(blank=True, default=dict, null=True, verbose_name='平台特定数据')
+    post_comments = models.IntegerField(blank=True, default=0, null=True, verbose_name='评论数')
+    post_content = models.TextField(blank=True, null=True, verbose_name='帖子内容')
+    post_images = models.JSONField(blank=True, default=list, null=True, verbose_name='帖子图片')
+    post_likes = models.IntegerField(blank=True, default=0, null=True, verbose_name='点赞数')
+    post_shares = models.IntegerField(blank=True, default=0, null=True, verbose_name='分享数')
+    post_tags = models.JSONField(blank=True, default=list, null=True, verbose_name='帖子标签')
+    post_video_url = models.URLField(blank=True, null=True, verbose_name='视频链接')
+    profile_changes = models.JSONField(blank=True, default=dict, null=True, verbose_name='资料变化详情')
+    
     class Meta:
         app_label = 'tools'
         ordering = ['-created_at']
@@ -135,6 +180,35 @@ class SocialMediaNotification(models.Model):
     
     def __str__(self):
         return f"{self.subscription.target_user_name} - {self.get_notification_type_display()}"
+
+    @classmethod
+    def get_user_notification_stats(cls, user):
+        """获取用户通知统计信息"""
+        from django.db.models import Count
+        
+        total_notifications = cls.objects.filter(subscription__user=user).count()
+        unread_notifications = cls.objects.filter(subscription__user=user, is_read=False).count()
+        read_notifications = cls.objects.filter(subscription__user=user, is_read=True).count()
+        
+        # 按类型统计
+        type_stats = cls.objects.filter(subscription__user=user).values('notification_type').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        # 按平台统计
+        platform_stats = cls.objects.filter(subscription__user=user).values(
+            'subscription__platform'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        return {
+            'total_notifications': total_notifications,
+            'unread_notifications': unread_notifications,
+            'read_notifications': read_notifications,
+            'type_stats': list(type_stats),
+            'platform_stats': list(platform_stats)
+        }
 
 
 class SocialMediaPlatformConfig(models.Model):
@@ -159,16 +233,16 @@ class SocialMediaPlatformConfig(models.Model):
 
 class DouyinVideoAnalysis(models.Model):
     """抖音视频分析模型"""
-    video_url = models.URLField(verbose_name='视频URL')
-    video_id = models.CharField(max_length=100, unique=True, verbose_name='视频ID')
-    author_name = models.CharField(max_length=100, verbose_name='作者名称')
-    title = models.TextField(verbose_name='视频标题')
+    video_url = models.URLField(default='', verbose_name='视频URL')
+    video_id = models.CharField(max_length=100, unique=True, default='', verbose_name='视频ID')
+    author_name = models.CharField(max_length=100, default='', verbose_name='作者名称')
+    title = models.TextField(default='', verbose_name='视频标题')
     description = models.TextField(blank=True, verbose_name='视频描述')
     music_info = models.JSONField(default=dict, verbose_name='音乐信息')
     statistics = models.JSONField(default=dict, verbose_name='统计数据')
     hashtags = models.JSONField(default=list, verbose_name='话题标签')
-    created_time = models.DateTimeField(verbose_name='视频创建时间')
-    analyzed_at = models.DateTimeField(auto_now_add=True, verbose_name='分析时间')
+    created_time = models.DateTimeField(default=timezone.now, verbose_name='视频创建时间')
+    analyzed_at = models.DateTimeField(default=timezone.now, verbose_name='分析时间')
     
     class Meta:
         app_label = 'tools'
@@ -182,20 +256,20 @@ class DouyinVideoAnalysis(models.Model):
 
 class DouyinVideo(models.Model):
     """抖音视频模型"""
-    video_id = models.CharField(max_length=100, unique=True, verbose_name='视频ID')
-    author_id = models.CharField(max_length=100, verbose_name='作者ID')
-    author_name = models.CharField(max_length=100, verbose_name='作者名称')
-    title = models.TextField(verbose_name='视频标题')
-    cover_url = models.URLField(verbose_name='封面URL')
-    video_url = models.URLField(verbose_name='视频URL')
+    video_id = models.CharField(max_length=100, unique=True, default='', verbose_name='视频ID')
+    author_id = models.CharField(max_length=100, verbose_name='作者ID', blank=True, null=True)
+    author_name = models.CharField(max_length=100, verbose_name='作者名称', blank=True, null=True)
+    title = models.TextField(verbose_name='视频标题', blank=True, null=True)
+    cover_url = models.URLField(verbose_name='封面URL', blank=True, null=True)
+    video_url = models.URLField(default='', verbose_name='视频URL')
     duration = models.IntegerField(default=0, verbose_name='时长(秒)')
     likes = models.IntegerField(default=0, verbose_name='点赞数')
     comments = models.IntegerField(default=0, verbose_name='评论数')
     shares = models.IntegerField(default=0, verbose_name='分享数')
     music = models.JSONField(default=dict, verbose_name='音乐信息')
     hashtags = models.JSONField(default=list, verbose_name='话题标签')
-    created_time = models.DateTimeField(verbose_name='视频创建时间')
-    crawled_at = models.DateTimeField(auto_now_add=True, verbose_name='爬取时间')
+    created_time = models.DateTimeField(default=timezone.now, verbose_name='视频创建时间')
+    crawled_at = models.DateTimeField(default=timezone.now, verbose_name='爬取时间')
     
     class Meta:
         app_label = 'tools'

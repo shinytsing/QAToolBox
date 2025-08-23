@@ -2190,17 +2190,17 @@
                     <span>管理后台</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(243, 156, 18, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
                 </a>
-                <a href="{% url 'admin_user_management' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                <a href="{% url 'users:admin_user_management' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
                     <i class="fas fa-users-cog" style="width: 16px; text-align: center; color: #9b59b6;"></i>
                     <span>用户管理</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(155, 89, 182, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
                 </a>
-                <a href="{% url 'admin_feature_management' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                <a href="{% url 'content:admin_feature_management' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
                     <i class="fas fa-cogs" style="width: 16px; text-align: center; color: #3498db;"></i>
                     <span>功能管理</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
                 </a>
-                <a href="{% url 'monitoring_dashboard' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                <a href="{% url 'tools:monitoring_dashboard' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
                     <i class="fas fa-chart-line" style="width: 16px; text-align: center; color: #2ecc71;"></i>
                     <span>系统监控</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(46, 204, 113, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
@@ -7618,6 +7618,39 @@
                 }
             }, 300);
         }, duration);
+    }
+    
+    // 聊天通知系统初始化
+    function initChatNotificationSystem() {
+        // 只在用户已登录时初始化
+        {% if user.is_authenticated %}
+        if (typeof ChatNotificationManager === 'undefined') {
+            // 动态加载聊天通知脚本
+            const script = document.createElement('script');
+            script.src = '{% static "js/chat_notifications.js" %}';
+            script.onload = function() {
+                // 初始化聊天通知管理器
+                window.chatNotificationManager = new ChatNotificationManager();
+            };
+            script.onerror = function() {
+                console.error('加载聊天通知脚本失败');
+            };
+            document.head.appendChild(script);
+        } else {
+            // 如果已经加载，直接初始化
+            window.chatNotificationManager = new ChatNotificationManager();
+        }
+        {% else %}
+        // 用户未登录，跳过聊天通知初始化
+        console.log('用户未登录，跳过聊天通知系统初始化');
+        {% endif %}
+    }
+    
+    // 页面加载完成后初始化聊天通知
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initChatNotificationSystem);
+    } else {
+        initChatNotificationSystem();
     }
     </script>
 </body>

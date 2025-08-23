@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin: 10px 0; }
+        input, button { padding: 10px; margin: 5px; }
+        #status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>WebSocket连接测试</h1>
+    <div id="status" class="disconnected">未连接</div>
+    
+    <div>
+        <input type="text" id="messageInput" placeholder="输入测试消息..." style="width: 300px;">
+        <button onclick="sendMessage()">发送</button>
+        <button onclick="connect()">连接</button>
+        <button onclick="disconnect()">断开</button>
+    </div>
+    
+    <div id="messages"></div>
+
+    <script>
+        let socket = null;
+        const roomId = '0c38a502-25ad-47e7-9a37-15660a57d135';
+        
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            if (connected) {
+                status.textContent = 'WebSocket已连接';
+                status.className = 'connected';
+            } else {
+                status.textContent = 'WebSocket未连接';
+                status.className = 'disconnected';
+            }
+        }
+        
+        function addMessage(message) {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function connect() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                addMessage('WebSocket已经连接');
+                return;
+            }
+            
+            const wsUrl = `ws://localhost:8000/ws/chat/${roomId}/`;
+            addMessage('尝试连接: ' + wsUrl);
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(event) {
+                addMessage('WebSocket连接成功');
+                updateStatus(true);
+            };
+            
+            socket.onmessage = function(event) {
+                addMessage('收到消息: ' + event.data);
+            };
+            
+            socket.onclose = function(event) {
+                addMessage(`WebSocket连接关闭 (代码: ${event.code}, 原因: ${event.reason})`);
+                updateStatus(false);
+            };
+            
+            socket.onerror = function(error) {
+                addMessage('WebSocket错误: ' + error);
+                updateStatus(false);
+            };
+        }
+        
+        function disconnect() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+        
+        function sendMessage() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                addMessage('WebSocket未连接，无法发送消息');
+                return;
+            }
+            
+            const input = document.getElementById('messageInput');
+            const message = {
+                type: 'message',
+                content: input.value,
+                message_type: 'text'
+            };
+            
+            socket.send(JSON.stringify(message));
+            addMessage('发送消息: ' + input.value);
+            input.value = '';
+        }
+        
+        // 页面加载时自动连接
+        window.onload = function() {
+            addMessage('页面已加载，准备测试WebSocket连接');
+        };
+        
+        // 回车键发送消息
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

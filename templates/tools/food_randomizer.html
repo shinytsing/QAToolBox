@@ -1630,34 +1630,41 @@ async function startRandomization() {
     document.getElementById('startButton').disabled = true;
     
     try {
-        const response = await fetch('/tools/api/food-randomizer/start/', {
+        const response = await fetch('/tools/api/food-randomizer/pure-random/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({
-                meal_type: mealType,
-                cuisine_preference: cuisine,
-                mood: mood,
-                price_range: priceRange,
-                dietary_restrictions: dietaryRestrictions,
-                animation_duration: 3000
+                cuisine_type: cuisine || 'all',
+                meal_type: mealType || 'all',
+                exclude_recent: true
             })
         });
         
         const data = await response.json();
+        console.log('API Response:', data);
         
-        if (data.success) {
-            currentSessionId = data.session_id;
-            currentHistoryId = data.session_id;
+        if (data.success && data.recommendation) {
+            // 验证数据结构
+            if (!data.recommendation.food) {
+                console.error('API返回的数据中缺少food字段:', data.recommendation);
+                alert('服务器返回的数据格式错误，请重试');
+                resetUI();
+                return;
+            }
+            
+            currentSessionId = data.recommendation.generated_at;
+            currentHistoryId = data.recommendation.generated_at;
             
             // 模拟动画延迟
             setTimeout(() => {
-                showResult(data.selected_food, data.alternative_foods);
+                showResult(data.recommendation.food, data.recommendation.alternatives || []);
             }, 3000);
         } else {
-            alert('随机选择失败: ' + data.error);
+            console.error('API调用失败:', data);
+            alert('随机选择失败: ' + (data.error || '未知错误'));
             resetUI();
         }
     } catch (error) {
@@ -1682,22 +1689,34 @@ async function startPureRandomization() {
                 'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({
-                animation_duration: 3000
+                cuisine_type: 'all',
+                meal_type: 'all',
+                exclude_recent: true
             })
         });
         
         const data = await response.json();
+        console.log('Pure Random API Response:', data);
         
-        if (data.success) {
-            currentSessionId = data.session_id;
-            currentHistoryId = data.session_id;
+        if (data.success && data.recommendation) {
+            // 验证数据结构
+            if (!data.recommendation.food) {
+                console.error('Pure Random API返回的数据中缺少food字段:', data.recommendation);
+                alert('服务器返回的数据格式错误，请重试');
+                resetUI();
+                return;
+            }
+            
+            currentSessionId = data.recommendation.generated_at;
+            currentHistoryId = data.recommendation.generated_at;
             
             // 模拟动画延迟
             setTimeout(() => {
-                showResult(data.selected_food, data.alternative_foods);
+                showResult(data.recommendation.food, data.recommendation.alternatives || []);
             }, 3000);
         } else {
-            alert('朕随便失败: ' + data.error);
+            console.error('Pure Random API调用失败:', data);
+            alert('纯随机选择失败: ' + (data.error || '未知错误'));
             resetUI();
         }
     } catch (error) {
@@ -1708,11 +1727,21 @@ async function startPureRandomization() {
 }
 
 function showResult(selectedFood, alternativeFoods) {
+    // 添加错误检查
+    if (!selectedFood) {
+        console.error('showResult: selectedFood is undefined or null');
+        alert('获取食物数据失败，请重试');
+        resetUI();
+        return;
+    }
+    
+    console.log('showResult called with:', selectedFood, alternativeFoods);
+    
     document.getElementById('animationContainer').style.display = 'none';
     document.getElementById('resultContainer').style.display = 'block';
     
     // 填充食物信息
-    document.getElementById('foodName').textContent = selectedFood.name;
+    document.getElementById('foodName').textContent = selectedFood.name || '未知食物';
     document.getElementById('foodDescription').textContent = selectedFood.description || '暂无描述';
     
     // 设置图片 - 优先使用本地图片

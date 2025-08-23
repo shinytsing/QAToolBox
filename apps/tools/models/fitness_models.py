@@ -5,8 +5,8 @@ from django.core.cache import cache
 from datetime import timedelta
 
 
-class FitnessWorkoutSession(models.Model):
-    """健身训练会话模型"""
+class EnhancedFitnessWorkoutSession(models.Model):
+    """增强版健身训练会话模型"""
     WORKOUT_TYPE_CHOICES = [
         ('strength', '力量训练'),
         ('cardio', '有氧运动'),
@@ -43,8 +43,8 @@ class FitnessWorkoutSession(models.Model):
         return f"{self.user.username} - {self.get_workout_type_display()} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
 
-class CodeWorkoutSession(models.Model):
-    """代码训练会话模型"""
+class EnhancedCodeWorkoutSession(models.Model):
+    """增强版代码训练会话模型"""
     WORKOUT_TYPE_CHOICES = [
         ('pull_up', '引体向上(原生JS)'),
         ('plank', '平板支撑(拒绝AI)'),
@@ -72,8 +72,8 @@ class CodeWorkoutSession(models.Model):
         return f"{self.user.username} - {self.get_workout_type_display()} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
 
-class ExhaustionProof(models.Model):
-    """力竭证明NFT模型"""
+class EnhancedExhaustionProof(models.Model):
+    """增强版力竭证明NFT模型"""
     PROOF_TYPE_CHOICES = [
         ('fitness', '健身力竭'),
         ('coding', '编程力竭'),
@@ -102,8 +102,8 @@ class ExhaustionProof(models.Model):
         return f"{self.user.username} - {self.get_proof_type_display()} - {self.title}"
 
 
-class AIDependencyMeter(models.Model):
-    """AI依赖度仪表模型"""
+class EnhancedAIDependencyMeter(models.Model):
+    """增强版AI依赖度仪表模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
     total_code_lines = models.IntegerField(default=0, verbose_name='总代码行数')
     ai_generated_lines = models.IntegerField(default=0, verbose_name='AI生成代码行数')
@@ -126,8 +126,8 @@ class AIDependencyMeter(models.Model):
         return (self.ai_generated_lines / self.total_code_lines) * 100
 
 
-class CoPilotCollaboration(models.Model):
-    """AI协作声明模型"""
+class EnhancedCoPilotCollaboration(models.Model):
+    """增强版AI协作声明模型"""
     COLLABORATION_TYPE_CHOICES = [
         ('skeleton', '骨架代码'),
         ('muscle', '肌肉代码'),
@@ -152,8 +152,8 @@ class CoPilotCollaboration(models.Model):
         return f"{self.user.username} - {self.get_collaboration_type_display()} - {self.project_name}"
 
 
-class DailyWorkoutChallenge(models.Model):
-    """每日训练挑战模型"""
+class EnhancedDailyWorkoutChallenge(models.Model):
+    """增强版每日训练挑战模型"""
     CHALLENGE_TYPE_CHOICES = [
         ('fitness', '健身挑战'),
         ('coding', '编程挑战'),
@@ -181,8 +181,8 @@ class DailyWorkoutChallenge(models.Model):
         return f"{self.user.username} - {self.get_challenge_type_display()} - {self.date}"
 
 
-class PainCurrency(models.Model):
-    """痛苦货币模型"""
+class EnhancedPainCurrency(models.Model):
+    """增强版痛苦货币模型"""
     CURRENCY_TYPE_CHOICES = [
         ('exhaustion', '力竭币'),
         ('rejection', '拒绝币'),
@@ -206,8 +206,8 @@ class PainCurrency(models.Model):
         return f"{self.user.username} - {self.get_currency_type_display()}: {self.amount}"
 
 
-class WorkoutDashboard(models.Model):
-    """训练仪表盘模型"""
+class EnhancedWorkoutDashboard(models.Model):
+    """增强版训练仪表盘模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
     total_workouts = models.IntegerField(default=0, verbose_name='总训练次数')
     total_duration = models.IntegerField(default=0, verbose_name='总训练时长(分钟)')
@@ -227,8 +227,8 @@ class WorkoutDashboard(models.Model):
         return f"{self.user.username} - 训练仪表盘"
 
 
-class ExerciseWeightRecord(models.Model):
-    """锻炼重量记录模型"""
+class EnhancedExerciseWeightRecord(models.Model):
+    """增强版锻炼重量记录模型"""
     EXERCISE_TYPE_CHOICES = [
         # 三大项
         ('squat', '深蹲'),
@@ -345,8 +345,8 @@ class ExerciseWeightRecord(models.Model):
         return '标准'
 
 
-class FitnessStrengthProfile(models.Model):
-    """健身力量档案模型"""
+class EnhancedFitnessStrengthProfile(models.Model):
+    """增强版健身力量档案模型"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
     
     # 三大项最佳记录
@@ -395,10 +395,10 @@ class FitnessStrengthProfile(models.Model):
         from datetime import datetime, timedelta
         
         # 更新总训练次数
-        self.total_workouts = ExerciseWeightRecord.objects.filter(user=self.user).count()
+        self.total_workouts = EnhancedExerciseWeightRecord.objects.filter(user=self.user).count()
         
         # 更新连续天数
-        records = ExerciseWeightRecord.objects.filter(user=self.user).order_by('-workout_date')
+        records = EnhancedExerciseWeightRecord.objects.filter(user=self.user).order_by('-workout_date')
         if records.exists():
             current_streak = 0
             longest_streak = 0
@@ -441,7 +441,7 @@ class FitnessStrengthProfile(models.Model):
     def update_1rm_records(self):
         """更新1RM记录"""
         # 更新深蹲1RM
-        squat_records = ExerciseWeightRecord.objects.filter(
+        squat_records = EnhancedExerciseWeightRecord.objects.filter(
             user=self.user, 
             exercise_type='squat'
         ).order_by('-weight', '-workout_date')
@@ -452,7 +452,7 @@ class FitnessStrengthProfile(models.Model):
             self.squat_1rm_date = best_squat.workout_date
         
         # 更新卧推1RM
-        bench_records = ExerciseWeightRecord.objects.filter(
+        bench_records = EnhancedExerciseWeightRecord.objects.filter(
             user=self.user, 
             exercise_type='bench_press'
         ).order_by('-weight', '-workout_date')
@@ -463,7 +463,7 @@ class FitnessStrengthProfile(models.Model):
             self.bench_press_1rm_date = best_bench.workout_date
         
         # 更新硬拉1RM
-        deadlift_records = ExerciseWeightRecord.objects.filter(
+        deadlift_records = EnhancedExerciseWeightRecord.objects.filter(
             user=self.user, 
             exercise_type='deadlift'
         ).order_by('-weight', '-workout_date')
@@ -510,8 +510,8 @@ class FitnessStrengthProfile(models.Model):
         return min(round((current / goal) * 100, 1), 100)
 
 
-class FitnessUserProfile(models.Model):
-    """健身用户档案模型"""
+class EnhancedFitnessUserProfile(models.Model):
+    """增强版健身用户档案模型"""
     GENDER_CHOICES = [
         ('male', '男性'),
         ('female', '女性'),
@@ -551,6 +551,16 @@ class FitnessUserProfile(models.Model):
     training_days_per_week = models.IntegerField(default=3, verbose_name='每周训练天数')
     training_intensity = models.CharField(max_length=20, default='moderate', verbose_name='训练强度')
     training_duration = models.IntegerField(default=60, verbose_name='训练时长(分钟)')
+    
+    # 徽章和成就展示
+    selected_badges = models.JSONField(default=dict, verbose_name='选中的徽章')
+    badge_showcase_layout = models.CharField(max_length=20, default='grid', verbose_name='徽章展示布局')
+    show_achievements_publicly = models.BooleanField(default=True, verbose_name='公开显示成就')
+    
+    # 个人资料展示设置
+    profile_visibility = models.CharField(max_length=20, default='public', verbose_name='资料可见性')
+    show_stats_publicly = models.BooleanField(default=True, verbose_name='公开显示统计')
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
     
@@ -562,8 +572,8 @@ class FitnessUserProfile(models.Model):
         return f"{self.user.username} - {self.get_goal_display()}"
 
 
-class DietPlan(models.Model):
-    """饮食计划模型"""
+class EnhancedDietPlan(models.Model):
+    """增强版饮食计划模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
     start_date = models.DateField(verbose_name='开始日期')
     end_date = models.DateField(verbose_name='结束日期')
@@ -584,8 +594,8 @@ class DietPlan(models.Model):
         return f"{self.user.username} - {self.start_date} 到 {self.end_date}"
 
 
-class Meal(models.Model):
-    """餐食模型"""
+class EnhancedMeal(models.Model):
+    """增强版餐食模型"""
     MEAL_TYPE_CHOICES = [
         ('breakfast', '早餐'),
         ('lunch', '午餐'),
@@ -595,7 +605,7 @@ class Meal(models.Model):
         ('post_workout', '训练后'),
     ]
     
-    plan = models.ForeignKey(DietPlan, on_delete=models.CASCADE, verbose_name='饮食计划')
+    plan = models.ForeignKey(EnhancedDietPlan, on_delete=models.CASCADE, verbose_name='饮食计划')
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES, verbose_name='餐食类型')
     day_of_week = models.IntegerField(verbose_name='星期几(1-7)')
     description = models.TextField(verbose_name='餐食描述')
@@ -616,8 +626,8 @@ class Meal(models.Model):
         return f"{self.plan.user.username} - {self.get_meal_type_display()} - 第{self.day_of_week}天"
 
 
-class NutritionReminder(models.Model):
-    """营养提醒模型"""
+class EnhancedNutritionReminder(models.Model):
+    """增强版营养提醒模型"""
     REMINDER_TYPE_CHOICES = [
         ('meal_time', '用餐时间'),
         ('pre_workout', '训练前加餐'),
@@ -646,10 +656,10 @@ class NutritionReminder(models.Model):
         return f"{self.user.username} - {self.get_reminder_type_display()}"
 
 
-class MealLog(models.Model):
-    """餐食记录模型"""
+class EnhancedMealLog(models.Model):
+    """增强版餐食记录模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    meal = models.ForeignKey(Meal, on_delete=models.CASCADE, verbose_name='计划餐食')
+    meal = models.ForeignKey(EnhancedMeal, on_delete=models.CASCADE, verbose_name='计划餐食')
     consumed_date = models.DateField(verbose_name='消费日期')
     consumed_time = models.TimeField(verbose_name='消费时间')
     actual_calories = models.IntegerField(null=True, blank=True, verbose_name='实际热量')
@@ -669,8 +679,8 @@ class MealLog(models.Model):
         return f"{self.user.username} - {self.meal.get_meal_type_display()} - {self.consumed_date}"
 
 
-class WeightTracking(models.Model):
-    """体重追踪模型"""
+class EnhancedWeightTracking(models.Model):
+    """增强版体重追踪模型"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
     weight = models.FloatField(verbose_name='体重(kg)')
     body_fat_percentage = models.FloatField(null=True, blank=True, verbose_name='体脂率(%)')
@@ -687,8 +697,8 @@ class WeightTracking(models.Model):
         return f"{self.user.username} - {self.weight}kg - {self.measurement_date}"
 
 
-class FoodDatabase(models.Model):
-    """食物数据库模型"""
+class EnhancedFoodDatabase(models.Model):
+    """增强版食物数据库模型"""
     name = models.CharField(max_length=200, verbose_name='食物名称')
     category = models.CharField(max_length=100, verbose_name='食物类别')
     calories_per_100g = models.FloatField(verbose_name='每100g热量')

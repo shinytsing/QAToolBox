@@ -18,23 +18,31 @@ class ChatRoom(models.Model):
     ]
     
     STATUS_CHOICES = [
+        ('waiting', '等待匹配'),
         ('active', '活跃'),
+        ('ended', '已结束'),
         ('inactive', '非活跃'),
         ('archived', '已归档'),
         ('deleted', '已删除'),
     ]
     
-    name = models.CharField(max_length=200, verbose_name='房间名称')
+    room_id = models.CharField(max_length=100, unique=True, verbose_name='房间ID', blank=True)
+    name = models.CharField(max_length=200, verbose_name='房间名称', blank=True, null=True)
     description = models.TextField(blank=True, verbose_name='描述')
     room_type = models.CharField(max_length=20, choices=ROOM_TYPE_CHOICES, default='private', verbose_name='房间类型')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='状态')
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_rooms', verbose_name='创建者')
-    members = models.ManyToManyField(User, through='ChatRoomMember', related_name='joined_rooms', verbose_name='成员')
+    
+    # 为了兼容数据库结构，只使用数据库中存在的字段
+    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_as_user1', verbose_name='用户1')
+    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_rooms_as_user2', verbose_name='用户2', null=True, blank=True)
+    
+    # 数据库中存在的字段
     max_members = models.IntegerField(default=100, verbose_name='最大成员数')
     is_encrypted = models.BooleanField(default=False, verbose_name='是否加密')
     last_activity = models.DateTimeField(auto_now=True, verbose_name='最后活动时间')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    ended_at = models.DateTimeField(null=True, blank=True, verbose_name='结束时间')
 
     class Meta:
         verbose_name = '聊天室'
@@ -42,39 +50,37 @@ class ChatRoom(models.Model):
         ordering = ['-last_activity']
         indexes = [
             models.Index(fields=['room_type', 'status']),
-            models.Index(fields=['creator', 'status']),
+            models.Index(fields=['user1', 'status']),
             models.Index(fields=['last_activity']),
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.room_id:
+            import uuid
+            self.room_id = str(uuid.uuid4())
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.get_room_type_display()})"
 
     def get_member_count(self):
         """获取成员数量"""
-        return self.members.count()
+        count = 1 if self.user1 else 0
+        if self.user2:
+            count += 1
+        return count
 
     def is_user_member(self, user):
         """检查用户是否为成员"""
-        return self.members.filter(id=user.id).exists()
+        return user == self.user1 or user == self.user2
 
-    def add_member(self, user, role='member'):
-        """添加成员"""
-        ChatRoomMember.objects.get_or_create(
-            room=self,
-            user=user,
-            defaults={'role': role}
-        )
-
-    def remove_member(self, user):
-        """移除成员"""
-        ChatRoomMember.objects.filter(room=self, user=user).delete()
-
-    def get_online_members(self):
-        """获取在线成员"""
-        return self.members.filter(
-            useronlinestatus__is_online=True,
-            useronlinestatus__last_seen__gte=timezone.now() - timedelta(minutes=5)
-        )
+    def get_other_user(self, current_user):
+        """获取对方用户"""
+        if current_user == self.user1:
+            return self.user2
+        elif current_user == self.user2:
+            return self.user1
+        return None
 
 
 class ChatRoomMember(models.Model):
@@ -127,6 +133,7 @@ class ChatMessage(models.Model):
     reply_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='回复消息')
     is_edited = models.BooleanField(default=False, verbose_name='是否编辑')
     is_deleted = models.BooleanField(default=False, verbose_name='是否删除')
+    is_read = models.BooleanField(default=False, verbose_name='是否已读')
     read_by = models.ManyToManyField(User, through='MessageRead', related_name='chat_read_messages', verbose_name='已读用户')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='发送时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
@@ -223,10 +230,10 @@ class UserOnlineStatus(models.Model):
 class HeartLinkRequest(models.Model):
     """心动链接请求模型"""
     STATUS_CHOICES = [
-        ('pending', '待处理'),
-        ('accepted', '已接受'),
-        ('rejected', '已拒绝'),
+        ('pending', '等待中'),
+        ('matched', '已匹配'),
         ('expired', '已过期'),
+        ('cancelled', '已取消'),
     ]
     
     REQUEST_TYPE_CHOICES = [
@@ -236,53 +243,73 @@ class HeartLinkRequest(models.Model):
         ('marriage', '结婚'),
     ]
     
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_heart_links', verbose_name='发送者')
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_heart_links', verbose_name='接收者')
-    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, verbose_name='请求类型')
-    message = models.TextField(blank=True, verbose_name='留言')
+    # 匹配数据库schema
+    requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='heart_link_requests', verbose_name='请求者')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
-    expires_at = models.DateTimeField(verbose_name='过期时间')
-    accepted_at = models.DateTimeField(null=True, blank=True, verbose_name='接受时间')
-    rejected_at = models.DateTimeField(null=True, blank=True, verbose_name='拒绝时间')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    matched_at = models.DateTimeField(null=True, blank=True, verbose_name='匹配时间')
+    matched_with = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='matched_heart_links', verbose_name='匹配用户')
+    chat_room = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, null=True, blank=True, related_name='heart_link_requests', verbose_name='聊天室')
 
     class Meta:
         verbose_name = '心动链接请求'
         verbose_name_plural = '心动链接请求'
-        unique_together = ['sender', 'receiver', 'request_type']
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['receiver', 'status']),
-            models.Index(fields=['sender', 'status']),
-            models.Index(fields=['expires_at']),
+            models.Index(fields=['requester', 'status']),
+            models.Index(fields=['matched_with', 'status']),
+            models.Index(fields=['status', 'created_at']),
         ]
 
     def __str__(self):
-        return f"{self.sender.username} -> {self.receiver.username} ({self.get_request_type_display()})"
+        return f"{self.requester.username} 的心动链接请求"
 
     def is_expired(self):
-        """检查是否过期"""
-        return timezone.now() > self.expires_at
-
-    def accept(self):
-        """接受请求"""
-        self.status = 'accepted'
-        self.accepted_at = timezone.now()
-        self.save()
-
-    def reject(self):
-        """拒绝请求"""
-        self.status = 'rejected'
-        self.rejected_at = timezone.now()
-        self.save()
+        """检查是否过期（10分钟）"""
+        from django.utils import timezone
+        from datetime import timedelta
+        return timezone.now() > self.created_at + timedelta(minutes=10)
 
     def expire(self):
         """过期请求"""
         self.status = 'expired'
         self.save()
 
+    @property
     def get_remaining_time(self):
         """获取剩余时间"""
+        from datetime import timedelta
         if self.is_expired():
             return timedelta(0)
-        return self.expires_at - timezone.now()
+        expiry_time = self.created_at + timedelta(minutes=10)
+        return expiry_time - timezone.now()
+
+
+class ChatNotification(models.Model):
+    """聊天通知模型"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, verbose_name='聊天室')
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE, verbose_name='消息')
+    is_read = models.BooleanField(default=False, verbose_name='是否已读')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name='阅读时间')
+    
+    class Meta:
+        verbose_name = '聊天通知'
+        verbose_name_plural = '聊天通知'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+            models.Index(fields=['room', 'is_read']),
+        ]
+    
+    def __str__(self):
+        status = "已读" if self.is_read else "未读"
+        return f"{self.user.username} - {self.room.name} - {status}"
+    
+    def mark_as_read(self):
+        """标记为已读"""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=['is_read', 'read_at'])

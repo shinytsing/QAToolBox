@@ -16,7 +16,6 @@ class NotificationService:
         for update in updates:
             # 检查是否已存在相同通知
             existing_notification = SocialMediaNotification.objects.filter(
-                user=subscription.user,
                 subscription=subscription,
                 notification_type=update['type'],
                 external_url=update.get('external_url', ''),
@@ -28,13 +27,12 @@ class NotificationService:
             
             # 创建新通知
             notification = SocialMediaNotification.objects.create(
-                user=subscription.user,
                 subscription=subscription,
                 notification_type=update['type'],
                 title=update['title'],
                 content=update['content'],
                 external_url=update.get('external_url', ''),
-                metadata=update,
+                data=update,  # Use 'data' field instead of 'metadata'
                 is_read=False,
                 created_at=timezone.now()
             )
@@ -45,7 +43,7 @@ class NotificationService:
     def get_unread_count(user) -> int:
         """获取未读通知数量"""
         return SocialMediaNotification.objects.filter(
-            user=user,
+            subscription__user=user,  # Access user through subscription
             is_read=False
         ).count()
     
@@ -55,10 +53,10 @@ class NotificationService:
         try:
             notification = SocialMediaNotification.objects.get(
                 id=notification_id,
-                user=user
+                subscription__user=user  # Access user through subscription
             )
             notification.is_read = True
-            notification.read_at = timezone.now()
+            # Note: 'read_at' field doesn't exist in the model, so we'll just save is_read
             notification.save()
             return True
         except SocialMediaNotification.DoesNotExist:
@@ -68,11 +66,11 @@ class NotificationService:
     def mark_all_as_read(user) -> int:
         """标记所有通知为已读"""
         count = SocialMediaNotification.objects.filter(
-            user=user,
+            subscription__user=user,  # Access user through subscription
             is_read=False
         ).update(
-            is_read=True,
-            read_at=timezone.now()
+            is_read=True
+            # Note: 'read_at' field doesn't exist in the model
         )
         return count
     

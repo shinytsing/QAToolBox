@@ -1,445 +1,340 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}心动链接测试 - QAToolBox{% endblock %}
+{% block title %}心动链接测试{% endblock %}
 
 {% block extra_css %}
 <style>
-.heart-link-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #667eea 100%);
-    color: #ffffff;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.heart-link-card {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    padding: 3rem;
-    text-align: center;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    max-width: 600px;
-    width: 100%;
-    position: relative;
-    z-index: 1;
-}
-
-.heart-link-title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.heart-link-subtitle {
-    font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 2rem;
-}
-
-.click-info {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-}
-
-.click-counter {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.test-buttons {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-}
-
-.test-button {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-bottom: 5px;
-    display: block;
-    width: 120px;
-}
-
-.test-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.test-button.red {
-    background: rgba(255, 0, 0, 0.2);
-}
-
-.test-button.red:hover {
-    background: rgba(255, 0, 0, 0.3);
-}
-
-.debug-info {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    font-family: monospace;
-    font-size: 12px;
-    max-width: 300px;
-    z-index: 1000;
-}
+    .test-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .status-panel {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    
+    .status-connected {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-disconnected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .status-connecting {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .message-log {
+        height: 300px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        margin: 10px 0;
+        font-family: monospace;
+        font-size: 12px;
+    }
+    
+    .controls {
+        display: flex;
+        gap: 10px;
+        margin: 10px 0;
+        flex-wrap: wrap;
+    }
+    
+    .controls button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .test-input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .user-info {
+        background: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="heart-link-container">
-    <div class="heart-link-card">
-        <div class="heart-animation">💕</div>
-        <h1 class="heart-link-title">心动链接测试</h1>
-        <p class="heart-link-subtitle">测试点击功能和数字匹配模态框</p>
-        
-        <div class="click-info">
-            <div class="click-counter" id="clickCounter">点击次数: 0</div>
-            <p>在页面任意位置点击4次，3秒内完成</p>
-        </div>
-        
-        <p>💡 提示：页面右上角有测试按钮</p>
+<div class="test-container">
+    <h1>心动链接WebSocket测试</h1>
+    
+    <div class="user-info">
+        <strong>当前用户:</strong> {{ user.username }} (ID: {{ user.id }})<br>
+        <strong>测试房间:</strong> {{ room_id }}<br>
+        <strong>WebSocket URL:</strong> ws://localhost:8000/ws/chat/{{ room_id }}/
+    </div>
+    
+    <div id="status" class="status-panel status-disconnected">
+        🔴 WebSocket未连接
+    </div>
+    
+    <div class="controls">
+        <button id="connectBtn" class="btn-primary" onclick="connectWebSocket()">连接</button>
+        <button id="disconnectBtn" class="btn-danger" onclick="disconnectWebSocket()">断开</button>
+        <button class="btn-secondary" onclick="clearLog()">清空日志</button>
+        <input type="text" id="testMessage" class="test-input" placeholder="输入测试消息..." onkeypress="handleKeyPress(event)">
+        <button class="btn-success" onclick="sendTestMessage()">发送</button>
+    </div>
+    
+    <div id="messageLog" class="message-log"></div>
+    
+    <div class="controls">
+        <button class="btn-secondary" onclick="testHeartbeat()">测试心跳</button>
+        <button class="btn-secondary" onclick="testTyping()">测试打字状态</button>
+        <button class="btn-secondary" onclick="testReadStatus()">测试已读状态</button>
     </div>
 </div>
 
-<!-- 测试按钮 -->
-<div class="test-buttons">
-    <button class="test-button" onclick="testClickFunction()">
-        测试点击功能
-    </button>
-    <button class="test-button red" onclick="showNumberMatchModal()">
-        直接测试模态框
-    </button>
-    <button class="test-button" onclick="clearDebug()">
-        清除调试信息
-    </button>
-</div>
-
-<!-- 调试信息 -->
-<div class="debug-info" id="debugInfo">
-    调试信息将显示在这里...
-</div>
-
 <script>
-let clickCount = 0;
-let clickTimer = null;
+let socket = null;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 3;
+const roomId = '{{ room_id }}';
 
-function log(message) {
-    const debugInfo = document.getElementById('debugInfo');
+function addLog(message, type = 'info') {
+    const log = document.getElementById('messageLog');
     const timestamp = new Date().toLocaleTimeString();
-    debugInfo.innerHTML += `<div>[${timestamp}] ${message}</div>`;
-    console.log(message);
+    const logEntry = document.createElement('div');
+    
+    let color = '#333';
+    if (type === 'error') color = '#dc3545';
+    else if (type === 'success') color = '#28a745';
+    else if (type === 'warning') color = '#ffc107';
+    
+    logEntry.style.color = color;
+    logEntry.innerHTML = `[${timestamp}] ${message}`;
+    log.appendChild(logEntry);
+    log.scrollTop = log.scrollHeight;
 }
 
-// 处理秘密点击事件
-function handleSecretClick(event) {
-    log(`点击事件触发，当前计数: ${clickCount}`);
+function updateStatus(status, message) {
+    const statusDiv = document.getElementById('status');
+    statusDiv.className = `status-panel status-${status}`;
     
-    // 清除之前的计时器
-    if (clickTimer) {
-        clearTimeout(clickTimer);
+    let emoji = '🔴';
+    if (status === 'connected') emoji = '🟢';
+    else if (status === 'connecting') emoji = '🟡';
+    
+    statusDiv.textContent = `${emoji} ${message}`;
+}
+
+function connectWebSocket() {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        addLog('WebSocket已经连接', 'warning');
+        return;
     }
     
-    // 增加点击计数
-    clickCount++;
-    document.getElementById('clickCounter').textContent = `点击次数: ${clickCount}`;
-    log(`点击计数增加到: ${clickCount}`);
+    const wsUrl = `ws://localhost:8000/ws/chat/${roomId}/`;
+    addLog(`尝试连接: ${wsUrl}`);
+    updateStatus('connecting', 'WebSocket连接中...');
     
-    // 设置新的计时器，3秒后重置计数
-    clickTimer = setTimeout(() => {
-        log('计时器重置，计数清零');
-        clickCount = 0;
-        document.getElementById('clickCounter').textContent = `点击次数: ${clickCount}`;
-    }, 3000);
-    
-    // 如果点击了4次，显示数字匹配页面
-    if (clickCount === 4) {
-        log('触发4次点击，显示数字匹配模态框');
-        clickCount = 0;
-        document.getElementById('clickCounter').textContent = `点击次数: ${clickCount}`;
-        showNumberMatchModal();
+    try {
+        socket = new WebSocket(wsUrl);
+        
+        socket.onopen = function(event) {
+            addLog('✅ WebSocket连接成功', 'success');
+            updateStatus('connected', 'WebSocket已连接');
+            reconnectAttempts = 0;
+            
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+        };
+        
+        socket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                addLog(`📨 收到消息 [${data.type}]: ${JSON.stringify(data, null, 2)}`, 'success');
+            } catch (e) {
+                addLog(`📨 收到原始消息: ${event.data}`, 'success');
+            }
+        };
+        
+        socket.onclose = function(event) {
+            addLog(`❌ WebSocket连接关闭 (代码: ${event.code}, 原因: ${event.reason || '无原因'})`, 'error');
+            updateStatus('disconnected', 'WebSocket未连接');
+            
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            
+            // 自动重连
+            if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                addLog(`🔄 ${3}秒后尝试第${reconnectAttempts}次重连...`, 'warning');
+                setTimeout(connectWebSocket, 3000);
+            }
+        };
+        
+        socket.onerror = function(error) {
+            addLog(`❌ WebSocket错误: ${error}`, 'error');
+            updateStatus('disconnected', 'WebSocket连接错误');
+        };
+        
+    } catch (error) {
+        addLog(`❌ 创建WebSocket失败: ${error}`, 'error');
+        updateStatus('disconnected', 'WebSocket创建失败');
     }
 }
 
-// 显示数字匹配模态框
-function showNumberMatchModal() {
-    log('显示数字匹配模态框');
+function disconnectWebSocket() {
+    if (socket) {
+        socket.close(1000, 'User requested disconnect');
+        socket = null;
+    }
+}
+
+function sendTestMessage() {
+    const input = document.getElementById('testMessage');
+    const message = input.value.trim();
     
-    // 创建模态框
-    const modal = document.createElement('div');
-    modal.id = 'number-match-modal';
-    modal.innerHTML = `
-        <div class="number-match-overlay">
-            <div class="number-match-modal">
-                <div class="number-match-header">
-                    <h2>🔢 数字匹配</h2>
-                    <button class="modal-close" onclick="closeNumberMatchModal()">×</button>
-                </div>
-                <div class="number-match-content">
-                    <p>输入4位数字，找到相同数字的人开始聊天</p>
-                    <div class="number-input-container">
-                        <input type="text" 
-                               class="number-input" 
-                               id="secretNumberInput" 
-                               placeholder="0000" 
-                               maxlength="4" 
-                               pattern="[0-9]{4}"
-                               autocomplete="off">
-                    </div>
-                    <div class="number-match-buttons">
-                        <button class="match-btn primary" onclick="startSecretMatch()">
-                            <i class="fas fa-search"></i> 开始匹配
-                        </button>
-                        <button class="match-btn secondary" onclick="closeNumberMatchModal()">
-                            <i class="fas fa-times"></i> 取消
-                        </button>
-                    </div>
-                    <div class="match-status" id="secretMatchStatus" style="display: none;">
-                        <div id="secretMatchContent"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+    if (!message) {
+        addLog('❌ 请输入测试消息', 'error');
+        return;
+    }
     
-    // 添加样式
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    `;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        addLog('❌ WebSocket未连接，无法发送消息', 'error');
+        return;
+    }
     
-    // 添加到页面
-    document.body.appendChild(modal);
+    const messageData = {
+        type: 'message',
+        content: message,
+        message_type: 'text'
+    };
     
-    // 聚焦到输入框
+    try {
+        socket.send(JSON.stringify(messageData));
+        addLog(`📤 发送消息: ${message}`, 'success');
+        input.value = '';
+    } catch (error) {
+        addLog(`❌ 发送消息失败: ${error}`, 'error');
+    }
+}
+
+function testHeartbeat() {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        addLog('❌ WebSocket未连接', 'error');
+        return;
+    }
+    
+    const heartbeat = {
+        type: 'heartbeat_ack',
+        timestamp: Date.now()
+    };
+    
+    socket.send(JSON.stringify(heartbeat));
+    addLog('💓 发送心跳包', 'success');
+}
+
+function testTyping() {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        addLog('❌ WebSocket未连接', 'error');
+        return;
+    }
+    
+    const typing = {
+        type: 'typing',
+        is_typing: true
+    };
+    
+    socket.send(JSON.stringify(typing));
+    addLog('⌨️ 发送打字状态', 'success');
+    
+    // 2秒后停止打字
     setTimeout(() => {
-        const input = document.getElementById('secretNumberInput');
-        if (input) {
-            input.focus();
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({type: 'typing', is_typing: false}));
+            addLog('⌨️ 停止打字状态', 'success');
         }
-    }, 100);
-    
-    log('数字匹配模态框已显示');
+    }, 2000);
 }
 
-// 关闭数字匹配模态框
-function closeNumberMatchModal() {
-    const modal = document.getElementById('number-match-modal');
-    if (modal) {
-        modal.remove();
-        log('数字匹配模态框已关闭');
+function testReadStatus() {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        addLog('❌ WebSocket未连接', 'error');
+        return;
+    }
+    
+    const readStatus = {
+        type: 'read_status',
+        message_ids: [1, 2, 3]
+    };
+    
+    socket.send(JSON.stringify(readStatus));
+    addLog('👁️ 发送已读状态', 'success');
+}
+
+function clearLog() {
+    document.getElementById('messageLog').innerHTML = '';
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendTestMessage();
     }
 }
 
-// 测试点击功能
-function testClickFunction() {
-    log('测试点击功能被调用');
-    alert('测试点击功能正常工作！现在模拟4次点击...');
+// 页面加载时自动连接
+window.onload = function() {
+    addLog('🚀 页面加载完成，准备测试WebSocket');
+    document.getElementById('disconnectBtn').disabled = true;
     
-    // 模拟4次点击
-    for (let i = 0; i < 4; i++) {
-        setTimeout(() => {
-            handleSecretClick();
-        }, i * 100);
+    // 延迟1秒自动连接
+    setTimeout(connectWebSocket, 1000);
+};
+
+// 页面卸载时断开连接
+window.onbeforeunload = function() {
+    if (socket) {
+        socket.close();
     }
-}
-
-// 清除调试信息
-function clearDebug() {
-    document.getElementById('debugInfo').innerHTML = '调试信息已清除...';
-}
-
-// 页面加载时初始化
-document.addEventListener('DOMContentLoaded', function() {
-    log('页面加载完成，初始化秘密点击功能');
-    
-    // 添加点击事件监听器
-    document.addEventListener('click', handleSecretClick);
-    
-    log('点击事件监听器已添加');
-    log('💡 提示：在页面任意位置点击4次可以触发秘密功能');
-});
-
-// 数字匹配模态框样式
-const style = document.createElement('style');
-style.textContent = `
-.number-match-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10001;
-}
-
-.number-match-modal {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    max-width: 500px;
-    width: 90%;
-    color: white;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-50px) scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.number-match-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding-bottom: 1rem;
-}
-
-.number-match-header h2 {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: bold;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-
-.modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.number-match-content {
-    text-align: center;
-}
-
-.number-match-content p {
-    margin-bottom: 1.5rem;
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
-.number-input-container {
-    margin-bottom: 1.5rem;
-}
-
-.number-input {
-    width: 200px;
-    height: 50px;
-    font-size: 1.5rem;
-    text-align: center;
-    border: none;
-    border-radius: 15px;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    backdrop-filter: blur(10px);
-    margin-bottom: 1rem;
-}
-
-.number-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.number-input:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-}
-
-.number-match-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-}
-
-.match-btn {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 25px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    color: white;
-}
-
-.match-btn.primary {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-}
-
-.match-btn.primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
-}
-
-.match-btn.secondary {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.match-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-}
-`;
-document.head.appendChild(style);
+};
 </script>
 {% endblock %}

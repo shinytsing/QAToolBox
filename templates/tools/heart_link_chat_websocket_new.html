@@ -143,11 +143,33 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        flex-wrap: wrap;
     }
 
     .audio-player {
         height: 40px;
         border-radius: 20px;
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .audio-download-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .audio-download-btn:hover {
+        background: #5a6fd8;
+        transform: scale(1.1);
     }
 
     .message-file {
@@ -243,15 +265,17 @@
         border-radius: 8px;
         padding: 10px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        z-index: 9999;
+        z-index: 99999;
         display: none;
         min-width: 200px;
         max-width: 300px;
         margin-bottom: 10px;
+        visibility: hidden;
     }
     
     .emoji-picker.show {
         display: block !important;
+        visibility: visible !important;
     }
 
     .emoji-grid {
@@ -383,6 +407,10 @@
         100% { opacity: 1; }
     }
 
+    .pulse-animation {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
     .file-input {
         display: none;
     }
@@ -451,7 +479,7 @@
     <div class="chat-input-container">
         <!-- 工具栏 -->
         <div class="chat-toolbar">
-            <button class="toolbar-btn" title="表情" id="emoji-btn">
+            <button class="toolbar-btn" title="表情" id="emoji-btn" style="position: relative; z-index: 1000;">
                 <i class="fas fa-smile"></i>
             </button>
             <button class="toolbar-btn" title="图片" onclick="document.getElementById('image-input').click()">
@@ -462,6 +490,9 @@
             </button>
             <button class="toolbar-btn" title="文件" onclick="document.getElementById('file-input').click()">
                 <i class="fas fa-paperclip"></i>
+            </button>
+            <button class="toolbar-btn" title="视频通话" onclick="sendVideoCallInvite()">
+                <i class="fas fa-video"></i>
             </button>
         </div>
 
@@ -565,7 +596,16 @@ const roomId = '{{ room_id }}';
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面加载完成，开始初始化...');
+    console.log('页面加载完成，开始初始化... [版本: 2024-01-01-v2]');
+    
+    // 检查roomId是否有效
+    if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId === '') {
+        console.error('❌ 无效的roomId:', roomId);
+        console.error('无法初始化聊天功能');
+        return;
+    }
+    
+    console.log('✅ roomId有效:', roomId);
     
     // 延迟一点初始化，确保DOM完全准备好
     setTimeout(() => {
@@ -579,89 +619,169 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeEventListeners() {
     console.log('初始化事件监听器...');
     
-    // 表情按钮
+    // 表情按钮 - 彻底重写
+    console.log('🎭 开始初始化表情按钮...');
     const emojiBtn = document.getElementById('emoji-btn');
     if (emojiBtn) {
-        console.log('绑定表情按钮事件');
+        console.log('✅ 找到表情按钮，开始配置...');
         
-        // 确保按钮可点击
+        // 清除所有旧事件
+        emojiBtn.removeEventListener('click', handleEmojiClick);
+        emojiBtn.onclick = null;
+        
+        // 设置样式确保可点击
         emojiBtn.style.pointerEvents = 'auto';
         emojiBtn.style.cursor = 'pointer';
-        emojiBtn.style.zIndex = '1000';
+        emojiBtn.style.zIndex = '10000';
+        emojiBtn.style.position = 'relative';
+        emojiBtn.disabled = false;
         
-        // 移除可能存在的旧事件监听器
-        emojiBtn.removeEventListener('click', handleEmojiClick);
-        
-        // 添加新的事件监听器
-        emojiBtn.addEventListener('click', handleEmojiClick);
-        
-        console.log('表情按钮事件绑定完成');
-    } else {
-        console.error('表情按钮未找到');
-    }
-    
-    // 表情按钮点击处理函数
-    function handleEmojiClick(e) {
-        console.log('表情按钮被点击!', e);
-        e.preventDefault();
-        e.stopPropagation();
-        toggleEmojiPicker();
-    }
-
-    // 发送按钮
-    const sendBtn = document.getElementById('send-btn');
-    if (sendBtn) {
-        console.log('绑定发送按钮事件');
-        sendBtn.addEventListener('click', function(e) {
-            console.log('发送按钮被点击');
+        // 使用简单直接的事件处理
+        emojiBtn.onclick = function(e) {
+            console.log('🎭 表情按钮被点击！');
             e.preventDefault();
             e.stopPropagation();
-            
-            if (sendCooldown) {
-                console.log('Send button blocked by cooldown');
-                return;
-            }
-            
-            if (sendBtn.disabled) {
-                console.log('Send button blocked by disabled state');
-                return;
-            }
-            
-            console.log('Sending message via button click');
-            sendMessage();
-        });
+            toggleEmojiPicker();
+        };
+        
+        // 添加hover效果验证按钮响应
+        emojiBtn.onmouseenter = function() {
+            console.log('🎭 鼠标进入表情按钮');
+            this.style.backgroundColor = '#e9ecef';
+        };
+        
+        emojiBtn.onmouseleave = function() {
+            console.log('🎭 鼠标离开表情按钮');
+            this.style.backgroundColor = '';
+        };
+        
+        console.log('✅ 表情按钮事件绑定完成');
     } else {
-        console.error('发送按钮未找到');
+        console.error('❌ 表情按钮未找到！');
+        setTimeout(() => {
+            console.log('🔍 延迟查找表情按钮...');
+            const delayedBtn = document.getElementById('emoji-btn');
+            if (delayedBtn) {
+                console.log('⏰ 延迟找到表情按钮，重新绑定...');
+                delayedBtn.onclick = function(e) {
+                    console.log('🎭 延迟绑定的表情按钮被点击！');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleEmojiPicker();
+                };
+            }
+        }, 1000);
     }
-
+    
     // 录音按钮
     const recordBtn = document.getElementById('record-btn');
     if (recordBtn) {
-        console.log('绑定录音按钮事件');
-        recordBtn.addEventListener('click', function(e) {
-            console.log('录音按钮被点击');
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (!isRecording) {
-                startRecording();
-            } else {
-                stopRecording();
-            }
-        });
-    } else {
-        console.error('录音按钮未找到');
+        recordBtn.addEventListener('click', toggleVoiceRecording);
     }
     
-    console.log('事件监听器初始化完成');
+    // 发送按钮
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+    }
+    
+    // 点击其他地方隐藏表情选择器
+    document.addEventListener('click', function(event) {
+        const emojiPicker = document.getElementById('emoji-picker');
+        const emojiBtn = document.getElementById('emoji-btn');
+        
+        if (emojiPicker && !emojiPicker.contains(event.target) && !emojiBtn.contains(event.target)) {
+            emojiPicker.style.display = 'none';
+        }
+    });
+    
+    // 事件委托：处理文件下载链接点击
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('file-download-link') || event.target.closest('.file-download-link')) {
+            event.preventDefault();
+            const link = event.target.classList.contains('file-download-link') ? event.target : event.target.closest('.file-download-link');
+            const fileUrl = link.getAttribute('data-file-url');
+            const fileName = link.getAttribute('data-file-name');
+            downloadFile(fileUrl, fileName);
+        }
+    });
+    
+    // 事件委托：处理音频下载按钮点击
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('audio-download-btn') || event.target.closest('.audio-download-btn')) {
+            event.preventDefault();
+            const btn = event.target.classList.contains('audio-download-btn') ? event.target : event.target.closest('.audio-download-btn');
+            const fileUrl = btn.getAttribute('data-file-url');
+            const fileName = btn.getAttribute('data-file-name');
+            downloadFile(fileUrl, fileName);
+        }
+    });
+}
+
+// 处理表情按钮点击
+function handleEmojiClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('表情按钮被点击');
+    
+    const picker = document.getElementById('emoji-picker');
+    if (picker) {
+        // 检查当前显示状态
+        const isCurrentlyVisible = picker.classList.contains('show') || 
+                                  picker.style.display === 'block' ||
+                                  getComputedStyle(picker).display === 'block';
+        
+        console.log('当前可见状态:', isCurrentlyVisible);
+        
+        if (isCurrentlyVisible) {
+            // 隐藏
+            picker.classList.remove('show');
+            picker.style.display = 'none';
+            picker.style.visibility = 'hidden';
+            console.log('表情选择器显示状态: false (隐藏)');
+        } else {
+            // 显示
+            picker.classList.add('show');
+            picker.style.display = 'block';
+            picker.style.visibility = 'visible';
+            picker.style.position = 'absolute';
+            picker.style.zIndex = '99999';
+            picker.style.bottom = '100%';
+            picker.style.left = '0';
+            console.log('表情选择器显示状态: true (显示)');
+        }
+    } else {
+        console.error('表情选择器未找到');
+    }
 }
 
 // 连接WebSocket
 function connectWebSocket() {
+    // 检查roomId是否有效
+    if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId === '') {
+        console.error('❌ 无效的roomId:', roomId);
+        console.error('无法建立WebSocket连接');
+        return;
+    }
+    
+    // 检查是否已经连接
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log('✅ WebSocket已经连接，无需重复连接');
+        return;
+    }
+    
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/chat/${roomId}/`;
     
-    socket = new WebSocket(wsUrl);
+    console.log('🔌 尝试连接WebSocket:', wsUrl);
+    
+    try {
+        socket = new WebSocket(wsUrl);
+    } catch (error) {
+        console.error('❌ WebSocket创建失败:', error);
+        return;
+    }
     
     socket.onopen = function(event) {
         console.log('WebSocket连接已建立');
@@ -683,7 +803,12 @@ function connectWebSocket() {
             setTimeout(() => {
                 reconnectAttempts++;
                 console.log(`尝试重新连接... (${reconnectAttempts}/${maxReconnectAttempts})`);
-                connectWebSocket();
+                // 检查roomId是否仍然有效
+                if (roomId && roomId !== 'undefined' && roomId !== 'null' && roomId !== '') {
+                    connectWebSocket();
+                } else {
+                    console.error('❌ roomId无效，停止重连尝试');
+                }
             }, reconnectDelay);
         } else if (reconnectAttempts >= maxReconnectAttempts) {
             console.error('重连次数已达上限，请刷新页面');
@@ -728,6 +853,25 @@ function handleWebSocketMessage(data) {
             handleUserTyping(data.username, data.is_typing);
             break;
             
+        case 'user_joined':
+            console.log('用户加入聊天室:', data.username);
+            showSystemMessage(`${data.username} 加入了聊天室`);
+            break;
+            
+        case 'new_message':
+            // 收到新消息通知，刷新消息列表
+            console.log('收到新消息通知，刷新消息列表');
+            loadInitialMessages();
+            break;
+            
+        case 'video_call_invite':
+            handleVideoCallInvite(data);
+            break;
+            
+        case 'video_call_status':
+            handleVideoCallStatus(data);
+            break;
+            
         case 'read_status_update':
             updateMessageReadStatus(data.message_ids, data.username);
             break;
@@ -739,6 +883,14 @@ function handleWebSocketMessage(data) {
 
 // 加载初始消息
 function loadInitialMessages() {
+    // 检查roomId是否有效
+    if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId === '') {
+        console.error('❌ 无效的roomId，无法加载消息:', roomId);
+        return;
+    }
+    
+    console.log('📨 加载初始消息，roomId:', roomId);
+    
     fetch(`/tools/api/chat/${roomId}/messages/`)
         .then(response => response.json())
         .then(data => {
@@ -785,25 +937,39 @@ function addMessageToChat(message) {
     let contentHtml = '';
     if (message.message_type === 'image') {
         // 确保图片URL是完整的
-        const imageUrl = message.file_url.startsWith('http') ? message.file_url : window.location.origin + '/media/' + message.file_url;
+        const imageUrl = message.file_url.startsWith('http') ? message.file_url : 
+                        message.file_url.startsWith('/media/') ? window.location.origin + message.file_url :
+                        window.location.origin + '/media/' + message.file_url;
         contentHtml = `<img src="${imageUrl}" alt="图片" class="message-image" onclick="openImageModal('${imageUrl}')" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div class="image-error" style="display: none; color: #dc3545; font-size: 12px;">图片加载失败</div>`;
-    } else if (message.message_type === 'audio') {
+    } else if (message.message_type === 'audio' || message.message_type === 'voice') {
+        // 确保音频URL是完整的
+        const audioUrl = message.file_url.startsWith('http') ? message.file_url : 
+                        message.file_url.startsWith('/media/') ? window.location.origin + message.file_url :
+                        window.location.origin + '/media/' + message.file_url;
         contentHtml = `
             <div class="message-audio">
-                <audio controls class="audio-player">
-                    <source src="${message.file_url}" type="audio/wav">
+                <audio controls class="audio-player" preload="metadata">
+                    <source src="${audioUrl}" type="audio/webm">
+                    <source src="${audioUrl}" type="audio/mp3">
+                    <source src="${audioUrl}" type="audio/wav">
+                    <source src="${audioUrl}" type="audio/ogg">
                     您的浏览器不支持音频播放
                 </audio>
+                <button class="audio-download-btn" data-file-url="${audioUrl}" data-file-name="voice_message.webm" title="下载音频">
+                    <i class="fas fa-download"></i>
+                </button>
             </div>
         `;
     } else if (message.message_type === 'file') {
         // 确保文件URL是完整的
-        const fileUrl = message.file_url.startsWith('http') ? message.file_url : window.location.origin + '/media/' + message.file_url;
+        const fileUrl = message.file_url.startsWith('http') ? message.file_url : 
+                       message.file_url.startsWith('/media/') ? window.location.origin + message.file_url :
+                       window.location.origin + '/media/' + message.file_url;
         contentHtml = `
             <div class="message-file">
                 <i class="fas fa-file"></i>
-                <a href="${fileUrl}" target="_blank" download="${message.content}" onclick="downloadFile('${fileUrl}', '${message.content}')">${message.content}</a>
+                <a href="javascript:void(0)" data-file-url="${fileUrl}" data-file-name="${escapeHtml(message.content)}" class="file-download-link" title="点击下载文件">${escapeHtml(message.content)}</a>
             </div>
         `;
     } else {
@@ -815,8 +981,8 @@ function addMessageToChat(message) {
         // 发送方显示已读状态（知道对方是否已读）
         statusHtml = `<span class="message-status ${message.is_read ? 'read' : 'unread'}">${message.is_read ? '已读' : '未读'}</span>`;
     } else {
-        // 接收方不显示已读状态
-        statusHtml = '';
+        // 接收方也显示已读状态（表示自己是否已读这条消息）
+        statusHtml = `<span class="message-status ${message.is_read ? 'read' : 'unread'}">${message.is_read ? '已读' : '未读'}</span>`;
     }
     
     messageDiv.innerHTML = `
@@ -835,11 +1001,6 @@ function addMessageToChat(message) {
 
 // 发送消息
 function sendMessage() {
-    if (sendCooldown) {
-        console.log('Message blocked by cooldown');
-        return;
-    }
-    
     const input = document.getElementById('chat-input');
     const content = input.value.trim();
     
@@ -847,9 +1008,6 @@ function sendMessage() {
         console.log('Message blocked: empty content');
         return;
     }
-    
-    // 设置冷却
-    setSendCooldown(1000);
     
     const sendBtn = document.getElementById('send-btn');
     sendBtn.disabled = true;
@@ -884,10 +1042,7 @@ function handleKeyDown(event) {
         event.preventDefault();
         event.stopPropagation();
         
-        if (sendCooldown) {
-            console.log('Enter blocked by cooldown');
-            return false;
-        }
+
         
         const sendBtn = document.getElementById('send-btn');
         if (sendBtn.disabled) {
@@ -911,61 +1066,383 @@ function handleKeyDown(event) {
 
 // 处理发送按钮点击（已内联到事件监听器中）
 
-// 设置发送冷却
-function setSendCooldown(duration) {
-    console.log('Setting send cooldown for', duration, 'ms');
-    sendCooldown = true;
-    const cooldownElement = document.getElementById('send-cooldown');
-    cooldownElement.textContent = '发送冷却中...';
-    
-    if (sendCooldownTimer) {
-        clearTimeout(sendCooldownTimer);
-    }
-    
-    sendCooldownTimer = setTimeout(() => {
-        sendCooldown = false;
-        cooldownElement.textContent = '';
-        console.log('Send cooldown expired');
-    }, duration);
-}
+// 冷却功能已移除 - 允许快速发送消息
 
 // 处理表情按钮点击（已内联到事件监听器中）
 
+// 插入表情到输入框
+function insertEmoji(emoji) {
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        const currentValue = messageInput.value;
+        const cursorPosition = messageInput.selectionStart;
+        const newValue = currentValue.slice(0, cursorPosition) + emoji + currentValue.slice(cursorPosition);
+        messageInput.value = newValue;
+        messageInput.focus();
+        // 设置光标位置到表情后面
+        messageInput.setSelectionRange(cursorPosition + emoji.length, cursorPosition + emoji.length);
+        
+        // 隐藏表情选择器
+        const picker = document.getElementById('emoji-picker');
+        if (picker) {
+            picker.style.display = 'none';
+            picker.classList.remove('show');
+        }
+    }
+}
+
+// 显示系统消息
+function showSystemMessage(message) {
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) {
+        const systemMsg = document.createElement('div');
+        systemMsg.className = 'system-message';
+        systemMsg.style.cssText = `
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin: 10px 0;
+            font-size: 0.9em;
+        `;
+        systemMsg.textContent = message;
+        chatContainer.appendChild(systemMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
+
+// 发送视频通话邀请
+function sendVideoCallInvite() {
+    console.log('发送视频通话邀请...');
+    
+    // 通过WebSocket发送邀请
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        const message = {
+            type: 'video_call_invite',
+            room_id: roomId,
+            message: '邀请您进行视频通话'
+        };
+        
+        socket.send(JSON.stringify(message));
+        console.log('视频邀请已发送');
+        
+        // 在聊天中显示邀请消息
+        showVideoInviteMessage('您', '发起了视频通话邀请', roomId, true);
+    } else {
+        console.error('WebSocket连接未建立');
+        alert('连接未建立，无法发送邀请');
+    }
+}
+
+// 处理收到的视频通话邀请
+function handleVideoCallInvite(data) {
+    console.log('收到视频通话邀请:', data);
+    
+    // 在聊天中显示邀请消息
+    showVideoInviteMessage(data.username || '对方', '邀请您进行视频通话', data.room_id || roomId, false);
+}
+
+// 处理视频通话状态更新
+function handleVideoCallStatus(data) {
+    console.log('🎥 收到视频通话状态更新:', data);
+    
+    if (data.message_id) {
+        console.log('🎥 查找消息ID:', data.message_id);
+        // 查找所有可能的消息ID（因为可能有多个视频邀请消息）
+        const allVideoInvites = document.querySelectorAll('.video-invite-message');
+        console.log('🎥 找到的视频邀请消息数量:', allVideoInvites.length);
+        
+        allVideoInvites.forEach((invite, index) => {
+            const messageId = invite.id;
+            console.log(`🎥 处理邀请 ${index + 1}: messageId=${messageId}`);
+            if (messageId) {
+                updateVideoCallStatus(messageId, data.status, data.username || '对方');
+            }
+        });
+    } else {
+        console.log('⚠️ 缺少message_id，无法更新状态');
+    }
+}
+
+// 显示视频邀请消息
+function showVideoInviteMessage(senderName, message, videoRoomId, isSelf) {
+    const chatContainer = document.getElementById('chat-messages');
+    if (!chatContainer) return;
+    
+    const messageId = `video-invite-${Date.now()}`;
+    const messageDiv = document.createElement('div');
+    messageDiv.id = messageId;
+    messageDiv.className = `message ${isSelf ? 'self' : 'other'} video-invite-message`;
+    messageDiv.style.cssText = `
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 10px;
+        background: ${isSelf ? '#007bff' : '#f8f9fa'};
+        color: ${isSelf ? 'white' : '#333'};
+        border: 2px solid #007bff;
+    `;
+    
+    const statusId = `status-${messageId}`;
+    
+    messageDiv.innerHTML = `
+        <div class="video-invite-content">
+            <div class="invite-header">
+                <i class="fas fa-video" style="margin-right: 8px;"></i>
+                <strong>${senderName}</strong> ${message}
+            </div>
+            <div id="${statusId}" class="invite-status" style="margin-top: 8px; font-size: 0.9em; opacity: 0.8;">
+                <i class="fas fa-clock"></i> 等待对方响应...
+            </div>
+            <div class="invite-actions" style="margin-top: 10px;">
+                ${!isSelf ? `
+                    <button onclick="joinVideoCall('${videoRoomId}', '${messageId}')" 
+                            style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 5px; margin-right: 10px; cursor: pointer;">
+                        <i class="fas fa-video"></i> 加入通话
+                    </button>
+                    <button onclick="declineVideoCall('${messageId}')" 
+                            style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                        <i class="fas fa-times"></i> 拒绝
+                    </button>
+                ` : `
+                    <button onclick="joinVideoCall('${videoRoomId}', '${messageId}')" 
+                            style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                        <i class="fas fa-video"></i> 进入通话
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
+    
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // 开始监控视频通话状态
+    if (isSelf) {
+        monitorVideoCallStatus(videoRoomId, messageId);
+    }
+}
+
+// 监控视频通话状态
+function monitorVideoCallStatus(videoRoomId, messageId) {
+    const statusElement = document.getElementById(`status-${messageId}`);
+    if (!statusElement) return;
+    
+    let checkCount = 0;
+    const maxChecks = 120; // 检查120次，每次3秒，共6分钟
+    let animationCount = 0;
+    
+    const statusInterval = setInterval(async () => {
+        checkCount++;
+        animationCount++;
+        
+        // 检查对方是否已进入视频聊天室
+        try {
+            const response = await fetch(`/tools/check-video-room-status/${videoRoomId}/`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.participants && data.participants.length > 1) {
+                    // 对方已加入
+                    statusElement.innerHTML = '<i class="fas fa-video" style="color: #28a745;"></i> 对方已加入通话';
+                    statusElement.style.color = '#28a745';
+                    clearInterval(statusInterval);
+                    delete window.videoStatusIntervals[messageId];
+                    return;
+                } else if (data.status === 'declined') {
+                    // 对方拒绝了
+                    statusElement.innerHTML = '<i class="fas fa-times" style="color: #dc3545;"></i> 对方拒绝了通话';
+                    statusElement.style.color = '#dc3545';
+                    clearInterval(statusInterval);
+                    delete window.videoStatusIntervals[messageId];
+                    return;
+                }
+            }
+        } catch (error) {
+            console.log('检查视频聊天室状态失败:', error);
+        }
+        
+        if (checkCount > maxChecks) {
+            // 超时
+            statusElement.innerHTML = '<i class="fas fa-clock" style="color: #dc3545;"></i> 邀请已过期';
+            statusElement.style.color = '#dc3545';
+            clearInterval(statusInterval);
+            delete window.videoStatusIntervals[messageId];
+            return;
+        }
+        
+        // 更新等待状态动画
+        const dots = '.'.repeat((animationCount % 3) + 1);
+        const waitingText = '等待对方响应' + dots;
+        statusElement.innerHTML = `<i class="fas fa-clock pulse-animation"></i> ${waitingText}`;
+        
+    }, 3000); // 每3秒检查一次
+    
+    // 存储interval以便后续清理
+    if (!window.videoStatusIntervals) {
+        window.videoStatusIntervals = {};
+    }
+    window.videoStatusIntervals[messageId] = statusInterval;
+}
+
+// 更新视频通话状态
+function updateVideoCallStatus(messageId, status, userInfo) {
+    const statusElement = document.getElementById(`status-${messageId}`);
+    if (!statusElement) return;
+    
+    // 清理监控interval
+    if (window.videoStatusIntervals && window.videoStatusIntervals[messageId]) {
+        clearInterval(window.videoStatusIntervals[messageId]);
+        delete window.videoStatusIntervals[messageId];
+    }
+    
+    switch (status) {
+        case 'joined':
+            statusElement.innerHTML = `<i class="fas fa-check-circle" style="color: #28a745;"></i> ${userInfo || '对方'}已进入视频聊天`;
+            statusElement.style.color = '#28a745';
+            break;
+        case 'declined':
+            statusElement.innerHTML = `<i class="fas fa-times-circle" style="color: #dc3545;"></i> ${userInfo || '对方'}拒绝了邀请`;
+            statusElement.style.color = '#dc3545';
+            break;
+        case 'left':
+            statusElement.innerHTML = `<i class="fas fa-sign-out-alt" style="color: #ffc107;"></i> ${userInfo || '对方'}已离开视频聊天`;
+            statusElement.style.color = '#ffc107';
+            break;
+        case 'expired':
+            statusElement.innerHTML = '<i class="fas fa-clock"></i> 邀请已过期';
+            statusElement.style.color = '#6c757d';
+            break;
+    }
+}
+
+// 加入视频通话
+function joinVideoCall(videoRoomId, messageId) {
+    console.log('加入视频通话:', videoRoomId);
+    
+    // 更新状态
+    if (messageId) {
+        updateVideoCallStatus(messageId, 'joined', '您');
+    }
+    
+    // 在新窗口打开视频通话页面
+    const videoUrl = `/tools/video-chat/${videoRoomId}/`;
+    window.open(videoUrl, '_blank', 'width=1200,height=800');
+    
+    // 通过WebSocket通知对方用户已加入
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'video_call_status',
+            room_id: roomId,
+            video_room_id: videoRoomId,
+            status: 'joined',
+            message_id: messageId
+        }));
+    }
+}
+
+// 拒绝视频通话
+function declineVideoCall(messageId) {
+    console.log('拒绝视频通话');
+    
+    // 更新状态
+    if (messageId) {
+        updateVideoCallStatus(messageId, 'declined', '您');
+    }
+    
+    showSystemMessage('您拒绝了视频通话邀请');
+    
+    // 通过WebSocket通知对方用户拒绝了邀请
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+            type: 'video_call_status',
+            room_id: roomId,
+            status: 'declined',
+            message_id: messageId
+        }));
+    }
+}
+
 // 切换表情选择器
 function toggleEmojiPicker() {
-    console.log('切换表情选择器...');
+    console.log('🎭 切换表情选择器...');
     const picker = document.getElementById('emoji-picker');
     if (!picker) {
-        console.error('表情选择器未找到');
+        console.error('❌ 表情选择器未找到');
         return;
     }
     
-    const isVisible = picker.classList.contains('show');
+    // 检查当前显示状态
+    const isCurrentlyVisible = picker.classList.contains('show');
     
-    if (isVisible) {
+    console.log('🎭 当前状态分析:');
+    console.log('  - classList.contains("show"):', isCurrentlyVisible);
+    
+    if (isCurrentlyVisible) {
         // 隐藏表情选择器
+        console.log('🎭 执行隐藏操作...');
         picker.classList.remove('show');
         picker.style.display = 'none';
-        console.log('表情选择器已隐藏');
+        picker.style.visibility = 'hidden';
+        console.log('✅ 表情选择器已隐藏');
     } else {
-        // 显示表情选择器
+        // 显示表情选择器 - 强制设置所有必要样式
+        console.log('🎭 执行显示操作... [v2.0强化版本]');
         picker.classList.add('show');
-        picker.style.display = 'block';
-        picker.style.position = 'absolute';
-        picker.style.zIndex = '9999';
-        console.log('表情选择器已显示');
         
-        // 点击其他地方关闭表情选择器
+        // 强制设置样式，确保显示
+        picker.style.display = 'block';
+        picker.style.visibility = 'visible';
+        picker.style.opacity = '1';
+        picker.style.position = 'absolute';
+        picker.style.bottom = '100%';
+        picker.style.left = '0';
+        picker.style.zIndex = '99999';
+        picker.style.background = 'white';
+        picker.style.border = '1px solid #e9ecef';
+        picker.style.borderRadius = '8px';
+        picker.style.padding = '10px';
+        picker.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+        picker.style.minWidth = '200px';
+        picker.style.maxWidth = '300px';
+        
+        console.log('✅ 表情选择器已显示 [强制样式设置完成]');
+        
+        // 延迟添加关闭监听器
         setTimeout(() => {
-            document.addEventListener('click', function closeEmojiPicker(e) {
+            function closeEmojiPicker(e) {
                 if (!picker.contains(e.target) && !e.target.closest('#emoji-btn')) {
+                    console.log('🎭 点击外部，关闭表情选择器');
                     picker.classList.remove('show');
                     picker.style.display = 'none';
+                    picker.style.visibility = 'hidden';
                     document.removeEventListener('click', closeEmojiPicker);
                 }
-            });
+            }
+            document.addEventListener('click', closeEmojiPicker);
         }, 100);
     }
+    
+    // 验证最终状态
+    setTimeout(() => {
+        const finalDisplay = getComputedStyle(picker).display;
+        const finalVisibility = getComputedStyle(picker).visibility;
+        const finalOpacity = getComputedStyle(picker).opacity;
+        const finalZIndex = getComputedStyle(picker).zIndex;
+        const hasShowClass = picker.classList.contains('show');
+        console.log('🎭 最终状态验证:');
+        console.log('  - display =', finalDisplay);
+        console.log('  - visibility =', finalVisibility);
+        console.log('  - opacity =', finalOpacity);
+        console.log('  - zIndex =', finalZIndex);
+        console.log('  - hasShowClass =', hasShowClass);
+        console.log('  - offsetWidth =', picker.offsetWidth);
+        console.log('  - offsetHeight =', picker.offsetHeight);
+    }, 100);
 }
 
 // 获取Cookie函数
@@ -1031,7 +1508,9 @@ function handleImageUpload(event) {
     formData.append('room_id', roomId);
     
     // 获取CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                     document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     getCookie('csrftoken');
     if (!csrfToken) {
         alert('CSRF token未找到，请刷新页面重试');
         return;
@@ -1053,15 +1532,21 @@ function handleImageUpload(event) {
     .then(data => {
         if (progressDiv) progressDiv.style.display = 'none';
         if (data.success) {
-            // 通过WebSocket发送图片消息
+            // 图片上传成功，通过WebSocket广播给其他用户
+            console.log('图片上传成功:', data.message);
+            
+            // 发送WebSocket消息通知其他用户有新图片
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
-                    type: 'message',
-                    content: '图片',
-                    message_type: 'image',
-                    file_url: data.file_url
+                    'type': 'new_message',
+                    'message_id': data.message.id,
+                    'room_id': roomId
                 }));
+                console.log('已通知其他用户有新图片消息');
             }
+            
+            // 本地刷新消息列表
+            loadInitialMessages();
         } else {
             alert('发送图片失败: ' + data.error);
         }
@@ -1101,7 +1586,9 @@ function handleFileUpload(event) {
     formData.append('room_id', roomId);
     
     // 获取CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                     document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     getCookie('csrftoken');
     if (!csrfToken) {
         alert('CSRF token未找到，请刷新页面重试');
         return;
@@ -1117,15 +1604,21 @@ function handleFileUpload(event) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // 通过WebSocket发送文件消息
+            // 文件上传成功，通过WebSocket广播给其他用户
+            console.log('文件上传成功:', data.message);
+            
+            // 发送WebSocket消息通知其他用户有新文件
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
-                    type: 'message',
-                    content: file.name,
-                    message_type: 'file',
-                    file_url: data.file_url
+                    'type': 'new_message',
+                    'message_id': data.message.id,
+                    'room_id': roomId
                 }));
+                console.log('已通知其他用户有新文件消息');
             }
+            
+            // 本地刷新消息列表
+            loadInitialMessages();
         } else {
             alert('发送文件失败: ' + data.error);
         }
@@ -1138,200 +1631,105 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-// 处理录音（已内联到事件监听器中）
+// 切换语音录制
+function toggleVoiceRecording() {
+    if (isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
+}
 
 // 开始录音
 function startRecording() {
-    // 检查浏览器支持
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert('您的浏览器不支持录音功能');
         return;
     }
     
-    navigator.mediaDevices.getUserMedia({ 
-        audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            sampleRate: 44100
-        } 
-    })
-    .then(stream => {
-        mediaRecorder = new MediaRecorder(stream, {
-            mimeType: 'audio/webm;codecs=opus'
-        });
-        audioChunks = [];
-        
-        mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'audio/webm;codecs=opus' // 使用WebM格式，支持更好的压缩
+            });
+            
+            audioChunks = [];
+            recordingStartTime = Date.now();
+            
+            mediaRecorder.ondataavailable = event => {
                 audioChunks.push(event.data);
-            }
-        };
-        
-        mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            };
             
-            // 检查文件大小限制（10MB）
-            if (audioBlob.size > 10 * 1024 * 1024) {
-                alert('录音文件过大，请录制更短的音频');
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                uploadAudio(audioBlob);
+                
+                // 停止所有音轨
                 stream.getTracks().forEach(track => track.stop());
-                return;
-            }
+            };
             
-            // 直接发送WebM格式，让服务器处理转换
-            sendAudioMessage(audioBlob);
-            stream.getTracks().forEach(track => track.stop());
-        };
-        
-        mediaRecorder.onerror = (event) => {
-            console.error('录音错误:', event.error);
-            alert('录音过程中发生错误');
-            stream.getTracks().forEach(track => track.stop());
-        };
-        
-        mediaRecorder.start(1000); // 每秒收集一次数据
-        isRecording = true;
-        recordingStartTime = Date.now();
-        
-        const recordBtn = document.getElementById('record-btn');
-        if (recordBtn) {
-            recordBtn.classList.add('active');
-            recordBtn.innerHTML = '<i class="fas fa-stop"></i>';
-            recordBtn.style.color = '#ff4757';
-        }
-        
-        // 开始录音计时
-        recordingTimer = setInterval(() => {
-            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            mediaRecorder.start();
+            isRecording = true;
+            
+            // 更新UI
+            const recordBtn = document.getElementById('record-btn');
             if (recordBtn) {
-                recordBtn.title = `录音中... ${elapsed}s`;
+                recordBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                recordBtn.style.backgroundColor = '#ff4757';
+                recordBtn.style.color = 'white';
             }
-        }, 1000);
-        
-        console.log('录音已开始');
-    })
-    .catch(error => {
-        console.error('录音失败:', error);
-        if (error.name === 'NotAllowedError') {
-            alert('请允许访问麦克风权限');
-        } else if (error.name === 'NotFoundError') {
-            alert('未找到麦克风设备');
-        } else {
-            alert('录音失败: ' + error.message);
-        }
-    });
-}
-
-// 将WebM音频转换为WAV格式
-function convertWebmToWav(webmBlob) {
-    return new Promise((resolve, reject) => {
-        try {
-            // 创建音频上下文
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const fileReader = new FileReader();
             
-            fileReader.onload = function(e) {
-                audioContext.decodeAudioData(e.target.result, function(buffer) {
-                    // 创建WAV文件
-                    const wavBuffer = audioBufferToWav(buffer);
-                    const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
-                    resolve(wavBlob);
-                }, function(error) {
-                    reject(error);
-                });
-            };
+            // 开始录音计时
+            startRecordingTimer();
             
-            fileReader.onerror = function(error) {
-                reject(error);
-            };
-            
-            fileReader.readAsArrayBuffer(webmBlob);
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-// 将AudioBuffer转换为WAV格式
-function audioBufferToWav(buffer) {
-    const length = buffer.length;
-    const numberOfChannels = buffer.numberOfChannels;
-    const sampleRate = buffer.sampleRate;
-    const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
-    const view = new DataView(arrayBuffer);
-    
-    // WAV文件头
-    const writeString = (offset, string) => {
-        for (let i = 0; i < string.length; i++) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-        }
-    };
-    
-    writeString(0, 'RIFF');
-    view.setUint32(4, 36 + length * numberOfChannels * 2, true);
-    writeString(8, 'WAVE');
-    writeString(12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numberOfChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * numberOfChannels * 2, true);
-    view.setUint16(32, numberOfChannels * 2, true);
-    view.setUint16(34, 16, true);
-    writeString(36, 'data');
-    view.setUint32(40, length * numberOfChannels * 2, true);
-    
-    // 写入音频数据
-    let offset = 44;
-    for (let i = 0; i < length; i++) {
-        for (let channel = 0; channel < numberOfChannels; channel++) {
-            const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
-            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-            offset += 2;
-        }
-    }
-    
-    return arrayBuffer;
+            console.log('开始录音');
+        })
+        .catch(error => {
+            console.error('录音失败:', error);
+            alert('无法访问麦克风，请检查权限设置');
+        });
 }
 
 // 停止录音
 function stopRecording() {
     if (mediaRecorder && isRecording) {
-        try {
-            mediaRecorder.stop();
-            isRecording = false;
-            
-            const recordBtn = document.getElementById('record-btn');
-            if (recordBtn) {
-                recordBtn.classList.remove('active');
-                recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-                recordBtn.title = '录音';
-                recordBtn.style.color = '';
-            }
-            
-            if (recordingTimer) {
-                clearInterval(recordingTimer);
-                recordingTimer = null;
-            }
-            
-            console.log('录音已停止');
-        } catch (error) {
-            console.error('停止录音失败:', error);
+        mediaRecorder.stop();
+        isRecording = false;
+        
+        // 更新UI
+        const recordBtn = document.getElementById('record-btn');
+        if (recordBtn) {
+            recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            recordBtn.style.backgroundColor = '';
+            recordBtn.style.color = '';
         }
+        
+        // 停止计时
+        stopRecordingTimer();
+        
+        console.log('停止录音');
     }
 }
 
-// 发送音频消息
-function sendAudioMessage(audioBlob) {
+// 上传音频文件
+function uploadAudio(audioBlob) {
     const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.wav');
+    formData.append('audio', audioBlob, 'recording.webm');
     formData.append('room_id', roomId);
     
     // 获取CSRF token
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                     document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     getCookie('csrftoken');
     if (!csrfToken) {
         alert('CSRF token未找到，请刷新页面重试');
         return;
     }
+    
+    // 显示上传进度
+    const progressDiv = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    if (progressDiv) progressDiv.style.display = 'block';
     
     fetch(`/tools/api/chat/${roomId}/send-audio/`, {
         method: 'POST',
@@ -1342,24 +1740,60 @@ function sendAudioMessage(audioBlob) {
     })
     .then(response => response.json())
     .then(data => {
+        if (progressDiv) progressDiv.style.display = 'none';
         if (data.success) {
-            // 通过WebSocket发送音频消息
+            // 语音上传成功，通过WebSocket广播给其他用户
+            console.log('语音上传成功:', data.message);
+            
+            // 发送WebSocket消息通知其他用户有新语音
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
-                    type: 'message',
-                    content: '语音消息',
-                    message_type: 'audio',
-                    file_url: data.file_url
+                    'type': 'new_message',
+                    'message_id': data.message.id,
+                    'room_id': roomId
                 }));
+                console.log('已通知其他用户有新语音消息');
             }
+            
+            // 本地刷新消息列表
+            loadInitialMessages();
         } else {
-            alert('发送音频失败: ' + data.error);
+            alert('发送语音失败: ' + data.error);
         }
     })
     .catch(error => {
+        if (progressDiv) progressDiv.style.display = 'none';
         console.error('Error:', error);
         alert('网络错误，请重试');
     });
+}
+
+// 开始录音计时
+function startRecordingTimer() {
+    recordingTimer = setInterval(() => {
+        const elapsed = Date.now() - recordingStartTime;
+        const seconds = Math.floor(elapsed / 1000);
+        const minutes = Math.floor(seconds / 60);
+        
+        const recordBtn = document.getElementById('record-btn');
+        if (recordBtn) {
+            const timeStr = `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
+            recordBtn.title = `录音中 ${timeStr}`;
+        }
+    }, 1000);
+}
+
+// 停止录音计时
+function stopRecordingTimer() {
+    if (recordingTimer) {
+        clearInterval(recordingTimer);
+        recordingTimer = null;
+        
+        const recordBtn = document.getElementById('record-btn');
+        if (recordBtn) {
+            recordBtn.title = '录音';
+        }
+    }
 }
 
 // 标记消息为已读
@@ -1386,7 +1820,9 @@ function markMessagesAsRead() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken')
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || 
+                              document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                              getCookie('csrftoken')
             },
             body: JSON.stringify({ message_ids: messageIds })
         })
@@ -1540,6 +1976,29 @@ function downloadImage() {
 function downloadFile(fileUrl, fileName) {
     console.log('开始下载文件:', fileName, 'URL:', fileUrl);
     
+    // 如果是聊天室文件，使用专门的下载API
+    if (fileUrl.includes('/media/chat_')) {
+        // 从URL中提取消息ID
+        const urlParts = fileUrl.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const messageId = filename.split('_')[1]?.split('.')[0];
+        
+        if (messageId) {
+            const downloadUrl = `/tools/api/chat/${roomId}/download/${messageId}/`;
+            console.log('使用聊天室下载API:', downloadUrl);
+            
+            // 创建一个隐藏的下载链接
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.style.display = 'none';
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+    }
+    
     // 确保文件URL是完整的
     const fullFileUrl = fileUrl.startsWith('http') ? fileUrl : window.location.origin + fileUrl;
     
@@ -1617,12 +2076,30 @@ setInterval(markMessagesAsRead, 2000);
 
 // 定期检查WebSocket连接状态
 setInterval(() => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        // 发送心跳包
-        socket.send(JSON.stringify({ type: 'ping' }));
-    } else if (socket && socket.readyState === WebSocket.CLOSED) {
-        console.log('检测到WebSocket连接已断开，尝试重连...');
-        connectWebSocket();
+    try {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            try {
+                // 发送心跳包
+                socket.send(JSON.stringify({ type: 'ping' }));
+            } catch (error) {
+                console.error('❌ 心跳包发送失败:', error);
+                // 如果心跳包发送失败，可能需要重新连接
+                if (error.name === 'InvalidStateError' || error.name === 'NetworkError') {
+                    console.log('检测到连接状态异常，尝试重新连接...');
+                    connectWebSocket();
+                }
+            }
+        } else if (socket && socket.readyState === WebSocket.CLOSED) {
+            console.log('检测到WebSocket连接已断开，尝试重连...');
+            // 检查roomId是否仍然有效
+            if (roomId && roomId !== 'undefined' && roomId !== 'null' && roomId !== '') {
+                connectWebSocket();
+            } else {
+                console.error('❌ roomId无效，停止重连尝试');
+            }
+        }
+    } catch (error) {
+        console.error('❌ WebSocket状态检查失败:', error);
     }
 }, 30000); // 每30秒检查一次
 
@@ -1648,6 +2125,23 @@ document.addEventListener('keydown', function(event) {
             emojiPicker.classList.remove('show');
             emojiPicker.style.display = 'none';
         }
+    }
+});
+
+// 全局错误处理
+window.addEventListener('error', function(event) {
+    if (event.error && event.error.message && event.error.message.includes('WebSocket')) {
+        console.error('🌐 WebSocket全局错误:', event.error);
+        console.error('错误详情:', event.error.message);
+        console.error('错误堆栈:', event.error.stack);
+    }
+});
+
+// 全局未处理的Promise拒绝处理
+window.addEventListener('unhandledrejection', function(event) {
+    if (event.reason && event.reason.message && event.reason.message.includes('WebSocket')) {
+        console.error('🌐 WebSocket Promise拒绝:', event.reason);
+        console.error('错误详情:', event.reason.message);
     }
 });
 </script>

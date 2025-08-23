@@ -48,7 +48,6 @@
         </div>
     </div>
 </div>
-
 <!-- 二维码弹窗 -->
 <div class="qrcode-modal" id="qrcodeModal" style="display: none;">
     <div class="qrcode-content">
@@ -64,7 +63,6 @@
         </div>
     </div>
 </div>
-
 <style>
 .share-button-container {
     position: fixed;
@@ -73,11 +71,9 @@
     z-index: 9999;
     pointer-events: auto;
 }
-
 .share-button-wrapper {
     position: relative;
 }
-
 .share-button {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -94,16 +90,13 @@
     pointer-events: auto;
     z-index: 10000;
 }
-
 .share-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
-
 .share-button i {
     font-size: 16px;
 }
-
 .share-menu {
     position: absolute;
     bottom: 100%;
@@ -118,13 +111,11 @@
     transform: translateY(10px);
     transition: all 0.3s ease;
 }
-
 .share-menu.show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
 }
-
 .share-menu-header {
     display: flex;
     justify-content: space-between;
@@ -132,13 +123,11 @@
     padding: 15px 20px;
     border-bottom: 1px solid #f0f0f0;
 }
-
 .share-menu-header h4 {
     margin: 0;
     font-size: 16px;
     color: #333;
 }
-
 .close-share-menu {
     background: none;
     border: none;
@@ -148,15 +137,12 @@
     border-radius: 4px;
     transition: background-color 0.2s ease;
 }
-
 .close-share-menu:hover {
     background-color: #f5f5f5;
 }
-
 .share-options {
     padding: 10px;
 }
-
 .share-option {
     display: flex;
     align-items: center;
@@ -171,24 +157,20 @@
     color: #333;
     font-size: 14px;
 }
-
 .share-option:hover {
     background-color: #f8f9fa;
 }
-
 .share-option i {
     font-size: 18px;
     width: 20px;
     text-align: center;
 }
-
 .share-option:nth-child(1) i { color: #07C160; } /* 微信 */
 .share-option:nth-child(2) i { color: #E6162D; } /* 微博 */
 .share-option:nth-child(3) i { color: #000000; } /* 抖音 */
 .share-option:nth-child(4) i { color: #12B7F5; } /* QQ */
 .share-option:nth-child(5) i { color: #007bff; } /* 复制链接 */
 .share-option:nth-child(6) i { color: #28a745; } /* 二维码 */
-
 .qrcode-modal {
     position: fixed;
     top: 0;
@@ -201,7 +183,6 @@
     justify-content: center;
     z-index: 2000;
 }
-
 .qrcode-content {
     background: white;
     border-radius: 16px;
@@ -210,20 +191,17 @@
     width: 90%;
     text-align: center;
 }
-
 .qrcode-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
-
 .qrcode-header h4 {
     margin: 0;
     font-size: 18px;
     color: #333;
 }
-
 .close-qrcode {
     background: none;
     border: none;
@@ -233,18 +211,15 @@
     border-radius: 4px;
     transition: background-color 0.2s ease;
 }
-
 .close-qrcode:hover {
     background-color: #f5f5f5;
 }
-
 .qrcode-body {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
 }
-
 #qrcodeContainer {
     width: 200px;
     height: 200px;
@@ -254,13 +229,11 @@
     background: #f8f9fa;
     border-radius: 8px;
 }
-
 .qrcode-tip {
     margin: 0;
     color: #666;
     font-size: 14px;
 }
-
 /* 移动端适配 */
 @media (max-width: 768px) {
     .share-button-container {
@@ -288,7 +261,6 @@
         height: 180px;
     }
 }
-
 /* 深色主题适配 */
 @media (prefers-color-scheme: dark) {
     .share-menu {
@@ -326,18 +298,15 @@
     }
 }
 </style>
-
 <script>
 // 分享功能JavaScript
 let shareManager = null;
-
 // 初始化分享管理器
 function initShareManager() {
     if (typeof ShareManager !== 'undefined') {
         shareManager = new ShareManager();
     }
 }
-
 // 切换分享菜单
 function toggleShareMenu() {
     const menu = document.getElementById('shareMenu');
@@ -345,7 +314,6 @@ function toggleShareMenu() {
         menu.classList.toggle('show');
     }
 }
-
 // 分享到指定平台
 function shareTo(platform) {
     const currentUrl = window.location.href;
@@ -362,13 +330,11 @@ function shareTo(platform) {
     // 关闭分享菜单
     toggleShareMenu();
 }
-
 // 获取页面描述
 function getMetaDescription() {
     const metaDesc = document.querySelector('meta[name="description"]');
     return metaDesc ? metaDesc.getAttribute('content') : document.title;
 }
-
 // 备用分享逻辑
 function fallbackShare(platform, url, title, description) {
     const encodedUrl = encodeURIComponent(url);
@@ -394,7 +360,6 @@ function fallbackShare(platform, url, title, description) {
             break;
     }
 }
-
 // 显示二维码
 function showQRCode(url) {
     const modal = document.getElementById('qrcodeModal');
@@ -406,7 +371,6 @@ function showQRCode(url) {
         modal.style.display = 'flex';
     }
 }
-
 // 关闭二维码弹窗
 function closeQRCode() {
     const modal = document.getElementById('qrcodeModal');
@@ -414,7 +378,6 @@ function closeQRCode() {
         modal.style.display = 'none';
     }
 }
-
 // 生成二维码
 function generateQRCode(text, container) {
     // 使用QRCode.js库生成二维码
@@ -433,7 +396,6 @@ function generateQRCode(text, container) {
         container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(text)}" alt="QR Code">`;
     }
 }
-
 // 复制到剪贴板
 function copyToClipboard(text) {
     if (navigator.clipboard) {
@@ -446,7 +408,6 @@ function copyToClipboard(text) {
         fallbackCopyToClipboard(text);
     }
 }
-
 // 备用复制方法
 function fallbackCopyToClipboard(text) {
     const textArea = document.createElement('textarea');
@@ -467,7 +428,6 @@ function fallbackCopyToClipboard(text) {
     
     document.body.removeChild(textArea);
 }
-
 // 显示提示消息
 function showToast(message, duration = 2000) {
     // 创建toast元素
@@ -506,7 +466,6 @@ function showToast(message, duration = 2000) {
         }, 300);
     }, duration);
 }
-
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     initShareManager();
@@ -537,7 +496,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
 // 显示分享按钮（可选：根据页面内容决定是否显示）
 function showShareButton() {
     const container = document.getElementById('shareButtonContainer');
@@ -545,7 +503,6 @@ function showShareButton() {
         container.style.display = 'block';
     }
 }
-
 // 隐藏分享按钮
 function hideShareButton() {
     const container = document.getElementById('shareButtonContainer');

@@ -965,7 +965,7 @@ function displayEvents(events) {
                             `<span class="event-tag">${event.gender_restriction === 'male' ? '👨 仅限男性' : '👩 仅限女性'}</span>` : ''}
                         <span class="event-tag">${event.distance}</span>
                     </div>
-                    <button class="join-btn" ${isFull ? 'disabled' : ''} onclick="arguments[0].stopPropagation(); joinEvent(${event.id})">
+                    <button class="join-btn" ${isFull ? 'disabled' : ''} data-event-id="${event.id}" onclick="handleJoinEvent(this, event)">
                         ${isFull ? '人数已满' : '立即加入'}
                     </button>
                 </div>
@@ -990,6 +990,13 @@ function getEventTypeIcon(eventType) {
         'other': '🎯'
     };
     return icons[eventType] || '🎯';
+}
+
+// 处理加入活动点击事件
+function handleJoinEvent(button, clickEvent) {
+    clickEvent.stopPropagation();
+    const eventId = button.getAttribute('data-event-id');
+    joinEvent(parseInt(eventId));
 }
 
 // 加入活动

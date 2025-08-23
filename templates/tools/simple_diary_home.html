@@ -1,0 +1,2537 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}简单生活日记{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="记录生活点滴，保存美好回忆。简单易用的日记工具，支持文字、图片记录，让每一天都值得纪念。">
+<meta property="og:title" content="简单生活日记 - 记录生活点滴">
+<meta property="og:description" content="记录生活点滴，保存美好回忆。简单易用的日记工具，支持文字、图片记录，让每一天都值得纪念。">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="简单生活日记 - 记录生活点滴">
+<meta name="twitter:description" content="记录生活点滴，保存美好回忆。简单易用的日记工具，支持文字、图片记录，让每一天都值得纪念。">
+{% endblock %}
+
+{% block content %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<style>
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --success-color: #4CAF50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+    --light-bg: #f8f9ff;
+    --card-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+    --border-radius: 16px;
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --text-color: #2c3e50;
+    --text-secondary: #34495e;
+    --text-muted: #5a6c7d;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--light-bg) 0%, #e3f2fd 100%);
+    min-height: 100vh;
+    color: var(--text-color);
+}
+
+.diary-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+
+/* 顶部统计卡片 */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+/* 改进的统计卡片 */
+.stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+}
+
+.stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* 今日记录区域 */
+.today-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--card-shadow);
+}
+
+.section-title {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 输入区域 */
+.input-area {
+    margin-bottom: 20px;
+}
+
+/* 改进的每日问题区域 */
+.daily-question {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.daily-question::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) rotate(180deg); }
+}
+
+.question-text {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.question-answer {
+    position: relative;
+    z-index: 2;
+}
+
+.question-input {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    background: rgba(255,255,255,0.95);
+    color: var(--text-color);
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.question-input:focus {
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+.question-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* 记录方式按钮组 */
+.record-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+/* 改进的按钮样式 */
+.method-btn {
+    background: var(--glass-bg);
+    border: 2px solid transparent;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.method-btn:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.method-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.method-btn.active .method-name,
+.method-btn.active .method-desc {
+    color: white;
+}
+
+.method-icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.method-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.method-desc {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+
+/* 心情选择器 */
+.mood-selector {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+/* 改进的输入框样式 */
+.diary-input {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: all 0.3s ease;
+    background: white;
+    color: var(--text-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.diary-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.diary-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* 改进的心情选择器 */
+.mood-btn {
+    font-size: 2.5em;
+    background: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mood-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.mood-btn.selected {
+    background: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transform: scale(1.2);
+    border-color: white;
+}
+
+/* 图片上传区域 */
+.image-upload {
+    border: 2px dashed #ccc;
+    border-radius: var(--border-radius);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.5);
+}
+
+.image-upload:hover {
+    border-color: var(--primary-color);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.image-upload.dragover {
+    border-color: var(--success-color);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+/* 改进的保存状态样式 */
+.save-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 25px;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.save-status.saving {
+    background: rgba(255, 152, 0, 0.15);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.save-status.saved {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* 漂浮的加号按钮 */
+.floating-add {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 2em;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.floating-add:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+}
+
+/* 成就提示 */
+.achievement-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: white;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    text-align: center;
+    z-index: 2000;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.achievement-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.achievement-icon {
+    font-size: 4em;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.achievement-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.achievement-desc {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .diary-container {
+        padding: 15px;
+    }
+    
+    .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .record-methods {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .method-btn {
+        padding: 15px;
+    }
+    
+    .mood-selector {
+        gap: 8px;
+    }
+    
+    .mood-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 2em;
+    }
+    
+    .floating-add {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5em;
+    }
+    
+    .today-section {
+        padding: 20px;
+    }
+    
+    .daily-question {
+        padding: 15px;
+    }
+    
+    .question-input {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .mood-selector {
+        gap: 5px;
+    }
+    
+    .mood-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.8em;
+    }
+    
+    /* 移动端标签页样式 */
+    .history-tabs {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .tab-btn {
+        padding: 12px 16px;
+        text-align: center;
+    }
+    
+    /* 移动端日历样式 */
+    .calendar-grid {
+        padding: 10px;
+        gap: 1px;
+    }
+    
+    .calendar-day {
+        min-height: 40px;
+        padding: 8px 4px;
+        font-size: 0.9em;
+    }
+    
+    .calendar-header {
+        padding: 8px 4px;
+        font-size: 0.8em;
+    }
+    
+    .calendar-controls {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .calendar-nav {
+        display: flex;
+        align-items: center;
+    }
+    
+    .nav-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .selected-date-entries {
+        padding: 15px;
+    }
+    
+    .date-entry-item {
+        padding: 12px;
+    }
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 历史日记相关样式 */
+.view-history-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-history-card:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    transform: translateY(-8px) scale(1.05);
+}
+
+.history-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: var(--card-shadow);
+}
+
+.diary-item {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.diary-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-color);
+}
+
+.diary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.diary-date {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.diary-mood {
+    font-size: 1.8em;
+    margin-right: 8px;
+}
+
+.diary-type {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.diary-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.diary-content {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.diary-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.diary-image {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    margin: 10px 0;
+    object-fit: cover;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+/* 图片查看器样式 */
+.image-viewer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    cursor: pointer;
+}
+
+.image-viewer.show {
+    display: flex;
+}
+
+.image-viewer img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    cursor: default;
+}
+
+.image-viewer .close-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 2em;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.5);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.image-viewer .close-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.image-viewer .image-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
+/* 可点击图片样式 */
+.diary-image {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.diary-image:hover {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+/* 标签页样式 */
+.history-tabs {
+    display: flex;
+    gap: 10px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    background: var(--glass-bg);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    color: var(--text-secondary);
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.tab-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.tab-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.tab-content {
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* 日历样式 */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.calendar-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9em;
+    border-radius: 8px;
+}
+
+.calendar-day {
+    background: var(--glass-bg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.calendar-day:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.calendar-day.today {
+    background: var(--primary-color);
+    color: white;
+    font-weight: bold;
+}
+
+.calendar-day.has-entry {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1));
+    border-color: #4CAF50;
+}
+
+.calendar-day.has-entry::after {
+    content: '●';
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    color: #4CAF50;
+    font-size: 0.8em;
+}
+
+.calendar-day.selected {
+    background: var(--secondary-color);
+    color: white;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+}
+
+.nav-btn {
+    background: var(--glass-bg);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    color: var(--primary-color);
+    padding: 8px 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.selected-date-entries {
+    background: var(--glass-bg);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.selected-date-title {
+    color: var(--primary-color);
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.date-entry-item {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.date-entry-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* 模板选择 */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+/* 改进的模板卡片样式 */
+.template-card {
+    background: white;
+    border: 2px solid #e1e5e9;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.template-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.template-card.selected {
+    border-color: var(--primary-color);
+    background: rgba(102, 126, 234, 0.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.template-icon {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.template-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+.template-desc {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}
+</style>
+
+<div class="diary-container">
+    <!-- 顶部统计 -->
+    <div class="stats-cards fade-in">
+        <div class="stat-card">
+            <div class="stat-number">{{ streak_days }}</div>
+            <div class="stat-label">连续记录天数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ month_entries_count }}</div>
+            <div class="stat-label">本月记录</div>
+        </div>
+        <div class="stat-card view-history-card" id="viewHistoryCard">
+            <div class="stat-number">📚</div>
+            <div class="stat-label">查看历史</div>
+        </div>
+    </div>
+
+    <!-- 今日记录区域 -->
+    <div class="today-section fade-in">
+        <h2 class="section-title">
+            <i class="fas fa-calendar-day"></i>
+            今天 ({{ today }})
+        </h2>
+
+        <!-- 每日问题 -->
+        <div class="daily-question">
+            <div class="question-text">💭 {{ daily_question }}</div>
+            <div class="question-answer">
+                <input type="text" class="question-input" placeholder="写下你的想法...">
+            </div>
+        </div>
+
+        <!-- 记录方式选择 -->
+        <div class="record-methods">
+            <div class="method-btn" data-method="text">
+                <span class="method-icon">✍️</span>
+                <div class="method-name">文字记录</div>
+                <div class="method-desc">写下今天的故事</div>
+            </div>
+            
+            <div class="method-btn" data-method="mood">
+                <span class="method-icon">😊</span>
+                <div class="method-name">心情打卡</div>
+                <div class="method-desc">一键记录心情</div>
+            </div>
+            
+            <div class="method-btn" data-method="image">
+                <span class="method-icon">📸</span>
+                <div class="method-name">图片日记</div>
+                <div class="method-desc">分享美好瞬间</div>
+            </div>
+            
+            <div class="method-btn" data-method="template">
+                <span class="method-icon">📝</span>
+                <div class="method-name">模板填空</div>
+                <div class="method-desc">轻松完成记录</div>
+            </div>
+        </div>
+
+        <!-- 心情选择器 -->
+        <div class="mood-selector">
+            <button class="mood-btn" data-mood="😊" title="开心">😊</button>
+            <button class="mood-btn" data-mood="😐" title="平静">😐</button>
+            <button class="mood-btn" data-mood="😢" title="难过">😢</button>
+            <button class="mood-btn" data-mood="🥳" title="兴奋">🥳</button>
+            <button class="mood-btn" data-mood="😴" title="疲惫">😴</button>
+            <button class="mood-btn" data-mood="🤔" title="思考">🤔</button>
+            <button class="mood-btn" data-mood="😍" title="感动">😍</button>
+            <button class="mood-btn" data-mood="😤" title="愤怒">😤</button>
+        </div>
+
+        <!-- 文字输入区域 -->
+        <div class="input-area" id="textInputArea" style="display:none;">
+            <textarea class="diary-input" placeholder="今天有什么想分享的吗？从一个字开始..."></textarea>
+        </div>
+
+        <!-- 图片上传区域 -->
+        <div class="image-upload" id="imageUploadArea" style="display:none;">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 3em; color: #ccc; margin-bottom: 10px;"></i>
+            <p>拖拽图片到这里，或点击上传</p>
+            <input type="file" accept="image/*" style="display:none;">
+        </div>
+
+        <!-- 模板选择区域 -->
+        <div id="templateArea" style="display:none;">
+            <div class="template-grid" id="templateGrid">
+                <!-- 模板将通过JavaScript动态加载 -->
+            </div>
+            <div id="templateForm" style="display:none;">
+                <!-- 模板表单将动态生成 -->
+            </div>
+        </div>
+
+        <!-- 保存状态 -->
+        <div class="save-status" id="saveStatus" style="display:none;">
+            <i class="fas fa-check-circle"></i>
+            <span>已保存</span>
+        </div>
+    </div>
+    
+    <!-- 今日已有记录显示 -->
+    {% if today_entry %}
+    <div class="today-section fade-in" style="margin-top: 20px;">
+        <h3 class="section-title">
+            <i class="fas fa-bookmark"></i>
+            今日记录
+        </h3>
+        <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 12px; border-left: 4px solid #4CAF50;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 1.5em;">{{ today_entry.mood }}</span>
+                <span style="color: #4CAF50; font-weight: 600;">{{ today_entry.get_word_count_display }}</span>
+            </div>
+            <p>{{ today_entry.get_entry_summary }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 历史日记查看区域 -->
+    <div class="history-section fade-in" id="historySection" style="display: none; margin-top: 20px;">
+        <h3 class="section-title">
+            <i class="fas fa-history"></i>
+            历史日记
+            <button id="closeHistoryBtn" style="float: right; background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 1.2em;">
+                <i class="fas fa-times"></i>
+            </button>
+        </h3>
+        
+        <!-- 标签页导航 -->
+        <div class="history-tabs" style="margin-bottom: 20px;">
+            <button class="tab-btn active" id="listTabBtn" data-tab="list">
+                <i class="fas fa-list"></i> 列表视图
+            </button>
+            <button class="tab-btn" id="calendarTabBtn" data-tab="calendar">
+                <i class="fas fa-calendar-alt"></i> 日历视图
+            </button>
+        </div>
+        
+        <!-- 列表视图 -->
+        <div class="tab-content" id="listView">
+            <div class="history-controls" style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="loadDiaryList()" class="btn-secondary" style="background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer;">
+                        <i class="fas fa-refresh"></i> 刷新
+                    </button>
+                    <span id="diaryCount" style="color: var(--text-secondary); font-size: 0.9em;"></span>
+                </div>
+            </div>
+            
+            <div class="diary-list" id="diaryList">
+                <div class="loading-spinner" id="loadingSpinner" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2em; color: var(--primary-color);"></i>
+                    <p style="margin-top: 10px; color: var(--text-secondary);">加载中...</p>
+                </div>
+            </div>
+            
+            <div class="load-more-container" id="loadMoreContainer" style="text-align: center; margin-top: 20px; display: none;">
+                <button onclick="loadMoreDiaries()" id="loadMoreBtn" class="btn-secondary" style="background: var(--glass-bg); border: 1px solid var(--primary-color); color: var(--primary-color); padding: 10px 20px; border-radius: 20px; cursor: pointer;">
+                    <i class="fas fa-chevron-down"></i> 加载更多
+                </button>
+            </div>
+        </div>
+        
+        <!-- 日历视图 -->
+        <div class="tab-content" id="calendarView" style="display: none;">
+            <div class="calendar-controls" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="calendar-nav">
+                    <button onclick="changeMonth(-1)" class="nav-btn">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="currentMonth" style="font-size: 1.1em; font-weight: 600; margin: 0 20px;"></span>
+                    <button onclick="changeMonth(1)" class="nav-btn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <button onclick="goToToday()" class="btn-secondary" style="background: var(--glass-bg); border: 1px solid var(--primary-color); color: var(--primary-color); padding: 6px 12px; border-radius: 16px; cursor: pointer; font-size: 0.9em;">
+                    <i class="fas fa-calendar-day"></i> 今天
+                </button>
+            </div>
+            
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- 日历将通过JavaScript生成 -->
+            </div>
+            
+            <div class="selected-date-entries" id="selectedDateEntries" style="margin-top: 20px; display: none;">
+                <h4 class="selected-date-title" id="selectedDateTitle"></h4>
+                <div class="date-entries-list" id="dateEntriesList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 漂浮的加号按钮 -->
+<button class="floating-add" id="scrollToTopBtn">
+    <i class="fas fa-plus"></i>
+</button>
+
+<!-- 成就弹窗 -->
+<div class="achievement-popup" id="achievementPopup">
+    <span class="achievement-icon">🏆</span>
+    <div class="achievement-title">恭喜获得成就！</div>
+    <div class="achievement-desc">继续保持下去～</div>
+    <button onclick="closeAchievementPopup()" style="background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">好的</button>
+</div>
+
+<!-- 图片查看器 -->
+<div class="image-viewer" id="imageViewer" onclick="closeImageViewer()">
+    <div class="close-btn" onclick="closeImageViewer()">
+        <i class="fas fa-times"></i>
+    </div>
+    <img id="viewerImage" src="" alt="日记图片" onclick="event.stopPropagation()">
+    <div class="image-info" id="imageInfo">
+        <div id="imageTitle"></div>
+        <div id="imageDate"></div>
+    </div>
+</div>
+
+<script>
+let currentMethod = '';
+let selectedMood = '';
+let autoSaveTimer = null;
+let isAutoSaving = false;
+
+// 历史日记相关变量
+let currentPage = 1;
+let isLoading = false;
+let hasMore = true;
+
+// 日历相关变量
+let currentCalendarDate = new Date();
+let calendarData = {};
+let selectedDate = null;
+
+// ========== 核心函数（需要在页面加载前定义） ==========
+
+// 切换历史日记显示
+function toggleHistoryView() {
+    const historySection = document.getElementById('historySection');
+    const todaySection = document.querySelector('.today-section');
+    
+    if (historySection.style.display === 'none' || historySection.style.display === '') {
+        historySection.style.display = 'block';
+        todaySection.style.display = 'none';
+        
+        // 首次打开时加载日记列表
+        if (!document.querySelector('.diary-item')) {
+            loadDiaryList();
+        }
+    } else {
+        historySection.style.display = 'none';
+        todaySection.style.display = 'block';
+    }
+}
+
+// 切换历史标签页
+function switchHistoryTab(tabName) {
+    // 更新标签按钮状态
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // 显示对应内容
+    document.getElementById('listView').style.display = tabName === 'list' ? 'block' : 'none';
+    document.getElementById('calendarView').style.display = tabName === 'calendar' ? 'block' : 'none';
+    
+    // 如果切换到日历视图，初始化日历
+    if (tabName === 'calendar') {
+        initializeCalendar();
+    }
+}
+
+// 日历相关函数（需要在HTML中直接调用）
+function changeMonth(delta) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    loadCalendarData();
+    
+    // 隐藏选中日期的详情
+    const selectedEntries = document.getElementById('selectedDateEntries');
+    if (selectedEntries) {
+        selectedEntries.style.display = 'none';
+    }
+    selectedDate = null;
+}
+
+function goToToday() {
+    currentCalendarDate = new Date();
+    loadCalendarData();
+    
+    // 隐藏选中日期的详情
+    const selectedEntries = document.getElementById('selectedDateEntries');
+    if (selectedEntries) {
+        selectedEntries.style.display = 'none';
+    }
+    selectedDate = null;
+}
+
+// 图片查看器函数
+function openImageViewer(imageUrl, title, date) {
+    const imageViewer = document.getElementById('imageViewer');
+    const viewerImage = document.getElementById('viewerImage');
+    const imageTitle = document.getElementById('imageTitle');
+    const imageDate = document.getElementById('imageDate');
+    
+    if (!imageViewer || !viewerImage) return;
+    
+    // 设置图片源
+    viewerImage.src = imageUrl;
+    
+    // 设置图片信息
+    if (imageTitle) imageTitle.textContent = title || '日记图片';
+    if (imageDate) imageDate.textContent = date;
+    
+    // 显示查看器
+    imageViewer.classList.add('show');
+    
+    // 禁止页面滚动
+    document.body.style.overflow = 'hidden';
+    
+    // 添加键盘事件监听（ESC键关闭）
+    document.addEventListener('keydown', handleImageViewerKeydown);
+}
+
+function closeImageViewer() {
+    const imageViewer = document.getElementById('imageViewer');
+    const viewerImage = document.getElementById('viewerImage');
+    
+    if (!imageViewer) return;
+    
+    // 隐藏查看器
+    imageViewer.classList.remove('show');
+    
+    // 恢复页面滚动
+    document.body.style.overflow = '';
+    
+    // 清空图片源（避免内存泄漏）
+    setTimeout(() => {
+        if (viewerImage) viewerImage.src = '';
+    }, 300);
+    
+    // 移除键盘事件监听
+    document.removeEventListener('keydown', handleImageViewerKeydown);
+}
+
+function handleImageViewerKeydown(e) {
+    if (e.key === 'Escape') {
+        closeImageViewer();
+    }
+}
+
+// 调试函数 - 显示日期信息
+function debugDateInfo() {
+    const now = new Date();
+    console.log('=== 日期调试信息 ===');
+    console.log('当前时间:', now);
+    console.log('本地日期字符串:', now.toLocaleDateString('zh-CN'));
+    console.log('ISO字符串:', now.toISOString());
+    console.log('时区偏移(分钟):', now.getTimezoneOffset());
+    console.log('年月日:', now.getFullYear(), now.getMonth() + 1, now.getDate());
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEventListeners();
+    loadTemplates();
+    
+    // 默认选择文字记录方式
+    selectMethod('text');
+    
+    // 调试日期信息
+    debugDateInfo();
+});
+
+// 初始化事件监听器
+function initializeEventListeners() {
+    // 查看历史按钮
+    const viewHistoryCard = document.getElementById('viewHistoryCard');
+    if (viewHistoryCard) {
+        viewHistoryCard.addEventListener('click', toggleHistoryView);
+    }
+    
+    // 关闭历史按钮
+    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+    if (closeHistoryBtn) {
+        closeHistoryBtn.addEventListener('click', toggleHistoryView);
+    }
+    
+    // 标签页按钮
+    const listTabBtn = document.getElementById('listTabBtn');
+    if (listTabBtn) {
+        listTabBtn.addEventListener('click', () => switchHistoryTab('list'));
+    }
+    
+    const calendarTabBtn = document.getElementById('calendarTabBtn');
+    if (calendarTabBtn) {
+        calendarTabBtn.addEventListener('click', () => switchHistoryTab('calendar'));
+    }
+    
+    // 滚动到顶部按钮
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    if (scrollToTopBtn) {
+        scrollToTopBtn.addEventListener('click', scrollToTop);
+    }
+    
+    // 记录方式选择
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectMethod(this.dataset.method);
+        });
+    });
+    
+    // 心情选择
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectMood(this.dataset.mood);
+        });
+    });
+    
+    // 文字输入自动保存
+    const textInput = document.querySelector('.diary-input');
+    if (textInput) {
+        textInput.addEventListener('input', function() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                autoSaveContent();
+            }, 2000); // 2秒后自动保存
+        });
+    }
+    
+    // 每日问题输入
+    const questionInput = document.querySelector('.question-input');
+    if (questionInput) {
+        questionInput.addEventListener('input', function() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                autoSaveQuestionAnswer();
+            }, 2000);
+        });
+    }
+    
+    // 图片拖拽上传
+    const imageUpload = document.getElementById('imageUploadArea');
+    if (imageUpload) {
+        imageUpload.addEventListener('click', function() {
+            const fileInput = this.querySelector('input[type="file"]');
+            fileInput.click();
+        });
+        
+        imageUpload.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        imageUpload.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+        
+        imageUpload.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                uploadImage(files[0]);
+            }
+        });
+        
+        const fileInput = imageUpload.querySelector('input[type="file"]');
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                uploadImage(e.target.files[0]);
+            }
+        });
+    }
+}
+
+// 选择记录方式
+function selectMethod(method) {
+    // 移除其他按钮的选中状态
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 选中当前按钮
+    document.querySelector(`[data-method="${method}"]`).classList.add('active');
+    
+    // 隐藏所有输入区域
+    document.getElementById('textInputArea').style.display = 'none';
+    document.getElementById('imageUploadArea').style.display = 'none';
+    document.getElementById('templateArea').style.display = 'none';
+    
+    // 显示对应的输入区域
+    currentMethod = method;
+    
+    switch(method) {
+        case 'text':
+            document.getElementById('textInputArea').style.display = 'block';
+            document.querySelector('.diary-input').focus();
+            break;
+        case 'mood':
+            // 心情记录不需要额外输入区域，直接选择心情即可保存
+            showMessage('选择一个心情来记录今天的感受！', 'info');
+            break;
+        case 'image':
+            document.getElementById('imageUploadArea').style.display = 'block';
+            break;
+        case 'template':
+            document.getElementById('templateArea').style.display = 'block';
+            break;
+    }
+}
+
+// 选择心情
+function selectMood(mood) {
+    // 移除其他心情按钮的选中状态
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    // 选中当前心情
+    document.querySelector(`[data-mood="${mood}"]`).classList.add('selected');
+    selectedMood = mood;
+    
+    // 如果当前是心情记录模式，直接保存
+    if (currentMethod === 'mood') {
+        saveMoodEntry();
+    }
+}
+
+// 自动保存内容
+function autoSaveContent() {
+    if (isAutoSaving) return;
+    
+    const textInput = document.querySelector('.diary-input');
+    const content = textInput.value.trim();
+    
+    if (!content && !selectedMood) return;
+    
+    showSaveStatus('saving');
+    isAutoSaving = true;
+    
+    fetch('/tools/api/diary/quick-save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            content: content,
+            mood: selectedMood,
+            entry_type: 'text'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        isAutoSaving = false;
+        if (data.success) {
+            showSaveStatus('saved');
+            updateWordCount(data.word_count);
+        } else {
+            showMessage(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        isAutoSaving = false;
+        console.error('Auto save error:', error);
+        showMessage('自动保存失败', 'error');
+    });
+}
+
+// 自动保存问题回答
+function autoSaveQuestionAnswer() {
+    const questionInput = document.querySelector('.question-input');
+    const answer = questionInput.value.trim();
+    
+    if (!answer) return;
+    
+    autoSaveContent(); // 复用文字保存逻辑
+}
+
+// 保存心情记录
+function saveMoodEntry() {
+    if (!selectedMood) {
+        showMessage('请选择一个心情', 'error');
+        return;
+    }
+    
+    showSaveStatus('saving');
+    
+    fetch('/tools/api/diary/mood-save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            mood: selectedMood
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSaveStatus('saved');
+            showMessage(data.message, 'success');
+            // 可能触发成就
+            checkForAchievements();
+        } else {
+            showMessage(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Mood save error:', error);
+        showMessage('保存失败', 'error');
+    });
+}
+
+// 上传图片
+function uploadImage(file) {
+    if (!file.type.startsWith('image/')) {
+        showMessage('请上传图片文件', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('mood', selectedMood || '😊');
+    formData.append('description', '');
+    
+    showSaveStatus('saving');
+    
+    fetch('/tools/api/diary/image-upload/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSaveStatus('saved');
+            showMessage(data.message, 'success');
+            
+            // 显示上传的图片预览
+            const imageUpload = document.getElementById('imageUploadArea');
+            imageUpload.innerHTML = `
+                <img src="${data.image_url}" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 10px;">
+                <p>图片上传成功！</p>
+            `;
+            
+            checkForAchievements();
+        } else {
+            showMessage(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Image upload error:', error);
+        showMessage('上传失败', 'error');
+    });
+}
+
+// 加载模板
+function loadTemplates() {
+    fetch('/tools/api/diary/templates/')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            displayTemplates(data.templates);
+        } else {
+            console.error('Failed to load templates:', data.error);
+            showMessage('加载模板失败', 'error');
+            // 使用默认模板作为备选
+            displayDefaultTemplates();
+        }
+    })
+    .catch(error => {
+        console.error('Load templates error:', error);
+        showMessage('加载模板失败，使用默认模板', 'warning');
+        // 使用默认模板作为备选
+        displayDefaultTemplates();
+    });
+}
+
+// 显示默认模板
+function displayDefaultTemplates() {
+    const defaultTemplates = [
+        {
+            id: 'default1',
+            name: '今日回顾',
+            description: '简单回顾今天的生活',
+            icon: '📝',
+            content: '今天最开心的事：{开心的事}\n今天遇到的挑战：{挑战}\n明天的计划：{计划}'
+        },
+        {
+            id: 'default2', 
+            name: '心情记录',
+            description: '记录今天的心情变化',
+            icon: '😊',
+            content: '早上心情：{早上心情}\n中午心情：{中午心情}\n晚上心情：{晚上心情}\n心情变化原因：{原因}'
+        },
+        {
+            id: 'default3',
+            name: '生活感悟',
+            description: '记录生活中的小感悟',
+            icon: '💭',
+            content: '今天学到的新知识：{新知识}\n对生活的感悟：{感悟}\n想要改进的地方：{改进点}'
+        }
+    ];
+    
+    displayTemplates(defaultTemplates);
+}
+
+// 显示模板
+function displayTemplates(templates) {
+    const templateGrid = document.getElementById('templateGrid');
+    templateGrid.innerHTML = '';
+    
+    templates.forEach(template => {
+        const templateCard = document.createElement('div');
+        templateCard.className = 'template-card';
+        templateCard.dataset.templateId = template.id;
+        templateCard.innerHTML = `
+            <div class="template-icon">${template.icon}</div>
+            <div class="template-name">${template.name}</div>
+            <div class="template-desc">${template.description}</div>
+        `;
+        
+        templateCard.addEventListener('click', function() {
+            selectTemplate(template);
+        });
+        
+        templateGrid.appendChild(templateCard);
+    });
+}
+
+// 选择模板
+function selectTemplate(template) {
+    // 移除其他模板的选中状态
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // 选中当前模板
+    document.querySelector(`[data-template-id="${template.id}"]`).classList.add('selected');
+    
+    // 生成模板表单
+    generateTemplateForm(template);
+}
+
+// 生成模板表单
+function generateTemplateForm(template) {
+    const templateForm = document.getElementById('templateForm');
+    
+    // 解析模板内容，提取需要填空的部分
+    const content = template.content;
+    const blanks = content.match(/\{([^}]+)\}/g) || [];
+    
+    let formHtml = `<h4 style="margin: 20px 0 15px 0; color: var(--text-color);">${template.name}</h4>`;
+    formHtml += `<p style="color: var(--text-secondary); margin-bottom: 20px;">${template.description}</p>`;
+    
+    if (blanks.length === 0) {
+        formHtml += `<p style="color: var(--text-muted); font-style: italic;">这个模板没有需要填空的内容</p>`;
+    } else {
+        blanks.forEach((blank, index) => {
+            const fieldName = blank.replace(/[{}]/g, '');
+            formHtml += `
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-color);">${fieldName}</label>
+                    <input type="text" class="diary-input" data-field="${fieldName}" 
+                           style="min-height: auto; padding: 10px; margin-bottom: 5px;" 
+                           placeholder="在这里填写...">
+                </div>
+            `;
+        });
+    }
+    
+    formHtml += `
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="saveTemplateEntry('${template.id}')" 
+                    style="background: var(--primary-color); color: white; border: none; 
+                           padding: 12px 24px; border-radius: 8px; cursor: pointer; 
+                           font-weight: 600; flex: 1;">
+                完成记录
+            </button>
+            <button onclick="cancelTemplateForm()" 
+                    style="background: #6c757d; color: white; border: none; 
+                           padding: 12px 24px; border-radius: 8px; cursor: pointer; 
+                           font-weight: 600; flex: 1;">
+                取消
+            </button>
+        </div>
+    `;
+    
+    templateForm.innerHTML = formHtml;
+    templateForm.style.display = 'block';
+}
+
+// 取消模板表单
+function cancelTemplateForm() {
+    document.getElementById('templateForm').style.display = 'none';
+    // 移除模板选中状态
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+}
+
+// 保存模板记录
+function saveTemplateEntry(templateId) {
+    const formInputs = document.querySelectorAll('#templateForm input[data-field]');
+    const answers = {};
+    
+    formInputs.forEach(input => {
+        answers[input.dataset.field] = input.value.trim();
+    });
+    
+    // 检查是否所有字段都已填写
+    const emptyFields = Object.values(answers).filter(value => !value);
+    if (emptyFields.length > 0) {
+        showMessage('请填写所有必填字段', 'error');
+        return;
+    }
+    
+    showSaveStatus('saving');
+    
+    // 如果是默认模板，直接保存到本地存储
+    if (templateId.startsWith('default')) {
+        const entry = {
+            content: Object.entries(answers).map(([key, value]) => `${key}: ${value}`).join('\n'),
+            mood: selectedMood || '😊',
+            entry_type: 'template',
+            template_name: '默认模板',
+            created_at: new Date().toISOString()
+        };
+        
+        // 保存到本地存储
+        const savedEntries = JSON.parse(localStorage.getItem('diary_entries') || '[]');
+        savedEntries.push(entry);
+        localStorage.setItem('diary_entries', JSON.stringify(savedEntries));
+        
+        showSaveStatus('saved');
+        showMessage('记录保存成功！', 'success');
+        
+        // 清空表单
+        document.getElementById('templateForm').style.display = 'none';
+        return;
+    }
+    
+    // 正常API保存
+    fetch('/tools/api/diary/template-save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            template_id: templateId,
+            answers: answers,
+            mood: selectedMood || '😊'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showSaveStatus('saved');
+            showMessage(data.message, 'success');
+            checkForAchievements();
+        } else {
+            showMessage(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Template save error:', error);
+        showMessage('保存失败', 'error');
+    });
+}
+
+// 显示保存状态
+function showSaveStatus(status) {
+    const saveStatus = document.getElementById('saveStatus');
+    const icon = saveStatus.querySelector('i');
+    const text = saveStatus.querySelector('span');
+    
+    saveStatus.style.display = 'inline-flex';
+    
+    if (status === 'saving') {
+        saveStatus.className = 'save-status saving';
+        icon.className = 'fas fa-spinner fa-spin';
+        text.textContent = '保存中...';
+    } else if (status === 'saved') {
+        saveStatus.className = 'save-status saved';
+        icon.className = 'fas fa-check-circle';
+        text.textContent = '已保存';
+        
+        // 3秒后隐藏
+        setTimeout(() => {
+            saveStatus.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// 检查成就
+function checkForAchievements() {
+    fetch('/tools/api/diary/achievements/')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const newAchievements = data.achievements.filter(a => 
+                a.is_completed && !localStorage.getItem(`achievement_${a.id}_shown`)
+            );
+            
+            if (newAchievements.length > 0) {
+                showAchievementPopup(newAchievements[0]);
+                localStorage.setItem(`achievement_${newAchievements[0].id}_shown`, 'true');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Check achievements error:', error);
+    });
+}
+
+// 显示成就弹窗
+function showAchievementPopup(achievement) {
+    const popup = document.getElementById('achievementPopup');
+    const icon = popup.querySelector('.achievement-icon');
+    const title = popup.querySelector('.achievement-title');
+    const desc = popup.querySelector('.achievement-desc');
+    
+    icon.textContent = achievement.icon;
+    title.textContent = achievement.name;
+    desc.textContent = achievement.description;
+    
+    popup.classList.add('show');
+    
+    // 添加庆祝动画
+    setTimeout(() => {
+        popup.classList.add('pulse');
+    }, 500);
+}
+
+// 关闭成就弹窗
+function closeAchievementPopup() {
+    const popup = document.getElementById('achievementPopup');
+    popup.classList.remove('show', 'pulse');
+}
+
+// 滚动到顶部
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+// 更新字数统计
+function updateWordCount(count) {
+    // 可以在这里更新字数显示
+    console.log('Word count:', count);
+}
+
+// 改进的消息提示系统
+function showMessage(message, type = 'info', duration = 3000) {
+    // 移除现有的消息
+    const existingMessages = document.querySelectorAll('.message-toast');
+    existingMessages.forEach(msg => document.body.removeChild(msg));
+    
+    // 创建消息提示元素
+    const messageEl = document.createElement('div');
+    messageEl.className = 'message-toast';
+    messageEl.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1001;
+        max-width: 300px;
+        word-wrap: break-word;
+        animation: slideIn 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    // 根据类型设置背景色和图标
+    let icon = '';
+    switch(type) {
+        case 'success':
+            messageEl.style.background = 'var(--success-color)';
+            icon = '✅ ';
+            break;
+        case 'error':
+            messageEl.style.background = 'var(--danger-color)';
+            icon = '❌ ';
+            break;
+        case 'warning':
+            messageEl.style.background = 'var(--warning-color)';
+            icon = '⚠️ ';
+            break;
+        case 'info':
+        default:
+            messageEl.style.background = 'var(--primary-color)';
+            icon = 'ℹ️ ';
+            break;
+    }
+    
+    messageEl.innerHTML = `<span>${icon}${message}</span>`;
+    document.body.appendChild(messageEl);
+    
+    // 自动移除
+    setTimeout(() => {
+        messageEl.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => {
+            if (document.body.contains(messageEl)) {
+                document.body.removeChild(messageEl);
+            }
+        }, 300);
+    }, duration);
+    
+    // 点击关闭
+    messageEl.addEventListener('click', () => {
+        messageEl.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => {
+            if (document.body.contains(messageEl)) {
+                document.body.removeChild(messageEl);
+            }
+        }, 300);
+    });
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 添加CSS动画
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// ========== 历史日记相关函数 ==========
+
+// 加载日记列表
+function loadDiaryList(page = 1) {
+    if (isLoading) return;
+    
+    isLoading = true;
+    currentPage = page;
+    
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const diaryList = document.getElementById('diaryList');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    
+    // 如果是第一页，显示加载动画
+    if (page === 1) {
+        loadingSpinner.style.display = 'block';
+        diaryList.innerHTML = '<div class="loading-spinner" id="loadingSpinner" style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 2em; color: var(--primary-color);"></i><p style="margin-top: 10px; color: var(--text-secondary);">加载中...</p></div>';
+        loadMoreContainer.style.display = 'none';
+    }
+    
+    fetch(`/tools/api/diary/list/?page=${page}&page_size=10`)
+        .then(response => response.json())
+        .then(data => {
+            isLoading = false;
+            
+            if (data.success) {
+                displayDiaryList(data.entries, page === 1);
+                
+                // 更新分页信息
+                hasMore = data.has_more;
+                
+                // 更新计数显示
+                const diaryCount = document.getElementById('diaryCount');
+                diaryCount.textContent = `共 ${data.total_count} 条记录`;
+                
+                // 显示/隐藏加载更多按钮
+                if (hasMore && data.entries.length > 0) {
+                    loadMoreContainer.style.display = 'block';
+                } else {
+                    loadMoreContainer.style.display = 'none';
+                }
+            } else {
+                showMessage(data.error || '加载失败', 'error');
+                if (page === 1) {
+                    showEmptyState();
+                }
+            }
+        })
+        .catch(error => {
+            isLoading = false;
+            console.error('Load diary list error:', error);
+            showMessage('加载失败', 'error');
+            if (page === 1) {
+                showEmptyState();
+            }
+        });
+}
+
+// 显示日记列表
+function displayDiaryList(entries, clearFirst = false) {
+    const diaryList = document.getElementById('diaryList');
+    
+    if (clearFirst) {
+        diaryList.innerHTML = '';
+    }
+    
+    if (entries.length === 0 && clearFirst) {
+        showEmptyState();
+        return;
+    }
+    
+    entries.forEach(entry => {
+        const diaryItem = createDiaryItem(entry);
+        diaryList.appendChild(diaryItem);
+    });
+}
+
+// 创建日记项目元素
+function createDiaryItem(entry) {
+    const diaryItem = document.createElement('div');
+    diaryItem.className = 'diary-item fade-in';
+    diaryItem.dataset.entryId = entry.id;
+    
+    // 格式化日期 - 避免时区问题
+    const dateParts = entry.date.split('-');
+    const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+    const dateStr = date.toLocaleDateString('zh-CN', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        weekday: 'short'
+    });
+    
+    // 类型显示映射
+    const typeMap = {
+        'text': '文字',
+        'mood': '心情',
+        'image': '图片',
+        'template': '模板',
+        'quick': '快记'
+    };
+    
+    diaryItem.innerHTML = `
+        <div class="diary-header">
+            <div class="diary-date">${dateStr}</div>
+            <div>
+                <span class="diary-mood">${entry.mood}</span>
+                <span class="diary-type">${typeMap[entry.entry_type] || entry.entry_type}</span>
+            </div>
+        </div>
+        <div class="diary-title">${entry.title}</div>
+        <div class="diary-content">${entry.content || entry.summary}</div>
+        ${entry.image_url ? `<img src="${entry.image_url}" alt="日记图片" class="diary-image" data-image-url="${entry.image_url}" data-title="${entry.title}" data-date="${dateStr}">` : ''}
+        <div class="diary-meta">
+            <span><i class="fas fa-font"></i> ${entry.word_count} 字</span>
+            <span><i class="fas fa-clock"></i> ${formatTime(entry.created_at)}</span>
+        </div>
+    `;
+    
+    // 为图片添加点击事件
+    const imageElement = diaryItem.querySelector('.diary-image');
+    if (imageElement) {
+        imageElement.addEventListener('click', function(e) {
+            e.stopPropagation(); // 阻止事件冒泡到父元素
+            openImageViewer(
+                this.dataset.imageUrl, 
+                this.dataset.title, 
+                this.dataset.date
+            );
+        });
+    }
+    
+    // 为日记项目添加点击事件（排除图片区域）
+    diaryItem.addEventListener('click', function(e) {
+        // 如果点击的是图片，不执行日记详情
+        if (e.target.classList.contains('diary-image')) {
+            return;
+        }
+        showDiaryDetail(entry);
+    });
+    
+    return diaryItem;
+}
+
+// 显示空状态
+function showEmptyState() {
+    const diaryList = document.getElementById('diaryList');
+    diaryList.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <h3>还没有日记记录</h3>
+            <p>开始记录你的生活点滴吧！</p>
+        </div>
+    `;
+}
+
+// 加载更多日记
+function loadMoreDiaries() {
+    if (!hasMore || isLoading) return;
+    
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+    
+    loadDiaryList(currentPage + 1);
+}
+
+// 显示日记详情（简单的展开/收起）
+function showDiaryDetail(entry) {
+    // 这里可以实现日记详情的显示
+    // 暂时用alert显示
+    let detailText = `日期: ${entry.date}\n`;
+    detailText += `心情: ${entry.mood}\n`;
+    detailText += `类型: ${entry.entry_type}\n`;
+    if (entry.title) detailText += `标题: ${entry.title}\n`;
+    if (entry.content) detailText += `内容: ${entry.content}\n`;
+    detailText += `字数: ${entry.word_count}`;
+    
+    alert(detailText);
+}
+
+// 格式化时间
+function formatTime(timeStr) {
+    const time = new Date(timeStr);
+    const now = new Date();
+    const diff = now - time;
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 60) {
+        return `${minutes}分钟前`;
+    } else if (hours < 24) {
+        return `${hours}小时前`;
+    } else if (days < 7) {
+        return `${days}天前`;
+    } else {
+        return time.toLocaleDateString('zh-CN');
+    }
+}
+
+// ========== 图片查看器相关函数（已移至页面顶部） ==========
+
+// 图片加载错误处理
+document.addEventListener('DOMContentLoaded', function() {
+    // 为所有图片添加错误处理
+    document.addEventListener('error', function(e) {
+        if (e.target.tagName === 'IMG' && e.target.classList.contains('diary-image')) {
+            e.target.style.display = 'none';
+            
+            // 在图片位置显示错误提示
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                padding: 20px;
+                text-align: center;
+                color: var(--text-muted);
+                background: rgba(0, 0, 0, 0.05);
+                border-radius: 8px;
+                margin: 10px 0;
+            `;
+            errorDiv.innerHTML = '<i class="fas fa-image"></i><br>图片加载失败';
+            
+            e.target.parentNode.insertBefore(errorDiv, e.target.nextSibling);
+        }
+    }, true);
+});
+
+// ========== 标签页和日历相关函数 ==========
+
+// 初始化日历
+function initializeCalendar() {
+    currentCalendarDate = new Date();
+    loadCalendarData();
+}
+
+// 加载日历数据
+function loadCalendarData() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth() + 1;
+    
+    fetch(`/tools/api/diary/calendar/?year=${year}&month=${month}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                calendarData = data.calendar_data;
+                renderCalendar();
+            } else {
+                showMessage('加载日历数据失败', 'error');
+                renderCalendar(); // 仍然渲染空日历
+            }
+        })
+        .catch(error => {
+            console.error('Load calendar data error:', error);
+            showMessage('加载日历数据失败', 'error');
+            renderCalendar(); // 仍然渲染空日历
+        });
+}
+
+// 渲染日历
+function renderCalendar() {
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonth = document.getElementById('currentMonth');
+    
+    // 更新月份标题
+    const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    currentMonth.textContent = `${currentCalendarDate.getFullYear()}年 ${monthNames[currentCalendarDate.getMonth()]}`;
+    
+    // 清空日历
+    calendarGrid.innerHTML = '';
+    
+    // 添加星期标题
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    weekDays.forEach(dayName => {
+        const header = document.createElement('div');
+        header.className = 'calendar-header';
+        header.textContent = dayName;
+        calendarGrid.appendChild(header);
+    });
+    
+    // 获取当月第一天和最后一天
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // 获取第一天是星期几
+    const firstDayWeek = firstDay.getDay();
+    
+    // 添加上个月的日期（填充）
+    const prevMonth = new Date(year, month, 0);
+    for (let i = firstDayWeek - 1; i >= 0; i--) {
+        const prevDay = prevMonth.getDate() - i;
+        const dayElement = createCalendarDay(prevDay, true, new Date(year, month - 1, prevDay));
+        calendarGrid.appendChild(dayElement);
+    }
+    
+    // 添加当月的日期
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const dayElement = createCalendarDay(day, false, date);
+        calendarGrid.appendChild(dayElement);
+    }
+    
+    // 添加下个月的日期（填充）
+    const totalCells = calendarGrid.children.length - 7; // 减去星期标题
+    const remainingCells = 42 - totalCells; // 6行 * 7列 = 42个单元格
+    for (let nextDay = 1; nextDay <= remainingCells; nextDay++) {
+        const dayElement = createCalendarDay(nextDay, true, new Date(year, month + 1, nextDay));
+        calendarGrid.appendChild(dayElement);
+    }
+}
+
+// 创建日历日期元素
+function createCalendarDay(day, isOtherMonth, date) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'calendar-day';
+    dayElement.textContent = day;
+    
+    if (isOtherMonth) {
+        dayElement.classList.add('other-month');
+    }
+    
+    // 检查是否是今天
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+        dayElement.classList.add('today');
+    }
+    
+    // 检查是否有日记 - 使用本地日期格式避免时区问题
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day_now = String(date.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day_now}`;
+    
+    if (calendarData[dateKey]) {
+        dayElement.classList.add('has-entry');
+        dayElement.title = `${calendarData[dateKey].mood} ${calendarData[dateKey].entry_type === 'image' ? '📸' : ''}`;
+    }
+    
+    // 添加点击事件
+    dayElement.addEventListener('click', function() {
+        selectCalendarDate(date, dayElement);
+    });
+    
+    return dayElement;
+}
+
+// 选择日历日期
+function selectCalendarDate(date, dayElement) {
+    // 移除之前的选中状态
+    document.querySelectorAll('.calendar-day.selected').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // 添加选中状态
+    dayElement.classList.add('selected');
+    selectedDate = date;
+    
+    // 显示该日期的日记
+    showDateEntries(date);
+}
+
+// 显示指定日期的日记
+function showDateEntries(date) {
+    const selectedDateEntries = document.getElementById('selectedDateEntries');
+    const selectedDateTitle = document.getElementById('selectedDateTitle');
+    const dateEntriesList = document.getElementById('dateEntriesList');
+    
+    // 使用本地日期格式化，避免时区问题
+    const dateStr = date.toLocaleDateString('zh-CN', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        weekday: 'long'
+    });
+    
+    selectedDateTitle.innerHTML = `<i class="fas fa-calendar-day"></i> ${dateStr}`;
+    
+    // 检查是否有该日期的日记 - 使用本地日期格式
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day_now = String(date.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day_now}`;
+    const dayData = calendarData[dateKey];
+    
+    if (dayData) {
+        // 获取该日期的详细日记信息
+        loadDateEntries(dateKey);
+    } else {
+        dateEntriesList.innerHTML = `
+            <div class="empty-state" style="padding: 40px 20px;">
+                <i class="fas fa-calendar-times"></i>
+                <p>这一天还没有日记记录</p>
+                <small style="color: var(--text-muted);">点击今日记录区域开始写日记吧！</small>
+            </div>
+        `;
+    }
+    
+    selectedDateEntries.style.display = 'block';
+}
+
+// 加载指定日期的日记详情
+function loadDateEntries(dateKey) {
+    const dateEntriesList = document.getElementById('dateEntriesList');
+    
+    // 显示加载状态
+    dateEntriesList.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-spinner fa-spin" style="color: var(--primary-color);"></i>
+            <p style="margin-top: 10px; color: var(--text-secondary);">加载中...</p>
+        </div>
+    `;
+    
+    // 从日记列表中查找该日期的记录（简化实现）
+    fetch(`/tools/api/diary/list/?page=1&page_size=50`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const dateEntries = data.entries.filter(entry => entry.date === dateKey);
+                displayDateEntries(dateEntries);
+            } else {
+                dateEntriesList.innerHTML = '<p style="text-align: center; color: var(--text-muted);">加载失败</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Load date entries error:', error);
+            dateEntriesList.innerHTML = '<p style="text-align: center; color: var(--text-muted);">加载失败</p>';
+        });
+}
+
+// 显示日期日记条目
+function displayDateEntries(entries) {
+    const dateEntriesList = document.getElementById('dateEntriesList');
+    
+    if (entries.length === 0) {
+        dateEntriesList.innerHTML = `
+            <div class="empty-state" style="padding: 40px 20px;">
+                <i class="fas fa-calendar-times"></i>
+                <p>这一天还没有日记记录</p>
+            </div>
+        `;
+        return;
+    }
+    
+    dateEntriesList.innerHTML = '';
+    
+    entries.forEach(entry => {
+        const entryElement = document.createElement('div');
+        entryElement.className = 'date-entry-item';
+        
+        entryElement.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2em;">${entry.mood}</span>
+                    <span style="font-weight: 600; color: var(--text-color);">${entry.title}</span>
+                </div>
+                <span style="font-size: 0.8em; color: var(--text-muted);">${formatTime(entry.created_at)}</span>
+            </div>
+            <div style="color: var(--text-secondary); margin-bottom: 8px;">${entry.content || entry.summary}</div>
+            ${entry.image_url ? `<img src="${entry.image_url}" alt="日记图片" style="max-width: 100%; max-height: 150px; border-radius: 6px; cursor: pointer;" onclick="openImageViewer('${entry.image_url}', '${entry.title}', '${entry.date}')">` : ''}
+            <div style="font-size: 0.8em; color: var(--text-muted);">
+                <i class="fas fa-font"></i> ${entry.word_count} 字
+            </div>
+        `;
+        
+        dateEntriesList.appendChild(entryElement);
+    });
+}
+
+// 切换月份和回到今天函数已移至页面顶部
+
+// ========== 页面特定分享配置 ==========
+
+// 覆盖全局分享函数，为简单日记页面提供特定文案
+if (typeof window.getMetaDescription === 'function') {
+    const originalGetMetaDescription = window.getMetaDescription;
+    window.getMetaDescription = function() {
+        return "记录生活点滴，保存美好回忆。简单易用的日记工具，支持文字、图片记录，让每一天都值得纪念。";
+    };
+}
+
+// 为简单日记页面提供特定的分享文案
+window.getPageShareContent = function() {
+    return {
+        title: "简单生活日记 - 记录生活点滴",
+        description: "记录生活点滴，保存美好回忆。简单易用的日记工具，支持文字、图片记录，让每一天都值得纪念。",
+        url: window.location.href,
+        hashtags: ["生活日记", "记录生活", "美好回忆", "日记工具"]
+    };
+};
+
+// 优化复制链接的提示文案
+if (typeof window.showShareToast === 'function') {
+    const originalShowShareToast = window.showShareToast;
+    window.showShareToast = function(message, duration) {
+        if (message.includes('链接已复制')) {
+            message = "简单日记链接已复制！快去分享给朋友们吧～";
+        }
+        originalShowShareToast(message, duration);
+    };
+}
+
+</script>
+
+{% endblock %}
+

@@ -921,6 +921,14 @@
                     </div>
                 </div>
                 <div class="profile-name">{{ profile.get_display_name }}</div>
+                {% if profile.selected_badge %}
+                <div style="display:flex;justify-content:center;margin-top:8px;">
+                    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;background: rgba(255,255,255,0.9);border:1px solid rgba(255,107,53,0.3);">
+                        <i class="{{ profile.selected_badge.icon|default:'fas fa-trophy' }}" style="color: {{ profile.selected_badge.color|default:'#ff6b35' }}"></i>
+                        <span style="font-weight:600;color:#333;">已佩戴徽章：{{ profile.selected_badge.name }}</span>
+                    </span>
+                </div>
+                {% endif %}
                 <div class="profile-level">
                     {% if profile.fitness_level == 'beginner' %}
                         初学者 Lv.1
@@ -1155,6 +1163,7 @@
                             </div>
                             <div class="achievement-title">{{ achievement.achievement.name }}</div>
                             <div class="achievement-desc">{{ achievement.achievement.description }}</div>
+                            <button onclick="equipBadge({{ achievement.achievement.id }})" style="margin-top:8px;padding:6px 10px;border:none;border-radius:6px;background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);color:#000;cursor:pointer;font-weight:600;">佩戴</button>
                         </div>
                         {% endfor %}
                     {% else %}
@@ -1746,6 +1755,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化进度条动画
     animateProgressBars();
+
+    // 绑定徽章佩戴
+    window.equipBadge = async function(achievementId) {
+        try {
+            const resp = await fetch('/tools/api/fitness/equip_badge/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ achievement_id: achievementId })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showNotification('徽章已佩戴', 'success');
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showNotification(data.error || '佩戴失败', 'error');
+            }
+        } catch (e) {
+            showNotification('网络错误，请稍后重试', 'error');
+        }
+    }
 });
 
 // 添加悬停效果
