@@ -1,6 +1,6 @@
 # QAToolBox 基础依赖
 # 核心框架
-Django==4.2.23
+Django==4.2.7
 djangorestframework==3.16.0
 django-cors-headers==4.7.0
 django-crispy-forms==2.4
@@ -74,8 +74,6 @@ cryptography==42.0.5
 # 数据库连接池
 django-db-connection-pool==1.0.0
 django-redis==5.4.0
-redis==5.0.1
-
 # 异步处理
 celery==5.3.4
 django-celery-beat==2.5.0
@@ -85,4 +83,4 @@ django-debug-toolbar==4.2.0
 django-extensions==3.2.3
 
 # 缓存优化
-django-cacheops==7.2
+django-cacheops==8.0.0

@@ -1,27 +1,10 @@
 # 生产环境依赖
 -r base.txt
 
-# WSGI服务器
-gunicorn==21.2.0
+# 生产环境特有依赖
 gevent==23.9.1
-
-# 数据库
 psycopg2-binary==2.9.9
-
-# 缓存
-redis==5.0.1
-
-# 任务队列
-celery==5.3.4
-
-# 监控和日志
 sentry-sdk[django]==1.40.4
 structlog==23.2.0
-
-# 安全
-django-cors-headers==4.3.1
 django-csp==3.7
-
-# 性能优化
-django-cacheops==8.0.0
-django-redis==5.4.0
+whitenoise==6.6.0
