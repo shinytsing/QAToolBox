@@ -1,267 +1,184 @@
-# QAToolBox 阿里云部署指南
+# QAToolBox 阿里云一键部署
 
-## 一键部署
+## 🚀 快速开始
 
-在你的阿里云服务器上运行以下命令即可完成部署：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/shinytsing/QAToolbox/main/aliyun_deploy.sh | bash
-```
-
-## 服务器信息
-
-- **服务器IP**: 47.103.143.152
-- **域名**: shenyiqing.xin
-- **操作系统**: Ubuntu 20.04+ 推荐
-
-## 部署内容
-
-脚本会自动完成以下操作：
-
-1. ✅ 更新系统包
-2. ✅ 安装Docker和Docker Compose
-3. ✅ 安装Nginx和Certbot
-4. ✅ 配置防火墙
-5. ✅ 克隆项目代码
-6. ✅ 创建环境配置
-7. ✅ 构建Docker镜像
-8. ✅ 启动所有服务
-9. ✅ 创建系统服务
-
-## 服务架构
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│     Nginx       │────│   Django Web    │────│   PostgreSQL    │
-│   (反向代理)     │    │     (主应用)     │    │    (数据库)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │  Celery Worker  │────│     Redis       │
-                       │   (异步任务)     │    │    (缓存)       │
-                       └─────────────────┘    └─────────────────┘
-                                │
-                       ┌─────────────────┐
-                       │  Celery Beat    │
-                       │   (定时任务)     │
-                       └─────────────────┘
-```
-
-## 访问地址
-
-部署完成后，可通过以下地址访问：
-
-- **主站**: http://47.103.143.152 或 http://shenyiqing.xin
-- **管理后台**: http://shenyiqing.xin/admin/
-
-## 默认账户
-
-- **用户名**: admin
-- **密码**: admin123456
-- **邮箱**: admin@shenyiqing.xin
-
-⚠️ **请立即修改默认密码！**
-
-## 服务管理
-
-部署完成后，使用以下命令管理服务：
+在阿里云服务器上运行一条命令即可完成部署：
 
 ```bash
-# 进入项目目录
-cd ~/QAToolbox
-
-# 启动服务
-./manage_service.sh start
-
-# 停止服务
-./manage_service.sh stop
-
-# 重启服务
-./manage_service.sh restart
-
-# 查看服务状态
-./manage_service.sh status
-
-# 查看日志
-./manage_service.sh logs
-
-# 更新服务
-./manage_service.sh update
-
-# 备份数据库
-./manage_service.sh backup
-
-# 配置SSL证书
-./manage_service.sh ssl
+curl -fsSL https://raw.githubusercontent.com/yourusername/QAToolBox/main/deploy_aliyun_final.sh | bash
 ```
 
-## SSL证书配置
-
-如需启用HTTPS，请执行：
+或者下载脚本后运行：
 
 ```bash
-cd ~/QAToolbox
-./manage_service.sh ssl
+wget https://raw.githubusercontent.com/yourusername/QAToolBox/main/deploy_aliyun_final.sh
+chmod +x deploy_aliyun_final.sh
+./deploy_aliyun_final.sh
 ```
 
-然后编辑nginx配置文件，取消SSL相关配置的注释：
+## 📋 系统要求
 
-```bash
-# 编辑配置
-nano nginx/nginx.conf
+- **操作系统**: CentOS 7/8, Ubuntu 18.04+, 或其他Linux发行版
+- **Python**: 3.8+ (推荐3.9+)
+- **内存**: 最少1GB RAM (推荐2GB+)
+- **磁盘**: 最少2GB可用空间
+- **网络**: 能够访问外网下载依赖包
 
-# 取消以下行的注释：
-# ssl_certificate /etc/letsencrypt/live/shenyiqing.xin/fullchain.pem;
-# ssl_certificate_key /etc/letsencrypt/live/shenyiqing.xin/privkey.pem;
+## ⚡ 部署特性
 
-# 重启服务
-./manage_service.sh restart
-```
+- ✅ **全自动部署**: 一键完成所有配置
+- ✅ **依赖检查**: 自动检查系统要求
+- ✅ **错误处理**: 详细的错误提示和日志
+- ✅ **服务管理**: 自动配置Gunicorn服务
+- ✅ **安全配置**: 优化的生产环境设置
+- ✅ **状态验证**: 部署后自动验证服务状态
 
-## 系统服务
+## 🛠️ 部署过程
 
-脚本会自动创建系统服务，服务器重启后自动启动：
+脚本会自动执行以下步骤：
 
-```bash
-# 查看服务状态
-sudo systemctl status qatoolbox
+1. **系统检查**: 验证操作系统、Python版本、磁盘空间等
+2. **依赖安装**: 安装必要的系统包和Python包
+3. **项目设置**: 克隆或更新项目代码
+4. **环境配置**: 创建Python虚拟环境并安装依赖
+5. **Django配置**: 数据库迁移、静态文件收集、创建管理员用户
+6. **服务启动**: 启动Gunicorn Web服务器
+7. **部署验证**: 测试服务是否正常运行
 
-# 手动启动
-sudo systemctl start qatoolbox
+## 🌐 访问应用
 
-# 手动停止
-sudo systemctl stop qatoolbox
-```
+部署成功后，通过以下地址访问：
 
-## 监控和维护
+- **主页**: `http://YOUR_SERVER_IP:8000`
+- **管理后台**: `http://YOUR_SERVER_IP:8000/admin`
+  - 用户名: `admin`
+  - 密码: `admin123`
+
+## 📊 服务管理
 
 ### 查看服务状态
 ```bash
-docker-compose -f docker-compose.prod.yml ps
+ps aux | grep gunicorn
+netstat -tlnp | grep :8000
 ```
 
-### 查看资源使用
+### 查看日志
 ```bash
-docker stats
+# 错误日志
+tail -f /tmp/qatoolbox_error.log
+
+# 访问日志
+tail -f /tmp/qatoolbox_access.log
+
+# Django日志
+tail -f /tmp/qatoolbox_django.log
 ```
 
-### 查看磁盘使用
+### 重启服务
 ```bash
-df -h
-docker system df
+pkill -f gunicorn
+./deploy_aliyun_final.sh
 ```
 
-### 清理Docker
+### 停止服务
 ```bash
-docker system prune -a
+pkill -f gunicorn
 ```
 
-### 备份重要数据
-```bash
-# 备份数据库
-./manage_service.sh backup
+## 🔧 故障排除
 
-# 备份媒体文件
-tar -czf media_backup_$(date +%Y%m%d).tar.gz media/
+### 常见问题
 
-# 备份环境配置
-cp .env .env.backup
-```
+1. **端口8000被占用**
+   ```bash
+   netstat -tlnp | grep :8000
+   pkill -f gunicorn
+   ```
 
-## 故障排除
+2. **Python版本不兼容**
+   ```bash
+   # CentOS
+   sudo yum install python39 python39-pip python39-venv
 
-### 服务无法启动
-```bash
-# 查看详细日志
-./manage_service.sh logs
+   # Ubuntu
+   sudo apt install python3.9 python3.9-pip python3.9-venv
+   ```
 
-# 检查Docker状态
-sudo systemctl status docker
+3. **权限问题**
+   ```bash
+   sudo chown -R $(whoami):$(whoami) /opt/QAToolBox
+   ```
 
-# 重启Docker
-sudo systemctl restart docker
-```
+4. **防火墙阻止访问**
+   ```bash
+   # CentOS
+   sudo firewall-cmd --permanent --add-port=8000/tcp
+   sudo firewall-cmd --reload
 
-### 端口冲突
-```bash
-# 查看端口占用
-sudo netstat -tulpn | grep :80
-sudo netstat -tulpn | grep :443
+   # Ubuntu
+   sudo ufw allow 8000
+   ```
 
-# 停止占用端口的服务
-sudo systemctl stop apache2  # 如果安装了Apache
-```
+### 诊断工具
 
-### 内存不足
-```bash
-# 查看内存使用
-free -h
-
-# 添加交换空间
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```
-
-### 磁盘空间不足
-```bash
-# 清理Docker镜像和容器
-docker system prune -a
-
-# 清理日志
-sudo journalctl --vacuum-time=7d
-```
-
-## 性能优化
-
-### 数据库优化
-```bash
-# 进入数据库容器
-docker-compose -f docker-compose.prod.yml exec db psql -U qatoolbox
-
-# 查看数据库大小
-SELECT pg_size_pretty(pg_database_size('qatoolbox'));
-
-# 清理过期数据
-VACUUM ANALYZE;
-```
-
-### 静态文件优化
-```bash
-# 重新收集静态文件
-docker-compose -f docker-compose.prod.yml exec web python manage.py collectstatic --clear --noinput
-```
-
-## 更新部署
+项目提供了额外的诊断和修复脚本：
 
 ```bash
-cd ~/QAToolbox
+# 运行诊断
+./diagnose_deployment.sh
 
-# 拉取最新代码
-git pull origin main
+# 运行修复
+./fix_aliyun_deployment.sh
 
-# 更新服务
-./manage_service.sh update
+# 简化部署
+./aliyun_one_click_deploy.sh
 ```
 
-## 安全建议
+## 🔒 安全建议
 
-1. **修改默认密码**: 立即修改admin账户密码
-2. **启用SSL**: 配置HTTPS加密
-3. **定期备份**: 设置自动备份计划
-4. **监控日志**: 定期检查错误日志
-5. **更新系统**: 定期更新系统和软件包
+1. **修改默认密码**
+   ```bash
+   python manage.py shell
+   ```
+   ```python
+   from django.contrib.auth import get_user_model
+   User = get_user_model()
+   admin = User.objects.get(username='admin')
+   admin.set_password('your_secure_password')
+   admin.save()
+   ```
 
-## 联系支持
+2. **配置防火墙**
+   - 只开放必要的端口 (22, 80, 443, 8000)
+   - 使用密钥认证SSH
 
-如遇到问题，请：
+3. **使用HTTPS**
+   - 配置SSL证书
+   - 使用Nginx反向代理
 
-1. 查看日志: `./manage_service.sh logs`
-2. 检查服务状态: `./manage_service.sh status`
-3. 查看系统资源: `htop` 或 `docker stats`
+4. **定期更新**
+   - 更新系统包
+   - 更新Python依赖
 
----
+## 📚 更多文档
 
-**部署完成！享受使用QAToolBox！** 🎉
+- [详细部署指南](./ALIYUN_DEPLOYMENT_GUIDE.md)
+- [配置说明](./config/settings/aliyun.py)
+- [故障排除](./ALIYUN_DEPLOYMENT_GUIDE.md#-常见问题解决)
+
+## 🤝 支持
+
+如果遇到问题：
+
+1. 查看[部署指南](./ALIYUN_DEPLOYMENT_GUIDE.md)
+2. 运行诊断脚本: `./diagnose_deployment.sh`
+3. 查看错误日志: `tail -20 /tmp/qatoolbox_error.log`
+4. 提交Issue到GitHub仓库
+
+## 📝 更新日志
+
+- **v1.0** (2024-01-XX): 初始发布
+  - 支持CentOS/Ubuntu自动部署
+  - SQLite数据库配置
+  - Gunicorn Web服务器
+  - 完整的错误处理和日志记录
