@@ -1,0 +1,89 @@
+# 基础requirements
+-r requirements.txt
+
+# 数据库
+psycopg2-binary==2.9.9
+
+# 缓存和任务队列
+redis==5.2.1
+celery==5.4.0
+django-redis==5.4.0
+
+# Web服务器
+gunicorn==23.0.0
+gevent==24.11.1
+whitenoise==6.8.2
+
+# 监控和错误追踪
+sentry-sdk[django]==2.19.2
+
+# API和跨域
+django-cors-headers==4.6.0
+djangorestframework==3.15.2
+
+# 环境配置
+django-environ==0.11.2
+
+# 文件处理
+Pillow==11.1.0
+python-magic==0.4.27
+
+# 音频处理
+pydub==0.25.1
+mutagen==1.47.0
+
+# PDF处理
+PyPDF2==3.0.1
+reportlab==4.2.5
+
+# Excel处理
+openpyxl==3.1.5
+xlsxwriter==3.2.0
+
+# 图像处理
+opencv-python-headless==4.10.0.84
+
+# 网络请求
+requests==2.32.3
+httpx==0.28.1
+
+# 数据处理
+pandas==2.2.3
+numpy==2.0.2
+
+# 时间处理
+python-dateutil==2.9.0.post0
+pytz==2025.1
+
+# 加密和安全
+cryptography==44.0.0
+bcrypt==4.2.1
+
+# 工具类
+python-dotenv==1.0.0
+tenacity==9.1.2
+prettytable==3.14.0
+
+# 网页解析
+beautifulsoup4==4.13.3
+lxml==5.3.0
+html5lib==1.1
+
+# 图表生成
+matplotlib==3.9.4
+pyecharts==2.0.8
+
+# 金融数据
+yfinance==0.2.52
+
+# 验证码
+django-simple-captcha==0.6.1
+
+# 限流
+django-ratelimit==4.1.0
+
+# 思维导图
+xmind==1.2.0
+
+# 系统工具
+netcat==0.0.1
