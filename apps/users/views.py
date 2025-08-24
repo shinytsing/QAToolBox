@@ -107,7 +107,7 @@ def register_view(request):
                         user = User.objects.create_user(username=username, password=password, email=email)
                         user.save()
                         messages.success(request, f'{username} 的账户已创建！')
-                        return redirect('login')
+                        return redirect('users:login')
                     except Exception as e:
                         messages.error(request, f'错误: {str(e)}')
         else:
@@ -141,7 +141,7 @@ def register(request):
             Profile.objects.create(user=user)
             
             messages.success(request, '注册成功！请登录。')
-            return redirect('login')
+            return redirect('users:login')
     else:
         form = UserRegistrationForm()
     

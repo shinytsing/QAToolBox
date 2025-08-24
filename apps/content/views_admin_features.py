@@ -12,7 +12,7 @@ def admin_required(view_func):
     """管理员权限装饰器"""
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect('login')
+            return redirect('users:login')
         
         # 检查是否为超级用户
         if request.user.is_superuser:

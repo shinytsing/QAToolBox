@@ -720,7 +720,7 @@ def message_history(request, room_id):
 def heart_link(request):
     """心动链接页面"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     return render(request, 'tools/heart_link.html')
 
 
@@ -728,7 +728,7 @@ def heart_link(request):
 def heart_link_chat(request, room_id):
     """心动链接聊天页面"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
@@ -798,7 +798,7 @@ def chat_entrance_view(request):
 def chat_enhanced(request, room_id):
     """增强聊天页面 - 展示用户头像、昵称、信息和标签"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
@@ -857,7 +857,7 @@ def chat_enhanced(request, room_id):
 def chat_debug_view(request, room_id):
     """聊天调试页面 - 用于诊断WebSocket连接问题"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     
     context = {
         'room_id': room_id,
@@ -869,7 +869,7 @@ def chat_debug_view(request, room_id):
 def active_chat_rooms_view(request):
     """活跃聊天室页面 - 显示用户参与的活跃聊天室"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     
     context = {
         'user': request.user,
@@ -951,7 +951,7 @@ def secure_chat_entrance(request):
 def secure_chat_enhanced(request, room_id, token):
     """安全的增强聊天页面 - 使用令牌验证访问权限"""
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('users:login')
     
     # 验证访问令牌
     if not verify_chat_token(request.user, room_id, token):

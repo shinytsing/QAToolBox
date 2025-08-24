@@ -121,7 +121,7 @@ def admin_required(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.error(request, '请先登录')
-            return redirect('login')
+            return redirect('users:login')
         
         try:
             user_role = request.user.role
