@@ -8,6 +8,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 import environ
 
+# 首先定义BASE_DIR
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# 添加apps目录到Python路径
+sys.path.append(str(BASE_DIR / 'apps'))
+
 # 初始化environ
 env = environ.Env(
     DEBUG=(bool, False),

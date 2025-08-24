@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                 'verbose_name': '社交媒体订阅',
                 'verbose_name_plural': '社交媒体订阅',
                 'ordering': ['-created_at'],
-                'unique_together': {('user', 'platform', 'user_id')},
+                'unique_together': {('user', 'platform', 'target_user_id')},
             },
         ),
         migrations.CreateModel(

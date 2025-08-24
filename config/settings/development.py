@@ -6,29 +6,43 @@ from .base import *
 # 开发环境特定配置
 DEBUG = True
 
-# 允许的主机
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+# 允许的主机 - 添加局域网访问支持
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '192.168.0.118', '172.16.0.1', '0.0.0.0', '*']
 
-# 数据库配置 - 开发环境使用SQLite
+# 数据库配置 - 开发环境使用PostgreSQL（与生产保持一致）
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'qatoolbox_local'),
+        'USER': os.environ.get('DB_USER', 'gaojie'),  # macOS当前用户
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),    # 本地无密码
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
         'OPTIONS': {
-            'timeout': 30,  # 增加超时时间
-            'check_same_thread': False,  # 允许多线程访问
+            'sslmode': 'prefer',
         },
-        'ATOMIC_REQUESTS': False,  # 禁用自动事务以提高并发性能
     }
 }
 
-# 开发环境禁用HTTPS
-SECURE_SSL_REDIRECT = False
-SECURE_PROXY_SSL_HEADER = None
+# HTTPS配置
+SECURE_SSL_REDIRECT = False  # 开发环境不强制重定向
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# 开发环境允许所有CORS
+# 开发环境允许所有CORS - 支持局域网访问
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://192.168.0.118:8000",
+    "http://172.16.0.1:8000",
+    "https://localhost:8443",
+    "https://127.0.0.1:8443", 
+    "https://192.168.0.118:8443",
+    "https://172.16.0.1:8443",
+]
 
 # 开发环境日志级别 - 减少debug信息输出
 LOGGING['loggers']['django']['level'] = 'WARNING'
@@ -73,6 +87,10 @@ if DEBUG:
         INTERNAL_IPS = ['127.0.0.1', 'localhost']
     except ImportError:
         pass
+
+# 添加django-extensions支持
+if 'django_extensions' not in INSTALLED_APPS:
+    INSTALLED_APPS += ['django_extensions']
 
 # 开发环境Celery配置
 CELERY_TASK_ALWAYS_EAGER = True

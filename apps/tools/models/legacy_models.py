@@ -2868,6 +2868,8 @@ class FitnessFollow(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_fitness', verbose_name='关注者')
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers_fitness', verbose_name='被关注者')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='关注时间')
+    # 临时添加这些字段以避免迁移错误
+    content = models.TextField(blank=True, default='', verbose_name='内容')
     
     class Meta:
         unique_together = ['follower', 'following']

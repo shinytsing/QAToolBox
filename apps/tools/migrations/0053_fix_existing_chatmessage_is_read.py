@@ -10,7 +10,7 @@ def set_default_is_read(apps, schema_editor):
     # 使用原始SQL更新所有is_read为NULL的记录
     with schema_editor.connection.cursor() as cursor:
         cursor.execute(
-            "UPDATE tools_chatmessage SET is_read = 0 WHERE is_read IS NULL"
+            "UPDATE tools_chatmessage SET is_read = FALSE WHERE is_read IS NULL"
         )
 
 

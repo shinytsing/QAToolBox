@@ -10,3 +10,4 @@ chmod +x /tmp/smart_deploy.sh
 /tmp/smart_deploy.sh
 
 echo "✅ 部署完成！"
+
