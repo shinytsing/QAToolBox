@@ -1,6 +1,24 @@
-# ModeShift - 多功能工具集合平台
+# QAToolBox - 智能工具箱
 
-ModeShift 是一个基于Django的多功能工具集合平台，提供四大主题模块：生活模式、极客模式、狂暴模式和赛博哥特模式。
+QAToolBox 是一个功能强大的Django工具箱项目，集成了AI工具、数据处理、图像识别等多种实用功能。
+
+## 🚀 一键部署
+
+```bash
+# 克隆项目
+git clone https://github.com/shinytsing/QAToolBox.git
+cd QAToolBox
+
+# 一键部署
+./deploy.sh
+```
+
+支持三种部署方式：
+- 🔧 本地开发环境
+- 🚀 生产环境部署  
+- 🐳 Docker容器化
+
+详细部署说明请查看 [DEPLOY_V2.md](DEPLOY_V2.md)
 
 ## 🚀 功能特色
 

@@ -18,6 +18,7 @@ Including another URLconf
 import time
 from django.contrib import admin
 from django.urls import include, path
+from apps.tools.views.health_views import HealthCheckView, DetailedHealthCheckView
 from views import home_view, tool_view, welcome_view, theme_demo_view, version_history_view, help_page_view, custom_static_serve, secure_media_serve
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -39,7 +40,8 @@ def health_check_view(request):
     })
 
 urlpatterns = [
-    path('health/', health_check_view, name='health_check'),
+    path('health/', HealthCheckView.as_view(), name='health_check'),
+    path('health/detailed/', DetailedHealthCheckView.as_view(), name='detailed_health_check'),
     path('', home_view, name='home'),
     path('welcome/', welcome_view, name='welcome'),
     path('theme-demo/', theme_demo_view, name='theme_demo'),

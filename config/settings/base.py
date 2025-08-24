@@ -6,13 +6,26 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-import os
+import environ
+
+# 初始化environ
+env = environ.Env(
+    DEBUG=(bool, False),
+    DJANGO_SECRET_KEY=(str, 'django-insecure-change-me-in-production'),
+    ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
+    DB_NAME=(str, 'qatoolbox'),
+    DB_USER=(str, 'qatoolbox'),
+    DB_PASSWORD=(str, ''),
+    DB_HOST=(str, 'localhost'),
+    DB_PORT=(int, 5432),
+    REDIS_URL=(str, 'redis://localhost:6379/0'),
+)
 
 # 加载环境变量
 env_paths = [
+    os.path.join(BASE_DIR, '.env'),
     os.path.join(os.path.dirname(__file__), '.env'),
     os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'),
-    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'),
 ]
 
 for env_path in env_paths:
@@ -27,12 +40,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / 'apps'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-1^6^nfbpnl$vpi=o05c8n+%7#b@ldjegoj6u0-3*!t3a3m#*54')
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['shenyiqing.xin', '47.103.143.152', 'localhost', '127.0.0.1', 'testserver']
+# 允许的主机
+ALLOWED_HOSTS = env('ALLOWED_HOSTS') + ['testserver']
 
 # 文件上传设置
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
