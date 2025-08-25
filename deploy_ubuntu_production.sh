@@ -180,21 +180,73 @@ configure_postgresql() {
     sudo -u postgres psql -c "CREATE DATABASE $PROJECT_USER OWNER $PROJECT_USER;"
     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $PROJECT_USER TO $PROJECT_USER;"
     
-    # 配置PostgreSQL允许连接
-    PG_VERSION=$(sudo -u postgres psql -c "SHOW server_version;" | grep PostgreSQL | awk '{print $2}' | cut -d. -f1)
-    PG_DATA_DIR="/etc/postgresql/$PG_VERSION/main"
+    # 自动检测PostgreSQL版本和配置路径
+    PG_VERSION=$(sudo -u postgres psql -t -c "SHOW server_version;" | grep -oE '[0-9]+' | head -1)
     
-    # 修改postgresql.conf
-    sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" $PG_DATA_DIR/postgresql.conf
+    # 查找正确的配置文件路径
+    PG_CONF_PATH=""
+    PG_HBA_PATH=""
     
-    # 修改pg_hba.conf
-    cp $PG_DATA_DIR/pg_hba.conf $PG_DATA_DIR/pg_hba.conf.backup
-    echo "host    all             all             127.0.0.1/32            md5" >> $PG_DATA_DIR/pg_hba.conf
+    for path in "/etc/postgresql/$PG_VERSION/main" "/etc/postgresql/main" "/var/lib/postgresql/$PG_VERSION/main" "/usr/local/pgsql/data"; do
+        if [ -f "$path/postgresql.conf" ]; then
+            PG_CONF_PATH="$path/postgresql.conf"
+            PG_HBA_PATH="$path/pg_hba.conf"
+            break
+        fi
+    done
     
-    # 重启PostgreSQL
-    systemctl restart postgresql
+    if [ -z "$PG_CONF_PATH" ]; then
+        # 使用pg_config查找配置目录
+        if command -v pg_config &> /dev/null; then
+            CONFIG_DIR=$(pg_config --sysconfdir)
+            if [ -f "$CONFIG_DIR/postgresql.conf" ]; then
+                PG_CONF_PATH="$CONFIG_DIR/postgresql.conf"
+                PG_HBA_PATH="$CONFIG_DIR/pg_hba.conf"
+            fi
+        fi
+    fi
     
-    log_success "PostgreSQL配置完成"
+    if [ -z "$PG_CONF_PATH" ]; then
+        # 最后尝试通过find查找
+        PG_CONF_PATH=$(find /etc /var/lib -name "postgresql.conf" 2>/dev/null | head -1)
+        if [ -n "$PG_CONF_PATH" ]; then
+            PG_HBA_PATH=$(dirname "$PG_CONF_PATH")/pg_hba.conf
+        fi
+    fi
+    
+    if [ -n "$PG_CONF_PATH" ] && [ -f "$PG_CONF_PATH" ]; then
+        log_info "找到PostgreSQL配置文件: $PG_CONF_PATH"
+        
+        # 修改postgresql.conf
+        sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "$PG_CONF_PATH"
+        sed -i "s/listen_addresses = 'localhost'/listen_addresses = '*'/" "$PG_CONF_PATH"
+        
+        # 修改pg_hba.conf
+        if [ -f "$PG_HBA_PATH" ]; then
+            cp "$PG_HBA_PATH" "$PG_HBA_PATH.backup"
+            
+            # 添加md5认证规则（如果不存在）
+            if ! grep -q "host.*all.*all.*127.0.0.1/32.*md5" "$PG_HBA_PATH"; then
+                echo "host    all             all             127.0.0.1/32            md5" >> "$PG_HBA_PATH"
+            fi
+        fi
+        
+        # 重启PostgreSQL
+        systemctl restart postgresql
+        
+        # 等待服务重启
+        sleep 3
+        
+        # 验证连接
+        if PGPASSWORD="$PROJECT_USER@2024" psql -h localhost -U $PROJECT_USER -d $PROJECT_USER -c "SELECT 1;" &>/dev/null; then
+            log_success "PostgreSQL配置完成，连接测试成功"
+        else
+            log_warning "PostgreSQL配置完成，但连接测试失败，可能需要手动调整"
+        fi
+    else
+        log_warning "未找到PostgreSQL配置文件，跳过网络配置"
+        log_info "数据库已创建，但可能只能本地连接"
+    fi
 }
 
 # 安装Redis和Nginx
@@ -634,19 +686,43 @@ EOF
 optimize_performance() {
     log_step "性能优化配置"
     
-    # PostgreSQL优化
-    PG_VERSION=$(sudo -u postgres psql -c "SHOW server_version;" | grep PostgreSQL | awk '{print $2}' | cut -d. -f1)
-    PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
-    cp $PG_CONF $PG_CONF.backup
+    # PostgreSQL优化 - 智能查找配置文件
+    PG_VERSION=$(sudo -u postgres psql -t -c "SHOW server_version;" | grep -oE '[0-9]+' | head -1)
     
-    # 根据服务器内存调整PostgreSQL配置
-    TOTAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $2}')
-    SHARED_BUFFERS=$((TOTAL_MEM / 4))
-    EFFECTIVE_CACHE=$((TOTAL_MEM * 3 / 4))
+    # 查找PostgreSQL配置文件
+    PG_CONF=""
+    for path in "/etc/postgresql/$PG_VERSION/main/postgresql.conf" "/etc/postgresql/main/postgresql.conf" "/var/lib/postgresql/$PG_VERSION/main/postgresql.conf"; do
+        if [ -f "$path" ]; then
+            PG_CONF="$path"
+            break
+        fi
+    done
     
-    cat >> $PG_CONF << EOF
+    # 如果还没找到，使用find命令
+    if [ -z "$PG_CONF" ]; then
+        PG_CONF=$(find /etc /var/lib -name "postgresql.conf" 2>/dev/null | head -1)
+    fi
+    
+    if [ -n "$PG_CONF" ] && [ -f "$PG_CONF" ]; then
+        log_info "找到PostgreSQL配置文件: $PG_CONF"
+        cp "$PG_CONF" "$PG_CONF.backup"
+        
+        # 根据服务器内存调整PostgreSQL配置
+        TOTAL_MEM=$(free -m | awk 'NR==2{printf "%.0f", $2}')
+        SHARED_BUFFERS=$((TOTAL_MEM / 4))
+        EFFECTIVE_CACHE=$((TOTAL_MEM * 3 / 4))
+        
+        # 确保配置值合理
+        if [ $SHARED_BUFFERS -lt 32 ]; then
+            SHARED_BUFFERS=32
+        fi
+        if [ $EFFECTIVE_CACHE -lt 128 ]; then
+            EFFECTIVE_CACHE=128
+        fi
+        
+        cat >> "$PG_CONF" << EOF
 
-# Performance tuning
+# Performance tuning - Auto generated
 shared_buffers = ${SHARED_BUFFERS}MB
 effective_cache_size = ${EFFECTIVE_CACHE}MB
 work_mem = 4MB
@@ -654,20 +730,34 @@ maintenance_work_mem = 64MB
 checkpoint_completion_target = 0.9
 wal_buffers = 16MB
 default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
 EOF
+        
+        log_info "PostgreSQL性能优化配置已添加"
+    else
+        log_warning "未找到PostgreSQL配置文件，跳过数据库性能优化"
+    fi
     
     # 系统优化
-    cat >> /etc/sysctl.conf << EOF
+    if ! grep -q "Network performance tuning" /etc/sysctl.conf; then
+        cat >> /etc/sysctl.conf << EOF
 
-# Network performance tuning
+# Network performance tuning - Auto generated
 net.core.rmem_max = 134217728
 net.core.wmem_max = 134217728
 net.ipv4.tcp_rmem = 4096 65536 134217728
 net.ipv4.tcp_wmem = 4096 65536 134217728
 net.core.netdev_max_backlog = 5000
+net.ipv4.tcp_congestion_control = bbr
+net.core.default_qdisc = fq
 EOF
-    
-    sysctl -p
+        
+        sysctl -p
+        log_info "系统网络性能优化配置已添加"
+    else
+        log_info "系统优化配置已存在，跳过"
+    fi
     
     # 重启服务应用配置
     systemctl restart postgresql
@@ -748,8 +838,81 @@ main() {
     echo
 }
 
+# PostgreSQL诊断和修复函数
+diagnose_postgresql() {
+    log_step "PostgreSQL诊断和修复"
+    
+    # 检查PostgreSQL服务状态
+    if ! systemctl is-active --quiet postgresql; then
+        log_warning "PostgreSQL服务未运行，尝试启动..."
+        systemctl start postgresql
+        sleep 3
+    fi
+    
+    # 检查PostgreSQL版本和路径
+    if command -v psql &> /dev/null; then
+        PG_VERSION=$(sudo -u postgres psql -t -c "SHOW server_version;" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+        log_info "检测到PostgreSQL版本: $PG_VERSION"
+        
+        # 查找配置文件
+        log_info "查找PostgreSQL配置文件..."
+        find /etc -name "postgresql.conf" 2>/dev/null | while read conf_file; do
+            log_info "找到配置文件: $conf_file"
+        done
+        
+        find /var/lib -name "postgresql.conf" 2>/dev/null | while read conf_file; do
+            log_info "找到配置文件: $conf_file"
+        done
+        
+        # 检查数据目录
+        DATA_DIR=$(sudo -u postgres psql -t -c "SHOW data_directory;" 2>/dev/null | xargs)
+        if [ -n "$DATA_DIR" ]; then
+            log_info "数据目录: $DATA_DIR"
+            ls -la "$DATA_DIR" 2>/dev/null | head -5
+        fi
+        
+        # 测试连接
+        if sudo -u postgres psql -c "SELECT version();" &>/dev/null; then
+            log_success "PostgreSQL连接正常"
+        else
+            log_error "PostgreSQL连接失败"
+        fi
+    else
+        log_error "PostgreSQL未正确安装"
+    fi
+}
+
 # 错误处理
 trap 'log_error "部署过程中发生错误，请检查日志"; exit 1' ERR
+
+# 命令行参数处理
+if [[ $# -gt 0 ]]; then
+    case "$1" in
+        --diagnose|--debug)
+            show_welcome
+            check_root
+            detect_system
+            diagnose_postgresql
+            exit 0
+            ;;
+        --help|-h)
+            echo "QAToolBox Ubuntu 一键智能部署脚本"
+            echo ""
+            echo "用法:"
+            echo "  $0                  执行完整部署"
+            echo "  $0 --diagnose      仅执行PostgreSQL诊断"
+            echo "  $0 --help          显示此帮助信息"
+            echo ""
+            echo "部署完成后访问: https://shenyiqing.xin"
+            exit 0
+            ;;
+        *)
+            echo "未知参数: $1"
+            echo "使用 $0 --help 查看帮助"
+            exit 1
+            ;;
+    esac
+fi
 
 # 运行主函数
 main "$@"
