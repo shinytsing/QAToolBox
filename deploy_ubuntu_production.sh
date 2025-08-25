@@ -100,18 +100,85 @@ detect_system() {
 install_basic_packages() {
     log_step "更新系统并安装基础包"
     
+    # 修复Ubuntu 24.04的apt_pkg问题
+    if [[ "$VER" == "24.04" ]]; then
+        log_info "检测到Ubuntu 24.04，修复apt_pkg问题"
+        # 临时禁用command-not-found更新
+        if [ -f /etc/apt/apt.conf.d/50command-not-found ]; then
+            mv /etc/apt/apt.conf.d/50command-not-found /etc/apt/apt.conf.d/50command-not-found.disabled 2>/dev/null || true
+        fi
+        
+        # 修复python3-apt包
+        apt-get install --reinstall python3-apt python3-distutils -y 2>/dev/null || true
+        apt-get clean
+        apt-get autoclean
+    fi
+    
     # 更新包索引
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update -y
+    
+    # 多次尝试更新，处理网络和apt_pkg问题
+    for i in {1..3}; do
+        if apt-get update -y 2>/dev/null; then
+            log_success "包索引更新成功"
+            break
+        else
+            log_warning "包更新失败，尝试修复... (尝试 $i/3)"
+            apt-get clean
+            apt-get autoclean
+            
+            # 特殊处理command-not-found问题
+            if [ -f /etc/apt/apt.conf.d/50command-not-found ]; then
+                mv /etc/apt/apt.conf.d/50command-not-found /etc/apt/apt.conf.d/50command-not-found.disabled 2>/dev/null || true
+            fi
+            
+            if [ $i -eq 3 ]; then
+                log_warning "包更新持续失败，但继续安装..."
+            fi
+            sleep 2
+        fi
+    done
     
     # 安装基础工具
-    apt-get install -y \
+    log_info "安装基础开发工具..."
+    
+    # 尝试批量安装
+    if apt-get install -y \
         wget curl git vim unzip htop tree \
         software-properties-common apt-transport-https ca-certificates \
         gnupg lsb-release build-essential \
         libssl-dev libffi-dev libpq-dev \
         python3-dev python3-pip python3-venv \
-        ufw fail2ban
+        python3-apt python3-distutils \
+        ufw fail2ban; then
+        
+        log_success "基础包批量安装成功"
+    else
+        log_warning "批量安装失败，尝试单独安装关键包..."
+        
+        # 关键包列表
+        CRITICAL_PACKAGES=(
+            "wget" "curl" "git" "python3-dev" 
+            "python3-pip" "python3-venv" "build-essential"
+            "libssl-dev" "libffi-dev" "libpq-dev"
+            "python3-apt" "python3-distutils"
+        )
+        
+        for pkg in "${CRITICAL_PACKAGES[@]}"; do
+            if ! dpkg -l | grep -q "^ii  $pkg "; then
+                log_info "安装关键包: $pkg"
+                apt-get install -y "$pkg" || log_warning "包 $pkg 安装失败，但继续..."
+            else
+                log_info "包 $pkg 已安装"
+            fi
+        done
+    fi
+    
+    # 恢复command-not-found配置（如果之前禁用了）
+    if [ -f /etc/apt/apt.conf.d/50command-not-found.disabled ]; then
+        mv /etc/apt/apt.conf.d/50command-not-found.disabled /etc/apt/apt.conf.d/50command-not-found 2>/dev/null || true
+        log_info "已恢复command-not-found配置"
+    fi
     
     log_success "基础包安装完成"
 }
