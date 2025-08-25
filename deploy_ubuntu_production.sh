@@ -360,9 +360,10 @@ clone_project() {
         # 尝试多个Git源
         CLONE_SUCCESS=false
         for repo in \
-            "https://github.com/shinytsing/QAToolbox.git" \
             "https://gitee.com/shinytsing/QAToolbox.git" \
-            "https://github.com.cnpmjs.org/shinytsing/QAToolbox.git"
+            "https://gitclone.com/github.com/shinytsing/QAToolbox.git" \
+            "https://hub.fastgit.xyz/shinytsing/QAToolbox.git" \
+            "https://github.com/shinytsing/QAToolbox.git"
         do
             log_info "尝试从 $repo 克隆..."
             if timeout 300 sudo -u $PROJECT_USER git clone $repo $PROJECT_DIR; then
@@ -400,15 +401,34 @@ setup_virtualenv() {
         log_success "虚拟环境创建完成"
     fi
     
+    # 配置pip使用中国镜像源加速下载
+    log_info "配置pip中国镜像源"
+    sudo -u $PROJECT_USER mkdir -p /home/$PROJECT_USER/.pip
+    sudo -u $PROJECT_USER tee /home/$PROJECT_USER/.pip/pip.conf > /dev/null << 'EOF'
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+timeout = 120
+retries = 5
+
+[install]
+trusted-host = pypi.tuna.tsinghua.edu.cn
+EOF
+    
     # 安装依赖
-    log_info "安装Python依赖包"
-    sudo -u $PROJECT_USER .venv/bin/pip install --upgrade pip
+    log_info "安装Python依赖包（使用清华大学镜像源加速）"
+    sudo -u $PROJECT_USER .venv/bin/pip install --upgrade pip \
+        -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn
     
     # 先安装核心依赖
-    sudo -u $PROJECT_USER .venv/bin/pip install Django gunicorn psycopg2-binary redis
+    log_info "安装核心依赖包"
+    sudo -u $PROJECT_USER .venv/bin/pip install Django gunicorn psycopg2-binary redis wheel setuptools \
+        -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn
     
     # 再安装完整依赖
-    sudo -u $PROJECT_USER .venv/bin/pip install -r requirements.txt || {
+    log_info "安装项目完整依赖"
+    sudo -u $PROJECT_USER .venv/bin/pip install -r requirements.txt \
+        -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn || {
         log_warning "部分依赖安装失败，但继续执行"
     }
     
