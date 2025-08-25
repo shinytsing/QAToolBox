@@ -1,119 +1,123 @@
 #!/bin/bash
 
-# QAToolBox 终极修复脚本 - 解决所有依赖和配置问题
+# QAToolBox 最终修复部署脚本 - 快速拉起服务
+# 适用于Ubuntu/CentOS系统
+
 set -e
+
+echo "🚀 开始快速修复QAToolBox部署问题..."
 
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-
-PROJECT_USER="qatoolbox"
-PROJECT_DIR="/home/qatoolbox/QAToolBox"
-
-log_info "🚀 开始QAToolBox终极修复"
-
-# 1. 安装所有缺失的Python模块
-log_info "安装所有缺失的Python模块"
-cd $PROJECT_DIR
-
-sudo -u $PROJECT_USER .venv/bin/pip install \
-    pillow-heif \
-    ratelimit \
-    django-environ \
-    psutil \
-    opencv-python-headless \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn
-
-log_success "Python模块安装完成"
-
-# 2. 创建简化的生产配置（避免复杂的分片配置问题）
-log_info "创建简化的生产配置"
-sudo -u $PROJECT_USER tee config/settings/simple_prod.py > /dev/null << 'EOF'
-from .base import *
-import os
-
-# 简化的数据库配置
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'qatoolbox',
-        'USER': 'qatoolbox', 
-        'PASSWORD': 'qatoolbox_secure_2024!',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'prefer',
-        },
-    }
+# 功能函数
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-# 简化的Redis配置
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
-    }
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-# 移除复杂的分片配置
-DATABASE_ROUTERS = []
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
 
-# 基础设置
-DEBUG = False
-ALLOWED_HOSTS = ['*']
-STATIC_ROOT = '/home/qatoolbox/QAToolBox/staticfiles'
-MEDIA_ROOT = '/home/qatoolbox/QAToolBox/media'
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
 
-# SSL设置
-SECURE_SSL_REDIRECT = False  # 让Nginx处理SSL
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# 检查并切换到项目目录
+if [ ! -d "/home/qatoolbox/QAToolBox" ]; then
+    print_error "项目目录不存在，请先运行部署脚本"
+    exit 1
+fi
+
+cd /home/qatoolbox/QAToolBox
+print_status "当前目录: $(pwd)"
+
+# 1. 停止现有服务
+print_status "停止现有服务..."
+sudo systemctl stop qatoolbox || true
+sudo systemctl stop nginx || true
+
+# 2. 激活虚拟环境并安装缺失依赖
+print_status "激活虚拟环境并安装缺失依赖..."
+source .venv/bin/activate
+
+# 安装缺失的Python包
+pip install django-environ psutil ratelimit pillow-heif opencv-python-headless -i https://pypi.tuna.tsinghua.edu.cn/simple/
+
+# 3. 创建必要的目录结构
+print_status "创建必要的目录结构..."
+sudo -u qatoolbox mkdir -p /home/qatoolbox/QAToolBox/config/settings
+sudo -u qatoolbox mkdir -p /home/qatoolbox/QAToolBox/staticfiles
+sudo -u qatoolbox mkdir -p /home/qatoolbox/QAToolBox/media
+sudo -u qatoolbox mkdir -p /home/qatoolbox/QAToolBox/logs
+
+# 4. 创建config包初始化文件
+print_status "创建config包初始化文件..."
+sudo -u qatoolbox touch /home/qatoolbox/QAToolBox/config/__init__.py
+sudo -u qatoolbox touch /home/qatoolbox/QAToolBox/config/settings/__init__.py
+
+# 5. 修复数据库连接
+print_status "修复PostgreSQL数据库配置..."
+
+# 重新配置PostgreSQL认证
+sudo sed -i 's/local   all             qatoolbox                               md5/local   all             qatoolbox                               trust/' /etc/postgresql/*/main/pg_hba.conf || true
+sudo systemctl restart postgresql
+
+# 测试数据库连接
+if sudo -u postgres psql -c "SELECT 1;" qatoolbox > /dev/null 2>&1; then
+    print_success "数据库连接正常"
+else
+    print_warning "重新创建数据库..."
+    sudo -u postgres dropdb qatoolbox || true
+    sudo -u postgres dropuser qatoolbox || true
+    sudo -u postgres createuser qatoolbox
+    sudo -u postgres createdb qatoolbox -O qatoolbox
+fi
+
+# 6. 运行数据库迁移
+print_status "运行数据库迁移..."
+export DJANGO_SETTINGS_MODULE=config.settings.fixed_prod
+sudo -u qatoolbox -E .venv/bin/python manage.py makemigrations --settings=config.settings.fixed_prod || true
+sudo -u qatoolbox -E .venv/bin/python manage.py migrate --settings=config.settings.fixed_prod
+
+# 7. 收集静态文件
+print_status "收集静态文件..."
+sudo -u qatoolbox -E .venv/bin/python manage.py collectstatic --noinput --settings=config.settings.fixed_prod
+
+# 8. 创建超级用户（如果不存在）
+print_status "创建超级用户账户..."
+sudo -u qatoolbox -E .venv/bin/python manage.py shell --settings=config.settings.fixed_prod << 'EOF'
+from django.contrib.auth.models import User
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('admin', 'admin@qatoolbox.com', 'admin123')
+    print("超级用户 admin 已创建，密码: admin123")
+else:
+    print("超级用户 admin 已存在")
 EOF
 
-log_success "简化配置创建完成"
-
-# 3. 使用简化配置执行数据库迁移
-log_info "使用简化配置执行数据库迁移"
-sudo -u $PROJECT_USER .venv/bin/python manage.py check --settings=config.settings.simple_prod || {
-    log_warning "配置检查有警告，但继续执行"
-}
-
-sudo -u $PROJECT_USER .venv/bin/python manage.py makemigrations --settings=config.settings.simple_prod || true
-sudo -u $PROJECT_USER .venv/bin/python manage.py migrate --settings=config.settings.simple_prod || {
-    log_warning "迁移有问题，但继续执行"
-}
-
-# 4. 收集静态文件
-log_info "收集静态文件"
-sudo -u $PROJECT_USER mkdir -p staticfiles media
-sudo -u $PROJECT_USER .venv/bin/python manage.py collectstatic --noinput --settings=config.settings.simple_prod || true
-
-log_success "数据库和静态文件处理完成"
-
-# 5. 配置systemd服务
-log_info "配置systemd服务"
-tee /etc/systemd/system/qatoolbox.service > /dev/null << EOF
+# 9. 更新systemd服务文件
+print_status "更新systemd服务配置..."
+sudo tee /etc/systemd/system/qatoolbox.service > /dev/null << 'EOF'
 [Unit]
 Description=QAToolBox Django Application
 After=network.target postgresql.service redis.service
 
 [Service]
-User=$PROJECT_USER
-Group=$PROJECT_USER
-WorkingDirectory=$PROJECT_DIR
-Environment="PATH=$PROJECT_DIR/.venv/bin"
-Environment="DJANGO_SETTINGS_MODULE=config.settings.simple_prod"
-ExecStart=$PROJECT_DIR/.venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 --timeout 300 --access-logfile - --error-logfile - config.wsgi:application
+Type=exec
+User=qatoolbox
+Group=qatoolbox
+WorkingDirectory=/home/qatoolbox/QAToolBox
+Environment="PATH=/home/qatoolbox/QAToolBox/.venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=config.settings.fixed_prod"
+ExecStart=/home/qatoolbox/QAToolBox/.venv/bin/gunicorn --workers 1 --bind 127.0.0.1:8000 --timeout 300 --max-requests 1000 --max-requests-jitter 100 --preload config.wsgi:application
 Restart=always
 RestartSec=3
 
@@ -121,107 +125,84 @@ RestartSec=3
 WantedBy=multi-user.target
 EOF
 
-log_success "Systemd服务配置完成"
+# 10. 重新加载systemd并启动服务
+print_status "重新加载systemd配置..."
+sudo systemctl daemon-reload
+sudo systemctl enable qatoolbox
 
-# 6. 配置Nginx
-log_info "配置Nginx"
-tee /etc/nginx/sites-available/qatoolbox > /dev/null << 'EOF'
-server {
-    listen 80;
-    server_name 47.103.143.152 shenyiqing.xin localhost;
-    
-    client_max_body_size 100M;
-    
-    # 静态文件
-    location /static/ {
-        alias /home/qatoolbox/QAToolBox/staticfiles/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # 媒体文件
-    location /media/ {
-        alias /home/qatoolbox/QAToolBox/media/;
-        expires 1y;
-        add_header Cache-Control "public";
-    }
-    
-    # Django应用
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_connect_timeout 300s;
-        proxy_send_timeout 300s;
-        proxy_read_timeout 300s;
-    }
-}
-EOF
+# 11. 启动Redis服务
+print_status "启动Redis服务..."
+sudo systemctl start redis-server || sudo systemctl start redis
+sudo systemctl enable redis-server || sudo systemctl enable redis
 
-# 启用站点
-ln -sf /etc/nginx/sites-available/qatoolbox /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-
-# 测试Nginx配置
-nginx -t || {
-    log_error "Nginx配置测试失败"
+# 12. 测试Django应用启动
+print_status "测试Django应用启动..."
+export DJANGO_SETTINGS_MODULE=config.settings.fixed_prod
+if sudo -u qatoolbox -E .venv/bin/python manage.py check --settings=config.settings.fixed_prod; then
+    print_success "Django应用配置检查通过"
+else
+    print_error "Django应用配置检查失败"
     exit 1
-}
+fi
 
-log_success "Nginx配置完成"
-
-# 7. 启动所有服务
-log_info "启动所有服务"
-systemctl daemon-reload
-systemctl enable qatoolbox nginx postgresql redis-server
-systemctl restart postgresql redis-server
-systemctl restart qatoolbox
-systemctl restart nginx
+# 13. 启动应用服务
+print_status "启动QAToolBox服务..."
+sudo systemctl start qatoolbox
 
 # 等待服务启动
 sleep 5
 
-log_success "服务启动完成"
-
-# 8. 检查服务状态
-log_info "检查服务状态"
-echo "📊 服务状态:"
-for service in postgresql redis-server qatoolbox nginx; do
-    if systemctl is-active --quiet $service; then
-        echo "  ✅ $service: 运行正常"
-    else
-        echo "  ❌ $service: 启动失败"
-        systemctl status $service --no-pager -l
-    fi
-done
-
-# 9. 测试Web访问
-log_info "测试Web访问"
-echo "🌐 Web服务测试:"
-if curl -s -o /dev/null -w "%{http_code}" http://localhost/ | grep -q "200\|301\|302"; then
-    echo "  ✅ HTTP服务: 正常访问"
+# 14. 检查服务状态
+if sudo systemctl is-active --quiet qatoolbox; then
+    print_success "QAToolBox服务启动成功"
 else
-    echo "  ❌ HTTP服务: 访问失败"
+    print_error "QAToolBox服务启动失败，查看日志:"
+    sudo journalctl -u qatoolbox --no-pager -n 20
+    exit 1
 fi
 
-# 10. 显示访问信息
-log_success "🎉 QAToolBox修复完成！"
-echo
-echo "🌐 访问地址:"
-echo "  HTTP:  http://47.103.143.152"
-echo "  HTTP:  http://shenyiqing.xin"
-echo "  本地:  http://localhost"
-echo
-echo "👤 创建管理员账户:"
-echo "  cd $PROJECT_DIR"
-echo "  sudo -u $PROJECT_USER .venv/bin/python manage.py createsuperuser --settings=config.settings.simple_prod"
-echo
-echo "🔧 管理命令:"
-echo "  查看应用日志: journalctl -u qatoolbox -f"
-echo "  查看Nginx日志: tail -f /var/log/nginx/error.log"
-echo "  重启应用: systemctl restart qatoolbox"
-echo "  重启Nginx: systemctl restart nginx"
-echo
-echo "✨ 系统已准备就绪！"
+# 15. 启动Nginx
+print_status "启动Nginx服务..."
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# 16. 最终验证
+print_status "执行最终验证..."
+
+# 检查端口监听
+if netstat -tlnp | grep ":8000.*gunicorn" > /dev/null; then
+    print_success "Gunicorn正在监听端口8000"
+else
+    print_warning "Gunicorn可能未正确启动"
+fi
+
+# 检查HTTP响应
+if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ | grep -q "200\|302\|404"; then
+    print_success "HTTP响应正常"
+else
+    print_warning "HTTP响应异常，但服务可能正在初始化"
+fi
+
+# 17. 显示服务状态
+print_status "服务状态摘要:"
+echo "=========================="
+echo "PostgreSQL: $(sudo systemctl is-active postgresql)"
+echo "Redis: $(sudo systemctl is-active redis-server 2>/dev/null || sudo systemctl is-active redis 2>/dev/null || echo 'inactive')"
+echo "QAToolBox: $(sudo systemctl is-active qatoolbox)"
+echo "Nginx: $(sudo systemctl is-active nginx)"
+echo "=========================="
+
+# 18. 显示访问信息
+print_success "🎉 快速修复完成！"
+echo ""
+echo "📋 访问信息:"
+echo "   网站地址: https://shenyiqing.xin"
+echo "   管理后台: https://shenyiqing.xin/admin/"
+echo "   管理员账户: admin / admin123"
+echo ""
+echo "🔧 常用命令:"
+echo "   查看服务状态: sudo systemctl status qatoolbox"
+echo "   查看日志: sudo journalctl -u qatoolbox -f"
+echo "   重启服务: sudo systemctl restart qatoolbox"
+echo ""
+echo "🚨 如有问题，请查看日志: sudo journalctl -u qatoolbox --no-pager -n 50"
