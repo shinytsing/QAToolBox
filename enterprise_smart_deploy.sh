@@ -387,10 +387,7 @@ retry_command "systemctl enable postgresql redis-server && systemctl start postg
 
 # 配置PostgreSQL
 print_status "🗄️ 配置PostgreSQL数据库..."
-sudo -u postgres psql << 'EOF' || {
-    print_error "PostgreSQL配置失败"
-    FAILED_COMMANDS+=("PostgreSQL数据库配置")
-}
+if ! sudo -u postgres psql << 'PGEOF'
 DROP DATABASE IF EXISTS qatoolbox;
 DROP ROLE IF EXISTS qatoolbox;
 CREATE ROLE qatoolbox WITH LOGIN PASSWORD 'qatoolbox2024!';
@@ -400,7 +397,11 @@ GRANT ALL PRIVILEGES ON DATABASE qatoolbox TO qatoolbox;
 \c qatoolbox;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
-EOF
+PGEOF
+then
+    print_error "PostgreSQL配置失败"
+    FAILED_COMMANDS+=("PostgreSQL数据库配置")
+fi
 
 # 配置Redis
 print_status "🔐 配置Redis..."
