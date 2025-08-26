@@ -123,11 +123,15 @@ install_system_dependencies() {
     # 数据库驱动
     apt install -y libpq-dev postgresql-client libmysqlclient-dev
     
-    # 图像处理库
-    apt install -y \
-        libjpeg-dev libpng-dev libtiff-dev \
-        libfreetype6-dev liblcms2-dev \
-        libopenjp2-7-dev libwebp-dev
+    # 图像处理库（使用兼容性安装避免版本冲突）
+    echo -e "${BLUE}  安装图像处理基础库...${NC}"
+    apt install -y libjpeg-dev libpng-dev libtiff-dev libwebp-dev || echo "⚠️ 基础图像库部分安装失败"
+    
+    # 处理有版本冲突的包
+    echo -e "${BLUE}  处理可能冲突的图像库...${NC}"
+    apt install -y libfreetype6-dev || echo "⚠️ freetype跳过，使用系统版本"
+    apt install -y liblcms2-dev || echo "⚠️ lcms2跳过，使用系统版本"
+    apt install -y libopenjp2-7-dev || echo "⚠️ openjp2跳过，使用系统版本"
     
     # 视频和音频
     apt install -y \
