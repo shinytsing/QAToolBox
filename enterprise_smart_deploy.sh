@@ -518,8 +518,8 @@ websocket_packages=(
 )
 
 ml_packages=(
-    "torch==2.1.1"
-    "torchvision==0.16.1"
+    "torch==2.0.1"
+    "torchvision==0.15.2"
     "opencv-python==4.8.1.78"
     "scikit-learn==1.3.2"
     "numpy==1.24.4"
@@ -837,10 +837,7 @@ fi
 
 # 创建超级用户（容错）
 print_status "👤 创建超级用户..."
-sudo -u qatoolbox DJANGO_SETTINGS_MODULE=config.settings.production_smart .venv/bin/python manage.py shell << 'EOF' || {
-    print_warning "超级用户创建可能失败"
-    FAILED_COMMANDS+=("创建超级用户")
-}
+if ! sudo -u qatoolbox DJANGO_SETTINGS_MODULE=config.settings.production_smart .venv/bin/python manage.py shell << 'USEREOF'
 from django.contrib.auth import get_user_model
 try:
     User = get_user_model()
@@ -851,7 +848,11 @@ try:
         print("✅ 超级用户已存在")
 except Exception as e:
     print(f"⚠️ 超级用户创建失败: {e}")
-EOF
+USEREOF
+then
+    print_warning "超级用户创建失败"
+    FAILED_COMMANDS+=("创建超级用户")
+fi
 
 # 收集静态文件（容错）
 print_status "📁 收集静态文件..."
