@@ -1,0 +1,42 @@
+# QAToolBox 生产环境依赖
+# 核心Django框架
+Django==4.2.7
+djangorestframework==3.14.0
+
+# 数据库和缓存
+psycopg2-binary==2.9.7
+redis==4.6.0
+
+# Web服务器
+gunicorn==21.2.0
+whitenoise==6.5.0
+
+# 环境变量管理
+python-decouple==3.8
+django-environ==0.11.2
+
+# 跨域请求
+django-cors-headers==4.3.1
+
+# 系统监控
+psutil==5.9.5
+
+# 图像处理
+Pillow==10.0.1
+
+# 异步任务
+celery==5.3.2
+
+# HTTP请求
+requests==2.31.0
+
+# HTML解析
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# 开发工具
+django-extensions==3.2.3
+
+# 其他工具
+python-dateutil==2.8.2
+pytz==2023.3
