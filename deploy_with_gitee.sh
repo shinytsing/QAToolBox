@@ -32,13 +32,8 @@ log_error() {
 setup_git_proxy() {
     log_info "配置Git访问..."
     
-    # 尝试使用GitHub镜像
-    export GIT_CONFIG_GLOBAL=/dev/null
-    
-    # 设置Git超时时间
-    git config --global http.lowSpeedLimit 1000
-    git config --global http.lowSpeedTime 300
-    git config --global http.postBuffer 1048576000
+    # 设置Git超时时间（不使用全局配置）
+    export GIT_CONFIG_GLOBAL=""
     
     log_success "Git配置完成"
 }
