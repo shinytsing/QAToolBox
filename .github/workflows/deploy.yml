@@ -1,0 +1,28 @@
+name: Deploy to Aliyun Server
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd ~/QAToolBox || exit 1
+          git pull origin main
+          docker-compose -f docker-compose.china.yml down
+          docker-compose -f docker-compose.china.yml up -d --build
+          echo "部署完成！"
+
