@@ -109,7 +109,17 @@ apt install -y \
     python3-dev \
     python3-setuptools \
     python3-wheel \
-    python3-distutils
+    python3-setuptools-whl || {
+    # Ubuntu 24.04兼容处理
+    print_warning "python3-setuptools-whl安装失败，使用基础包..."
+    apt install -y \
+        python3 \
+        python3-pip \
+        python3-venv \
+        python3-dev \
+        python3-setuptools \
+        python3-wheel
+}
 
 print_status "🗃️ 安装数据库和缓存..."
 apt install -y \
