@@ -92,3 +92,5 @@ fi
 echo
 echo "现在可以运行主部署脚本:"
 echo "curl -O https://raw.githubusercontent.com/shinytsing/QAToolbox/main/deploy_ubuntu_production.sh && sudo bash deploy_ubuntu_production.sh"
+
+

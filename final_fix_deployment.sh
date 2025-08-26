@@ -206,3 +206,4 @@ echo "   查看日志: sudo journalctl -u qatoolbox -f"
 echo "   重启服务: sudo systemctl restart qatoolbox"
 echo ""
 echo "🚨 如有问题，请查看日志: sudo journalctl -u qatoolbox --no-pager -n 50"
+

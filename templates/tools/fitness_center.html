@@ -176,6 +176,18 @@ if (typeof renderActivePlan !== 'undefined' || typeof initCurrentPlan !== 'undef
           ">
             <i class="fas fa-expand"></i> 全屏
           </button>
+          <button class="export-plan-btn" onclick="exportPlanAsImage()" data-zh="导出图片" data-en="Export Image" style="
+            background: var(--success-color, #4CAF50);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 8px;
+          ">
+            <i class="fas fa-download"></i> 导出图片
+          </button>
         </div>
         <div class="fitness-card-content">
           <div class="current-plan-preview">
@@ -229,9 +241,6 @@ if (typeof renderActivePlan !== 'undefined' || typeof initCurrentPlan !== 'undef
               </button>
               <button class="action-btn secondary" onclick="openPlanTemplates()">
                 <i class="fas fa-star"></i> 模板推荐
-              </button>
-              <button class="action-btn enhanced" onclick="window.location.href='/tools/fitness/enhanced/'">
-                <i class="fas fa-rocket"></i> 增强版健身中心
               </button>
             </div>
           </div>
@@ -613,6 +622,24 @@ if (typeof renderActivePlan !== 'undefined' || typeof initCurrentPlan !== 'undef
   background: var(--rage-primary, #ff6b35);
   color: #000;
   font-weight: 600;
+}
+
+.plan-day.today {
+  border: 2px solid #4CAF50;
+  background: linear-gradient(45deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.2));
+  animation: todayPulse 2s ease-in-out infinite;
+}
+
+.plan-day.today.active {
+  background: linear-gradient(45deg, #4CAF50, #66BB6A);
+  color: white;
+  border: 2px solid #388E3C;
+}
+
+@keyframes todayPulse {
+  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(76, 175, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
 }
 
 .plan-type {
@@ -2206,22 +2233,298 @@ function renderActivePlan(plan) {
     `;
   }
   
-  // 渲染周计划
+  // 渲染周计划 - 只显示今天的训练
   if (plan.week_schedule && Array.isArray(plan.week_schedule)) {
-    planContainer.innerHTML = plan.week_schedule.map((day, index) => {
-      const exerciseCount = day.modules ? 
-        Object.values(day.modules).reduce((sum, module) => sum + (module?.length || 0), 0) : 0;
-      const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
-        (day.body_parts.includes('休息') ? '恢复日' : '待添加');
+    // 获取当前星期几（0=周日, 1=周一, ..., 6=周六）
+    const today = new Date();
+    const currentDayOfWeek = today.getDay();
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const currentWeekday = weekdays[currentDayOfWeek];
+    
+    // 找到今天的训练计划
+    let todaysPlan = null;
+    let todaysIndex = -1;
+    
+    for (let i = 0; i < plan.week_schedule.length; i++) {
+      const day = plan.week_schedule[i];
+      const dayWeekday = day.weekday || weekdays[i] || `第${i + 1}天`;
+      if (dayWeekday === currentWeekday) {
+        todaysPlan = day;
+        todaysIndex = i;
+        break;
+      }
+    }
+    
+    if (todaysPlan) {
+      // 安全地获取day的属性
+      const safeDay = {
+        weekday: todaysPlan.weekday || currentWeekday,
+        body_parts: Array.isArray(todaysPlan.body_parts) ? todaysPlan.body_parts : ['未设置'],
+        exercises: todaysPlan.exercises || [],
+        modules: todaysPlan.modules || {}
+      };
       
-      return `
-        <div class="plan-day ${index === 0 ? 'active' : ''}" data-day="${index + 1}" onclick="showDayDetails(${index})">
-          <span>${day.weekday}</span>
-          <span class="plan-type">${day.body_parts.join(' + ')}</span>
-          <span class="plan-exercises">${exerciseText}</span>
+      // 计算动作数量
+      let exerciseCount = 0;
+      if (safeDay.exercises && Array.isArray(safeDay.exercises)) {
+        exerciseCount = safeDay.exercises.length;
+      } else if (safeDay.modules) {
+        exerciseCount = Object.values(safeDay.modules).reduce((sum, module) => sum + (Array.isArray(module) ? module.length : 0), 0);
+      }
+      
+      const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
+        (safeDay.body_parts.includes('休息') ? '恢复日' : '待添加');
+      
+      // 生成今天的详细动作列表
+      let todaysExercisesList = '';
+      if (safeDay.exercises && Array.isArray(safeDay.exercises) && safeDay.exercises.length > 0) {
+        todaysExercisesList = safeDay.exercises.map((exercise, index) => {
+          return `
+            <div class="exercise-item" data-exercise-index="${index}" data-day-index="0" style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 15px;
+              margin: 10px 0;
+              background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%);
+              border: 1px solid rgba(76, 175, 80, 0.2);
+              border-radius: 12px;
+              border-left: 4px solid #4CAF50;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+              transition: all 0.3s ease;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.08)'">
+              <div class="exercise-info" style="flex: 1;">
+                <div class="exercise-header" style="display: flex; align-items: center; margin-bottom: 8px;">
+                  <div class="exercise-number" style="
+                    background: #4CAF50;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-right: 12px;
+                  ">${index + 1}</div>
+                  <div class="exercise-name" style="font-weight: bold; color: white; font-size: 16px; line-height: 1.2; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                    ${exercise.name}
+                  </div>
+                </div>
+                <div class="exercise-details" style="
+                  color: #666;
+                  font-size: 14px;
+                  line-height: 1.4;
+                  margin-left: 36px;
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                ">
+                  <span style="
+                    background: rgba(76, 175, 80, 0.1);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    color: #2E7D32;
+                  ">
+                    <i class="fas fa-repeat" style="margin-right: 4px;"></i>
+                    ${exercise.sets || 3}组
+                  </span>
+                  <span style="
+                    background: rgba(33, 150, 243, 0.1);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    color: #1565C0;
+                  ">
+                    <i class="fas fa-times" style="margin-right: 4px;"></i>
+                    ${exercise.reps || '10-12'}次
+                  </span>
+                  ${exercise.weight ? `
+                    <span style="
+                      background: rgba(255, 152, 0, 0.1);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-weight: 500;
+                      color: #E65100;
+                    ">
+                      <i class="fas fa-dumbbell" style="margin-right: 4px;"></i>
+                      ${exercise.weight}${(exercise.weight && (exercise.weight.toString().includes('kg') || /^(自重|空杆)$/.test(exercise.weight.toString()) || exercise.weight.toString().includes('杆'))) ? '' : 'kg'}
+                    </span>
+                  ` : ''}
+                  ${exercise.rest ? `
+                    <span style="
+                      background: rgba(156, 39, 176, 0.1);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-weight: 500;
+                      color: #7B1FA2;
+                    ">
+                      <i class="fas fa-clock" style="margin-right: 4px;"></i>
+                      休息${exercise.rest}
+                    </span>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="exercise-actions" style="margin-left: 15px;">
+                <button class="complete-btn" onclick="markExerciseDone(${index}, 0)" style="
+                  background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+                  color: white;
+                  border: none;
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-size: 13px;
+                  font-weight: 500;
+                  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+                  transition: all 0.3s ease;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  min-width: 80px;
+                  justify-content: center;
+                " onmouseover="if(!this.classList.contains('completed')) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.4)'; }" onmouseout="if(!this.classList.contains('completed')) { this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(76, 175, 80, 0.3)'; }">
+                  <i class="fas fa-check"></i> 完成
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else if (safeDay.body_parts.includes('休息')) {
+        todaysExercisesList = `
+          <div class="rest-day-message" style="
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.05) 0%, rgba(156, 39, 176, 0.02) 100%);
+            border: 1px solid rgba(156, 39, 176, 0.2);
+            border-radius: 12px;
+            color: #7B1FA2;
+            font-style: italic;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          ">
+            <div style="font-size: 48px; margin-bottom: 15px;">😴</div>
+            <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">休息日</div>
+            <div style="font-size: 14px; color: #999;">好好恢复体力，为明天的训练做准备</div>
+          </div>
+        `;
+      } else {
+        todaysExercisesList = `
+          <div class="no-exercises-message" style="
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.02) 100%);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            color: #F57C00;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          ">
+            <div style="font-size: 48px; margin-bottom: 15px;">📝</div>
+            <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">待添加动作</div>
+            <div style="font-size: 14px; color: #999; margin-bottom: 15px;">暂未安排具体训练动作</div>
+            <button onclick="window.location.href='/tools/fitness/plan-editor/'" 
+                    style="
+                      padding: 10px 20px;
+                      background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+                      color: white;
+                      border: none;
+                      border-radius: 8px;
+                      cursor: pointer;
+                      font-size: 14px;
+                      font-weight: 500;
+                      box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+                      transition: all 0.3s ease;
+                    "
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.4)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(76, 175, 80, 0.3)'">
+              <i class="fas fa-edit" style="margin-right: 6px;"></i> 编辑计划
+            </button>
+          </div>
+        `;
+      }
+      
+      planContainer.innerHTML = `
+        <div class="today-plan-container">
+          <div class="plan-day active today" data-day="${todaysIndex + 1}" onclick="showDayDetails(${todaysIndex})" style="margin-bottom: 15px;">
+            <span>${safeDay.weekday} 🌟</span>
+            <span class="plan-type">${safeDay.body_parts.join(' + ')}</span>
+            <span class="plan-exercises">${exerciseText}</span>
+          </div>
+          
+          <div class="today-exercises-details" style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+              <h5 style="color: #333; margin: 0; font-size: 14px; font-weight: bold;">
+                <i class="fas fa-dumbbell"></i> 今日训练详情
+              </h5>
+              <div class="training-progress" style="
+                background: rgba(76, 175, 80, 0.1);
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                color: #4CAF50;
+                font-weight: 500;
+              ">
+                训练进度: 0% (0/0)
+              </div>
+            </div>
+            ${todaysExercisesList}
+          </div>
+          
+          <div class="action-buttons" style="display: flex; gap: 10px;">
+            <div class="view-full-plan-btn" onclick="showFullWeekPlan()" style="
+              flex: 1;
+              text-align: center;
+              padding: 12px;
+              background: rgba(76, 175, 80, 0.1);
+              border: 1px dashed #4CAF50;
+              border-radius: 8px;
+              cursor: pointer;
+              color: #4CAF50;
+              font-size: 13px;
+              transition: all 0.3s ease;
+            ">
+              <i class="fas fa-eye"></i> 查看完整周计划
+            </div>
+            <div class="export-today-btn" onclick="exportTodayPlan()" style="
+              flex: 1;
+              text-align: center;
+              padding: 12px;
+              background: rgba(33, 150, 243, 0.1);
+              border: 1px dashed #2196F3;
+              border-radius: 8px;
+              cursor: pointer;
+              color: #2196F3;
+              font-size: 13px;
+              transition: all 0.3s ease;
+            ">
+              <i class="fas fa-download"></i> 导出今日计划
+            </div>
+          </div>
         </div>
       `;
-    }).join('');
+      
+      // 延迟恢复完成状态
+      setTimeout(() => {
+        restoreExerciseCompletions();
+      }, 100);
+    } else {
+      // 如果没有找到今天的计划，显示提示
+      planContainer.innerHTML = `
+        <div class="no-plan-today" style="
+          text-align: center;
+          padding: 20px;
+          color: #666;
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 8px;
+        ">
+          <i class="fas fa-calendar-times" style="font-size: 24px; margin-bottom: 10px; color: #999;"></i>
+          <p>今天没有安排训练</p>
+          <button onclick="showFullWeekPlan()" class="btn-secondary" style="margin-top: 10px;">
+            <i class="fas fa-eye"></i> 查看完整周计划
+          </button>
+        </div>
+      `;
+    }
   }
   
   // 重新绑定点击事件
@@ -2315,6 +2618,641 @@ async function showDayDetails(dayIndex) {
   }
 }
 
+// 显示完整周计划
+async function showFullWeekPlan() {
+  try {
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    
+    if (data.success && data.has_plan && data.plan) {
+      showFullWeekPlanModal(data.plan);
+    } else {
+      showNoPlanModal();
+    }
+  } catch (error) {
+    console.error('获取训练计划失败:', error);
+    alert('获取训练计划失败，请重试');
+  }
+}
+
+// 显示完整周计划模态框
+function showFullWeekPlanModal(plan) {
+  const modal = document.createElement('div');
+  modal.className = 'checkin-modal';
+  
+  const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const today = new Date();
+  const currentDayOfWeek = today.getDay();
+  const currentWeekday = weekdays[currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1]; // 转换为周一开始
+  
+  let weekPlanHTML = '';
+  if (plan.week_schedule && Array.isArray(plan.week_schedule)) {
+    weekPlanHTML = plan.week_schedule.map((dayData, index) => {
+      const dayName = weekdays[index] || dayData.weekday || `第${index + 1}天`;
+      const isToday = dayName === currentWeekday;
+      
+      // 安全地获取训练部位
+      let bodyParts = '未设置';
+      if (dayData.body_parts && Array.isArray(dayData.body_parts)) {
+        bodyParts = dayData.body_parts.join(' + ');
+      } else if (dayData.type) {
+        bodyParts = dayData.type;
+      }
+      
+      // 计算动作数量
+      let exerciseCount = 0;
+      let exerciseText = '待添加';
+      if (dayData.exercises && Array.isArray(dayData.exercises) && dayData.exercises.length > 0) {
+        exerciseCount = dayData.exercises.length;
+        exerciseText = `${exerciseCount}个动作`;
+      } else if (bodyParts.includes('休息')) {
+        exerciseText = '恢复日';
+      }
+      
+      return `
+        <div class="week-plan-day ${isToday ? 'current-day' : ''}" 
+             style="
+               display: flex;
+               align-items: center;
+               padding: 15px;
+               margin: 8px 0;
+               background: ${isToday ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 255, 255, 0.05)'};
+               border-radius: 8px;
+               border-left: 4px solid ${isToday ? '#4CAF50' : '#ddd'};
+               cursor: pointer;
+               transition: all 0.3s ease;
+             "
+             onclick="showDayDetails(${index}); document.querySelector('.checkin-modal').remove();">
+          <div style="width: 80px; font-weight: bold; color: ${isToday ? '#4CAF50' : '#333'};">
+            ${dayName}${isToday ? ' 🌟' : ''}
+          </div>
+          <div style="width: 150px; color: #666; font-size: 14px;">
+            ${bodyParts}
+          </div>
+          <div style="flex: 1; color: #333; font-size: 14px;">
+            ${exerciseText}
+          </div>
+          <div style="color: #999; font-size: 12px;">
+            <i class="fas fa-chevron-right"></i>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    weekPlanHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无训练安排</div>';
+  }
+  
+  modal.innerHTML = `
+    <div class="checkin-modal-content" style="max-width: 600px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3><i class="fas fa-calendar-week"></i> 完整周训练计划</h3>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button onclick="exportFullWeekPlan()" style="
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          ">
+            <i class="fas fa-download"></i> 导出完整计划
+          </button>
+          <button class="btn-cancel" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+      </div>
+      
+      <div class="plan-info" style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 5px 0; color: #4CAF50;">${plan.name}</h4>
+        <p style="margin: 0; color: #666; font-size: 14px;">${plan.mode} • ${plan.cycle_weeks}周周期</p>
+      </div>
+      
+      <div class="week-schedule">
+        ${weekPlanHTML}
+      </div>
+      
+      <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; color: #888; font-size: 12px; text-align: center;">
+        点击任意一天查看详细训练安排
+      </div>
+    </div>
+  `;
+  
+  // 添加关闭事件
+  modal.querySelector('.btn-cancel').addEventListener('click', () => {
+    modal.remove();
+  });
+  
+  // 点击背景关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  document.body.appendChild(modal);
+}
+
+// 导出今日训练计划
+async function exportTodayPlan() {
+  try {
+    showNotification('正在生成今日训练图片...', 'info');
+    
+    // 获取今天的训练计划数据
+    const todayPlanData = await getTodayPlanData();
+    if (!todayPlanData) {
+      showNotification('没有今日训练计划可导出', 'warning');
+      return;
+    }
+    
+    // 创建今日计划的导出容器
+    const exportContainer = createTodayExportContainer(todayPlanData);
+    document.body.appendChild(exportContainer);
+    
+    // 使用html2canvas生成图片
+    try {
+      if (!window.html2canvas) {
+        await loadHtml2Canvas();
+      }
+      
+      const canvas = await html2canvas(exportContainer, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        scrollX: 0,
+        scrollY: 0,
+        useCORS: true,
+        allowTaint: true,
+        height: exportContainer.scrollHeight,
+        width: exportContainer.scrollWidth
+      });
+      
+      // 清理临时容器
+      document.body.removeChild(exportContainer);
+      
+      // 下载图片
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      const todayName = weekdays[today.getDay()];
+      
+      const link = document.createElement('a');
+      link.download = `今日训练计划_${todayName}_${dateStr}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      showNotification('今日训练计划导出成功！', 'success');
+      
+    } catch (error) {
+      document.body.removeChild(exportContainer);
+      throw error;
+    }
+    
+  } catch (error) {
+    console.error('导出今日计划失败:', error);
+    showNotification('导出失败: ' + error.message, 'error');
+  }
+}
+
+// 获取今日训练计划数据
+async function getTodayPlanData() {
+  try {
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    
+    if (data.success && data.has_plan && data.plan && data.plan.week_schedule) {
+      const plan = data.plan;
+      const today = new Date();
+      const currentDayOfWeek = today.getDay();
+      const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const currentWeekday = weekdays[currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1];
+      
+      // 找到今天的训练计划
+      for (let i = 0; i < plan.week_schedule.length; i++) {
+        const dayData = plan.week_schedule[i];
+        const dayName = weekdays[i] || dayData.weekday || `第${i + 1}天`;
+        if (dayName === currentWeekday) {
+          // 安全地获取训练部位
+          let bodyParts = '未设置';
+          if (dayData.body_parts && Array.isArray(dayData.body_parts)) {
+            bodyParts = dayData.body_parts.join(' + ');
+          } else if (dayData.type) {
+            bodyParts = dayData.type;
+          }
+          
+          return {
+            planName: plan.name || '训练计划',
+            planMode: plan.mode || '自定义',
+            dayName: currentWeekday,
+            bodyParts: bodyParts,
+            exercises: dayData.exercises || [],
+            isRestDay: bodyParts.includes('休息') || (dayData.exercises && dayData.exercises.length === 0)
+          };
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('获取今日计划数据失败:', error);
+    return null;
+  }
+}
+
+// 创建今日计划导出容器
+function createTodayExportContainer(todayPlan) {
+  const container = document.createElement('div');
+  container.style.cssText = `
+    position: absolute;
+    top: -10000px;
+    left: -10000px;
+    width: 600px;
+    background: white;
+    padding: 30px;
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    color: #333;
+    box-sizing: border-box;
+  `;
+  
+  // 生成动作列表HTML
+  let exercisesHTML = '';
+  if (todayPlan.exercises && todayPlan.exercises.length > 0) {
+    exercisesHTML = todayPlan.exercises.map((exercise, index) => {
+      return `
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px;
+          margin: 8px 0;
+          background: rgba(76, 175, 80, 0.05);
+          border-radius: 6px;
+          border-left: 3px solid #4CAF50;
+        ">
+          <div>
+            <div style="font-weight: bold; color: #333; font-size: 15px; margin-bottom: 4px;">
+              ${index + 1}. ${exercise.name}
+            </div>
+            <div style="color: #666; font-size: 13px;">
+              ${exercise.sets || 3}组 × ${exercise.reps || '10-12'}次
+              ${exercise.weight ? ` @ ${exercise.weight}${(exercise.weight && (exercise.weight.toString().includes('kg') || /^(自重|空杆)$/.test(exercise.weight.toString()) || exercise.weight.toString().includes('杆'))) ? '' : 'kg'}` : ''}
+              ${exercise.rest ? ` | 休息${exercise.rest}` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else if (todayPlan.isRestDay) {
+    exercisesHTML = `
+      <div style="
+        text-align: center;
+        padding: 40px 20px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        color: #999;
+        font-style: italic;
+      ">
+        <div style="font-size: 48px; margin-bottom: 15px;">😴</div>
+        <div style="font-size: 18px;">休息日，好好恢复体力</div>
+      </div>
+    `;
+  } else {
+    exercisesHTML = `
+      <div style="
+        text-align: center;
+        padding: 40px 20px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        color: #999;
+      ">
+        <div style="font-size: 48px; margin-bottom: 15px;">📝</div>
+        <div style="font-size: 16px;">暂未安排具体动作</div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = `
+    <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #4CAF50; padding-bottom: 15px;">
+      <h1 style="color: #4CAF50; margin: 0; font-size: 24px;">今日训练计划</h1>
+      <p style="color: #666; margin: 8px 0 0 0; font-size: 13px;">导出日期: ${new Date().toLocaleDateString('zh-CN')}</p>
+    </div>
+    
+    <div style="margin-bottom: 25px;">
+      <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
+        <h2 style="color: #4CAF50; font-size: 18px; margin: 0 0 8px 0;">${todayPlan.dayName}</h2>
+        <div style="color: #333; font-size: 14px; margin-bottom: 4px;">
+          <strong>计划:</strong> ${todayPlan.planName}
+        </div>
+        <div style="color: #333; font-size: 14px; margin-bottom: 4px;">
+          <strong>模式:</strong> ${todayPlan.planMode}
+        </div>
+        <div style="color: #333; font-size: 14px;">
+          <strong>训练部位:</strong> ${todayPlan.bodyParts}
+        </div>
+      </div>
+    </div>
+    
+    <div>
+      <h2 style="color: #333; font-size: 18px; margin-bottom: 15px;">🏋️ 训练动作</h2>
+      ${exercisesHTML}
+    </div>
+    
+    <div style="margin-top: 30px; text-align: center; color: #999; font-size: 11px; border-top: 1px solid #eee; padding-top: 15px;">
+      <p>由 FitMatrix 健身矩阵生成 | ${new Date().toLocaleString('zh-CN')}</p>
+      <p style="margin-top: 6px; color: #4CAF50; font-weight: bold;">🌐 shenyiqing.xin</p>
+    </div>
+  `;
+  
+  return container;
+}
+
+// 导出完整周训练计划
+async function exportFullWeekPlan() {
+  try {
+    showNotification('正在生成完整周训练图片...', 'info');
+    
+    // 获取完整的训练计划数据
+    const fullWeekData = await getActivePlanData();
+    if (!fullWeekData) {
+      showNotification('没有训练计划可导出', 'warning');
+      return;
+    }
+    
+    // 创建完整周计划的导出容器，使用和网页一致的样式
+    const exportContainer = createFullWeekExportContainer(fullWeekData);
+    document.body.appendChild(exportContainer);
+    
+    // 使用html2canvas生成图片
+    try {
+      if (!window.html2canvas) {
+        await loadHtml2Canvas();
+      }
+      
+      const canvas = await html2canvas(exportContainer, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        scrollX: 0,
+        scrollY: 0,
+        useCORS: true,
+        allowTaint: true,
+        height: exportContainer.scrollHeight,
+        width: exportContainer.scrollWidth
+      });
+      
+      // 清理临时容器
+      document.body.removeChild(exportContainer);
+      
+      // 下载图片
+      const dateStr = new Date().toISOString().split('T')[0];
+      const link = document.createElement('a');
+      link.download = `完整周训练计划_${fullWeekData.name}_${dateStr}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      showNotification('完整周训练计划导出成功！', 'success');
+      
+    } catch (error) {
+      document.body.removeChild(exportContainer);
+      throw error;
+    }
+    
+  } catch (error) {
+    console.error('导出完整周计划失败:', error);
+    showNotification('导出失败: ' + error.message, 'error');
+  }
+}
+
+// 创建完整周计划导出容器，样式与网页保持一致
+function createFullWeekExportContainer(planData) {
+  const container = document.createElement('div');
+  container.style.cssText = `
+    position: absolute;
+    top: -10000px;
+    left: -10000px;
+    width: 800px;
+    background: white;
+    padding: 40px;
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    color: #333;
+    box-sizing: border-box;
+  `;
+  
+  const today = new Date();
+  const currentDayOfWeek = today.getDay();
+  const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const currentWeekday = weekdays[currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1];
+  
+  // 生成周计划HTML，样式与网页保持一致
+  let weekPlanHTML = '';
+  if (planData.weeklyPlan && planData.weeklyPlan.length > 0) {
+    weekPlanHTML = planData.weeklyPlan.map((day, index) => {
+      const isToday = day.day === currentWeekday;
+      
+      // 格式化详细动作信息
+      const exerciseLines = day.exercises.split('\n');
+      const hasDetailedExercises = exerciseLines.length > 1 && exerciseLines[0] !== '待添加' && exerciseLines[0] !== '休息日，好好恢复体力';
+      
+      let exercisesDetailHTML = '';
+      if (hasDetailedExercises) {
+        exercisesDetailHTML = exerciseLines.map((line, idx) => 
+          `<div style="color: #666; font-size: 12px; margin: 3px 0; padding-left: 15px;">• ${line}</div>`
+        ).join('');
+      } else {
+        exercisesDetailHTML = `<div style="color: #999; font-size: 13px; text-align: center; font-style: italic; padding: 10px;">${day.exercises}</div>`;
+      }
+      
+      return `
+        <div style="
+          margin-bottom: 20px;
+          padding: 20px;
+          background: ${isToday ? 'rgba(76, 175, 80, 0.1)' : 'rgba(248, 249, 250, 1)'};
+          border-radius: 8px;
+          border-left: 4px solid ${isToday ? '#4CAF50' : '#ddd'};
+          border: ${isToday ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid #eee'};
+        ">
+          <div style="display: flex; align-items: center; margin-bottom: 15px;">
+            <div style="font-weight: bold; color: ${isToday ? '#4CAF50' : '#333'}; font-size: 18px; margin-right: 15px;">
+              ${day.day}${isToday ? ' 🌟' : ''}
+            </div>
+            <div style="color: #666; font-size: 14px; background: white; padding: 6px 12px; border-radius: 4px; border: 1px solid #eee;">
+              ${day.bodyParts}
+            </div>
+            ${day.exerciseCount > 0 ? `<div style="margin-left: 15px; color: #888; font-size: 12px; background: rgba(76, 175, 80, 0.1); padding: 3px 8px; border-radius: 12px;">${day.exerciseCount}个动作</div>` : ''}
+          </div>
+          <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #eee;">
+            <div style="font-weight: bold; color: #333; font-size: 14px; margin-bottom: 10px;">🏋️ 训练详情</div>
+            ${exercisesDetailHTML}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    weekPlanHTML = '<div style="text-align: center; color: #999; padding: 40px;">暂无训练安排</div>';
+  }
+  
+  container.innerHTML = `
+    <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 20px;">
+      <h1 style="color: #4CAF50; margin: 0; font-size: 28px;">${planData.name}</h1>
+      <p style="color: #666; margin: 10px 0 0 0; font-size: 14px;">
+        ${planData.mode} • ${planData.cycle_weeks}周周期 | 导出日期: ${new Date().toLocaleDateString('zh-CN')}
+      </p>
+    </div>
+    
+    <div style="margin-bottom: 30px;">
+      <h2 style="color: #333; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center;">
+        <i class="fas fa-calendar-week" style="margin-right: 10px; color: #4CAF50;"></i>
+        完整周训练安排
+      </h2>
+      ${weekPlanHTML}
+    </div>
+    
+    <div style="margin-top: 40px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px;">
+      <p>由 FitMatrix 健身矩阵生成 | ${new Date().toLocaleString('zh-CN')}</p>
+      <p style="margin-top: 8px; color: #4CAF50; font-weight: bold;">🌐 shenyiqing.xin</p>
+    </div>
+  `;
+  
+  return container;
+}
+
+// 标记动作完成
+function markExerciseDone(exerciseIndex, dayIndex) {
+  const exerciseElement = document.querySelector(`[data-exercise-index="${exerciseIndex}"][data-day-index="${dayIndex}"]`);
+  if (!exerciseElement) return;
+  
+  const button = exerciseElement.querySelector('.complete-btn');
+  const exerciseItem = exerciseElement.closest('.exercise-item');
+  
+  if (button && exerciseItem) {
+    // 切换完成状态
+    const isCompleted = button.classList.contains('completed');
+    const exerciseName = exerciseItem.querySelector('.exercise-name').textContent;
+    
+    if (isCompleted) {
+      // 取消完成状态
+      button.classList.remove('completed');
+      button.innerHTML = '<i class="fas fa-check"></i> 完成';
+      button.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45A049 100%)';
+      exerciseItem.classList.remove('completed');
+      exerciseItem.style.opacity = '1';
+      exerciseItem.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%)';
+      
+      // 从本地存储中移除完成状态
+      removeExerciseCompletion(exerciseName, dayIndex);
+    } else {
+      // 标记为完成
+      button.classList.add('completed');
+      button.innerHTML = '<i class="fas fa-check-circle"></i> 已完成';
+      button.style.background = 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)';
+      exerciseItem.classList.add('completed');
+      exerciseItem.style.opacity = '0.7';
+      exerciseItem.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%)';
+      
+      // 保存完成状态到本地存储
+      saveExerciseCompletion(exerciseName, dayIndex);
+      
+      // 显示完成提示
+      showNotification(`动作"${exerciseName}"已完成！`, 'success');
+    }
+    
+    // 更新训练进度
+    updateTrainingProgress();
+  }
+}
+
+// 保存动作完成状态到本地存储
+function saveExerciseCompletion(exerciseName, dayIndex) {
+  const today = new Date().toISOString().split('T')[0]; // 格式: YYYY-MM-DD
+  const storageKey = `exercise_completion_${today}`;
+  
+  let completions = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  if (!completions[dayIndex]) {
+    completions[dayIndex] = [];
+  }
+  
+  if (!completions[dayIndex].includes(exerciseName)) {
+    completions[dayIndex].push(exerciseName);
+  }
+  
+  localStorage.setItem(storageKey, JSON.stringify(completions));
+}
+
+// 从本地存储中移除动作完成状态
+function removeExerciseCompletion(exerciseName, dayIndex) {
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `exercise_completion_${today}`;
+  
+  let completions = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  if (completions[dayIndex]) {
+    const index = completions[dayIndex].indexOf(exerciseName);
+    if (index > -1) {
+      completions[dayIndex].splice(index, 1);
+    }
+  }
+  
+  localStorage.setItem(storageKey, JSON.stringify(completions));
+}
+
+// 检查动作是否已完成
+function isExerciseCompleted(exerciseName, dayIndex) {
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `exercise_completion_${today}`;
+  
+  const completions = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  return completions[dayIndex] && completions[dayIndex].includes(exerciseName);
+}
+
+// 恢复动作完成状态
+function restoreExerciseCompletions() {
+  const exerciseItems = document.querySelectorAll('.exercise-item');
+  
+  exerciseItems.forEach(item => {
+    const exerciseName = item.querySelector('.exercise-name')?.textContent;
+    const dayIndex = parseInt(item.getAttribute('data-day-index') || '0');
+    const button = item.querySelector('.complete-btn');
+    
+    if (exerciseName && button && isExerciseCompleted(exerciseName, dayIndex)) {
+      // 恢复完成状态
+      button.classList.add('completed');
+      button.innerHTML = '<i class="fas fa-check-circle"></i> 已完成';
+      button.style.background = 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)';
+      item.classList.add('completed');
+      item.style.opacity = '0.7';
+      item.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%)';
+    }
+  });
+  
+  // 更新训练进度
+  updateTrainingProgress();
+}
+
+// 更新训练进度
+function updateTrainingProgress() {
+  const allExercises = document.querySelectorAll('.exercise-item');
+  const completedExercises = document.querySelectorAll('.exercise-item.completed');
+  
+  if (allExercises.length > 0) {
+    const progress = Math.round((completedExercises.length / allExercises.length) * 100);
+    
+    // 更新页面上的进度显示
+    const progressElement = document.querySelector('.training-progress');
+    if (progressElement) {
+      progressElement.textContent = `训练进度: ${progress}% (${completedExercises.length}/${allExercises.length})`;
+    }
+    
+    // 如果全部完成，显示恭喜信息
+    if (progress === 100) {
+      setTimeout(() => {
+        showNotification('🎉 恭喜！今日训练全部完成！', 'success');
+      }, 500);
+    }
+  }
+}
+
 // 显示训练日详情模态框
 function showDayDetailsModal(dayData, dayNumber) {
   const modal = document.createElement('div');
@@ -2332,7 +3270,7 @@ function showDayDetailsModal(dayData, dayNumber) {
     
     if (totalExercises > 0) {
       exercisesHTML = dayData.exercises.map((exercise, index) => {
-        const weight = exercise.weight ? `${exercise.weight}kg` : '自重';
+        const weight = exercise.weight ? `${exercise.weight}${(exercise.weight && (exercise.weight.toString().includes('kg') || /^(自重|空杆)$/.test(exercise.weight.toString()) || exercise.weight.toString().includes('杆'))) ? '' : 'kg'}` : '自重';
         const reps = exercise.reps || '10-12';
         const sets = exercise.sets || 3;
         const rest = exercise.rest || '90秒';
@@ -2404,7 +3342,7 @@ function showDayDetailsModal(dayData, dayNumber) {
                     <div class="exercise-params">
                       ${exercise.sets ? `${exercise.sets}组` : ''}
                       ${exercise.reps ? ` × ${exercise.reps}次` : ''}
-                      ${exercise.weight ? ` @ ${exercise.weight}kg` : ''}
+                      ${exercise.weight ? ` @ ${exercise.weight}${(exercise.weight && (exercise.weight.toString().includes('kg') || /^(自重|空杆)$/.test(exercise.weight.toString()) || exercise.weight.toString().includes('杆'))) ? '' : 'kg'}` : ''}
                       ${exercise.rest ? ` (休息${exercise.rest})` : ''}
                     </div>
                   </div>
@@ -2439,7 +3377,7 @@ function showDayDetailsModal(dayData, dayNumber) {
   
   modal.innerHTML = `
     <div class="checkin-modal-content">
-      <h3>${dayData.weekday} - ${dayData.body_parts.join(' + ')}</h3>
+      <h3>${dayData.weekday || '训练日'} - ${dayData.body_parts ? dayData.body_parts.join(' + ') : (dayData.type || '训练')}</h3>
       <div class="day-details-content">
         ${exercisesHTML}
       </div>
@@ -3436,6 +4374,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载当前激活的训练计划
     loadActivePlan();
+    
+    // 延迟恢复完成状态，确保DOM已加载
+    setTimeout(() => {
+      restoreExerciseCompletions();
+    }, 1000);
   } catch (error) {
     console.error('初始化失败:', error);
   }
@@ -3478,7 +4421,7 @@ function updatePlanDisplay(plan) {
     planDescription.textContent = `${plan.mode} • ${plan.cycle_weeks}周计划`;
   }
   
-  // 更新训练日显示
+  // 更新训练日显示 - 只显示今天的训练
   const workoutPlan = document.getElementById('workoutPlan');
   console.log('workoutPlan element:', workoutPlan);
   console.log('plan.week_schedule:', plan.week_schedule);
@@ -3486,11 +4429,38 @@ function updatePlanDisplay(plan) {
   if (workoutPlan && plan.week_schedule) {
     const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     
-    workoutPlan.innerHTML = plan.week_schedule.map((dayData, index) => {
-      console.log(`处理第${index}天:`, dayData);
-      const exerciseCount = dayData.exercises ? dayData.exercises.length : 0;
-      const dayType = dayData.type || dayData.name || '休息';
+    // 获取当前星期几
+    const today = new Date();
+    const currentDayOfWeek = today.getDay();
+    const currentWeekday = weekDays[currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1]; // 转换为周一开始
+    
+    // 找到今天的训练计划
+    let todaysPlan = null;
+    let todaysIndex = -1;
+    
+    for (let i = 0; i < plan.week_schedule.length; i++) {
+      const dayData = plan.week_schedule[i];
+      const dayName = weekDays[i] || dayData.weekday || `第${i + 1}天`;
+      if (dayName === currentWeekday) {
+        todaysPlan = dayData;
+        todaysIndex = i;
+        break;
+      }
+    }
+    
+    if (todaysPlan) {
+      console.log(`处理今天的训练计划:`, todaysPlan);
+      const exerciseCount = todaysPlan.exercises ? todaysPlan.exercises.length : 0;
+      const dayType = todaysPlan.type || todaysPlan.name || '训练';
       console.log(`dayType: "${dayType}", exerciseCount: ${exerciseCount}`);
+      
+      // 安全地获取训练部位
+      let bodyParts = '未设置';
+      if (todaysPlan.body_parts && Array.isArray(todaysPlan.body_parts)) {
+        bodyParts = todaysPlan.body_parts.join(' + ');
+      } else if (dayType) {
+        bodyParts = dayType;
+      }
       
       // 更安全的休息日判断
       let isRestDay = false;
@@ -3501,48 +4471,259 @@ function updatePlanDisplay(plan) {
       }
       console.log(`isRestDay: ${isRestDay}`);
       
-      // 生成训练动作列表
-      let exercisesList = '';
-      if (dayData.exercises && dayData.exercises.length > 0) {
-        exercisesList = dayData.exercises.map(exercise => {
+      const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
+        (isRestDay ? '恢复日' : '待添加');
+      
+      // 生成今天的详细动作列表
+      let todaysExercisesList = '';
+      if (todaysPlan.exercises && Array.isArray(todaysPlan.exercises) && todaysPlan.exercises.length > 0) {
+        todaysExercisesList = todaysPlan.exercises.map((exercise, index) => {
           return `
-            <div class="exercise-item">
-              <div class="exercise-name">${exercise.name}</div>
-              <div class="exercise-details">
-                ${exercise.sets}组 × ${exercise.reps}次
-                ${exercise.weight ? ` @ ${exercise.weight}` : ''}
+            <div class="exercise-item" data-exercise-index="${index}" data-day-index="0" style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 15px;
+              margin: 10px 0;
+              background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%);
+              border: 1px solid rgba(76, 175, 80, 0.2);
+              border-radius: 12px;
+              border-left: 4px solid #4CAF50;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+              transition: all 0.3s ease;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0, 0, 0, 0.08)'">
+              <div class="exercise-info" style="flex: 1;">
+                <div class="exercise-header" style="display: flex; align-items: center; margin-bottom: 8px;">
+                  <div class="exercise-number" style="
+                    background: #4CAF50;
+                    color: white;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-right: 12px;
+                  ">${index + 1}</div>
+                  <div class="exercise-name" style="font-weight: bold; color: white; font-size: 16px; line-height: 1.2; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                    ${exercise.name}
+                  </div>
+                </div>
+                <div class="exercise-details" style="
+                  color: #666;
+                  font-size: 14px;
+                  line-height: 1.4;
+                  margin-left: 36px;
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                ">
+                  <span style="
+                    background: rgba(76, 175, 80, 0.1);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    color: #2E7D32;
+                  ">
+                    <i class="fas fa-repeat" style="margin-right: 4px;"></i>
+                    ${exercise.sets || 3}组
+                  </span>
+                  <span style="
+                    background: rgba(33, 150, 243, 0.1);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    color: #1565C0;
+                  ">
+                    <i class="fas fa-times" style="margin-right: 4px;"></i>
+                    ${exercise.reps || '10-12'}次
+                  </span>
+                  ${exercise.weight ? `
+                    <span style="
+                      background: rgba(255, 152, 0, 0.1);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-weight: 500;
+                      color: #E65100;
+                    ">
+                      <i class="fas fa-dumbbell" style="margin-right: 4px;"></i>
+                      ${exercise.weight}${(exercise.weight && (exercise.weight.toString().includes('kg') || /^(自重|空杆)$/.test(exercise.weight.toString()) || exercise.weight.toString().includes('杆'))) ? '' : 'kg'}
+                    </span>
+                  ` : ''}
+                  ${exercise.rest ? `
+                    <span style="
+                      background: rgba(156, 39, 176, 0.1);
+                      padding: 4px 8px;
+                      border-radius: 6px;
+                      font-weight: 500;
+                      color: #7B1FA2;
+                    ">
+                      <i class="fas fa-clock" style="margin-right: 4px;"></i>
+                      休息${exercise.rest}
+                    </span>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="exercise-actions" style="margin-left: 15px;">
+                <button class="complete-btn" onclick="markExerciseDone(${index}, 0)" style="
+                  background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+                  color: white;
+                  border: none;
+                  padding: 8px 16px;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-size: 13px;
+                  font-weight: 500;
+                  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+                  transition: all 0.3s ease;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  min-width: 80px;
+                  justify-content: center;
+                " onmouseover="if(!this.classList.contains('completed')) { this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.4)'; }" onmouseout="if(!this.classList.contains('completed')) { this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(76, 175, 80, 0.3)'; }">
+                  <i class="fas fa-check"></i> 完成
+                </button>
               </div>
             </div>
           `;
         }).join('');
+      } else if (isRestDay) {
+        todaysExercisesList = `
+          <div class="rest-day-message" style="
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.05) 0%, rgba(156, 39, 176, 0.02) 100%);
+            border: 1px solid rgba(156, 39, 176, 0.2);
+            border-radius: 12px;
+            color: #7B1FA2;
+            font-style: italic;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          ">
+            <div style="font-size: 48px; margin-bottom: 15px;">😴</div>
+            <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">休息日</div>
+            <div style="font-size: 14px; color: #999;">好好恢复体力，为明天的训练做准备</div>
+          </div>
+        `;
       } else {
-        exercisesList = '<div class="rest-day-message">休息日，好好恢复体力</div>';
+        todaysExercisesList = `
+          <div class="no-exercises-message" style="
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.02) 100%);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            color: #F57C00;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          ">
+            <div style="font-size: 48px; margin-bottom: 15px;">📝</div>
+            <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">待添加动作</div>
+            <div style="font-size: 14px; color: #999; margin-bottom: 15px;">暂未安排具体训练动作</div>
+            <button onclick="window.location.href='/tools/fitness/plan-editor/'" 
+                    style="
+                      padding: 10px 20px;
+                      background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%);
+                      color: white;
+                      border: none;
+                      border-radius: 8px;
+                      cursor: pointer;
+                      font-size: 14px;
+                      font-weight: 500;
+                      box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+                      transition: all 0.3s ease;
+                    "
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.4)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 6px rgba(76, 175, 80, 0.3)'">
+              <i class="fas fa-edit" style="margin-right: 6px;"></i> 编辑计划
+            </button>
+          </div>
+        `;
       }
       
-      return `
-        <div class="detailed-plan-day ${index === 0 ? 'active' : ''} ${isRestDay ? 'rest-day' : ''}" data-day="${index + 1}">
-          <div class="day-header">
-            <div class="day-name">${weekDays[index]}</div>
-            <div class="day-type">${dayType}</div>
+      workoutPlan.innerHTML = `
+        <div class="today-plan-container">
+          <div class="plan-day active today" data-day="${todaysIndex + 1}" onclick="showDayDetails(${todaysIndex})" style="margin-bottom: 15px;">
+            <span>${currentWeekday} 🌟</span>
+            <span class="plan-type">${bodyParts}</span>
+            <span class="plan-exercises">${exerciseText}</span>
           </div>
-          <div class="day-exercises">
-            ${exercisesList}
+          
+          <div class="today-exercises-details" style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+              <h5 style="color: #333; margin: 0; font-size: 14px; font-weight: bold;">
+                <i class="fas fa-dumbbell"></i> 今日训练详情
+              </h5>
+              <div class="training-progress" style="
+                background: rgba(76, 175, 80, 0.1);
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 12px;
+                color: #4CAF50;
+                font-weight: 500;
+              ">
+                训练进度: 0% (0/0)
+              </div>
+            </div>
+            ${todaysExercisesList}
+          </div>
+          
+          <div class="action-buttons" style="display: flex; gap: 10px;">
+            <div class="view-full-plan-btn" onclick="showFullWeekPlan()" style="
+              flex: 1;
+              text-align: center;
+              padding: 12px;
+              background: rgba(76, 175, 80, 0.1);
+              border: 1px dashed #4CAF50;
+              border-radius: 8px;
+              cursor: pointer;
+              color: #4CAF50;
+              font-size: 13px;
+              transition: all 0.3s ease;
+            ">
+              <i class="fas fa-eye"></i> 查看完整周计划
+            </div>
+            <div class="export-today-btn" onclick="exportTodayPlan()" style="
+              flex: 1;
+              text-align: center;
+              padding: 12px;
+              background: rgba(33, 150, 243, 0.1);
+              border: 1px dashed #2196F3;
+              border-radius: 8px;
+              cursor: pointer;
+              color: #2196F3;
+              font-size: 13px;
+              transition: all 0.3s ease;
+            ">
+              <i class="fas fa-download"></i> 导出今日计划
+            </div>
           </div>
         </div>
       `;
-    }).join('');
-    
-    // 重新绑定点击事件
-    workoutPlan.querySelectorAll('.detailed-plan-day').forEach(day => {
-      day.addEventListener('click', () => {
-        // 移除其他活动状态
-        workoutPlan.querySelectorAll('.detailed-plan-day').forEach(d => d.classList.remove('active'));
-        // 添加当前活动状态
-        day.classList.add('active');
-        // 显示详情
-        showDayDetails(parseInt(day.getAttribute('data-day')) - 1);
-      });
-    });
+      
+      // 延迟恢复完成状态
+      setTimeout(() => {
+        restoreExerciseCompletions();
+      }, 100);
+    } else {
+      // 如果没有找到今天的计划，显示提示
+      workoutPlan.innerHTML = `
+        <div class="no-plan-today" style="
+          text-align: center;
+          padding: 20px;
+          color: #666;
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 8px;
+        ">
+          <i class="fas fa-calendar-times" style="font-size: 24px; margin-bottom: 10px; color: #999;"></i>
+          <p>今天没有安排训练</p>
+          <button onclick="showFullWeekPlan()" class="btn-secondary" style="margin-top: 10px;">
+            <i class="fas fa-eye"></i> 查看完整周计划
+          </button>
+        </div>
+      `;
+    }
   }
 }
 
@@ -3669,16 +4850,34 @@ function showPlanLibraryModal(plans) {
 async function openPlanTemplates() {
   try {
     const response = await fetch('/tools/api/training_plans/templates/');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
     const data = await response.json();
+    console.log('API响应数据:', data);
     
     if (data.success) {
-      showPlanTemplatesModal(data.templates || []);
+      let templates = data.templates || data.data || [];
+      
+      // 如果templates是对象，转换为数组
+      if (typeof templates === 'object' && !Array.isArray(templates)) {
+        templates = Object.keys(templates).map(key => ({
+          id: key,
+          ...templates[key]
+        }));
+      }
+      
+      console.log('解析的模板数据:', templates);
+      showPlanTemplatesModal(templates);
     } else {
-      alert('加载模板失败: ' + data.error);
+      console.error('API返回错误:', data);
+      alert('加载模板失败: ' + (data.error || '未知错误'));
     }
   } catch (error) {
     console.error('加载模板失败:', error);
-    alert('加载模板失败，请重试');
+    alert('加载模板失败: ' + error.message);
   }
 }
 
@@ -3686,6 +4885,24 @@ async function openPlanTemplates() {
 function showPlanTemplatesModal(templates) {
   const modal = document.createElement('div');
   modal.className = 'checkin-modal';
+  
+  // 确保templates是数组
+  if (!Array.isArray(templates)) {
+    console.warn('templates不是数组:', templates);
+    templates = [];
+  }
+  
+  // 处理空模板的情况
+  if (templates.length === 0) {
+    templates = [{
+      id: 'no_templates',
+      name: '暂无模板',
+      description: '当前没有可用的训练计划模板',
+      difficulty: 'beginner',
+      target_goals: [],
+      mode: 'custom'
+    }];
+  }
   
   const templatesHTML = templates.map(template => {
     const difficultyColors = {
@@ -3702,25 +4919,35 @@ function showPlanTemplatesModal(templates) {
       'expert': '专家'
     };
     
+    // 确保模板数据安全
+    const safeTemplate = {
+      id: template.id || 'unknown',
+      name: template.name || '未知模板',
+      description: template.description || '暂无描述',
+      difficulty: template.difficulty || 'beginner',
+      target_goals: Array.isArray(template.target_goals) ? template.target_goals : [],
+      mode: template.mode || 'custom'
+    };
+    
     return `
-      <div class="template-item" data-template-id="${template.id}">
+      <div class="template-item" data-template-id="${safeTemplate.id}">
         <div class="template-header">
-          <div class="template-name">${template.name}</div>
-          <div class="template-difficulty" style="background: ${difficultyColors[template.difficulty] || '#666'}">
-            ${difficultyNames[template.difficulty] || template.difficulty}
+          <div class="template-name">${safeTemplate.name}</div>
+          <div class="template-difficulty" style="background: ${difficultyColors[safeTemplate.difficulty] || '#666'}">
+            ${difficultyNames[safeTemplate.difficulty] || safeTemplate.difficulty}
           </div>
         </div>
-        <div class="template-description">${template.description}</div>
+        <div class="template-description">${safeTemplate.description}</div>
         <div class="template-meta">
-          <span><i class="fas fa-calendar"></i> ${template.cycle_weeks}周</span>
-          <span><i class="fas fa-dumbbell"></i> ${template.mode}</span>
-          <span><i class="fas fa-target"></i> ${template.target_goals.join(', ')}</span>
+          <span><i class="fas fa-calendar"></i> ${template.cycle_weeks || 4}周</span>
+          <span><i class="fas fa-dumbbell"></i> ${safeTemplate.mode}</span>
+          <span><i class="fas fa-target"></i> ${safeTemplate.target_goals.join(', ')}</span>
         </div>
         <div class="template-actions">
-          <button class="btn-apply" onclick="applyTemplate('${template.id}', '${template.name}')">
+          <button class="btn-apply" onclick="applyTemplate('${safeTemplate.id}', '${safeTemplate.name}')"
             <i class="fas fa-rocket"></i> 立即应用
           </button>
-          <button class="btn-preview" onclick="previewTemplate('${template.id}')">
+          <button class="btn-preview" onclick="previewTemplate('${safeTemplate.id}')">
             <i class="fas fa-eye"></i> 预览
           </button>
         </div>
@@ -3788,19 +5015,41 @@ async function applyTemplate(templateId, templateName) {
   if (customName === null) return; // 用户取消
   
   try {
+    console.log('开始应用模板:', templateId, templateName, customName);
+    
+    // 获取CSRF令牌
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                      document.querySelector('meta[name=csrf-token]')?.content || 
+                      getCookie('csrftoken') || '';
+    
+    console.log('CSRF令牌:', csrfToken);
+    
+    const requestData = { 
+      template_id: templateId,
+      custom_name: customName.trim() || templateName
+    };
+    
+    console.log('请求数据:', requestData);
+    
     const response = await fetch('/tools/api/training_plans/templates/apply/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        'X-CSRFToken': csrfToken
       },
-      body: JSON.stringify({ 
-        template_id: templateId,
-        custom_name: customName.trim() || templateName
-      })
+      body: JSON.stringify(requestData)
     });
     
+    console.log('响应状态:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('响应错误:', errorText);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
     const data = await response.json();
+    console.log('响应数据:', data);
     
     if (data.success) {
       // 关闭模态框
@@ -3838,22 +5087,50 @@ async function previewPlan(planId) {
 }
 
 // 预览模板
-function previewTemplate(templateId) {
-  // 从已加载的模板数据中查找
-  fetch('/tools/api/training_plans/templates/')
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        const template = data.templates.find(t => t.id === templateId);
+async function previewTemplate(templateId) {
+  try {
+    console.log('开始预览模板:', templateId);
+    
+    const response = await fetch('/tools/api/training_plans/templates/');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('预览模板API响应:', data);
+    
+    if (data.success) {
+      let template = null;
+      const templates = data.templates || {};
+      
+      // 处理字典格式的templates
+      if (typeof templates === 'object' && !Array.isArray(templates)) {
+        template = templates[templateId];
         if (template) {
-          showPlanPreviewModal(template);
+          template.id = templateId; // 确保包含id
         }
+      } else if (Array.isArray(templates)) {
+        // 处理数组格式的templates
+        template = templates.find(t => t.id === templateId);
       }
-    })
-    .catch(error => {
-      console.error('预览模板失败:', error);
-      alert('预览模板失败，请重试');
-    });
+      
+      console.log('找到的模板:', template);
+      
+      if (template) {
+        showPlanPreviewModal(template);
+      } else {
+        console.error('未找到模板:', templateId, '可用模板:', Object.keys(templates));
+        alert('未找到模板数据');
+      }
+    } else {
+      console.error('API错误:', data.error);
+      alert('获取模板数据失败: ' + (data.error || '未知错误'));
+    }
+  } catch (error) {
+    console.error('预览模板失败:', error);
+    alert('预览模板失败: ' + error.message);
+  }
 }
 
 // 显示计划预览模态框
@@ -4866,7 +6143,7 @@ async function showApplyPlanModal(planId, planName) {
                       <div class="exercise-name">${exercise.name}</div>
                       <div class="exercise-params">
                         ${exercise.sets}组 × ${exercise.reps}次
-                        ${exercise.weight ? ` @ ${exercise.weight}` : ''}
+                        ${exercise.weight ? ` 重量@ ${exercise.weight}` : ''}
                         ${exercise.rest ? ` | 休息${exercise.rest}` : ''}
                       </div>
                     </div>
@@ -5035,5 +6312,237 @@ async function deletePlan(planId, planName) {
 
 // 保存全局引用以便其他函数访问
 window.checkInCalendar = null;
+
+// 获取Cookie的辅助函数
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// 训练计划导出为图片功能
+async function exportPlanAsImage() {
+  // 现在只导出今日计划，与主页面的"导出今日计划"功能一致
+  await exportTodayPlan();
+}
+
+// 获取当前激活的训练计划数据
+async function getActivePlanData() {
+  try {
+    // 直接从API获取最新的训练计划数据
+    const response = await fetch('/tools/api/training_plans/active/');
+    const data = await response.json();
+    
+    if (data.success && data.has_plan && data.plan) {
+      const plan = data.plan;
+      const weeklyPlan = [];
+      
+      if (plan.week_schedule && Array.isArray(plan.week_schedule)) {
+        const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        
+        plan.week_schedule.forEach((dayData, index) => {
+          const dayName = weekdays[index] || dayData.weekday || `第${index + 1}天`;
+          
+          // 安全地获取训练部位
+          let bodyParts = '未设置';
+          if (dayData.body_parts && Array.isArray(dayData.body_parts)) {
+            bodyParts = dayData.body_parts.join(' + ');
+          } else if (dayData.type) {
+            bodyParts = dayData.type;
+          }
+          
+          // 获取详细的动作信息
+          let detailedExercises = '待添加';
+          if (dayData.exercises && Array.isArray(dayData.exercises) && dayData.exercises.length > 0) {
+            detailedExercises = dayData.exercises.map(exercise => {
+              return `${exercise.name} (${exercise.sets || 3}组 × ${exercise.reps || '10-12'}次${exercise.weight ? ` @ ${exercise.weight}${(exercise.weight && (exercise.weight.toString().includes('kg') || /^(自重|空杆)$/.test(exercise.weight.toString()) || exercise.weight.toString().includes('杆'))) ? '' : 'kg'}` : ''})`;
+            }).join('\n');
+          } else if (bodyParts.includes('休息')) {
+            detailedExercises = '休息日，好好恢复体力';
+          }
+          
+          weeklyPlan.push({
+            week: 1,
+            day: dayName,
+            bodyParts: bodyParts,
+            exercises: detailedExercises,
+            exerciseCount: dayData.exercises ? dayData.exercises.length : 0
+          });
+        });
+      }
+      
+      return {
+        name: plan.name || '训练计划',
+        mode: plan.mode || '自定义',
+        cycle_weeks: plan.cycle_weeks || 4,
+        weeklyPlan: weeklyPlan
+      };
+    }
+    
+    // 备用方案：从页面DOM获取数据
+    const planElement = document.querySelector('.current-plan-preview');
+    if (!planElement) return null;
+    
+    const planName = planElement.querySelector('h4')?.textContent || '训练计划';
+    const weeklyPlan = [];
+    
+    // 从当前显示的计划天数数据中获取
+    const planDays = document.querySelectorAll('.plan-day');
+    
+    if (planDays.length > 0) {
+      planDays.forEach((dayElement, index) => {
+        const dayName = dayElement.querySelector('span:first-child')?.textContent || `第${index + 1}天`;
+        const bodyParts = dayElement.querySelector('.plan-type')?.textContent || '未设置';
+        const exercises = dayElement.querySelector('.plan-exercises')?.textContent || '待添加';
+        
+        weeklyPlan.push({
+          week: 1,
+          day: dayName,
+          bodyParts: bodyParts,
+          exercises: exercises,
+          exerciseCount: exercises.includes('个动作') ? parseInt(exercises) || 0 : 0
+        });
+      });
+    } else {
+      // 如果没有找到计划天数，使用全局的activePlan数据
+      if (window.activePlan && window.activePlan.week_schedule) {
+        window.activePlan.week_schedule.forEach((day, index) => {
+          const safeDay = {
+            weekday: day.weekday || `第${index + 1}天`,
+            body_parts: Array.isArray(day.body_parts) ? day.body_parts : ['未设置'],
+            modules: day.modules || {}
+          };
+          
+          const exerciseCount = Object.values(safeDay.modules).reduce((sum, module) => sum + (Array.isArray(module) ? module.length : 0), 0);
+          const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
+            (safeDay.body_parts.includes('休息') ? '恢复日' : '待添加');
+          
+          weeklyPlan.push({
+            week: 1,
+            day: safeDay.weekday,
+            bodyParts: safeDay.body_parts.join(' + '),
+            exercises: exerciseText,
+            detailedModules: safeDay.modules
+          });
+        });
+      }
+    }
+    
+    return {
+      name: planName.replace('当前计划：', '').trim(),
+      details: planDetails,
+      weeklyPlan: weeklyPlan,
+      exportDate: new Date().toLocaleDateString('zh-CN')
+    };
+  } catch (error) {
+    console.error('获取计划数据失败:', error);
+    return null;
+  }
+}
+
+// 创建导出用的容器
+function createExportContainer(planData) {
+  const container = document.createElement('div');
+  container.style.cssText = `
+    position: absolute;
+    top: -10000px;
+    left: -10000px;
+    width: 800px;
+    background: white;
+    padding: 40px;
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    color: #333;
+    box-sizing: border-box;
+  `;
+  
+  container.innerHTML = `
+    <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #4CAF50; padding-bottom: 20px;">
+      <h1 style="color: #4CAF50; margin: 0; font-size: 28px;">${planData.name}</h1>
+      <p style="color: #666; margin: 10px 0 0 0; font-size: 14px;">导出日期: ${planData.exportDate}</p>
+    </div>
+    
+    <div style="margin-bottom: 30px;">
+      <h2 style="color: #333; font-size: 20px; margin-bottom: 15px;">📋 计划详情</h2>
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
+        ${planData.details || '暂无详细信息'}
+      </div>
+    </div>
+    
+    <div>
+      <h2 style="color: #333; font-size: 20px; margin-bottom: 20px;">📅 训练安排</h2>
+      ${generateWeeklyPlanHTML(planData.weeklyPlan)}
+    </div>
+    
+    <div style="margin-top: 40px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px;">
+      <p>由 FitMatrix 健身矩阵生成 | ${new Date().toLocaleString('zh-CN')}</p>
+      <p style="margin-top: 8px; color: #4CAF50; font-weight: bold;">🌐 shenyiqing.xin</p>
+    </div>
+  `;
+  
+  return container;
+}
+
+// 生成周计划HTML
+function generateWeeklyPlanHTML(weeklyPlan) {
+  if (!weeklyPlan || weeklyPlan.length === 0) {
+    return '<p style="color: #999; text-align: center;">暂无训练安排</p>';
+  }
+  
+  return `
+    <div style="margin-bottom: 25px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+      <div style="background: #4CAF50; color: white; padding: 10px 15px; font-weight: bold;">
+        训练计划详情
+      </div>
+      <div style="padding: 15px;">
+        ${weeklyPlan.map(day => {
+          // 格式化详细动作信息
+          const exerciseLines = day.exercises.split('\n');
+          const formattedExercises = exerciseLines.length > 1 && exerciseLines[0] !== '待添加' && exerciseLines[0] !== '休息日，好好恢复体力'
+            ? exerciseLines.map(line => `• ${line}`).join('<br>')
+            : day.exercises;
+          
+          return `
+            <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #4CAF50;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <div style="font-weight: bold; color: #4CAF50; font-size: 16px; margin-right: 15px;">${day.day}</div>
+                <div style="color: #666; font-size: 14px; background: white; padding: 4px 8px; border-radius: 4px;">${day.bodyParts}</div>
+                ${day.exerciseCount > 0 ? `<div style="margin-left: 10px; color: #888; font-size: 12px;">${day.exerciseCount}个动作</div>` : ''}
+              </div>
+              <div style="color: #333; font-size: 13px; line-height: 1.5; margin-left: 0;">
+                ${formattedExercises}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// 动态加载html2canvas库
+function loadHtml2Canvas() {
+  return new Promise((resolve, reject) => {
+    if (window.html2canvas) {
+      resolve();
+      return;
+    }
+    
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('html2canvas库加载失败'));
+    document.head.appendChild(script);
+  });
+}
+
 </script>
 {% endblock %} 

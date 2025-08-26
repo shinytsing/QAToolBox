@@ -27,30 +27,50 @@ def enhanced_fitness_center(request):
     """增强版健身中心"""
     try:
         # 获取用户档案
-        profile, created = EnhancedFitnessUserProfile.objects.get_or_create(user=request.user)
+        try:
+            profile, created = EnhancedFitnessUserProfile.objects.get_or_create(user=request.user)
+        except Exception:
+            # 如果增强档案表不存在，使用基础档案
+            from apps.tools.models.legacy_models import FitnessUserProfile
+            profile, created = FitnessUserProfile.objects.get_or_create(user=request.user)
         
         # 获取用户成就统计
-        achievement_stats = get_user_achievement_stats(request.user)
+        try:
+            achievement_stats = get_user_achievement_stats(request.user)
+        except Exception:
+            achievement_stats = {'total_achievements': 0, 'total_points': 0}
         
         # 获取用户当前训练计划
-        current_plans = UserTrainingPlan.objects.filter(
-            user=request.user,
-            status='in_progress'
-        ).select_related('plan')[:3]
+        try:
+            current_plans = UserTrainingPlan.objects.filter(
+                user=request.user,
+                status='in_progress'
+            ).select_related('plan')[:3]
+        except Exception:
+            current_plans = []
         
         # 获取推荐的训练计划
-        recommended_plans = get_recommended_plans(request.user)
+        try:
+            recommended_plans = get_recommended_plans(request.user)
+        except Exception:
+            recommended_plans = []
         
         # 获取最近的训练会话
-        recent_sessions = TrainingSession.objects.filter(
-            user_plan__user=request.user
-        ).order_by('-actual_date')[:5]
+        try:
+            recent_sessions = TrainingSession.objects.filter(
+                user_plan__user=request.user
+            ).order_by('-actual_date')[:5]
+        except Exception:
+            recent_sessions = []
         
         # 获取用户收藏的动作
-        favorite_exercises = UserExercisePreference.objects.filter(
-            user=request.user,
-            is_favorite=True
-        ).select_related('exercise')[:6]
+        try:
+            favorite_exercises = UserExercisePreference.objects.filter(
+                user=request.user,
+                is_favorite=True
+            ).select_related('exercise')[:6]
+        except Exception:
+            favorite_exercises = []
         
         context = {
             'profile': profile,
@@ -64,7 +84,14 @@ def enhanced_fitness_center(request):
         return render(request, 'tools/enhanced_fitness_center.html', context)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        # 返回错误页面而不是JSON
+        import traceback
+        print(f"增强健身中心错误: {e}")
+        print(traceback.format_exc())
+        
+        # 返回基础健身页面作为后备
+        from apps.tools.views.basic_tools_views import fitness_center
+        return fitness_center(request)
 
 
 @login_required

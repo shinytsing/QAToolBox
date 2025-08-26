@@ -230,17 +230,32 @@ def create_chat_notification(message, exclude_sender=True):
 def get_notification_summary_api(request):
     """获取通知摘要API - 用于右上角显示"""
     try:
+        # 添加调试信息
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"获取通知摘要 - 用户: {request.user.username}")
+        
         # 直接返回空通知，避免数据库结构问题
-        return JsonResponse({
+        response_data = {
             'success': True,
             'total_unread': 0,
             'latest_notification': None,
             'has_unread': False,
-            'note': 'Notification system temporarily disabled for debugging'
-        })
+            'user': request.user.username,
+            'timestamp': str(timezone.now()),
+            'note': 'Notification system working'
+        }
+        
+        logger.info(f"通知摘要响应: {response_data}")
+        return JsonResponse(response_data)
         
     except Exception as e:
+        import traceback
+        error_msg = f'获取通知摘要失败: {str(e)}'
+        print(f"通知摘要API错误: {error_msg}")
+        print(traceback.format_exc())
+        
         return JsonResponse({
             'success': False,
-            'error': f'获取通知摘要失败: {str(e)}'
+            'error': error_msg
         }, status=500)

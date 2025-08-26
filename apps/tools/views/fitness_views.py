@@ -742,24 +742,27 @@ def apply_training_plan_api(request):
 def get_training_plan_templates_api(request):
     """获取训练计划模板"""
     try:
-        # 从数据库获取模板  
-        templates = []
-        template_plans = TrainingPlan.objects.filter(visibility='public')
+        # 使用新的模板数据文件
+        from apps.tools.services.fitness_template_data import get_all_templates
         
-        for plan in template_plans:
+        all_templates = get_all_templates()
+        
+        # 将模板转换为数组格式（保持向后兼容）
+        templates = []
+        for template_id, template in all_templates.items():
             template_data = {
-                'id': f'template_{plan.id}',
-                'name': plan.name,
-                'description': f'{plan.mode}训练计划',
-                'mode': plan.mode,
-                'cycle_weeks': plan.cycle_weeks,
-                'difficulty': 'intermediate',
-                'target_goals': ['健身', '增肌'],
-                'week_schedule': plan.week_schedule if plan.week_schedule else []
+                'id': template_id,
+                'name': template['name'],
+                'description': template['description'],
+                'mode': template['mode'],
+                'cycle_weeks': template['cycle_weeks'],
+                'difficulty': template['difficulty'],
+                'target_goals': template['target_goals'],
+                'week_schedule': template['week_schedule']
             }
             templates.append(template_data)
         
-        # 如果没有模板，返回默认模板
+        # 备用：如果导入失败，返回默认模板
         if not templates:
             templates = [
                 {
@@ -1046,51 +1049,110 @@ def get_training_plan_templates_api(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
+@csrf_exempt
 @login_required
 def apply_training_plan_template_api(request):
     """应用训练计划模板（创建新计划并激活）"""
     try:
+        # 添加调试信息
+        print(f"接收到模板应用请求，用户: {request.user.username}")
+        print(f"请求体: {request.body}")
+        
         data = json.loads(request.body)
         template_id = data.get('template_id')
         custom_name = data.get('custom_name', '')
         
+        print(f"模板ID: {template_id}, 自定义名称: {custom_name}")
+        
         if not template_id:
             return JsonResponse({'success': False, 'error': '模板ID不能为空'}, status=400)
         
-        # 获取模板数据
-        templates_response = get_training_plan_templates_api(request)
-        templates_data = json.loads(templates_response.content)
-        
-        if not templates_data.get('success'):
-            return JsonResponse({'success': False, 'error': '无法获取模板数据'}, status=500)
+        # 使用新的模板数据文件
+        try:
+            print("开始获取模板数据...")
+            from apps.tools.services.fitness_template_data import get_all_templates
+            
+            all_templates = get_all_templates()
+            
+            # 将模板转换为API需要的格式
+            templates_dict = {}
+            for template_id, template in all_templates.items():
+                templates_dict[template_id] = {
+                    'name': template['name'],
+                    'description': template['description'],
+                    'mode': template['mode'],
+                    'difficulty': template['difficulty'],
+                    'target_goals': template['target_goals'],
+                    'cycle_weeks': template['cycle_weeks'],
+                    'schedule': template['week_schedule']
+                }
+            
+            print(f"获取到 {len(templates_dict)} 个模板")
+            
+        except Exception as template_error:
+            print(f"获取模板数据错误: {template_error}")
+            return JsonResponse({'success': False, 'error': f'获取模板数据失败: {str(template_error)}'}, status=500)
         
         # 查找指定模板
-        template = None
-        for t in templates_data['templates']:
-            if t['id'] == template_id:
-                template = t
-                break
-        
-        if not template:
-            return JsonResponse({'success': False, 'error': '模板不存在'}, status=404)
+        template = templates_dict.get(template_id)
+        if template:
+            template['id'] = template_id  # 确保包含id
+            print(f"找到模板: {template['name']}")
+        else:
+            print(f"未找到模板: {template_id}, 可用模板: {list(templates_dict.keys())}")
+            return JsonResponse({'success': False, 'error': f'模板不存在: {template_id}'}, status=404)
         
         # 创建新的训练计划
-        plan_name = custom_name or template['name']
+        plan_name = custom_name or template.get('name', '训练计划')
         
         # 将其他计划设为非激活状态
-        TrainingPlan.objects.filter(user=request.user).update(is_active=False)
+        try:
+            updated_count = TrainingPlan.objects.filter(user=request.user).update(is_active=False)
+            print(f"已将 {updated_count} 个计划设为非激活状态")
+        except Exception as update_error:
+            print(f"更新现有计划状态失败: {update_error}")
+            # 这里不直接返回错误，因为这不是致命问题
+        
+        # 安全地获取模板数据，提供默认值
+        template_mode = template.get('mode', 'custom')
+        template_weeks = template.get('cycle_weeks', 4)
+        template_schedule = template.get('schedule', template.get('week_schedule', []))
+        
+        print(f"准备创建计划 - 名称: {plan_name}, 模式: {template_mode}, 周期: {template_weeks}")
+        print(f"计划安排: {template_schedule}")
         
         # 创建新计划
-        new_plan = TrainingPlan.objects.create(
-            user=request.user,
-            name=plan_name,
-            mode=template['mode'],
-            cycle_weeks=template['cycle_weeks'],
-            week_schedule=template['week_schedule'],
-            is_active=True
-        )
+        try:
+            # 确保cycle_weeks是整数
+            if not isinstance(template_weeks, int):
+                try:
+                    template_weeks = int(template_weeks)
+                except (ValueError, TypeError):
+                    template_weeks = 4
+            
+            # 确保week_schedule是列表
+            if not isinstance(template_schedule, list):
+                template_schedule = []
+            
+            new_plan = TrainingPlan.objects.create(
+                user=request.user,
+                name=plan_name,
+                mode=template_mode,
+                cycle_weeks=template_weeks,
+                week_schedule=template_schedule,
+                is_active=True
+            )
+            print(f"计划创建成功，ID: {new_plan.id}")
+            
+        except Exception as create_error:
+            import traceback
+            print(f"创建计划失败: {create_error}")
+            print(traceback.format_exc())
+            return JsonResponse({
+                'success': False, 
+                'error': f'创建计划失败: {str(create_error)}'
+            }, status=500)
         
         return JsonResponse({
             'success': True,
@@ -1104,8 +1166,15 @@ def apply_training_plan_template_api(request):
             }
         })
         
+    except json.JSONDecodeError as e:
+        print(f"JSON解析错误: {e}")
+        return JsonResponse({'success': False, 'error': '请求数据格式错误'}, status=400)
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        import traceback
+        error_msg = str(e)
+        print(f"应用模板API错误: {error_msg}")
+        print(traceback.format_exc())
+        return JsonResponse({'success': False, 'error': f'应用模板失败: {error_msg}'}, status=500)
 
 
 @csrf_exempt

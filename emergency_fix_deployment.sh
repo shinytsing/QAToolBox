@@ -360,3 +360,4 @@ echo "   重启: sudo systemctl restart qatoolbox"
 echo ""
 echo "⚠️  注意: 当前运行在紧急模式，使用SQLite数据库"
 echo "   如需切换到PostgreSQL，请稍后运行完整修复脚本"
+

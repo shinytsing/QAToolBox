@@ -217,6 +217,41 @@
     <div class="exercise-library">
       <div class="library-header">
         <h3><i class="fas fa-dumbbell"></i> 动作库</h3>
+        
+        <!-- 拖拽提醒 -->
+        <div class="drag-reminder" style="
+          background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%);
+          border: 1px solid rgba(255, 107, 53, 0.3);
+          border-radius: 8px;
+          padding: 12px;
+          margin: 15px 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          animation: dragPulse 3s ease-in-out infinite;
+        ">
+          <div style="
+            font-size: 1.5rem;
+            color: #ff6b35;
+            animation: dragFloat 2s ease-in-out infinite alternate;
+          ">
+            <i class="fas fa-hand-paper"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="
+              font-size: 0.85rem;
+              color: #ff6b35;
+              font-weight: 600;
+              margin-bottom: 2px;
+            ">💡 使用提示</div>
+            <div style="
+              font-size: 0.8rem;
+              color: #a8a8a8;
+              line-height: 1.3;
+            ">拖拽动作到左侧训练模块，或点击"添加动作"按钮手动输入</div>
+          </div>
+        </div>
+        
         <div class="library-search">
           <input type="text" id="exerciseSearch" placeholder="搜索动作..." onkeyup="searchExercises()">
         </div>
@@ -690,34 +725,75 @@
 }
 
 .exercise-drop-zone {
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  padding: 30px;
+  border: 2px dashed rgba(255, 107, 53, 0.4);
+  border-radius: 12px;
+  padding: 25px;
   text-align: center;
   color: var(--rage-text-muted, #a8a8a8);
-  transition: all 0.3s ease;
-  min-height: 100px;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-height: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.02) 0%, rgba(247, 147, 30, 0.02) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.exercise-drop-zone::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.1), transparent);
+  transition: left 2s ease-in-out;
+}
+
+.exercise-drop-zone:hover::before {
+  left: 100%;
 }
 
 .exercise-drop-zone:hover {
   border-color: var(--rage-primary, #ff6b35);
-  background: rgba(255, 107, 53, 0.05);
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(247, 147, 30, 0.08) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
 }
 
 .exercise-drop-zone.dragover {
   border-color: var(--rage-primary, #ff6b35);
-  background: rgba(255, 107, 53, 0.1);
-  transform: scale(1.02);
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.15) 0%, rgba(247, 147, 30, 0.15) 100%);
+  transform: scale(1.02) translateY(-3px);
+  box-shadow: 0 12px 30px rgba(255, 107, 53, 0.25);
+  border-style: solid;
 }
 
 .exercise-drop-zone i {
-  font-size: 2rem;
+  font-size: 2.5rem;
+  color: var(--rage-primary, #ff6b35);
+  margin-bottom: 5px;
+  transition: all 0.3s ease;
+}
+
+.exercise-drop-zone:hover i {
+  transform: scale(1.1) rotate(90deg);
+  color: #f7931e;
+}
+
+.exercise-drop-zone p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.95rem;
   color: var(--rage-text-muted, #a8a8a8);
+  transition: color 0.3s ease;
+}
+
+.exercise-drop-zone:hover p {
+  color: var(--rage-primary, #ff6b35);
 }
 
 /* 动作库样式 */
@@ -1487,7 +1563,340 @@
     font-size: 2rem;
     color: #ff6b35;
   }
+
+  /* 拖拽提醒动画 */
+  @keyframes dragPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(255, 107, 53, 0);
+    }
+  }
+
+  @keyframes dragFloat {
+    0% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    100% {
+      transform: translateY(-5px) rotate(5deg);
+    }
+  }
 </style>
 
-<script src="{% static 'js/training_plan_editor.js' %}"></script>
+<script src="{% static 'js/training_plan_editor.js' %}?v={{ request.GET.t|default:'1' }}"></script>
+
+<script>
+// 确保addExerciseToModule函数被正确定义
+function addExerciseToModule(module) {
+  if (!editor) {
+    alert('编辑器未初始化');
+    return;
+  }
+  
+  // 创建动作输入模态框
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.id = 'addExerciseModal';
+  
+  const moduleNames = {
+    warmup: '热身',
+    main: '主训',
+    accessory: '辅助',
+    cooldown: '拉伸'
+  };
+  
+  modal.innerHTML = `
+    <div class="modal-content" style="
+      background: linear-gradient(135deg, rgba(26,26,46,0.98) 0%, rgba(22,33,62,0.98) 100%);
+      border: 2px solid rgba(255, 107, 53, 0.4);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+      color: #e6e6e6;
+      max-width: 500px;
+      width: 90%;
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+    ">
+      <div class="modal-header" style="
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.15) 0%, rgba(247, 147, 30, 0.15) 100%);
+        border-bottom: 1px solid rgba(255, 107, 53, 0.3);
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      ">
+        <h3 style="
+          color: #ff6b35;
+          margin: 0;
+          font-size: 1.3rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        "><i class="fas fa-plus-circle"></i> 添加动作到${moduleNames[module]}模块</h3>
+        <button class="modal-close" onclick="closeAddExerciseModal()" style="
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #e6e6e6;
+          padding: 8px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-size: 16px;
+        " onmouseover="this.style.background='rgba(255,107,53,0.3)'; this.style.borderColor='#ff6b35';" 
+           onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.2)';">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 25px;">
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: #ff6b35;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          ">动作名称 *</label>
+          <input type="text" id="exerciseName" placeholder="请输入动作名称，如：杠铃卧推" style="
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+            font-size: 14px;
+            background: rgba(255,255,255,0.05);
+            color: #e6e6e6;
+            transition: all 0.3s ease;
+          " onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255,255,255,0.1)';"
+             onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)';">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+          <div class="form-group">
+            <label style="
+              display: block; 
+              margin-bottom: 8px; 
+              font-weight: 600;
+              color: #ff6b35;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">组数</label>
+            <input type="text" id="exerciseSets" value="${getDefaultSetsForModal(module)}" style="
+              width: 100%; 
+              padding: 12px 16px; 
+              border: 2px solid rgba(255,255,255,0.1); 
+              border-radius: 10px; 
+              font-size: 14px;
+              background: rgba(255,255,255,0.05);
+              color: #e6e6e6;
+              transition: all 0.3s ease;
+            " onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255,255,255,0.1)';"
+               onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)';">
+          </div>
+          <div class="form-group">
+            <label style="
+              display: block; 
+              margin-bottom: 8px; 
+              font-weight: 600;
+              color: #ff6b35;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">次数/时间</label>
+            <input type="text" id="exerciseReps" value="${getDefaultRepsForModal(module)}" style="
+              width: 100%; 
+              padding: 12px 16px; 
+              border: 2px solid rgba(255,255,255,0.1); 
+              border-radius: 10px; 
+              font-size: 14px;
+              background: rgba(255,255,255,0.05);
+              color: #e6e6e6;
+              transition: all 0.3s ease;
+            " onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255,255,255,0.1)';"
+               onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)';">
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+          <div class="form-group">
+            <label style="
+              display: block; 
+              margin-bottom: 8px; 
+              font-weight: 600;
+              color: #ff6b35;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">重量(kg)</label>
+            <input type="text" id="exerciseWeight" placeholder="选填，如：60或空杆" style="
+              width: 100%; 
+              padding: 12px 16px; 
+              border: 2px solid rgba(255,255,255,0.1); 
+              border-radius: 10px; 
+              font-size: 14px;
+              background: rgba(255,255,255,0.05);
+              color: #e6e6e6;
+              transition: all 0.3s ease;
+            " onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255,255,255,0.1)';"
+               onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)';">
+          </div>
+          <div class="form-group">
+            <label style="
+              display: block; 
+              margin-bottom: 8px; 
+              font-weight: 600;
+              color: #ff6b35;
+              font-size: 12px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">休息时间</label>
+            <input type="text" id="exerciseRest" value="${getDefaultRestForModal(module)}" style="
+              width: 100%; 
+              padding: 12px 16px; 
+              border: 2px solid rgba(255,255,255,0.1); 
+              border-radius: 10px; 
+              font-size: 14px;
+              background: rgba(255,255,255,0.05);
+              color: #e6e6e6;
+              transition: all 0.3s ease;
+            " onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255,255,255,0.1)';"
+               onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)';">
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button onclick="closeAddExerciseModal()" style="
+            padding: 12px 20px; 
+            border: 2px solid rgba(255,255,255,0.2); 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 10px; 
+            cursor: pointer;
+            color: #e6e6e6;
+            font-weight: 500;
+            transition: all 0.3s ease;
+          " onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.4)';"
+             onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.2)';">
+            取消
+          </button>
+          <button onclick="confirmAddExercise('${module}')" style="
+            padding: 12px 20px; 
+            border: none; 
+            background: linear-gradient(135deg, #4CAF50 0%, #45A049 100%); 
+            color: white; 
+            border-radius: 10px; 
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+          " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(76, 175, 80, 0.4)';"
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(76, 175, 80, 0.3)';">
+            <i class="fas fa-plus"></i> 添加动作
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // 焦点到名称输入框
+  setTimeout(() => {
+    document.getElementById('exerciseName').focus();
+  }, 100);
+  
+  // 支持回车键确认
+  document.getElementById('exerciseName').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      confirmAddExercise(module);
+    }
+  });
+}
+
+// 获取模块默认参数的辅助函数
+function getDefaultSetsForModal(module) {
+  const defaults = {
+    warmup: '2',
+    main: '4', 
+    accessory: '3',
+    cooldown: '1'
+  };
+  return defaults[module] || '3';
+}
+
+function getDefaultRepsForModal(module) {
+  const defaults = {
+    warmup: '15-20',
+    main: '8-10',
+    accessory: '10-12', 
+    cooldown: '10分钟'
+  };
+  return defaults[module] || '10-12';
+}
+
+function getDefaultRestForModal(module) {
+  const defaults = {
+    warmup: '30秒',
+    main: '3分钟',
+    accessory: '90秒',
+    cooldown: '无'
+  };
+  return defaults[module] || '90秒';
+}
+
+// 确认添加动作
+function confirmAddExercise(module) {
+  const exerciseName = document.getElementById('exerciseName').value.trim();
+  const exerciseSets = document.getElementById('exerciseSets').value.trim();
+  const exerciseReps = document.getElementById('exerciseReps').value.trim();
+  const exerciseWeight = document.getElementById('exerciseWeight').value.trim();
+  const exerciseRest = document.getElementById('exerciseRest').value.trim();
+  
+  if (!exerciseName) {
+    alert('请输入动作名称');
+    document.getElementById('exerciseName').focus();
+    return;
+  }
+  
+  // 创建动作对象
+  const exercise = {
+    name: exerciseName,
+    sets: exerciseSets || '3',
+    reps: exerciseReps || '10-12', 
+    weight: exerciseWeight || '',
+    rest: exerciseRest || '90秒'
+  };
+  
+  // 添加到编辑器
+  if (editor) {
+    const currentDay = editor.planData.week_schedule[editor.currentDay];
+    currentDay.modules[module].push(exercise);
+    editor.renderModule(module, currentDay.modules[module]);
+    editor.renderWeekCards();
+    
+    const moduleNames = {
+      warmup: '热身',
+      main: '主训', 
+      accessory: '辅助',
+      cooldown: '拉伸'
+    };
+    
+    editor.showNotification(`已添加"${exerciseName}"到${moduleNames[module]}模块`, 'success');
+  }
+  
+  // 关闭模态框
+  closeAddExerciseModal();
+}
+
+// 关闭添加动作模态框
+function closeAddExerciseModal() {
+  const modal = document.getElementById('addExerciseModal');
+  if (modal) {
+    modal.remove();
+  }
+}
+</script>
+
 {% endblock %}

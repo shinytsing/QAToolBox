@@ -962,47 +962,154 @@ class TrainingPlanEditor {
 
   createExerciseCard(exercise, module, index) {
     return `
-      <div class="exercise-card" data-module="${module}" data-index="${index}">
-        <div class="exercise-card-header">
-          <div class="exercise-card-name">${exercise.name}</div>
+      <div class="exercise-card" data-module="${module}" data-index="${index}" style="
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+        border: 1px solid rgba(255, 107, 53, 0.2);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      " onmouseover="this.style.borderColor='rgba(255, 107, 53, 0.4)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(255, 107, 53, 0.15)';"
+         onmouseout="this.style.borderColor='rgba(255, 107, 53, 0.2)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+        <div class="exercise-card-header" style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+        ">
+          <div class="exercise-card-name" style="
+            font-weight: 600;
+            color: #ff6b35;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          ">
+            <i class="fas fa-dumbbell" style="font-size: 0.9rem;"></i>
+            ${exercise.name}
+          </div>
           <div class="exercise-card-controls">
-            <button class="card-control-btn" onclick="editor.removeExercise('${module}', ${index})" title="删除">
+            <button class="card-control-btn" onclick="editor.removeExercise('${module}', ${index})" title="删除" style="
+              background: rgba(255, 107, 53, 0.1);
+              border: 1px solid rgba(255, 107, 53, 0.3);
+              color: #ff6b35;
+              padding: 6px 8px;
+              border-radius: 6px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              font-size: 0.8rem;
+            " onmouseover="this.style.background='rgba(255, 107, 53, 0.2)'; this.style.transform='scale(1.05)';"
+               onmouseout="this.style.background='rgba(255, 107, 53, 0.1)'; this.style.transform='scale(1)';">
               <i class="fas fa-trash"></i>
             </button>
           </div>
         </div>
-        <div class="exercise-params">
+        <div class="exercise-params" style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        ">
           <div class="param-group">
-            <div class="param-label">组数</div>
+            <div class="param-label" style="
+              font-size: 0.8rem;
+              color: #ff6b35;
+              font-weight: 600;
+              margin-bottom: 6px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">组数</div>
             <input type="text" class="param-input" value="${exercise.sets}" 
-                   onchange="editor.updateExerciseParam('${module}', ${index}, 'sets', this.value)">
+                   onchange="editor.updateExerciseParam('${module}', ${index}, 'sets', this.value)"
+                   style="
+                     width: 100%;
+                     padding: 10px 12px;
+                     border: 2px solid rgba(255, 255, 255, 0.1);
+                     border-radius: 8px;
+                     background: rgba(255, 255, 255, 0.05);
+                     color: #e6e6e6;
+                     font-size: 14px;
+                     transition: all 0.3s ease;
+                     box-sizing: border-box;
+                   "
+                   onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='0 0 0 3px rgba(255, 107, 53, 0.1)';"
+                   onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.background='rgba(255, 255, 255, 0.05)'; this.style.boxShadow='none';">
           </div>
           <div class="param-group">
-            <div class="param-label">重量(kg)</div>
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <input type="number" class="param-input" value="${exercise.weight || ''}" 
-                     placeholder="0" min="0" step="0.5"
-                     onchange="editor.updateExerciseParam('${module}', ${index}, 'weight', this.value)">
-              <button class="weight-adjust-btn" onclick="editor.quickAdjustWeight('${module}', ${index}, -2.5)" title="减少2.5kg">
-                <i class="fas fa-minus"></i>
-              </button>
-              <button class="weight-adjust-btn" onclick="editor.quickAdjustWeight('${module}', ${index}, 2.5)" title="增加2.5kg">
-                <i class="fas fa-plus"></i>
-              </button>
-              <button class="weight-suggestion-btn" onclick="editor.showWeightSuggestion('${exercise.name}', '${module}')" title="重量建议">
-                <i class="fas fa-lightbulb"></i>
-              </button>
-            </div>
+            <div class="param-label" style="
+              font-size: 0.8rem;
+              color: #ff6b35;
+              font-weight: 600;
+              margin-bottom: 6px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">重量(kg)</div>
+            <input type="text" class="param-input" value="${exercise.weight || ''}" 
+                   placeholder="重量或空杆"
+                   onchange="editor.updateExerciseParam('${module}', ${index}, 'weight', this.value)"
+                   style="
+                     width: 100%;
+                     padding: 10px 12px;
+                     border: 2px solid rgba(255, 255, 255, 0.1);
+                     border-radius: 8px;
+                     background: rgba(255, 255, 255, 0.05);
+                     color: #e6e6e6;
+                     font-size: 14px;
+                     transition: all 0.3s ease;
+                     box-sizing: border-box;
+                   "
+                   onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='0 0 0 3px rgba(255, 107, 53, 0.1)';"
+                   onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.background='rgba(255, 255, 255, 0.05)'; this.style.boxShadow='none';">
           </div>
           <div class="param-group">
-            <div class="param-label">次数</div>
+            <div class="param-label" style="
+              font-size: 0.8rem;
+              color: #ff6b35;
+              font-weight: 600;
+              margin-bottom: 6px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">次数</div>
             <input type="text" class="param-input" value="${exercise.reps}"
-                   onchange="editor.updateExerciseParam('${module}', ${index}, 'reps', this.value)">
+                   onchange="editor.updateExerciseParam('${module}', ${index}, 'reps', this.value)"
+                   style="
+                     width: 100%;
+                     padding: 10px 12px;
+                     border: 2px solid rgba(255, 255, 255, 0.1);
+                     border-radius: 8px;
+                     background: rgba(255, 255, 255, 0.05);
+                     color: #e6e6e6;
+                     font-size: 14px;
+                     transition: all 0.3s ease;
+                     box-sizing: border-box;
+                   "
+                   onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='0 0 0 3px rgba(255, 107, 53, 0.1)';"
+                   onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.background='rgba(255, 255, 255, 0.05)'; this.style.boxShadow='none';">
           </div>
           <div class="param-group">
-            <div class="param-label">休息</div>
+            <div class="param-label" style="
+              font-size: 0.8rem;
+              color: #ff6b35;
+              font-weight: 600;
+              margin-bottom: 6px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            ">休息</div>
             <input type="text" class="param-input" value="${exercise.rest}"
-                   onchange="editor.updateExerciseParam('${module}', ${index}, 'rest', this.value)">
+                   onchange="editor.updateExerciseParam('${module}', ${index}, 'rest', this.value)"
+                   style="
+                     width: 100%;
+                     padding: 10px 12px;
+                     border: 2px solid rgba(255, 255, 255, 0.1);
+                     border-radius: 8px;
+                     background: rgba(255, 255, 255, 0.05);
+                     color: #e6e6e6;
+                     font-size: 14px;
+                     transition: all 0.3s ease;
+                     box-sizing: border-box;
+                   "
+                   onfocus="this.style.borderColor='#ff6b35'; this.style.background='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='0 0 0 3px rgba(255, 107, 53, 0.1)';"
+                   onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.background='rgba(255, 255, 255, 0.05)'; this.style.boxShadow='none';">
           </div>
         </div>
       </div>
@@ -1850,8 +1957,173 @@ function manageWeights() {
 }
 
 function addExerciseToModule(module) {
+  if (!editor) {
+    alert('编辑器未初始化');
+    return;
+  }
+  
+  // 创建动作输入模态框
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.id = 'addExerciseModal';
+  
+  const moduleNames = {
+    warmup: '热身',
+    main: '主训',
+    accessory: '辅助',
+    cooldown: '拉伸'
+  };
+  
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus"></i> 添加动作到${moduleNames[module]}模块</h3>
+        <button class="modal-close" onclick="closeAddExerciseModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 5px; font-weight: bold;">动作名称 *</label>
+          <input type="text" id="exerciseName" placeholder="请输入动作名称，如：杠铃卧推" 
+                 style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">组数</label>
+            <input type="text" id="exerciseSets" value="${getDefaultSets(module)}" 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+          </div>
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">次数/时间</label>
+            <input type="text" id="exerciseReps" value="${getDefaultReps(module)}" 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">重量(kg)</label>
+            <input type="text" id="exerciseWeight" placeholder="选填，如：60或空杆" 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+          </div>
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">休息时间</label>
+            <input type="text" id="exerciseRest" value="${getDefaultRest(module)}" 
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button onclick="closeAddExerciseModal()" 
+                  style="padding: 8px 16px; border: 1px solid #ddd; background: #f5f5f5; border-radius: 4px; cursor: pointer;">
+            取消
+          </button>
+          <button onclick="confirmAddExercise('${module}')" 
+                  style="padding: 8px 16px; border: none; background: #4CAF50; color: white; border-radius: 4px; cursor: pointer;">
+            <i class="fas fa-plus"></i> 添加动作
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // 焦点到名称输入框
+  setTimeout(() => {
+    document.getElementById('exerciseName').focus();
+  }, 100);
+  
+  // 支持回车键确认
+  document.getElementById('exerciseName').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      confirmAddExercise(module);
+    }
+  });
+}
+
+// 获取模块默认参数的辅助函数
+function getDefaultSets(module) {
+  const defaults = {
+    warmup: '2',
+    main: '4', 
+    accessory: '3',
+    cooldown: '1'
+  };
+  return defaults[module] || '3';
+}
+
+function getDefaultReps(module) {
+  const defaults = {
+    warmup: '15-20',
+    main: '8-10',
+    accessory: '10-12', 
+    cooldown: '10分钟'
+  };
+  return defaults[module] || '10-12';
+}
+
+function getDefaultRest(module) {
+  const defaults = {
+    warmup: '30秒',
+    main: '3分钟',
+    accessory: '90秒',
+    cooldown: '无'
+  };
+  return defaults[module] || '90秒';
+}
+
+// 确认添加动作
+function confirmAddExercise(module) {
+  const exerciseName = document.getElementById('exerciseName').value.trim();
+  const exerciseSets = document.getElementById('exerciseSets').value.trim();
+  const exerciseReps = document.getElementById('exerciseReps').value.trim();
+  const exerciseWeight = document.getElementById('exerciseWeight').value.trim();
+  const exerciseRest = document.getElementById('exerciseRest').value.trim();
+  
+  if (!exerciseName) {
+    alert('请输入动作名称');
+    document.getElementById('exerciseName').focus();
+    return;
+  }
+  
+  // 创建动作对象
+  const exercise = {
+    name: exerciseName,
+    sets: exerciseSets || '3',
+    reps: exerciseReps || '10-12', 
+    weight: exerciseWeight || '',
+    rest: exerciseRest || '90秒'
+  };
+  
+  // 添加到编辑器
   if (editor) {
-    editor.showNotification('请从动作库拖拽动作到对应模块', 'info');
+    const currentDay = editor.planData.week_schedule[editor.currentDay];
+    currentDay.modules[module].push(exercise);
+    editor.renderModule(module, currentDay.modules[module]);
+    editor.renderWeekCards();
+    
+    const moduleNames = {
+      warmup: '热身',
+      main: '主训', 
+      accessory: '辅助',
+      cooldown: '拉伸'
+    };
+    
+    editor.showNotification(`已添加"${exerciseName}"到${moduleNames[module]}模块`, 'success');
+  }
+  
+  // 关闭模态框
+  closeAddExerciseModal();
+}
+
+// 关闭添加动作模态框
+function closeAddExerciseModal() {
+  const modal = document.getElementById('addExerciseModal');
+  if (modal) {
+    modal.remove();
   }
 }
 
