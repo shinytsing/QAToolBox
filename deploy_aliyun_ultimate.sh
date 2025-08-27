@@ -135,8 +135,36 @@ install_python() {
     if [ "$OS_ID" = "ubuntu" ] || [ "$OS_ID" = "debian" ]; then
         retry_command "apt install -y python3 python3-pip python3-venv python3-dev build-essential gcc g++ make pkg-config cmake libbz2-dev libreadline-dev libsqlite3-dev libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev" "安装Python开发环境"
         
-        # 升级pip
-        retry_command "python3 -m pip install --upgrade pip setuptools wheel --break-system-packages" "升级pip"
+        # 修复Ubuntu系统的pip升级问题
+        log_info "修复Ubuntu系统的pip升级问题..."
+        
+        # 方法1: 尝试使用--break-system-packages
+        if python3 -m pip install --upgrade pip setuptools wheel --break-system-packages 2>/dev/null; then
+            log_success "使用--break-system-packages升级pip成功"
+        else
+            log_warning "方法1失败，尝试方法2..."
+            
+            # 方法2: 强制重新安装，忽略已安装的包
+            if python3 -m pip install --upgrade --force-reinstall --ignore-installed pip setuptools wheel 2>/dev/null; then
+                log_success "使用--force-reinstall升级pip成功"
+            else
+                log_warning "方法2失败，尝试方法3..."
+                
+                # 方法3: 只升级pip和setuptools，不升级wheel
+                if python3 -m pip install --upgrade --force-reinstall pip setuptools 2>/dev/null; then
+                    log_success "升级pip和setuptools成功（跳过wheel）"
+                else
+                    log_warning "方法3失败，尝试方法4..."
+                    
+                    # 方法4: 使用apt升级系统pip
+                    if apt install -y --only-upgrade python3-pip 2>/dev/null; then
+                        log_success "使用apt升级系统pip成功"
+                    else
+                        log_error "所有pip升级方法都失败，继续使用系统默认版本"
+                    fi
+                fi
+            fi
+        fi
         
     elif [ "$OS_ID" = "centos" ] || [ "$OS_ID" = "rhel" ] || [ "$OS_ID" = "rocky" ]; then
         retry_command "yum install -y python3 python3-pip python3-devel gcc gcc-c++ make pkgconfig cmake3 libffi-devel openssl-devel bzip2-devel readline-devel sqlite-devel ncurses-devel tk-devel xz-devel" "安装Python开发环境"
@@ -360,8 +388,23 @@ setup_python_environment() {
     # 创建虚拟环境
     sudo -u "$PROJECT_USER" python3 -m venv .venv
     
-    # 升级pip
-    sudo -u "$PROJECT_USER" .venv/bin/pip install --upgrade pip setuptools wheel
+    # 升级pip（修复wheel冲突问题）
+    log_info "升级虚拟环境中的pip..."
+    if sudo -u "$PROJECT_USER" .venv/bin/pip install --upgrade pip setuptools wheel 2>/dev/null; then
+        log_success "虚拟环境pip升级成功"
+    else
+        log_warning "标准升级失败，尝试强制重新安装..."
+        if sudo -u "$PROJECT_USER" .venv/bin/pip install --upgrade --force-reinstall pip setuptools wheel 2>/dev/null; then
+            log_success "强制重新安装pip成功"
+        else
+            log_warning "强制重新安装失败，尝试跳过wheel..."
+            if sudo -u "$PROJECT_USER" .venv/bin/pip install --upgrade --force-reinstall pip setuptools 2>/dev/null; then
+                log_success "升级pip和setuptools成功（跳过wheel）"
+            else
+                log_error "虚拟环境pip升级失败，继续使用默认版本"
+            fi
+        fi
+    fi
     
     log_info "安装Python依赖包..."
     

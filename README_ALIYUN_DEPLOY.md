@@ -102,7 +102,20 @@ sudo tail -f /var/log/qatoolbox_deploy.log
 sudo systemctl status nginx postgresql redis-server supervisor
 ```
 
-#### 2. 应用无法访问
+#### 2. pip wheel冲突问题
+如果遇到 "Cannot uninstall wheel 0.42.0" 错误，可以使用专门的修复脚本：
+
+```bash
+# 下载并运行修复脚本
+wget https://raw.githubusercontent.com/shinytsing/QAToolbox/main/fix_pip_wheel_conflict.sh
+chmod +x fix_pip_wheel_conflict.sh
+sudo bash fix_pip_wheel_conflict.sh
+
+# 或者手动修复
+sudo python3 -m pip install --upgrade --force-reinstall --ignore-installed pip setuptools wheel
+```
+
+#### 3. 应用无法访问
 ```bash
 # 检查应用进程
 sudo supervisorctl status qatoolbox
@@ -114,7 +127,7 @@ sudo netstat -tlnp | grep :8000
 sudo supervisorctl restart qatoolbox
 ```
 
-#### 3. 数据库连接失败
+#### 4. 数据库连接失败
 ```bash
 # 检查PostgreSQL状态
 sudo systemctl status postgresql
