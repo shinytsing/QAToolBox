@@ -1,0 +1,3611 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block tool_title_inner %}缘契 - 传统八字姻缘分析{% endblock %}
+{% block tool_title_display %}缘契 - 传统八字姻缘分析{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb-item">
+    <a href="{% url 'tools:tools_index' %}" class="breadcrumb-link geek-breadcrumb-link">
+        <i class="fas fa-wrench"></i>
+        工具集
+    </a>
+</div>
+<div class="breadcrumb-item">
+    <a href="{% url 'tools:yuanqi_marriage_analyzer' %}" class="breadcrumb-link geek-breadcrumb-link">
+        <i class="fas fa-heart"></i>
+        缘契姻缘分析
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<div class="yuanqi-container">
+    <!-- 头部区域 -->
+    <div class="yuanqi-header">
+        <div class="header-decoration">
+            <div class="traditional-pattern"></div>
+        </div>
+            <div class="title-section">
+            <div class="logo-container">
+                <div class="yin-yang-symbol">
+                    <div class="yin-yang">
+                        <div class="yang"></div>
+                        <div class="yin"></div>
+                        <div class="yang-dot"></div>
+                        <div class="yin-dot"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="title-content">
+                <h1 class="main-title">缘契</h1>
+                <p class="subtitle">传统八字姻缘分析平台</p>
+                <div class="tagline">
+                    <span class="chinese-text">天作之合 · 缘定三生</span>
+                </div>
+            </div>
+        </div>
+        </div>
+        
+        <!-- 免责声明 -->
+    <div class="disclaimer-banner">
+            <i class="fas fa-info-circle"></i>
+        <span>本平台内容基于传统文化和算法生成，仅供娱乐和参考，不作为人生决策依据，请理性看待。</span>
+    </div>
+
+        <!-- 主要内容区域 -->
+    <div class="main-content">
+        <!-- 模式选择区域 -->
+        <div class="mode-selection">
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="couple" onclick="switchMode('couple')">
+                    <i class="fas fa-heart"></i>
+                    <span>双人合婚</span>
+                    <p>分析两人的八字契合度</p>
+                </button>
+                <button class="mode-tab" data-mode="single" onclick="switchMode('single')">
+                    <i class="fas fa-user"></i>
+                    <span>单人姻缘</span>
+                    <p>推算适合的伴侣类型</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- 输入表单区域 -->
+        <div class="form-section" id="formSection">
+            <div class="form-container">
+                <div class="form-header">
+                    <h3 id="formTitle"><i class="fas fa-user-friends"></i> 双方基本信息</h3>
+                    <p id="formSubtitle">请输入双方的详细信息，我们将为您进行专业的八字合婚分析</p>
+                    </div>
+
+                                <!-- 双人合婚表单 -->
+                <div class="form-content" id="coupleForm">
+                    <!-- 男方信息 -->
+                    <div class="person-form male-form">
+                        <div class="form-title">
+                            <i class="fas fa-male"></i>
+                            <h4>男方信息</h4>
+                </div>
+                
+                        <div class="input-grid">
+                            <div class="input-field">
+                                <label for="maleName">
+                                <i class="fas fa-user"></i>
+                                姓名
+                            </label>
+                                <input type="text" id="maleName" class="traditional-input" placeholder="请输入男方姓名">
+                        </div>
+                            
+                            <div class="input-field">
+                                <label for="maleGender">
+                                <i class="fas fa-venus-mars"></i>
+                                性别
+                            </label>
+                                <select id="maleGender" class="traditional-select">
+                                    <option value="male">男</option>
+                                </select>
+                        </div>
+                    </div>
+                    
+                        <div class="datetime-grid">
+                            <div class="input-field">
+                                <label for="maleBirthDate">
+                                <i class="fas fa-calendar-alt"></i>
+                                出生日期
+                            </label>
+                                <div class="custom-date-picker" id="maleBirthDate">
+                                    <select class="date-select year-select" id="maleBirthYear">
+                                        <option value="">年</option>
+                                </select>
+                                    <select class="date-select month-select" id="maleBirthMonth">
+                                        <option value="">月</option>
+                                        <option value="1">1月</option>
+                                        <option value="2">2月</option>
+                                        <option value="3">3月</option>
+                                        <option value="4">4月</option>
+                                        <option value="5">5月</option>
+                                        <option value="6">6月</option>
+                                        <option value="7">7月</option>
+                                        <option value="8">8月</option>
+                                        <option value="9">9月</option>
+                                        <option value="10">10月</option>
+                                        <option value="11">11月</option>
+                                        <option value="12">12月</option>
+                                    </select>
+                                    <select class="date-select day-select" id="maleBirthDay">
+                                        <option value="">日</option>
+                                    </select>
+                            </div>
+                        </div>
+                            
+                            <div class="input-field">
+                                <label for="maleBirthTime">
+                                <i class="fas fa-clock"></i>
+                                    出生时辰
+                            </label>
+                                <select id="maleBirthTime" class="traditional-select">
+                                    <option value="">请选择时辰</option>
+                                    <option value="zi">子时 (23:00-1:00)</option>
+                                    <option value="chou">丑时 (1:00-3:00)</option>
+                                    <option value="yin">寅时 (3:00-5:00)</option>
+                                    <option value="mao">卯时 (5:00-7:00)</option>
+                                    <option value="chen">辰时 (7:00-9:00)</option>
+                                    <option value="si">巳时 (9:00-11:00)</option>
+                                    <option value="wu">午时 (11:00-13:00)</option>
+                                    <option value="wei">未时 (13:00-15:00)</option>
+                                    <option value="shen">申时 (15:00-17:00)</option>
+                                    <option value="you">酉时 (17:00-19:00)</option>
+                                    <option value="xu">戌时 (19:00-21:00)</option>
+                                    <option value="hai">亥时 (21:00-23:00)</option>
+                                    <option value="unknown">不知道时辰</option>
+                                </select>
+                        </div>
+                    </div>
+                    
+                        <div class="input-field">
+                            <label for="maleBirthPlace">
+                                <i class="fas fa-map-marker-alt"></i>
+                                出生地点
+                            </label>
+                            <input type="text" id="maleBirthPlace" class="traditional-input" placeholder="请输入出生地点（如：北京市朝阳区）">
+                        </div>
+                    </div>
+                    
+                    <!-- 女方信息 -->
+                    <div class="person-form female-form">
+                        <div class="form-title">
+                            <i class="fas fa-female"></i>
+                            <h4>女方信息</h4>
+                    </div>
+                        
+                        <div class="input-grid">
+                            <div class="input-field">
+                                <label for="femaleName">
+                                    <i class="fas fa-user"></i>
+                                    姓名
+                                </label>
+                                <input type="text" id="femaleName" class="traditional-input" placeholder="请输入女方姓名">
+                </div>
+                            
+                            <div class="input-field">
+                                <label for="femaleGender">
+                                    <i class="fas fa-venus-mars"></i>
+                                    性别
+                                </label>
+                                <select id="femaleGender" class="traditional-select">
+                                    <option value="female">女</option>
+                                </select>
+            </div>
+        </div>
+
+                        <div class="datetime-grid">
+                            <div class="input-field">
+                                <label for="femaleBirthDate">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    出生日期
+                                </label>
+                                <div class="custom-date-picker" id="femaleBirthDate">
+                                    <select class="date-select year-select" id="femaleBirthYear">
+                                        <option value="">年</option>
+                                    </select>
+                                    <select class="date-select month-select" id="femaleBirthMonth">
+                                        <option value="">月</option>
+                                        <option value="1">1月</option>
+                                        <option value="2">2月</option>
+                                        <option value="3">3月</option>
+                                        <option value="4">4月</option>
+                                        <option value="5">5月</option>
+                                        <option value="6">6月</option>
+                                        <option value="7">7月</option>
+                                        <option value="8">8月</option>
+                                        <option value="9">9月</option>
+                                        <option value="10">10月</option>
+                                        <option value="11">11月</option>
+                                        <option value="12">12月</option>
+                                    </select>
+                                    <select class="date-select day-select" id="femaleBirthDay">
+                                        <option value="">日</option>
+                                    </select>
+                    </div>
+                </div>
+                
+                            <div class="input-field">
+                                <label for="femaleBirthTime">
+                                    <i class="fas fa-clock"></i>
+                                    出生时辰
+                                </label>
+                                <select id="femaleBirthTime" class="traditional-select">
+                                    <option value="">请选择时辰</option>
+                                    <option value="zi">子时 (23:00-1:00)</option>
+                                    <option value="chou">丑时 (1:00-3:00)</option>
+                                    <option value="yin">寅时 (3:00-5:00)</option>
+                                    <option value="mao">卯时 (5:00-7:00)</option>
+                                    <option value="chen">辰时 (7:00-9:00)</option>
+                                    <option value="si">巳时 (9:00-11:00)</option>
+                                    <option value="wu">午时 (11:00-13:00)</option>
+                                    <option value="wei">未时 (13:00-15:00)</option>
+                                    <option value="shen">申时 (15:00-17:00)</option>
+                                    <option value="you">酉时 (17:00-19:00)</option>
+                                    <option value="xu">戌时 (19:00-21:00)</option>
+                                    <option value="hai">亥时 (21:00-23:00)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="input-field">
+                            <label for="femaleBirthPlace">
+                                <i class="fas fa-map-marker-alt"></i>
+                                出生地点
+                            </label>
+                            <input type="text" id="femaleBirthPlace" class="traditional-input" placeholder="请输入出生地点（如：上海市浦东新区）">
+                                </div>
+                                    </div>
+                                </div>
+                        
+                <!-- 单人姻缘表单 -->
+                <div class="form-content single-content" id="singleForm" style="display: none;">
+                    <div class="person-form single-person-form">
+                        <div class="form-title">
+                            <i class="fas fa-user"></i>
+                            <h4>个人信息</h4>
+                            </div>
+                        
+                        <div class="input-grid">
+                            <div class="input-field">
+                                <label for="singleName">
+                                    <i class="fas fa-user"></i>
+                                    姓名
+                                </label>
+                                <input type="text" id="singleName" class="traditional-input" placeholder="请输入您的姓名">
+                            </div>
+                            
+                            <div class="input-field">
+                                <label for="singleGender">
+                                    <i class="fas fa-venus-mars"></i>
+                                    性别
+                                </label>
+                                <select id="singleGender" class="traditional-select">
+                                    <option value="">请选择性别</option>
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                    </select>
+                                </div>
+                                </div>
+                        
+                        <div class="datetime-grid">
+                            <div class="input-field">
+                                <label for="singleBirthDate">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    出生日期
+                                </label>
+                                <div class="custom-date-picker" id="singleBirthDate">
+                                    <select class="date-select year-select" id="singleBirthYear">
+                                        <option value="">年</option>
+                                    </select>
+                                    <select class="date-select month-select" id="singleBirthMonth">
+                                        <option value="">月</option>
+                                        <option value="1">1月</option>
+                                        <option value="2">2月</option>
+                                        <option value="3">3月</option>
+                                        <option value="4">4月</option>
+                                        <option value="5">5月</option>
+                                        <option value="6">6月</option>
+                                        <option value="7">7月</option>
+                                        <option value="8">8月</option>
+                                        <option value="9">9月</option>
+                                        <option value="10">10月</option>
+                                        <option value="11">11月</option>
+                                        <option value="12">12月</option>
+                                    </select>
+                                    <select class="date-select day-select" id="singleBirthDay">
+                                        <option value="">日</option>
+                                    </select>
+                        </div>
+                    </div>
+
+                            <div class="input-field">
+                                <label for="singleBirthTime">
+                                    <i class="fas fa-clock"></i>
+                                    出生时辰
+                                </label>
+                                <select id="singleBirthTime" class="traditional-select">
+                                        <option value="">请选择时辰</option>
+                                    <option value="zi">子时 (23:00-1:00)</option>
+                                    <option value="chou">丑时 (1:00-3:00)</option>
+                                    <option value="yin">寅时 (3:00-5:00)</option>
+                                    <option value="mao">卯时 (5:00-7:00)</option>
+                                    <option value="chen">辰时 (7:00-9:00)</option>
+                                    <option value="si">巳时 (9:00-11:00)</option>
+                                    <option value="wu">午时 (11:00-13:00)</option>
+                                    <option value="wei">未时 (13:00-15:00)</option>
+                                    <option value="shen">申时 (15:00-17:00)</option>
+                                    <option value="you">酉时 (17:00-19:00)</option>
+                                    <option value="xu">戌时 (19:00-21:00)</option>
+                                    <option value="hai">亥时 (21:00-23:00)</option>
+                                    </select>
+                            </div>
+                        </div>
+                        
+                        <div class="input-field">
+                            <label for="singleBirthPlace">
+                                <i class="fas fa-map-marker-alt"></i>
+                                出生地点
+                            </label>
+                            <input type="text" id="singleBirthPlace" class="traditional-input" placeholder="请输入出生地点（如：广州市天河区）">
+                                </div>
+                        
+                        <!-- 期望条件 -->
+                        <div class="expectation-section">
+                            <h5><i class="fas fa-heart"></i> 理想伴侣期望（可选）</h5>
+                            <div class="input-grid">
+                                <div class="input-field">
+                                    <label for="expectedAge">
+                                        <i class="fas fa-birthday-cake"></i>
+                                        期望年龄范围
+                                    </label>
+                                    <select id="expectedAge" class="traditional-select">
+                                        <option value="">不限</option>
+                                        <option value="younger">比我年轻</option>
+                                        <option value="similar">同龄</option>
+                                        <option value="older">比我年长</option>
+                                        </select>
+                                    </div>
+                                
+                                <div class="input-field">
+                                    <label for="expectedPersonality">
+                                        <i class="fas fa-smile"></i>
+                                        期望性格
+                                    </label>
+                                    <select id="expectedPersonality" class="traditional-select">
+                                        <option value="">不限</option>
+                                        <option value="gentle">温和体贴</option>
+                                        <option value="active">活泼开朗</option>
+                                        <option value="stable">稳重踏实</option>
+                                        <option value="creative">富有创意</option>
+                                    </select>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeMarriage()">
+                            <i class="fas fa-heart"></i>
+                        <span id="analyzeBtnText">开始合婚分析</span>
+                        <div class="btn-ripple"></div>
+                        </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="result-section" id="resultSection" style="display: none;">
+            <div class="result-container">
+                <div class="result-header">
+                    <h3><i class="fas fa-scroll"></i> 姻缘分析报告</h3>
+                    <p>根据八字信息，为您呈现详细的合婚分析</p>
+                </div>
+                
+            <div class="result-content" id="resultContent">
+                    <!-- 结果内容将通过JavaScript动态生成 -->
+                </div>
+                
+                <div class="result-actions">
+                    <button class="secondary-btn" onclick="resetForm()">
+                        <i class="fas fa-redo"></i>
+                        重新分析
+                    </button>
+                    <button class="ai-btn" onclick="generateAIAnalysis()">
+                        <i class="fas fa-brain"></i>
+                        AI智能分析
+                    </button>
+                    <button class="primary-btn" onclick="generateReport()">
+                        <i class="fas fa-file-pdf"></i>
+                        生成PDF报告
+                    </button>
+                    <button class="tertiary-btn" onclick="generateImageReport()">
+                        <i class="fas fa-image"></i>
+                        导出图片
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="traditional-spinner">
+                <div class="bagua-symbol">
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                    <div class="bagua-line"></div>
+                </div>
+            </div>
+            <p>正在解析八字，请稍候...</p>
+            </div>
+        </div>
+
+    <!-- 传统装饰元素 -->
+    <div class="decoration-elements">
+        <div class="floating-element dragon"></div>
+        <div class="floating-element phoenix"></div>
+        <div class="floating-element cloud"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isAnalyzing = false;
+let currentMode = 'couple'; // 'couple' or 'single'
+
+// 生肖配对数据
+const zodiacCompatibility = {
+    '鼠': { best: ['龙', '猴', '牛'], good: ['鼠', '虎', '兔', '蛇', '猪'], bad: ['马', '羊', '鸡', '狗'] },
+    '牛': { best: ['蛇', '鸡', '鼠'], good: ['牛', '兔', '龙', '猴', '猪'], bad: ['虎', '马', '羊', '狗'] },
+    '虎': { best: ['马', '狗', '猪'], good: ['虎', '龙', '蛇', '鸡'], bad: ['牛', '兔', '蛇', '猴'] },
+    '兔': { best: ['羊', '猪', '狗'], good: ['牛', '虎', '龙', '蛇', '马', '鸡'], bad: ['鼠', '兔', '鸡'] },
+    '龙': { best: ['鼠', '猴', '鸡'], good: ['牛', '虎', '兔', '蛇', '马', '羊'], bad: ['龙', '狗', '猪'] },
+    '蛇': { best: ['牛', '鸡'], good: ['虎', '兔', '龙', '马', '羊', '猴', '猪'], bad: ['鼠', '蛇', '狗'] },
+    '马': { best: ['虎', '羊', '狗'], good: ['兔', '龙', '蛇', '马', '猴', '鸡'], bad: ['鼠', '牛', '猪'] },
+    '羊': { best: ['兔', '马', '猪'], good: ['龙', '蛇', '羊', '猴', '鸡', '狗'], bad: ['鼠', '牛', '虎'] },
+    '猴': { best: ['鼠', '龙'], good: ['牛', '马', '羊', '猴', '鸡', '狗', '猪'], bad: ['虎', '蛇'] },
+    '鸡': { best: ['牛', '龙', '蛇'], good: ['兔', '马', '羊', '猴', '鸡', '狗'], bad: ['鼠', '虎', '猪'] },
+    '狗': { best: ['虎', '兔', '马'], good: ['羊', '猴', '鸡', '狗', '猪'], bad: ['牛', '龙', '蛇', '鸡'] },
+    '猪': { best: ['虎', '兔', '羊'], good: ['鼠', '牛', '蛇', '猴', '狗', '猪'], bad: ['龙', '马', '鸡'] }
+};
+
+// 五行相生相克关系
+const wuxingRelations = {
+    '金': { generates: '水', destroys: '木', generatedBy: '土', destroyedBy: '火' },
+    '木': { generates: '火', destroys: '土', generatedBy: '水', destroyedBy: '金' },
+    '水': { generates: '木', destroys: '火', generatedBy: '金', destroyedBy: '土' },
+    '火': { generates: '土', destroys: '金', generatedBy: '木', destroyedBy: '水' },
+    '土': { generates: '金', destroys: '水', generatedBy: '火', destroyedBy: '木' }
+};
+
+// 天干地支数据
+const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+const diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const zodiacAnimals = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+
+// 模式切换函数
+function switchMode(mode) {
+    currentMode = mode;
+    
+    // 更新标签页状态
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+    
+    // 更新表单显示
+    if (mode === 'couple') {
+        document.getElementById('coupleForm').style.display = 'grid';
+        document.getElementById('singleForm').style.display = 'none';
+        document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-friends"></i> 双方基本信息';
+        document.getElementById('formSubtitle').textContent = '请输入双方的详细信息，我们将为您进行专业的八字合婚分析';
+        document.getElementById('analyzeBtnText').textContent = '开始合婚分析';
+    } else {
+        document.getElementById('coupleForm').style.display = 'none';
+        document.getElementById('singleForm').style.display = 'block';
+        document.getElementById('formTitle').innerHTML = '<i class="fas fa-user"></i> 个人基本信息';
+        document.getElementById('formSubtitle').textContent = '请输入您的详细信息，我们将为您推算适合的伴侣类型';
+        document.getElementById('analyzeBtnText').textContent = '开始姻缘分析';
+    }
+    
+    // 隐藏结果区域
+    document.getElementById('resultSection').style.display = 'none';
+}
+
+function analyzeMarriage() {
+    console.log('analyzeMarriage called, currentMode:', currentMode);
+    if (isAnalyzing) return;
+    
+    try {
+        if (currentMode === 'couple') {
+            analyzeCoupleMarriage();
+        } else {
+            analyzeSingleDestiny();
+        }
+    } catch (error) {
+        console.error('Error in analyzeMarriage:', error);
+        showNotification('分析过程中出现错误，请重试', 'warning');
+    }
+}
+
+function analyzeCoupleMarriage() {
+    // 获取输入数据
+    const maleData = {
+        name: document.getElementById('maleName').value.trim(),
+        birthDate: getDateFromSelects('male'),
+        birthTime: document.getElementById('maleBirthTime').value,
+        birthPlace: document.getElementById('maleBirthPlace').value.trim()
+    };
+    
+    const femaleData = {
+        name: document.getElementById('femaleName').value.trim(),
+        birthDate: getDateFromSelects('female'),
+        birthTime: document.getElementById('femaleBirthTime').value,
+        birthPlace: document.getElementById('femaleBirthPlace').value.trim()
+    };
+    
+    // 验证输入
+    if (!maleData.name || !maleData.birthDate || !femaleData.name || !femaleData.birthDate) {
+        showNotification('请填写双方的姓名和出生日期', 'warning');
+        return;
+    }
+    
+    isAnalyzing = true;
+    showLoading();
+    
+    // 模拟分析过程
+    setTimeout(() => {
+        hideLoading();
+        generateMarriageResult(maleData, femaleData);
+        isAnalyzing = false;
+    }, 4000);
+}
+
+function analyzeSingleDestiny() {
+    console.log('analyzeSingleDestiny called');
+    
+    // 获取输入数据
+    const singleData = {
+        name: document.getElementById('singleName').value.trim(),
+        gender: document.getElementById('singleGender').value,
+        birthDate: getDateFromSelects('single'),
+        birthTime: document.getElementById('singleBirthTime').value,
+        birthPlace: document.getElementById('singleBirthPlace').value.trim(),
+        expectedAge: document.getElementById('expectedAge').value,
+        expectedPersonality: document.getElementById('expectedPersonality').value
+    };
+    
+    console.log('singleData:', singleData);
+    
+    // 验证输入
+    if (!singleData.name || !singleData.gender || !singleData.birthDate) {
+        showNotification('请填写姓名、性别和出生日期', 'warning');
+        return;
+    }
+    
+    isAnalyzing = true;
+    showLoading();
+    
+    // 模拟分析过程
+    setTimeout(() => {
+        hideLoading();
+        generateSingleDestinyResult(singleData);
+        isAnalyzing = false;
+    }, 4000);
+}
+
+function generateMarriageResult(maleData, femaleData) {
+    // 计算生肖
+    const maleZodiac = getZodiacAnimal(maleData.birthDate);
+    const femaleZodiac = getZodiacAnimal(femaleData.birthDate);
+    
+    // 分析生肖配对
+    const zodiacCompatibilityResult = analyzeZodiacCompatibility(maleZodiac, femaleZodiac);
+    
+    // 生成八字（简化版）
+    const maleBazi = generateSimpleBazi(maleData.birthDate, maleData.birthTime);
+    const femaleBazi = generateSimpleBazi(femaleData.birthDate, femaleData.birthTime);
+    
+    // 五行分析
+    const wuxingAnalysis = analyzeWuxing(maleBazi, femaleBazi);
+    
+    // 综合评分
+    const overallScore = calculateOverallScore(zodiacCompatibilityResult, wuxingAnalysis);
+    
+    const resultContent = document.getElementById('resultContent');
+    resultContent.innerHTML = `
+        <div class="analysis-summary">
+            <div class="couple-info">
+                <div class="person-card male-card">
+                    <div class="card-header">
+                        <i class="fas fa-male"></i>
+                        <h4>${maleData.name}</h4>
+                    </div>
+                    <div class="card-content">
+                        <div class="zodiac-info">
+                            <span class="zodiac-label">生肖：</span>
+                            <span class="zodiac-value">${maleZodiac}</span>
+                </div>
+                        <div class="bazi-info">
+                            <span class="bazi-label">八字：</span>
+                            <div class="bazi-pillars">
+                                ${maleBazi.map(pillar => `<span class="pillar">${pillar}</span>`).join('')}
+            </div>
+                </div>
+                    </div>
+                    </div>
+                
+                    <div class="compatibility-score">
+                    <div class="score-circle">
+                        <div class="score-inner">
+                            <span class="score-number">${overallScore}</span>
+                            <span class="score-label">分</span>
+                    </div>
+                        <svg class="score-progress" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" stroke="#f0f0f0" stroke-width="8" fill="none"/>
+                            <circle cx="50" cy="50" r="45" stroke="#d4af37" stroke-width="8" fill="none"
+                                    stroke-dasharray="283" stroke-dashoffset="${283 - (283 * overallScore / 100)}"
+                                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                        </svg>
+                </div>
+                    <div class="score-description">
+                        <h4>姻缘契合度</h4>
+                        <p>${getScoreDescription(overallScore)}</p>
+            </div>
+                    </div>
+                    
+                <div class="person-card female-card">
+                    <div class="card-header">
+                        <i class="fas fa-female"></i>
+                        <h4>${femaleData.name}</h4>
+                    </div>
+                    <div class="card-content">
+                        <div class="zodiac-info">
+                            <span class="zodiac-label">生肖：</span>
+                            <span class="zodiac-value">${femaleZodiac}</span>
+                        </div>
+                        <div class="bazi-info">
+                            <span class="bazi-label">八字：</span>
+                            <div class="bazi-pillars">
+                                ${femaleBazi.map(pillar => `<span class="pillar">${pillar}</span>`).join('')}
+                    </div>
+                </div>
+                </div>
+                    </div>
+                </div>
+                    </div>
+                    
+        <div class="analysis-details">
+            <div class="analysis-card zodiac-analysis">
+                        <div class="card-header">
+                            <i class="fas fa-paw"></i>
+                    <h4>生肖配对分析</h4>
+                    </div>
+                <div class="card-content">
+                    <div class="compatibility-result ${zodiacCompatibilityResult.level}">
+                        <div class="result-icon">
+                            ${zodiacCompatibilityResult.level === 'excellent' ? '💖' : 
+                              zodiacCompatibilityResult.level === 'good' ? '💕' : '💔'}
+                    </div>
+                        <div class="result-text">
+                            <h5>${zodiacCompatibilityResult.title}</h5>
+                            <p>${zodiacCompatibilityResult.description}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-card wuxing-analysis">
+                        <div class="card-header">
+                    <i class="fas fa-yin-yang"></i>
+                    <h4>五行互补分析</h4>
+                </div>
+                <div class="card-content">
+                    <div class="wuxing-chart">
+                        ${generateWuxingChart(wuxingAnalysis)}
+                    </div>
+                    <div class="wuxing-description">
+                        <p>${wuxingAnalysis.description}</p>
+                    </div>
+                    </div>
+                </div>
+            
+            <div class="analysis-card suggestions">
+                <div class="card-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <h4>姻缘建议</h4>
+                </div>
+                <div class="card-content">
+                    <div class="suggestions-list">
+                        ${generateSuggestions(overallScore, zodiacCompatibilityResult, wuxingAnalysis)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 显示结果区域
+    document.getElementById('resultSection').style.display = 'block';
+    
+    // 滚动到结果区域
+    setTimeout(() => {
+        document.getElementById('resultSection').scrollIntoView({ 
+            behavior: 'smooth' 
+        });
+    }, 100);
+    
+    showNotification('姻缘分析完成！', 'success');
+}
+
+function generateSingleDestinyResult(singleData) {
+    // 计算个人信息
+    const userZodiac = getZodiacAnimal(singleData.birthDate);
+    const userBazi = generateSimpleBazi(singleData.birthDate, singleData.birthTime);
+    const userElement = getPersonElement(userBazi);
+    
+    // 推算适合的伴侣
+    const idealPartner = calculateIdealPartner(userZodiac, userElement, singleData.gender, singleData.expectedAge, singleData.expectedPersonality);
+    
+    // 姻缘运势分析
+    const destinyAnalysis = analyzeSingleDestinyDetails(userZodiac, userElement, singleData.birthDate);
+    
+    const resultContent = document.getElementById('resultContent');
+    resultContent.innerHTML = `
+        <div class="single-analysis-summary">
+            <div class="user-profile">
+                <div class="profile-card">
+                    <div class="card-header">
+                        <i class="fas fa-${singleData.gender === 'male' ? 'male' : 'female'}"></i>
+                        <h4>${singleData.name}</h4>
+                    </div>
+                    <div class="card-content">
+                        <div class="zodiac-info">
+                            <span class="zodiac-label">生肖：</span>
+                            <span class="zodiac-value">${userZodiac}</span>
+                </div>
+                        <div class="bazi-info">
+                            <span class="bazi-label">八字：</span>
+                            <div class="bazi-pillars">
+                                ${userBazi.map(pillar => `<span class="pillar">${pillar}</span>`).join('')}
+            </div>
+                    </div>
+                        <div class="element-info">
+                            <span class="element-label">主要五行：</span>
+                            <span class="element-value">${userElement}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                </div>
+                
+        <div class="single-analysis-details">
+            <div class="analysis-card ideal-partner">
+                <div class="card-header">
+                    <i class="fas fa-heart"></i>
+                    <h4>理想伴侣分析</h4>
+                    </div>
+                <div class="card-content">
+                    <div class="partner-recommendations">
+                        <div class="recommendation-item best">
+                            <div class="rec-header">
+                                <i class="fas fa-star"></i>
+                                <h5>最佳配对生肖</h5>
+                        </div>
+                            <div class="rec-content">
+                                <div class="zodiac-list">
+                                    ${idealPartner.bestZodiacs.map(zodiac => 
+                                        `<span class="zodiac-tag best">${zodiac}</span>`
+                                    ).join('')}
+                    </div>
+                                <p>${idealPartner.bestDescription}</p>
+                </div>
+            </div>
+            
+                        <div class="recommendation-item good">
+                            <div class="rec-header">
+                                <i class="fas fa-heart"></i>
+                                <h5>适合的伴侣特质</h5>
+                        </div>
+                            <div class="rec-content">
+                                <div class="trait-list">
+                                    ${idealPartner.traits.map(trait => 
+                                        `<div class="trait-item">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>${trait}</span>
+                                        </div>`
+                                    ).join('')}
+                    </div>
+                        </div>
+                    </div>
+                        </div>
+                </div>
+                    </div>
+                    
+            <div class="analysis-card destiny-analysis">
+                        <div class="card-header">
+                    <i class="fas fa-crystal-ball"></i>
+                    <h4>姻缘运势</h4>
+                        </div>
+                <div class="card-content">
+                    <div class="destiny-timeline">
+                        ${destinyAnalysis.timeline.map(period => 
+                            `<div class="timeline-item">
+                                <div class="timeline-dot ${period.level}"></div>
+                                <div class="timeline-content">
+                                    <h6>${period.period}</h6>
+                                    <p>${period.description}</p>
+                                </div>
+                            </div>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-card suggestions">
+                <div class="card-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <h4>姻缘建议</h4>
+                </div>
+                <div class="card-content">
+                    <div class="suggestions-list">
+                        ${destinyAnalysis.suggestions.map(suggestion => 
+                            `<div class="suggestion-item">
+                    <i class="fas fa-heart"></i>
+                                ${suggestion}
+                            </div>`
+                        ).join('')}
+                </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 显示结果区域
+    document.getElementById('resultSection').style.display = 'block';
+    
+    // 滚动到结果区域
+    setTimeout(() => {
+        document.getElementById('resultSection').scrollIntoView({ 
+            behavior: 'smooth' 
+        });
+    }, 100);
+    
+    showNotification('姻缘分析完成！', 'success');
+}
+
+function getZodiacAnimal(dateString) {
+    const year = new Date(dateString).getFullYear();
+    // 简化计算，实际应该考虑农历
+    const zodiacIndex = (year - 1900) % 12;
+    return zodiacAnimals[zodiacIndex];
+}
+
+function analyzeZodiacCompatibility(maleZodiac, femaleZodiac) {
+    const compatibility = zodiacCompatibility[maleZodiac];
+    
+    if (compatibility.best.includes(femaleZodiac)) {
+        return {
+            level: 'excellent',
+            title: '天作之合',
+            description: `${maleZodiac}与${femaleZodiac}属于最佳配对，性格互补，能够相互扶持，共同成长。这样的组合往往能够建立稳定幸福的婚姻关系。`
+        };
+    } else if (compatibility.good.includes(femaleZodiac)) {
+        return {
+            level: 'good',
+            title: '良缘佳配',
+            description: `${maleZodiac}与${femaleZodiac}属于较好配对，虽然偶有小摩擦，但总体和谐。只要双方多沟通理解，必能白头偕老。`
+        };
+    } else {
+        return {
+            level: 'challenging',
+            title: '需要磨合',
+            description: `${maleZodiac}与${femaleZodiac}的配对需要更多的理解和包容。虽然挑战较多，但真爱能够克服一切困难。`
+        };
+    }
+}
+
+function generateSimpleBazi(dateString, timeString) {
+    // 这里是简化的八字生成，实际应该使用专业的万年历算法
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    // 简化的天干地支计算
+    const yearGan = tianGan[(year - 4) % 10];
+    const yearZhi = diZhi[(year - 4) % 12];
+    const monthGan = tianGan[(month - 1) % 10];
+    const monthZhi = diZhi[(month - 1) % 12];
+    const dayGan = tianGan[(day - 1) % 10];
+    const dayZhi = diZhi[(day - 1) % 12];
+    
+    let timeGan = '甲', timeZhi = '子';
+    if (timeString) {
+        const timeIndex = ['zi', 'chou', 'yin', 'mao', 'chen', 'si', 'wu', 'wei', 'shen', 'you', 'xu', 'hai'].indexOf(timeString);
+        if (timeIndex !== -1) {
+            timeGan = tianGan[timeIndex % 10];
+            timeZhi = diZhi[timeIndex];
+        }
+    }
+    
+    return [
+        `${yearGan}${yearZhi}`,
+        `${monthGan}${monthZhi}`,
+        `${dayGan}${dayZhi}`,
+        `${timeGan}${timeZhi}`
+    ];
+}
+
+function analyzeWuxing(maleBazi, femaleBazi) {
+    // 简化的五行分析
+    const elements = ['金', '木', '水', '火', '土'];
+    const maleElements = elements[Math.floor(Math.random() * elements.length)];
+    const femaleElements = elements[Math.floor(Math.random() * elements.length)];
+    
+    let relationship = '平衡';
+    let description = '双方五行平衡，相处和谐。';
+    
+    if (wuxingRelations[maleElements].generates === femaleElements) {
+        relationship = '相生';
+        description = `男方${maleElements}行生女方${femaleElements}行，男方能够给予女方支持和帮助，关系融洽。`;
+    } else if (wuxingRelations[maleElements].destroys === femaleElements) {
+        relationship = '相克';
+        description = `男方${maleElements}行克女方${femaleElements}行，需要更多理解和包容，建议通过调和化解。`;
+    }
+    
+    return {
+        maleElement: maleElements,
+        femaleElement: femaleElements,
+        relationship: relationship,
+        description: description
+    };
+}
+
+function calculateOverallScore(zodiacResult, wuxingResult) {
+    let score = 60; // 基础分
+    
+    if (zodiacResult.level === 'excellent') score += 25;
+    else if (zodiacResult.level === 'good') score += 15;
+    else score += 5;
+    
+    if (wuxingResult.relationship === '相生') score += 15;
+    else if (wuxingResult.relationship === '平衡') score += 10;
+    else score += 0;
+    
+    return Math.min(score, 99); // 最高99分
+}
+
+function getScoreDescription(score) {
+    if (score >= 90) return '天作之合，百年好合';
+    else if (score >= 80) return '良缘佳配，相得益彰';
+    else if (score >= 70) return '缘分不浅，需要经营';
+    else if (score >= 60) return '有缘无分，需要努力';
+    else return '缘分较浅，需要慎重';
+}
+
+function generateWuxingChart(wuxingAnalysis) {
+    return `
+        <div class="wuxing-elements">
+                            <div class="element-pair">
+                    <div class="element male-element">
+                        <div class="element-symbol">${wuxingAnalysis.maleElement}</div>
+                        <div class="element-label">男方</div>
+                    </div>
+                    <div class="relationship-indicator ${wuxingAnalysis.relationship}">
+                        <span class="relationship-text">${wuxingAnalysis.relationship}</span>
+                    </div>
+                    <div class="element female-element">
+                        <div class="element-symbol">${wuxingAnalysis.femaleElement}</div>
+                        <div class="element-label">女方</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateSuggestions(score, zodiacResult, wuxingResult) {
+    const suggestions = [];
+    
+    if (score >= 80) {
+        suggestions.push('你们的缘分很深，要珍惜彼此，共同经营这份美好的感情。');
+        suggestions.push('建议选择吉日良辰举办婚礼，让天时地利人和都为你们助力。');
+    } else if (score >= 60) {
+        suggestions.push('虽然有些小挑战，但真诚的沟通能化解所有问题。');
+        suggestions.push('建议多参加一些传统文化活动，增进彼此了解。');
+    } else {
+        suggestions.push('感情需要更多的耐心和包容，不要急于求成。');
+        suggestions.push('建议寻求长辈的建议和祝福，获得更多的支持。');
+    }
+    
+    if (wuxingResult.relationship === '相克') {
+        suggestions.push('可以通过佩戴相应的饰品来调和五行，化解相克之势。');
+    }
+    
+    return suggestions.map(suggestion => `<div class="suggestion-item"><i class="fas fa-heart"></i> ${suggestion}</div>`).join('');
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function resetForm() {
+    document.getElementById('maleName').value = '';
+    document.getElementById('maleBirthDate').value = '';
+    document.getElementById('maleBirthTime').value = '';
+    document.getElementById('maleBirthPlace').value = '';
+    document.getElementById('femaleName').value = '';
+    document.getElementById('femaleBirthDate').value = '';
+    document.getElementById('femaleBirthTime').value = '';
+    document.getElementById('femaleBirthPlace').value = '';
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('formSection').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+}
+
+// 单人分析辅助函数
+function getPersonElement(bazi) {
+    const elements = ['金', '木', '水', '火', '土'];
+    return elements[Math.floor(Math.random() * elements.length)];
+}
+
+function calculateIdealPartner(userZodiac, userElement, userGender, expectedAge, expectedPersonality) {
+    const compatibility = zodiacCompatibility[userZodiac];
+    
+    // 基于生肖的最佳配对
+    const bestZodiacs = compatibility.best;
+    
+    // 基于五行的特质匹配
+    const elementTraits = {
+        '金': ['坚毅果断', '理性务实', '追求完美', '责任心强'],
+        '木': ['温和善良', '富有创意', '乐观向上', '包容性强'],
+        '水': ['聪明智慧', '适应能力强', '直觉敏锐', '善于沟通'],
+        '火': ['热情活泼', '积极主动', '富有激情', '领导能力强'],
+        '土': ['稳重踏实', '忠诚可靠', '脚踏实地', '耐心细致']
+    };
+    
+    let traits = [...elementTraits[userElement]];
+    
+    // 根据期望添加特质
+    if (expectedPersonality) {
+        const personalityTraits = {
+            'gentle': ['温和体贴', '善解人意', '包容宽容'],
+            'active': ['活泼开朗', '积极乐观', '善于交际'],
+            'stable': ['稳重踏实', '可靠负责', '成熟稳健'],
+            'creative': ['富有创意', '思维敏捷', '艺术气质']
+        };
+        traits.push(...personalityTraits[expectedPersonality] || []);
+    }
+    
+    // 年龄期望描述
+    let ageDescription = '';
+    if (expectedAge === 'younger') {
+        ageDescription = '建议寻找比您年轻2-5岁的伴侣，能够带来活力和新鲜感。';
+    } else if (expectedAge === 'older') {
+        ageDescription = '建议寻找比您年长2-5岁的伴侣，能够提供稳定感和指导。';
+    } else if (expectedAge === 'similar') {
+        ageDescription = '建议寻找同龄或相差1-2岁的伴侣，更容易产生共鸣。';
+    } else {
+        ageDescription = '年龄并非决定性因素，更重要的是心灵契合。';
+    }
+    
+    return {
+        bestZodiacs: bestZodiacs,
+        bestDescription: `与${bestZodiacs.join('、')}属相的人最为般配，能够形成互补优势，关系和谐稳定。${ageDescription}`,
+        traits: traits.slice(0, 6) // 取前6个特质
+    };
+}
+
+function analyzeSingleDestinyDetails(userZodiac, userElement, birthDate) {
+    const currentYear = new Date().getFullYear();
+    const birthYear = new Date(birthDate).getFullYear();
+    const age = currentYear - birthYear;
+    
+    // 生成运势时间线
+    const timeline = [
+        {
+            period: `${currentYear}年 (${age}岁)`,
+            level: 'good',
+            description: '当前姻缘运势平稳上升，是结识新朋友的好时机。保持开放的心态，真爱可能就在不远处。'
+        },
+        {
+            period: `${currentYear + 1}年 (${age + 1}岁)`,
+            level: 'excellent',
+            description: '明年桃花运旺盛，特别是春季和秋季，容易遇到心仪的对象。建议多参加社交活动。'
+        },
+        {
+            period: `${currentYear + 2}年 (${age + 2}岁)`,
+            level: 'good',
+            description: '感情运势稳定发展，如果已有伴侣，关系会更加稳固，是考虑进一步发展的好时机。'
+        }
+    ];
+    
+    // 生成建议
+    const suggestions = [
+        '多参加户外活动和兴趣小组，扩大社交圈子',
+        '保持良好的外在形象和内在修养，提升个人魅力',
+        '学会倾听和沟通，真诚待人是吸引真爱的关键',
+        '不要过分挑剔，给彼此一些时间和空间了解',
+        '相信缘分的同时也要主动创造机会',
+        '保持积极乐观的心态，好的心情会带来好的姻缘'
+    ];
+    
+    return {
+        timeline: timeline,
+        suggestions: suggestions
+    };
+}
+
+async function generateReport() {
+    // 创建报告内容
+    const reportData = getCurrentAnalysisData();
+    if (!reportData) {
+        showNotification('请先完成分析再生成报告', 'warning');
+        return;
+    }
+    
+    // 生成PDF报告
+    showNotification('正在生成PDF报告，请稍候...', 'info');
+    
+    try {
+        const blob = await generatePDFContent(reportData);
+        
+        // 确定文件扩展名
+        let fileName = `${reportData.title}_姻缘分析报告`;
+        let fileExtension = '.pdf';
+        
+        // 根据blob类型确定文件扩展名
+        if (blob.type.includes('image')) {
+            fileExtension = '.png';
+        } else if (blob.type.includes('text')) {
+            fileExtension = '.txt';
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName + fileExtension;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('报告已生成并下载', 'success');
+    } catch (error) {
+        console.error('报告生成失败:', error);
+        showNotification('报告生成失败，请重试', 'warning');
+    }
+}
+
+function getCurrentAnalysisData() {
+    const resultSection = document.getElementById('resultSection');
+    if (resultSection.style.display === 'none') {
+        return null;
+    }
+    
+    // 获取当前分析的数据
+    if (currentMode === 'couple') {
+    return {
+            title: '双人合婚分析',
+            type: 'couple',
+            content: document.getElementById('resultContent').innerHTML
+        };
+    } else {
+        return {
+            title: '单人姻缘分析',
+            type: 'single',
+            content: document.getElementById('resultContent').innerHTML
+        };
+    }
+}
+
+async function generatePDFContent(data) {
+    try {
+        // 使用html2canvas将结果区域转换为图片，然后生成PDF
+        const resultElement = document.getElementById('resultContent');
+        if (!resultElement) {
+            throw new Error('找不到结果内容');
+        }
+
+        // 临时创建一个用于PDF的容器
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.cssText = `
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 750px;
+            background: white;
+            padding: 30px;
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            color: #2c2c2c;
+            line-height: 1.8;
+            box-sizing: border-box;
+        `;
+
+        // 创建PDF内容，处理原始内容的样式
+        const processedContent = processContentForPDF(resultElement.innerHTML);
+        
+        pdfContainer.innerHTML = `
+            <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #d4af37;">
+                <h1 style="color: #d4af37; font-size: 22px; margin: 0; font-weight: bold;">缘契 - 传统八字姻缘分析平台</h1>
+                <h2 style="color: #4a4a4a; font-size: 16px; margin: 8px 0; font-weight: normal;">${data.title || '姻缘分析报告'}</h2>
+                <p style="color: #666; font-size: 11px; margin: 5px 0;">生成时间：${new Date().toLocaleString()}</p>
+            </div>
+            <div style="margin: 20px 0;">
+                ${processedContent}
+            </div>
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 10px; color: #555;">
+                <p style="margin: 0 0 8px 0;"><strong style="color: #333;">免责声明：</strong></p>
+                <p style="margin: 0 0 10px 0; line-height: 1.5;">本报告基于传统文化和算法生成，内容仅供娱乐和参考使用。请理性看待分析结果，不要将其作为人生重大决策的唯一依据。真正的感情需要双方的理解、包容和努力经营。</p>
+                <div style="margin-top: 12px; text-align: center; color: #666; font-size: 9px;">
+                    <p style="margin: 3px 0;">🌐 官方网站：${window.location.origin}/tools/yuanqi/</p>
+                    <p style="margin: 3px 0;">💝 感谢使用缘契 - 传统八字姻缘分析平台</p>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(pdfContainer);
+
+        // 等待内容渲染完成
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 使用html2canvas截图
+        const canvas = await html2canvas(pdfContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            width: 750,
+            height: pdfContainer.scrollHeight,
+            scrollX: 0,
+            scrollY: 0,
+            logging: false,
+            imageTimeout: 0
+        });
+
+        // 移除临时容器
+        document.body.removeChild(pdfContainer);
+
+        // 创建PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const pageWidth = 210; // A4宽度 (mm)
+        const pageHeight = 297; // A4高度 (mm)
+        const margin = 10; // 页边距 (mm)
+        const contentWidth = pageWidth - 2 * margin;
+        
+        // 计算图片尺寸，保持宽高比
+        const imgWidth = contentWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let yPosition = margin;
+        let remainingHeight = imgHeight;
+        let sourceY = 0;
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        // 分页处理，避免截断
+        while (remainingHeight > 0) {
+            const availableHeight = pageHeight - yPosition - margin;
+            const sliceHeight = Math.min(remainingHeight, availableHeight);
+            
+            // 计算在canvas上的切片高度
+            const canvasSliceHeight = (sliceHeight * canvas.height) / imgHeight;
+            
+            // 创建切片canvas
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = canvasSliceHeight;
+            const sliceCtx = sliceCanvas.getContext('2d');
+            
+            sliceCtx.drawImage(canvas, 0, sourceY, canvas.width, canvasSliceHeight, 0, 0, canvas.width, canvasSliceHeight);
+            
+            // 添加切片到PDF
+            pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, yPosition, imgWidth, sliceHeight);
+            
+            remainingHeight -= sliceHeight;
+            sourceY += canvasSliceHeight;
+            
+            // 如果还有内容，添加新页
+            if (remainingHeight > 0) {
+                pdf.addPage();
+                yPosition = margin;
+            }
+        }
+
+        return pdf.output('blob');
+
+    } catch (error) {
+        console.error('PDF生成错误:', error);
+        // 如果PDF生成失败，提供备用的图片下载
+        try {
+            const resultElement = document.getElementById('resultContent');
+            const canvas = await html2canvas(resultElement, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            });
+            
+            return new Promise((resolve) => {
+                canvas.toBlob(resolve, 'image/png');
+            });
+        } catch (imgError) {
+            console.error('图片生成也失败:', imgError);
+            // 最后的备选方案：文本文件
+            const content = generateFormattedReport(data);
+            return new Blob(['\uFEFF' + content], { 
+                type: 'text/plain;charset=utf-8' 
+            });
+        }
+    }
+}
+
+function processContentForPDF(htmlContent) {
+    // 处理HTML内容，调整样式适合PDF
+    let processedContent = htmlContent;
+    
+    // 替换亮色字体为深色
+    processedContent = processedContent.replace(/color:\s*rgba?\([^)]*\)/g, 'color: #333');
+    processedContent = processedContent.replace(/color:\s*#[a-fA-F0-9]{3,6}/g, 'color: #333');
+    processedContent = processedContent.replace(/color:\s*white/gi, 'color: #333');
+    
+    // 调整背景色
+    processedContent = processedContent.replace(/background[^;]*;?/g, '');
+    processedContent = processedContent.replace(/rgba?\([^)]*0\.[0-9]+\)/g, 'transparent');
+    
+    // 调整字体大小和间距
+    processedContent = processedContent.replace(/font-size:\s*[0-9.]+rem/g, 'font-size: 14px');
+    processedContent = processedContent.replace(/font-size:\s*[0-9.]+em/g, 'font-size: 14px');
+    
+    // 处理特殊元素
+    processedContent = processedContent.replace(/<h[1-6][^>]*>/g, match => {
+        return match.replace(/style="[^"]*"/, 'style="color: #2c2c2c; margin: 12px 0 8px 0; font-weight: bold;"');
+    });
+    
+    processedContent = processedContent.replace(/<p[^>]*>/g, match => {
+        return match.replace(/style="[^"]*"/, 'style="color: #333; margin: 8px 0; line-height: 1.6;"');
+    });
+    
+    // 处理AI分析区域
+    processedContent = processedContent.replace(/ai-analysis-section/g, 'ai-analysis-section-pdf');
+    processedContent = processedContent.replace(/ai-section/g, 'ai-section-pdf');
+    
+    // 添加PDF专用样式
+    const pdfStyles = `
+        <style>
+            .ai-analysis-section-pdf {
+                border: 1px solid #ccc !important;
+                background: #f9f9f9 !important;
+                padding: 15px !important;
+                margin: 15px 0 !important;
+                border-radius: 8px !important;
+            }
+            .ai-analysis-section-pdf h3 {
+                color: #2c2c2c !important;
+                font-size: 16px !important;
+                margin: 0 0 10px 0 !important;
+            }
+            .ai-section-pdf {
+                background: white !important;
+                border: 1px solid #ddd !important;
+                padding: 10px !important;
+                margin: 8px 0 !important;
+                border-radius: 4px !important;
+            }
+            .ai-section-pdf h4 {
+                color: #2c2c2c !important;
+                font-size: 14px !important;
+                margin: 0 0 6px 0 !important;
+            }
+            .ai-section-pdf p {
+                color: #333 !important;
+                font-size: 13px !important;
+                line-height: 1.6 !important;
+                margin: 0 !important;
+            }
+            .ai-badge {
+                background: #666 !important;
+                color: white !important;
+                padding: 2px 6px !important;
+                border-radius: 3px !important;
+                font-size: 10px !important;
+            }
+        </style>
+    `;
+    
+    return pdfStyles + processedContent;
+}
+
+function generateFormattedReport(data) {
+    const currentTime = new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    
+    // 清理HTML标签
+    const cleanContent = data.content
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+    
+    const report = `
+═══════════════════════════════════════════════════════════════
+                    缘契 - 传统八字姻缘分析平台
+                        姻缘分析报告
+═══════════════════════════════════════════════════════════════
+
+📅 生成时间：${currentTime}
+📋 报告标题：${data.title || '姻缘分析报告'}
+
+───────────────────────────────────────────────────────────────
+
+📊 分析内容：
+
+${cleanContent}
+
+───────────────────────────────────────────────────────────────
+
+⚠️  重要声明：
+
+本报告基于传统文化和算法生成，内容仅供娱乐和参考使用。
+请理性看待分析结果，不要将其作为人生重大决策的唯一依据。
+真正的感情需要双方的理解、包容和努力经营。
+
+───────────────────────────────────────────────────────────────
+
+💝 感谢使用缘契平台
+🌐 官方网站：${window.location.origin}/tools/yuanqi/
+📞 如有问题，请联系客服
+
+═══════════════════════════════════════════════════════════════
+    `;
+    
+    return report.trim();
+}
+
+async function generateImageReport() {
+    const reportData = getCurrentAnalysisData();
+    if (!reportData) {
+        showNotification('请先完成分析再导出图片', 'warning');
+        return;
+    }
+    
+    showNotification('正在生成图片，请稍候...', 'info');
+    
+    try {
+        const resultElement = document.getElementById('resultContent');
+        
+        // 创建一个用于图片的容器，包含标题
+        const imageContainer = document.createElement('div');
+        imageContainer.style.cssText = `
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 800px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 40px;
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        `;
+
+        imageContainer.innerHTML = `
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #d4af37; font-size: 28px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">缘契 - 传统八字姻缘分析平台</h1>
+                <h2 style="color: #fff; font-size: 20px; margin: 15px 0;">${reportData.title || '姻缘分析报告'}</h2>
+                <p style="color: #ccc; font-size: 14px;">生成时间：${new Date().toLocaleString()}</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.95); border-radius: 15px; padding: 30px; color: #333;">
+                ${resultElement.innerHTML}
+            </div>
+            <div style="text-align: center; margin-top: 20px; color: #ccc; font-size: 12px;">
+                <p>本报告基于传统文化和算法生成，仅供娱乐参考</p>
+                <p style="margin-top: 10px; color: #d4af37;">🌐 ${window.location.origin}/tools/yuanqi/</p>
+            </div>
+        `;
+
+        document.body.appendChild(imageContainer);
+
+        const canvas = await html2canvas(imageContainer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            width: 800,
+            height: imageContainer.scrollHeight
+        });
+
+        document.body.removeChild(imageContainer);
+
+        // 下载图片
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${reportData.title}_姻缘分析报告.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('图片已生成并下载', 'success');
+        }, 'image/png');
+
+    } catch (error) {
+        console.error('图片生成失败:', error);
+        showNotification('图片生成失败，请重试', 'warning');
+    }
+}
+
+async function generateAIAnalysis() {
+    const reportData = getCurrentAnalysisData();
+    if (!reportData) {
+        showNotification('请先完成基础分析再进行AI智能分析', 'warning');
+        return;
+    }
+    
+    showNotification('正在连接AI进行深度分析，请稍候...', 'info');
+    
+    try {
+        // 获取用户输入的数据
+        const userData = getUserInputData();
+        
+        // 调用DeepSeek API
+        const aiAnalysis = await callDeepSeekAPI(userData, reportData);
+        
+        // 将AI分析结果添加到现有结果中
+        displayAIAnalysis(aiAnalysis);
+        
+        showNotification('AI智能分析完成！', 'success');
+    } catch (error) {
+        console.error('AI分析失败:', error);
+        showNotification('AI分析服务暂时不可用，请稍后重试', 'warning');
+    }
+}
+
+function getUserInputData() {
+    if (currentMode === 'couple') {
+        return {
+            mode: 'couple',
+            male: {
+                name: document.getElementById('maleName').value.trim(),
+                birthDate: getDateFromSelects('male'),
+                birthTime: document.getElementById('maleBirthTime').value,
+                birthPlace: document.getElementById('maleBirthPlace').value.trim()
+            },
+            female: {
+                name: document.getElementById('femaleName').value.trim(),
+                birthDate: getDateFromSelects('female'),
+                birthTime: document.getElementById('femaleBirthTime').value,
+                birthPlace: document.getElementById('femaleBirthPlace').value.trim()
+            }
+        };
+    } else {
+        return {
+            mode: 'single',
+            person: {
+                name: document.getElementById('singleName').value.trim(),
+                gender: document.getElementById('singleGender').value,
+                birthDate: getDateFromSelects('single'),
+                birthTime: document.getElementById('singleBirthTime').value,
+                birthPlace: document.getElementById('singleBirthPlace').value.trim(),
+                expectedAge: document.getElementById('expectedAge').value,
+                expectedPersonality: document.getElementById('expectedPersonality').value
+            }
+        };
+    }
+}
+
+async function callDeepSeekAPI(userData, basicAnalysis) {
+    // 构建发送给AI的提示词
+    const prompt = buildAIPrompt(userData, basicAnalysis);
+    
+    try {
+        const response = await fetch('/tools/api/ai-analysis/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                userData: userData
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('AI服务请求失败');
+        }
+        
+        const result = await response.json();
+        return result.analysis;
+    } catch (error) {
+        console.error('DeepSeek API调用失败:', error);
+        // 如果API调用失败，返回模拟的AI分析结果
+        return generateMockAIAnalysis(userData);
+    }
+}
+
+function buildAIPrompt(userData, basicAnalysis) {
+    let prompt = `你是一位资深的中国传统命理学专家，精通八字命理和姻缘分析。请基于以下信息进行深度的姻缘分析：
+
+基础信息：
+${JSON.stringify(userData, null, 2)}
+
+基础分析结果：
+${basicAnalysis.content.replace(/<[^>]*>/g, '')}
+
+请从以下角度进行深度分析：
+1. 八字五行的深层互补关系
+2. 天干地支的细致配对分析  
+3. 神煞星宿对姻缘的具体影响
+4. 大运流年对感情发展的时间节点预测
+5. 性格匹配度的心理学分析
+6. 具体的相处建议和注意事项
+7. 婚姻生活中可能遇到的挑战及化解方法
+
+请用专业但易懂的语言，提供具体而实用的建议。回答要结构清晰，内容丰富，具有指导意义。`;
+
+    return prompt;
+}
+
+function generateMockAIAnalysis(userData) {
+    // 模拟AI分析结果（当API不可用时的备选方案）
+    return {
+        title: 'AI智能深度分析',
+        sections: [
+            {
+                title: '🧠 AI深度洞察',
+                content: '基于大数据分析和传统命理学的结合，AI系统发现了更深层的匹配模式...'
+            },
+            {
+                title: '🔮 未来趋势预测', 
+                content: '根据八字运势和现代心理学分析，预测未来感情发展的关键时期...'
+            },
+            {
+                title: '💡 个性化建议',
+                content: '针对双方的具体情况，AI提供了量身定制的相处建议和注意事项...'
+            }
+        ]
+    };
+}
+
+function displayAIAnalysis(aiAnalysis) {
+    const resultContent = document.getElementById('resultContent');
+    
+    // 创建AI分析区域
+    const aiSection = document.createElement('div');
+    aiSection.className = 'ai-analysis-section';
+    aiSection.innerHTML = `
+        <div class="ai-analysis-header">
+            <h3><i class="fas fa-brain"></i> ${aiAnalysis.title || 'AI智能深度分析'}</h3>
+            <span class="ai-badge">DeepSeek AI</span>
+        </div>
+        <div class="ai-analysis-content">
+            ${aiAnalysis.sections ? aiAnalysis.sections.map(section => `
+                <div class="ai-section">
+                    <h4>${section.title}</h4>
+                    <p>${section.content}</p>
+                </div>
+            `).join('') : `<p>${aiAnalysis}</p>`}
+        </div>
+    `;
+    
+    // 将AI分析添加到结果区域
+    resultContent.appendChild(aiSection);
+    
+    // 添加分隔线
+    const separator = document.createElement('div');
+    separator.className = 'analysis-separator';
+    separator.innerHTML = '<div class="separator-line"></div><span class="separator-text">AI智能分析</span><div class="separator-line"></div>';
+    resultContent.insertBefore(separator, aiSection);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function shareResult() {
+    if (navigator.share) {
+        navigator.share({
+            title: '我的姻缘分析结果 - 缘契',
+            text: '来看看我们的姻缘分析结果吧！',
+            url: window.location.href
+        });
+    } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showNotification('链接已复制到剪贴板', 'success');
+        });
+    }
+}
+
+// 通知函数
+function showNotification(message, type = 'info') {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 显示动画
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // 自动隐藏
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// 日期选择器辅助函数
+function getDateFromSelects(prefix) {
+    const year = document.getElementById(`${prefix}BirthYear`).value;
+    const month = document.getElementById(`${prefix}BirthMonth`).value;
+    const day = document.getElementById(`${prefix}BirthDay`).value;
+    
+    if (!year || !month || !day) {
+        return '';
+    }
+    
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
+
+function initializeDateSelectors() {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 80;
+    const endYear = currentYear - 10;
+    
+    // 初始化年份选择器
+    ['male', 'female', 'single'].forEach(prefix => {
+        const yearSelect = document.getElementById(`${prefix}BirthYear`);
+        if (yearSelect) {
+            for (let year = endYear; year >= startYear; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + '年';
+                yearSelect.appendChild(option);
+            }
+        }
+    });
+    
+    // 添加日期联动
+    ['male', 'female', 'single'].forEach(prefix => {
+        const monthSelect = document.getElementById(`${prefix}BirthMonth`);
+        const daySelect = document.getElementById(`${prefix}BirthDay`);
+        
+        if (monthSelect && daySelect) {
+            monthSelect.addEventListener('change', function() {
+                updateDayOptions(prefix);
+            });
+            
+            const yearSelect = document.getElementById(`${prefix}BirthYear`);
+            if (yearSelect) {
+                yearSelect.addEventListener('change', function() {
+                    updateDayOptions(prefix);
+                });
+            }
+        }
+    });
+}
+
+function updateDayOptions(prefix) {
+    const yearSelect = document.getElementById(`${prefix}BirthYear`);
+    const monthSelect = document.getElementById(`${prefix}BirthMonth`);
+    const daySelect = document.getElementById(`${prefix}BirthDay`);
+    
+    const year = parseInt(yearSelect.value);
+    const month = parseInt(monthSelect.value);
+    
+    // 清空日期选项
+    daySelect.innerHTML = '<option value="">日</option>';
+    
+    if (!year || !month) return;
+    
+    // 计算该月的天数
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const option = document.createElement('option');
+        option.value = day;
+        option.textContent = day + '日';
+        daySelect.appendChild(option);
+    }
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化日期选择器
+    initializeDateSelectors();
+    
+    // 添加输入框焦点效果
+    const inputs = document.querySelectorAll('.traditional-input, .traditional-select, .date-select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+    
+    // 添加按钮点击效果
+    const buttons = document.querySelectorAll('.analyze-btn');
+    buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const ripple = this.querySelector('.btn-ripple');
+            if (ripple) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('active');
+                
+                setTimeout(() => {
+                    ripple.classList.remove('active');
+                }, 600);
+            }
+        });
+    });
+});
+</script>
+
+<style>
+/* 主容器样式 */
+.yuanqi-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #1a1a2e 100%);
+    background-size: 400% 400%;
+    animation: backgroundShift 20s ease infinite;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* 传统背景纹理 */
+.yuanqi-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 60%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+    z-index: 0;
+    animation: textureFloat 30s ease-in-out infinite;
+}
+
+@keyframes backgroundShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes textureFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+    50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+}
+
+/* 头部区域样式 */
+.yuanqi-header {
+    text-align: center;
+    padding: 3rem 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.header-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.traditional-pattern {
+    width: 100%;
+    height: 100%;
+    background-image: 
+        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.1) 0px, transparent 2px, transparent 10px, rgba(212, 175, 55, 0.1) 12px),
+        repeating-linear-gradient(-45deg, rgba(220, 20, 60, 0.1) 0px, transparent 2px, transparent 10px, rgba(220, 20, 60, 0.1) 12px);
+    animation: patternMove 15s linear infinite;
+}
+
+@keyframes patternMove {
+    0% { background-position: 0px 0px, 0px 0px; }
+    100% { background-position: 40px 40px, -40px 40px; }
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* 太极图标 */
+.logo-container {
+    position: relative;
+}
+
+.yin-yang-symbol {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    animation: rotate 20s linear infinite;
+}
+
+.yin-yang {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    background: linear-gradient(to right, #000 50%, #fff 50%);
+    box-shadow: 
+        0 0 30px rgba(212, 175, 55, 0.6),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.yin-yang::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+    background: #fff;
+    transform: translateX(-50%);
+    box-shadow: 0 50px 0 #000;
+}
+
+.yang-dot, .yin-dot {
+    position: absolute;
+    width: 20%;
+    height: 20%;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.yang-dot {
+    background: #000;
+    left: 15%;
+}
+
+.yin-dot {
+    background: #fff;
+    right: 15%;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 标题样式 */
+.title-content {
+    text-align: left;
+}
+
+.main-title {
+    font-size: 4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 25%, #dc143c 50%, #ff6347 75%, #d4af37 100%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    animation: titleGlow 4s ease-in-out infinite;
+    text-shadow: 0 0 50px rgba(212, 175, 55, 0.5);
+    font-family: 'Microsoft YaHei', '微软雅黑', serif;
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0.5rem 0 1rem 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    font-weight: 300;
+    letter-spacing: 2px;
+}
+
+.tagline {
+    margin-top: 1rem;
+}
+
+.chinese-text {
+    font-size: 1.2rem;
+    color: #d4af37;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+}
+
+@keyframes titleGlow {
+    0%, 100% { 
+        background-position: 0% 50%;
+        text-shadow: 0 0 50px rgba(212, 175, 55, 0.5);
+    }
+    50% { 
+        background-position: 100% 50%;
+        text-shadow: 0 0 80px rgba(212, 175, 55, 0.8);
+    }
+}
+
+/* 免责声明 */
+.disclaimer-banner {
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 15px;
+    padding: 1rem 2rem;
+    margin: 0 2rem 2rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    backdrop-filter: blur(10px);
+    position: relative;
+    z-index: 1;
+}
+
+.disclaimer-banner i {
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+/* 主要内容区域 */
+.main-content {
+    padding: 0 2rem 3rem 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* 模式选择区域 */
+.mode-selection {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.mode-tabs {
+    display: flex;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mode-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem 2rem;
+    background: transparent;
+    border: none;
+    border-radius: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+    text-align: center;
+}
+
+.mode-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+}
+
+.mode-tab.active {
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+    color: white;
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+}
+
+.mode-tab i {
+    font-size: 1.8rem;
+    margin-bottom: 0.3rem;
+}
+
+.mode-tab span {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.mode-tab p {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* 表单区域样式 - 水墨风格 */
+.form-container {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 3rem;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(40, 40, 40, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(30, 30, 30, 0.3) 100%);
+    z-index: -1;
+}
+
+.form-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.3;
+    z-index: -1;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.form-header h3 {
+    font-size: 2.2rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+    font-weight: 700;
+}
+
+.form-header h3 i {
+    color: #d4af37;
+    font-size: 2rem;
+}
+
+.form-header p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+    margin: 0;
+}
+
+/* 表单内容布局 */
+.form-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+}
+
+.form-content.single-content {
+    display: block;
+    max-width: 600px;
+    margin: 0 auto 3rem auto;
+}
+
+.person-form {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 2.5rem;
+    position: relative;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.male-form {
+    border-left: 4px solid #4a90e2;
+}
+
+.female-form {
+    border-left: 4px solid #e24a90;
+}
+
+.single-person-form {
+    border-left: 4px solid #9b59b6;
+}
+
+/* 期望条件区域 */
+.expectation-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.expectation-section h5 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.expectation-section h5 i {
+    color: #e74c3c;
+    font-size: 1rem;
+}
+
+.form-title {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-title i {
+    font-size: 1.5rem;
+}
+
+.male-form .form-title i {
+    color: #4a90e2;
+}
+
+.female-form .form-title i {
+    color: #e24a90;
+}
+
+.form-title h4 {
+    font-size: 1.4rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* 输入框样式 */
+.input-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.input-field {
+    position: relative;
+}
+
+.input-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    font-size: 1rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.input-field label i {
+    color: #d4af37;
+    font-size: 1rem;
+}
+
+.traditional-input, .traditional-select {
+    width: 100%;
+    padding: 1.2rem 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    appearance: none;
+    cursor: pointer;
+}
+
+.traditional-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+    padding-right: 3.5rem;
+}
+
+.traditional-select option {
+    background: rgba(0, 0, 0, 0.9);
+    color: rgba(255, 255, 255, 0.95);
+    padding: 0.5rem;
+}
+
+.traditional-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.traditional-input:focus, .traditional-select:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 
+        0 0 0 3px rgba(212, 175, 55, 0.2),
+        0 10px 25px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* 日期时辰布局优化 */
+.datetime-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 自定义日期选择器样式 */
+.custom-date-picker {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.date-select {
+    flex: none;
+    min-width: 70px;
+    padding: 0.8rem 0.6rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 0.8rem;
+    padding-right: 2rem;
+    text-align: center;
+}
+
+.date-select:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 
+        0 0 0 3px rgba(212, 175, 55, 0.2),
+        0 10px 25px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.date-select:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    transform: translateY(-1px);
+}
+
+.date-select option {
+    background: rgba(0, 0, 0, 0.9);
+    color: rgba(255, 255, 255, 0.95);
+    padding: 0.5rem;
+}
+
+.year-select {
+    min-width: 85px;
+}
+
+.month-select {
+    min-width: 75px;
+}
+
+.day-select {
+    min-width: 65px;
+}
+
+/* 分析按钮样式 */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.analyze-btn {
+    position: relative;
+    padding: 1.5rem 4rem;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 25%, #dc143c 50%, #ff6347 75%, #d4af37 100%);
+    background-size: 300% 300%;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: 
+        0 15px 35px rgba(212, 175, 55, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    animation: buttonGlow 4s ease-in-out infinite;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.analyze-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 
+        0 20px 50px rgba(212, 175, 55, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.analyze-btn:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.btn-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+.btn-ripple.active {
+    animation: ripple 0.6s linear;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes buttonGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* 结果展示区域样式 - 水墨风格 */
+.result-container {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 3rem;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+    margin-top: 2rem;
+}
+
+.result-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 40%, rgba(40, 40, 40, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 70% 60%, rgba(60, 60, 60, 0.2) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(30, 30, 30, 0.3) 100%);
+    z-index: -1;
+}
+
+/* 通知样式 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 1rem 1.5rem;
+    color: white;
+    font-size: 0.95rem;
+    z-index: 10000;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification.success {
+    border-left: 4px solid #27ae60;
+}
+
+.notification.warning {
+    border-left: 4px solid #f39c12;
+}
+
+.notification.info {
+    border-left: 4px solid #3498db;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.notification-content i {
+    font-size: 1.1rem;
+}
+
+.notification.success .notification-content i {
+    color: #27ae60;
+}
+
+.notification.warning .notification-content i {
+    color: #f39c12;
+}
+
+.notification.info .notification-content i {
+    color: #3498db;
+}
+
+.result-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.result-header h3 {
+    font-size: 2.2rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+    font-weight: 700;
+}
+
+.result-header h3 i {
+    color: #d4af37;
+    font-size: 2rem;
+}
+
+.result-header p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.1rem;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+    margin: 0;
+}
+
+/* 分析摘要区域 */
+.analysis-summary {
+    margin-bottom: 3rem;
+}
+
+.couple-info {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.person-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+.male-card {
+    border-left: 4px solid #4a90e2;
+}
+
+.female-card {
+    border-left: 4px solid #e24a90;
+}
+
+.person-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.person-card .card-header i {
+    font-size: 1.8rem;
+}
+
+.male-card .card-header i {
+    color: #4a90e2;
+}
+
+.female-card .card-header i {
+    color: #e24a90;
+}
+
+.person-card .card-header h4 {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    font-weight: 600;
+}
+
+.zodiac-info, .bazi-info {
+    margin-bottom: 1rem;
+}
+
+.zodiac-label, .bazi-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+}
+
+.zodiac-value {
+    color: #d4af37;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.bazi-pillars {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.pillar {
+    background: rgba(212, 175, 55, 0.2);
+    color: #d4af37;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* 契合度评分 */
+.compatibility-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.score-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.score-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    position: relative;
+}
+
+.score-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #d4af37;
+    text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+}
+
+.score-label {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: -0.5rem;
+}
+
+.score-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.score-description {
+    text-align: center;
+}
+
+.score-description h4 {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.3rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.score-description p {
+    color: #d4af37;
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* 详细分析卡片 */
+.analysis-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.analysis-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.analysis-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.analysis-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.analysis-card .card-header i {
+    font-size: 1.5rem;
+    color: #d4af37;
+}
+
+.analysis-card .card-header h4 {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* 生肖配对结果 */
+.compatibility-result {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 1rem;
+}
+
+.compatibility-result.excellent {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(139, 195, 74, 0.2) 100%);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.compatibility-result.good {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 152, 0, 0.2) 100%);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.compatibility-result.challenging {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.2) 0%, rgba(233, 30, 99, 0.2) 100%);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.result-icon {
+    font-size: 2rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.result-text h5 {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.result-text p {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* 五行分析 */
+.wuxing-chart {
+    margin-bottom: 1.5rem;
+}
+
+.element-pair {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.element {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.element-symbol {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+}
+
+.element-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+.relationship-indicator {
+    flex: 1;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.relationship-indicator.相生 {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(139, 195, 74, 0.3) 100%);
+    color: #4caf50;
+}
+
+.relationship-indicator.相克 {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.3) 0%, rgba(233, 30, 99, 0.3) 100%);
+    color: #f44336;
+}
+
+.relationship-indicator.平衡 {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.3) 0%, rgba(63, 81, 181, 0.3) 100%);
+    color: #2196f3;
+}
+
+.wuxing-description p {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* 建议列表 */
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border-left: 4px solid #d4af37;
+}
+
+.suggestion-item i {
+    color: #d4af37;
+    font-size: 1rem;
+    margin-top: 0.2rem;
+}
+
+/* 单人分析结果样式 */
+.single-analysis-summary {
+    margin-bottom: 3rem;
+}
+
+.user-profile {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.profile-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    text-align: center;
+    border-left: 4px solid #9b59b6;
+    min-width: 300px;
+}
+
+.profile-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-card .card-header i {
+    font-size: 1.8rem;
+    color: #9b59b6;
+}
+
+.element-info {
+    margin-top: 1rem;
+}
+
+.element-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+}
+
+.element-value {
+    color: #9b59b6;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+/* 理想伴侣推荐 */
+.partner-recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.recommendation-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border-left: 4px solid #d4af37;
+}
+
+.rec-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.rec-header i {
+    color: #d4af37;
+    font-size: 1.2rem;
+}
+
+.rec-header h5 {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.zodiac-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.zodiac-tag {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.zodiac-tag.best {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(46, 204, 113, 0.3);
+}
+
+.trait-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.trait-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.trait-item i {
+    color: #27ae60;
+    font-size: 0.9rem;
+}
+
+/* 运势时间线 */
+.destiny-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-top: 0.3rem;
+    flex-shrink: 0;
+}
+
+.timeline-dot.excellent {
+    background: #27ae60;
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+}
+
+.timeline-dot.good {
+    background: #f39c12;
+    box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.2);
+}
+
+.timeline-dot.normal {
+    background: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.timeline-content h6 {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.timeline-content p {
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* 操作按钮 */
+.result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+}
+
+.primary-btn, .secondary-btn, .share-btn, .tertiary-btn, .ai-btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+}
+
+.secondary-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.share-btn {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(74, 144, 226, 0.3);
+}
+
+.tertiary-btn {
+    background: linear-gradient(135deg, #2c5f2d 0%, #4a8c4e 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(44, 95, 45, 0.3);
+}
+
+.ai-btn {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(155, 89, 182, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: ai-shine 2s infinite;
+}
+
+@keyframes ai-shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+}
+
+.primary-btn:hover, .secondary-btn:hover, .share-btn:hover, .tertiary-btn:hover, .ai-btn:hover {
+    transform: translateY(-3px);
+}
+
+.primary-btn:hover {
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4);
+}
+
+.share-btn:hover {
+    box-shadow: 0 15px 35px rgba(74, 144, 226, 0.4);
+}
+
+.tertiary-btn:hover {
+    box-shadow: 0 15px 35px rgba(44, 95, 45, 0.4);
+}
+
+.ai-btn:hover {
+    box-shadow: 0 15px 35px rgba(155, 89, 182, 0.5);
+    background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+}
+
+/* AI分析区域样式 */
+.ai-analysis-section {
+    margin-top: 2rem;
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(142, 68, 173, 0.05) 100%);
+    border: 2px solid rgba(155, 89, 182, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-analysis-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(155, 89, 182, 0.05) 0%, transparent 70%);
+    animation: ai-pulse 3s ease-in-out infinite;
+}
+
+@keyframes ai-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.1); opacity: 0.1; }
+}
+
+.ai-analysis-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.ai-analysis-header h3 {
+    color: #9b59b6;
+    font-size: 1.5rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ai-badge {
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+}
+
+.ai-analysis-content {
+    position: relative;
+    z-index: 2;
+}
+
+.ai-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border-left: 4px solid #9b59b6;
+}
+
+.ai-section h4 {
+    color: #9b59b6;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.ai-section p {
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.analysis-separator {
+    display: flex;
+    align-items: center;
+    margin: 2rem 0;
+    gap: 1rem;
+}
+
+.separator-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #9b59b6 50%, transparent 100%);
+}
+
+.separator-text {
+    color: #9b59b6;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: rgba(155, 89, 182, 0.1);
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* 加载动画 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.traditional-spinner {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 2rem;
+    position: relative;
+    animation: spinnerRotate 3s linear infinite;
+}
+
+.bagua-symbol {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border: 3px solid #d4af37;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.bagua-line {
+    position: absolute;
+    width: 60%;
+    height: 4px;
+    background: #d4af37;
+    border-radius: 2px;
+    transform-origin: center;
+}
+
+.bagua-line:nth-child(1) { transform: rotate(0deg) translateX(25px); }
+.bagua-line:nth-child(2) { transform: rotate(45deg) translateX(25px); }
+.bagua-line:nth-child(3) { transform: rotate(90deg) translateX(25px); }
+.bagua-line:nth-child(4) { transform: rotate(135deg) translateX(25px); }
+.bagua-line:nth-child(5) { transform: rotate(180deg) translateX(25px); }
+.bagua-line:nth-child(6) { transform: rotate(225deg) translateX(25px); }
+.bagua-line:nth-child(7) { transform: rotate(270deg) translateX(25px); }
+.bagua-line:nth-child(8) { transform: rotate(315deg) translateX(25px); }
+
+@keyframes spinnerRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.loading-content p {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    animation: textPulse 2s ease-in-out infinite;
+}
+
+@keyframes textPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* 装饰元素 */
+.decoration-elements {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.floating-element {
+    position: absolute;
+    opacity: 0.1;
+    animation: float 20s ease-in-out infinite;
+}
+
+.floating-element.dragon {
+    top: 20%;
+    left: 10%;
+    font-size: 2rem;
+    animation-delay: 0s;
+}
+
+.floating-element.phoenix {
+    top: 60%;
+    right: 15%;
+    font-size: 2rem;
+    animation-delay: 5s;
+}
+
+.floating-element.cloud {
+    top: 40%;
+    left: 50%;
+    font-size: 1.5rem;
+    animation-delay: 10s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-20px) rotate(90deg); }
+    50% { transform: translateY(0px) rotate(180deg); }
+    75% { transform: translateY(20px) rotate(270deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+    .couple-info {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .compatibility-score {
+        order: -1;
+    }
+    
+    .form-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .analysis-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .yuanqi-container {
+        padding: 0;
+    }
+    
+    .yuanqi-header {
+        padding: 2rem 1rem;
+    }
+    
+    .title-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .main-title {
+        font-size: 2.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1.2rem;
+    }
+    
+    .main-content {
+        padding: 0 1rem 2rem 1rem;
+    }
+    
+    .form-container, .result-container {
+        padding: 2rem;
+        margin: 1rem;
+        border-radius: 20px;
+    }
+    
+    .input-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .yin-yang-symbol {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .score-circle {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .score-number {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 2rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    .form-container, .result-container {
+        padding: 1.5rem;
+    }
+    
+    .person-form {
+        padding: 1.5rem;
+    }
+    
+    .analyze-btn {
+        padding: 1.2rem 2.5rem;
+        font-size: 1.1rem;
+    }
+}
+</style>
+{% endblock %}

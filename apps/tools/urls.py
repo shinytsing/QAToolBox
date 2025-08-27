@@ -12,10 +12,10 @@ from . import consumers
 
 # 🔧 基础工具视图
 from .views.basic_tools_views import (
-    test_case_generator, redbook_generator, pdf_converter, pdf_converter_test, 
-    yuanqi_marriage_analyzer, web_crawler, self_analysis, storyboard, 
+    test_case_generator, redbook_generator, pdf_converter, pdf_converter_test,
+    yuanqi_marriage_analyzer, fortune_analyzer, web_crawler, self_analysis, storyboard,
     fitness_center, training_plan_editor, storyboard_api,
-    location_api, update_location_api
+    location_api, update_location_api, ai_analysis_api
 )
 
 # 🎵 音乐相关视图
@@ -530,6 +530,7 @@ urlpatterns = [
     # 位置API
     path('api/location/', location_api, name='location_api'),
     path('api/location/update/', update_location_api, name='update_location_api'),
+    path('api/ai-analysis/', ai_analysis_api, name='ai_analysis_api'),
     
     # 旅游攻略API
     path('api/travel_guide/', travel_guide_api, name='travel_guide_api'),
