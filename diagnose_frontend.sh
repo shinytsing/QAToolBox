@@ -261,3 +261,8 @@ echo "• http://47.103.143.152"
 echo "• http://shenyiqing.xin/admin"
 
 print_warning "如果诊断发现问题，请执行: sudo bash /tmp/fix_frontend.sh"
+
+
+
+
+

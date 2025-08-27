@@ -161,6 +161,18 @@ def mark_notifications_read_api(request):
 def clear_all_notifications_api(request):
     """清除所有通知API"""
     try:
+        # 确保ChatNotification表存在
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tools_chatnotification')")
+            table_exists = cursor.fetchone()[0]
+        
+        if not table_exists:
+            return JsonResponse({
+                'success': True,
+                'message': '已清除 0 条通知'
+            })
+        
         # 标记所有未读通知为已读
         notifications = ChatNotification.objects.filter(
             user=request.user,

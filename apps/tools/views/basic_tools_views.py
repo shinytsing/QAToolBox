@@ -43,9 +43,16 @@ def pdf_converter_test(request):
 
 
 @login_required
+def yuanqi_marriage_analyzer(request):
+    """缘契 - 传统八字姻缘分析平台"""
+    return render(request, 'tools/yuanqi_marriage_analyzer.html')
+
+@login_required
 def fortune_analyzer(request):
-    """姻缘分析器页面"""
-    return render(request, 'tools/fortune_analyzer.html')
+    """重定向到缘契姻缘分析平台（保持向后兼容）"""
+    from django.shortcuts import redirect
+    from django.urls import reverse
+    return redirect(reverse('tools:yuanqi_marriage_analyzer'))
 
 
 @login_required

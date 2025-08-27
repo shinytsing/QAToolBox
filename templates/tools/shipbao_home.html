@@ -135,33 +135,34 @@ body {
 }
 
 .shipbao-header p {
-    color: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
     font-size: 1.3rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    font-weight: 300;
+    text-shadow: none;
+    font-weight: 400;
     letter-spacing: 0.5px;
 }
 
 /* 位置信息显示 */
 .location-display {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     border-radius: 15px;
     padding: 15px 20px;
     margin: 20px auto;
     max-width: 400px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     position: relative;
     z-index: 1;
 }
 
 .location-display .location-text {
-    color: white;
+    color: #2c3e50;
     font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-weight: 500;
 }
 
 .location-display .location-icon {
@@ -191,19 +192,21 @@ body {
 }
 
 .edit-location-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
+    background: rgba(79, 172, 254, 0.1);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    color: #4facfe;
     padding: 4px 8px;
     border-radius: 6px;
     font-size: 0.8rem;
     cursor: pointer;
     margin-left: 10px;
     transition: all 0.3s ease;
+    font-weight: 500;
 }
 
 .edit-location-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(79, 172, 254, 0.2);
+    border-color: rgba(79, 172, 254, 0.5);
     transform: translateY(-1px);
 }
 
@@ -507,26 +510,29 @@ body {
 .loading {
     text-align: center;
     padding: 60px;
-    color: white;
+    color: #2c3e50;
     font-size: 1.1rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 20px;
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .no-items {
     text-align: center;
     padding: 80px 20px;
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
+    color: #2c3e50;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 20px;
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .no-items h3 {
     margin-bottom: 15px;
-    color: white;
+    color: #2c3e50;
     font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .pagination {
@@ -538,28 +544,34 @@ body {
 
 .pagination button {
     padding: 10px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s;
     backdrop-filter: blur(10px);
+    font-weight: 500;
 }
 
 .pagination button:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
+    color: #667eea;
     transform: translateY(-2px);
 }
 
 .pagination button.active {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.5);
+    color: #667eea;
+    font-weight: 600;
 }
 
 .pagination button:disabled {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.3);
+    border-color: rgba(0, 0, 0, 0.1);
     cursor: not-allowed;
     transform: none;
 }
@@ -721,26 +733,7 @@ let currentPage = 1;
 let currentFilters = {};
 let userLocation = null;
 
-// 页面加载完成后获取物品列表
-document.addEventListener('DOMContentLoaded', function() {
-    loadItems();
-    getLocationInfo();
-    
-    // 绑定筛选器事件
-    document.getElementById('category-filter').addEventListener('change', () => loadItems(1));
-    document.getElementById('price-filter').addEventListener('change', () => loadItems(1));
-    document.getElementById('delivery-filter').addEventListener('change', () => loadItems(1));
-    document.getElementById('location-filter').addEventListener('change', () => loadItems(1));
-    document.getElementById('distance-filter').addEventListener('change', () => loadItems(1));
-    document.getElementById('sort-filter').addEventListener('change', () => loadItems(1));
-    
-    // 绑定搜索框回车事件
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchItems();
-        }
-    });
-});
+// 页面加载完成后的初始化将在下面的统一DOMContentLoaded事件中处理
 
 // 获取位置信息
 function getLocationInfo() {
@@ -1041,13 +1034,10 @@ function getCookie(name) {
 
 // ==================== 位置获取和管理功能 ====================
 
-let userLocation = null;
+// userLocation 变量已在上面声明，这里不需要重复声明
 let isLocationInputVisible = false;
 
-// 页面加载时初始化位置
-document.addEventListener('DOMContentLoaded', function() {
-    initializeLocation();
-});
+// 位置初始化将在下面的统一DOMContentLoaded事件中处理
 
 // 初始化位置信息
 function initializeLocation() {
@@ -1349,23 +1339,26 @@ function getCurrentUserLocation() {
     return userLocation;
 }
 
-// 页面初始化
+// 页面初始化 - 统一的DOMContentLoaded事件处理
 document.addEventListener('DOMContentLoaded', function() {
     console.log('页面初始化...');
     
     // 初始化位置信息
     initializeLocation();
     
+    // 获取位置信息（兼容旧代码）
+    getLocationInfo();
+    
     // 初始化物品列表
     loadItems();
     
-    // 绑定筛选器事件
-    const filterElements = document.querySelectorAll('#category-filter, #delivery-filter, #sort-filter, #price-filter');
-    filterElements.forEach(element => {
+    // 绑定所有筛选器事件
+    const allFilterElements = document.querySelectorAll('#category-filter, #price-filter, #delivery-filter, #location-filter, #distance-filter, #sort-filter');
+    allFilterElements.forEach(element => {
         if (element) {
             element.addEventListener('change', () => {
                 console.log('筛选条件改变，重新加载物品');
-                loadItems();
+                loadItems(1); // 重置到第一页
             });
         }
     });
@@ -1373,9 +1366,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // 绑定搜索框事件
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
+        // 回车事件
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchItems();
+            }
+        });
+        
+        // 输入事件（防抖）
         searchInput.addEventListener('input', debounce(() => {
             console.log('搜索条件改变，重新加载物品');
-            loadItems();
+            loadItems(1);
         }, 500));
     }
     

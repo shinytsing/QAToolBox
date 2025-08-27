@@ -13,8 +13,8 @@ from . import consumers
 # 🔧 基础工具视图
 from .views.basic_tools_views import (
     test_case_generator, redbook_generator, pdf_converter, pdf_converter_test, 
-    fortune_analyzer, web_crawler, self_analysis, storyboard, 
-    fitness_center, training_plan_editor, self_analysis_api, storyboard_api,
+    yuanqi_marriage_analyzer, web_crawler, self_analysis, storyboard, 
+    fitness_center, training_plan_editor, storyboard_api,
     location_api, update_location_api
 )
 
@@ -126,7 +126,7 @@ from .legacy_views import (
     video_chat_view, multi_video_chat_view, multi_video_test_view, 
     douyin_analyzer, triple_awakening_dashboard, copilot_page,
     chat_room_error_view, meetsomeone_dashboard_view, check_video_room_status_api,
-    tarot_reading_view, tarot_diary_view, meetsomeone_timeline_view, 
+    tarot_reading_view, meetsomeone_timeline_view, 
     meetsomeone_graph_view, food_randomizer, food_image_recognition_view,
     audio_converter_view, audio_playback_test, shipbao_home, shipbao_publish, shipbao_detail,
     shipbao_transactions, shipbao_chat, buddy_home, buddy_create,
@@ -147,7 +147,7 @@ from .legacy_views import (
     cancel_heart_link_request_api, check_heart_link_status_api, cleanup_heart_link_api,
     get_chat_messages_api, send_message_api, send_image_api, send_audio_api,
     send_file_api, send_video_api, delete_message_api, mark_messages_read_api,
-
+    self_analysis_api,
     update_online_status_api, get_online_users_api, get_active_chat_rooms_api,
     get_user_profile_api, get_chat_room_participants_api, number_match_api,
     cancel_number_match_api, number_match_view, meditation_audio_api, douyin_analysis_api,
@@ -384,6 +384,7 @@ urlpatterns = [
     path('redbook_generator/', redbook_generator, name='redbook_generator'),
     path('pdf_converter/', pdf_converter, name='pdf_converter'),
     path('pdf_converter_test/', pdf_converter_test, name='pdf_converter_test'),
+    path('yuanqi/', yuanqi_marriage_analyzer, name='yuanqi_marriage_analyzer'),
     path('fortune_analyzer/', fortune_analyzer, name='fortune_analyzer'),
     path('web_crawler/', web_crawler, name='web_crawler'),
     path('self_analysis/', self_analysis, name='self_analysis'),
@@ -480,7 +481,7 @@ urlpatterns = [
     
     # 中优先级：添加缺失的页面路由
     path('tarot/reading/', tarot_reading_view, name='tarot_reading'),
-    path('tarot/diary/', tarot_diary_view, name='tarot_diary'),
+
     path('meetsomeone/', meetsomeone_dashboard_view, name='meetsomeone_dashboard'),
     path('meetsomeone/timeline/', meetsomeone_timeline_view, name='meetsomeone_timeline'),
     path('meetsomeone/graph/', meetsomeone_graph_view, name='meetsomeone_graph'),

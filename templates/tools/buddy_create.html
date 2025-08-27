@@ -1,0 +1,2095 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}发起活动 - 搭子{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 现代化搭子创建页面样式 */
+.buddy-create-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 动态背景效果 */
+.buddy-create-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    z-index: -1;
+    animation: createPulse 6s ease-in-out infinite;
+}
+
+@keyframes createPulse {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: scale(1.05) rotate(2deg);
+        opacity: 1;
+    }
+}
+
+/* 浮动元素 */
+.floating-elements {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.floating-element {
+    position: absolute;
+    opacity: 0.15;
+    animation: floatCreate 8s ease-in-out infinite;
+}
+
+.floating-element:nth-child(1) {
+    top: 15%;
+    left: 15%;
+    font-size: 2.5rem;
+    animation-delay: 0s;
+}
+
+.floating-element:nth-child(2) {
+    top: 25%;
+    right: 20%;
+    font-size: 2rem;
+    animation-delay: 2s;
+}
+
+.floating-element:nth-child(3) {
+    bottom: 35%;
+    left: 25%;
+    font-size: 2.2rem;
+    animation-delay: 4s;
+}
+
+@keyframes floatCreate {
+    0%, 100% { 
+        transform: translateY(0px) rotate(0deg); 
+        opacity: 0.15;
+    }
+    50% { 
+        transform: translateY(-15px) rotate(5deg); 
+        opacity: 0.25;
+    }
+}
+
+/* 头部样式 */
+.create-header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.create-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #fff, #f0f8ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.create-header p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 表单容器 */
+.create-form-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+/* 表单组样式 */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.form-group label .required {
+    color: #e74c3c;
+    margin-left: 4px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid rgba(225, 229, 233, 0.6);
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    color: #333;
+}
+
+.form-control:not(:placeholder-shown) {
+    color: #000;
+    font-weight: 500;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(255, 255, 255, 0.8) url("data:image/svg+xml;charset=utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='%23667eea' d='M6 9L1.5 4.5h9z'/></svg>") no-repeat right 12px center;
+    background-size: 12px;
+    padding-right: 40px;
+    position: relative;
+    z-index: 10;
+    color: #333;
+}
+
+select.form-control option {
+    color: #333;
+    background: #fff;
+}
+
+/* 日期时间输入框样式 */
+input[type="datetime-local"].form-control {
+    color: #333;
+}
+
+input[type="datetime-local"].form-control::-webkit-datetime-edit {
+    color: #333;
+}
+
+input[type="datetime-local"].form-control::-webkit-datetime-edit-fields-wrapper {
+    color: #333;
+}
+
+/* 确保有值时文字为黑色 */
+.form-control:valid {
+    color: #000 !important;
+    font-weight: 500;
+}
+
+/* 强制显示选项样式 */
+select.form-control option {
+    background: white !important;
+    color: #333 !important;
+    padding: 12px 16px !important;
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    border: none !important;
+    font-weight: normal !important;
+    min-height: 40px !important;
+    display: block !important;
+}
+
+select.form-control option:hover {
+    background: #667eea !important;
+    color: white !important;
+}
+
+select.form-control option:checked,
+select.form-control option:selected {
+    background: #667eea !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* 修复Safari和Chrome的选项显示 */
+select.form-control {
+    background-color: white;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    padding: 12px 40px 12px 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    height: auto;
+    min-height: 48px;
+}
+
+select.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+/* 针对不同浏览器的选项样式修复 */
+select.form-control optgroup {
+    background: white;
+    color: #666;
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* 自定义下拉框包装器 */
+.custom-select-wrapper {
+    position: relative;
+    display: block;
+}
+
+.custom-select-wrapper::after {
+    content: '▼';
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #667eea;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.custom-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background: white !important;
+    background-image: none !important;
+    padding-right: 45px !important;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+}
+
+/* 强制显示选项 - 更强的样式覆盖 */
+.custom-select option {
+    background: white !important;
+    color: #333 !important;
+    padding: 12px 16px !important;
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    border: none !important;
+    font-weight: normal !important;
+    min-height: 45px !important;
+    display: block !important;
+    text-indent: 0 !important;
+}
+
+.custom-select option:hover {
+    background: #667eea !important;
+    color: white !important;
+}
+
+.custom-select option:checked,
+.custom-select option:selected {
+    background: #667eea !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* 针对WebKit浏览器的特殊处理 */
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    .custom-select {
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 45px 12px 16px;
+    }
+    
+    .custom-select option {
+        background: white;
+        color: #333;
+        padding: 10px;
+        font-size: 16px; /* 防止iOS缩放 */
+    }
+}
+
+/* Firefox特殊处理 */
+@-moz-document url-prefix() {
+    .custom-select {
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 45px 12px 16px;
+        text-indent: 0.01px;
+        text-overflow: '';
+    }
+    
+    .custom-select option {
+        background: white;
+        color: #333;
+        padding: 8px;
+    }
+}
+
+/* 确保下拉选项在所有浏览器中可见 */
+@supports (-webkit-appearance: none) {
+    .custom-select option {
+        background: white;
+        color: #333;
+    }
+}
+
+@supports (-moz-appearance: none) {
+    .custom-select option {
+        background: white;
+        color: #333;
+    }
+}
+
+/* 时间输入组 */
+.time-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* 费用相关 */
+.cost-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    align-items: end;
+}
+
+/* 年龄限制 */
+.age-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* 位置相关 */
+.location-group {
+    position: relative;
+}
+
+.location-input {
+    padding-right: 80px;
+}
+
+.location-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.location-btn:hover {
+    background: #5a6fd8;
+    transform: translateY(-50%) scale(1.05);
+}
+
+/* 地点搜索下拉列表 */
+.location-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(225, 229, 233, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    max-height: 400px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.location-dropdown-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(225, 229, 233, 0.5);
+    display: flex;
+    gap: 8px;
+}
+
+.location-action-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.location-action-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateY(-1px);
+}
+
+.location-suggestions {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.location-suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(225, 229, 233, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.location-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.location-suggestion-item:hover {
+    background: rgba(102, 126, 234, 0.08);
+}
+
+.location-suggestion-icon {
+    width: 20px;
+    height: 20px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.location-suggestion-content {
+    flex: 1;
+}
+
+.location-suggestion-name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.location-suggestion-address {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* 按钮样式 */
+.btn-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn {
+    flex: 1;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 2px solid #e9ecef;
+}
+
+.btn-secondary:hover {
+    background: #e9ecef;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+}
+
+/* 加载状态 */
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-message {
+    background: #fee;
+    color: #c33;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #fcc;
+    display: none;
+}
+
+.success-message {
+    background: #efe;
+    color: #363;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #cfc;
+    display: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .buddy-create-container {
+        padding: 15px;
+    }
+    
+    .create-form-container {
+        padding: 25px;
+        margin: 0 10px;
+    }
+    
+    .create-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .time-group,
+    .cost-group,
+    .age-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+}
+
+/* 工具提示 */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    margin-left: 5px;
+    color: #667eea;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 1;
+}
+
+.tooltip::before {
+    content: '?';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 16px;
+}
+
+/* 地图选择器样式 */
+.map-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 800px;
+    height: 80%;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.map-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.map-modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    flex: 1;
+}
+
+.map-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.status-indicator {
+    font-size: 1rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.status-text {
+    font-size: 0.85rem;
+}
+
+.map-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.map-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.map-search-bar {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.search-input-container {
+    flex: 1;
+    position: relative;
+}
+
+.map-search-input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.suggestion-address {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.suggestion-distance {
+    font-size: 0.75rem;
+    color: #999;
+    float: right;
+}
+
+.map-search-btn,
+.map-location-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.map-search-btn {
+    background: #667eea;
+    color: white;
+}
+
+.map-search-btn:hover {
+    background: #5a6fd8;
+}
+
+.map-location-btn {
+    background: #28a745;
+    color: white;
+}
+
+.map-location-btn:hover {
+    background: #218838;
+}
+
+.map-container {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+}
+
+.map-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.selected-location {
+    margin-bottom: 15px;
+    color: #495057;
+}
+
+.map-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.btn-cancel,
+.btn-confirm {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+.btn-confirm {
+    background: #28a745;
+    color: white;
+}
+
+.btn-confirm:hover {
+    background: #218838;
+}
+
+.btn-confirm:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* 地点推荐样式 */
+.location-suggestions {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.suggestion-title {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.suggestion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.suggestion-tag {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.suggestion-tag:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-1px);
+}
+
+/* 搜索提示样式 */
+.search-tip {
+    padding: 12px 16px;
+    margin: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    animation: tipSlideIn 0.3s ease-out;
+    white-space: pre-line;
+}
+
+@keyframes tipSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-tip-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.search-tip-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.search-tip-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="buddy-create-container">
+    <!-- 浮动元素 -->
+    <div class="floating-elements">
+        <div class="floating-element">🎯</div>
+        <div class="floating-element">✨</div>
+        <div class="floating-element">🤝</div>
+    </div>
+
+    <!-- 头部 -->
+    <div class="create-header">
+        <h1>✨ 发起活动</h1>
+        <p>创建一个精彩的同城活动，找到志同道合的伙伴</p>
+    </div>
+
+    <!-- 表单容器 -->
+    <div class="create-form-container">
+        <!-- 错误和成功提示 -->
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="create-event-form">
+            <!-- 基础信息 -->
+            <div class="form-group">
+                <label for="title">活动标题 <span class="required">*</span></label>
+                <input type="text" id="title" name="title" class="form-control" 
+                       placeholder="给你的活动起个吸引人的标题..." maxlength="200" required>
+            </div>
+
+            <div class="form-group">
+                <label for="event_type">活动类型 <span class="required">*</span></label>
+                <div class="custom-select-wrapper">
+                    <select id="event_type" name="event_type" class="form-control custom-select" required>
+                        <option value="">请选择活动类型</option>
+                        <option value="meal">🍽️ 饭搭 - 一起吃饭聊天</option>
+                        <option value="sports">⚽ 球搭 - 运动健身</option>
+                        <option value="travel">🎒 旅行搭 - 结伴出游</option>
+                        <option value="study">📚 学习搭 - 一起学习</option>
+                        <option value="game">🎮 游戏搭 - 游戏娱乐</option>
+                        <option value="movie">🎬 电影搭 - 观影活动</option>
+                        <option value="shopping">🛍️ 购物搭 - 购物逛街</option>
+                        <option value="coffee">☕ 咖啡搭 - 咖啡聚会</option>
+                        <option value="other">🎯 其他 - 其他活动</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">活动描述 <span class="required">*</span></label>
+                <textarea id="description" name="description" class="form-control" 
+                          placeholder="详细描述你的活动内容、要求、注意事项等..." required></textarea>
+            </div>
+
+            <!-- 时间安排 -->
+            <div class="form-group">
+                <label>时间安排 <span class="required">*</span></label>
+                <div class="time-group">
+                    <div>
+                        <label for="start_time">开始时间</label>
+                        <input type="datetime-local" id="start_time" name="start_time" class="form-control" required>
+                    </div>
+                    <div>
+                        <label for="end_time">结束时间</label>
+                        <input type="datetime-local" id="end_time" name="end_time" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 地点信息 -->
+            <div class="form-group">
+                <label for="location">活动地点 <span class="required">*</span>
+                    <span class="tooltip" data-tooltip="点击地图选择精确位置，或手动输入地址"></span>
+                </label>
+                <div class="location-group">
+                    <input type="text" id="location" name="location" class="form-control location-input" 
+                           placeholder="请输入地点名称，如：卧龙公园、卧龙小区..." required autocomplete="off">
+                    <button type="button" class="location-btn" onclick="openMapPicker()">🗺️ 地图</button>
+                    
+                    <!-- 地点搜索下拉列表 -->
+                    <div id="location-dropdown" class="location-dropdown" style="display: none;">
+                        <div class="location-dropdown-header">
+                            <button type="button" class="location-action-btn" onclick="getCurrentLocation()">
+                                <i class="fas fa-location-arrow"></i> 当前位置
+                            </button>
+                            <button type="button" class="location-action-btn" onclick="clearLocationSearch()">
+                                <i class="fas fa-times"></i> 清除
+                            </button>
+                        </div>
+                        <div id="location-suggestions" class="location-suggestions">
+                            <!-- 搜索建议将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+                
+                <!-- 地图选择器 -->
+                <div id="map-picker-modal" class="map-modal" style="display: none;">
+                    <div class="map-modal-content">
+                        <div class="map-modal-header">
+                            <h3>📍 选择活动地点</h3>
+                            <div class="map-status" id="map-status">
+                                <span class="status-indicator" id="status-indicator">🔄</span>
+                                <span class="status-text" id="status-text">初始化中...</span>
+                            </div>
+                            <button type="button" class="map-close-btn" onclick="closeMapPicker()">&times;</button>
+                        </div>
+                        <div class="map-search-bar">
+                            <div class="search-input-container">
+                                <input type="text" id="map-search-input" placeholder="搜索咖啡厅、餐厅、公园、商场等地点..." class="map-search-input" autocomplete="off">
+                                <div class="search-suggestions" id="search-suggestions"></div>
+                            </div>
+                            <button type="button" onclick="searchLocation()" class="map-search-btn">🔍 搜索</button>
+                            <button type="button" onclick="getCurrentLocationForMap()" class="map-location-btn">📍 定位</button>
+                        </div>
+                        
+                        <!-- 地点推荐提示 -->
+                        <div class="location-suggestions">
+                            <div class="suggestion-title">💡 推荐地点类型：</div>
+                            <div class="suggestion-tags">
+                                <span class="suggestion-tag" onclick="searchSuggestion('北京大学')">🎓 北京大学</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('清华大学')">🎓 清华大学</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('天安门广场')">🏛️ 天安门</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('上海外滩')">🌃 外滩</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('西湖')">🌊 西湖</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('咖啡厅')">☕ 咖啡厅</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('餐厅')">🍽️ 餐厅</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('公园')">🌳 公园</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('商场')">🛍️ 商场</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('图书馆')">📚 图书馆</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('电影院')">🎬 电影院</span>
+                                <span class="suggestion-tag" onclick="searchSuggestion('健身房')">💪 健身房</span>
+                            </div>
+                        </div>
+                        <div id="amap-container" class="map-container"></div>
+                        <div class="map-modal-footer">
+                            <div class="selected-location">
+                                <strong>已选择：</strong>
+                                <span id="selected-location-text">请在地图上点击选择位置</span>
+                            </div>
+                            <div class="map-buttons">
+                                <button type="button" onclick="closeMapPicker()" class="btn-cancel">取消</button>
+                                <button type="button" onclick="confirmLocation()" class="btn-confirm">确认位置</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人数和费用 -->
+            <div class="form-group">
+                <label for="max_members">人数上限
+                    <span class="tooltip" data-tooltip="包含您在内的总人数"></span>
+                </label>
+                <div class="custom-select-wrapper">
+                    <select id="max_members" name="max_members" class="form-control custom-select">
+                        <option value="2">👥 2人 - 小聚</option>
+                        <option value="3">👥 3人 - 三人行</option>
+                        <option value="4" selected>👥 4人 - 小团队（推荐）</option>
+                        <option value="5">👥 5人 - 五人组</option>
+                        <option value="6">👥 6人 - 六人团</option>
+                        <option value="8">👥 8人 - 大聚会</option>
+                        <option value="10">👥 10人 - 大团队</option>
+                        <option value="15">👥 15人 - 超大团队</option>
+                        <option value="20">👥 20人 - 聚会活动</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>费用信息</label>
+                <div class="cost-group">
+                    <div>
+                        <label for="cost_type">费用类型</label>
+                        <select id="cost_type" name="cost_type" class="form-control">
+                            <option value="free">免费</option>
+                            <option value="aa" selected>AA制</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="estimated_cost">预估费用（元）</label>
+                        <input type="number" id="estimated_cost" name="estimated_cost" class="form-control" 
+                               placeholder="0" min="0" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 限制条件 -->
+            <div class="form-group">
+                <label for="gender_restriction">性别限制</label>
+                <select id="gender_restriction" name="gender_restriction" class="form-control">
+                    <option value="none">不限</option>
+                    <option value="male">仅限男性</option>
+                    <option value="female">仅限女性</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>年龄限制</label>
+                <div class="age-group">
+                    <div>
+                        <label for="age_min">最小年龄</label>
+                        <input type="number" id="age_min" name="age_min" class="form-control" 
+                               placeholder="不限" min="16" max="100">
+                    </div>
+                    <div>
+                        <label for="age_max">最大年龄</label>
+                        <input type="number" id="age_max" name="age_max" class="form-control" 
+                               placeholder="不限" min="16" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 按钮组 -->
+            <div class="btn-group">
+                <a href="{% url 'tools:buddy_home' %}" class="btn btn-secondary">取消</a>
+                <button type="submit" class="btn btn-primary" id="submit-btn">
+                    <span id="submit-text">发布活动</span>
+                    <span id="submit-loading" style="display: none;">
+                        <span class="loading-spinner"></span>发布中...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+        <!-- 高德地图API - 使用有效的API密钥 -->
+        <script src="https://webapi.amap.com/maps?v=2.0&key=a825cd9231f473717912d3203a62c53e&plugin=AMap.PlaceSearch,AMap.Autocomplete,AMap.Geolocation,AMap.Geocoder"></script>
+<script>
+// 表单提交处理
+document.getElementById('create-event-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const submitLoading = document.getElementById('submit-loading');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+    
+    // 隐藏之前的消息
+    errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
+    
+    // 显示加载状态
+    submitBtn.disabled = true;
+    submitText.style.display = 'none';
+    submitLoading.style.display = 'inline';
+    
+    try {
+        // 收集表单数据
+        const formData = {
+            title: document.getElementById('title').value.trim(),
+            event_type: document.getElementById('event_type').value,
+            description: document.getElementById('description').value.trim(),
+            start_time: document.getElementById('start_time').value,
+            end_time: document.getElementById('end_time').value || null,
+            location: document.getElementById('location').value.trim(),
+            latitude: document.getElementById('latitude').value || null,
+            longitude: document.getElementById('longitude').value || null,
+            max_members: parseInt(document.getElementById('max_members').value),
+            cost_type: document.getElementById('cost_type').value,
+            estimated_cost: document.getElementById('estimated_cost').value || 0,
+            gender_restriction: document.getElementById('gender_restriction').value,
+            age_min: document.getElementById('age_min').value || null,
+            age_max: document.getElementById('age_max').value || null
+        };
+        
+        // 基础验证
+        if (!formData.title) {
+            throw new Error('请填写活动标题');
+        }
+        if (!formData.event_type) {
+            throw new Error('请选择活动类型');
+        }
+        if (!formData.description) {
+            throw new Error('请填写活动描述');
+        }
+        if (!formData.start_time) {
+            throw new Error('请选择开始时间');
+        }
+        if (!formData.location) {
+            throw new Error('请填写活动地点');
+        }
+        
+        // 时间验证
+        const startTime = new Date(formData.start_time);
+        const now = new Date();
+        if (startTime <= now) {
+            throw new Error('开始时间必须晚于当前时间');
+        }
+        
+        if (formData.end_time) {
+            const endTime = new Date(formData.end_time);
+            if (endTime <= startTime) {
+                throw new Error('结束时间必须晚于开始时间');
+            }
+        }
+        
+        // 年龄验证
+        if (formData.age_min && formData.age_max) {
+            if (parseInt(formData.age_min) > parseInt(formData.age_max)) {
+                throw new Error('最小年龄不能大于最大年龄');
+            }
+        }
+        
+        // 发送请求
+        const response = await fetch('{% url "tools:buddy_create_event_api" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 成功
+            successMessage.textContent = result.message;
+            successMessage.style.display = 'block';
+            
+            // 3秒后跳转到活动详情页
+            setTimeout(() => {
+                window.location.href = `{% url 'tools:buddy_detail' 0 %}`.replace('0', result.event_id);
+            }, 2000);
+        } else {
+            // 失败
+            errorMessage.textContent = result.message || '创建活动失败';
+            errorMessage.style.display = 'block';
+        }
+        
+    } catch (error) {
+        errorMessage.textContent = error.message || '创建活动失败，请重试';
+        errorMessage.style.display = 'block';
+    } finally {
+        // 恢复按钮状态
+        submitBtn.disabled = false;
+        submitText.style.display = 'inline';
+        submitLoading.style.display = 'none';
+    }
+});
+
+// 地图相关变量
+let map = null;
+let marker = null;
+let selectedLocation = null;
+let placeSearch = null;
+let autocomplete = null;
+let searchTimeout = null;
+
+// 打开地图选择器
+function openMapPicker() {
+    const modal = document.getElementById('map-picker-modal');
+    modal.style.display = 'flex';
+    
+    // 初始化地图
+    if (!map) {
+        initMap();
+    }
+}
+
+// 关闭地图选择器
+function closeMapPicker() {
+    const modal = document.getElementById('map-picker-modal');
+    modal.style.display = 'none';
+}
+
+// 初始化地图
+function initMap() {
+    try {
+        // 创建地图实例
+        map = new AMap.Map('amap-container', {
+            zoom: 15,
+            center: [116.397428, 39.90923], // 默认北京天安门
+            mapStyle: 'amap://styles/normal',
+            resizeEnable: true,
+            rotateEnable: false,
+            pitchEnable: false,
+            zoomEnable: true,
+            dragEnable: true
+        });
+        
+        // 创建标记
+        marker = new AMap.Marker({
+            position: [116.397428, 39.90923],
+            draggable: true,
+            cursor: 'move',
+            title: '点击地图或拖拽此标记选择位置'
+        });
+        
+        // 添加标记到地图
+        map.add(marker);
+        
+        // 创建地点搜索服务
+        placeSearch = new AMap.PlaceSearch({
+            pageSize: 20,
+            pageIndex: 1,
+            city: '', // 全国搜索
+            citylimit: false,
+            map: map,
+            panel: false,
+            autoFitView: false
+        });
+        
+        // 地图点击事件
+        map.on('click', function(e) {
+            const lng = e.lnglat.getLng();
+            const lat = e.lnglat.getLat();
+            
+            // 移动标记
+            marker.setPosition([lng, lat]);
+            
+            // 反向地理编码获取地址
+            reverseGeocode(lng, lat);
+        });
+        
+        // 标记拖拽事件
+        marker.on('dragend', function(e) {
+            const lng = e.lnglat.getLng();
+            const lat = e.lnglat.getLat();
+            
+            // 反向地理编码获取地址
+            reverseGeocode(lng, lat);
+        });
+        
+        // 地图加载完成后的回调
+        map.on('complete', function() {
+            console.log('地图加载完成');
+            updateMapStatus('✅', '地图已就绪');
+            showSearchTip('地图已加载完成，您可以搜索地点或直接点击地图选择位置', 'success');
+        });
+        
+        // 尝试获取用户当前位置
+        getCurrentLocationForMap();
+        
+    } catch (error) {
+        console.error('地图初始化失败:', error);
+        updateMapStatus('❌', '地图加载失败');
+        showSearchTip('地图加载失败，请刷新页面重试', 'warning');
+    }
+}
+
+// 更新地图状态
+function updateMapStatus(indicator, text) {
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    
+    if (statusIndicator && statusText) {
+        statusIndicator.textContent = indicator;
+        statusText.textContent = text;
+    }
+}
+
+// 搜索地点 - 使用本地地图搜索API
+async function searchLocation() {
+    const keyword = document.getElementById('map-search-input').value.trim();
+    if (!keyword) {
+        showSearchTip('请输入搜索关键词');
+        return;
+    }
+    
+    // 显示搜索状态
+    const searchBtn = document.querySelector('.map-search-btn');
+    const originalText = searchBtn.textContent;
+    searchBtn.textContent = '🔍 搜索中...';
+    searchBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/tools/api/map/search-location/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ query: keyword })
+        });
+
+        const data = await response.json();
+        
+        // 恢复搜索按钮
+        searchBtn.textContent = originalText;
+        searchBtn.disabled = false;
+        
+        if (data.success && data.suggestions && data.suggestions.length > 0) {
+            // 选择最匹配的结果
+            const bestMatch = findBestMatch(data.suggestions, keyword);
+            
+            if (bestMatch) {
+                const lng = bestMatch.lon || bestMatch.longitude || bestMatch.lng;
+                const lat = bestMatch.lat || bestMatch.latitude;
+                
+                // 移动地图中心和标记
+                map.setCenter([lng, lat]);
+                marker.setPosition([lng, lat]);
+                
+                // 更新选中的位置信息
+                selectedLocation = {
+                    lng: lng,
+                    lat: lat,
+                    address: bestMatch.name + (bestMatch.address ? ' - ' + bestMatch.address : ''),
+                    name: bestMatch.name
+                };
+                
+                document.getElementById('selected-location-text').textContent = selectedLocation.address;
+                document.querySelector('.btn-confirm').disabled = false;
+                
+                showSearchTip('✅ 找到地点：' + bestMatch.name, 'success');
+            }
+        } else {
+            showSearchTip('🔍 搜索建议：\n• 尝试输入完整地名（如：北京大学、清华大学）\n• 包含城市名称（如：北京三里屯、上海外滩）\n• 点击地图直接选择位置\n• 使用下方推荐的地点类型快速搜索', 'info');
+        }
+    } catch (error) {
+        console.error('搜索失败:', error);
+        searchBtn.textContent = originalText;
+        searchBtn.disabled = false;
+        showSearchTip('🔧 搜索服务暂时不可用，请直接点击地图选择位置', 'warning');
+    }
+}
+
+
+
+// 找到最佳匹配结果
+function findBestMatch(suggestions, keyword) {
+    if (!suggestions || suggestions.length === 0) {
+        return null;
+    }
+    
+    // 优先选择名称包含关键词的结果
+    for (let item of suggestions) {
+        const name = item.name || item.address || '';
+        if (name.includes(keyword)) {
+            return item;
+        }
+    }
+    
+    // 其次选择地址包含关键词的结果
+    for (let item of suggestions) {
+        const address = item.address || '';
+        if (address.includes(keyword)) {
+            return item;
+        }
+    }
+    
+    // 最后返回第一个结果
+    return suggestions[0] || null;
+}
+
+// 显示搜索提示
+function showSearchTip(message, type = 'info') {
+    const tipElement = document.createElement('div');
+    tipElement.className = `search-tip search-tip-${type}`;
+    tipElement.textContent = message;
+    
+    // 插入到地图容器上方
+    const mapContainer = document.getElementById('amap-container');
+    mapContainer.parentNode.insertBefore(tipElement, mapContainer);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        if (tipElement.parentNode) {
+            tipElement.parentNode.removeChild(tipElement);
+        }
+    }, type === 'success' ? 2000 : 5000);
+}
+
+// 搜索建议地点
+function searchSuggestion(keyword) {
+    document.getElementById('map-search-input').value = keyword;
+    searchLocation();
+}
+
+// 获取当前位置（用于地图）
+function getCurrentLocationForMap() {
+    if (!navigator.geolocation) {
+        console.log('浏览器不支持定位功能');
+        return;
+    }
+    
+    const locationBtn = document.querySelector('.map-location-btn');
+    const originalText = locationBtn.textContent;
+    locationBtn.textContent = '📍 定位中...';
+    locationBtn.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // 移动地图中心和标记
+            map.setCenter([lng, lat]);
+            marker.setPosition([lng, lat]);
+            
+            // 反向地理编码获取地址
+            reverseGeocode(lng, lat);
+            
+            locationBtn.textContent = '✅ 已定位';
+            setTimeout(() => {
+                locationBtn.textContent = originalText;
+                locationBtn.disabled = false;
+            }, 2000);
+        },
+        function(error) {
+            console.log('定位失败：', error.message);
+            locationBtn.textContent = originalText;
+            locationBtn.disabled = false;
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+        }
+    );
+}
+
+// 反向地理编码
+function reverseGeocode(lng, lat) {
+    const geocoder = new AMap.Geocoder();
+    
+    geocoder.getAddress([lng, lat], function(status, result) {
+        if (status === 'complete' && result.regeocode) {
+            const address = result.regeocode.formattedAddress;
+            const poi = result.regeocode.pois[0];
+            const poiName = poi ? poi.name : '';
+            
+            selectedLocation = {
+                lng: lng,
+                lat: lat,
+                address: address,
+                name: poiName || address
+            };
+            
+            document.getElementById('selected-location-text').textContent = selectedLocation.address;
+            document.querySelector('.btn-confirm').disabled = false;
+        }
+    });
+}
+
+// 确认位置选择
+function confirmLocation() {
+    if (!selectedLocation) {
+        alert('请先选择一个位置');
+        return;
+    }
+    
+    // 更新表单字段
+    const locationInput = document.getElementById('location');
+    locationInput.value = selectedLocation.address;
+    document.getElementById('latitude').value = selectedLocation.lat;
+    document.getElementById('longitude').value = selectedLocation.lng;
+    
+    // 触发输入框的change事件，确保样式更新
+    locationInput.dispatchEvent(new Event('input'));
+    locationInput.dispatchEvent(new Event('change'));
+    
+    // 关闭地图选择器
+    closeMapPicker();
+}
+
+
+
+// 搜索建议 - 使用本地地图搜索API
+async function searchSuggestions(query) {
+    await searchLocationSuggestions(query);
+}
+
+// 使用本地地图搜索API获取位置建议
+async function searchLocationSuggestions(query) {
+    if (!query || query.length < 2) {
+        hideSuggestions();
+        return;
+    }
+
+    try {
+        const response = await fetch('/tools/api/map/search-location/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ query: query })
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.suggestions && data.suggestions.length > 0) {
+            // 转换为兼容格式
+            const tips = data.suggestions.slice(0, 8).map(item => ({
+                name: item.name || item.address,
+                address: item.address || '',
+                location: {
+                    lat: item.lat || item.latitude,
+                    lng: item.lon || item.longitude || item.lng
+                },
+                district: item.district || item.city || '',
+                cityname: item.city || ''
+            }));
+            
+            showSuggestions(tips);
+        } else {
+            hideSuggestions();
+            showSearchTip('💡 未找到相关地点，请尝试其他关键词或点击地图选择位置', 'info');
+        }
+    } catch (error) {
+        console.error('搜索建议失败:', error);
+        hideSuggestions();
+        showSearchTip('🔧 搜索服务暂时不可用，请直接点击地图选择位置', 'warning');
+    }
+}
+
+// 显示搜索建议
+function showSuggestions(tips) {
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    suggestionsContainer.innerHTML = '';
+    
+    tips.forEach(tip => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        
+        suggestionItem.innerHTML = `
+            <div class="suggestion-name">${tip.name}</div>
+            <div class="suggestion-address">${tip.address || tip.district}</div>
+        `;
+        
+        suggestionItem.addEventListener('click', function() {
+            selectSuggestion(tip);
+        });
+        
+        suggestionsContainer.appendChild(suggestionItem);
+    });
+    
+    suggestionsContainer.style.display = 'block';
+}
+
+// 隐藏搜索建议
+function hideSuggestions() {
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    suggestionsContainer.style.display = 'none';
+}
+
+// 选择建议项
+function selectSuggestion(tip) {
+    const searchInput = document.getElementById('map-search-input');
+    searchInput.value = tip.name;
+    
+    hideSuggestions();
+    
+    // 如果有位置信息，直接定位
+    if (tip.location) {
+        const lng = typeof tip.location.lng !== 'undefined' ? tip.location.lng : tip.location.getLng();
+        const lat = typeof tip.location.lat !== 'undefined' ? tip.location.lat : tip.location.getLat();
+        
+        // 移动地图中心和标记
+        if (map && marker) {
+            map.setCenter([lng, lat]);
+            marker.setPosition([lng, lat]);
+            
+            // 更新选中的位置信息
+            selectedLocation = {
+                lng: lng,
+                lat: lat,
+                address: tip.name + (tip.address ? ' - ' + tip.address : ''),
+                name: tip.name
+            };
+            
+            document.getElementById('selected-location-text').textContent = selectedLocation.address;
+            document.querySelector('.btn-confirm').disabled = false;
+        }
+    } else {
+        // 没有位置信息，进行搜索
+        searchLocation();
+    }
+}
+
+// 地点下拉搜索相关函数
+async function searchLocationDropdown(query) {
+    if (!query || query.length < 2) {
+        hideLocationDropdown();
+        return;
+    }
+
+    try {
+        const response = await fetch('/tools/api/map/search-location/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ query: query })
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.suggestions && data.suggestions.length > 0) {
+            displayLocationSuggestions(data.suggestions);
+        } else {
+            showLocationDropdown(); // 显示空的下拉
+        }
+    } catch (error) {
+        console.error('地点搜索失败:', error);
+        showLocationDropdown(); // 显示空的下拉
+    }
+}
+
+function displayLocationSuggestions(suggestions) {
+    const dropdown = document.getElementById('location-dropdown');
+    const suggestionsContainer = document.getElementById('location-suggestions');
+    
+    suggestionsContainer.innerHTML = '';
+    
+    suggestions.slice(0, 8).forEach(item => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'location-suggestion-item';
+        
+        suggestionItem.innerHTML = `
+            <div class="location-suggestion-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="location-suggestion-content">
+                <div class="location-suggestion-name">${item.name || item.address}</div>
+                <div class="location-suggestion-address">${item.address || item.city || ''}</div>
+            </div>
+        `;
+        
+        suggestionItem.addEventListener('click', function() {
+            selectLocationSuggestion(item);
+        });
+        
+        suggestionsContainer.appendChild(suggestionItem);
+    });
+    
+    dropdown.style.display = 'block';
+}
+
+function selectLocationSuggestion(item) {
+    const locationInput = document.getElementById('location');
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+    
+    // 设置地点名称
+    locationInput.value = item.name || item.address;
+    
+    // 设置坐标
+    const lat = item.lat || item.latitude;
+    const lon = item.lon || item.longitude || item.lng;
+    
+    if (lat) {
+        latInput.value = lat;
+    }
+    if (lon) {
+        lonInput.value = lon;
+    }
+    
+    // 更新地图选择器中的地址显示
+    updateMapSelectedLocation({
+        name: item.name || item.address,
+        address: item.address || '',
+        lat: lat,
+        lng: lon
+    });
+    
+    hideLocationDropdown();
+}
+
+function showLocationDropdown() {
+    const dropdown = document.getElementById('location-dropdown');
+    const suggestionsContainer = document.getElementById('location-suggestions');
+    
+    // 如果没有建议，清空建议容器
+    if (!suggestionsContainer.children.length) {
+        suggestionsContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">输入地点名称开始搜索</div>';
+    }
+    
+    dropdown.style.display = 'block';
+}
+
+function hideLocationDropdown() {
+    const dropdown = document.getElementById('location-dropdown');
+    dropdown.style.display = 'none';
+}
+
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const locationText = `当前位置 (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+                
+                // 更新表单字段
+                const locationInput = document.getElementById('location');
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lon;
+                locationInput.value = locationText;
+                
+                // 触发输入框事件确保样式更新
+                locationInput.dispatchEvent(new Event('input'));
+                locationInput.dispatchEvent(new Event('change'));
+                
+                // 更新地图选择器中的地址显示
+                updateMapSelectedLocation({
+                    name: locationText,
+                    address: locationText,
+                    lat: lat,
+                    lng: lon
+                });
+                
+                hideLocationDropdown();
+            },
+            function(error) {
+                alert('无法获取当前位置：' + error.message);
+            }
+        );
+    } else {
+        alert('您的浏览器不支持地理定位');
+    }
+}
+
+function clearLocationSearch() {
+    document.getElementById('location').value = '';
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+    
+    // 清除地图选择器中的地址显示
+    clearMapSelectedLocation();
+    
+    hideLocationDropdown();
+}
+
+// 更新地图选择器中的地址显示
+function updateMapSelectedLocation(location) {
+    // 更新地图选择器中的显示文本
+    const selectedLocationText = document.getElementById('selected-location-text');
+    if (selectedLocationText) {
+        selectedLocationText.textContent = location.address || location.name;
+    }
+    
+    // 更新全局选中位置变量
+    if (typeof selectedLocation !== 'undefined') {
+        selectedLocation = {
+            lng: location.lng,
+            lat: location.lat,
+            address: location.address || location.name,
+            name: location.name
+        };
+    }
+    
+    // 如果地图已经初始化，更新地图中心和标记
+    if (typeof map !== 'undefined' && map && location.lat && location.lng) {
+        map.setCenter([location.lng, location.lat]);
+        if (typeof marker !== 'undefined' && marker) {
+            marker.setPosition([location.lng, location.lat]);
+        }
+    }
+    
+    // 启用确认按钮
+    const confirmBtn = document.querySelector('.btn-confirm');
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+    }
+}
+
+// 清除地图选择器中的地址显示
+function clearMapSelectedLocation() {
+    const selectedLocationText = document.getElementById('selected-location-text');
+    if (selectedLocationText) {
+        selectedLocationText.textContent = '请选择活动地点';
+    }
+    
+    // 清除全局选中位置变量
+    if (typeof selectedLocation !== 'undefined') {
+        selectedLocation = null;
+    }
+    
+    // 禁用确认按钮
+    const confirmBtn = document.querySelector('.btn-confirm');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+    }
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 页面加载完成后设置默认时间
+document.addEventListener('DOMContentLoaded', function() {
+    // 设置默认开始时间为1小时后
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    
+    // 格式化为datetime-local格式
+    const startTimeString = oneHourLater.toISOString().slice(0, 16);
+    const endTimeString = twoHoursLater.toISOString().slice(0, 16);
+    
+    document.getElementById('start_time').value = startTimeString;
+    document.getElementById('end_time').value = endTimeString;
+    
+    // 地点输入框事件绑定
+    const locationInput = document.getElementById('location');
+    let locationSearchTimeout;
+    
+    // 输入时实时搜索
+    locationInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        if (query.length >= 2) {
+            // 防抖处理
+            clearTimeout(locationSearchTimeout);
+            locationSearchTimeout = setTimeout(() => {
+                searchLocationDropdown(query);
+            }, 300);
+        } else {
+            hideLocationDropdown();
+        }
+    });
+    
+    // 获得焦点时显示下拉
+    locationInput.addEventListener('focus', function(e) {
+        const query = e.target.value.trim();
+        if (query.length >= 2) {
+            searchLocationDropdown(query);
+        } else {
+            showLocationDropdown(); // 显示空的下拉（只有操作按钮）
+        }
+    });
+    
+    // 失去焦点时延迟隐藏下拉（允许点击下拉项）
+    locationInput.addEventListener('blur', function(e) {
+        setTimeout(() => {
+            hideLocationDropdown();
+        }, 200);
+    });
+    
+    // 点击外部区域隐藏下拉
+    document.addEventListener('click', function(e) {
+        const locationGroup = document.querySelector('.location-group');
+        if (!locationGroup.contains(e.target)) {
+            hideLocationDropdown();
+        }
+    });
+    
+    // 地图搜索框事件绑定
+    const searchInput = document.getElementById('map-search-input');
+    
+    // 回车键支持
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchLocation();
+        }
+    });
+    
+    // 输入时搜索建议
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        if (query.length >= 2) {
+            // 防抖处理
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchSuggestions(query);
+            }, 300);
+        } else {
+            hideSuggestions();
+        }
+    });
+    
+    // 失去焦点时隐藏建议
+    searchInput.addEventListener('blur', function() {
+        setTimeout(() => {
+            hideSuggestions();
+        }, 200); // 延迟隐藏，允许点击建议项
+    });
+});
+
+// 费用类型变化时的处理
+document.getElementById('cost_type').addEventListener('change', function() {
+    const estimatedCostInput = document.getElementById('estimated_cost');
+    if (this.value === 'free') {
+        estimatedCostInput.value = '0';
+        estimatedCostInput.disabled = true;
+    } else {
+        estimatedCostInput.disabled = false;
+        if (estimatedCostInput.value === '0') {
+            estimatedCostInput.value = '';
+        }
+    }
+});
+</script>
+{% endblock %}
+

@@ -7612,10 +7612,7 @@ def tarot_reading_view(request):
     """塔罗牌占卜页面"""
     return render(request, 'tools/tarot_reading.html')
 
-@login_required
-def tarot_diary_view(request):
-    """塔罗牌日记页面"""
-    return render(request, 'tools/tarot_diary.html')
+
 
 @login_required
 def meetsomeone_dashboard_view(request):
@@ -11118,9 +11115,19 @@ def buddy_events_api(request):
         cost_type = request.GET.get('cost_type')
         gender_restriction = request.GET.get('gender_restriction')
         sort_by = request.GET.get('sort_by', 'created_at')
+        search = request.GET.get('search', '').strip()
         
         # 构建查询
         events = BuddyEvent.objects.filter(status='active')
+        
+        # 搜索功能
+        if search:
+            from django.db.models import Q
+            events = events.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(location__icontains=search)
+            )
         
         if event_type:
             events = events.filter(event_type=event_type)
@@ -11169,10 +11176,13 @@ def buddy_events_api(request):
         
         return JsonResponse({
             'success': True,
-            'data': events_data,
-            'total': events.count(),
-            'page': page,
-            'has_next': events.count() > end
+            'events': events_data,
+            'pagination': {
+                'total': events.count(),
+                'page': page,
+                'has_next': events.count() > end,
+                'page_size': page_size
+            }
         })
         
     except Exception as e:
