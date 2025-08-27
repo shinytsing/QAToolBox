@@ -269,25 +269,113 @@ setup_project_user() {
     else
         log_success "用户 $PROJECT_USER 已存在"
     fi
+    
+    # 确保用户目录权限正确
+    if [ -d "/home/$PROJECT_USER" ]; then
+        chown -R "$PROJECT_USER:$PROJECT_USER" "/home/$PROJECT_USER"
+        chmod 755 "/home/$PROJECT_USER"
+        log_success "用户目录权限已修复"
+    fi
+}
+
+# 修复权限问题
+fix_permissions() {
+    log_header "修复权限问题"
+    
+    # 确保项目目录权限正确
+    if [ -d "$PROJECT_DIR" ]; then
+        chown -R "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
+        chmod -R 755 "$PROJECT_DIR"
+        log_success "项目目录权限已修复"
+    fi
+    
+    # 确保静态文件目录权限正确
+    if [ -d "/var/www/qatoolbox" ]; then
+        chown -R "$PROJECT_USER:$PROJECT_USER" "/var/www/qatoolbox"
+        chmod -R 755 "/var/www/qatoolbox"
+        log_success "静态文件目录权限已修复"
+    fi
+    
+    # 确保日志目录权限正确
+    if [ -d "/var/log" ]; then
+        touch "/var/log/qatoolbox.log" "/var/log/qatoolbox_error.log" 2>/dev/null || true
+        chown "$PROJECT_USER:$PROJECT_USER" "/var/log/qatoolbox.log" "/var/log/qatoolbox_error.log" 2>/dev/null || true
+        chmod 644 "/var/log/qatoolbox.log" "/var/log/qatoolbox_error.log" 2>/dev/null || true
+        log_success "日志文件权限已修复"
+    fi
 }
 
 # 下载项目代码
 download_project() {
     log_header "下载项目代码"
     
-    # 删除旧目录
+    # 确保项目目录权限正确
     if [ -d "$PROJECT_DIR" ]; then
         rm -rf "$PROJECT_DIR"
     fi
     
-    # 尝试从GitHub克隆
-    if git clone https://github.com/shinytsing/QAToolbox.git "$PROJECT_DIR" 2>/dev/null; then
-        log_success "从GitHub下载成功"
+    # 创建项目目录并设置正确权限
+    mkdir -p "$PROJECT_DIR"
+    chown "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
+    chmod 755 "$PROJECT_DIR"
+    
+    # 尝试多个源克隆（中国网络环境优化）
+    CLONE_SUCCESS=false
+    
+    # 尝试从Gitee克隆（中国网络优化）
+    log_info "尝试从 https://gitee.com/shinytsing/QAToolbox.git 克隆..."
+    if sudo -u "$PROJECT_USER" git clone https://gitee.com/shinytsing/QAToolbox.git "$PROJECT_DIR" 2>/dev/null; then
+        log_success "从Gitee下载成功"
+        CLONE_SUCCESS=true
     else
-        log_warning "GitHub克隆失败，创建基础项目结构"
+        log_warning "从Gitee克隆失败，尝试下一个..."
+        sudo -u "$PROJECT_USER" rm -rf "$PROJECT_DIR" 2>/dev/null || true
         mkdir -p "$PROJECT_DIR"
-        
-        # 下载必要文件
+        chown "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
+    fi
+    
+    # 尝试从GitHub镜像克隆
+    if [ "$CLONE_SUCCESS" = false ]; then
+        log_info "尝试从 https://github.com.cnpmjs.org/shinytsing/QAToolbox.git 克隆..."
+        if sudo -u "$PROJECT_USER" git clone https://github.com.cnpmjs.org/shinytsing/QAToolbox.git "$PROJECT_DIR" 2>/dev/null; then
+            log_success "从GitHub镜像下载成功"
+            CLONE_SUCCESS=true
+        else
+            log_warning "从GitHub镜像克隆失败，尝试下一个..."
+            sudo -u "$PROJECT_USER" rm -rf "$PROJECT_DIR" 2>/dev/null || true
+            mkdir -p "$PROJECT_DIR"
+            chown "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
+        fi
+    fi
+    
+    # 尝试从FastGit克隆
+    if [ "$CLONE_SUCCESS" = false ]; then
+        log_info "尝试从 https://hub.fastgit.xyz/shinytsing/QAToolbox.git 克隆..."
+        if sudo -u "$PROJECT_USER" git clone https://hub.fastgit.xyz/shinytsing/QAToolbox.git "$PROJECT_DIR" 2>/dev/null; then
+            log_success "从FastGit下载成功"
+            CLONE_SUCCESS=true
+        else
+            log_warning "从FastGit克隆失败，尝试下一个..."
+            sudo -u "$PROJECT_USER" rm -rf "$PROJECT_DIR" 2>/dev/null || true
+            mkdir -p "$PROJECT_DIR"
+            chown "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
+        fi
+    fi
+    
+    # 最后尝试从GitHub克隆
+    if [ "$CLONE_SUCCESS" = false ]; then
+        log_info "尝试从 https://github.com/shinytsing/QAToolbox.git 克隆..."
+        if sudo -u "$PROJECT_USER" git clone https://github.com/shinytsing/QAToolbox.git "$PROJECT_DIR" 2>/dev/null; then
+            log_success "从GitHub下载成功"
+            CLONE_SUCCESS=true
+        else
+            log_warning "从GitHub克隆失败，创建基础项目结构"
+        fi
+    fi
+    
+    # 如果所有克隆都失败，创建基础项目结构
+    if [ "$CLONE_SUCCESS" = false ]; then
+        log_warning "所有Git源都失败，创建基础项目结构"
         cd "$PROJECT_DIR"
         
         # 创建基础manage.py
@@ -650,10 +738,13 @@ main() {
     install_services
     setup_database
     setup_project_user
+    fix_permissions
     download_project
+    fix_permissions
     setup_python_environment
     setup_environment_variables
     initialize_django
+    fix_permissions
     setup_nginx
     setup_supervisor
     verify_deployment
