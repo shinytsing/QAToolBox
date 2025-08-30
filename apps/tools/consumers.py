@@ -3,11 +3,31 @@ import logging
 import gzip
 import time
 import asyncio
-from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
-from .models.chat_models import ChatRoom, ChatMessage, UserOnlineStatus
+
+try:
+    from channels.generic.websocket import AsyncWebsocketConsumer
+    from channels.db import database_sync_to_async
+    from .models.chat_models import ChatRoom, ChatMessage, UserOnlineStatus
+    CHANNELS_AVAILABLE = True
+except ImportError:
+    # 如果channels未安装，创建一个虚拟的Consumer类
+    class AsyncWebsocketConsumer:
+        pass
+    
+    def database_sync_to_async(func):
+        return func
+    
+    # 创建虚拟模型以避免导入错误
+    class ChatRoom:
+        pass
+    class ChatMessage:
+        pass
+    class UserOnlineStatus:
+        pass
+    
+    CHANNELS_AVAILABLE = False
 from .services.reconnection_manager import (
     ReconnectionManager, ConnectionConfig, MessageCompressor,
     get_reconnection_manager, remove_reconnection_manager

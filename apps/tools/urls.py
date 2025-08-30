@@ -4,7 +4,13 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.conf import settings
-from . import consumers
+try:
+    from . import consumers
+except ImportError:
+    # 如果consumers无法导入（缺少channels），创建一个虚拟模块
+    class MockConsumers:
+        pass
+    consumers = MockConsumers()
 
 # =============================================================================
 # 📋 优化的导入结构 - 按功能分组
