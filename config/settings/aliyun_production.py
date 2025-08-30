@@ -395,7 +395,8 @@ if not DEBUG:
     # 数据库连接池
     DATABASES['default']['OPTIONS']['MAX_CONNS'] = 20
     
-    # 缓存模板加载器
+    # 缓存模板加载器 - 关闭APP_DIRS，使用自定义loaders
+    TEMPLATES[0]['APP_DIRS'] = False
     TEMPLATES[0]['OPTIONS']['loaders'] = [
         ('django.template.loaders.cached.Loader', [
             'django.template.loaders.filesystem.Loader',
