@@ -79,6 +79,8 @@ class ShardManager:
             if shard in connections.databases:
                 return True
         
+        # 如果没有配置分片数据库，在生产环境也返回 False
+        # 这样可以避免分片健康检查的错误
         return False
     
     def get_shard_for_key(self, table_name: str, key_value: Any) -> str:
@@ -363,6 +365,10 @@ class ShardMonitoring:
         """获取分片统计信息"""
         stats = {}
         
+        # 如果没有配置分片，返回空统计
+        if not self.shard_manager.shard_configs:
+            return {'message': 'No shards configured, using single database mode'}
+        
         for table_name, config in self.shard_manager.shard_configs.items():
             table_stats = {
                 'type': config['type'],
@@ -385,6 +391,11 @@ class ShardMonitoring:
     def _check_shard_health(self, shard: str) -> str:
         """检查分片健康状态"""
         try:
+            # 检查分片是否配置
+            if shard not in connections.databases:
+                logger.warning(f"分片 {shard} 未配置，跳过健康检查")
+                return 'not_configured'
+            
             # 检查分片连接
             with connections[shard].cursor() as cursor:
                 cursor.execute("SELECT 1")
