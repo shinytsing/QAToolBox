@@ -335,8 +335,35 @@ deploy_project_code() {
     
     echo -e "${YELLOW}📥 克隆项目代码...${NC}"
     
-    # 使用重试机制克隆代码
-    retry_command "git clone $GITHUB_REPO $PROJECT_DIR" "克隆项目代码" 3 10
+    # 使用重试机制克隆代码，支持镜像源
+    echo -e "   尝试从GitHub主站克隆..."
+    if ! git clone "$GITHUB_REPO" "$PROJECT_DIR" 2>/dev/null; then
+        echo -e "   ${YELLOW}GitHub主站连接失败，尝试镜像源...${NC}"
+        rm -rf "$PROJECT_DIR" 2>/dev/null
+        
+        # 尝试多个GitHub镜像源
+        local mirror_repos=(
+            "https://github.com.cnpmjs.org/shinytsing/QAToolbox.git"
+            "https://hub.fastgit.xyz/shinytsing/QAToolbox.git"
+            "https://gitclone.com/github.com/shinytsing/QAToolbox.git"
+        )
+        
+        local success=false
+        for repo in "${mirror_repos[@]}"; do
+            echo -e "   尝试镜像源: $repo"
+            if git clone "$repo" "$PROJECT_DIR" 2>/dev/null; then
+                success=true
+                break
+            fi
+            rm -rf "$PROJECT_DIR" 2>/dev/null
+        done
+        
+        if [ "$success" = false ]; then
+            echo -e "${RED}❌ 所有克隆方式都失败了${NC}"
+            echo -e "${YELLOW}💡 建议手动上传代码或配置代理${NC}"
+            exit 1
+        fi
+    fi
     
     # 设置目录权限
     chown -R "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
