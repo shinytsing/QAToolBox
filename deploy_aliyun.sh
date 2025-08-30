@@ -402,93 +402,147 @@ setup_python_environment() {
     # 使用 requirements 文件安装依赖（Python 3.12 优化版本）
     if [ -f "requirements/base.txt" ]; then
         retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install -r requirements/base.txt" "安装基础依赖" 3 5
+        
+        # 如果还有可选依赖，也尝试安装
+        if [ -f "requirements/optional.txt" ]; then
+            echo -e "${YELLOW}📦 安装可选依赖...${NC}"
+            sudo -u "$PROJECT_USER" $VENV_NAME/bin/pip install -r requirements/optional.txt || echo "⚠️ 部分可选依赖安装失败"
+        fi
     else
-        echo -e "${YELLOW}⚠️ requirements/base.txt 不存在，使用备用安装方案${NC}"
-        # 备用核心依赖包
-        local core_packages=(
+        echo -e "${YELLOW}⚠️ requirements/base.txt 不存在，使用完整备用安装方案${NC}"
+        
+        # 完整的依赖包列表
+        local all_packages=(
+            # 核心Django框架
             "Django>=4.2,<5.0"
             "djangorestframework>=3.14.0"
+            "django-cors-headers>=4.3.0"
+            "django-crispy-forms>=2.0"
+            "crispy-bootstrap5>=0.7"
+            "django-simple-captcha>=0.6.0"
+            "django-ratelimit>=4.1.0"
+            "django-extensions>=3.2.3"
+            "django-filter>=23.3"
+            
+            # 数据库和缓存
             "psycopg2-binary>=2.9.7"
-            "gunicorn>=21.2.0"
-            "whitenoise>=6.6.0"
-            "python-dotenv>=1.0.0"
-            "django-environ>=0.11.0"
             "redis>=4.6.0"
             "django-redis>=5.4.0"
+            
+            # Web服务器
+            "gunicorn>=21.2.0"
+            "whitenoise>=6.6.0"
+            
+            # 环境配置
+            "python-dotenv>=1.0.0"
+            "django-environ>=0.11.0"
+            
+            # HTTP和网络
+            "requests>=2.31.0"
+            "beautifulsoup4>=4.12.0"
+            "lxml>=4.9.0"
+            
+            # 数据处理
+            "pandas>=2.1.0"
+            "numpy>=1.26.0"
+            "Pillow>=10.0.0"
+            
+            # 文档处理
+            "python-docx>=1.1.0"
+            "python-pptx>=0.6.22"
+            "openpyxl>=3.1.2"
+            "reportlab>=4.0.9"
+            "pypdfium2>=4.23.1"
+            "pdfplumber>=0.10.3"
+            
+            # 系统监控
+            "psutil>=5.9.0"
+            "GPUtil>=1.4.0"
+            "py-cpuinfo>=9.0.0"
+            
+            # 思维导图和图表
+            "xmind>=1.2.0"
+            "matplotlib>=3.8.0"
+            "seaborn>=0.12.0"
+            
+            # 任务队列
+            "celery>=5.3.0"
+            "django-celery-beat>=2.5.0"
+            
+            # 实时通信
+            "channels>=4.0.0"
+            "channels-redis>=4.1.0"
+            "daphne>=4.0.0"
+            
+            # 安全和加密
+            "cryptography>=41.0.0"
+            
+            # 工具库
+            "tenacity>=8.2.0"
+            "prettytable>=3.9.0"
+            "qrcode>=7.4.0"
+            "python-dateutil>=2.8.0"
+            
+            # 音视频处理
+            "pydub>=0.25.1"
+            "librosa>=0.10.1"
+            
+            # OCR和图像
+            "pytesseract>=0.3.10"
+            "opencv-python-headless>=4.8.0"
+            
+            # 科学计算
+            "scipy>=1.11.0"
+            "scikit-learn>=1.3.0"
+            
+            # Web爬虫和浏览器
+            "selenium>=4.15.0"
+            "webdriver-manager>=4.0.0"
         )
         
-        for package in "${core_packages[@]}"; do
-            retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
+        echo -e "${YELLOW}📦 安装完整依赖包（共 ${#all_packages[@]} 个包）...${NC}"
+        
+        # 分批安装以提高成功率
+        local batch_size=5
+        local total_packages=${#all_packages[@]}
+        local failed_packages=()
+        
+        for ((i=0; i<total_packages; i+=batch_size)); do
+            local batch=("${all_packages[@]:i:batch_size}")
+            local batch_str=$(IFS=' '; echo "${batch[*]}")
+            
+            echo -e "   📦 安装批次 $((i/batch_size + 1)): ${batch[0]} 等 ${#batch[@]} 个包..."
+            
+            if sudo -u "$PROJECT_USER" $VENV_NAME/bin/pip install $batch_str; then
+                echo -e "   ✅ 批次 $((i/batch_size + 1)) 安装成功"
+            else
+                echo -e "   ⚠️ 批次 $((i/batch_size + 1)) 部分失败，尝试单独安装..."
+                # 如果批次安装失败，尝试单独安装每个包
+                for package in "${batch[@]}"; do
+                    if ! sudo -u "$PROJECT_USER" $VENV_NAME/bin/pip install "$package"; then
+                        failed_packages+=("$package")
+                        echo -e "     ❌ $package 安装失败"
+                    else
+                        echo -e "     ✅ $package 安装成功"
+                    fi
+                done
+            fi
         done
+        
+        # 报告安装结果
+        if [ ${#failed_packages[@]} -eq 0 ]; then
+            echo -e "${GREEN}✅ 所有依赖包安装成功！${NC}"
+        else
+            echo -e "${YELLOW}⚠️ 以下包安装失败，但不影响核心功能:${NC}"
+            for pkg in "${failed_packages[@]}"; do
+                echo -e "     - $pkg"
+            done
+        fi
     fi
     
-    echo -e "${YELLOW}📦 安装Django扩展包...${NC}"
+    # Django扩展包已在上面的完整列表中安装
     
-    # Django扩展包
-    local django_packages=(
-        "django-cors-headers==4.3.1"
-        "django-crispy-forms==2.0"
-        "crispy-bootstrap5==0.7"
-        "django-simple-captcha==0.6.0"
-        "django-ratelimit==4.1.0"
-        "django-extensions==3.2.3"
-        "django-filter==23.3"
-    )
-    
-    for package in "${django_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
-    done
-    
-    echo -e "${YELLOW}📦 安装数据处理包...${NC}"
-    
-    # 数据处理包
-    local data_packages=(
-        "pandas>=2.1.0"
-        "numpy>=1.26.0"
-        "Pillow>=10.0.0"
-        "requests==2.31.0"
-        "beautifulsoup4==4.12.2"
-        "lxml==4.9.3"
-    )
-    
-    for package in "${data_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
-    done
-    
-    echo -e "${YELLOW}📦 安装文档处理包...${NC}"
-    
-    # 文档处理包
-    local doc_packages=(
-        "python-docx==1.1.0"
-        "openpyxl==3.1.2"
-        "reportlab==4.0.9"
-        "pypdfium2==4.23.1"
-    )
-    
-    for package in "${doc_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
-    done
-    
-    echo -e "${YELLOW}📦 批量安装其他依赖...${NC}"
-    
-    # 其他工具包
-    local other_packages=(
-        "celery==5.3.4"
-        "channels==4.0.0"
-        "daphne==4.0.0"
-        "cryptography==41.0.7"
-        "tenacity==8.2.3"
-        "prettytable==3.9.0"
-        "qrcode==7.4.2"
-        "python-dateutil==2.8.2"
-        "psutil>=5.9.0"
-        "GPUtil>=1.4.0"
-        "py-cpuinfo>=9.0.0"
-    )
-    
-    # 批量安装其他包（允许部分失败）
-    local packages_str=$(IFS=' '; echo "${other_packages[*]}")
-    sudo -u "$PROJECT_USER" $VENV_NAME/bin/pip install $packages_str || echo "⚠️ 部分非核心包安装失败，不影响基本功能"
+    # 所有依赖包已在上面的完整列表中统一安装
     
     echo -e "${GREEN}✅ Python环境配置完成${NC}"
 }
