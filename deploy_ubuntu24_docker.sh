@@ -362,57 +362,57 @@ RUN pip install \
 
 # 8. 数据处理
 RUN pip install \
-    pandas==2.0.3 \
-    numpy==1.24.4 \
-    scipy==1.9.3 \
-    matplotlib==3.7.5
+    pandas>=2.1.0 \
+    numpy>=1.26.0 \
+    scipy>=1.11.0 \
+    matplotlib>=3.8.0
 
 # 9. 机器学习（CPU版本）
 RUN pip install \
     torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu \
     && pip install \
-    tensorflow-cpu \
-    scikit-learn==1.3.2
+    tensorflow-cpu>=2.15.0 \
+    scikit-learn>=1.3.0
 
 # 10. 图像处理
 RUN pip install \
-    Pillow==9.5.0 \
-    opencv-python-headless==4.8.1.78 \
-    scikit-image \
-    imageio
+    Pillow>=10.0.0 \
+    opencv-python-headless>=4.8.0 \
+    scikit-image>=0.21.0 \
+    imageio>=2.31.0
 
 # 11. 文档处理
 RUN pip install \
-    python-docx==1.1.0 \
-    python-pptx==0.6.22 \
-    openpyxl==3.1.2 \
-    reportlab==4.0.9 \
-    pypdfium2==4.23.1 \
-    pdfplumber==0.10.3
+    python-docx>=1.1.0 \
+    python-pptx>=0.6.22 \
+    openpyxl>=3.1.2 \
+    reportlab>=4.0.9 \
+    pypdfium2>=4.23.1 \
+    pdfplumber>=0.10.3
 
 # 12. OCR
 RUN pip install \
-    pytesseract==0.3.10 \
-    easyocr
+    pytesseract>=0.3.10 \
+    easyocr>=1.7.0
 
 # 13. 音频处理
 RUN pip install \
-    pydub==0.25.1 \
-    librosa==0.10.1 \
-    soundfile==0.12.1
+    pydub>=0.25.1 \
+    librosa>=0.10.1 \
+    soundfile>=0.12.1
 
 # 14. 浏览器自动化
 RUN pip install \
-    selenium==4.15.2 \
-    webdriver-manager==4.0.1
+    selenium>=4.15.0 \
+    webdriver-manager>=4.0.0
 
 # 15. 其他工具
 RUN pip install \
-    cryptography==41.0.7 \
-    tenacity==8.2.3 \
-    prettytable==3.9.0 \
-    qrcode==7.4.2 \
-    python-dateutil==2.8.2
+    cryptography>=41.0.0 \
+    tenacity>=8.2.0 \
+    prettytable>=3.9.0 \
+    qrcode>=7.4.0 \
+    python-dateutil>=2.8.0
 
 # 复制项目文件
 COPY . /app/

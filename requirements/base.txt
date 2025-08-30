@@ -1,5 +1,5 @@
 # QAToolBox 基础依赖
-# Python 3.9+ 兼容版本
+# Python 3.11+ 兼容版本 (完全支持 Python 3.12)
 
 # ===== 核心Django框架 =====
 Django>=4.2,<5.0
@@ -36,5 +36,5 @@ lxml>=4.9.0
 
 # ===== 基础工具 =====
 tenacity>=8.2.0
-python-dateutil>=2.8.2
+python-dateutil>=2.8.0
 pytz>=2023.3
