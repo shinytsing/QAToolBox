@@ -392,8 +392,9 @@ if 'celery' in [app.split('.')[-1] for app in INSTALLED_APPS]:
 
 # 性能优化
 if not DEBUG:
-    # 数据库连接池
-    DATABASES['default']['OPTIONS']['MAX_CONNS'] = 20
+    # 数据库连接池配置移除，MAX_CONNS不是psycopg2的有效选项
+    # 如果需要连接池，应该使用django-db-connection-pool或类似的第三方包
+    pass
     
     # 缓存模板加载器 - 关闭APP_DIRS，使用自定义loaders
     TEMPLATES[0]['APP_DIRS'] = False
