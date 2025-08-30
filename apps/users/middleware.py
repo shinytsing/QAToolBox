@@ -5,8 +5,6 @@ from django.utils.deprecation import MiddlewareMixin
 from django.http import JsonResponse
 from django.contrib.sessions.backends.cache import SessionStore
 from django.core.cache import cache
-from django.contrib.auth.models import AnonymousUser
-from .models import UserActivityLog, APIUsageStats, UserSessionStats
 from django.utils import timezone
 from datetime import timedelta
 
@@ -48,6 +46,7 @@ class UserActivityMiddleware(MiddlewareMixin):
     def log_page_view(self, request, ip):
         """记录页面访问"""
         try:
+            from .models import UserActivityLog
             UserActivityLog.objects.create(
                 user=request.user,
                 activity_type='page_view',
@@ -90,6 +89,7 @@ class UserActivityMiddleware(MiddlewareMixin):
                 except:
                     request_data = {}
             
+            from .models import APIUsageStats
             APIUsageStats.objects.create(
                 endpoint=request.path,
                 method=request.method,
@@ -103,6 +103,7 @@ class UserActivityMiddleware(MiddlewareMixin):
             
             # 同时记录到活动日志
             if request.user.is_authenticated:
+                from .models import UserActivityLog
                 UserActivityLog.objects.create(
                     user=request.user,
                     activity_type='api_access',
@@ -126,6 +127,7 @@ class UserSessionMiddleware(MiddlewareMixin):
     def process_request(self, request):
         if request.user.is_authenticated:
             # 检查是否有活跃会话
+            from .models import UserSessionStats
             active_session = UserSessionStats.objects.filter(
                 user=request.user,
                 is_active=True
@@ -144,6 +146,7 @@ class UserSessionMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         if request.user.is_authenticated:
             # 更新会话活跃时间
+            from .models import UserSessionStats
             active_session = UserSessionStats.objects.filter(
                 user=request.user,
                 is_active=True
@@ -192,6 +195,7 @@ class SessionPersistenceMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         # 如果用户未登录但有会话cookie，尝试恢复会话
+        from django.contrib.auth.models import AnonymousUser
         if (isinstance(request.user, AnonymousUser) and 
             hasattr(request, 'session') and 
             request.session):
@@ -230,6 +234,7 @@ class SessionPersistenceMiddleware(MiddlewareMixin):
     
     def process_response(self, request, response):
         # 如果用户已登录，确保会话数据持久化
+        from django.contrib.auth.models import AnonymousUser
         if (hasattr(request, 'user') and 
             not isinstance(request.user, AnonymousUser) and 
             hasattr(request, 'session') and 
