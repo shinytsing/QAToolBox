@@ -368,6 +368,9 @@ install_python_dependencies() {
         "prettytable>=3.9.0"
         "qrcode>=7.4.0"
         "python-dateutil>=2.8.0"
+        "ratelimit>=2.2.0"
+        "python-dotenv>=1.0.0"
+        "setuptools>=65.0.0"
         
         # 音视频处理
         "pydub>=0.25.1"
