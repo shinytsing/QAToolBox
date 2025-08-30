@@ -481,6 +481,9 @@ setup_python_environment() {
         "prettytable==3.9.0"
         "qrcode==7.4.2"
         "python-dateutil==2.8.2"
+        "psutil>=5.9.0"
+        "GPUtil>=1.4.0"
+        "py-cpuinfo>=9.0.0"
     )
     
     # 批量安装其他包（允许部分失败）
