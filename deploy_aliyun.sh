@@ -410,9 +410,9 @@ setup_python_environment() {
     
     # 数据处理包
     local data_packages=(
-        "pandas==2.0.3"
-        "numpy==1.24.4"
-        "Pillow==9.5.0"
+        "pandas>=2.1.0"
+        "numpy>=1.26.0"
+        "Pillow>=10.0.0"
         "requests==2.31.0"
         "beautifulsoup4==4.12.2"
         "lxml==4.9.3"
