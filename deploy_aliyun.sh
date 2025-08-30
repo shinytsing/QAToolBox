@@ -222,8 +222,14 @@ install_system_dependencies() {
     retry_command "apt update" "更新包索引"
     
     retry_command "DEBIAN_FRONTEND=noninteractive apt install -y \
-        python3.12 python3.12-pip python3.12-venv python3.12-dev \
-        python3-setuptools python3-wheel" "安装Python 3.12环境"
+        python3.12 python3.12-venv python3.12-dev \
+        python3-setuptools python3-wheel python3-pip" "安装Python 3.12环境"
+    
+    # 确保 python3.12 有 pip
+    if ! python3.12 -m pip --version &>/dev/null; then
+        echo -e "${YELLOW}📦 为Python 3.12安装pip...${NC}"
+        curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+    fi
     
     echo -e "${YELLOW}🗄️ 安装数据库服务...${NC}"
     retry_command "DEBIAN_FRONTEND=noninteractive apt install -y \
