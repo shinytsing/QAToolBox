@@ -1,8 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# QAToolBox 阿里云服务器一键部署脚本 v2.0
+# QAToolBox 阿里云服务器一键部署脚本 v3.0
 # =============================================================================
 # 全新Ubuntu服务器一键部署，包含自动重试机制和中国地区优化
+# 支持 Python 3.12 优化部署，自动从GitHub拉取最新代码
 # 服务器: 阿里云 Ubuntu 20.04/22.04/24.04
 # 域名: https://shenyiqing.xin/
 # 管理员: admin / admin123456
@@ -20,10 +21,13 @@ readonly BOLD='\033[1m'
 readonly NC='\033[0m'
 
 # 配置变量
+readonly GITHUB_REPO="https://github.com/shinytsing/QAToolbox.git"
 readonly SERVER_IP="${SERVER_IP:-47.103.143.152}"
 readonly DOMAIN="${DOMAIN:-shenyiqing.xin}"
 readonly PROJECT_USER="${PROJECT_USER:-qatoolbox}"
 readonly PROJECT_DIR="/home/$PROJECT_USER/QAToolBox"
+readonly PYTHON_VERSION="3.12"
+readonly VENV_NAME="venv_py312"
 readonly DB_PASSWORD="${DB_PASSWORD:-QAToolBox@2024@$(date +%s)}"
 readonly ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin123456}"
 
@@ -41,9 +45,11 @@ exec 2>&1
 echo -e "${CYAN}${BOLD}"
 cat << 'EOF'
 ========================================
-🚀 QAToolBox 阿里云一键部署 v2.0
+🚀 QAToolBox 阿里云一键部署 v3.0
 ========================================
 ✨ 特性:
+  • Python 3.12 完全支持
+  • 自动从GitHub拉取最新代码
   • 全新Ubuntu服务器支持
   • 自动重试机制
   • 中国地区镜像加速
@@ -209,10 +215,15 @@ install_system_dependencies() {
         ca-certificates gnupg lsb-release build-essential \
         gcc g++ make cmake pkg-config" "安装基础工具"
     
-    echo -e "${YELLOW}🐍 安装Python环境...${NC}"
+    echo -e "${YELLOW}🐍 安装Python 3.12环境...${NC}"
+    # 添加deadsnakes PPA以获取Python 3.12
+    retry_command "apt install -y software-properties-common" "安装软件包管理工具"
+    retry_command "add-apt-repository ppa:deadsnakes/ppa -y" "添加Python PPA源"
+    retry_command "apt update" "更新包索引"
+    
     retry_command "DEBIAN_FRONTEND=noninteractive apt install -y \
-        python3 python3-pip python3-venv python3-dev \
-        python3-setuptools python3-wheel" "安装Python环境"
+        python3.12 python3.12-pip python3.12-venv python3.12-dev \
+        python3-setuptools python3-wheel" "安装Python 3.12环境"
     
     echo -e "${YELLOW}🗄️ 安装数据库服务...${NC}"
     retry_command "DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -319,7 +330,7 @@ deploy_project_code() {
     echo -e "${YELLOW}📥 克隆项目代码...${NC}"
     
     # 使用重试机制克隆代码
-    retry_command "git clone https://github.com/shinytsing/QAToolbox.git $PROJECT_DIR" "克隆项目代码" 3 10
+    retry_command "git clone $GITHUB_REPO $PROJECT_DIR" "克隆项目代码" 3 10
     
     # 设置目录权限
     chown -R "$PROJECT_USER:$PROJECT_USER" "$PROJECT_DIR"
@@ -339,33 +350,44 @@ setup_python_environment() {
     cd "$PROJECT_DIR"
     
     echo -e "${YELLOW}🐍 创建Python虚拟环境...${NC}"
+    if [ -d "$VENV_NAME" ]; then
+        rm -rf "$VENV_NAME"
+    fi
+    
+    # 兼容旧版本，清理.venv
     if [ -d ".venv" ]; then
         rm -rf ".venv"
     fi
     
-    sudo -u "$PROJECT_USER" python3 -m venv .venv
+    sudo -u "$PROJECT_USER" python3.12 -m venv "$VENV_NAME"
     
     # 升级pip
-    retry_command "sudo -u '$PROJECT_USER' .venv/bin/pip install --upgrade pip setuptools wheel" "升级pip工具"
+    retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install --upgrade pip setuptools wheel" "升级pip工具"
     
-    echo -e "${YELLOW}📦 安装核心Django依赖...${NC}"
+    echo -e "${YELLOW}📦 安装项目依赖...${NC}"
     
-    # 分阶段安装依赖，避免冲突
-    local core_packages=(
-        "Django==4.2.7"
-        "djangorestframework==3.14.0"
-        "psycopg2-binary==2.9.7"
-        "gunicorn==21.2.0"
-        "whitenoise==6.6.0"
-        "python-dotenv==1.0.0"
-        "django-environ==0.11.2"
-        "redis==4.6.0"
-        "django-redis==5.4.0"
-    )
-    
-    for package in "${core_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' .venv/bin/pip install '$package'" "安装 $package" 2 3
-    done
+    # 使用 requirements 文件安装依赖（Python 3.12 优化版本）
+    if [ -f "requirements/base.txt" ]; then
+        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install -r requirements/base.txt" "安装基础依赖" 3 5
+    else
+        echo -e "${YELLOW}⚠️ requirements/base.txt 不存在，使用备用安装方案${NC}"
+        # 备用核心依赖包
+        local core_packages=(
+            "Django>=4.2,<5.0"
+            "djangorestframework>=3.14.0"
+            "psycopg2-binary>=2.9.7"
+            "gunicorn>=21.2.0"
+            "whitenoise>=6.6.0"
+            "python-dotenv>=1.0.0"
+            "django-environ>=0.11.0"
+            "redis>=4.6.0"
+            "django-redis>=5.4.0"
+        )
+        
+        for package in "${core_packages[@]}"; do
+            retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
+        done
+    fi
     
     echo -e "${YELLOW}📦 安装Django扩展包...${NC}"
     
@@ -381,7 +403,7 @@ setup_python_environment() {
     )
     
     for package in "${django_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' .venv/bin/pip install '$package'" "安装 $package" 2 3
+        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
     done
     
     echo -e "${YELLOW}📦 安装数据处理包...${NC}"
@@ -397,7 +419,7 @@ setup_python_environment() {
     )
     
     for package in "${data_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' .venv/bin/pip install '$package'" "安装 $package" 2 3
+        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
     done
     
     echo -e "${YELLOW}📦 安装文档处理包...${NC}"
@@ -411,7 +433,7 @@ setup_python_environment() {
     )
     
     for package in "${doc_packages[@]}"; do
-        retry_command "sudo -u '$PROJECT_USER' .venv/bin/pip install '$package'" "安装 $package" 2 3
+        retry_command "sudo -u '$PROJECT_USER' $VENV_NAME/bin/pip install '$package'" "安装 $package" 2 3
     done
     
     echo -e "${YELLOW}📦 批量安装其他依赖...${NC}"
@@ -430,7 +452,7 @@ setup_python_environment() {
     
     # 批量安装其他包（允许部分失败）
     local packages_str=$(IFS=' '; echo "${other_packages[*]}")
-    sudo -u "$PROJECT_USER" .venv/bin/pip install $packages_str || echo "⚠️ 部分非核心包安装失败，不影响基本功能"
+    sudo -u "$PROJECT_USER" $VENV_NAME/bin/pip install $packages_str || echo "⚠️ 部分非核心包安装失败，不影响基本功能"
     
     echo -e "${GREEN}✅ Python环境配置完成${NC}"
 }
@@ -493,18 +515,18 @@ initialize_django() {
     export DJANGO_SETTINGS_MODULE=config.settings.aliyun_production
     
     # 创建迁移文件
-    retry_command "sudo -u '$PROJECT_USER' DJANGO_SETTINGS_MODULE=config.settings.aliyun_production .venv/bin/python manage.py makemigrations --noinput" "创建数据库迁移" 2 5
+    retry_command "sudo -u '$PROJECT_USER' DJANGO_SETTINGS_MODULE=config.settings.aliyun_production $VENV_NAME/bin/python manage.py makemigrations --noinput" "创建数据库迁移" 2 5
     
     # 执行迁移
-    retry_command "sudo -u '$PROJECT_USER' DJANGO_SETTINGS_MODULE=config.settings.aliyun_production .venv/bin/python manage.py migrate --noinput" "执行数据库迁移" 2 5
+    retry_command "sudo -u '$PROJECT_USER' DJANGO_SETTINGS_MODULE=config.settings.aliyun_production $VENV_NAME/bin/python manage.py migrate --noinput" "执行数据库迁移" 2 5
     
     echo -e "${YELLOW}📁 收集静态文件...${NC}"
-    retry_command "sudo -u '$PROJECT_USER' DJANGO_SETTINGS_MODULE=config.settings.aliyun_production .venv/bin/python manage.py collectstatic --noinput" "收集静态文件" 2 5
+    retry_command "sudo -u '$PROJECT_USER' DJANGO_SETTINGS_MODULE=config.settings.aliyun_production $VENV_NAME/bin/python manage.py collectstatic --noinput" "收集静态文件" 2 5
     
     echo -e "${YELLOW}👑 创建管理员用户...${NC}"
     
     # 创建管理员用户
-    sudo -u "$PROJECT_USER" DJANGO_SETTINGS_MODULE=config.settings.aliyun_production .venv/bin/python manage.py shell << PYTHON_EOF
+    sudo -u "$PROJECT_USER" DJANGO_SETTINGS_MODULE=config.settings.aliyun_production $VENV_NAME/bin/python manage.py shell << PYTHON_EOF
 import os
 import django
 django.setup()
@@ -630,7 +652,7 @@ EOF
     # 创建Supervisor配置
     cat > /etc/supervisor/conf.d/qatoolbox.conf << EOF
 [program:qatoolbox]
-command=$PROJECT_DIR/.venv/bin/gunicorn wsgi:application
+command=$PROJECT_DIR/$VENV_NAME/bin/gunicorn wsgi:application
 directory=$PROJECT_DIR
 user=$PROJECT_USER
 autostart=true
@@ -644,8 +666,8 @@ stderr_logfile_maxbytes=50MB
 stderr_logfile_backups=3
 
 # Gunicorn配置
-environment=DJANGO_SETTINGS_MODULE="config.settings.aliyun_production",PATH="$PROJECT_DIR/.venv/bin"
-command=$PROJECT_DIR/.venv/bin/gunicorn wsgi:application --bind 127.0.0.1:8000 --workers 3 --worker-class sync --timeout 60 --max-requests 1000 --max-requests-jitter 100 --preload
+environment=DJANGO_SETTINGS_MODULE="config.settings.aliyun_production",PATH="$PROJECT_DIR/$VENV_NAME/bin"
+command=$PROJECT_DIR/$VENV_NAME/bin/gunicorn wsgi:application --bind 127.0.0.1:8000 --workers 3 --worker-class sync --timeout 60 --max-requests 1000 --max-requests-jitter 100 --preload
 
 # 进程管理
 killasgroup=true
@@ -762,8 +784,8 @@ final_verification() {
   项目目录: $PROJECT_DIR
   数据库:   PostgreSQL (qatoolbox)
   缓存:     Redis
-  Python:   $(python3 --version 2>&1)
-  Django:   $(sudo -u $PROJECT_USER $PROJECT_DIR/.venv/bin/python -c "import django; print(django.get_version())" 2>/dev/null || echo "未知")
+  Python:   $(python3.12 --version 2>&1)
+  Django:   $(sudo -u $PROJECT_USER $PROJECT_DIR/$VENV_NAME/bin/python -c "import django; print(django.get_version())" 2>/dev/null || echo "未知")
 
 🔧 管理命令:
   重启应用: sudo supervisorctl restart qatoolbox
