@@ -521,30 +521,6 @@
         animation: none;
     }
 
-    .image-recognition-button {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 50px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
-        margin: 10px;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-
-    .image-recognition-button:hover {
-        background: linear-gradient(45deg, #764ba2, #667eea);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        color: white;
-        text-decoration: none;
-    }
-
     .animation-container {
         display: none;
         text-align: center;
@@ -1411,9 +1387,7 @@
             <button id="pureRandomButton" class="pure-random-button" onclick="startPureRandomization()">
                 🎲 朕随便
             </button>
-            <a href="{% url 'tools:food_image_recognition' %}" class="image-recognition-button">
-                📷 图像识别
-            </a>
+
         </div>
     </div>
 
@@ -1758,9 +1732,17 @@ function showResult(selectedFood, alternativeFoods) {
         foodImage.src = imageUrl;
         foodImage.style.display = 'block';
         foodImage.onerror = function() {
+            // 防止无限循环，只允许一次回退
+            if (this.dataset.fallbackAttempted) {
+                console.log('图片加载失败，隐藏图片');
+                this.style.display = 'none';
+                return;
+            }
+            
             // 如果本地图片加载失败，回退到原始图片
             if (useLocalImages && selectedFood.image_url && imageUrl !== selectedFood.image_url) {
                 console.log('本地图片加载失败，回退到原始图片');
+                this.dataset.fallbackAttempted = 'true';
                 this.src = selectedFood.image_url;
             } else {
                 console.log('图片加载失败，隐藏图片');
@@ -1793,27 +1775,69 @@ function showResult(selectedFood, alternativeFoods) {
     nutritionInfo.innerHTML = '';
     
     if (selectedFood.calories > 0) {
+        // 使用新的数据结构
+        const nutrition = selectedFood.nutrition || {};
         const nutritionItems = [
             { label: '卡路里', value: selectedFood.calories, unit: '千卡', icon: '🔥' },
-            { label: '蛋白质', value: selectedFood.protein, unit: '克', icon: '💪' },
-            { label: '脂肪', value: selectedFood.fat, unit: '克', icon: '🥑' },
-            { label: '碳水化合物', value: selectedFood.carbohydrates, unit: '克', icon: '🍞' },
-            { label: '膳食纤维', value: selectedFood.fiber, unit: '克', icon: '🌾' },
-            { label: '糖分', value: selectedFood.sugar, unit: '克', icon: '🍯' },
-            { label: '钠', value: selectedFood.sodium, unit: '毫克', icon: '🧂' }
+            { label: '蛋白质', value: nutrition.protein || selectedFood.protein, unit: '克', icon: '💪' },
+            { label: '脂肪', value: nutrition.fat || selectedFood.fat, unit: '克', icon: '🥑' },
+            { label: '碳水化合物', value: nutrition.carbohydrates || selectedFood.carbohydrates, unit: '克', icon: '🍞' },
+            { label: '膳食纤维', value: nutrition.dietary_fiber || selectedFood.fiber, unit: '克', icon: '🌾' },
+            { label: '糖分', value: nutrition.sugar || selectedFood.sugar, unit: '克', icon: '🍯' },
+            { label: '钠', value: nutrition.sodium || selectedFood.sodium, unit: '毫克', icon: '🧂' }
         ];
         
         nutritionItems.forEach((item, index) => {
-            const nutritionItem = document.createElement('div');
-            nutritionItem.className = 'nutrition-item';
-            nutritionItem.style.animationDelay = `${index * 0.1}s`;
-            nutritionItem.innerHTML = `
-                <div class="nutrition-value">${item.icon} ${item.value}</div>
-                <div class="nutrition-label">${item.label}</div>
-                <div class="nutrition-unit">${item.unit}</div>
-            `;
-            nutritionInfo.appendChild(nutritionItem);
+            if (item.value !== undefined && item.value !== null) {
+                const nutritionItem = document.createElement('div');
+                nutritionItem.className = 'nutrition-item';
+                nutritionItem.style.animationDelay = `${index * 0.1}s`;
+                
+                // 格式化数值显示
+                let displayValue = item.value;
+                if (typeof displayValue === 'number') {
+                    displayValue = item.unit === '毫克' ? Math.round(displayValue) : displayValue.toFixed(1);
+                }
+                
+                nutritionItem.innerHTML = `
+                    <div class="nutrition-value">${item.icon} ${displayValue}</div>
+                    <div class="nutrition-label">${item.label}</div>
+                    <div class="nutrition-unit">${item.unit}</div>
+                `;
+                nutritionInfo.appendChild(nutritionItem);
+            }
         });
+        
+        // 添加健康标签显示
+        if (selectedFood.health_score !== undefined || selectedFood.is_high_protein || selectedFood.is_vegetarian || selectedFood.is_low_carb) {
+            const healthSection = document.createElement('div');
+            healthSection.style.marginTop = '15px';
+            healthSection.style.padding = '10px';
+            healthSection.style.background = 'linear-gradient(135deg, #e8f5e8, #f0f8f0)';
+            healthSection.style.borderRadius = '8px';
+            healthSection.style.gridColumn = '1 / -1';
+            
+            let healthInfo = '';
+            if (selectedFood.health_score !== undefined) {
+                const healthColor = selectedFood.health_score >= 80 ? '#28a745' : selectedFood.health_score >= 60 ? '#ffc107' : '#dc3545';
+                healthInfo += `<div style="color: ${healthColor}; font-weight: bold;">🏥 健康评分: ${selectedFood.health_score}/100</div>`;
+            }
+            
+            const tags = [];
+            if (selectedFood.is_vegetarian) tags.push('🥬 素食');
+            if (selectedFood.is_high_protein) tags.push('💪 高蛋白');
+            if (selectedFood.is_low_carb) tags.push('🥗 低碳水');
+            if (selectedFood.is_low_fat) tags.push('🍃 低脂');
+            
+            if (tags.length > 0) {
+                healthInfo += `<div style="margin-top: 5px; font-size: 0.9em;">${tags.join(' | ')}</div>`;
+            }
+            
+            if (healthInfo) {
+                healthSection.innerHTML = healthInfo;
+                nutritionInfo.appendChild(healthSection);
+            }
+        }
     } else {
         nutritionInfo.innerHTML = '<span style="color: #666; grid-column: 1 / -1; text-align: center;">暂无营养信息</span>';
     }
@@ -1840,7 +1864,7 @@ function showResult(selectedFood, alternativeFoods) {
             
             card.innerHTML = `
                 <img src="${altImageUrl}" alt="${food.name}" class="alternative-image" 
-                     onerror="this.src='${food.image_url || '/static/img/default-food.jpg'}'">
+                     onerror="if(!this.dataset.fallbackAttempted){this.dataset.fallbackAttempted='true';this.src='${food.image_url || '/static/img/default-food.jpg'}';}else{this.style.display='none';}">
                 <div class="alternative-name">${food.name}</div>
                 <div class="alternative-cuisine">${food.cuisine}</div>
             `;

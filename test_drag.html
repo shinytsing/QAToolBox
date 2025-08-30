@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖拽测试</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <h1>聊天通知拖拽测试</h1>
+    <p>检查控制台输出，尝试拖拽图标：</p>
+    <ul>
+        <li>🔥 红色圆圈：简单拖拽测试</li>
+        <li>💬 蓝色圆圈：聊天通知管理器（如果加载成功）</li>
+    </ul>
+    
+    <!-- 模拟登录状态的CSRF token -->
+    <input type="hidden" name="csrfmiddlewaretoken" value="test-token">
+    
+    <script src="/static/js/simple_drag_test.js"></script>
+    <script src="/static/js/chat_notifications.js"></script>
+    <script>
+        // 手动初始化聊天通知管理器
+        console.log('开始初始化聊天通知管理器...');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM已加载，创建ChatNotificationManager实例...');
+            
+            try {
+                window.testChatManager = new ChatNotificationManager();
+                console.log('ChatNotificationManager创建成功！');
+                
+                // 检查元素是否存在
+                setTimeout(() => {
+                    const manager = document.getElementById('chat-notification-manager');
+                    const icon = document.getElementById('notification-icon');
+                    
+                    console.log('Manager元素:', manager);
+                    console.log('Icon元素:', icon);
+                    
+                    if (manager && icon) {
+                        console.log('✅ 聊天通知管理器元素已正确创建');
+                        console.log('现在可以尝试拖拽蓝色圆圈图标');
+                    } else {
+                        console.error('❌ 聊天通知管理器元素未找到');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('创建ChatNotificationManager时出错:', error);
+            }
+        });
+    </script>
+</body>
+</html>

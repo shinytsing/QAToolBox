@@ -272,12 +272,82 @@ def heart_link(request):
 
 @login_required
 def heart_link_chat(request, room_id):
-    """心动链接聊天页面"""
+    """心动链接聊天页面 - 仅用于一对一私密聊天"""
     if not request.user.is_authenticated:
         return redirect('users:login')
     
+    # 防止访问群聊天室ID - 引导用户到正确的心动链接流程
+    if room_id in ['public-room', 'general', 'chat', 'random'] or room_id.startswith('test-room-'):
+        # 检查用户是否有活跃的心动链接请求
+        from apps.tools.models.chat_models import HeartLinkRequest
+        existing_request = HeartLinkRequest.objects.filter(
+            requester=request.user,
+            status__in=['pending', 'matched']
+        ).first()
+        
+        if existing_request and existing_request.status == 'matched' and existing_request.chat_room:
+            # 如果用户已有匹配的聊天室，重定向到正确的聊天室
+            return JsonResponse({
+                'success': True,
+                'message': '已为您找到心动链接聊天室',
+                'redirect': f'/tools/heart_link/chat/{existing_request.chat_room.room_id}/'
+            })
+        else:
+            # 自动为用户创建心动链接请求
+            try:
+                # 创建聊天室
+                import uuid
+                room = ChatRoom.objects.create(
+                    room_id=str(uuid.uuid4()),
+                    user1=request.user,
+                    status='waiting'
+                )
+                
+                # 创建心动链接请求
+                new_request = HeartLinkRequest.objects.create(
+                    requester=request.user,
+                    status='pending',
+                    chat_room=room
+                )
+                
+                # 尝试匹配其他用户
+                from apps.tools.services.heart_link_matcher import matcher
+                matched_room, matched_user = matcher.match_users(request.user, new_request)
+                
+                if matched_room and matched_user:
+                    # 立即匹配成功
+                    return JsonResponse({
+                        'success': True,
+                        'matched': True,
+                        'message': '已为您找到匹配用户！',
+                        'redirect': f'/tools/heart_link/chat/{matched_room.room_id}/'
+                    })
+                else:
+                    # 等待匹配
+                    return JsonResponse({
+                        'success': False,
+                        'error': '正在为您寻找心动链接匹配，请稍候...',
+                        'redirect': '/tools/heart_link/',
+                        'auto_matching': True
+                    }, status=202)  # 202 表示正在处理
+            except Exception as e:
+                # 如果自动创建失败，回退到原方案
+                return JsonResponse({
+                    'success': False,
+                    'error': '心动链接需要先进行匹配，正在为您跳转到匹配页面...',
+                    'redirect': '/tools/heart_link/'
+                }, status=400)
+    
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 确保这是心动链接类型的聊天室
+        if not chat_room.is_heart_link_room():
+            return JsonResponse({
+                'success': False,
+                'error': '此聊天室不是心动链接房间，请使用多人聊天功能',
+                'redirect': '/tools/chat/'
+            }, status=400)
         
         # 检查聊天室状态
         if chat_room.status != 'active':
@@ -299,7 +369,7 @@ def heart_link_chat(request, room_id):
             if not heart_link_request:
                 return JsonResponse({
                     'success': False,
-                    'error': '您没有权限访问此聊天室'
+                    'error': '您没有权限访问此心动链接聊天室'
                 }, status=403)
         
         # 获取对方用户信息
@@ -307,22 +377,34 @@ def heart_link_chat(request, room_id):
         if not other_user:
             return JsonResponse({
                 'success': False,
-                'error': '聊天室配置错误'
+                'error': '心动链接聊天室配置错误，缺少匹配用户'
             }, status=500)
         
         context = {
             'room_id': room_id,
             'chat_room': chat_room,
-            'other_user': other_user
+            'other_user': other_user,
+            'chat_type': 'heart_link'  # 标识聊天类型
         }
         
-        # 使用新的WebSocket版本的聊天页面
+        # 使用心动链接专用的聊天页面
         return render(request, 'tools/heart_link_chat_websocket_new.html', context)
         
     except ChatRoom.DoesNotExist:
-        return redirect('tools:chat_room_error', error_type='not_found', room_id=room_id)
+        return JsonResponse({
+            'success': False,
+            'error': '心动链接聊天室不存在',
+            'redirect': '/tools/heart_link/'
+        }, status=404)
     except Exception as e:
-        return redirect('tools:chat_room_error', error_type='general', room_id=room_id)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Heart link chat error: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': '访问心动链接聊天室时发生错误',
+            'redirect': '/tools/heart_link/'
+        }, status=500)
 
 @login_required
 def chat_entrance_view(request):
@@ -521,10 +603,28 @@ def chat_enhanced(request, room_id):
         return render(request, 'tools/chat_enhanced.html', context)
         
     except ChatRoom.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': '聊天室不存在'
-        }, status=404)
+        # 对于多人聊天室，自动创建新的聊天室
+        if room_id and len(room_id) > 0:
+            # 创建新的聊天室
+            chat_room = ChatRoom.objects.create(
+                room_id=room_id,
+                user1=request.user,
+                status='active',  # 多人聊天室直接设为活跃状态
+            )
+            
+            context = {
+                'room_id': room_id,
+                'chat_room': chat_room,
+                'other_user': None,  # 多人聊天室没有特定的"对方用户"
+                'is_public_room': True
+            }
+            
+            return render(request, 'tools/chat_enhanced.html', context)
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': '聊天室不存在'
+            }, status=404)
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -2474,11 +2574,12 @@ def create_heart_link_request_api(request):
                 status='waiting'
             )
             
-            # 创建新的心动链接请求
+            # 创建新的心动链接请求，关联聊天室
             # 注意：HeartLinkRequest模型使用requester字段
             heart_link_request = HeartLinkRequest.objects.create(
                 requester=request.user,
-                status='pending'
+                status='pending',
+                chat_room=temp_room  # 关联聊天室
             )
             
             # 使用智能匹配服务
@@ -8819,133 +8920,13 @@ def cancel_number_match_api(request):
         }, status=500, content_type='application/json', headers=response_headers)
 
 
-# 食品图像识别相关导入
-from .services.food_image_mapping import (
-    recognize_food_from_image, 
-    get_food_suggestions_by_image,
-    get_food_image
-)
-from .services.real_image_recognition import (
-    recognize_food_from_image_real,
-    get_food_suggestions_by_image_real
-)
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def food_image_recognition_api(request):
-    """
-    食品图像识别API
-    """
-    if request.method == 'POST':
-        try:
-            print("🔄 开始处理图像识别请求...")
-            
-            # 获取上传的图片
-            uploaded_file = request.FILES.get('image')
-            if not uploaded_file:
-                print("❌ 没有上传图片")
-                return JsonResponse({
-                    'success': False,
-                    'error': '没有上传图片'
-                })
-            
-            print(f"✅ 接收到图片: {uploaded_file.name}, 大小: {uploaded_file.size} bytes")
-            
-            # 保存上传的图片到临时目录
-            import os
-            import tempfile
-            from django.conf import settings
-            
-            # 创建临时文件
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
-                for chunk in uploaded_file.chunks():
-                    temp_file.write(chunk)
-                temp_path = temp_file.name
-            
-            print(f"✅ 临时文件已保存: {temp_path}")
-            
-            # 检查文件是否存在和大小
-            if not os.path.exists(temp_path):
-                print("❌ 临时文件不存在")
-                return JsonResponse({
-                    'success': False,
-                    'error': '临时文件创建失败'
-                })
-            
-            file_size = os.path.getsize(temp_path)
-            print(f"📁 临时文件大小: {file_size} bytes")
-            
-            if file_size == 0:
-                print("❌ 临时文件为空")
-                os.unlink(temp_path)
-                return JsonResponse({
-                    'success': False,
-                    'error': '上传的图片文件为空'
-                })
-            
-            # 尝试使用DeepSeek进行图像识别
-            print("🔄 尝试使用DeepSeek进行图像识别...")
-            try:
-                from .services.deepseek_image_recognition import DeepSeekImageRecognition
-                deepseek_recognition = DeepSeekImageRecognition()
-                recognition_result = deepseek_recognition.recognize_food_image(temp_path)
-                print(f"✅ DeepSeek识别结果: {recognition_result}")
-                
-                if recognition_result['success']:
-                    # 获取食品建议
-                    suggestions = deepseek_recognition.get_food_suggestions(
-                        recognition_result['recognized_food'],
-                        recognition_result['nutrition_info']
-                    )
-                    print(f"✅ DeepSeek建议: {suggestions}")
-                else:
-                    # DeepSeek失败，使用备用识别方法
-                    print("⚠️ DeepSeek识别失败，使用备用方法...")
-                    recognition_result = recognize_food_from_image_real(temp_path)
-                    suggestions = get_food_suggestions_by_image_real(temp_path)
-                    
-            except Exception as deepseek_error:
-                print(f"⚠️ DeepSeek服务不可用: {deepseek_error}")
-                # 使用备用识别方法
-                recognition_result = recognize_food_from_image_real(temp_path)
-                suggestions = get_food_suggestions_by_image_real(temp_path)
-            
-            # 清理临时文件
-            try:
-                os.unlink(temp_path)
-                print(f"✅ 临时文件已清理: {temp_path}")
-            except Exception as e:
-                print(f"⚠️ 清理临时文件失败: {e}")
-            
-            return JsonResponse({
-                'success': True,
-                'recognition': recognition_result,
-                'suggestions': suggestions
-            })
-            
-        except Exception as e:
-            import traceback
-            print(f"❌ 图像识别API错误: {e}")
-            print(f"详细错误信息: {traceback.format_exc()}")
-            return JsonResponse({
-                'success': False,
-                'error': f'图像处理失败: {str(e)}'
-            })
-    
-    return JsonResponse({
-        'success': False,
-        'error': '只支持POST请求'
-    })
 
 
-@login_required
-def food_image_recognition_view(request):
-    """
-    食品图像识别页面
-    """
-    return render(request, 'tools/food_image_recognition.html')
+
+
+
 
 
 @login_required

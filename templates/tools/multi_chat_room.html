@@ -1,0 +1,1272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ room_name }} - 多人聊天室{% endblock %}
+
+{% block extra_css %}
+<style>
+.multi-chat-container {
+    display: flex;
+    height: calc(100vh - 100px);
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 20px;
+}
+
+.participants-panel {
+    width: 280px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.room-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.room-info {
+    opacity: 0.9;
+    font-size: 0.9em;
+}
+
+.participants-header {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.participant-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.participant-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.participant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.participant-info {
+    flex: 1;
+}
+
+.participant-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.participant-status {
+    font-size: 0.8em;
+    color: #28a745;
+}
+
+.messages-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.message-item {
+    display: flex;
+    margin-bottom: 15px;
+    animation: fadeIn 0.3s ease;
+}
+
+.message-item.own {
+    justify-content: flex-end;
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    position: relative;
+}
+
+.message-item:not(.own) .message-bubble {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-left: 50px;
+}
+
+.message-item.own .message-bubble {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-right: 50px;
+}
+
+.message-sender {
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-bottom: 4px;
+    opacity: 0.8;
+}
+
+.message-content {
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 0.7em;
+    opacity: 0.6;
+    margin-top: 4px;
+}
+
+.message-sender-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.8em;
+    position: absolute;
+    left: 10px;
+    bottom: 0;
+}
+
+.message-item.own .message-sender-avatar {
+    right: 10px;
+    left: auto;
+}
+
+.input-container {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.message-input {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 1em;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.message-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+}
+
+.send-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+}
+
+.send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.room-stats {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stat-item {
+    display: inline-block;
+    margin: 0 15px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #333;
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.typing-indicator {
+    padding: 10px 20px;
+    color: #666;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.connection-status {
+    padding: 10px 20px;
+    text-align: center;
+    background: #d4edda;
+    color: #155724;
+    font-size: 0.9em;
+}
+
+.connection-status.disconnected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.media-buttons {
+    display: flex;
+    gap: 10px;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.media-btn {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.media-btn:hover {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.media-btn.recording {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.emoji-picker {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 0 20px 10px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+    gap: 5px;
+}
+
+.emoji-grid span {
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.emoji-grid span:hover {
+    background: #f0f0f0;
+    transform: scale(1.2);
+}
+
+.message-content.image {
+    max-width: 300px;
+    max-height: 200px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.message-content.file {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.message-content.file:hover {
+    background: #e9ecef;
+}
+
+.file-icon {
+    font-size: 24px;
+    color: #667eea;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.file-size {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.voice-message {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 25px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.voice-play-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voice-play-btn:hover {
+    background: #5a6fd8;
+    transform: scale(1.1);
+}
+
+.voice-duration {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.video-message {
+    max-width: 400px;
+    max-height: 300px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .multi-chat-container {
+        flex-direction: column;
+        height: calc(100vh - 80px);
+        padding: 10px;
+    }
+    
+    .participants-panel {
+        width: 100%;
+        height: 150px;
+        margin-bottom: 10px;
+    }
+    
+    .message-bubble {
+        max-width: 85%;
+    }
+    
+    .message-item:not(.own) .message-bubble {
+        margin-left: 40px;
+    }
+    
+    .message-item.own .message-bubble {
+        margin-right: 40px;
+    }
+    
+    .media-buttons {
+        padding: 8px 15px;
+        gap: 8px;
+    }
+    
+    .media-btn {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .emoji-picker {
+        margin: 0 15px 10px 15px;
+        padding: 10px;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(auto-fill, minmax(25px, 1fr));
+    }
+    
+    .emoji-grid span {
+        font-size: 18px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="multi-chat-container">
+    <!-- 参与者面板 -->
+    <div class="participants-panel">
+        <div class="participants-header">
+            <i class="fas fa-users"></i> 聊天室成员
+        </div>
+        
+        <div class="room-stats">
+            <div class="stat-item">
+                <span class="stat-value" id="participantCount">{{ participants|length }}</span>
+                在线用户
+            </div>
+        </div>
+        
+        <div id="participantsList">
+            {% for participant in participants %}
+            <div class="participant-item" data-user-id="{{ participant.id }}">
+                <div class="participant-avatar">
+                    {{ participant.username|first|upper }}
+                </div>
+                <div class="participant-info">
+                    <div class="participant-name">
+                        {{ participant.username }}
+                        {% if participant == request.user %}(我){% endif %}
+                    </div>
+                    <div class="participant-status">在线</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 主聊天区域 -->
+    <div class="chat-main">
+        <!-- 聊天室头部 -->
+        <div class="chat-header">
+            <div class="room-title">{{ room_name }}</div>
+            <div class="room-info">房间ID: {{ room_id }} | 多人聊天室</div>
+        </div>
+        
+        <!-- 连接状态 -->
+        <div class="connection-status" id="connectionStatus">
+            <i class="fas fa-wifi"></i> 正在连接...
+        </div>
+        
+        <!-- 消息区域 -->
+        <div class="messages-container" id="messagesContainer">
+            {% for message in recent_messages %}
+            <div class="message-item {% if message.sender == request.user %}own{% endif %}">
+                {% if message.sender != request.user %}
+                <div class="message-sender-avatar">
+                    {{ message.sender.username|first|upper }}
+                </div>
+                {% endif %}
+                <div class="message-bubble">
+                    {% if message.sender != request.user %}
+                    <div class="message-sender">{{ message.sender.username }}</div>
+                    {% endif %}
+                    <div class="message-content">{{ message.content }}</div>
+                    <div class="message-time">{{ message.created_at|date:"H:i" }}</div>
+                </div>
+                {% if message.sender == request.user %}
+                <div class="message-sender-avatar">
+                    {{ message.sender.username|first|upper }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 正在输入指示器 -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <i class="fas fa-circle"></i> 有人正在输入...
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="input-container">
+            <!-- 媒体功能按钮 -->
+            <div class="media-buttons">
+                <button class="media-btn" onclick="toggleEmojiPicker()" title="表情">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <button class="media-btn" onclick="document.getElementById('imageInput').click()" title="图片">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="media-btn" onclick="document.getElementById('fileInput').click()" title="文件">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <button class="media-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="语音">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="media-btn" onclick="document.getElementById('videoInput').click()" title="视频">
+                    <i class="fas fa-video"></i>
+                </button>
+            </div>
+            
+            <!-- 表情选择器 -->
+            <div class="emoji-picker" id="emojiPicker" style="display: none;">
+                <div class="emoji-grid">
+                    <span onclick="insertEmoji('😀')">😀</span>
+                    <span onclick="insertEmoji('😃')">😃</span>
+                    <span onclick="insertEmoji('😄')">😄</span>
+                    <span onclick="insertEmoji('😁')">😁</span>
+                    <span onclick="insertEmoji('😆')">😆</span>
+                    <span onclick="insertEmoji('😅')">😅</span>
+                    <span onclick="insertEmoji('🤣')">🤣</span>
+                    <span onclick="insertEmoji('😂')">😂</span>
+                    <span onclick="insertEmoji('🙂')">🙂</span>
+                    <span onclick="insertEmoji('🙃')">🙃</span>
+                    <span onclick="insertEmoji('😉')">😉</span>
+                    <span onclick="insertEmoji('😊')">😊</span>
+                    <span onclick="insertEmoji('😇')">😇</span>
+                    <span onclick="insertEmoji('🥰')">🥰</span>
+                    <span onclick="insertEmoji('😍')">😍</span>
+                    <span onclick="insertEmoji('🤩')">🤩</span>
+                    <span onclick="insertEmoji('😘')">😘</span>
+                    <span onclick="insertEmoji('😗')">😗</span>
+                    <span onclick="insertEmoji('😚')">😚</span>
+                    <span onclick="insertEmoji('😙')">😙</span>
+                    <span onclick="insertEmoji('😋')">😋</span>
+                    <span onclick="insertEmoji('😛')">😛</span>
+                    <span onclick="insertEmoji('😜')">😜</span>
+                    <span onclick="insertEmoji('🤪')">🤪</span>
+                    <span onclick="insertEmoji('😝')">😝</span>
+                    <span onclick="insertEmoji('🤑')">🤑</span>
+                    <span onclick="insertEmoji('🤗')">🤗</span>
+                    <span onclick="insertEmoji('🤭')">🤭</span>
+                    <span onclick="insertEmoji('🤫')">🤫</span>
+                    <span onclick="insertEmoji('🤔')">🤔</span>
+                    <span onclick="insertEmoji('🤐')">🤐</span>
+                    <span onclick="insertEmoji('🤨')">🤨</span>
+                    <span onclick="insertEmoji('😐')">😐</span>
+                    <span onclick="insertEmoji('😑')">😑</span>
+                    <span onclick="insertEmoji('😶')">😶</span>
+                    <span onclick="insertEmoji('😏')">😏</span>
+                    <span onclick="insertEmoji('😒')">😒</span>
+                    <span onclick="insertEmoji('🙄')">🙄</span>
+                    <span onclick="insertEmoji('😬')">😬</span>
+                    <span onclick="insertEmoji('🤥')">🤥</span>
+                    <span onclick="insertEmoji('😔')">😔</span>
+                    <span onclick="insertEmoji('😕')">😕</span>
+                    <span onclick="insertEmoji('🙁')">🙁</span>
+                    <span onclick="insertEmoji('☹️')">☹️</span>
+                    <span onclick="insertEmoji('😣')">😣</span>
+                    <span onclick="insertEmoji('😖')">😖</span>
+                    <span onclick="insertEmoji('😫')">😫</span>
+                    <span onclick="insertEmoji('😩')">😩</span>
+                    <span onclick="insertEmoji('🥺')">🥺</span>
+                    <span onclick="insertEmoji('😢')">😢</span>
+                    <span onclick="insertEmoji('😭')">😭</span>
+                    <span onclick="insertEmoji('😤')">😤</span>
+                    <span onclick="insertEmoji('😠')">😠</span>
+                    <span onclick="insertEmoji('😡')">😡</span>
+                    <span onclick="insertEmoji('🤬')">🤬</span>
+                    <span onclick="insertEmoji('🤯')">🤯</span>
+                    <span onclick="insertEmoji('😳')">😳</span>
+                    <span onclick="insertEmoji('🥵')">🥵</span>
+                    <span onclick="insertEmoji('🥶')">🥶</span>
+                    <span onclick="insertEmoji('😱')">😱</span>
+                    <span onclick="insertEmoji('😨')">😨</span>
+                    <span onclick="insertEmoji('😰')">😰</span>
+                    <span onclick="insertEmoji('😥')">😥</span>
+                    <span onclick="insertEmoji('😓')">😓</span>
+                    <span onclick="insertEmoji('🤗')">🤗</span>
+                    <span onclick="insertEmoji('🤔')">🤔</span>
+                    <span onclick="insertEmoji('🤭')">🤭</span>
+                    <span onclick="insertEmoji('🤫')">🤫</span>
+                    <span onclick="insertEmoji('🤥')">🤥</span>
+                    <span onclick="insertEmoji('😶')">😶</span>
+                    <span onclick="insertEmoji('😐')">😐</span>
+                    <span onclick="insertEmoji('😑')">😑</span>
+                    <span onclick="insertEmoji('😬')">😬</span>
+                    <span onclick="insertEmoji('🙄')">🙄</span>
+                    <span onclick="insertEmoji('😯')">😯</span>
+                    <span onclick="insertEmoji('😦')">😦</span>
+                    <span onclick="insertEmoji('😧')">😧</span>
+                    <span onclick="insertEmoji('😮')">😮</span>
+                    <span onclick="insertEmoji('😲')">😲</span>
+                    <span onclick="insertEmoji('🥱')">🥱</span>
+                    <span onclick="insertEmoji('😴')">😴</span>
+                    <span onclick="insertEmoji('🤤')">🤤</span>
+                    <span onclick="insertEmoji('😪')">😪</span>
+                    <span onclick="insertEmoji('😵')">😵</span>
+                    <span onclick="insertEmoji('🤐')">🤐</span>
+                    <span onclick="insertEmoji('🥴')">🥴</span>
+                    <span onclick="insertEmoji('🤢')">🤢</span>
+                    <span onclick="insertEmoji('🤮')">🤮</span>
+                    <span onclick="insertEmoji('🤧')">🤧</span>
+                    <span onclick="insertEmoji('😷')">😷</span>
+                    <span onclick="insertEmoji('🤒')">🤒</span>
+                    <span onclick="insertEmoji('🤕')">🤕</span>
+                    <span onclick="insertEmoji('🤑')">🤑</span>
+                    <span onclick="insertEmoji('🤠')">🤠</span>
+                    <span onclick="insertEmoji('😈')">😈</span>
+                    <span onclick="insertEmoji('👿')">👿</span>
+                    <span onclick="insertEmoji('👹')">👹</span>
+                    <span onclick="insertEmoji('👺')">👺</span>
+                    <span onclick="insertEmoji('🤡')">🤡</span>
+                    <span onclick="insertEmoji('💩')">💩</span>
+                    <span onclick="insertEmoji('👻')">👻</span>
+                    <span onclick="insertEmoji('💀')">💀</span>
+                    <span onclick="insertEmoji('☠️')">☠️</span>
+                    <span onclick="insertEmoji('👽')">👽</span>
+                    <span onclick="insertEmoji('👾')">👾</span>
+                    <span onclick="insertEmoji('🤖')">🤖</span>
+                    <span onclick="insertEmoji('🎃')">🎃</span>
+                    <span onclick="insertEmoji('😺')">😺</span>
+                    <span onclick="insertEmoji('😸')">😸</span>
+                    <span onclick="insertEmoji('😹')">😹</span>
+                    <span onclick="insertEmoji('😻')">😻</span>
+                    <span onclick="insertEmoji('😼')">😼</span>
+                    <span onclick="insertEmoji('😽')">😽</span>
+                    <span onclick="insertEmoji('🙀')">🙀</span>
+                    <span onclick="insertEmoji('😿')">😿</span>
+                    <span onclick="insertEmoji('😾')">😾</span>
+                    <span onclick="insertEmoji('👋')">👋</span>
+                    <span onclick="insertEmoji('🤚')">🤚</span>
+                    <span onclick="insertEmoji('🖐️')">🖐️</span>
+                    <span onclick="insertEmoji('✋')">✋</span>
+                    <span onclick="insertEmoji('🖖')">🖖</span>
+                    <span onclick="insertEmoji('👌')">👌</span>
+                    <span onclick="insertEmoji('🤏')">🤏</span>
+                    <span onclick="insertEmoji('✌️')">✌️</span>
+                    <span onclick="insertEmoji('🤞')">🤞</span>
+                    <span onclick="insertEmoji('🤟')">🤟</span>
+                    <span onclick="insertEmoji('🤘')">🤘</span>
+                    <span onclick="insertEmoji('🤙')">🤙</span>
+                    <span onclick="insertEmoji('👈')">👈</span>
+                    <span onclick="insertEmoji('👉')">👉</span>
+                    <span onclick="insertEmoji('👆')">👆</span>
+                    <span onclick="insertEmoji('🖕')">🖕</span>
+                    <span onclick="insertEmoji('👇')">👇</span>
+                    <span onclick="insertEmoji('☝️')">☝️</span>
+                    <span onclick="insertEmoji('👍')">👍</span>
+                    <span onclick="insertEmoji('👎')">👎</span>
+                    <span onclick="insertEmoji('✊')">✊</span>
+                    <span onclick="insertEmoji('👊')">👊</span>
+                    <span onclick="insertEmoji('🤛')">🤛</span>
+                    <span onclick="insertEmoji('🤜')">🤜</span>
+                    <span onclick="insertEmoji('👏')">👏</span>
+                    <span onclick="insertEmoji('🙌')">🙌</span>
+                    <span onclick="insertEmoji('👐')">👐</span>
+                    <span onclick="insertEmoji('🤲')">🤲</span>
+                    <span onclick="insertEmoji('🤝')">🤝</span>
+                    <span onclick="insertEmoji('🙏')">🙏</span>
+                    <span onclick="insertEmoji('✍️')">✍️</span>
+                    <span onclick="insertEmoji('💅')">💅</span>
+                    <span onclick="insertEmoji('🤳')">🤳</span>
+                    <span onclick="insertEmoji('💪')">💪</span>
+                    <span onclick="insertEmoji('🦾')">🦾</span>
+                    <span onclick="insertEmoji('🦿')">🦿</span>
+                    <span onclick="insertEmoji('🦵')">🦵</span>
+                    <span onclick="insertEmoji('🦶')">🦶</span>
+                    <span onclick="insertEmoji('👂')">👂</span>
+                    <span onclick="insertEmoji('🦻')">🦻</span>
+                    <span onclick="insertEmoji('👃')">👃</span>
+                    <span onclick="insertEmoji('🧠')">🧠</span>
+                    <span onclick="insertEmoji('🦷')">🦷</span>
+                    <span onclick="insertEmoji('🦴')">🦴</span>
+                    <span onclick="insertEmoji('👀')">👀</span>
+                    <span onclick="insertEmoji('👁️')">👁️</span>
+                    <span onclick="insertEmoji('👅')">👅</span>
+                    <span onclick="insertEmoji('👄')">👄</span>
+                    <span onclick="insertEmoji('💋')">💋</span>
+                    <span onclick="insertEmoji('🩸')">🩸</span>
+                </div>
+            </div>
+            
+            <!-- 文件输入框 -->
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="sendImage(this)">
+            <input type="file" id="fileInput" style="display: none;" onchange="sendFile(this)">
+            <input type="file" id="videoInput" accept="video/*" style="display: none;" onchange="sendVideo(this)">
+            
+            <!-- 消息输入区域 -->
+            <div class="input-group">
+                <input type="text" 
+                       class="message-input" 
+                       id="messageInput" 
+                       placeholder="输入消息..." 
+                       autocomplete="off">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i> 发送
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// WebSocket连接
+let socket = null;
+let isConnected = false;
+const roomId = '{{ room_id }}';
+const currentUser = '{{ request.user.username }}';
+const userId = {{ request.user.id }};
+
+// 连接WebSocket
+function connectWebSocket() {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${roomId}/`;
+    
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = function(e) {
+        isConnected = true;
+        updateConnectionStatus(true);
+        console.log('WebSocket连接已建立');
+    };
+    
+    socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        handleMessage(data);
+    };
+    
+    socket.onclose = function(e) {
+        isConnected = false;
+        updateConnectionStatus(false);
+        console.log('WebSocket连接已关闭');
+        
+        // 尝试重连
+        setTimeout(connectWebSocket, 3000);
+    };
+    
+    socket.onerror = function(e) {
+        console.error('WebSocket错误:', e);
+        updateConnectionStatus(false);
+    };
+}
+
+// 更新连接状态
+function updateConnectionStatus(connected) {
+    const statusElement = document.getElementById('connectionStatus');
+    if (connected) {
+        statusElement.innerHTML = '<i class="fas fa-wifi"></i> 已连接';
+        statusElement.classList.remove('disconnected');
+    } else {
+        statusElement.innerHTML = '<i class="fas fa-wifi"></i> 连接中断，正在重连...';
+        statusElement.classList.add('disconnected');
+    }
+}
+
+// 处理接收到的消息
+function handleMessage(data) {
+    switch(data.type) {
+        case 'chat.message':
+            addMessage(data.message);
+            break;
+        case 'chat.user_joined':
+            addSystemMessage(`${data.user.username} 加入了聊天室`);
+            updateParticipants();
+            break;
+        case 'chat.user_left':
+            addSystemMessage(`${data.user.username} 离开了聊天室`);
+            updateParticipants();
+            break;
+        case 'chat.typing':
+            showTypingIndicator(data.user.username);
+            break;
+        default:
+            console.log('未知消息类型:', data.type);
+    }
+}
+
+// 发送消息
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (!message || !isConnected) {
+        return;
+    }
+    
+    socket.send(JSON.stringify({
+        'type': 'chat.message',
+        'message': {
+            'content': message,
+            'message_type': 'text'
+        }
+    }));
+    
+    input.value = '';
+    input.focus();
+}
+
+// 添加消息到界面（使用多媒体支持）
+function addMessage(message) {
+    addMessageWithMedia(message);
+}
+
+// 添加系统消息
+function addSystemMessage(text) {
+    const container = document.getElementById('messagesContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-item system';
+    messageDiv.innerHTML = `
+        <div style="width: 100%; text-align: center; color: #666; font-style: italic; padding: 10px;">
+            ${text}
+        </div>
+    `;
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+// 显示输入指示器
+function showTypingIndicator(username) {
+    const indicator = document.getElementById('typingIndicator');
+    indicator.innerHTML = `<i class="fas fa-circle"></i> ${username} 正在输入...`;
+    indicator.style.display = 'block';
+    
+    // 3秒后隐藏
+    setTimeout(() => {
+        indicator.style.display = 'none';
+    }, 3000);
+}
+
+// 更新参与者列表
+function updateParticipants() {
+    // 这里可以通过AJAX获取最新的参与者列表
+    // 暂时简化处理
+}
+
+// 输入框事件
+document.getElementById('messageInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+// 页面加载完成后连接WebSocket
+document.addEventListener('DOMContentLoaded', function() {
+    connectWebSocket();
+    
+    // 滚动到底部
+    const container = document.getElementById('messagesContainer');
+    container.scrollTop = container.scrollHeight;
+    
+    // 聚焦输入框
+    document.getElementById('messageInput').focus();
+});
+
+// 表情功能
+function toggleEmojiPicker() {
+    const picker = document.getElementById('emojiPicker');
+    picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+}
+
+function insertEmoji(emoji) {
+    const input = document.getElementById('messageInput');
+    input.value += emoji;
+    input.focus();
+    document.getElementById('emojiPicker').style.display = 'none';
+}
+
+// 图片发送
+function sendImage(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // 显示上传进度
+        showUploadProgress('正在上传图片...');
+        
+        fetch(`/tools/api/chat/${roomId}/send-image/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideUploadProgress();
+            if (data.success) {
+                console.log('图片上传成功');
+            } else {
+                alert('图片上传失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideUploadProgress();
+            console.error('图片上传错误:', error);
+            alert('图片上传失败');
+        });
+    }
+    input.value = '';
+}
+
+// 文件发送
+function sendFile(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        showUploadProgress('正在上传文件...');
+        
+        fetch(`/tools/api/chat/${roomId}/send-file/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideUploadProgress();
+            if (data.success) {
+                console.log('文件上传成功');
+            } else {
+                alert('文件上传失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideUploadProgress();
+            console.error('文件上传错误:', error);
+            alert('文件上传失败');
+        });
+    }
+    input.value = '';
+}
+
+// 视频发送
+function sendVideo(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('video', file);
+        
+        showUploadProgress('正在上传视频...');
+        
+        fetch(`/tools/api/chat/${roomId}/send-video/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideUploadProgress();
+            if (data.success) {
+                console.log('视频上传成功');
+            } else {
+                alert('视频上传失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideUploadProgress();
+            console.error('视频上传错误:', error);
+            alert('视频上传失败');
+        });
+    }
+    input.value = '';
+}
+
+// 语音录制
+let mediaRecorder = null;
+let recordedChunks = [];
+let isRecording = false;
+
+function toggleVoiceRecording() {
+    if (isRecording) {
+        stopRecording();
+    } else {
+        startRecording();
+    }
+}
+
+function startRecording() {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            recordedChunks = [];
+            
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                sendVoiceMessage(blob);
+                
+                // 停止所有音频轨道
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            
+            const voiceBtn = document.getElementById('voiceBtn');
+            voiceBtn.classList.add('recording');
+            voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+            voiceBtn.title = '停止录音';
+            
+        })
+        .catch(error => {
+            console.error('无法访问麦克风:', error);
+            alert('无法访问麦克风，请检查权限设置');
+        });
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+    
+    isRecording = false;
+    const voiceBtn = document.getElementById('voiceBtn');
+    voiceBtn.classList.remove('recording');
+    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    voiceBtn.title = '语音';
+}
+
+function sendVoiceMessage(blob) {
+    const formData = new FormData();
+    formData.append('audio', blob, 'voice.webm');
+    
+    showUploadProgress('正在发送语音...');
+    
+    fetch(`/tools/api/chat/${roomId}/send-audio/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideUploadProgress();
+        if (data.success) {
+            console.log('语音发送成功');
+        } else {
+            alert('语音发送失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideUploadProgress();
+        console.error('语音发送错误:', error);
+        alert('语音发送失败');
+    });
+}
+
+// 上传进度显示
+function showUploadProgress(message) {
+    const container = document.getElementById('messagesContainer');
+    const progressDiv = document.createElement('div');
+    progressDiv.id = 'uploadProgress';
+    progressDiv.className = 'upload-progress';
+    progressDiv.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: #666;">
+            <i class="fas fa-spinner fa-spin"></i> ${message}
+        </div>
+    `;
+    container.appendChild(progressDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function hideUploadProgress() {
+    const progress = document.getElementById('uploadProgress');
+    if (progress) {
+        progress.remove();
+    }
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 处理不同类型的消息显示
+function addMessageWithMedia(message) {
+    const container = document.getElementById('messagesContainer');
+    const isOwn = message.sender.id === userId;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message-item ${isOwn ? 'own' : ''}`;
+    
+    const time = new Date(message.created_at).toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let contentHtml = '';
+    
+    switch(message.message_type) {
+        case 'image':
+            contentHtml = `<img src="${message.file_url}" class="message-content image" onclick="openImageModal('${message.file_url}')" alt="图片">`;
+            break;
+        case 'file':
+            const fileName = message.content || '未知文件';
+            contentHtml = `
+                <div class="message-content file" onclick="downloadFile('${message.file_url}', '${fileName}')">
+                    <div class="file-icon"><i class="fas fa-file"></i></div>
+                    <div class="file-info">
+                        <div class="file-name">${fileName}</div>
+                        <div class="file-size">点击下载</div>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'voice':
+            contentHtml = `
+                <div class="voice-message">
+                    <button class="voice-play-btn" onclick="playVoice('${message.file_url}')">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <div class="voice-duration">语音消息</div>
+                </div>
+            `;
+            break;
+        case 'video':
+            contentHtml = `
+                <video src="${message.file_url}" class="video-message" controls>
+                    您的浏览器不支持视频播放
+                </video>
+            `;
+            break;
+        default:
+            contentHtml = `<div class="message-content">${message.content}</div>`;
+    }
+    
+    messageDiv.innerHTML = `
+        ${!isOwn ? `<div class="message-sender-avatar">${message.sender.username.charAt(0).toUpperCase()}</div>` : ''}
+        <div class="message-bubble">
+            ${!isOwn ? `<div class="message-sender">${message.sender.username}</div>` : ''}
+            ${contentHtml}
+            <div class="message-time">${time}</div>
+        </div>
+        ${isOwn ? `<div class="message-sender-avatar">${message.sender.username.charAt(0).toUpperCase()}</div>` : ''}
+    `;
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+// 工具函数
+function openImageModal(imageUrl) {
+    window.open(imageUrl, '_blank');
+}
+
+function downloadFile(fileUrl, fileName) {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.click();
+}
+
+function playVoice(audioUrl) {
+    const audio = new Audio(audioUrl);
+    audio.play().catch(error => {
+        console.error('音频播放失败:', error);
+        alert('音频播放失败');
+    });
+}
+
+// 点击其他地方关闭表情选择器
+document.addEventListener('click', function(event) {
+    const emojiPicker = document.getElementById('emojiPicker');
+    const emojiBtn = event.target.closest('[onclick="toggleEmojiPicker()"]');
+    
+    if (!emojiBtn && !emojiPicker.contains(event.target)) {
+        emojiPicker.style.display = 'none';
+    }
+});
+
+// 页面卸载时关闭连接
+window.addEventListener('beforeunload', function() {
+    if (socket) {
+        socket.close();
+    }
+});
+</script>
+{% endblock %}

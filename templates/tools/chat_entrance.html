@@ -197,8 +197,8 @@
 
 {% block content %}
 <div class="entrance-container">
-    <h1 class="entrance-title">💬 聊天中心</h1>
-    <p class="entrance-subtitle">选择您喜欢的聊天方式</p>
+    <h1 class="entrance-title">💬 多人聊天中心</h1>
+    <p class="entrance-subtitle">创建或加入多人聊天室，与朋友们实时交流</p>
     
     <div class="options-grid">
         <a href="/tools/number-match/" class="option-card">
@@ -209,41 +209,41 @@
             </div>
         </a>
         
-        <a href="/tools/chat/enhanced/test-room/" class="option-card">
-            <span class="option-icon">💬</span>
-            <div class="option-title">直接聊天</div>
+        <a href="/tools/chat/room/public-room/" class="option-card">
+            <span class="option-icon">👥</span>
+            <div class="option-title">多人聊天室</div>
             <div class="option-description">
-                直接进入聊天室，支持文本、表情、图片、语音、文件、视频等多种消息类型。
+                加入公共聊天室与多人同时交流，支持文本、表情、图片、语音、文件、视频等多种消息类型。
             </div>
         </a>
     </div>
     
     <div class="direct-chat-section">
-        <h3>🎯 直接进入指定聊天室</h3>
+        <h3>🎯 创建或加入多人聊天室</h3>
         <div class="room-input-group">
             <input type="text" 
                    class="room-input" 
                    id="roomIdInput" 
-                   placeholder="输入聊天室ID" 
+                   placeholder="输入聊天室名称（如：技术讨论、随意聊天等）" 
                    autocomplete="off">
             <button class="join-btn" onclick="joinRoom()">
-                <i class="fas fa-sign-in-alt"></i> 加入
+                <i class="fas fa-sign-in-alt"></i> 进入
             </button>
         </div>
         <p style="font-size: 0.9em; opacity: 0.8; margin-top: 10px;">
-            如果您有聊天室ID，可以直接输入进入
+            输入任意聊天室名称即可创建或加入多人聊天室，支持多人同时在线交流
         </p>
     </div>
     
     <div class="features-list">
         <h3>🌟 功能特色</h3>
         <ul>
-            <li><strong>实时聊天</strong> - 基于WebSocket的实时消息传递</li>
+            <li><strong>多人实时聊天</strong> - 支持多用户同时在线交流</li>
             <li><strong>多媒体支持</strong> - 文本、表情、图片、语音、文件、视频</li>
-            <li><strong>视频通话</strong> - 高质量WebRTC视频对话</li>
-            <li><strong>用户资料</strong> - 显示头像、昵称、标签等信息</li>
-            <li><strong>数字匹配</strong> - 独特的4位数字匹配机制</li>
-            <li><strong>私密安全</strong> - 只有匹配用户才能访问聊天室</li>
+            <li><strong>视频通话</strong> - 支持多人视频会议功能</li>
+            <li><strong>用户在线状态</strong> - 实时显示参与者在线情况</li>
+            <li><strong>灵活加入</strong> - 任意聊天室名称即可创建或加入</li>
+            <li><strong>消息历史</strong> - 保存聊天记录，随时回顾</li>
             <li><strong>响应式设计</strong> - 支持手机、平板、电脑多端使用</li>
         </ul>
     </div>
@@ -264,8 +264,8 @@ function joinRoom() {
         return;
     }
     
-    // 跳转到聊天页面
-    window.location.href = `/tools/chat/enhanced/${roomId}/`;
+    // 跳转到多人聊天页面
+    window.location.href = `/tools/chat/room/${roomId}/`;
 }
 
 // 回车键快速加入

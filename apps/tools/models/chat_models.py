@@ -73,6 +73,29 @@ class ChatRoom(models.Model):
     def is_user_member(self, user):
         """检查用户是否为成员"""
         return user == self.user1 or user == self.user2
+    
+    def is_heart_link_room(self):
+        """检查是否是心动链接聊天室"""
+        try:
+            return hasattr(self, 'heart_link_requests') and self.heart_link_requests.exists()
+        except Exception:
+            return False
+    
+    def is_multi_chat_room(self):
+        """检查是否是多人聊天室"""
+        multi_chat_rooms = ['public-room', 'general', 'chat', 'random']
+        return (self.room_id in multi_chat_rooms or 
+                self.room_id.startswith('test-room-') or
+                self.room_type in ['group', 'public'])
+    
+    def get_room_category(self):
+        """获取聊天室类别"""
+        if self.is_heart_link_room():
+            return 'heart_link'
+        elif self.is_multi_chat_room():
+            return 'multi_chat'
+        else:
+            return 'private'
 
     def get_other_user(self, current_user):
         """获取对方用户"""
@@ -189,27 +212,36 @@ class MessageRead(models.Model):
 
 class UserOnlineStatus(models.Model):
     """用户在线状态模型"""
+    STATUS_CHOICES = [
+        ('online', '在线'),
+        ('busy', '忙碌'), 
+        ('away', '离开'),
+        ('offline', '离线'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
-    is_online = models.BooleanField(default=False, verbose_name='是否在线')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='offline', verbose_name='在线状态', db_index=True)
     last_seen = models.DateTimeField(auto_now=True, verbose_name='最后在线时间')
+    is_typing = models.BooleanField(default=False, verbose_name='是否正在输入')
     current_room = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='当前房间')
-    device_info = models.JSONField(default=dict, verbose_name='设备信息')
+    is_online = models.BooleanField(default=False, verbose_name='是否在线')
+    match_number = models.CharField(max_length=4, null=True, blank=True, verbose_name='匹配数字', db_index=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name='IP地址')
 
     class Meta:
         verbose_name = '用户在线状态'
         verbose_name_plural = '用户在线状态'
         indexes = [
+            models.Index(fields=['status', 'last_seen']),
             models.Index(fields=['is_online', 'last_seen']),
-            models.Index(fields=['current_room']),
         ]
 
     def __str__(self):
-        status = "在线" if self.is_online else "离线"
-        return f"{self.user.username} - {status}"
+        return f"{self.user.username} - {self.get_status_display()}"
 
     def go_online(self, room=None):
         """用户上线"""
+        self.status = 'online'
         self.is_online = True
         if room:
             self.current_room = room
@@ -217,6 +249,7 @@ class UserOnlineStatus(models.Model):
 
     def go_offline(self):
         """用户下线"""
+        self.status = 'offline'
         self.is_online = False
         self.current_room = None
         self.save()
@@ -225,6 +258,11 @@ class UserOnlineStatus(models.Model):
         """更新最后在线时间"""
         self.last_seen = timezone.now()
         self.save(update_fields=['last_seen'])
+        
+    @classmethod
+    def get_online_users(cls):
+        """获取在线用户列表"""
+        return cls.objects.filter(is_online=True, status='online')
 
 
 class HeartLinkRequest(models.Model):

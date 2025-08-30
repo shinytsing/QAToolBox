@@ -5940,6 +5940,90 @@ async function previewPlan(planId) {
   }
 }
 
+// 安全的字符串转小写函数
+function safeToLowerCase(str) {
+  if (str === null || str === undefined) return '';
+  try {
+    return String(str).toLowerCase();
+  } catch (error) {
+    console.warn('toLowerCase转换失败:', str, error);
+    return '';
+  }
+}
+
+// 全局搜索安全处理
+document.addEventListener('DOMContentLoaded', function() {
+  // 监听所有可能的搜索输入框
+  document.addEventListener('input', function(e) {
+    if (e.target.type === 'search' || e.target.type === 'text') {
+      try {
+        // 确保输入值是安全的
+        if (e.target.value && typeof e.target.value !== 'string') {
+          e.target.value = String(e.target.value);
+        }
+      } catch (error) {
+        console.warn('输入值处理错误:', error);
+        e.target.value = '';
+      }
+    }
+  });
+  
+  // 监听键盘事件
+  document.addEventListener('keyup', function(e) {
+    if (e.target.type === 'search' || e.target.type === 'text') {
+      try {
+        if (e.target.value && typeof e.target.value !== 'string') {
+          e.target.value = String(e.target.value);
+        }
+      } catch (error) {
+        console.warn('键盘输入处理错误:', error);
+        e.target.value = '';
+      }
+    }
+  });
+});
+
+// 格式化时间显示
+function formatDateTime(dateString) {
+  if (!dateString) return '未知';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '未知';
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit'
+    }) + ' ' + date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('时间格式化错误:', error);
+    return '未知';
+  }
+}
+
+// 切换动作详情显示
+function toggleExerciseDetails(element) {
+  try {
+    const detailsEl = element.querySelector('.exercise-details');
+    if (detailsEl) {
+      const isHidden = detailsEl.style.display === 'none' || detailsEl.style.display === '';
+      detailsEl.style.display = isHidden ? 'block' : 'none';
+      
+      // 切换展开图标
+      const chevronIcon = element.querySelector('.fa-chevron-down');
+      if (chevronIcon) {
+        chevronIcon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    } else {
+      console.warn('未找到.exercise-details元素，可能这一天没有训练内容');
+    }
+  } catch (error) {
+    console.error('切换动作详情失败:', error);
+  }
+}
+
 // 显示计划预览模态框
 function showPlanPreviewModal(plan) {
   const modal = document.createElement('div');
@@ -5947,11 +6031,51 @@ function showPlanPreviewModal(plan) {
   
   let scheduleHTML = '';
   if (plan.week_schedule && plan.week_schedule.length > 0) {
-    const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     scheduleHTML = plan.week_schedule.map((dayData, index) => {
-      const dayName = weekDays[index] || `第${index + 1}天`;
-      const exerciseCount = dayData.exercises ? dayData.exercises.length : 0;
-      const isRestDay = exerciseCount === 0;
+      const dayName = dayData.weekday || dayData.name || `第${index + 1}天`;
+      
+      // 计算动作数量
+      let exerciseCount = 0;
+      if (dayData.modules) {
+        exerciseCount = Object.values(dayData.modules).reduce((sum, module) => {
+          return sum + (Array.isArray(module) ? module.length : 0);
+        }, 0);
+      } else if (dayData.exercises) {
+        exerciseCount = dayData.exercises.length;
+      }
+      
+      const bodyParts = dayData.body_parts || dayData.type || '';
+      const isRestDay = exerciseCount === 0 || (Array.isArray(bodyParts) ? bodyParts.includes('休息') : bodyParts.includes('休息'));
+      
+      // 生成详细的动作列表
+      let exerciseDetails = '';
+      if (dayData.modules && exerciseCount > 0) {
+        const moduleNames = {
+          warmup: '热身',
+          main: '主训练', 
+          accessory: '辅助训练',
+          cooldown: '拉伸放松'
+        };
+        
+        Object.entries(dayData.modules).forEach(([moduleKey, exercises]) => {
+          if (Array.isArray(exercises) && exercises.length > 0) {
+            exerciseDetails += `
+              <div class="module-section" style="margin: 8px 0; padding-left: 15px;">
+                <div style="font-weight: bold; color: #ff6b35; font-size: 0.85rem; margin-bottom: 4px;">
+                  ${moduleNames[moduleKey] || moduleKey}
+                </div>
+                <div class="exercise-list">
+                  ${exercises.map(ex => `
+                    <div style="font-size: 0.8rem; color: #999; margin: 2px 0;">
+                      • ${ex.name} ${ex.sets ? `${ex.sets}组` : ''} ${ex.reps ? `×${ex.reps}` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }
+        });
+      }
       
       return `
         <div class="preview-day" style="
@@ -5960,14 +6084,24 @@ function showPlanPreviewModal(plan) {
           background: rgba(255, 255, 255, 0.05);
           border-radius: 6px;
           border-left: 4px solid ${isRestDay ? '#666' : 'var(--rage-primary, #ff6b35)'};
-        ">
+          cursor: pointer;
+          transition: all 0.3s ease;
+        " onclick="toggleExerciseDetails(this)">
           <div class="day-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <strong>${dayName}</strong>
-            <span style="color: #a8a8a8; font-size: 0.9rem;">
-              ${isRestDay ? '休息日' : `${exerciseCount}个动作`}
-            </span>
+            <div>
+              <strong>${dayName}</strong>
+              ${bodyParts ? `<div style="color: #a8a8a8; font-size: 0.8rem; margin-top: 2px;">${Array.isArray(bodyParts) ? bodyParts.join(' + ') : bodyParts}</div>` : ''}
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: #a8a8a8; font-size: 0.9rem;">
+                ${isRestDay ? '休息日' : `${exerciseCount}个动作`}
+              </span>
+              ${exerciseCount > 0 ? '<i class="fas fa-chevron-down" style="color: #999; font-size: 0.8rem; transition: transform 0.3s ease;"></i>' : ''}
+            </div>
           </div>
-          ${dayData.type ? `<div style="color: #a8a8a8; font-size: 0.85rem; margin-top: 4px;">${dayData.type}</div>` : ''}
+          <div class="exercise-details" style="display: none; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+            ${exerciseDetails || '<div style="text-align: center; color: #999; padding: 10px;">暂无详细动作信息</div>'}
+          </div>
         </div>
       `;
     }).join('');
@@ -5982,11 +6116,12 @@ function showPlanPreviewModal(plan) {
         <div class="plan-meta" style="margin-bottom: 20px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 6px;">
           <div><strong>训练模式：</strong>${plan.mode}</div>
           <div><strong>计划周期：</strong>${plan.cycle_weeks}周</div>
-          <div><strong>创建时间：</strong>${new Date(plan.created_at).toLocaleDateString()}</div>
+          <div><strong>创建时间：</strong>${formatDateTime(plan.created_at)}</div>
+          <div><strong>更新时间：</strong>${formatDateTime(plan.updated_at)}</div>
           <div><strong>状态：</strong>${plan.is_active ? '已激活' : '未激活'}</div>
         </div>
         <div class="plan-schedule">
-          <h4 style="margin-bottom: 10px;">周安排</h4>
+          <h4 style="margin-bottom: 10px;">周安排 <span style="font-size: 0.7rem; color: #999; font-weight: normal;">(点击展开动作详情)</span></h4>
           ${scheduleHTML}
         </div>
       </div>

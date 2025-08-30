@@ -1828,7 +1828,7 @@ class FoodPhotoBindingHistory(models.Model):
 
 # MeeSomeone 人际档案系统模型
 
-class RelationshipTag(models.Model):
+class LegacyRelationshipTag(models.Model):
     """关系标签模型"""
     TAG_TYPE_CHOICES = [
         ('predefined', '预定义标签'),
@@ -1857,7 +1857,7 @@ class RelationshipTag(models.Model):
         self.save(update_fields=['usage_count'])
 
 
-class PersonProfile(models.Model):
+class LegacyPersonProfile(models.Model):
     """人物档案模型"""
     IMPORTANCE_CHOICES = [
         (1, '⭐'),
@@ -1881,7 +1881,7 @@ class PersonProfile(models.Model):
     avatar = models.ImageField(upload_to='lifegraph/avatars/', blank=True, null=True, verbose_name='头像')
     
     # 关系信息
-    relationship_tags = models.ManyToManyField(RelationshipTag, blank=True, verbose_name='关系标签')
+    relationship_tags = models.ManyToManyField(LegacyRelationshipTag, blank=True, verbose_name='关系标签')
     first_met_date = models.DateField(blank=True, null=True, verbose_name='认识日期')
     first_met_location = models.CharField(max_length=200, blank=True, null=True, verbose_name='认识场景')
     importance_level = models.IntegerField(choices=IMPORTANCE_CHOICES, default=3, verbose_name='重要程度')
@@ -1958,7 +1958,7 @@ class PersonProfile(models.Model):
         self.save(update_fields=['interaction_count', 'last_interaction_date'])
 
 
-class Interaction(models.Model):
+class LegacyInteraction(models.Model):
     """互动记录模型"""
     INTERACTION_TYPE_CHOICES = [
         ('meeting', '见面'),
@@ -1988,7 +1988,7 @@ class Interaction(models.Model):
     
     # 基础信息
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    person = models.ForeignKey(PersonProfile, on_delete=models.CASCADE, related_name='interactions', verbose_name='相关人物')
+    person = models.ForeignKey(LegacyPersonProfile, on_delete=models.CASCADE, related_name='interactions', verbose_name='相关人物')
     
     # 互动详情
     interaction_type = models.CharField(max_length=20, choices=INTERACTION_TYPE_CHOICES, verbose_name='互动类型')
@@ -2007,7 +2007,7 @@ class Interaction(models.Model):
     impression_notes = models.TextField(blank=True, null=True, verbose_name='印象/感受')
     
     # 参与人员
-    other_participants = models.ManyToManyField(PersonProfile, blank=True, related_name='group_interactions', verbose_name='其他参与者')
+    other_participants = models.ManyToManyField(LegacyPersonProfile, blank=True, related_name='group_interactions', verbose_name='其他参与者')
     
     # 附件
     photos = models.JSONField(default=list, verbose_name='相关照片')
@@ -2054,7 +2054,7 @@ class Interaction(models.Model):
         return ""
 
 
-class ImportantMoment(models.Model):
+class LegacyImportantMoment(models.Model):
     """重要时刻模型"""
     MOMENT_TYPE_CHOICES = [
         ('first_meeting', '初次见面'),
@@ -2072,8 +2072,8 @@ class ImportantMoment(models.Model):
     
     # 基础信息
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    person = models.ForeignKey(PersonProfile, on_delete=models.CASCADE, related_name='important_moments', verbose_name='相关人物')
-    related_interaction = models.OneToOneField(Interaction, on_delete=models.CASCADE, blank=True, null=True, verbose_name='关联互动记录')
+    person = models.ForeignKey(LegacyPersonProfile, on_delete=models.CASCADE, related_name='important_moments', verbose_name='相关人物')
+    related_interaction = models.OneToOneField(LegacyInteraction, on_delete=models.CASCADE, blank=True, null=True, verbose_name='关联互动记录')
     
     # 时刻详情
     moment_type = models.CharField(max_length=30, choices=MOMENT_TYPE_CHOICES, verbose_name='时刻类型')
@@ -2089,7 +2089,7 @@ class ImportantMoment(models.Model):
     documents = models.JSONField(default=list, verbose_name='文档')
     
     # 参与人员
-    other_participants = models.ManyToManyField(PersonProfile, blank=True, related_name='shared_moments', verbose_name='其他参与者')
+    other_participants = models.ManyToManyField(LegacyPersonProfile, blank=True, related_name='shared_moments', verbose_name='其他参与者')
     
     # 情感记录
     emotional_impact = models.IntegerField(choices=[(i, i) for i in range(1, 6)], default=3, verbose_name='情感影响程度')
@@ -2115,7 +2115,7 @@ class ImportantMoment(models.Model):
         return '⭐' * self.emotional_impact
 
 
-class RelationshipStatistics(models.Model):
+class LegacyRelationshipStatistics(models.Model):
     """人际关系统计模型"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='用户')
     
@@ -2151,9 +2151,9 @@ class RelationshipStatistics(models.Model):
         from collections import Counter
         
         # 获取用户的所有人物档案和互动记录
-        profiles = PersonProfile.objects.filter(user=self.user)
-        interactions = Interaction.objects.filter(user=self.user)
-        moments = ImportantMoment.objects.filter(user=self.user)
+        profiles = LegacyPersonProfile.objects.filter(user=self.user)
+        interactions = LegacyInteraction.objects.filter(user=self.user)
+        moments = LegacyImportantMoment.objects.filter(user=self.user)
         
         # 基础统计
         self.total_people = profiles.count()
@@ -2182,7 +2182,7 @@ class RelationshipStatistics(models.Model):
         self.save()
 
 
-class RelationshipReminder(models.Model):
+class LegacyRelationshipReminder(models.Model):
     """人际关系提醒模型"""
     REMINDER_TYPE_CHOICES = [
         ('birthday', '生日提醒'),
@@ -2200,7 +2200,7 @@ class RelationshipReminder(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
-    person = models.ForeignKey(PersonProfile, on_delete=models.CASCADE, related_name='reminders', verbose_name='相关人物')
+    person = models.ForeignKey(LegacyPersonProfile, on_delete=models.CASCADE, related_name='reminders', verbose_name='相关人物')
     
     reminder_type = models.CharField(max_length=20, choices=REMINDER_TYPE_CHOICES, verbose_name='提醒类型')
     title = models.CharField(max_length=200, verbose_name='提醒标题')

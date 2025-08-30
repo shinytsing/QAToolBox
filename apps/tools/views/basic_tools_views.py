@@ -181,110 +181,97 @@ def self_analysis_api(request):
     return JsonResponse({'success': False, 'error': '只支持POST请求'})
 
 
-@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
 def storyboard_api(request):
     """故事板API"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            story_type = data.get('story_type', '')
-            theme = data.get('theme', '')
-            characters = data.get('characters', [])
-            plot_points = data.get('plot_points', [])
-            
-            if not story_type or not theme:
-                return JsonResponse({
-                    'success': False,
-                    'error': '故事类型和主题不能为空'
-                })
-            
-            # 构建故事生成提示词
-            characters_text = '\n'.join([f"- {char}" for char in characters]) if characters else "默认角色"
-            plot_text = '\n'.join([f"- {point}" for point in plot_points]) if plot_points else "自由发展"
-            
-            prompt = f"""
-            作为一个专业的编剧和故事创作者，请基于以下信息创作一个精彩的故事：
+    try:
+        data = json.loads(request.body)
+        prompt = data.get('prompt', '')
+        
+        # DeepSeek API配置
+        api_key = os.getenv('DEEPSEEK_API_KEY')
+        if not api_key:
+            return JsonResponse({'error': 'API密钥未配置'}, status=500, content_type='application/json')
+        
+        # 构建系统提示词
+        system_prompt = """你是一位富有同理心和创造力的故事作家，专门创作治愈系故事。
 
-            故事类型：{story_type}
-            主题：{theme}
+你的任务是：
+1. 根据用户的描述创作温暖治愈的故事
+2. 故事要有情感共鸣和深度
+3. 语言优美，富有诗意和想象力
+4. 传递积极向上的价值观
+5. 结尾要有启发性和治愈感
+
+创作要求：
+- 故事长度控制在400-600字
+- 情节要引人入胜
+- 人物形象要生动
+- 情感表达要真实
+- 要有哲思和启发
+
+请根据用户的描述，创作一个独特而治愈的故事。"""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"请根据以下描述创作一个治愈故事：{prompt}"}
+        ]
+        
+        # 调用DeepSeek API
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+        
+        payload = {
+            'model': 'deepseek-chat',
+            'messages': messages,
+            'temperature': 0.8,
+            'max_tokens': 1000
+        }
+        
+        response = requests.post(
+            'https://api.deepseek.com/v1/chat/completions',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            story = result['choices'][0]['message']['content']
             
-            角色设定：
-            {characters_text}
-            
-            情节要点：
-            {plot_text}
-            
-            请创作一个包含以下要素的完整故事：
-            1. 引人入胜的开头
-            2. 清晰的角色发展
-            3. 扣人心弦的情节发展
-            4. 令人满意的结局
-            5. 深刻的主题表达
-            
-            请用生动、富有感染力的语言讲述这个故事，让读者能够身临其境。
-            """
-            
-            # 调用DeepSeek API生成故事
-            api_key = os.getenv('DEEPSEEK_API_KEY')
-            if not api_key:
-                return JsonResponse({
-                    'success': False,
-                    'error': '故事生成服务暂时不可用'
-                })
-            
-            headers = {
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
-            }
-            
-            payload = {
-                'messages': [
-                    {
-                        'role': 'user',
-                        'content': prompt
-                    }
-                ],
-                'model': 'deepseek-chat',
-                'max_tokens': 1500,
-                'temperature': 0.8
-            }
-            
-            response = requests.post(
-                'https://api.deepseek.com/v1/chat/completions',
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                story = result['choices'][0]['message']['content']
-                
-                return JsonResponse({
-                    'success': True,
-                    'story': story,
-                    'story_info': {
-                        'type': story_type,
-                        'theme': theme,
-                        'characters': characters,
-                        'plot_points': plot_points,
-                        'word_count': len(story.split()),
-                        'created_at': timezone.now().isoformat()
-                    }
-                })
-            else:
-                return JsonResponse({
-                    'success': False,
-                    'error': '故事生成服务暂时不可用，请稍后重试'
-                })
-                
-        except Exception as e:
             return JsonResponse({
-                'success': False,
-                'error': f'故事生成失败: {str(e)}'
-            })
-    
-    return JsonResponse({'success': False, 'error': '只支持POST请求'})
+                'success': True,
+                'story': story
+            }, content_type='application/json')
+        elif response.status_code == 402:
+            # API余额不足时返回示例故事
+            fallback_stories = [
+                f"基于您的描述「{prompt}」，让我为您创作一个治愈的故事：\n\n在一个安静的午后，小雨轻敲着窗台。李明坐在咖啡店的角落，手中捧着一杯温热的拿铁，思考着生活的意义。\n\n突然，一只小猫从雨中跑进了咖啡店，浑身湿漉漉的。店员想要赶走它，但李明轻声说道：「让它留下来吧，或许它也需要一个温暖的地方。」\n\n小猫似乎听懂了什么，安静地卧在李明脚边。此刻，李明意识到，生活中最美好的时光，往往来自于这些不期而遇的温柔瞬间。\n\n有时候，我们不需要寻找答案，只需要学会在当下找到属于自己的宁静与温暖。",
+                f"关于「{prompt}」的故事：\n\n夕阳西下时，老师傅在工作室里专注地雕刻着一块木头。每一刀都小心翼翼，每一划都充满敬意。\n\n年轻的学徒好奇地问：「师傅，为什么您对待每一块木头都如此认真？」\n\n老师傅停下手中的工作，温和地说：「因为每一块木头都有它的故事，我只是帮它找到最美的表达方式。」\n\n学徒恍然大悟，原来匠心不在于技巧的高超，而在于对每一件事物的尊重与热爱。\n\n生活也是如此，当我们用心对待每一个平凡的日子，就会发现其中蕴含的无限可能。",
+                f"以「{prompt}」为灵感的治愈故事：\n\n图书馆里，一位老奶奶每天都会来看书。她总是选择靠窗的位置，安静地翻阅着同一本诗集。\n\n管理员小王很好奇，终于有一天忍不住问道：「奶奶，您为什么总是看这本书呢？」\n\n老奶奶笑着说：「这是我已故老伴最喜欢的诗集。每次读它，就像是在和他对话一样。」\n\n小王的眼中泛起泪花，她明白了，有些书不只是书，有些阅读不只是阅读，而是一种特殊的陪伴方式。\n\n爱从不会因为离别而消失，它会以不同的形式继续温暖着我们。"
+            ]
+            
+            import random
+            story = random.choice(fallback_stories)
+            
+            return JsonResponse({
+                'success': True,
+                'story': story,
+                'fallback': True,
+                'message': 'AI服务暂时不可用，为您提供了精选的治愈故事'
+            }, content_type='application/json')
+        else:
+            return JsonResponse({
+                'error': f'API调用失败: {response.status_code}'
+            }, status=500, content_type='application/json')
+            
+    except Exception as e:
+        return JsonResponse({
+            'error': f'处理请求时出错: {str(e)}'
+        }, status=500)
 
 
 @csrf_exempt

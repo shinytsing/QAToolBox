@@ -58,9 +58,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         # 检查用户是否已登录
         if isinstance(self.scope['user'], AnonymousUser):
-            # 对于测试房间和shipbao房间，允许匿名用户连接
+            # 对于测试房间、shipbao房间和多人聊天室，允许匿名用户连接
             if (self.room_id.startswith('test-room-') or 
                 self.room_id.startswith('shipbao-') or
+                self.room_id in ['public-room', 'general', 'chat', 'random'] or
                 self.room_id == '0c38a502-25ad-47e7-9a37-15660a57d135' or
                 self.room_id == 'e3aee9e3-99e1-428b-8e09-fb6389db5bef'):
                 logger.info(f'Anonymous user connecting to test room {self.room_id}')
@@ -73,11 +74,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             if not await self.verify_token_and_access():
                 logger.warning(f'User access verification failed for room {self.room_id}')
-                # 对于测试和shipbao，暂时允许连接
+                                # 对于测试、shipbao和多人聊天室，暂时允许连接
                 if not (self.room_id.startswith('test-room-') or 
-                       self.room_id.startswith('shipbao-') or
-                       self.room_id == '0c38a502-25ad-47e7-9a37-15660a57d135' or
-                       self.room_id == 'e3aee9e3-99e1-428b-8e09-fb6389db5bef'):
+                        self.room_id.startswith('shipbao-') or
+                        self.room_id in ['public-room', 'general', 'chat', 'random'] or
+                        self.room_id == '0c38a502-25ad-47e7-9a37-15660a57d135' or
+                        self.room_id == 'e3aee9e3-99e1-428b-8e09-fb6389db5bef'):
                     await self.close()
                     return
         except Exception as e:

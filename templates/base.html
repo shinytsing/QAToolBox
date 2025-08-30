@@ -20,6 +20,138 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
+    <!-- 修复悬浮函数未定义的问题 -->
+    <script>
+        // 设置下拉菜单的悬浮功能
+        let globalSettingsDropdownTimer = null;
+        let globalMenuDropdownTimer = null;
+        
+        function showSettingsDropdown() {
+            console.log('🔧 showSettingsDropdown 被调用');
+            
+            // 清除隐藏定时器
+            if (globalSettingsDropdownTimer) {
+                clearTimeout(globalSettingsDropdownTimer);
+                globalSettingsDropdownTimer = null;
+            }
+            
+            const dropdownContent = document.getElementById('settingsDropdownContent');
+            if (!dropdownContent) {
+                console.error('❌ 设置下拉菜单元素未找到');
+                return;
+            }
+            
+            // 显示菜单
+            dropdownContent.style.display = 'block';
+            dropdownContent.style.opacity = '1';
+            dropdownContent.style.transform = 'scale(1) translateY(0)';
+            
+            console.log('✅ 设置菜单已显示');
+        }
+        
+        function hideSettingsDropdownDelayed() {
+            console.log('🔧 hideSettingsDropdownDelayed 被调用');
+            
+            // 设置延迟隐藏定时器
+            globalSettingsDropdownTimer = setTimeout(() => {
+                hideSettingsDropdown();
+            }, 300);
+        }
+        
+        function hideSettingsDropdown() {
+            console.log('🔧 hideSettingsDropdown 被调用');
+            
+            const dropdownContent = document.getElementById('settingsDropdownContent');
+            if (!dropdownContent) return;
+            
+            // 隐藏菜单
+            dropdownContent.style.display = 'none';
+            dropdownContent.style.opacity = '0';
+            dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
+            
+            console.log('✅ 设置菜单已隐藏');
+        }
+        
+        function showMenuDropdown() {
+            console.log('🔧 showMenuDropdown 被调用');
+            
+            // 清除隐藏定时器
+            if (globalMenuDropdownTimer) {
+                clearTimeout(globalMenuDropdownTimer);
+                globalMenuDropdownTimer = null;
+            }
+            
+            const dropdownContent = document.getElementById('menuDropdownContent');
+            if (!dropdownContent) {
+                console.error('❌ 菜单下拉菜单元素未找到');
+                return;
+            }
+            
+            // 显示菜单
+            dropdownContent.style.display = 'block';
+            dropdownContent.style.opacity = '1';
+            dropdownContent.style.transform = 'translateX(-50%) scale(1) translateY(0)';
+            
+            console.log('✅ 菜单已显示');
+        }
+        
+        function hideMenuDropdownDelayed() {
+            console.log('🔧 hideMenuDropdownDelayed 被调用');
+            
+            // 设置延迟隐藏定时器
+            globalMenuDropdownTimer = setTimeout(() => {
+                hideMenuDropdown();
+            }, 300);
+        }
+        
+        function hideMenuDropdown() {
+            console.log('🔧 hideMenuDropdown 被调用');
+            
+            const dropdownContent = document.getElementById('menuDropdownContent');
+            if (!dropdownContent) return;
+            
+            // 隐藏菜单
+            dropdownContent.style.display = 'none';
+            dropdownContent.style.opacity = '0';
+            dropdownContent.style.transform = 'translateX(-50%) scale(0.95) translateY(-10px)';
+            
+            console.log('✅ 菜单已隐藏');
+        }
+        
+        // 添加缺失的模态框关闭函数
+        function closeSettingsModal() {
+            console.log('❌ 关闭设置模态框');
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal) {
+                settingsModal.style.display = 'none';
+                if (settingsModal.parentNode) {
+                    settingsModal.parentNode.removeChild(settingsModal);
+                }
+            }
+        }
+        
+        function closeMenuModal() {
+            console.log('❌ 关闭菜单模态框');
+            const menuModal = document.getElementById('menuModal');
+            if (menuModal) {
+                menuModal.style.display = 'none';
+                if (menuModal.parentNode) {
+                    menuModal.parentNode.removeChild(menuModal);
+                }
+            }
+        }
+        
+        // 确保函数在全局作用域中可用
+        window.showSettingsDropdown = showSettingsDropdown;
+        window.hideSettingsDropdownDelayed = hideSettingsDropdownDelayed;
+        window.hideSettingsDropdown = hideSettingsDropdown;
+        window.showMenuDropdown = showMenuDropdown;
+        window.hideMenuDropdownDelayed = hideMenuDropdownDelayed;
+        window.hideMenuDropdown = hideMenuDropdown;
+        window.closeSettingsModal = closeSettingsModal;
+        window.closeMenuModal = closeMenuModal;
+    </script>
+    
     <!-- 本地字体回退方案，避免Google Fonts加载失败 -->
     <style>
         /* 字体回退方案 */
@@ -2128,16 +2260,35 @@
             <div class="button-shine" style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(52, 152, 219, 0.6), transparent); transform: rotate(45deg); transition: all 0.6s ease; opacity: 0;"></div>
         </div>
         
-        <!-- 设置按钮 -->
-        <div class="top-ui-item" onclick="showSettings()" style="color: white !important; cursor: pointer !important; padding: 15px !important; border-radius: 50% !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; background: transparent !important; border: none !important; box-shadow: none !important; position: relative !important; overflow: hidden !important;">
-            <i class="fas fa-cog" style="font-size: 1.8rem !important; position: relative; z-index: 2; text-shadow: 0 0 20px rgba(155, 89, 182, 0.8), 0 0 40px rgba(155, 89, 182, 0.6) !important; filter: drop-shadow(0 0 10px rgba(155, 89, 182, 0.8)) !important; transition: transform 0.3s ease;"></i>
-            <div class="button-shine" style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(155, 89, 182, 0.6), transparent); transform: rotate(45deg); transition: all 0.6s ease; opacity: 0;"></div>
-        </div>
+
         
         <!-- 菜单按钮 -->
-        <div class="top-ui-item" onclick="toggleMobileMenu()" style="color: white !important; cursor: pointer !important; padding: 15px !important; border-radius: 50% !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; background: transparent !important; border: none !important; box-shadow: none !important; position: relative !important; overflow: hidden !important;">
-            <i class="fas fa-bars" style="font-size: 1.8rem !important; position: relative; z-index: 2; text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6) !important; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)) !important;"></i>
-            <div class="button-shine" style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.6), transparent); transform: rotate(45deg); transition: all 0.6s ease; opacity: 0;"></div>
+        <div class="top-ui-menu-dropdown">
+            <div class="top-ui-item" onmouseenter="showMenuDropdown()" onmouseleave="hideMenuDropdownDelayed()" style="color: white !important; cursor: pointer !important; padding: 15px !important; border-radius: 50% !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; background: transparent !important; border: none !important; box-shadow: none !important; position: relative !important; overflow: hidden !important;">
+                <i class="fas fa-bars" style="font-size: 1.8rem !important; position: relative; z-index: 2; text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6) !important; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)) !important;"></i>
+                <div class="button-shine" style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.6), transparent); transform: rotate(45deg); transition: all 0.6s ease; opacity: 0;"></div>
+            </div>
+            <div class="top-ui-menu-dropdown-content" id="menuDropdownContent" onmouseenter="showMenuDropdown()" onmouseleave="hideMenuDropdownDelayed()" style="display: none; position: absolute; left: 50%; top: 100%; transform: translateX(-50%) scale(0.95) translateY(-10px); background: linear-gradient(135deg, rgba(52, 152, 219, 0.95) 0%, rgba(155, 89, 182, 0.95) 50%, rgba(74, 144, 226, 0.95) 100%); backdrop-filter: blur(20px); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 15px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(52, 152, 219, 0.3); min-width: 200px; z-index: 10000; margin-top: 10px; padding: 15px 0; transform-origin: top center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0;">
+                <div style="padding: 0 20px 15px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: 600; color: white; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);">🧭 导航菜单</div>
+                </div>
+                <a href="{% url 'home' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-home" style="width: 16px; text-align: center; color: #2ecc71;"></i>
+                    <span>首页</span>
+                </a>
+                <a href="/tools/" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-tools" style="width: 16px; text-align: center; color: #f39c12;"></i>
+                    <span>工具集</span>
+                </a>
+                <a href="/users/profile/" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-user" style="width: 16px; text-align: center; color: #3498db;"></i>
+                    <span>个人中心</span>
+                </a>
+                <a href="/tools/chat/" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-comments" style="width: 16px; text-align: center; color: #e74c3c;"></i>
+                    <span>聊天室</span>
+                </a>
+            </div>
         </div>
         
         <!-- 隐藏按钮 -->
@@ -2147,13 +2298,13 @@
         </div>
         {% if user.is_authenticated %}
         <div class="top-ui-user-dropdown">
-            <div class="top-ui-user" onclick="toggleUserDropdown()" style="display: flex !important; align-items: center !important; gap: 12px !important; color: white !important; cursor: pointer !important; padding: 10px 15px !important; border-radius: 25px !important; background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; backdrop-filter: blur(10px) !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; position: relative !important; overflow: hidden !important;">
+            <div class="top-ui-user" onmouseenter="showUserDropdown()" onmouseleave="hideUserDropdownDelayed()" style="display: flex !important; align-items: center !important; gap: 12px !important; color: white !important; cursor: pointer !important; padding: 10px 15px !important; border-radius: 25px !important; background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; backdrop-filter: blur(10px) !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; position: relative !important; overflow: hidden !important;">
                 <img class="top-ui-avatar" src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.svg' %}{% endif %}" alt="用户头像" style="width: 35px !important; height: 35px !important; border-radius: 50% !important; border: 2px solid rgba(255, 255, 255, 0.3) !important; box-shadow: 0 0 15px rgba(255, 255, 255, 0.3) !important; transition: all 0.3s ease !important;">
                 <span class="top-ui-username" style="font-weight: 600 !important; font-size: 0.95rem !important; text-shadow: 0 0 10px rgba(78, 205, 196, 0.8) !important; color: #4ecdc4 !important; background: linear-gradient(45deg, #4ecdc4, #45b7d1, #4ecdc4) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">{{ user.username }}</span>
                 <i class="fas fa-chevron-down" style="margin-left: 5px; font-size: 14px; transition: transform 0.3s ease; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);"></i>
                 <div class="user-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); transition: left 0.5s ease; opacity: 0;"></div>
             </div>
-            <div class="top-ui-user-dropdown-content" id="userDropdownContent" style="display: none; position: absolute; right: 0; top: 100%; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(26, 26, 26, 0.95) 50%, rgba(45, 45, 45, 0.95) 100%); backdrop-filter: blur(20px); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 15px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.1); min-width: 220px; z-index: 10000; margin-top: 10px; padding: 15px 0; transform-origin: top right; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: scale(1) translateY(0);">
+            <div class="top-ui-user-dropdown-content" id="userDropdownContent" onmouseenter="showUserDropdown()" onmouseleave="hideUserDropdownDelayed()" style="display: none; position: absolute; right: 0; top: 100%; background: linear-gradient(135deg, rgba(10, 10, 10, 0.95) 0%, rgba(26, 26, 26, 0.95) 50%, rgba(45, 45, 45, 0.95) 100%); backdrop-filter: blur(20px); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 15px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.1); min-width: 280px; max-height: 80vh; overflow-y: auto; z-index: 10000; margin-top: 10px; padding: 15px 0; transform-origin: top right; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: scale(0.95) translateY(-10px);">
                 <div style="padding: 0 20px 15px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px;">
                     <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 5px;">欢迎回来</div>
                     <div style="font-size: 1.1rem; font-weight: 600; color: white; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);">{{ user.username }}</div>
@@ -2168,15 +2319,85 @@
                     <span>编辑资料</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(69, 183, 209, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
                 </a>
-                <a href="#" onclick="showSettings(); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
-                    <i class="fas fa-cog" style="width: 16px; text-align: center; color: #f39c12;"></i>
-                    <span>设置</span>
+                <!-- 🧭 快速导航区 -->
+                <div style="padding: 0 20px 10px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px;">
+                    <div style="font-size: 0.8rem; color: #4ecdc4; margin-bottom: 8px; text-align: center; font-weight: 600;">
+                        <i class="fas fa-compass" style="margin-right: 6px;"></i>快速导航
+                    </div>
+                </div>
+                <a href="{% url 'home' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-home" style="width: 16px; text-align: center; color: #2ecc71;"></i>
+                    <span>首页</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(46, 204, 113, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="#" onclick="goToCurrentModeTools(); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-tools" style="width: 16px; text-align: center; color: #f39c12;"></i>
+                    <span>工具集</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(243, 156, 18, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
                 </a>
-                <a href="#" onclick="showSuggestions(); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
-                    <i class="fas fa-comment-dots" style="width: 16px; text-align: center; color: #e74c3c;"></i>
-                    <span>我的建议</span>
+                <a href="/tools/chat/" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-comments" style="width: 16px; text-align: center; color: #e74c3c;"></i>
+                    <span>聊天室</span>
                     <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="/tools/heart_link/" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-heart" style="width: 16px; text-align: center; color: #e91e63;"></i>
+                    <span>心链匹配</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(233, 30, 99, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="#" onclick="showSuggestions(); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-lightbulb" style="width: 16px; text-align: center; color: #ffc107;"></i>
+                    <span>我的建议</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 193, 7, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                
+                <!-- 🎨 主题模式区 -->
+                <div style="padding: 10px 20px 10px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                    <div style="font-size: 0.8rem; color: #ff6b6b; margin-bottom: 8px; text-align: center; font-weight: 600;">
+                        <i class="fas fa-palette" style="margin-right: 6px;"></i>主题模式
+                    </div>
+                </div>
+                <a href="#" onclick="switchTheme('life'); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-seedling" style="width: 16px; text-align: center; color: #27ae60;"></i>
+                    <span>生活模式</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(39, 174, 96, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="#" onclick="switchTheme('work'); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-laptop-code" style="width: 16px; text-align: center; color: #3498db;"></i>
+                    <span>极客模式</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="#" onclick="switchTheme('training'); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-dumbbell" style="width: 16px; text-align: center; color: #e74c3c;"></i>
+                    <span>狂暴模式</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(231, 76, 60, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="#" onclick="switchTheme('emo'); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-heart-broken" style="width: 16px; text-align: center; color: #9b59b6;"></i>
+                    <span>Emo模式</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(155, 89, 182, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                
+                <!-- 📚 帮助与信息区 -->
+                <div style="padding: 10px 20px 10px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px;">
+                    <div style="font-size: 0.8rem; color: #20c997; margin-bottom: 8px; text-align: center; font-weight: 600;">
+                        <i class="fas fa-info-circle" style="margin-right: 6px;"></i>帮助与信息
+                    </div>
+                </div>
+                <a href="{% url 'help_page' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-question-circle" style="width: 16px; text-align: center; color: #17a2b8;"></i>
+                    <span>帮助中心</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(23, 162, 184, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="{% url 'version_history' %}" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-history" style="width: 16px; text-align: center; color: #6c757d;"></i>
+                    <span>版本记录</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(108, 117, 125, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
+                </a>
+                <a href="#" onclick="showHiddenInfo(); return false;" class="top-ui-dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #ffffff; text-decoration: none; transition: all 0.3s ease; border-radius: 8px; margin: 0 10px 5px 10px; position: relative; overflow: hidden;">
+                    <i class="fas fa-eye" style="width: 16px; text-align: center; color: #fd7e14;"></i>
+                    <span>关于系统</span>
+                    <div class="item-hover-effect" style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(253, 126, 20, 0.1), transparent); transition: left 0.3s ease; opacity: 0;"></div>
                 </a>
                 {% if user.is_staff or user.is_superuser %}
                 <div style="padding: 0 20px; margin: 10px 0;">
@@ -2272,63 +2493,111 @@
                                 <span id="username-display" style="color: #ffffff !important; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">{{ user.username }}</span>
                                 <span id="theme-badge" class="theme-badge">极客</span>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 50%, rgba(240, 147, 251, 0.95) 100%); border: 1px solid rgba(255,255,255,0.2); min-width: 220px; box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(102, 126, 234, 0.3); border-radius: 12px; backdrop-filter: blur(15px); margin-top: 8px;">
-                                <h6 class="dropdown-header" style="color: #fff; border-bottom: 1px solid #333; font-weight: bold; padding: 8px 16px;">账户设置</h6>
-                                <a class="dropdown-item" href="#" id="edit-avatar-btn" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-user-circle" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 编辑头像
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 50%, rgba(240, 147, 251, 0.95) 100%); border: 1px solid rgba(255,255,255,0.2); min-width: 280px; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(102, 126, 234, 0.3); border-radius: 12px; backdrop-filter: blur(15px); margin-top: 8px;">
+                                
+                                <!-- 🧭 快速导航区 -->
+                                <h6 class="dropdown-header" style="color: #4ecdc4; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">
+                                    <i class="fas fa-compass" style="margin-right: 8px;"></i>快速导航
+                                </h6>
+                                <a class="dropdown-item" href="{% url 'home' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-home" style="color: #2ecc71; margin-right: 8px; width: 16px; text-align: center;"></i> 首页
                                 </a>
+                                <a class="dropdown-item" href="#" onclick="goToCurrentModeTools(); return false;" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-tools" style="color: #f39c12; margin-right: 8px; width: 16px; text-align: center;"></i> 工具集
+                                </a>
+                                <a class="dropdown-item" href="/tools/chat/" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-comments" style="color: #e74c3c; margin-right: 8px; width: 16px; text-align: center;"></i> 聊天室
+                                </a>
+                                <a class="dropdown-item" href="/tools/heart_link/" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-heart" style="color: #e91e63; margin-right: 8px; width: 16px; text-align: center;"></i> 心链匹配
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="showSuggestions(); return false;" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-lightbulb" style="color: #ffc107; margin-right: 8px; width: 16px; text-align: center;"></i> 我的建议
+                                </a>
+                                
+                                <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
+                                
+                                <!-- 👤 账户设置区 -->
+                                <h6 class="dropdown-header" style="color: #667eea; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">
+                                    <i class="fas fa-user-cog" style="margin-right: 8px;"></i>账户设置
+                                </h6>
                                 <a class="dropdown-item" href="{% url 'users:profile' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-user-edit" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 个人资料
+                                    <i class="fas fa-user-edit" style="color: #4ecdc4; margin-right: 8px; width: 16px; text-align: center;"></i> 个人资料
                                 </a>
-                                <a class="dropdown-item" href="{% url 'version_history' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-history" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 版本迭代记录
-                                </a>
-                                <a class="dropdown-item" href="{% url 'help_page' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-question-circle" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 帮助中心
+                                <a class="dropdown-item" href="#" id="edit-avatar-btn" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-user-circle" style="color: #45b7d1; margin-right: 8px; width: 16px; text-align: center;"></i> 编辑头像
                                 </a>
                                 <a class="dropdown-item" href="#" onclick="openShareFromMenu(); return false;" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-share-alt" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 分享当前页
+                                    <i class="fas fa-share-alt" style="color: #17a2b8; margin-right: 8px; width: 16px; text-align: center;"></i> 分享当前页
                                 </a>
-                                 <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
-                                <h6 class="dropdown-header" style="color: #667eea; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">界面模式</h6>
-
-
-                            <div class="dropdown-item" style="color: rgba(255,255,255,0.9); font-size: 0.75rem; padding: 8px 16px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-style: italic;">
-                                <i class="fas fa-cog" style="margin-right: 6px;"></i> 更多设置: 右上角齿轮按钮
-                            </div>
+                                
+                                <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
+                                
+                                <!-- 🎨 界面模式区 -->
+                                <h6 class="dropdown-header" style="color: #ff6b6b; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">
+                                    <i class="fas fa-palette" style="margin-right: 8px;"></i>界面模式
+                                </h6>
                                 <a class="dropdown-item theme-switch" href="#" data-mode="life" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-palette" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 生活模式
+                                    <i class="fas fa-seedling" style="color: #27ae60; margin-right: 8px; width: 16px; text-align: center;"></i> 生活模式
                                 </a>
                                 <a class="dropdown-item theme-switch" href="#" data-mode="work" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-laptop-code" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 极客模式
+                                    <i class="fas fa-laptop-code" style="color: #3498db; margin-right: 8px; width: 16px; text-align: center;"></i> 极客模式
                                 </a>
                                 <a class="dropdown-item theme-switch" href="#" data-mode="training" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-dumbbell" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 狂暴模式
+                                    <i class="fas fa-dumbbell" style="color: #e74c3c; margin-right: 8px; width: 16px; text-align: center;"></i> 狂暴模式
                                 </a>
                                 <a class="dropdown-item theme-switch" href="#" data-mode="emo" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                    <i class="fas fa-heart-broken" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> Emo模式
+                                    <i class="fas fa-heart-broken" style="color: #9b59b6; margin-right: 8px; width: 16px; text-align: center;"></i> Emo模式
+                                </a>
+                                
+                                <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
+                                
+                                <!-- 📚 帮助与信息区 -->
+                                <h6 class="dropdown-header" style="color: #20c997; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">
+                                    <i class="fas fa-info-circle" style="margin-right: 8px;"></i>帮助与信息
+                                </h6>
+                                <a class="dropdown-item" href="{% url 'help_page' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-question-circle" style="color: #17a2b8; margin-right: 8px; width: 16px; text-align: center;"></i> 帮助中心
+                                </a>
+                                <a class="dropdown-item" href="{% url 'version_history' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-history" style="color: #6c757d; margin-right: 8px; width: 16px; text-align: center;"></i> 版本迭代记录
+                                </a>
+                                <a class="dropdown-item" href="#" onclick="showHiddenInfo(); return false;" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
+                                    <i class="fas fa-eye" style="color: #fd7e14; margin-right: 8px; width: 16px; text-align: center;"></i> 关于系统
                                 </a>
 
                                 {% if user.role.is_admin %}
                                     <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
-                                    <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">快速管理</h6>
+                                    <!-- 🔑 管理员功能区 -->
+                                    <h6 class="dropdown-header" style="color: #FFD700; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; padding: 10px 16px; font-size: 0.85rem;">
+                                        <i class="fas fa-crown" style="margin-right: 8px;"></i>管理员功能
+                                    </h6>
                                     <a class="dropdown-item" href="{% url 'content:admin_dashboard' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                        <i class="fas fa-tachometer-alt" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 仪表板
+                                        <i class="fas fa-tachometer-alt" style="color: #28a745; margin-right: 8px; width: 16px; text-align: center;"></i> 仪表板
                                     </a>
                                     <a class="dropdown-item" href="{% url 'content:admin_announcements' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                        <i class="fas fa-bullhorn" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 公告管理
+                                        <i class="fas fa-bullhorn" style="color: #ffc107; margin-right: 8px; width: 16px; text-align: center;"></i> 公告管理
                                     </a>
                                     <a class="dropdown-item" href="{% url 'content:admin_suggestions' %}" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                        <i class="fas fa-lightbulb" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 建议管理
+                                        <i class="fas fa-lightbulb" style="color: #fd7e14; margin-right: 8px; width: 16px; text-align: center;"></i> 建议管理
                                     </a>
                                     <a class="dropdown-item" href="/tools/food_photo_binding/" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                        <i class="fas fa-link" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 食物照片绑定
+                                        <i class="fas fa-link" style="color: #6f42c1; margin-right: 8px; width: 16px; text-align: center;"></i> 食物照片绑定
                                     </a>
                                     <a class="dropdown-item" href="/tools/food_image_correction/" style="color: #fff; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px;">
-                                        <i class="fas fa-camera-retro" style="color: #ffffff; margin-right: 8px; width: 16px; text-align: center;"></i> 食物图片矫正
+                                        <i class="fas fa-camera-retro" style="color: #e83e8c; margin-right: 8px; width: 16px; text-align: center;"></i> 食物图片矫正
                                     </a>
                                 {% endif %}
-                                <a class="dropdown-item logout-btn" href="{% url 'users:logout' %}" onclick="stopMedia();" style="color: #ff6b6b; padding: 10px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 2px 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                
+                                <div class="dropdown-divider" style="border-color: rgba(255,255,255,0.1); margin: 8px 12px;"></div>
+                                
+                                <!-- 💡 设置提示 -->
+                                <div class="dropdown-item" style="color: rgba(255,255,255,0.8); font-size: 0.75rem; padding: 8px 16px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-style: italic; background: rgba(255,255,255,0.05);">
+                                    <i class="fas fa-cog" style="margin-right: 6px; color: #ffc107;"></i> 更多设置请访问右上角齿轮按钮
+                                </div>
+                                
+                                <!-- 🚪 登出 -->
+                                <a class="dropdown-item logout-btn" href="{% url 'users:logout' %}" onclick="stopMedia();" style="color: #ff6b6b; padding: 12px 16px; transition: all 0.3s ease; border-radius: 6px; margin: 8px 8px 4px 8px; border-top: 2px solid rgba(255,255,255,0.1); background: rgba(255, 107, 107, 0.1);">
                                     <i class="fas fa-sign-out-alt" style="color: #ff6b6b; margin-right: 8px; width: 16px; text-align: center;"></i> <span data-translate="登出">登出</span>
                                 </a>
                             </div>
@@ -3085,67 +3354,104 @@
         }
     }
     
-    // 切换用户下拉菜单
-    function toggleUserDropdown() {
+    // 存储隐藏定时器
+    let hideDropdownTimer = null;
+    
+    // 显示用户下拉菜单
+    function showUserDropdown() {
+        console.log('🔧 showUserDropdown 被调用');
+        
+        // 清除隐藏定时器
+        if (hideDropdownTimer) {
+            clearTimeout(hideDropdownTimer);
+            hideDropdownTimer = null;
+            console.log('✅ 已清除隐藏定时器');
+        }
+        
         const dropdownContent = document.getElementById('userDropdownContent');
         const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
+        
+        if (!dropdownContent) {
+            console.error('❌ 用户下拉菜单元素未找到');
+            return;
+        }
+        
+        console.log('💡 正在显示菜单');
+        
+        // 显示菜单
+        dropdownContent.style.display = 'block';
+        dropdownContent.style.opacity = '1';
+        dropdownContent.style.transform = 'scale(1) translateY(0)';
+        dropdownContent.classList.add('show');
+        
+        if (chevronIcon) {
+            chevronIcon.style.transform = 'rotate(180deg)';
+        }
+        
+        console.log('✅ 菜单已显示');
+    }
+    
+    // 延迟隐藏用户下拉菜单
+    function hideUserDropdownDelayed() {
+        console.log('🔧 hideUserDropdownDelayed 被调用');
+        
+        // 设置延迟隐藏定时器
+        hideDropdownTimer = setTimeout(() => {
+            hideUserDropdown();
+        }, 300); // 300ms延迟，给用户时间移动鼠标
+        
+        console.log('⏰ 已设置300ms延迟隐藏定时器');
+    }
+    
+    // 立即隐藏用户下拉菜单
+    function hideUserDropdown() {
+        console.log('🔧 hideUserDropdown 被调用');
+        
+        const dropdownContent = document.getElementById('userDropdownContent');
+        const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
+        
+        if (!dropdownContent) {
+            console.error('❌ 用户下拉菜单元素未找到');
+            return;
+        }
+        
+        console.log('💡 正在隐藏菜单');
+        
+        // 隐藏菜单
+        dropdownContent.style.display = 'none';
+        dropdownContent.style.opacity = '0';
+        dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
+        dropdownContent.classList.remove('show');
+        
+        if (chevronIcon) {
+            chevronIcon.style.transform = 'rotate(0deg)';
+        }
+        
+        console.log('✅ 菜单已隐藏');
+    }
+    
+    // 保留原来的切换函数用于调试
+    function toggleUserDropdown() {
+        const dropdownContent = document.getElementById('userDropdownContent');
         
         if (!dropdownContent) {
             console.error('用户下拉菜单元素未找到');
             return;
         }
         
-        // 检查当前显示状态 - 修复逻辑
-        const isVisible = dropdownContent.style.display === 'block' || 
-                         dropdownContent.style.opacity === '1' ||
-                         dropdownContent.classList.contains('show');
-        
-        console.log('当前菜单状态:', {
-            display: dropdownContent.style.display,
-            opacity: dropdownContent.style.opacity,
-            isVisible: isVisible
-        });
+        const isVisible = dropdownContent.style.display === 'block' && 
+                         dropdownContent.style.opacity !== '0' &&
+                         !dropdownContent.classList.contains('hidden');
         
         if (isVisible) {
-            // 隐藏菜单
-            dropdownContent.style.display = 'none';
-            dropdownContent.style.opacity = '0';
-            dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
-            dropdownContent.classList.remove('show');
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(0deg)';
-            }
-            console.log('✅ 菜单已隐藏');
+            hideUserDropdown();
         } else {
-            // 显示菜单
-            dropdownContent.style.display = 'block';
-            dropdownContent.style.opacity = '1';
-            dropdownContent.style.transform = 'scale(1) translateY(0)';
-            dropdownContent.classList.add('show');
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(180deg)';
-            }
-            console.log('✅ 菜单已显示');
+            showUserDropdown();
         }
-        
-        console.log('用户下拉菜单已切换:', isVisible ? '隐藏' : '显示');
     }
     
-    // 点击其他地方关闭下拉菜单
-    document.addEventListener('click', function(event) {
-        const userDropdown = document.querySelector('.top-ui-user-dropdown');
-        const dropdownContent = document.getElementById('userDropdownContent');
-        
-        if (userDropdown && !userDropdown.contains(event.target)) {
-            if (dropdownContent && dropdownContent.style.display === 'block') {
-                dropdownContent.style.display = 'none';
-            }
-            const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
-            if (chevronIcon) {
-                chevronIcon.style.transform = 'rotate(0deg)';
-            }
-        }
-    });
+    // 由于现在使用悬浮触发，不再需要点击事件监听器
+    // 点击其他地方关闭下拉菜单的功能已被悬浮触发机制取代
     
     // 更新按钮颜色
     function updateButtonColors(colors) {
@@ -3295,7 +3601,7 @@
                         <h4 style="color: white; margin-bottom: 20px; font-size: 18px; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
                             <i class="fas fa-link" style="margin-right: 8px;"></i> 更多链接
                         </h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                             <a href="https://github.com/shinytsing/QAToolbox" target="_blank" 
                                style="display: flex; align-items: center; padding: 15px; background: linear-gradient(135deg, #333, #555); color: white; text-decoration: none; border-radius: 12px; transition: all 0.3s ease; font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
                                 <i class="fab fa-github" style="margin-right: 10px; font-size: 20px;"></i>
@@ -3305,6 +3611,11 @@
                                style="display: flex; align-items: center; padding: 15px; background: linear-gradient(135deg, #ff2442, #ff6b6b); color: white; text-decoration: none; border-radius: 12px; transition: all 0.3s ease; font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 36, 66, 0.3);" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
                                 <i class="fab fa-music" style="margin-right: 10px; font-size: 20px;"></i>
                                 网易云音乐
+                            </a>
+                            <a href="https://humanbenchmark.com/dashboard" target="_blank" 
+                               style="display: flex; align-items: center; padding: 15px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; text-decoration: none; border-radius: 12px; transition: all 0.3s ease; font-size: 14px; font-weight: bold; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <i class="fas fa-brain" style="margin-right: 10px; font-size: 20px;"></i>
+                                Human Benchmark
                             </a>
                         </div>
                     </div>
@@ -6684,6 +6995,40 @@
             }
         }
         
+        // 切换移动菜单
+        function toggleMobileMenu() {
+            console.log('📱 toggleMobileMenu 被调用');
+            const menuModal = document.getElementById('menuModal');
+            if (menuModal) {
+                menuModal.style.display = 'block';
+                console.log('✅ 菜单已显示');
+            } else {
+                // 如果菜单模态框不存在，创建一个
+                console.log('🔄 创建菜单面板...');
+                createMenuModal();
+            }
+        }
+        
+        // 关闭设置模态框
+        function closeSettingsModal() {
+            console.log('❌ 关闭设置面板');
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal) {
+                settingsModal.style.display = 'none';
+            }
+        }
+        
+        // 关闭菜单模态框
+        function closeMenuModal() {
+            console.log('❌ 关闭菜单面板');
+            const menuModal = document.getElementById('menuModal');
+            if (menuModal) {
+                menuModal.style.display = 'none';
+            }
+        }
+        
+                    // 悬浮下拉菜单函数已在页面头部定义
+        
         // 这些函数现在在 top_ui_functions.js 中定义
     
     // 创建设置模态框
@@ -6856,15 +7201,6 @@
     
     // 点击其他地方关闭下拉菜单和模态框
     document.addEventListener('click', function(event) {
-        const userDropdown = document.querySelector('.top-ui-user-dropdown');
-        const dropdownContent = document.getElementById('userDropdownContent');
-        
-        if (userDropdown && dropdownContent) {
-            if (!userDropdown.contains(event.target)) {
-                dropdownContent.classList.remove('show');
-            }
-        }
-        
         // 关闭设置模态框
         const settingsModal = document.getElementById('settingsModal');
         if (settingsModal && event.target === settingsModal) {
@@ -7007,17 +7343,8 @@
         console.log('🔧 页面初始化开始');
         
         // 添加点击外部关闭菜单的功能
-        document.addEventListener('click', function(event) {
-            const dropdownContent = document.getElementById('userDropdownContent');
-            const userButton = document.querySelector('.top-ui-user');
-            
-            if (dropdownContent && userButton) {
-                // 如果点击的不是用户按钮或其子元素，且菜单是显示的，则关闭菜单
-                if (!userButton.contains(event.target) && 
-                    dropdownContent.style.display === 'block') {
-                    toggleUserDropdown();
-                }
-            }
+        // 由于现在使用悬浮触发，不再需要这个点击事件监听器
+        // 原来的点击关闭功能已被悬浮机制取代
         });
         setTimeout(initTopUIControl, 100);
         
@@ -7139,9 +7466,9 @@
         }
         
         // 检查当前显示状态
-        const isVisible = dropdownContent.style.display === 'block' || 
-                         dropdownContent.style.opacity === '1' ||
-                         dropdownContent.classList.contains('show');
+        const isVisible = dropdownContent.style.display === 'block' && 
+                         dropdownContent.style.opacity !== '0' &&
+                         !dropdownContent.classList.contains('hidden');
         
         console.log('当前菜单状态:', {
             display: dropdownContent.style.display,

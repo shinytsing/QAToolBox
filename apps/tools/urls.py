@@ -107,7 +107,8 @@ from .views.food_randomizer_views import (
 from .views.meetsomeone_views import (
     get_dashboard_stats_api, get_relationship_tags_api, get_person_profiles_api, 
     create_person_profile_api, get_interactions_api, create_interaction_api, 
-    create_important_moment_api, get_timeline_data_api, get_graph_data_api
+    create_important_moment_api, get_timeline_data_api, get_graph_data_api,
+    meetsomeone_dashboard_view, meetsomeone_timeline_view, meetsomeone_graph_view
 )
 
 # 从食物图片视图导入
@@ -125,15 +126,14 @@ from .views.food_image_views import (
 from .legacy_views import (
     video_chat_view, multi_video_chat_view, multi_video_test_view, 
     douyin_analyzer, triple_awakening_dashboard, copilot_page,
-    chat_room_error_view, meetsomeone_dashboard_view, check_video_room_status_api,
-    tarot_reading_view, meetsomeone_timeline_view, 
-    meetsomeone_graph_view, food_randomizer, food_image_recognition_view,
+    chat_room_error_view, check_video_room_status_api,
+    tarot_reading_view, food_randomizer,
     audio_converter_view, audio_playback_test, shipbao_home, shipbao_publish, shipbao_detail,
     shipbao_transactions, shipbao_chat, buddy_home, buddy_create,
     buddy_detail, buddy_manage, buddy_chat, feature_recommendations_api,
     feature_list_api, recommendation_stats_api, resolve_url_api,
     get_checkin_calendar_api, start_food_randomization_api,
-    pause_food_randomization_api, rate_food_api, food_image_recognition_api,
+    pause_food_randomization_api, rate_food_api,
     audio_converter_api, user_generated_travel_guide_api,
     user_generated_travel_guide_detail_api, user_generated_travel_guide_download_api,
     user_generated_travel_guide_use_api, user_generated_travel_guide_upload_attachment_api,
@@ -198,8 +198,9 @@ from .views.simple_diary_views import (
 )
 
 # 从聊天相关视图导入 - 只导入heart_link避免其他导入问题
-from .legacy_views import heart_link, heart_link_chat, heart_link_test_view
+from .legacy_views import heart_link, heart_link_chat, heart_link_test_view, chat_entrance_view, chat_enhanced, chat_debug_view, active_chat_rooms_view
 from .views.chat_views import download_chat_file
+from .views.multi_chat_views import multi_chat_room, create_chat_room, list_active_rooms
 
 # 从ZIP相关视图导入
 from .views.zip_views import (
@@ -421,10 +422,11 @@ urlpatterns = [
     path('heart_link/test/', heart_link_test_view, name='heart_link_test'),
     # path('click-test/', click_test_view, name='click_test'), # 点击测试页面（无需登录）
     path('heart_link/chat/<str:room_id>/', heart_link_chat, name='heart_link_chat'),
-    # path('chat/enhanced/<str:room_id>/', chat_enhanced, name='chat_enhanced'),
-    # path('chat/debug/<str:room_id>/', chat_debug_view, name='chat_debug'), # 聊天调试页面
-    # path('chat/', chat_entrance_view, name='chat_entrance'), # 聊天入口页面
-    # path('chat/active_rooms/', active_chat_rooms_view, name='active_chat_rooms'), # 活跃聊天室页面
+    path('chat/', chat_entrance_view, name='chat_entrance'), # 聊天入口页面
+    path('chat/room/<str:room_id>/', multi_chat_room, name='multi_chat_room'), # 多人聊天室
+    path('chat/enhanced/<str:room_id>/', chat_enhanced, name='chat_enhanced'),
+    path('chat/debug/<str:room_id>/', chat_debug_view, name='chat_debug'), # 聊天调试页面
+    path('chat/active_rooms/', active_chat_rooms_view, name='active_chat_rooms'), # 活跃聊天室页面
     path('number-match/', number_match_view, name='number_match'), # 数字匹配页面
     path('video-chat/<str:room_id>/', video_chat_view, name='video_chat'),
     path('multi-video-chat/<str:room_id>/', multi_video_chat_view, name='multi_video_chat'), # 多人视频聊天页面
@@ -445,7 +447,7 @@ urlpatterns = [
     path('vanity_todo_list/', vanity_todo_list, name='vanity_todo_list'),
     path('travel_guide/', travel_guide, name='travel_guide'),
     path('food_randomizer/', food_randomizer, name='food_randomizer'),
-    path('food_image_recognition/', food_image_recognition_view, name='food_image_recognition'),
+
     path('food_photo_binding/', food_photo_binding_view, name='food_photo_binding'),
     
     # 音频转换器
@@ -597,6 +599,10 @@ urlpatterns = [
     path('api/heart_link/status/', check_heart_link_status_api, name='check_heart_link_status_api'),
     path('api/heart_link/cleanup/', cleanup_heart_link_api, name='cleanup_heart_link_api'),
 
+    # 多人聊天相关API路由
+    path('api/chat/create-room/', create_chat_room, name='create_chat_room_api'),
+    path('api/chat/active-rooms/', list_active_rooms, name='list_active_rooms_api'),
+    
     # 聊天相关API路由
     path('api/chat/<str:room_id>/messages/', get_chat_messages_api, name='get_chat_messages_api'),
     path('api/chat/<str:room_id>/send/', send_message_api, name='send_message_api'),
@@ -766,7 +772,7 @@ urlpatterns = [
     path('api/food-randomizer/history/', food_randomizer_history_api, name='food_randomizer_history_api'),
     
     # 食品图像识别API
-    path('api/food-image-recognition/', food_image_recognition_api, name='food_image_recognition_api'),
+
     
     # 音频转换器API
     path('api/audio_converter/', audio_converter_api, name='audio_converter_api'),

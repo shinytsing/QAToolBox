@@ -1336,6 +1336,27 @@
     padding: 10px;
     margin-bottom: 8px;
     transition: all 0.3s ease;
+    cursor: move;
+  }
+  
+  .exercise-card[draggable="true"]:hover {
+    cursor: grab;
+  }
+  
+  .exercise-card[draggable="true"]:active {
+    cursor: grabbing;
+  }
+  
+  .exercise-card.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg);
+    z-index: 1000;
+  }
+  
+  .exercise-card.drag-over {
+    border-color: rgba(255, 107, 53, 0.8) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.25);
   }
   
   .exercise-card:hover {

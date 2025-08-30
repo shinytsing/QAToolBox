@@ -70,9 +70,9 @@ from .legacy_models import (
     CheckInCalendar, CheckInDetail, CheckInStreak, CheckInAchievement,
     FoodPhotoBinding, FoodPhotoBindingHistory,
     
-    # 人际关系相关
-    RelationshipTag, PersonProfile, Interaction, ImportantMoment,
-    RelationshipStatistics, RelationshipReminder,
+    # 人际关系相关 - 已移至relationship_models.py
+    # RelationshipTag, PersonProfile, Interaction, ImportantMoment,
+    # RelationshipStatistics, RelationshipReminder,
     
     # 功能相关
     Feature, UserFeaturePermission, FeatureRecommendation, UserFirstVisit,
@@ -100,6 +100,17 @@ from .legacy_models import (
     
     # 其他
     ExerciseWeightRecord, FitnessStrengthProfile
+)
+
+# 从relationship_models导入人际关系相关模型
+from .relationship_models import (
+    RelationshipTag, PersonProfile, Interaction, ImportantMoment,
+    RelationshipStatistics, RelationshipReminder
+)
+
+# 从nutrition_models导入营养信息相关模型
+from .nutrition_models import (
+    NutritionCategory, FoodNutrition, FoodNutritionHistory, FoodRandomizationLog
 )
 
 # 导出所有模型类
@@ -187,6 +198,12 @@ __all__ = [
     'FoodHistory',
     'FoodPhotoBinding',
     'FoodPhotoBindingHistory',
+    
+    # 营养信息模型
+    'NutritionCategory',
+    'FoodNutrition',
+    'FoodNutritionHistory',
+    'FoodRandomizationLog',
     
     # 签到模型
     'CheckInCalendar',

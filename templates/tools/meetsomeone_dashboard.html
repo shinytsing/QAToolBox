@@ -58,6 +58,14 @@
   box-shadow: var(--emo-shadow-hover);
 }
 
+.stat-card.clickable {
+  cursor: pointer;
+}
+
+.stat-card.clickable:active {
+  transform: translateY(-2px);
+}
+
 .stat-number {
   font-size: 2.5rem;
   font-weight: 700;
@@ -731,19 +739,19 @@ async function loadDashboardData() {
 function displayStats(stats) {
   const statsGrid = document.getElementById('statsGrid');
   statsGrid.innerHTML = `
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="showPeopleList()">
       <div class="stat-number">${stats.total_people}</div>
       <div class="stat-label">人物档案</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="showInteractionsList()">
       <div class="stat-number">${stats.total_interactions}</div>
       <div class="stat-label">互动记录</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="showActiveRelationships()">
       <div class="stat-number">${stats.active_relationships}</div>
       <div class="stat-label">活跃关系</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card clickable" onclick="showMomentsList()">
       <div class="stat-number">${stats.total_moments}</div>
       <div class="stat-label">重要时刻</div>
     </div>
@@ -1114,6 +1122,74 @@ function showSuccess(message) {
 function showError(message) {
   // 这里可以实现一个错误提示组件
   alert(message);
+}
+
+// 统计卡片点击函数
+function showPeopleList() {
+  // 显示人物档案列表
+  if (personProfiles.length === 0) {
+    showError('暂无人物档案数据');
+    return;
+  }
+  
+  let content = '<div class="people-list"><h3>人物档案列表</h3>';
+  personProfiles.slice(0, 10).forEach(person => {
+    content += `
+      <div class="person-item">
+        <strong>${person.name}</strong>
+        ${person.nickname ? `(${person.nickname})` : ''}
+        - ${person.occupation || '未知职业'}
+        <br><small>重要程度: ${'⭐'.repeat(person.importance_level)}</small>
+      </div>
+    `;
+  });
+  if (personProfiles.length > 10) {
+    content += `<p><small>还有 ${personProfiles.length - 10} 个人物档案...</small></p>`;
+  }
+  content += '</div>';
+  
+  showInfo(content);
+}
+
+function showInteractionsList() {
+  showInfo('互动记录功能：查看最近的互动记录。点击上方"记录互动"按钮添加新的互动记录。');
+}
+
+function showActiveRelationships() {
+  showInfo('活跃关系：显示最近30天内有互动的人际关系。保持定期互动有助于维护良好的人际关系。');
+}
+
+function showMomentsList() {
+  showInfo('重要时刻：记录人生中的重要时刻和里程碑。点击上方"重要时刻"按钮添加新的记录。');
+}
+
+function showInfo(content) {
+  // 创建一个简单的信息显示框
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000; display: flex;
+    align-items: center; justify-content: center;
+  `;
+  
+  const content_div = document.createElement('div');
+  content_div.style.cssText = `
+    background: white; padding: 20px; border-radius: 8px;
+    max-width: 500px; max-height: 400px; overflow-y: auto;
+    position: relative;
+  `;
+  content_div.innerHTML = content + '<br><button onclick="this.closest(\'.info-modal\').remove()">关闭</button>';
+  
+  modal.className = 'info-modal';
+  modal.appendChild(content_div);
+  document.body.appendChild(modal);
+  
+  // 点击背景关闭
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
 }
 
 // 点击模态框外部关闭

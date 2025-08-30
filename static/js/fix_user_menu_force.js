@@ -64,9 +64,9 @@ function forceToggleUserDropdown() {
     }
     
     // 检查当前显示状态
-    const isVisible = dropdownContent.style.display === 'block' || 
-                     dropdownContent.style.opacity === '1' ||
-                     dropdownContent.classList.contains('show');
+    const isVisible = dropdownContent.style.display === 'block' && 
+                     dropdownContent.style.opacity !== '0' &&
+                     !dropdownContent.classList.contains('hidden');
     
     console.log('当前菜单状态:', {
         display: dropdownContent.style.display,

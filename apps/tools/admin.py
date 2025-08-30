@@ -36,3 +36,10 @@ try:
 except ImportError as e:
     print(f"Admin import error: {e}")
     pass
+
+# 导入营养信息管理配置
+try:
+    from .admin_nutrition import *
+except ImportError as e:
+    print(f"Nutrition admin import error: {e}")
+    pass

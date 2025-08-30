@@ -403,20 +403,42 @@ def create_heart_link_request(request):
     try:
         user = request.user
         
-        # 检查是否已有待处理的请求
+        # 检查是否已有请求
         existing_request = HeartLinkRequest.objects.filter(
             requester=user,
-            status__in=['pending', 'matching']
+            status__in=['pending', 'matching', 'matched']
         ).first()
         
         if existing_request:
-            return error_response("已有待处理的心动链接请求", status=400)
+            if existing_request.status == 'matched' and existing_request.chat_room:
+                # 如果已匹配，直接返回聊天室信息
+                return success_response({
+                    'request': {
+                        'id': existing_request.id,
+                        'status': existing_request.status,
+                        'room_id': existing_request.chat_room.room_id,
+                        'matched': True,
+                        'redirect': f'/tools/heart_link/chat/{existing_request.chat_room.room_id}/'
+                    }
+                })
+            elif existing_request.status in ['pending', 'matching']:
+                # 如果还在等待，返回现有请求信息继续等待
+                return success_response({
+                    'request': {
+                        'id': existing_request.id,
+                        'status': existing_request.status,
+                        'room_id': existing_request.chat_room.room_id if existing_request.chat_room else None,
+                        'matched': False,
+                        'continue_waiting': True
+                    }
+                })
         
-        # 创建聊天室
+        # 创建私密聊天室（单人心动链接专用）
         room = ChatRoom.objects.create(
             room_id=str(uuid.uuid4()),
             user1=user,
-            status='waiting'
+            status='waiting',
+            room_type='private'  # 明确设置为私密类型，不是公共的
         )
         
         # 创建心动链接请求
@@ -424,7 +446,8 @@ def create_heart_link_request(request):
         from datetime import timedelta
         heart_request = HeartLinkRequest.objects.create(
             requester=user,
-            status='pending'
+            status='pending',
+            chat_room=room  # 关联聊天室
         )
         
         return success_response({
@@ -726,12 +749,82 @@ def heart_link(request):
 
 @login_required
 def heart_link_chat(request, room_id):
-    """心动链接聊天页面"""
+    """心动链接聊天页面 - 仅用于一对一私密聊天"""
     if not request.user.is_authenticated:
         return redirect('users:login')
     
+    # 防止访问群聊天室ID - 引导用户到正确的心动链接流程
+    if room_id in ['public-room', 'general', 'chat', 'random'] or room_id.startswith('test-room-'):
+        # 检查用户是否有活跃的心动链接请求
+        from apps.tools.models.chat_models import HeartLinkRequest
+        existing_request = HeartLinkRequest.objects.filter(
+            requester=request.user,
+            status__in=['pending', 'matched']
+        ).first()
+        
+        if existing_request and existing_request.status == 'matched' and existing_request.chat_room:
+            # 如果用户已有匹配的聊天室，重定向到正确的聊天室
+            return JsonResponse({
+                'success': True,
+                'message': '已为您找到心动链接聊天室',
+                'redirect': f'/tools/heart_link/chat/{existing_request.chat_room.room_id}/'
+            })
+        else:
+            # 自动为用户创建心动链接请求
+            try:
+                # 创建聊天室
+                import uuid
+                room = ChatRoom.objects.create(
+                    room_id=str(uuid.uuid4()),
+                    user1=request.user,
+                    status='waiting'
+                )
+                
+                # 创建心动链接请求
+                new_request = HeartLinkRequest.objects.create(
+                    requester=request.user,
+                    status='pending',
+                    chat_room=room
+                )
+                
+                # 尝试匹配其他用户
+                from apps.tools.services.heart_link_matcher import matcher
+                matched_room, matched_user = matcher.match_users(request.user, new_request)
+                
+                if matched_room and matched_user:
+                    # 立即匹配成功
+                    return JsonResponse({
+                        'success': True,
+                        'matched': True,
+                        'message': '已为您找到匹配用户！',
+                        'redirect': f'/tools/heart_link/chat/{matched_room.room_id}/'
+                    })
+                else:
+                    # 等待匹配
+                    return JsonResponse({
+                        'success': False,
+                        'error': '正在为您寻找心动链接匹配，请稍候...',
+                        'redirect': '/tools/heart_link/',
+                        'auto_matching': True
+                    }, status=202)  # 202 表示正在处理
+            except Exception as e:
+                # 如果自动创建失败，回退到原方案
+                return JsonResponse({
+                    'success': False,
+                    'error': '心动链接需要先进行匹配，正在为您跳转到匹配页面...',
+                    'redirect': '/tools/heart_link/'
+                }, status=400)
+    
     try:
         chat_room = ChatRoom.objects.get(room_id=room_id)
+        
+        # 确保这是心动链接类型的聊天室
+        if not chat_room.is_heart_link_room():
+            return JsonResponse({
+                'success': False,
+                'error': '此聊天室不是心动链接房间，请使用多人聊天功能',
+                'redirect': '/tools/chat/'
+            }, status=400)
         
         # 检查聊天室状态
         if chat_room.status != 'active':
@@ -753,7 +846,7 @@ def heart_link_chat(request, room_id):
             if not heart_link_request:
                 return JsonResponse({
                     'success': False,
-                    'error': '您没有权限访问此聊天室'
+                    'error': '您没有权限访问此心动链接聊天室'
                 }, status=403)
         
         # 获取对方用户信息
@@ -761,22 +854,32 @@ def heart_link_chat(request, room_id):
         if not other_user:
             return JsonResponse({
                 'success': False,
-                'error': '聊天室配置错误'
+                'error': '心动链接聊天室配置错误，缺少匹配用户'
             }, status=500)
         
         context = {
             'room_id': room_id,
             'chat_room': chat_room,
-            'other_user': other_user
+            'other_user': other_user,
+            'chat_type': 'heart_link'  # 标识聊天类型
         }
         
-        # 使用新的WebSocket版本的聊天页面
+        # 使用心动链接专用的聊天页面
         return render(request, 'tools/heart_link_chat_websocket_new.html', context)
         
     except ChatRoom.DoesNotExist:
-        return redirect('tools:chat_room_error', error_type='not_found', room_id=room_id)
+        return JsonResponse({
+            'success': False,
+            'error': '心动链接聊天室不存在',
+            'redirect': '/tools/heart_link/'
+        }, status=404)
     except Exception as e:
-        return redirect('tools:chat_room_error', error_type='general', room_id=room_id)
+        logger.error(f"Heart link chat error: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': '访问心动链接聊天室时发生错误',
+            'redirect': '/tools/heart_link/'
+        }, status=500)
 
 
 def heart_link_test_view(request):

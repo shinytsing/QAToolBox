@@ -9,6 +9,11 @@ class ChatNotificationManager {
         this.notifications = [];
         this.isVisible = false;
         this.pollInterval = null;
+        this.isDragging = false;
+        this.currentX = 0;
+        this.currentY = 0;
+        this.xOffset = 0;
+        this.yOffset = 0;
         this.init();
     }
 
@@ -39,6 +44,9 @@ class ChatNotificationManager {
                     <h3>未读消息</h3>
                     <button class="clear-all-btn" id="clear-all-notifications">全部标记已读</button>
                 </div>
+                <div class="drag-hint">
+                    <small>💡 提示：拖拽图标可移动位置，双击可重置</small>
+                </div>
                 <div class="notification-list" id="notification-list">
                     <div class="no-notifications">暂无未读消息</div>
                 </div>
@@ -53,6 +61,12 @@ class ChatNotificationManager {
                 top: 20px;
                 right: 20px;
                 z-index: 9999;
+                user-select: none;
+                transition: none;
+            }
+
+            .chat-notification-manager.dragging {
+                transition: none !important;
             }
 
             .notification-icon {
@@ -65,9 +79,15 @@ class ChatNotificationManager {
                 align-items: center;
                 justify-content: center;
                 color: white;
-                cursor: pointer;
+                cursor: move;
                 box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
                 transition: all 0.3s ease;
+            }
+
+            .notification-icon.dragging {
+                cursor: grabbing;
+                transform: scale(1.05);
+                box-shadow: 0 8px 24px rgba(0, 123, 255, 0.5);
             }
 
             .notification-icon:hover {
@@ -139,6 +159,18 @@ class ChatNotificationManager {
 
             .clear-all-btn:hover {
                 background: #5a6268;
+            }
+
+            .drag-hint {
+                background: #e9ecef;
+                padding: 8px 15px;
+                border-bottom: 1px solid #dee2e6;
+                text-align: center;
+            }
+
+            .drag-hint small {
+                color: #6c757d;
+                font-size: 11px;
             }
 
             .notification-list {
@@ -222,11 +254,76 @@ class ChatNotificationManager {
         const icon = document.getElementById('notification-icon');
         const dropdown = document.getElementById('notification-dropdown');
         const clearAllBtn = document.getElementById('clear-all-notifications');
+        const manager = document.getElementById('chat-notification-manager');
 
-        // 点击图标切换显示/隐藏
-        icon.addEventListener('click', (e) => {
+        // 加载保存的位置
+        this.loadPosition();
+
+        // 简化的拖拽事件处理
+        let startX, startY, hasMoved = false;
+        
+        icon.addEventListener('mousedown', (e) => {
+            console.log('鼠标按下开始拖拽');
+            this.isDragging = true;
+            hasMoved = false;
+            startX = e.clientX - this.xOffset;
+            startY = e.clientY - this.yOffset;
+            
+            icon.style.cursor = 'grabbing';
+            manager.classList.add('dragging');
+            
+            e.preventDefault();
             e.stopPropagation();
-            this.toggleDropdown();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            
+            console.log('正在拖拽移动');
+            hasMoved = true;
+            e.preventDefault();
+            
+            this.currentX = e.clientX - startX;
+            this.currentY = e.clientY - startY;
+            
+            this.xOffset = this.currentX;
+            this.yOffset = this.currentY;
+            
+            this.setTranslate(this.currentX, this.currentY);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (this.isDragging) {
+                console.log('拖拽结束，移动了吗:', hasMoved);
+                this.isDragging = false;
+                icon.style.cursor = 'move';
+                manager.classList.remove('dragging');
+                
+                this.savePosition();
+                
+                // 如果有移动，延迟一点时间再允许点击
+                if (hasMoved) {
+                    setTimeout(() => {
+                        // 重置移动标志
+                        hasMoved = false;
+                    }, 100);
+                }
+            }
+        });
+
+        // 点击图标切换显示/隐藏（只有在没有拖拽时才触发）
+        icon.addEventListener('click', (e) => {
+            console.log('click事件触发，isDragging:', this.isDragging, 'hasMoved:', hasMoved);
+            e.stopPropagation();
+            if (!this.isDragging && !hasMoved) {
+                this.toggleDropdown();
+            }
+        });
+
+        // 双击重置位置
+        icon.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            this.resetPosition();
         });
 
         // 点击其他地方关闭下拉框
@@ -240,6 +337,50 @@ class ChatNotificationManager {
         clearAllBtn.addEventListener('click', () => {
             this.clearAllNotifications();
         });
+    }
+
+
+
+    setTranslate(xPos, yPos) {
+        const manager = document.getElementById('chat-notification-manager');
+        manager.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+    }
+
+
+
+    savePosition() {
+        localStorage.setItem('chatNotificationPosition', JSON.stringify({
+            x: this.currentX,
+            y: this.currentY
+        }));
+    }
+
+    loadPosition() {
+        const savedPosition = localStorage.getItem('chatNotificationPosition');
+        if (savedPosition) {
+            const position = JSON.parse(savedPosition);
+            this.currentX = position.x;
+            this.currentY = position.y;
+            this.xOffset = this.currentX;
+            this.yOffset = this.currentY;
+            this.setTranslate(this.currentX, this.currentY);
+        }
+    }
+
+    resetPosition() {
+        this.currentX = 0;
+        this.currentY = 0;
+        this.xOffset = 0;
+        this.yOffset = 0;
+        this.setTranslate(0, 0);
+        localStorage.removeItem('chatNotificationPosition');
+        
+        // 显示提示
+        const icon = document.getElementById('notification-icon');
+        icon.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+            icon.style.transform = '';
+        }, 200);
     }
 
     startPolling() {
@@ -264,18 +405,29 @@ class ChatNotificationManager {
             const response = await fetch('/tools/api/notifications/summary/', {
                 method: 'GET',
                 credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
             });
 
             if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    this.updateNotificationCount(data.total_unread);
-                    
-                    // 如果下拉框是打开的，获取详细通知
-                    if (this.isVisible) {
-                        this.fetchDetailedNotifications();
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateNotificationCount(data.total_unread);
+                        
+                        // 如果下拉框是打开的，获取详细通知
+                        if (this.isVisible) {
+                            this.fetchDetailedNotifications();
+                        }
                     }
+                } else {
+                    console.warn('通知API返回了非JSON响应，可能用户未登录');
                 }
+            } else if (response.status === 403 || response.status === 401) {
+                console.warn('通知API访问被拒绝，用户可能未登录');
             }
         } catch (error) {
             console.error('获取通知摘要失败:', error);
@@ -287,14 +439,25 @@ class ChatNotificationManager {
             const response = await fetch('/tools/api/notifications/unread/', {
                 method: 'GET',
                 credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
             });
 
             if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    this.notifications = data.notifications;
-                    this.updateNotificationList();
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.success) {
+                        this.notifications = data.notifications;
+                        this.updateNotificationList();
+                    }
+                } else {
+                    console.warn('详细通知API返回了非JSON响应，可能用户未登录');
                 }
+            } else if (response.status === 403 || response.status === 401) {
+                console.warn('详细通知API访问被拒绝，用户可能未登录');
             }
         } catch (error) {
             console.error('获取详细通知失败:', error);

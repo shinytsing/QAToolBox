@@ -157,9 +157,17 @@ function hideTopUI() {
     }
 }
 
-// 用户下拉菜单功能
-function toggleUserDropdown() {
-    console.log('🔧 toggleUserDropdown 被调用 (来自 top_ui_functions.js)');
+// 悬浮显示用户下拉菜单
+let hideDropdownTimer = null;
+
+function showUserDropdown() {
+    console.log('🔧 showUserDropdown 被调用 (来自 top_ui_functions.js)');
+    
+    // 清除隐藏定时器
+    if (hideDropdownTimer) {
+        clearTimeout(hideDropdownTimer);
+        hideDropdownTimer = null;
+    }
     
     const dropdownContent = document.getElementById('userDropdownContent');
     const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
@@ -169,41 +177,71 @@ function toggleUserDropdown() {
         return;
     }
     
-    // 检查当前显示状态
-    const isVisible = dropdownContent.style.display === 'block' || 
-                     dropdownContent.style.opacity === '1' ||
-                     dropdownContent.classList.contains('show');
+    // 显示菜单
+    dropdownContent.style.display = 'block';
+    dropdownContent.style.opacity = '1';
+    dropdownContent.style.transform = 'scale(1) translateY(0)';
+    dropdownContent.classList.add('show');
     
-    console.log('当前菜单状态:', {
-        display: dropdownContent.style.display,
-        opacity: dropdownContent.style.opacity,
-        isVisible: isVisible
-    });
+    if (chevronIcon) {
+        chevronIcon.style.transform = 'rotate(180deg)';
+    }
+    
+    console.log('✅ 菜单已显示');
+}
+
+function hideUserDropdownDelayed() {
+    console.log('🔧 hideUserDropdownDelayed 被调用 (来自 top_ui_functions.js)');
+    
+    // 设置延迟隐藏定时器
+    hideDropdownTimer = setTimeout(() => {
+        hideUserDropdown();
+    }, 300);
+}
+
+function hideUserDropdown() {
+    console.log('🔧 hideUserDropdown 被调用 (来自 top_ui_functions.js)');
+    
+    const dropdownContent = document.getElementById('userDropdownContent');
+    const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
+    
+    if (!dropdownContent) {
+        console.error('❌ 用户下拉菜单元素未找到');
+        return;
+    }
+    
+    // 隐藏菜单
+    dropdownContent.style.display = 'none';
+    dropdownContent.style.opacity = '0';
+    dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
+    dropdownContent.classList.remove('show');
+    
+    if (chevronIcon) {
+        chevronIcon.style.transform = 'rotate(0deg)';
+    }
+    
+    console.log('✅ 菜单已隐藏');
+}
+
+// 保留切换函数用于调试
+function toggleUserDropdown() {
+    console.log('🔧 toggleUserDropdown 被调用 (来自 top_ui_functions.js)');
+    
+    const dropdownContent = document.getElementById('userDropdownContent');
+    
+    if (!dropdownContent) {
+        console.error('❌ 用户下拉菜单元素未找到');
+        return;
+    }
+    
+    const isVisible = dropdownContent.style.display === 'block' && 
+                     dropdownContent.style.opacity !== '0' &&
+                     !dropdownContent.classList.contains('hidden');
     
     if (isVisible) {
-        // 隐藏菜单
-        dropdownContent.style.display = 'none';
-        dropdownContent.style.opacity = '0';
-        dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
-        dropdownContent.classList.remove('show');
-        
-        if (chevronIcon) {
-            chevronIcon.style.transform = 'rotate(0deg)';
-        }
-        
-        console.log('✅ 菜单已隐藏');
+        hideUserDropdown();
     } else {
-        // 显示菜单
-        dropdownContent.style.display = 'block';
-        dropdownContent.style.opacity = '1';
-        dropdownContent.style.transform = 'scale(1) translateY(0)';
-        dropdownContent.classList.add('show');
-        
-        if (chevronIcon) {
-            chevronIcon.style.transform = 'rotate(180deg)';
-        }
-        
-        console.log('✅ 菜单已显示');
+        showUserDropdown();
     }
 }
 

@@ -11,13 +11,15 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.db import models
+from apps.tools.models import FoodNutrition, FoodRandomizationLog
 
 logger = logging.getLogger(__name__)
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def food_randomizer_pure_random_api(request):
-    """食物随机器纯随机API - 真实实现"""
+    """食物随机器纯随机API - 使用数据库数据"""
     try:
         # 解析请求数据
         data = json.loads(request.body)
@@ -25,208 +27,43 @@ def food_randomizer_pure_random_api(request):
         meal_type = data.get('meal_type', 'all')
         exclude_recent = data.get('exclude_recent', True)
         
-        # 食物数据库
-        food_database = [
-            # 中餐
-            {
-                'id': 1, 'name': '宫保鸡丁', 'english_name': 'Kung Pao Chicken',
-                'cuisine': 'chinese', 'meal_type': 'main', 'calories': 350,
-                'ingredients': ['鸡肉', '花生', '干辣椒', '葱姜蒜'],
-                'description': '经典川菜，口感麻辣鲜香',
-                'image_url': '/static/img/food/kung_pao_chicken.jpg',
-                'difficulty': 3, 'cooking_time': 25
-            },
-            {
-                'id': 6, 'name': '麻婆豆腐', 'english_name': 'Mapo Tofu',
-                'cuisine': 'chinese', 'meal_type': 'main', 'calories': 280,
-                'ingredients': ['豆腐', '猪肉末', '豆瓣酱', '花椒'],
-                'description': '川菜经典，麻辣鲜香',
-                'image_url': '/static/img/food/mapo_tofu.jpg',
-                'difficulty': 3, 'cooking_time': 20
-            },
-            {
-                'id': 7, 'name': '糖醋里脊', 'english_name': 'Sweet and Sour Pork',
-                'cuisine': 'chinese', 'meal_type': 'main', 'calories': 320,
-                'ingredients': ['里脊肉', '糖', '醋', '淀粉'],
-                'description': '酸甜可口，开胃下饭',
-                'image_url': '/static/img/food/sweet_sour_pork.jpg',
-                'difficulty': 3, 'cooking_time': 25
-            },
-            {
-                'id': 8, 'name': '小笼包', 'english_name': 'Xiaolongbao',
-                'cuisine': 'chinese', 'meal_type': 'appetizer', 'calories': 150,
-                'ingredients': ['面粉', '猪肉', '高汤', '姜'],
-                'description': '上海名点，汤汁丰富',
-                'image_url': '/static/img/food/xiaolongbao.jpg',
-                'difficulty': 4, 'cooking_time': 40
-            },
-            {
-                'id': 9, 'name': '蛋炒饭', 'english_name': 'Egg Fried Rice',
-                'cuisine': 'chinese', 'meal_type': 'main', 'calories': 300,
-                'ingredients': ['米饭', '鸡蛋', '葱花', '酱油'],
-                'description': '简单美味，经典家常菜',
-                'image_url': '/static/img/food/egg_fried_rice.jpg',
-                'difficulty': 1, 'cooking_time': 15
-            },
-            
-            # 意餐
-            {
-                'id': 2, 'name': '意大利面', 'english_name': 'Spaghetti',
-                'cuisine': 'italian', 'meal_type': 'main', 'calories': 280,
-                'ingredients': ['意大利面', '番茄酱', '橄榄油', '罗勒'],
-                'description': '经典意式料理，简单美味',
-                'image_url': '/static/img/food/spaghetti.jpg',
-                'difficulty': 2, 'cooking_time': 20
-            },
-            {
-                'id': 10, 'name': '披萨', 'english_name': 'Pizza',
-                'cuisine': 'italian', 'meal_type': 'main', 'calories': 400,
-                'ingredients': ['面团', '番茄酱', '奶酪', '香肠'],
-                'description': '意式经典，香浓可口',
-                'image_url': '/static/img/food/pizza.jpg',
-                'difficulty': 3, 'cooking_time': 30
-            },
-            {
-                'id': 11, 'name': '提拉米苏', 'english_name': 'Tiramisu',
-                'cuisine': 'italian', 'meal_type': 'dessert', 'calories': 250,
-                'ingredients': ['手指饼干', '咖啡', '马斯卡彭奶酪', '可可粉'],
-                'description': '意式甜点，浓郁香滑',
-                'image_url': '/static/img/food/tiramisu.jpg',
-                'difficulty': 3, 'cooking_time': 45
-            },
-            
-            # 日餐
-            {
-                'id': 3, 'name': '寿司', 'english_name': 'Sushi',
-                'cuisine': 'japanese', 'meal_type': 'main', 'calories': 200,
-                'ingredients': ['米饭', '三文鱼', '海苔', '芥末'],
-                'description': '精致日式料理，营养丰富',
-                'image_url': '/static/img/food/sushi.jpg',
-                'difficulty': 4, 'cooking_time': 30
-            },
-            {
-                'id': 12, 'name': '拉面', 'english_name': 'Ramen',
-                'cuisine': 'japanese', 'meal_type': 'main', 'calories': 350,
-                'ingredients': ['面条', '高汤', '叉烧', '海苔'],
-                'description': '日式拉面，汤浓面滑',
-                'image_url': '/static/img/food/ramen.jpg',
-                'difficulty': 3, 'cooking_time': 25
-            },
-            {
-                'id': 13, 'name': '天妇罗', 'english_name': 'Tempura',
-                'cuisine': 'japanese', 'meal_type': 'appetizer', 'calories': 180,
-                'ingredients': ['虾', '面粉', '鸡蛋', '油'],
-                'description': '日式炸物，酥脆可口',
-                'image_url': '/static/img/food/tempura.jpg',
-                'difficulty': 3, 'cooking_time': 20
-            },
-            
-            # 美餐
-            {
-                'id': 4, 'name': '汉堡', 'english_name': 'Burger',
-                'cuisine': 'american', 'meal_type': 'main', 'calories': 450,
-                'ingredients': ['牛肉饼', '面包', '生菜', '番茄'],
-                'description': '美式快餐，方便快捷',
-                'image_url': '/static/img/food/burger.jpg',
-                'difficulty': 2, 'cooking_time': 15
-            },
-            {
-                'id': 14, 'name': '热狗', 'english_name': 'Hot Dog',
-                'cuisine': 'american', 'meal_type': 'main', 'calories': 300,
-                'ingredients': ['香肠', '面包', '芥末', '洋葱'],
-                'description': '美式经典，简单美味',
-                'image_url': '/static/img/food/hot_dog.jpg',
-                'difficulty': 1, 'cooking_time': 10
-            },
-            {
-                'id': 15, 'name': '苹果派', 'english_name': 'Apple Pie',
-                'cuisine': 'american', 'meal_type': 'dessert', 'calories': 280,
-                'ingredients': ['苹果', '面粉', '糖', '肉桂'],
-                'description': '美式甜点，香甜可口',
-                'image_url': '/static/img/food/apple_pie.jpg',
-                'difficulty': 3, 'cooking_time': 60
-            },
-            
-            # 健康餐
-            {
-                'id': 5, 'name': '沙拉', 'english_name': 'Salad',
-                'cuisine': 'healthy', 'meal_type': 'appetizer', 'calories': 120,
-                'ingredients': ['生菜', '番茄', '黄瓜', '橄榄油'],
-                'description': '健康轻食，清爽可口',
-                'image_url': '/static/img/food/salad.jpg',
-                'difficulty': 1, 'cooking_time': 10
-            },
-            {
-                'id': 16, 'name': '燕麦粥', 'english_name': 'Oatmeal',
-                'cuisine': 'healthy', 'meal_type': 'breakfast', 'calories': 150,
-                'ingredients': ['燕麦', '牛奶', '蜂蜜', '坚果'],
-                'description': '营养早餐，健康美味',
-                'image_url': '/static/img/food/oatmeal.jpg',
-                'difficulty': 1, 'cooking_time': 15
-            },
-            {
-                'id': 17, 'name': '蒸蛋羹', 'english_name': 'Steamed Egg',
-                'cuisine': 'healthy', 'meal_type': 'appetizer', 'calories': 100,
-                'ingredients': ['鸡蛋', '水', '盐', '葱花'],
-                'description': '清淡营养，易消化',
-                'image_url': '/static/img/food/steamed_egg.jpg',
-                'difficulty': 2, 'cooking_time': 20
-            },
-            
-            # 法餐
-            {
-                'id': 18, 'name': '法式牛排', 'english_name': 'French Steak',
-                'cuisine': 'french', 'meal_type': 'main', 'calories': 500,
-                'ingredients': ['牛排', '黄油', '红酒', '香草'],
-                'description': '法式经典，精致美味',
-                'image_url': '/static/img/food/french_steak.jpg',
-                'difficulty': 4, 'cooking_time': 30
-            },
-            {
-                'id': 19, 'name': '马卡龙', 'english_name': 'Macaron',
-                'cuisine': 'french', 'meal_type': 'dessert', 'calories': 200,
-                'ingredients': ['杏仁粉', '糖粉', '蛋白', '色素'],
-                'description': '法式甜点，色彩缤纷',
-                'image_url': '/static/img/food/macaron.jpg',
-                'difficulty': 5, 'cooking_time': 90
-            },
-            
-            # 韩餐
-            {
-                'id': 20, 'name': '韩式烤肉', 'english_name': 'Korean BBQ',
-                'cuisine': 'korean', 'meal_type': 'main', 'calories': 400,
-                'ingredients': ['牛肉', '生菜', '蒜', '辣椒酱'],
-                'description': '韩式经典，香辣可口',
-                'image_url': '/static/img/food/korean_bbq.jpg',
-                'difficulty': 3, 'cooking_time': 25
-            },
-            {
-                'id': 21, 'name': '泡菜汤', 'english_name': 'Kimchi Soup',
-                'cuisine': 'korean', 'meal_type': 'main', 'calories': 200,
-                'ingredients': ['泡菜', '豆腐', '猪肉', '辣椒'],
-                'description': '韩式汤品，开胃暖身',
-                'image_url': '/static/img/food/kimchi_soup.jpg',
-                'difficulty': 2, 'cooking_time': 20
-            }
-        ]
+        # 从数据库获取活跃的食物数据
+        queryset = FoodNutrition.objects.filter(is_active=True)
         
-        # 过滤食物
-        filtered_foods = food_database
+        # 处理cuisine_type过滤
+        if cuisine_type != 'all' and cuisine_type != 'mixed':
+            queryset = queryset.filter(cuisine=cuisine_type)
+        # 如果是'mixed'，则不过滤cuisine类型，显示所有菜系
         
-        if cuisine_type != 'all':
-            filtered_foods = [food for food in filtered_foods if food['cuisine'] == cuisine_type]
-        
+        # 处理meal_type过滤
         if meal_type != 'all':
-            filtered_foods = [food for food in filtered_foods if food['meal_type'] == meal_type]
+            # 将'lunch'映射到'main'，因为午餐通常是主食
+            if meal_type == 'lunch':
+                meal_type = 'main'
+            queryset = queryset.filter(meal_type=meal_type)
         
-        if not filtered_foods:
+        # 排除最近食用的食物（如果需要的话）
+        if exclude_recent and request.user.is_authenticated:
+            # 获取用户最近3天内食用过的食物
+            recent_cutoff = datetime.now() - timedelta(days=3)
+            recent_food_ids = FoodRandomizationLog.objects.filter(
+                user=request.user,
+                created_at__gte=recent_cutoff,
+                selected=True
+            ).values_list('food_id', flat=True)
+            queryset = queryset.exclude(id__in=recent_food_ids)
+        
+        # 转换为列表
+        available_foods = list(queryset)
+        
+        if not available_foods:
             return JsonResponse({
                 'success': False,
                 'error': '没有找到符合条件的食物'
             }, status=404)
         
         # 随机选择食物
-        selected_food = random.choice(filtered_foods)
+        selected_food = random.choice(available_foods)
         
         # 生成推荐理由
         reasons = [
@@ -234,18 +71,86 @@ def food_randomizer_pure_random_api(request):
             '制作简单，适合忙碌的生活',
             '口感丰富，满足味蕾需求',
             '健康美味，符合现代饮食理念',
-            '经典菜品，值得一试'
+            '经典菜品，值得一试',
+            '富含蛋白质，有助于肌肉健康',
+            '低脂健康，适合减肥期间',
+            '高纤维食物，促进消化',
+            '维生素丰富，增强免疫力'
         ]
         
+        # 获取备选食物（除了选中的食物）
+        alternative_foods = [f for f in available_foods if f.id != selected_food.id]
+        alternatives = random.sample(alternative_foods, min(3, len(alternative_foods)))
+        
+        # 将选中的食物转换为字典格式
+        def food_to_dict(food):
+            return {
+                'id': food.id,
+                'name': food.name,
+                'english_name': food.english_name,
+                'cuisine': food.cuisine,
+                'meal_type': food.meal_type,
+                'calories': int(food.calories),
+                'ingredients': food.ingredients,
+                'description': food.description,
+                'image_url': food.image_url or '/static/img/food/default-food.svg',
+                'difficulty': food.difficulty,
+                'cooking_time': food.cooking_time,
+                'health_score': food.health_score,
+                'nutrition': {
+                    'protein': food.protein,
+                    'fat': food.fat,
+                    'carbohydrates': food.carbohydrates,
+                    'dietary_fiber': food.dietary_fiber,
+                    'sugar': food.sugar,
+                    'sodium': food.sodium,
+                    'calcium': food.calcium,
+                    'iron': food.iron,
+                    'vitamin_c': food.vitamin_c
+                },
+                'tags': food.tags,
+                'is_vegetarian': food.is_vegetarian,
+                'is_high_protein': food.is_high_protein,
+                'is_low_carb': food.is_low_carb
+            }
+        
+        # 构建推荐结果
         recommendation = {
-            'food': selected_food,
+            'food': food_to_dict(selected_food),
             'reason': random.choice(reasons),
             'confidence': random.randint(70, 95),
-            'alternatives': random.sample([f for f in filtered_foods if f['id'] != selected_food['id']], min(3, len(filtered_foods)-1)),
-            'generated_at': datetime.now().isoformat()
+            'alternatives': [food_to_dict(f) for f in alternatives],
+            'generated_at': datetime.now().isoformat(),
+            'nutrition_summary': {
+                'macronutrients': selected_food.get_macronutrients_ratio(),
+                'health_score': selected_food.health_score,
+                'is_healthy': selected_food.is_healthy()
+            }
         }
         
-        logger.info(f"食物随机推荐: 选择 {selected_food['name']}")
+        # 记录推荐日志
+        session_id = recommendation['generated_at']
+        if request.user.is_authenticated:
+            FoodRandomizationLog.objects.create(
+                user=request.user,
+                food=selected_food,
+                session_id=session_id,
+                cuisine_filter=cuisine_type if cuisine_type != 'all' else None,
+                meal_type_filter=meal_type if meal_type != 'all' else None
+            )
+            
+            # 为备选食物也创建日志记录
+            for alt_food in alternatives:
+                FoodRandomizationLog.objects.create(
+                    user=request.user,
+                    food=alt_food,
+                    session_id=session_id,
+                    cuisine_filter=cuisine_type if cuisine_type != 'all' else None,
+                    meal_type_filter=meal_type if meal_type != 'all' else None,
+                    selected=False
+                )
+        
+        logger.info(f"食物随机推荐: 选择 {selected_food.name} (ID: {selected_food.id})")
         
         return JsonResponse({
             'success': True,
@@ -267,39 +172,94 @@ def food_randomizer_pure_random_api(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def food_randomizer_statistics_api(request):
-    """食物随机器统计API - 真实实现"""
+    """食物随机器统计API - 使用数据库数据"""
     try:
-        # 模拟统计数据
+        # 获取总体统计
+        total_foods = FoodNutrition.objects.filter(is_active=True).count()
+        total_recommendations = FoodRandomizationLog.objects.count()
+        
+        # 按菜系统计
+        cuisine_stats = {}
+        for cuisine, display_name in FoodNutrition.CUISINE_CHOICES:
+            count = FoodRandomizationLog.objects.filter(food__cuisine=cuisine).count()
+            if count > 0:
+                cuisine_stats[cuisine] = count
+        
+        # 按餐型统计
+        meal_type_stats = {}
+        for meal_type, display_name in FoodNutrition.MEAL_TYPE_CHOICES:
+            count = FoodRandomizationLog.objects.filter(food__meal_type=meal_type).count()
+            if count > 0:
+                meal_type_stats[meal_type] = count
+        
+        # 最受欢迎的食物
+        popular_food = FoodNutrition.objects.filter(is_active=True).order_by('-popularity_score').first()
+        
+        # 用户特定统计（如果用户已登录）
+        user_stats = {}
+        if request.user.is_authenticated:
+            user_recommendations = FoodRandomizationLog.objects.filter(user=request.user).count()
+            user_stats = {
+                'total_recommendations': user_recommendations,
+                'favorite_cuisine': None,
+                'healthy_choices': 0
+            }
+            
+            # 用户最喜欢的菜系
+            if user_recommendations > 0:
+                user_cuisine_stats = FoodRandomizationLog.objects.filter(
+                    user=request.user
+                ).values('food__cuisine').annotate(
+                    count=models.Count('food__cuisine')
+                ).order_by('-count').first()
+                
+                if user_cuisine_stats:
+                    user_stats['favorite_cuisine'] = user_cuisine_stats['food__cuisine']
+            
+            # 健康选择统计
+            user_stats['healthy_choices'] = FoodRandomizationLog.objects.filter(
+                user=request.user,
+                food__health_score__gte=70
+            ).count()
+        
+        # 周使用统计（最近7天）
+        weekly_usage = []
+        for i in range(7):
+            date = datetime.now().date() - timedelta(days=i)
+            count = FoodRandomizationLog.objects.filter(
+                created_at__date=date
+            ).count()
+            weekly_usage.append({
+                'date': date.isoformat(),
+                'count': count
+            })
+        weekly_usage.reverse()  # 按时间顺序排列
+        
         stats_data = {
-            'total_recommendations': 156,
-            'unique_foods_recommended': 45,
-            'most_popular_cuisine': 'chinese',
-            'average_rating': 4.2,
-            'cuisine_distribution': {
-                'chinese': 35,
-                'italian': 25,
-                'japanese': 20,
-                'american': 15,
-                'healthy': 5
-            },
-            'meal_type_distribution': {
-                'main': 60,
-                'appetizer': 25,
-                'dessert': 10,
-                'drink': 5
-            },
-            'weekly_usage': [
-                {'date': '2025-08-13', 'count': 8},
-                {'date': '2025-08-14', 'count': 12},
-                {'date': '2025-08-15', 'count': 6},
-                {'date': '2025-08-16', 'count': 15},
-                {'date': '2025-08-17', 'count': 9},
-                {'date': '2025-08-18', 'count': 11},
-                {'date': '2025-08-19', 'count': 7}
-            ]
+            'total_foods': total_foods,
+            'total_recommendations': total_recommendations,
+            'most_popular_food': popular_food.name if popular_food else None,
+            'cuisine_distribution': cuisine_stats,
+            'meal_type_distribution': meal_type_stats,
+            'weekly_usage': weekly_usage,
+            'user_stats': user_stats,
+            'health_metrics': {
+                'healthy_foods_count': FoodNutrition.objects.filter(
+                    is_active=True, 
+                    health_score__gte=70
+                ).count(),
+                'vegetarian_foods_count': FoodNutrition.objects.filter(
+                    is_active=True,
+                    is_vegetarian=True
+                ).count(),
+                'high_protein_foods_count': FoodNutrition.objects.filter(
+                    is_active=True,
+                    is_high_protein=True
+                ).count()
+            }
         }
         
-        logger.info(f"获取食物随机器统计")
+        logger.info(f"获取食物随机器统计: 用户 {request.user.username if request.user.is_authenticated else 'Anonymous'}")
         
         return JsonResponse({
             'success': True,
@@ -316,52 +276,46 @@ def food_randomizer_statistics_api(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def food_randomizer_history_api(request):
-    """食物随机器历史API - 真实实现"""
+    """食物随机器历史API - 使用数据库数据"""
     try:
         # 获取查询参数
         limit = int(request.GET.get('limit', 20))
         offset = int(request.GET.get('offset', 0))
         
-        # 模拟历史记录
-        history_records = [
-            {
-                'id': 'rec_001',
-                'food_name': '宫保鸡丁',
-                'cuisine': 'chinese',
-                'meal_type': 'main',
-                'rating': 4,
-                'created_at': (datetime.now() - timedelta(hours=2)).isoformat(),
-                'reason': '营养均衡，适合当前季节'
-            },
-            {
-                'id': 'rec_002',
-                'food_name': '意大利面',
-                'cuisine': 'italian',
-                'meal_type': 'main',
-                'rating': 5,
-                'created_at': (datetime.now() - timedelta(days=1)).isoformat(),
-                'reason': '制作简单，适合忙碌的生活'
-            },
-            {
-                'id': 'rec_003',
-                'food_name': '寿司',
-                'cuisine': 'japanese',
-                'meal_type': 'main',
-                'rating': 3,
-                'created_at': (datetime.now() - timedelta(days=2)).isoformat(),
-                'reason': '精致日式料理，营养丰富'
-            }
-        ]
+        if request.user.is_authenticated:
+            # 获取用户的推荐历史
+            queryset = FoodRandomizationLog.objects.filter(
+                user=request.user
+            ).select_related('food').order_by('-created_at')
+            
+            total_count = queryset.count()
+            records = queryset[offset:offset + limit]
+            
+            history_records = []
+            for record in records:
+                history_records.append({
+                    'id': record.id,
+                    'food_name': record.food.name,
+                    'cuisine': record.food.cuisine,
+                    'meal_type': record.food.meal_type,
+                    'calories': int(record.food.calories),
+                    'health_score': record.food.health_score,
+                    'rating': record.rating,
+                    'selected': record.selected,
+                    'created_at': record.created_at.isoformat(),
+                    'session_id': record.session_id,
+                    'nutrition_summary': record.food.get_nutrition_summary()
+                })
+        else:
+            # 如果用户未登录，返回空历史
+            total_count = 0
+            history_records = []
         
-        # 分页
-        total_count = len(history_records)
-        records_page = history_records[offset:offset + limit]
-        
-        logger.info(f"获取食物随机器历史: 用户 {request.user.id}, 返回 {len(records_page)} 条记录")
+        logger.info(f"获取食物随机器历史: 用户 {request.user.username if request.user.is_authenticated else 'Anonymous'}, 返回 {len(history_records)} 条记录")
         
         return JsonResponse({
             'success': True,
-            'history': records_page,
+            'history': history_records,
             'pagination': {
                 'total': total_count,
                 'limit': limit,

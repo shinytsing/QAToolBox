@@ -5,6 +5,10 @@ class TrainingPlanEditor {
     this.currentPlanId = null; // 当前编辑的计划ID
     this.planData = this.initializePlanData();
     this.favoriteExercises = this.loadFavoriteExercises();
+    this.draggedElement = null;
+    this.draggedModule = null;
+    this.draggedIndex = null;
+    this.isDragging = false;
     this.init();
   }
   
@@ -948,21 +952,29 @@ class TrainingPlanEditor {
       return;
     }
     
+    console.log(`重新渲染模块 ${module}, 动作数量: ${exercises.length}`);
+    
     if (exercises.length === 0) {
       dropZone.innerHTML = `
         <i class="fas fa-plus"></i>
         <p>拖拽${this.getModuleName(module)}动作至此</p>
       `;
     } else {
-      dropZone.innerHTML = exercises.map((exercise, index) => 
-        this.createExerciseCard(exercise, module, index)
-      ).join('');
+      // 先清空旧内容
+      dropZone.innerHTML = '';
+      
+      // 重新生成每个动作卡片
+      exercises.forEach((exercise, index) => {
+        const cardHTML = this.createExerciseCard(exercise, module, index);
+        console.log(`创建卡片 ${index}: ${exercise.name}`);
+        dropZone.insertAdjacentHTML('beforeend', cardHTML);
+      });
     }
   }
 
   createExerciseCard(exercise, module, index) {
     return `
-      <div class="exercise-card" data-module="${module}" data-index="${index}" style="
+      <div class="exercise-card" data-module="${module}" data-index="${index}" draggable="true" style="
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
         border: 1px solid rgba(255, 107, 53, 0.2);
         border-radius: 12px;
@@ -970,8 +982,13 @@ class TrainingPlanEditor {
         margin-bottom: 12px;
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
+        cursor: move;
       " onmouseover="this.style.borderColor='rgba(255, 107, 53, 0.4)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(255, 107, 53, 0.15)';"
-         onmouseout="this.style.borderColor='rgba(255, 107, 53, 0.2)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+         onmouseout="this.style.borderColor='rgba(255, 107, 53, 0.2)'; this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+         ondragstart="editor.handleDragStart(event)"
+         ondragover="editor.handleDragOver(event)"
+         ondrop="editor.handleDrop(event)"
+         ondragend="editor.handleDragEnd(event)">
         <div class="exercise-card-header" style="
           display: flex;
           justify-content: space-between;
@@ -986,11 +1003,12 @@ class TrainingPlanEditor {
             align-items: center;
             gap: 8px;
           ">
+            <i class="fas fa-grip-vertical" style="font-size: 0.8rem; color: #a8a8a8; margin-right: 4px;" title="拖拽排序"></i>
             <i class="fas fa-dumbbell" style="font-size: 0.9rem;"></i>
             ${exercise.name}
           </div>
           <div class="exercise-card-controls">
-            <button class="card-control-btn" onclick="editor.removeExercise('${module}', ${index})" title="删除" style="
+            <button class="card-control-btn" onclick="event.stopPropagation(); editor.removeExercise('${module}', ${index})" title="删除" style="
               background: rgba(255, 107, 53, 0.1);
               border: 1px solid rgba(255, 107, 53, 0.3);
               color: #ff6b35;
@@ -1587,6 +1605,115 @@ class TrainingPlanEditor {
     
     return previewHTML;
   }
+
+  // 拖拽处理方法
+  handleDragStart(event) {
+    this.isDragging = true;
+    this.draggedElement = event.target.closest('.exercise-card');
+    this.draggedModule = this.draggedElement.dataset.module;
+    this.draggedIndex = parseInt(this.draggedElement.dataset.index);
+    
+    console.log('开始拖拽:', {module: this.draggedModule, index: this.draggedIndex});
+    
+    // 设置拖拽效果
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', this.draggedElement.outerHTML);
+    
+    // 添加拖拽时的视觉效果
+    this.draggedElement.style.opacity = '0.5';
+    this.draggedElement.style.transform = 'rotate(3deg)';
+  }
+
+  handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    
+    const targetCard = event.target.closest('.exercise-card');
+    if (targetCard && targetCard !== this.draggedElement) {
+      // 添加拖拽悬停效果
+      targetCard.style.borderColor = 'rgba(255, 107, 53, 0.8)';
+      targetCard.style.transform = 'translateY(-1px)';
+    }
+  }
+
+  handleDrop(event) {
+    event.preventDefault();
+    
+    const targetCard = event.target.closest('.exercise-card');
+    if (targetCard && targetCard !== this.draggedElement && this.draggedElement) {
+      const targetModule = targetCard.dataset.module;
+      const targetIndex = parseInt(targetCard.dataset.index);
+      
+      // 只在同一个模块内进行排序
+      if (targetModule === this.draggedModule) {
+        this.reorderExercises(this.draggedModule, this.draggedIndex, targetIndex);
+      }
+      
+      // 重置目标卡片样式
+      targetCard.style.borderColor = 'rgba(255, 107, 53, 0.2)';
+      targetCard.style.transform = 'translateY(0)';
+    }
+  }
+
+  handleDragEnd(event) {
+    console.log('拖拽结束');
+    
+    // 重置拖拽元素样式
+    if (this.draggedElement) {
+      this.draggedElement.style.opacity = '1';
+      this.draggedElement.style.transform = 'translateY(0)';
+    }
+    
+    // 清除所有拖拽状态
+    this.draggedElement = null;
+    this.draggedModule = null;
+    this.draggedIndex = null;
+    this.isDragging = false;
+    
+    // 清除所有卡片的悬停效果
+    document.querySelectorAll('.exercise-card').forEach(card => {
+      card.style.borderColor = 'rgba(255, 107, 53, 0.2)';
+      card.style.transform = 'translateY(0)';
+    });
+  }
+
+  reorderExercises(module, fromIndex, toIndex) {
+    const currentDay = this.planData.week_schedule[this.currentDay];
+    const exercises = currentDay.modules[module];
+    
+    console.log('拖拽重排序:', {module, fromIndex, toIndex, exercisesCount: exercises.length});
+    
+    // 确保索引有效
+    if (fromIndex < 0 || fromIndex >= exercises.length || toIndex < 0 || toIndex >= exercises.length) {
+      console.warn('无效的拖拽索引:', fromIndex, toIndex, 'exercises.length:', exercises.length);
+      return;
+    }
+    
+    // 如果是同一个位置，不需要移动
+    if (fromIndex === toIndex) {
+      console.log('同位置拖拽，忽略');
+      return;
+    }
+    
+    // 创建数组的深度拷贝进行操作
+    const exercisesCopy = exercises.map(ex => ({...ex}));
+    const movedExercise = exercisesCopy.splice(fromIndex, 1)[0];
+    console.log('移动的动作:', movedExercise ? movedExercise.name : 'undefined');
+    
+    if (movedExercise) {
+      exercisesCopy.splice(toIndex, 0, movedExercise);
+      console.log('重排序后的动作列表:', exercisesCopy.map((ex, idx) => `${idx}: ${ex.name}`));
+      
+      // 更新原始数据
+      currentDay.modules[module] = exercisesCopy;
+      
+      // 重新渲染模块
+      this.renderModule(module, exercisesCopy);
+      
+      // 显示通知
+      this.showNotification(`已调整"${movedExercise.name}"的顺序`, 'success');
+    }
+  }
 }
 
 // 全局函数
@@ -1942,7 +2069,9 @@ function clearDay() {
         currentDay.modules[module] = [];
       });
       Object.keys(currentDay.modules).forEach(module => {
-        editor.renderModule(module, currentDay.modules[module]);
+        if (!editor.isDragging) {
+          editor.renderModule(module, currentDay.modules[module]);
+        }
       });
       editor.renderWeekCards();
       editor.showNotification('已清空当前训练日', 'info');
@@ -2102,7 +2231,9 @@ function confirmAddExercise(module) {
   if (editor) {
     const currentDay = editor.planData.week_schedule[editor.currentDay];
     currentDay.modules[module].push(exercise);
-    editor.renderModule(module, currentDay.modules[module]);
+    if (!editor.isDragging) {
+      editor.renderModule(module, currentDay.modules[module]);
+    }
     editor.renderWeekCards();
     
     const moduleNames = {
@@ -2130,11 +2261,17 @@ function closeAddExerciseModal() {
 
 
 function searchExercises() {
-  const searchTerm = document.getElementById('exerciseSearch').value.toLowerCase();
+  const searchInput = document.getElementById('exerciseSearch');
+  if (!searchInput) return;
+  
+  const searchTerm = (searchInput.value || '').toLowerCase();
   const exerciseItems = document.querySelectorAll('.exercise-item');
   
   exerciseItems.forEach(item => {
-    const exerciseName = item.querySelector('span').textContent.toLowerCase();
+    const nameElement = item.querySelector('span');
+    if (!nameElement) return;
+    
+    const exerciseName = (nameElement.textContent || '').toLowerCase();
     if (exerciseName.includes(searchTerm)) {
       item.style.display = 'flex';
     } else {

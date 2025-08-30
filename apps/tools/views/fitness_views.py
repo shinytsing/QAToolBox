@@ -293,10 +293,16 @@ def get_training_plan_api(request, plan_id):
                 'mode': plan.mode,
                 'cycle_weeks': plan.cycle_weeks,
                 'week_schedule': plan.week_schedule,
+                'is_active': plan.is_active,
+                'visibility': plan.visibility,
+                'created_at': plan.created_at.isoformat(),
+                'updated_at': plan.updated_at.isoformat()
             }
         })
     except TrainingPlan.DoesNotExist:
         return JsonResponse({'success': False, 'error': '计划不存在'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @csrf_exempt
@@ -1182,14 +1188,30 @@ def apply_training_plan_template_api(request):
 @login_required
 def save_training_plan_editor_api(request):
     """保存训练计划编辑器中的计划"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        logger.info(f"保存训练计划请求 - 用户: {request.user.username}")
+        logger.info(f"请求体长度: {len(request.body)} bytes")
+        
         data = json.loads(request.body)
+        logger.info(f"解析的数据: {data}")
         
         plan_name = data.get('name', '').strip()
         plan_mode = data.get('mode', '五分化')
-        cycle_weeks = data.get('cycle_weeks', 8)
+        cycle_weeks = data.get('cycle_weeks')
+        if cycle_weeks is None or cycle_weeks == '':
+            cycle_weeks = 8
+        else:
+            try:
+                cycle_weeks = int(cycle_weeks)
+            except (ValueError, TypeError):
+                cycle_weeks = 8
         week_schedule = data.get('week_schedule', [])
         plan_id = data.get('plan_id')  # 如果有ID，则更新现有计划
+        
+        logger.info(f"处理后的数据 - plan_name: {plan_name}, plan_mode: {plan_mode}, cycle_weeks: {cycle_weeks}, plan_id: {plan_id}")
         
         if not plan_name:
             return JsonResponse({'success': False, 'error': '计划名称不能为空'}, status=400)
@@ -1236,72 +1258,17 @@ def save_training_plan_editor_api(request):
             }
         })
         
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON解析错误: {str(e)}")
         return JsonResponse({'success': False, 'error': '无效的JSON数据'}, status=400)
     except Exception as e:
+        logger.error(f"保存训练计划异常: {str(e)}")
+        logger.error(f"异常类型: {type(e)}")
+        import traceback
+        logger.error(f"堆栈跟踪: {traceback.format_exc()}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def save_training_plan_editor_api(request):
-    """保存训练计划编辑器的数据"""
-    try:
-        data = json.loads(request.body)
-        plan_name = data.get('name', '').strip()
-        mode = data.get('mode', '自定义')
-        cycle_weeks = int(data.get('cycle_weeks', 8))
-        week_schedule = data.get('week_schedule', [])
-        plan_id = data.get('plan_id')  # 如果有ID则更新，否则创建新计划
-        
-        if not plan_name:
-            return JsonResponse({'success': False, 'error': '计划名称不能为空'}, status=400)
-            
-        if not week_schedule:
-            return JsonResponse({'success': False, 'error': '训练计划不能为空'}, status=400)
-        
-        if plan_id:
-            # 更新现有计划
-            try:
-                plan = TrainingPlan.objects.get(id=plan_id, user=request.user)
-                plan.name = plan_name
-                plan.mode = mode
-                plan.cycle_weeks = cycle_weeks
-                plan.week_schedule = week_schedule
-                plan.save()
-                message = f'训练计划 "{plan_name}" 已更新'
-            except TrainingPlan.DoesNotExist:
-                return JsonResponse({'success': False, 'error': '计划不存在或无权限'}, status=404)
-        else:
-            # 创建新计划
-            plan = TrainingPlan.objects.create(
-                user=request.user,
-                name=plan_name,
-                mode=mode,
-                cycle_weeks=cycle_weeks,
-                week_schedule=week_schedule
-            )
-            message = f'训练计划 "{plan_name}" 已保存'
-        
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'plan': {
-                'id': plan.id,
-                'name': plan.name,
-                'mode': plan.mode,
-                'cycle_weeks': plan.cycle_weeks,
-                'week_schedule': plan.week_schedule,
-                'is_active': plan.is_active,
-                'created_at': plan.created_at.isoformat(),
-                'updated_at': plan.updated_at.isoformat()
-            }
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': '无效的JSON数据'}, status=400)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["DELETE"])

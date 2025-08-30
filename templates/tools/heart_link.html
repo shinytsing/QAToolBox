@@ -630,20 +630,39 @@ async function startHeartLink() {
                 handleReconnect(data.matched_user);
             } else if (data.matched && data.room_id) {
                 // 新匹配成功
-                currentRequestId = data.request_id;
-                roomId = data.room_id;
+                currentRequestId = data.request_id || data.request?.id;
+                roomId = data.room_id || data.request?.room_id;
                 
                 // 保存匹配数据用于自动跳转
                 window.matchData = {
-                    room_id: data.room_id,
+                    room_id: roomId,
                     matched_user: data.matched_user,
-                    chat_url: data.chat_url
+                    chat_url: data.chat_url || data.redirect || `/tools/heart_link/chat/${roomId}/`
                 };
                 
                 handleMatchSuccess();
+            } else if (data.continue_waiting) {
+                // 继续等待现有的匹配请求
+                currentRequestId = data.request_id || data.request?.id;
+                roomId = data.room_id || data.request?.room_id;
+                
+                if (statusText) {
+                    statusText.textContent = '继续等待匹配';
+                }
+                if (statusDescription) {
+                    statusDescription.textContent = '您有正在进行的匹配请求...';
+                }
+                
+                // 开始轮询状态
+                startStatusCheck();
+                
+                // 启动倒计时
+                startCountdown();
             } else {
-                // 等待匹配
-                currentRequestId = data.request_id;
+                // 新的等待匹配
+                currentRequestId = data.request_id || data.request?.id;
+                roomId = data.room_id || data.request?.room_id;
+                
                 if (statusText) {
                     statusText.textContent = '匹配请求已发送';
                 }
