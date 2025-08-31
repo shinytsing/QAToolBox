@@ -61,11 +61,20 @@ fix_model_defaults() {
             log_success "fitnessfollow模型content字段默认值已修复"
         fi
         
-        # 修复其他可能的非空字段
-        sed -i 's/models\.CharField(/models.CharField(default="", /g' apps/content/models.py
-        sed -i 's/models\.TextField(/models.TextField(default="", /g' apps/content/models.py
-        sed -i 's/models\.IntegerField(/models.IntegerField(default=0, /g' apps/content/models.py
-        sed -i 's/models\.BooleanField(/models.BooleanField(default=False, /g' apps/content/models.py
+        # 智能修复字段，只修复没有default参数的字段
+        log_info "智能修复字段默认值..."
+        
+        # 修复CharField，只处理没有default参数的
+        sed -i '/models\.CharField(/!b; /default=/!s/models\.CharField(/models.CharField(default="", /g' apps/content/models.py
+        
+        # 修复TextField，只处理没有default参数的
+        sed -i '/models\.TextField(/!b; /default=/!s/models\.TextField(/models.TextField(default="", /g' apps/content/models.py
+        
+        # 修复IntegerField，只处理没有default参数的
+        sed -i '/models\.IntegerField(/!b; /default=/!s/models\.IntegerField(/models.IntegerField(default=0, /g' apps/content/models.py
+        
+        # 修复BooleanField，只处理没有default参数的
+        sed -i '/models\.BooleanField(/!b; /default=/!s/models\.BooleanField(/models.BooleanField(default=False, /g' apps/content/models.py
         
         log_success "content应用模型默认值修复完成"
     fi
@@ -79,15 +88,27 @@ fix_model_defaults() {
             # 备份原文件
             cp "${app_dir}models.py" "${app_dir}models.py.backup.$(date +%Y%m%d_%H%M%S)"
             
-            # 修复非空字段默认值
-            sed -i 's/models\.CharField(/models.CharField(default="", /g' "${app_dir}models.py"
-            sed -i 's/models\.TextField(/models.TextField(default="", /g' "${app_dir}models.py"
-            sed -i 's/models\.IntegerField(/models.IntegerField(default=0, /g' "${app_dir}models.py"
-            sed -i 's/models\.BooleanField(/models.BooleanField(default=False, /g' "${app_dir}models.py"
+            # 智能修复字段，只修复没有default参数的字段
+            sed -i '/models\.CharField(/!b; /default=/!s/models\.CharField(/models.CharField(default="", /g' "${app_dir}models.py"
+            sed -i '/models\.TextField(/!b; /default=/!s/models\.TextField(/models.TextField(default="", /g' "${app_dir}models.py"
+            sed -i '/models\.IntegerField(/!b; /default=/!s/models\.IntegerField(/models.IntegerField(default=0, /g' "${app_dir}models.py"
+            sed -i '/models\.BooleanField(/!b; /default=/!s/models\.BooleanField(/models.BooleanField(default=False, /g' "${app_dir}models.py"
             
             log_success "${app_name}应用模型默认值已修复"
         fi
     done
+    
+    # 验证修复结果
+    log_info "验证模型修复结果..."
+    if find apps/ -name "*.py" -exec grep -l "default=.*default=" {} \; | head -5; then
+        log_warning "发现重复的default参数，正在修复..."
+        find apps/ -name "*.py" -exec sed -i 's/default="", default=/default=/g' {} \;
+        find apps/ -name "*.py" -exec sed -i 's/default=0, default=/default=/g' {} \;
+        find apps/ -name "*.py" -exec sed -i 's/default=False, default=/default=/g' {} \;
+        log_success "重复的default参数已修复"
+    else
+        log_success "模型修复验证通过，无重复参数"
+    fi
 }
 
 # 检查系统信息
