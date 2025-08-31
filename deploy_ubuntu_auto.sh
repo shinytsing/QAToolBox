@@ -133,10 +133,30 @@ setup_postgresql() {
     # 等待PostgreSQL启动
     sleep 5
     
-    # 创建数据库用户和数据库
-    sudo -u postgres psql <<EOF
+    # 检查用户和数据库是否已存在
+    USER_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='qatoolbox'")
+    DB_EXISTS=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='qatoolbox'")
+    
+    if [[ -z "$USER_EXISTS" ]]; then
+        log_info "创建数据库用户qatoolbox..."
+        sudo -u postgres psql <<EOF
 CREATE USER qatoolbox WITH PASSWORD 'qatoolbox123';
+EOF
+    else
+        log_info "数据库用户qatoolbox已存在"
+    fi
+    
+    if [[ -z "$DB_EXISTS" ]]; then
+        log_info "创建数据库qatoolbox..."
+        sudo -u postgres psql <<EOF
 CREATE DATABASE qatoolbox OWNER qatoolbox;
+EOF
+    else
+        log_info "数据库qatoolbox已存在"
+    fi
+    
+    # 确保权限正确
+    sudo -u postgres psql <<EOF
 GRANT ALL PRIVILEGES ON DATABASE qatoolbox TO qatoolbox;
 ALTER USER qatoolbox CREATEDB;
 \q
@@ -284,19 +304,39 @@ clone_project() {
         log_info "项目已存在，更新代码..."
         git pull origin $BRANCH
     else
-        log_info "目录存在但不是Git仓库，清理后重新克隆..."
+        log_info "目录存在但不是Git仓库，彻底清理后重新克隆..."
+        
         # 备份重要文件（如果有的话）
         if [[ -f ".env" ]]; then
             cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
             log_info "已备份.env文件"
         fi
         
-        # 清理目录内容（保留media和logs目录）
-        find . -mindepth 1 -not -path "./media*" -not -path "./logs*" -not -path "./.env.backup*" -delete
+        # 记录当前目录
+        CURRENT_DIR=$(pwd)
+        
+        # 回到上级目录
+        cd ..
+        
+        # 重命名当前目录作为备份
+        sudo mv qatoolbox qatoolbox.backup.$(date +%Y%m%d_%H%M%S)
+        
+        # 重新创建空目录
+        sudo mkdir -p qatoolbox
+        sudo chown $USER:$USER qatoolbox
+        
+        # 进入新目录
+        cd qatoolbox
         
         # 重新克隆项目
         log_info "重新克隆项目..."
         git clone -b $BRANCH https://github.com/$GITHUB_REPO.git .
+        
+        # 恢复备份的.env文件（如果存在）
+        if [[ -f "../qatoolbox.backup.$(date +%Y%m%d_%H%M%S)/.env.backup.$(date +%Y%m%d_%H%M%S)" ]]; then
+            cp "../qatoolbox.backup.$(date +%Y%m%d_%H%M%S)/.env.backup.$(date +%Y%m%d_%H%M%S)" .env
+            log_info "已恢复.env文件"
+        fi
     fi
     
     log_success "项目代码获取完成"
