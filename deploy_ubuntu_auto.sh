@@ -853,7 +853,7 @@ main() {
     log_info "步骤 15/15: 健康检查"
     health_check || continue_on_error
     
-    log_info "步骤 16/16: 显示部署信息"
+    log_info "步骤 16/15: 显示部署信息"
     show_deployment_info || continue_on_error
     
     log_success "🎉 部署完成！QAToolBox已成功运行在您的服务器上！"
