@@ -279,12 +279,23 @@ clone_project() {
     
     cd $PROJECT_DIR
     
-    # 克隆项目
+    # 检查目录状态并智能处理
     if [[ -d ".git" ]]; then
         log_info "项目已存在，更新代码..."
         git pull origin $BRANCH
     else
-        log_info "克隆新项目..."
+        log_info "目录存在但不是Git仓库，清理后重新克隆..."
+        # 备份重要文件（如果有的话）
+        if [[ -f ".env" ]]; then
+            cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+            log_info "已备份.env文件"
+        fi
+        
+        # 清理目录内容（保留media和logs目录）
+        find . -mindepth 1 -not -path "./media*" -not -path "./logs*" -not -path "./.env.backup*" -delete
+        
+        # 重新克隆项目
+        log_info "重新克隆项目..."
         git clone -b $BRANCH https://github.com/$GITHUB_REPO.git .
     fi
     
