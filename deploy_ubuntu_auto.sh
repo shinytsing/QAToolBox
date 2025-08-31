@@ -363,13 +363,7 @@ setup_python_env() {
     
     # 安装音频处理依赖（兼容Python 3.12）
     log_info "安装音频处理依赖..."
-    if pip install -r requirements/audio_processing.txt; then
-        log_success "音频处理依赖安装成功"
-    else
-        log_warning "音频处理依赖安装失败，尝试安装兼容版本..."
-        # 尝试安装兼容Python 3.12的版本
-        pip install librosa>=0.10.0 numpy>=1.24.0 scipy>=1.10.0 soundfile>=0.12.0 pydub>=0.25.0
-    fi
+    pip install librosa>=0.10.0 numpy>=1.24.0 scipy>=1.10.0 soundfile>=0.12.0 pydub>=0.25.0 audioread>=3.0.0 resampy>=0.4.0
     
     # 安装生产环境依赖
     log_info "安装生产环境依赖..."
