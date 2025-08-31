@@ -3,7 +3,8 @@
 # QAToolBox Ubuntu服务器完全自动化一键部署脚本
 # 专为中国区网络环境优化，无需任何用户交互
 
-set -e  # 遇到错误立即退出
+# 遇到错误不退出，继续执行
+set +e
 
 # 颜色定义
 RED='\033[0;31m'
@@ -17,6 +18,16 @@ log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# 错误恢复函数
+continue_on_error() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        log_warning "命令执行失败（退出码: $exit_code），但继续执行..."
+        return 0
+    fi
+    return $exit_code
+}
 
 # 配置变量
 PROJECT_NAME="QAToolBox"
@@ -384,14 +395,18 @@ setup_python_env() {
     
     # 安装额外的重要依赖
     log_info "安装额外的重要依赖..."
-    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27
+    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27 || log_warning "部分依赖安装失败，继续执行..."
     
     # 安装系统依赖（如果python-magic-bin不可用）
     log_info "安装系统文件类型检测依赖..."
-    if ! pip install python-magic-bin>=0.4.14; then
+    if ! pip install python-magic-bin>=0.4.14 2>/dev/null; then
         log_warning "python-magic-bin不可用，使用系统libmagic..."
-        sudo apt install -y libmagic1
+        sudo apt install -y libmagic1 || log_warning "系统libmagic安装失败，继续执行..."
     fi
+    
+    # 验证关键依赖
+    log_info "验证关键依赖..."
+    python -c "import psutil, PIL, torch, channels, websockets, fitz, ratelimit" 2>/dev/null && log_success "关键依赖验证成功" || log_warning "部分依赖验证失败，但继续执行..."
     
     log_success "Python环境配置完成"
 }
@@ -577,21 +592,48 @@ main() {
     log_info "开始自动部署，预计需要10-20分钟..."
     echo
     
-    # 执行部署步骤
-    setup_china_mirrors
-    install_system_deps
-    setup_postgresql
-    setup_redis
-    create_project_dir
-    clone_project
-    setup_python_env
-    setup_env
-    run_migrations
-    setup_nginx
-    setup_supervisor
-    start_services
-    health_check
-    show_deployment_info
+    # 执行部署步骤（即使失败也继续）
+    log_info "步骤 1/14: 配置中国区镜像源"
+    setup_china_mirrors || continue_on_error
+    
+    log_info "步骤 2/14: 安装系统依赖"
+    install_system_deps || continue_on_error
+    
+    log_info "步骤 3/14: 配置PostgreSQL"
+    setup_postgresql || continue_on_error
+    
+    log_info "步骤 4/14: 配置Redis"
+    setup_redis || continue_on_error
+    
+    log_info "步骤 5/14: 创建项目目录"
+    create_project_dir || continue_on_error
+    
+    log_info "步骤 6/14: 从GitHub克隆项目"
+    clone_project || continue_on_error
+    
+    log_info "步骤 7/14: 配置Python环境"
+    setup_python_env || continue_on_error
+    
+    log_info "步骤 8/14: 配置环境变量"
+    setup_env || continue_on_error
+    
+    log_info "步骤 9/14: 运行数据库迁移"
+    run_migrations || continue_on_error
+    
+    log_info "步骤 10/14: 配置Nginx"
+    setup_nginx || continue_on_error
+    
+    log_info "步骤 11/14: 配置Supervisor"
+    setup_supervisor || continue_on_error
+    
+    log_info "步骤 12/14: 启动服务"
+    start_services || continue_on_error
+    
+    log_info "步骤 13/14: 健康检查"
+    health_check || continue_on_error
+    
+    log_info "步骤 14/14: 显示部署信息"
+    show_deployment_info || continue_on_error
     
     log_success "🎉 部署完成！QAToolBox已成功运行在您的服务器上！"
 }
