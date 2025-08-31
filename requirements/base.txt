@@ -33,11 +33,31 @@ django-environ>=0.11.0
 requests>=2.31.0
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
+aiohttp>=3.8.0
 
 # ===== 基础工具 =====
 tenacity>=8.2.0
 python-dateutil>=2.8.0
 pytz>=2023.3
+
+# ===== 系统监控 =====
+psutil>=5.9.0
+
+# ===== 图像处理 =====
+Pillow>=10.0.0
+opencv-python>=4.8.0
+
+# ===== 机器学习 =====
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ===== WebSocket支持 =====
+channels>=4.0.0
+channels-redis>=4.1.0
+websockets>=11.0.0
+
+# ===== 异步支持 =====
+asyncio-mqtt>=0.16.0
 
 # ===== Python 3.12 兼容性 =====
 # 确保所有包都兼容Python 3.12

@@ -382,6 +382,10 @@ setup_python_env() {
     log_info "安装生产环境依赖..."
     pip install -r requirements/production.txt
     
+    # 安装额外的重要依赖
+    log_info "安装额外的重要依赖..."
+    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0
+    
     log_success "Python环境配置完成"
 }
 
