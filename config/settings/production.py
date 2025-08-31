@@ -16,29 +16,25 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# 生产环境数据库配置
+# 生产环境数据库配置 - 使用SQLite简化部署
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'qatoolbox'),
-        'USER': os.environ.get('DB_USER', 'qatoolbox'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            'connect_timeout': 60,
-            'sslmode': 'prefer',
+            'timeout': 60,
         },
     }
 }
 
-# 生产环境缓存配置
+# 生产环境缓存配置 - 使用本地内存缓存简化部署  
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/1'),
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,
         'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'MAX_ENTRIES': 1000,
         }
     }
 }
@@ -65,10 +61,10 @@ LOGGING['loggers']['django']['level'] = 'WARNING'
 LOGGING['loggers']['apps.tools']['level'] = 'INFO'
 LOGGING['loggers']['apps.users']['level'] = 'INFO'
 
-# 生产环境Celery配置
-CELERY_TASK_ALWAYS_EAGER = False
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+# 生产环境Celery配置 - 简化为同步执行
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_BROKER_URL = 'django-db://'
+CELERY_RESULT_BACKEND = 'django-db'
 
 # 生产环境API限制
 REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
@@ -76,25 +72,36 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'user': '1000/minute'
 }
 
-# 生产环境CORS配置
+# 生产环境CORS配置 - 更新为新域名
 CORS_ALLOWED_ORIGINS = [
+    "http://shenyiqing.xin",
     "https://shenyiqing.xin",
-    "https://www.shenyiqing.xin",
+    "http://www.shenyiqing.xin", 
+    "https://shenyiqing.xin",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
-# 允许的主机
+# 允许的主机 - 配置外网访问
 ALLOWED_HOSTS = [
     'shenyiqing.xin',
     'www.shenyiqing.xin',
-    '47.103.143.152',
     'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '192.168.0.118',  # 本机内网IP
+    '*',  # 允许所有主机用于外网访问
 ]
 
-# 生产环境安全头
-SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+# 生产环境安全头 - 移除导致警告的COOP头
+SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
+# SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'  # 禁用避免警告
 
 # 生产环境文件上传限制
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
-MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
+MAX_UPLOAD_SIZE = 500 * 1024 * 1024  # 500MB
+
+# 文件上传超时设置
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+DATA_UPLOAD_MAX_NUMBER_FILES = 1000
