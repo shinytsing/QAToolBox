@@ -435,8 +435,8 @@ run_migrations() {
     cd $PROJECT_DIR
     source venv/bin/activate
     
-    # 设置环境变量
-    export $(cat .env | xargs)
+    # 设置环境变量（只导出非注释行）
+    export $(grep -v '^#' .env | xargs)
     
     # 运行迁移
     python manage.py makemigrations
