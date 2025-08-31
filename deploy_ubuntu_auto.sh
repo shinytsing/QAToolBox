@@ -397,6 +397,16 @@ setup_python_env() {
     log_info "安装额外的重要依赖..."
     pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27 xmind>=1.2.0 || log_warning "部分依赖安装失败，继续执行..."
     
+    # 安装HEIC图片支持
+    log_info "安装HEIC图片支持..."
+    pip install pillow-heif>=0.15.0 || log_warning "pillow-heif安装失败，尝试替代方案..."
+    
+    # 如果pillow-heif安装失败，尝试安装替代方案
+    if ! python -c "import pillow_heif" 2>/dev/null; then
+        log_warning "pillow-heif不可用，尝试安装替代方案..."
+        pip install pillow-heif-binary || pip install pillow-heif-cffi || log_warning "所有HEIC支持包都安装失败，继续执行..."
+    fi
+    
     # 安装系统依赖（如果python-magic-bin不可用）
     log_info "安装系统文件类型检测依赖..."
     if ! pip install python-magic-bin>=0.4.14 2>/dev/null; then
@@ -464,31 +474,129 @@ run_migrations() {
     # 设置环境变量（只导出非注释行）
     export $(grep -v '^#' .env | xargs)
     
+    # 检查数据库连接
+    log_info "检查数据库连接..."
+    python -c "
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.aliyun_production')
+django.setup()
+from django.db import connection
+try:
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT 1')
+        print('数据库连接成功')
+except Exception as e:
+    print(f'数据库连接失败: {e}')
+    exit(1)
+" || {
+        log_error "数据库连接失败，请检查PostgreSQL配置"
+        return 1
+    }
+    
     # 运行迁移
     log_info "创建数据库迁移..."
-    python manage.py makemigrations || log_warning "迁移创建失败，尝试继续..."
+    python manage.py makemigrations --verbosity=0 || {
+        log_warning "迁移创建失败，检查是否有现有迁移文件..."
+        # 检查是否有现有的迁移文件
+        if [ -d "apps/content/migrations" ] && [ "$(ls -A apps/content/migrations)" ]; then
+            log_info "发现现有迁移文件，跳过创建步骤"
+        else
+            log_error "没有迁移文件且创建失败，无法继续"
+            return 1
+        fi
+    }
     
     log_info "应用数据库迁移..."
-    python manage.py migrate || log_warning "迁移应用失败，尝试继续..."
+    python manage.py migrate --verbosity=0 || {
+        log_error "迁移应用失败，检查数据库状态..."
+        # 检查数据库表是否存在
+        python -c "
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.aliyun_production')
+django.setup()
+from django.db import connection
+try:
+    with connection.cursor() as cursor:
+        cursor.execute(\"\"\"
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name IN ('auth_user', 'django_migrations')
+        \"\"\")
+        tables = [row[0] for row in cursor.fetchall()]
+        print(f'现有表: {tables}')
+        if 'auth_user' not in tables:
+            print('auth_user表不存在，需要先运行迁移')
+            exit(1)
+        else:
+            print('基础表已存在，可以继续')
+except Exception as e:
+    print(f'检查数据库状态失败: {e}')
+    exit(1)
+" || {
+            log_error "数据库状态检查失败，无法继续"
+            return 1
+        }
+    }
+    
+    # 等待一下确保迁移完成
+    sleep 3
     
     # 创建超级用户
     log_info "创建超级用户..."
     python manage.py shell <<EOF
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.aliyun_production')
+django.setup()
+
 from django.contrib.auth import get_user_model
+from django.db import connection
+
 User = get_user_model()
+
 try:
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
-        print('超级用户创建成功')
-    else:
+    # 检查auth_user表是否存在
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'auth_user'
+        """)
+        if not cursor.fetchone():
+            print('auth_user表不存在，跳过创建超级用户')
+            exit(0)
+    
+    # 检查是否已存在超级用户
+    if User.objects.filter(is_superuser=True).exists():
         print('超级用户已存在')
+    else:
+        # 创建超级用户
+        User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+        print('超级用户创建成功: admin/admin123')
+        
 except Exception as e:
     print(f'创建超级用户失败: {e}')
+    # 尝试使用Django命令创建
+    import subprocess
+    try:
+        result = subprocess.run(['python', 'manage.py', 'createsuperuser', '--noinput'], 
+                              input=b'admin\nadmin@example.com\nadmin123\nadmin123\n', 
+                              capture_output=True, text=True)
+        if result.returncode == 0:
+            print('通过Django命令创建超级用户成功')
+        else:
+            print(f'Django命令创建失败: {result.stderr}')
+    except Exception as cmd_e:
+        print(f'Django命令执行失败: {cmd_e}')
 EOF
     
     # 收集静态文件
     log_info "收集静态文件..."
-    python manage.py collectstatic --noinput
+    python manage.py collectstatic --noinput --verbosity=0
     
     log_success "数据库迁移完成"
 }
@@ -607,46 +715,49 @@ main() {
     echo
     
     # 执行部署步骤（即使失败也继续）
-    log_info "步骤 1/14: 配置中国区镜像源"
+    log_info "步骤 1/15: 配置中国区镜像源"
     setup_china_mirrors || continue_on_error
     
-    log_info "步骤 2/14: 安装系统依赖"
+    log_info "步骤 2/15: 安装系统依赖"
     install_system_deps || continue_on_error
     
-    log_info "步骤 3/14: 配置PostgreSQL"
+    log_info "步骤 3/15: 配置PostgreSQL"
     setup_postgresql || continue_on_error
     
-    log_info "步骤 4/14: 配置Redis"
+    log_info "步骤 4/15: 配置Redis"
     setup_redis || continue_on_error
     
-    log_info "步骤 5/14: 创建项目目录"
+    log_info "步骤 5/15: 创建项目目录"
     create_project_dir || continue_on_error
     
-    log_info "步骤 6/14: 从GitHub克隆项目"
+    log_info "步骤 6/15: 从GitHub克隆项目"
     clone_project || continue_on_error
     
-    log_info "步骤 7/14: 配置Python环境"
+    log_info "步骤 7/15: 配置Python环境"
     setup_python_env || continue_on_error
     
-    log_info "步骤 8/14: 配置环境变量"
+    log_info "步骤 8/15: 安装HEIC图片支持"
+    install_heic_support || continue_on_error
+    
+    log_info "步骤 9/15: 配置环境变量"
     setup_env || continue_on_error
     
-    log_info "步骤 9/14: 运行数据库迁移"
+    log_info "步骤 10/15: 运行数据库迁移"
     run_migrations || continue_on_error
     
-    log_info "步骤 10/14: 配置Nginx"
+    log_info "步骤 11/15: 配置Nginx"
     setup_nginx || continue_on_error
     
-    log_info "步骤 11/14: 配置Supervisor"
+    log_info "步骤 12/15: 配置Supervisor"
     setup_supervisor || continue_on_error
     
-    log_info "步骤 12/14: 启动服务"
+    log_info "步骤 13/15: 启动服务"
     start_services || continue_on_error
     
-    log_info "步骤 13/14: 健康检查"
+    log_info "步骤 14/15: 健康检查"
     health_check || continue_on_error
     
-    log_info "步骤 14/14: 显示部署信息"
+    log_info "步骤 15/15: 显示部署信息"
     show_deployment_info || continue_on_error
     
     log_success "🎉 部署完成！QAToolBox已成功运行在您的服务器上！"
