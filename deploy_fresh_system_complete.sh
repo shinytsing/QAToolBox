@@ -159,71 +159,138 @@ echo_success "Python 虚拟环境创建完成"
 # 步骤8: 安装 Python 依赖包
 echo_step "步骤8: 安装 Python 依赖包"
 
+# 配置 pip 使用国内镜像源加速下载
+echo_step "配置 pip 镜像源"
+mkdir -p /home/qatoolbox/.pip
+cat > /home/qatoolbox/.pip/pip.conf << EOF
+[global]
+index-url = https://mirrors.aliyun.com/pypi/simple/
+trusted-host = mirrors.aliyun.com
+timeout = 120
+retries = 3
+EOF
+
+# 设置 pip 环境变量
+export PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+export PIP_TRUSTED_HOST=mirrors.aliyun.com
+export PIP_TIMEOUT=120
+export PIP_RETRIES=3
+
 # 优先尝试从 requirements.txt 安装
 if [ -f "requirements/base.txt" ]; then
     echo_step "从 requirements/base.txt 安装依赖"
-    pip install -r requirements/base.txt || echo_warning "requirements/base.txt 安装部分失败"
+    pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 -r requirements/base.txt || echo_warning "requirements/base.txt 安装部分失败"
 elif [ -f "requirements.txt" ]; then
     echo_step "从 requirements.txt 安装依赖"
-    pip install -r requirements.txt || echo_warning "requirements.txt 安装部分失败"
+    pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 -r requirements.txt || echo_warning "requirements.txt 安装部分失败"
 fi
 
-# 安装核心依赖包列表
-echo_step "安装核心依赖包"
-CORE_PACKAGES=(
-    "Django>=4.2.0,<5.0"
-    "psycopg2-binary>=2.9.0"
-    "redis>=4.5.0"
-    "celery>=5.3.0"
-    "gunicorn>=21.2.0"
-    "numpy>=1.26.0"
-    "pandas>=2.1.0"
-    "Pillow>=10.0.0"
-    "requests>=2.31.0"
-    "beautifulsoup4>=4.12.0"
-    "lxml>=4.9.0"
-    "openpyxl>=3.1.0"
-    "python-dotenv>=1.0.0"
-    "django-cors-headers>=4.3.0"
-    "django-crispy-forms>=2.0"
-    "crispy-bootstrap5>=0.7"
-    "django-simple-captcha>=0.5.20"
-    "django-extensions>=3.2.0"
-    "django-filter>=23.3"
-    "django-redis>=5.4.0"
-    "channels>=4.0.0"
-    "channels-redis>=4.1.0"
-    "daphne>=4.0.0"
-    "ratelimit>=2.2.0"
-    "pillow-heif>=0.13.0"
-    "psutil>=5.9.0"
-    "GPUtil>=1.4.0"
-    "py-cpuinfo>=9.0.0"
-    "xmind>=1.2.0"
-    "matplotlib>=3.7.0"
-    "seaborn>=0.12.0"
-    "cryptography>=41.0.0"
-    "tenacity>=8.2.0"
-    "prettytable>=3.9.0"
-    "qrcode>=7.4.0"
-    "python-dateutil>=2.8.0"
-    "pydub>=0.25.0"
-    "librosa>=0.10.0"
-    "pytesseract>=0.3.10"
-    "opencv-python-headless>=4.8.0"
-    "scipy>=1.11.0"
-    "scikit-learn>=1.3.0"
-    "selenium>=4.15.0"
-    "webdriver-manager>=4.0.0"
-    "easyocr>=1.7.0"
-    "tensorflow-cpu>=2.15.0"
-)
+# 分批安装核心依赖包（避免大包下载超时）
+echo_step "分批安装核心依赖包"
 
-# 批量安装依赖
-for package in "${CORE_PACKAGES[@]}"; do
-    echo_step "安装 $package"
-    pip install "$package" || echo_warning "安装 $package 失败，继续下一个"
-done
+# 第一批：核心框架包
+echo_step "📦 安装批次 1: Django 核心框架"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "Django>=4.2.0,<5.0" \
+    "psycopg2-binary>=2.9.0" \
+    "redis>=4.5.0" \
+    "gunicorn>=21.2.0" \
+    "python-dotenv>=1.0.0" || echo_warning "批次 1 部分包安装失败"
+
+# 第二批：Django 扩展包
+echo_step "📦 安装批次 2: Django 扩展包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "django-cors-headers>=4.3.0" \
+    "django-crispy-forms>=2.0" \
+    "crispy-bootstrap5>=0.7" \
+    "django-simple-captcha>=0.5.20" \
+    "django-extensions>=3.2.0" \
+    "django-filter>=23.3" \
+    "django-redis>=5.4.0" || echo_warning "批次 2 部分包安装失败"
+
+# 第三批：Web 相关包
+echo_step "📦 安装批次 3: Web 和异步包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "requests>=2.31.0" \
+    "beautifulsoup4>=4.12.0" \
+    "lxml>=4.9.0" \
+    "channels>=4.0.0" \
+    "channels-redis>=4.1.0" \
+    "daphne>=4.0.0" \
+    "ratelimit>=2.2.0" || echo_warning "批次 3 部分包安装失败"
+
+# 第四批：图像处理包
+echo_step "📦 安装批次 4: 图像处理包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "Pillow>=10.0.0" \
+    "pillow-heif>=0.13.0" \
+    "pytesseract>=0.3.10" || echo_warning "批次 4 部分包安装失败"
+
+# 第五批：数据处理包（小包先装）
+echo_step "📦 安装批次 5: 数据处理基础包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "openpyxl>=3.1.0" \
+    "cryptography>=41.0.0" \
+    "tenacity>=8.2.0" \
+    "prettytable>=3.9.0" \
+    "qrcode>=7.4.0" \
+    "python-dateutil>=2.8.0" || echo_warning "批次 5 部分包安装失败"
+
+# 第六批：系统监控包
+echo_step "📦 安装批次 6: 系统监控包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "psutil>=5.9.0" \
+    "GPUtil>=1.4.0" \
+    "py-cpuinfo>=9.0.0" \
+    "celery>=5.3.0" || echo_warning "批次 6 部分包安装失败"
+
+# 第七批：科学计算包（这些包比较大）
+echo_step "📦 安装批次 7: 科学计算包 (大包，耐心等待)"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "numpy>=1.26.0" || echo_warning "numpy 安装失败"
+
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "pandas>=2.1.0" || echo_warning "pandas 安装失败"
+
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "scipy>=1.11.0" || echo_warning "scipy 安装失败"
+
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "scikit-learn>=1.3.0" || echo_warning "scikit-learn 安装失败"
+
+# 第八批：可视化包
+echo_step "📦 安装批次 8: 可视化包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 120 \
+    "matplotlib>=3.7.0" \
+    "seaborn>=0.12.0" \
+    "xmind>=1.2.0" || echo_warning "批次 8 部分包安装失败"
+
+# 第九批：音频处理包
+echo_step "📦 安装批次 9: 音频处理包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "pydub>=0.25.0" || echo_warning "pydub 安装失败"
+
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "librosa>=0.10.0" || echo_warning "librosa 安装失败"
+
+# 第十批：计算机视觉包（最大的包）
+echo_step "📦 安装批次 10: 计算机视觉包 (最大包，请耐心等待)"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 600 \
+    "opencv-python-headless>=4.8.0" || echo_warning "opencv 安装失败"
+
+# 第十一批：自动化测试包
+echo_step "📦 安装批次 11: 自动化测试包"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 300 \
+    "selenium>=4.15.0" \
+    "webdriver-manager>=4.0.0" || echo_warning "批次 11 部分包安装失败"
+
+# 第十二批：OCR 和 AI 包（可选）
+echo_step "📦 安装批次 12: OCR 和 AI 包 (可选，失败不影响核心功能)"
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 600 \
+    "easyocr>=1.7.0" || echo_warning "easyocr 安装失败 (可选包)"
+
+pip install -i https://mirrors.aliyun.com/pypi/simple/ --timeout 600 \
+    "tensorflow-cpu>=2.15.0" || echo_warning "tensorflow 安装失败 (可选包)"
 
 echo_success "Python 依赖包安装完成"
 
