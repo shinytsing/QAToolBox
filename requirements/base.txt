@@ -38,3 +38,6 @@ lxml>=4.9.0
 tenacity>=8.2.0
 python-dateutil>=2.8.0
 pytz>=2023.3
+
+# ===== Python 3.12 兼容性 =====
+# 确保所有包都兼容Python 3.12

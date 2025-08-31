@@ -1,0 +1,21 @@
+# 音频处理相关依赖 - Python 3.12专用版本
+# 解决版本兼容性问题
+
+# 核心音频处理库 - 兼容Python 3.12
+librosa>=0.10.0
+numpy>=1.24.0
+scipy>=1.10.0
+soundfile>=0.12.0
+
+# 可选依赖（用于更好的音频支持）
+pydub>=0.25.0
+audioread>=3.0.0
+resampy>=0.4.0
+
+# 系统音频库（Ubuntu/Debian）
+# sudo apt-get install libsndfile1-dev
+# sudo apt-get install ffmpeg
+
+# 注意：某些音频库可能需要从源码编译以支持Python 3.12
+# 如果安装失败，可以尝试：
+# pip install --no-binary :all: librosa

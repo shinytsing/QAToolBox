@@ -1,9 +1,11 @@
 # 音频处理相关依赖
+# 兼容Python 3.12版本
+
+# 核心音频处理库
 librosa>=0.10.0
 numpy>=1.21.0
 scipy>=1.7.0
 soundfile>=0.10.0
-librosa-audio>=0.10.0
 
 # 可选依赖（用于更好的音频支持）
 pydub>=0.25.0
