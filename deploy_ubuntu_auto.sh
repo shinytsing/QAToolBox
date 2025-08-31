@@ -30,10 +30,65 @@ continue_on_error() {
 }
 
 # 配置变量
-PROJECT_NAME="QAToolBox"
 PROJECT_DIR="/var/www/qatoolbox"
-GITHUB_REPO="shinytsing/QAToolbox"
-BRANCH="main"
+REPO_URL="https://github.com/shinytsing/QAToolbox.git"
+DB_NAME="qatoolbox"
+DB_USER="qatoolbox"
+DB_PASSWORD="SecurePassword123"
+REDIS_PASSWORD="SecureRedisPassword123"
+SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))")
+ALLOWED_HOSTS="shenyiqing.xin,www.shenyiqing.xin,47.103.143.152,localhost,127.0.0.1"
+SERVER_IP="47.103.143.152"
+DOMAIN="shenyiqing.xin"
+
+# 修复模型默认值
+fix_model_defaults() {
+    log_info "修复模型默认值..."
+    
+    cd $PROJECT_DIR
+    
+    # 检查并修复模型中的非空字段默认值
+    if [[ -f "apps/content/models.py" ]]; then
+        log_info "检查content应用模型..."
+        
+        # 备份原文件
+        cp apps/content/models.py apps/content/models.py.backup.$(date +%Y%m%d_%H%M%S)
+        
+        # 修复fitnessfollow模型的content字段默认值
+        if grep -q "content.*=.*models.TextField" apps/content/models.py; then
+            log_info "修复fitnessfollow模型的content字段默认值..."
+            sed -i 's/content = models\.TextField(/content = models.TextField(default="", /g' apps/content/models.py
+            log_success "fitnessfollow模型content字段默认值已修复"
+        fi
+        
+        # 修复其他可能的非空字段
+        sed -i 's/models\.CharField(/models.CharField(default="", /g' apps/content/models.py
+        sed -i 's/models\.TextField(/models.TextField(default="", /g' apps/content/models.py
+        sed -i 's/models\.IntegerField(/models.IntegerField(default=0, /g' apps/content/models.py
+        sed -i 's/models\.BooleanField(/models.BooleanField(default=False, /g' apps/content/models.py
+        
+        log_success "content应用模型默认值修复完成"
+    fi
+    
+    # 检查并修复其他应用的模型
+    for app_dir in apps/*/; do
+        if [[ -f "${app_dir}models.py" ]]; then
+            app_name=$(basename "$app_dir")
+            log_info "检查${app_name}应用模型..."
+            
+            # 备份原文件
+            cp "${app_dir}models.py" "${app_dir}models.py.backup.$(date +%Y%m%d_%H%M%S)"
+            
+            # 修复非空字段默认值
+            sed -i 's/models\.CharField(/models.CharField(default="", /g' "${app_dir}models.py"
+            sed -i 's/models\.TextField(/models.TextField(default="", /g' "${app_dir}models.py"
+            sed -i 's/models\.IntegerField(/models.IntegerField(default=0, /g' "${app_dir}models.py"
+            sed -i 's/models\.BooleanField(/models.BooleanField(default=False, /g' "${app_dir}models.py"
+            
+            log_success "${app_name}应用模型默认值已修复"
+        fi
+    done
+}
 
 # 检查系统信息
 check_system() {
@@ -589,7 +644,8 @@ except Exception as e:
     
     # 运行迁移
     log_info "创建数据库迁移..."
-    python manage.py makemigrations --verbosity=0 || {
+    # 使用非交互式模式创建迁移，自动设置默认值为空字符串
+    echo "1" | python manage.py makemigrations --verbosity=0 || {
         log_warning "迁移创建失败，检查是否有现有迁移文件..."
         # 检查是否有现有的迁移文件
         if [ -d "apps/content/migrations" ] && [ "$(ls -A apps/content/migrations)" ]; then
@@ -673,18 +729,6 @@ try:
         
 except Exception as e:
     print(f'创建超级用户失败: {e}')
-    # 尝试使用Django命令创建
-    import subprocess
-    try:
-        result = subprocess.run(['python', 'manage.py', 'createsuperuser', '--noinput'], 
-                              input=b'admin\nadmin@example.com\nadmin123\nadmin123\n', 
-                              capture_output=True, text=True)
-        if result.returncode == 0:
-            print('通过Django命令创建超级用户成功')
-        else:
-            print(f'Django命令创建失败: {result.stderr}')
-    except Exception as cmd_e:
-        print(f'Django命令执行失败: {cmd_e}')
 EOF
     
     # 收集静态文件
@@ -808,52 +852,55 @@ main() {
     echo
     
     # 执行部署步骤（即使失败也继续）
-    log_info "步骤 1/15: 配置中国区镜像源"
+    log_info "步骤 1/16: 配置中国区镜像源"
     setup_china_mirrors || continue_on_error
     
-    log_info "步骤 2/15: 安装系统依赖"
+    log_info "步骤 2/16: 安装系统依赖"
     install_system_deps || continue_on_error
     
-    log_info "步骤 3/15: 配置PostgreSQL"
+    log_info "步骤 3/16: 配置PostgreSQL"
     setup_postgresql || continue_on_error
     
-    log_info "步骤 4/15: 配置Redis"
+    log_info "步骤 4/16: 配置Redis"
     setup_redis || continue_on_error
     
-    log_info "步骤 5/15: 创建项目目录"
+    log_info "步骤 5/16: 创建项目目录"
     create_project_dir || continue_on_error
     
-    log_info "步骤 6/15: 从GitHub克隆项目"
+    log_info "步骤 6/16: 从GitHub克隆项目"
     clone_project || continue_on_error
     
-    log_info "步骤 7/15: 配置Python环境"
+    log_info "步骤 7/16: 配置Python环境"
     setup_python_env || continue_on_error
     
-    log_info "步骤 8/15: 配置环境变量"
+    log_info "步骤 8/16: 配置环境变量"
     setup_env || continue_on_error
     
-    log_info "步骤 9/15: 检查和修复Django配置"
+    log_info "步骤 9/16: 检查和修复Django配置"
     fix_django_config || continue_on_error
     
-    log_info "步骤 10/15: 修复Django配置冲突"
+    log_info "步骤 10/16: 修复Django配置冲突"
     fix_django_config_conflicts || continue_on_error
     
-    log_info "步骤 11/15: 运行数据库迁移"
+    log_info "步骤 11/16: 修复模型默认值"
+    fix_model_defaults || continue_on_error
+    
+    log_info "步骤 12/16: 运行数据库迁移"
     run_migrations || continue_on_error
     
-    log_info "步骤 12/15: 配置Nginx"
+    log_info "步骤 13/16: 配置Nginx"
     setup_nginx || continue_on_error
     
-    log_info "步骤 13/15: 配置Supervisor"
+    log_info "步骤 14/16: 配置Supervisor"
     setup_supervisor || continue_on_error
     
-    log_info "步骤 14/15: 启动服务"
+    log_info "步骤 15/16: 启动服务"
     start_services || continue_on_error
     
-    log_info "步骤 15/15: 健康检查"
+    log_info "步骤 16/16: 健康检查"
     health_check || continue_on_error
     
-    log_info "步骤 16/15: 显示部署信息"
+    log_info "步骤 17/16: 显示部署信息"
     show_deployment_info || continue_on_error
     
     log_success "🎉 部署完成！QAToolBox已成功运行在您的服务器上！"
