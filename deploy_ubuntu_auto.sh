@@ -384,7 +384,14 @@ setup_python_env() {
     
     # 安装额外的重要依赖
     log_info "安装额外的重要依赖..."
-    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27 python-magic-bin>=0.4.14
+    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27
+    
+    # 安装系统依赖（如果python-magic-bin不可用）
+    log_info "安装系统文件类型检测依赖..."
+    if ! pip install python-magic-bin>=0.4.14; then
+        log_warning "python-magic-bin不可用，使用系统libmagic..."
+        sudo apt install -y libmagic1
+    fi
     
     log_success "Python环境配置完成"
 }
