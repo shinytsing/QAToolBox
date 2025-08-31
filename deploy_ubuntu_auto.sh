@@ -464,6 +464,99 @@ EOF
     log_success "环境变量配置完成"
 }
 
+# 检查和修复Django配置
+fix_django_config() {
+    log_info "检查和修复Django配置..."
+    
+    cd $PROJECT_DIR
+    
+    # 确保settings.py中的ALLOWED_HOSTS包含所有配置的HOSTS
+    ALLOWED_HOSTS_IN_SETTINGS=$(grep -E "ALLOWED_HOSTS.*=.*\[" .env | sed 's/.*= //; s/\[//; s/\]//; s/,/ /g')
+    if [[ "$ALLOWED_HOSTS_IN_SETTINGS" != "$ALLOWED_HOSTS" ]]; then
+        log_warning "Django settings.py中的ALLOWED_HOSTS与.env文件不匹配，正在修复..."
+        sed -i "s/ALLOWED_HOSTS=.*/ALLOWED_HOSTS=[$ALLOWED_HOSTS]/" .env
+        log_success "Django settings.py中的ALLOWED_HOSTS已更新"
+    else
+        log_info "Django settings.py中的ALLOWED_HOSTS与.env文件匹配，无需修改"
+    fi
+    
+    # 确保settings.py中的DEBUG设置正确
+    DEBUG_IN_SETTINGS=$(grep -E "DEBUG.*=.*True" .env | sed 's/.*= //')
+    if [[ "$DEBUG_IN_SETTINGS" == "True" ]]; then
+        log_warning "Django settings.py中的DEBUG设置为True，但.env文件为False，正在修复..."
+        sed -i "s/DEBUG=.*/DEBUG=False/" .env
+        log_success "Django settings.py中的DEBUG已更新"
+    else
+        log_info "Django settings.py中的DEBUG设置正确，无需修改"
+    fi
+    
+    # 确保settings.py中的SECRET_KEY设置正确
+    SECRET_KEY_IN_SETTINGS=$(grep -E "DJANGO_SECRET_KEY.*=.*" .env | sed 's/.*= //')
+    if [[ "$SECRET_KEY_IN_SETTINGS" != "$SECRET_KEY" ]]; then
+        log_warning "Django settings.py中的SECRET_KEY与.env文件不匹配，正在修复..."
+        sed -i "s/DJANGO_SECRET_KEY=.*/DJANGO_SECRET_KEY=$SECRET_KEY/" .env
+        log_success "Django settings.py中的SECRET_KEY已更新"
+    else
+        log_info "Django settings.py中的SECRET_KEY与.env文件匹配，无需修改"
+    fi
+    
+    # 确保settings.py中的SETTINGS_MODULE设置正确
+    SETTINGS_MODULE_IN_SETTINGS=$(grep -E "DJANGO_SETTINGS_MODULE.*=.*" .env | sed 's/.*= //')
+    if [[ "$SETTINGS_MODULE_IN_SETTINGS" != "config.settings.aliyun_production" ]]; then
+        log_warning "Django settings.py中的SETTINGS_MODULE与.env文件不匹配，正在修复..."
+        sed -i "s/DJANGO_SETTINGS_MODULE=.*/DJANGO_SETTINGS_MODULE=config.settings.aliyun_production/" .env
+        log_success "Django settings.py中的SETTINGS_MODULE已更新"
+    else
+        log_info "Django settings.py中的SETTINGS_MODULE与.env文件匹配，无需修改"
+    fi
+    
+    # 重启Django应用以应用新配置
+    log_info "重启Django应用以应用新配置..."
+    sudo supervisorctl restart qatoolbox
+    log_success "Django配置检查和修复完成"
+}
+
+# 修复Django配置冲突
+fix_django_config_conflicts() {
+    log_info "修复Django配置冲突..."
+    
+    cd $PROJECT_DIR
+    
+    # 检查并修复STATICFILES_DIRS和STATIC_ROOT冲突
+    if [[ -f "config/settings/aliyun_production.py" ]]; then
+        log_info "检查Django配置文件中的静态文件配置..."
+        
+        # 备份原配置
+        cp config/settings/aliyun_production.py config/settings/aliyun_production.py.backup.$(date +%Y%m%d_%H%M%S)
+        
+        # 修复STATICFILES_DIRS配置冲突
+        if grep -q "STATICFILES_DIRS.*STATIC_ROOT" config/settings/aliyun_production.py; then
+            log_warning "发现STATICFILES_DIRS包含STATIC_ROOT，正在修复..."
+            sed -i '/STATICFILES_DIRS/d' config/settings/aliyun_production.py
+            echo "STATICFILES_DIRS = []" >> config/settings/aliyun_production.py
+            log_success "STATICFILES_DIRS配置冲突已修复"
+        fi
+        
+        # 确保STATIC_ROOT设置正确
+        if ! grep -q "STATIC_ROOT.*=.*staticfiles" config/settings/aliyun_production.py; then
+            log_info "设置STATIC_ROOT..."
+            sed -i '/STATIC_ROOT/d' config/settings/aliyun_production.py
+            echo "STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')" >> config/settings/aliyun_production.py
+        fi
+        
+        # 确保MEDIA_ROOT设置正确
+        if ! grep -q "MEDIA_ROOT.*=.*media" config/settings/aliyun_production.py; then
+            log_info "设置MEDIA_ROOT..."
+            sed -i '/MEDIA_ROOT/d' config/settings/aliyun_production.py
+            echo "MEDIA_ROOT = os.path.join(BASE_DIR, 'media')" >> config/settings/aliyun_production.py
+        fi
+        
+        log_success "Django配置冲突修复完成"
+    else
+        log_warning "Django配置文件不存在，跳过配置冲突修复"
+    fi
+}
+
 # 运行数据库迁移
 run_migrations() {
     log_info "运行数据库迁移..."
@@ -736,28 +829,31 @@ main() {
     log_info "步骤 7/15: 配置Python环境"
     setup_python_env || continue_on_error
     
-    log_info "步骤 8/15: 安装HEIC图片支持"
-    install_heic_support || continue_on_error
-    
-    log_info "步骤 9/15: 配置环境变量"
+    log_info "步骤 8/15: 配置环境变量"
     setup_env || continue_on_error
     
-    log_info "步骤 10/15: 运行数据库迁移"
+    log_info "步骤 9/15: 检查和修复Django配置"
+    fix_django_config || continue_on_error
+    
+    log_info "步骤 10/15: 修复Django配置冲突"
+    fix_django_config_conflicts || continue_on_error
+    
+    log_info "步骤 11/15: 运行数据库迁移"
     run_migrations || continue_on_error
     
-    log_info "步骤 11/15: 配置Nginx"
+    log_info "步骤 12/15: 配置Nginx"
     setup_nginx || continue_on_error
     
-    log_info "步骤 12/15: 配置Supervisor"
+    log_info "步骤 13/15: 配置Supervisor"
     setup_supervisor || continue_on_error
     
-    log_info "步骤 13/15: 启动服务"
+    log_info "步骤 14/15: 启动服务"
     start_services || continue_on_error
     
-    log_info "步骤 14/15: 健康检查"
+    log_info "步骤 15/15: 健康检查"
     health_check || continue_on_error
     
-    log_info "步骤 15/15: 显示部署信息"
+    log_info "步骤 16/16: 显示部署信息"
     show_deployment_info || continue_on_error
     
     log_success "🎉 部署完成！QAToolBox已成功运行在您的服务器上！"
