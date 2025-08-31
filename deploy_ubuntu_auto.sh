@@ -210,7 +210,7 @@ setup_nginx() {
     sudo tee /etc/nginx/sites-available/qatoolbox > /dev/null <<EOF
 server {
     listen 80;
-    server_name _;
+    server_name shenyiqing.xin www.shenyiqing.xin 47.103.143.152 172.24.33.31;
     
     client_max_body_size 500M;
     client_body_timeout 300s;
@@ -395,7 +395,7 @@ setup_python_env() {
     
     # 安装额外的重要依赖
     log_info "安装额外的重要依赖..."
-    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27 || log_warning "部分依赖安装失败，继续执行..."
+    pip install psutil>=5.9.0 Pillow>=10.0.0 opencv-python>=4.8.0 torch>=2.0.0 torchvision>=0.15.0 channels>=4.0.0 channels-redis>=4.1.0 websockets>=11.0.0 PyMuPDF>=1.23.0 reportlab>=4.0.0 PyPDF2>=3.0.0 pdfplumber>=0.9.0 pypdf>=3.15.0 ratelimit>=2.0.0 python-magic>=0.4.27 xmind>=1.2.0 || log_warning "部分依赖安装失败，继续执行..."
     
     # 安装系统依赖（如果python-magic-bin不可用）
     log_info "安装系统文件类型检测依赖..."
@@ -431,7 +431,7 @@ DEBUG=False
 DJANGO_SETTINGS_MODULE=config.settings.aliyun_production
 
 # 主机配置
-ALLOWED_HOSTS=shenyiqing.xin,www.shenyiqing.xin,47.103.143.152,localhost,127.0.0.1
+ALLOWED_HOSTS=shenyiqing.xin,www.shenyiqing.xin,47.103.143.152,localhost,127.0.0.1,172.24.33.31
 
 # 数据库配置
 DB_NAME=qatoolbox
@@ -465,12 +465,26 @@ run_migrations() {
     export $(grep -v '^#' .env | xargs)
     
     # 运行迁移
-    python manage.py makemigrations
-    python manage.py migrate
+    log_info "创建数据库迁移..."
+    python manage.py makemigrations || log_warning "迁移创建失败，尝试继续..."
+    
+    log_info "应用数据库迁移..."
+    python manage.py migrate || log_warning "迁移应用失败，尝试继续..."
     
     # 创建超级用户
     log_info "创建超级用户..."
-    echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@example.com', 'admin123') if not User.objects.filter(username='admin').exists() else None" | python manage.py shell
+    python manage.py shell <<EOF
+from django.contrib.auth import get_user_model
+User = get_user_model()
+try:
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+        print('超级用户创建成功')
+    else:
+        print('超级用户已存在')
+except Exception as e:
+    print(f'创建超级用户失败: {e}')
+EOF
     
     # 收集静态文件
     log_info "收集静态文件..."
