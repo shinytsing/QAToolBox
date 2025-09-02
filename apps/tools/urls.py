@@ -18,7 +18,7 @@ except ImportError:
 
 # 🔧 基础工具视图
 from .views.basic_tools_views import (
-    test_case_generator, redbook_generator, pdf_converter, pdf_converter_test,
+    test_case_generator, task_manager, redbook_generator, pdf_converter, pdf_converter_test,
     yuanqi_marriage_analyzer, fortune_analyzer, web_crawler, self_analysis, storyboard,
     fitness_center, training_plan_editor, storyboard_api,
     location_api, update_location_api, ai_analysis_api
@@ -68,8 +68,7 @@ from .views.fitness_views import (
 
 # 从食物相关视图导入
 from .views.food_views import (
-    api_foods, api_food_photo_bindings, api_save_food_photo_bindings,
-    get_food_list_api, food_image_crawler_api
+    api_foods, api_food_photo_bindings, api_save_food_photo_bindings, api_upload_food_photo, api_remove_food_photo_binding
 )
 
 # 从成就相关视图导入
@@ -106,7 +105,7 @@ from .views.tarot_views import (
 
 # 从食物随机器视图导入
 from .views.food_randomizer_views import (
-    food_randomizer_pure_random_api, food_randomizer_statistics_api, food_randomizer_history_api
+    food_randomizer_pure_random_api, food_randomizer_statistics_api, food_randomizer_history_api, food_randomizer_rate_api
 )
 
 # 从MeeSomeone视图导入
@@ -119,7 +118,7 @@ from .views.meetsomeone_views import (
 
 # 从食物图片视图导入
 from .views.food_image_views import (
-    food_image_crawler_api, compare_food_images_api, update_food_image_api, api_photos
+    api_photos
 )
 
 # 从原来的views.py文件导入剩余的函数
@@ -190,7 +189,8 @@ from .views.map_base_views import (
 # 从通知视图导入
 from .views.notification_views import (
     get_unread_notifications_api, mark_notifications_read_api,
-    clear_all_notifications_api, get_notification_summary_api
+    clear_all_notifications_api, get_notification_summary_api,
+    create_system_notification_api
 )
 
 # 从日记相关视图导入
@@ -251,6 +251,7 @@ from .proxy_view import (
 # 从测试用例生成API导入
 from .generate_test_cases_api import GenerateTestCasesAPI
 from .generate_redbook_api import GenerateRedBookAPI
+from .async_test_cases_api import AsyncGenerateTestCasesAPI, TaskStatusAPI, TaskListAPI, DeleteTaskAPI
 
 # 从missing_views只导入仍需要的函数（避免重复）
 # from .missing_views import (
@@ -388,6 +389,7 @@ urlpatterns = [
     
     # 基础工具页面路由
     path('test_case_generator/', test_case_generator, name='test_case_generator'),
+    path('task_manager/', task_manager, name='task_manager'),
     path('redbook_generator/', redbook_generator, name='redbook_generator'),
     path('pdf_converter/', pdf_converter, name='pdf_converter'),
     path('pdf_converter_test/', pdf_converter_test, name='pdf_converter_test'),
@@ -400,6 +402,12 @@ urlpatterns = [
     # 测试用例生成API路由
     path('api/generate-testcases/', GenerateTestCasesAPI.as_view(), name='generate_test_cases_api'),
     path('api/generate-redbook/', GenerateRedBookAPI.as_view(), name='generate_redbook_api'),
+    
+    # 异步测试用例生成API路由
+    path('api/async/generate-testcases/', AsyncGenerateTestCasesAPI.as_view(), name='async_generate_test_cases_api'),
+    path('api/async/task/delete/', DeleteTaskAPI.as_view(), name='delete_task_api'),
+    path('api/async/task/<str:task_id>/', TaskStatusAPI.as_view(), name='task_status_api'),
+    path('api/async/tasks/', TaskListAPI.as_view(), name='task_list_api'),
     path('fitness_center/', fitness_center, name='fitness_center'),
     path('training_plan_editor/', training_plan_editor, name='training_plan_editor'),
 
@@ -623,6 +631,7 @@ urlpatterns = [
     path('api/notifications/mark-read/', mark_notifications_read_api, name='mark_notifications_read_api'),
     path('api/notifications/clear-all/', clear_all_notifications_api, name='clear_all_notifications_api'),
     path('api/notifications/summary/', get_notification_summary_api, name='get_notification_summary_api'),
+    path('api/notifications/create/', create_system_notification_api, name='create_system_notification_api'),
     path('api/chat/<str:room_id>/mark-read/', mark_messages_read_api, name='mark_messages_read_api'),
     path('api/chat/<str:room_id>/download/<int:message_id>/', download_chat_file, name='download_chat_file'),
     path('api/chat/online_status/', update_online_status_api, name='update_online_status_api'),
@@ -637,8 +646,10 @@ urlpatterns = [
     path('api/foods/', api_foods, name='api_foods'),
     path('api/food_photo_bindings/', api_food_photo_bindings, name='api_food_photo_bindings'),
     path('api/save_food_photo_bindings/', api_save_food_photo_bindings, name='api_save_food_photo_bindings'),
-    path('api/food_list/', get_food_list_api, name='get_food_list_api'),
-    path('api/food_image_crawler/', food_image_crawler_api, name='food_image_crawler_api'),
+    path('api/remove_food_photo_binding/', api_remove_food_photo_binding, name='api_remove_food_photo_binding'),
+    path('api/upload_food_photo/', api_upload_food_photo, name='api_upload_food_photo'),
+    # path('api/food_list/', get_food_list_api, name='get_food_list_api'),  # 已删除
+    # path('api/food_image_crawler/', food_image_crawler_api, name='food_image_crawler_api'),  # 已删除
     
     # 成就相关API路由
     path('api/fitness_community/achievements/', get_fitness_achievements_api, name='get_fitness_achievements_api'),
@@ -776,6 +787,7 @@ urlpatterns = [
     path('api/food-randomizer/pure-random/', food_randomizer_pure_random_api, name='food_randomizer_pure_random_api'),
     path('api/food-randomizer/statistics/', food_randomizer_statistics_api, name='food_randomizer_statistics_api'),
     path('api/food-randomizer/history/', food_randomizer_history_api, name='food_randomizer_history_api'),
+    path('api/food-randomizer/rate/', food_randomizer_rate_api, name='food_randomizer_rate_api'),
     
     # 食品图像识别API
 
@@ -805,11 +817,11 @@ urlpatterns = [
     
     # Food Image Crawler和Food List相关API路由（已合并到上面的食物相关API路由部分）
     
-    # Food Image Compare相关API路由
-    path('api/compare-food-images/', compare_food_images_api, name='compare_food_images_api'),
+    # Food Image Compare相关API路由 (已删除不存在的函数)
+    # path('api/compare-food-images/', compare_food_images_api, name='compare_food_images_api'),
     
-    # Food Image Update相关API路由
-    path('api/update-food-image/', update_food_image_api, name='update_food_image_api'),
+    # Food Image Update相关API路由 (已删除不存在的函数)
+    # path('api/update-food-image/', update_food_image_api, name='update_food_image_api'),
     
     # Photos相关API路由
     path('api/photos/', api_photos, name='api_photos'),

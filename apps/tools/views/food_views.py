@@ -1,7 +1,4 @@
 # QAToolbox/apps/tools/views/food_views.py
-"""
-食物相关的视图函数
-"""
 
 import json
 import logging
@@ -21,149 +18,53 @@ def api_foods(request):
         # 获取查询参数
         query = request.GET.get('query', '')
         category = request.GET.get('category', 'all')
-        limit = int(request.GET.get('limit', 20))
+        limit = int(request.GET.get('limit', 200))
         
-        # 模拟食物数据库
-        food_database = [
-            {
-                'id': 1,
-                'name': '苹果',
-                'english_name': 'Apple',
-                'category': 'fruits',
-                'calories': 52,
-                'protein': 0.3,
-                'fat': 0.2,
-                'carbohydrates': 14,
-                'fiber': 2.4,
-                'sugar': 10.4,
-                'vitamin_c': 4.6,
-                'potassium': 107,
-                'image_url': '/static/img/food/apple.jpg',
-                'description': '富含膳食纤维和维生素C，有助于消化和免疫系统健康',
-                'tags': ['水果', '健康', '维生素C']
-            },
-            {
-                'id': 2,
-                'name': '香蕉',
-                'english_name': 'Banana',
-                'category': 'fruits',
-                'calories': 89,
-                'protein': 1.1,
-                'fat': 0.3,
-                'carbohydrates': 23,
-                'fiber': 2.6,
-                'sugar': 12.2,
-                'vitamin_c': 8.7,
-                'potassium': 358,
-                'image_url': '/static/img/food/banana.jpg',
-                'description': '富含钾元素，有助于心脏健康和肌肉功能',
-                'tags': ['水果', '钾', '能量']
-            },
-            {
-                'id': 3,
-                'name': '西兰花',
-                'english_name': 'Broccoli',
-                'category': 'vegetables',
-                'calories': 34,
-                'protein': 2.8,
-                'fat': 0.4,
-                'carbohydrates': 7,
-                'fiber': 2.6,
-                'sugar': 1.5,
-                'vitamin_c': 89.2,
-                'vitamin_k': 101.6,
-                'image_url': '/static/img/food/broccoli.jpg',
-                'description': '富含维生素C和K，具有强大的抗氧化和抗炎作用',
-                'tags': ['蔬菜', '维生素C', '抗氧化']
-            },
-            {
-                'id': 4,
-                'name': '鸡胸肉',
-                'english_name': 'Chicken Breast',
-                'category': 'proteins',
-                'calories': 165,
-                'protein': 31,
-                'fat': 3.6,
-                'carbohydrates': 0,
-                'cholesterol': 85,
-                'sodium': 74,
-                'image_url': '/static/img/food/chicken_breast.jpg',
-                'description': '优质蛋白质来源，低脂肪，适合健身和减重',
-                'tags': ['蛋白质', '健身', '低脂肪']
-            },
-            {
-                'id': 5,
-                'name': '三文鱼',
-                'english_name': 'Salmon',
-                'category': 'proteins',
-                'calories': 208,
-                'protein': 25,
-                'fat': 12,
-                'carbohydrates': 0,
-                'omega_3': 2.3,
-                'vitamin_d': 11.1,
-                'image_url': '/static/img/food/salmon.jpg',
-                'description': '富含Omega-3脂肪酸，有助于心脏健康和大脑功能',
-                'tags': ['鱼类', 'Omega-3', '心脏健康']
-            },
-            {
-                'id': 6,
-                'name': '糙米',
-                'english_name': 'Brown Rice',
-                'category': 'grains',
-                'calories': 111,
-                'protein': 2.6,
-                'fat': 0.9,
-                'carbohydrates': 23,
-                'fiber': 1.8,
-                'magnesium': 43,
-                'manganese': 0.9,
-                'image_url': '/static/img/food/brown_rice.jpg',
-                'description': '全谷物，富含膳食纤维和B族维生素',
-                'tags': ['谷物', '全谷物', '膳食纤维']
-            }
-        ]
+        # 获取真实的食物数据
+        from apps.tools.models.legacy_models import FoodItem
         
-        # 搜索和过滤
+        food_database = []
+        try:
+            # 获取所有食物
+            foods = FoodItem.objects.all()
+            for food in foods:
+                                       food_database.append({
+                           'id': food.id,
+                           'name': food.name,
+                           'english_name': '',  # 模型中没有这个字段
+                           'category': food.cuisine or 'other',
+                           'calories': food.calories or 0,
+                           'protein': food.protein or 0,
+                           'fat': food.fat or 0,
+                           'carbohydrates': food.carbohydrates or 0,
+                           'fiber': food.fiber or 0,
+                           'sugar': food.sugar or 0,
+                           'vitamin_c': 0,  # 模型中没有这个字段
+                           'potassium': 0,  # 模型中没有这个字段
+                           'image_url': food.image_url or '/static/img/food/default-food.svg',
+                           'description': food.description or '',
+                           'tags': food.tags if isinstance(food.tags, list) else []
+                       })
+        except Exception as e:
+            # 如果数据库中没有数据，返回空数组
+            food_database = []
+        
+        # 应用筛选
         filtered_foods = food_database
         
-        # 按查询词过滤
+        # 按查询条件筛选
         if query:
-            query_lower = query.lower()
-            filtered_foods = [
-                food for food in filtered_foods
-                if query_lower in food['name'].lower() or 
-                   query_lower in food['english_name'].lower() or
-                   any(query_lower in tag.lower() for tag in food.get('tags', []))
-            ]
+            filtered_foods = [food for food in filtered_foods if query.lower() in food['name'].lower()]
         
-        # 按类别过滤
         if category != 'all':
             filtered_foods = [food for food in filtered_foods if food['category'] == category]
         
         # 限制结果数量
         filtered_foods = filtered_foods[:limit]
         
-        # 计算统计信息
-        categories_stats = {}
-        for food in filtered_foods:
-            cat = food['category']
-            if cat not in categories_stats:
-                categories_stats[cat] = 0
-            categories_stats[cat] += 1
-        
         logger.info(f"获取食物列表: 查询 '{query}', 类别 '{category}', 返回 {len(filtered_foods)} 条记录")
         
-        return JsonResponse({
-            'success': True,
-            'foods': filtered_foods,
-            'stats': {
-                'total_foods': len(filtered_foods),
-                'categories': categories_stats,
-                'query': query,
-                'category': category
-            }
-        })
+        return JsonResponse(filtered_foods, safe=False)
         
     except Exception as e:
         logger.error(f"获取食物列表失败: {str(e)}")
@@ -182,73 +83,35 @@ def api_food_photo_bindings(request):
         user_id = request.GET.get('user_id', request.user.id)
         limit = int(request.GET.get('limit', 20))
         
-        # 模拟食物照片绑定数据
-        bindings_data = [
-            {
-                'id': 1,
-                'user_id': user_id,
-                'food_name': '苹果',
-                'photo_url': '/media/food_photos/apple_001.jpg',
-                'confidence': 0.95,
-                'created_at': (datetime.now() - timedelta(days=1)).isoformat(),
-                'nutrition_info': {
-                    'calories': 52,
-                    'protein': 0.3,
-                    'fat': 0.2,
-                    'carbohydrates': 14
-                },
-                'tags': ['水果', '健康', '维生素C']
-            },
-            {
-                'id': 2,
-                'user_id': user_id,
-                'food_name': '鸡胸肉',
-                'photo_url': '/media/food_photos/chicken_001.jpg',
-                'confidence': 0.88,
-                'created_at': (datetime.now() - timedelta(days=2)).isoformat(),
-                'nutrition_info': {
-                    'calories': 165,
-                    'protein': 31,
-                    'fat': 3.6,
-                    'carbohydrates': 0
-                },
-                'tags': ['蛋白质', '健身', '低脂肪']
-            },
-            {
-                'id': 3,
-                'user_id': user_id,
-                'food_name': '西兰花',
-                'photo_url': '/media/food_photos/broccoli_001.jpg',
-                'confidence': 0.92,
-                'created_at': (datetime.now() - timedelta(days=3)).isoformat(),
-                'nutrition_info': {
-                    'calories': 34,
-                    'protein': 2.8,
-                    'fat': 0.4,
-                    'carbohydrates': 7
-                },
-                'tags': ['蔬菜', '维生素C', '抗氧化']
-            }
-        ]
+        # 获取真实的食物照片绑定数据
+        from apps.tools.models.legacy_models import FoodPhotoBinding
+        
+        bindings_data = []
+        try:
+            # 获取所有绑定关系
+            photo_bindings = FoodPhotoBinding.objects.all()
+            for binding in photo_bindings:
+                bindings_data.append({
+                    'id': binding.id,
+                    'food_id': binding.food_item.id if binding.food_item else None,
+                    'food_name': binding.food_item.name if binding.food_item else '未知食物',
+                    'photo_name': binding.photo_name,
+                    'photo_url': binding.photo_url,
+                    'created_at': binding.created_at.isoformat() if binding.created_at else None,
+                })
+        except Exception as e:
+            # 如果数据库中没有数据，返回空数组
+            bindings_data = []
         
         # 限制结果数量
         bindings_data = bindings_data[:limit]
         
         # 计算统计信息
         total_bindings = len(bindings_data)
-        avg_confidence = sum(b['confidence'] for b in bindings_data) / total_bindings if total_bindings > 0 else 0
         
         logger.info(f"获取食物照片绑定: 用户 {user_id}, 返回 {total_bindings} 条记录")
         
-        return JsonResponse({
-            'success': True,
-            'bindings': bindings_data,
-            'stats': {
-                'total_bindings': total_bindings,
-                'avg_confidence': f"{avg_confidence:.2f}",
-                'user_id': user_id
-            }
-        })
+        return JsonResponse(bindings_data, safe=False)
         
     except Exception as e:
         logger.error(f"获取食物照片绑定失败: {str(e)}")
@@ -275,7 +138,7 @@ def api_save_food_photo_bindings(request):
         
         # 验证绑定数据
         for binding in bindings:
-            required_fields = ['food_name', 'photo_url', 'confidence']
+            required_fields = ['food_id', 'photo_name']
             for field in required_fields:
                 if field not in binding:
                     return JsonResponse({
@@ -283,35 +146,59 @@ def api_save_food_photo_bindings(request):
                         'error': f'缺少必需字段: {field}'
                     }, status=400)
         
-        # 模拟保存绑定数据
+        # 获取真实的食物照片绑定数据
+        from apps.tools.models.legacy_models import FoodPhotoBinding, FoodItem
+        
         saved_bindings = []
-        for i, binding in enumerate(bindings):
-            saved_binding = {
-                'id': i + 1,
-                'user_id': request.user.id,
-                'food_name': binding['food_name'],
-                'photo_url': binding['photo_url'],
-                'confidence': binding['confidence'],
-                'nutrition_info': binding.get('nutrition_info', {}),
-                'tags': binding.get('tags', []),
-                'created_at': datetime.now().isoformat(),
-                'updated_at': datetime.now().isoformat()
-            }
-            saved_bindings.append(saved_binding)
+        for binding in bindings:
+            try:
+                # 获取食物对象
+                food_item = FoodItem.objects.get(id=binding['food_id'])
+                
+                # 查找或创建绑定记录
+                photo_binding, created = FoodPhotoBinding.objects.get_or_create(
+                    food_item=food_item,
+                    defaults={
+                        'photo_name': binding['photo_name'],
+                        'photo_url': f'/media/food_photos/{binding["photo_name"]}',
+                        'accuracy_score': 1.0,  # 手动绑定的准确度为1.0
+                        'created_by': request.user,
+                        'binding_source': 'manual',
+                    }
+                )
+                
+                if not created:
+                    # 更新现有绑定
+                    photo_binding.photo_name = binding['photo_name']
+                    photo_binding.photo_url = f'/media/food_photos/{binding["photo_name"]}'
+                    photo_binding.accuracy_score = 1.0
+                    photo_binding.binding_source = 'manual'
+                    photo_binding.save()
+                
+                saved_bindings.append({
+                    'id': photo_binding.id,
+                    'food_id': food_item.id,
+                    'food_name': food_item.name,
+                    'photo_name': photo_binding.photo_name,
+                    'photo_url': photo_binding.photo_url,
+                    'created': created
+                })
+                
+            except FoodItem.DoesNotExist:
+                logger.warning(f"食物ID {binding['food_id']} 不存在")
+                continue
+            except Exception as e:
+                logger.error(f"保存绑定失败: {str(e)}")
+                continue
         
         logger.info(f"保存食物照片绑定: 用户 {request.user.id}, 保存 {len(saved_bindings)} 条记录")
         
         return JsonResponse({
             'success': True,
-            'message': f'成功保存 {len(saved_bindings)} 条食物照片绑定',
-            'saved_bindings': saved_bindings
+            'message': f'成功保存 {len(saved_bindings)} 条绑定记录',
+            'bindings': saved_bindings
         })
         
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': '无效的JSON数据'
-        }, status=400)
     except Exception as e:
         logger.error(f"保存食物照片绑定失败: {str(e)}")
         return JsonResponse({
@@ -320,228 +207,114 @@ def api_save_food_photo_bindings(request):
         }, status=500)
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["POST"])
 @login_required
-def get_food_list_api(request):
-    """获取食物列表API - 真实实现"""
+def api_upload_food_photo(request):
+    """上传食物照片API"""
     try:
-        # 获取查询参数
-        query = request.GET.get('query', '')
-        category = request.GET.get('category', 'all')
-        limit = int(request.GET.get('limit', 20))
+        if 'photo' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': '没有上传文件'
+            }, status=400)
         
-        # 模拟食物数据库
-        food_database = [
-            {
-                'id': 1,
-                'name': '苹果',
-                'english_name': 'Apple',
-                'category': 'fruits',
-                'calories': 52,
-                'protein': 0.3,
-                'fat': 0.2,
-                'carbohydrates': 14,
-                'fiber': 2.4,
-                'sugar': 10.4,
-                'vitamin_c': 4.6,
-                'potassium': 107,
-                'image_url': '/static/img/food/apple.jpg',
-                'description': '富含膳食纤维和维生素C，有助于消化和免疫系统健康',
-                'tags': ['水果', '健康', '维生素C']
-            },
-            {
-                'id': 2,
-                'name': '香蕉',
-                'english_name': 'Banana',
-                'category': 'fruits',
-                'calories': 89,
-                'protein': 1.1,
-                'fat': 0.3,
-                'carbohydrates': 23,
-                'fiber': 2.6,
-                'sugar': 12.2,
-                'vitamin_c': 8.7,
-                'potassium': 358,
-                'image_url': '/static/img/food/banana.jpg',
-                'description': '富含钾元素，有助于心脏健康和肌肉功能',
-                'tags': ['水果', '钾', '能量']
-            },
-            {
-                'id': 3,
-                'name': '西兰花',
-                'english_name': 'Broccoli',
-                'category': 'vegetables',
-                'calories': 34,
-                'protein': 2.8,
-                'fat': 0.4,
-                'carbohydrates': 7,
-                'fiber': 2.6,
-                'sugar': 1.5,
-                'vitamin_c': 89.2,
-                'vitamin_k': 101.6,
-                'image_url': '/static/img/food/broccoli.jpg',
-                'description': '富含维生素C和K，具有强大的抗氧化和抗炎作用',
-                'tags': ['蔬菜', '维生素C', '抗氧化']
-            },
-            {
-                'id': 4,
-                'name': '鸡胸肉',
-                'english_name': 'Chicken Breast',
-                'category': 'proteins',
-                'calories': 165,
-                'protein': 31,
-                'fat': 3.6,
-                'carbohydrates': 0,
-                'cholesterol': 85,
-                'sodium': 74,
-                'image_url': '/static/img/food/chicken_breast.jpg',
-                'description': '优质蛋白质来源，低脂肪，适合健身和减重',
-                'tags': ['蛋白质', '健身', '低脂肪']
-            },
-            {
-                'id': 5,
-                'name': '三文鱼',
-                'english_name': 'Salmon',
-                'category': 'proteins',
-                'calories': 208,
-                'protein': 25,
-                'fat': 12,
-                'carbohydrates': 0,
-                'omega_3': 2.3,
-                'vitamin_d': 11.1,
-                'image_url': '/static/img/food/salmon.jpg',
-                'description': '富含Omega-3脂肪酸，有助于心脏健康和大脑功能',
-                'tags': ['鱼类', 'Omega-3', '心脏健康']
-            },
-            {
-                'id': 6,
-                'name': '糙米',
-                'english_name': 'Brown Rice',
-                'category': 'grains',
-                'calories': 111,
-                'protein': 2.6,
-                'fat': 0.9,
-                'carbohydrates': 23,
-                'fiber': 1.8,
-                'magnesium': 43,
-                'manganese': 0.9,
-                'image_url': '/static/img/food/brown_rice.jpg',
-                'description': '全谷物，富含膳食纤维和B族维生素',
-                'tags': ['谷物', '全谷物', '膳食纤维']
-            }
-        ]
+        photo_file = request.FILES['photo']
         
-        # 搜索和过滤
-        filtered_foods = food_database
+        # 验证文件类型
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+        if photo_file.content_type not in allowed_types:
+            return JsonResponse({
+                'success': False,
+                'error': '不支持的文件类型，请上传图片文件'
+            }, status=400)
         
-        # 按查询词过滤
-        if query:
-            query_lower = query.lower()
-            filtered_foods = [
-                food for food in filtered_foods
-                if query_lower in food['name'].lower() or 
-                   query_lower in food['english_name'].lower() or
-                   any(query_lower in tag.lower() for tag in food.get('tags', []))
-            ]
+        # 验证文件大小 (最大10MB)
+        if photo_file.size > 10 * 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'error': '文件大小不能超过10MB'
+            }, status=400)
         
-        # 按类别过滤
-        if category != 'all':
-            filtered_foods = [food for food in filtered_foods if food['category'] == category]
+        # 生成文件名
+        import uuid
+        import os
+        from django.core.files.storage import default_storage
         
-        # 限制结果数量
-        filtered_foods = filtered_foods[:limit]
+        file_extension = os.path.splitext(photo_file.name)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
         
-        # 计算统计信息
-        categories_stats = {}
-        for food in filtered_foods:
-            cat = food['category']
-            if cat not in categories_stats:
-                categories_stats[cat] = 0
-            categories_stats[cat] += 1
+        # 保存文件
+        file_path = f"food_photos/{unique_filename}"
+        saved_path = default_storage.save(file_path, photo_file)
         
-        logger.info(f"获取食物列表: 查询 '{query}', 类别 '{category}', 返回 {len(filtered_foods)} 条记录")
+        # 获取文件URL
+        file_url = default_storage.url(saved_path)
+        
+        logger.info(f"上传食物照片: 用户 {request.user.id}, 文件 {unique_filename}")
         
         return JsonResponse({
             'success': True,
-            'foods': filtered_foods,
-            'stats': {
-                'total_foods': len(filtered_foods),
-                'categories': categories_stats,
-                'query': query,
-                'category': category
+            'message': '照片上传成功',
+            'data': {
+                'filename': unique_filename,
+                'url': file_url,
+                'size': photo_file.size,
+                'content_type': photo_file.content_type
             }
         })
         
     except Exception as e:
-        logger.error(f"获取食物列表失败: {str(e)}")
+        logger.error(f"上传食物照片失败: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': f'获取食物列表失败: {str(e)}'
+            'error': f'上传失败: {str(e)}'
         }, status=500)
 
 @csrf_exempt
-@require_http_methods(["GET"])
+@require_http_methods(["POST"])
 @login_required
-def food_image_crawler_api(request):
-    """食物图片爬虫API - 真实实现"""
+def api_remove_food_photo_binding(request):
+    """删除食物照片绑定API"""
     try:
-        # 获取查询参数
-        food_name = request.GET.get('food_name', '')
-        limit = int(request.GET.get('limit', 10))
+        data = json.loads(request.body)
+        photo_name = data.get('photo_name')
         
-        if not food_name:
+        if not photo_name:
             return JsonResponse({
                 'success': False,
-                'error': '请提供食物名称'
+                'error': '缺少照片名称'
             }, status=400)
         
-        # 模拟爬虫结果
-        crawler_results = [
-            {
-                'id': 1,
-                'food_name': food_name,
-                'image_url': f'/static/img/food/{food_name.lower()}_001.jpg',
-                'source': 'food_database',
-                'confidence': 0.95,
-                'tags': ['高清', '正面', '完整'],
-                'created_at': datetime.now().isoformat()
-            },
-            {
-                'id': 2,
-                'food_name': food_name,
-                'image_url': f'/static/img/food/{food_name.lower()}_002.jpg',
-                'source': 'food_database',
-                'confidence': 0.88,
-                'tags': ['侧面', '细节'],
-                'created_at': datetime.now().isoformat()
-            },
-            {
-                'id': 3,
-                'food_name': food_name,
-                'image_url': f'/static/img/food/{food_name.lower()}_003.jpg',
-                'source': 'food_database',
-                'confidence': 0.92,
-                'tags': ['俯视', '整体'],
-                'created_at': datetime.now().isoformat()
-            }
-        ]
+        from apps.tools.models.legacy_models import FoodPhotoBinding
         
-        # 限制结果数量
-        crawler_results = crawler_results[:limit]
+        # 查找并删除绑定
+        bindings = FoodPhotoBinding.objects.filter(photo_name=photo_name)
+        deleted_count = bindings.count()
         
-        logger.info(f"食物图片爬虫: 食物 '{food_name}', 返回 {len(crawler_results)} 张图片")
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'成功获取 {food_name} 的图片',
-            'food_name': food_name,
-            'images': crawler_results,
-            'total_images': len(crawler_results)
-        })
-        
+        if deleted_count > 0:
+            bindings.delete()
+            logger.info(f"删除食物照片绑定: 用户 {request.user.id}, 照片 {photo_name}, 删除 {deleted_count} 条记录")
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'成功删除 {deleted_count} 条绑定记录',
+                'deleted_count': deleted_count
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': '未找到要删除的绑定'
+            }, status=404)
+            
     except Exception as e:
-        logger.error(f"食物图片爬虫失败: {str(e)}")
+        logger.error(f"删除食物照片绑定失败: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': f'爬虫失败: {str(e)}'
+            'error': f'删除失败: {str(e)}'
         }, status=500)
+
+@login_required
+def food_photo_binding_view(request):
+    """食物照片绑定页面"""
+    from django.shortcuts import render
+    return render(request, 'tools/food_photo_binding.html')

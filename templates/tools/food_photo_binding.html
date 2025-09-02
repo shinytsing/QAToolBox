@@ -265,6 +265,16 @@
             border-color: #667eea;
         }
         
+        .filter-info {
+            margin-right: 15px;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            font-size: 0.8em;
+            color: #666;
+            border: 1px solid #e9ecef;
+        }
+        
         .photo-item {
             position: relative;
             border-radius: 10px;
@@ -442,6 +452,78 @@
             box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
         }
         
+        .btn-upload {
+            background: linear-gradient(45deg, #9c27b0, #7b1fa2);
+            color: white;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4);
+        }
+        
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #9c27b0;
+            background: #f3e5f5;
+        }
+        
+        .upload-area.dragover {
+            border-color: #9c27b0;
+            background: #e1bee7;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #9c27b0;
+            margin-bottom: 15px;
+        }
+        
+        .upload-progress {
+            margin-top: 20px;
+        }
+        
+        .upload-status {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .upload-results {
+            margin-top: 20px;
+        }
+        
+        .uploaded-photo {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        
+        .uploaded-photo img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #4caf50;
+        }
+        
+        .uploaded-photo .photo-name {
+            font-size: 0.8em;
+            margin-top: 5px;
+            color: #666;
+        }
+        
         /* 搜索框样式 */
         .search-box {
             margin-bottom: 15px;
@@ -604,6 +686,9 @@
                     </div>
                     
                     <div class="search-filters">
+                        <div class="filter-info">
+                            <span id="filterResultCount">显示全部照片</span>
+                        </div>
                         <button class="filter-btn active" data-filter="all" onclick="filterPhotos('all')">
                             <i class="fas fa-list"></i> 全部
                         </button>
@@ -618,6 +703,12 @@
                         </button>
                         <button class="filter-btn" data-filter="png" onclick="filterPhotos('png')">
                             <i class="fas fa-image"></i> PNG
+                        </button>
+                        <button class="filter-btn" data-filter="gif" onclick="filterPhotos('gif')">
+                            <i class="fas fa-image"></i> GIF
+                        </button>
+                        <button class="filter-btn" data-filter="webp" onclick="filterPhotos('webp')">
+                            <i class="fas fa-image"></i> WebP
                         </button>
                     </div>
                     
@@ -685,6 +776,9 @@
             
             <!-- 操作按钮 -->
             <div class="action-buttons">
+                <button class="btn-action btn-upload" onclick="showUploadModal()">
+                    <i class="fas fa-upload"></i> 上传图片
+                </button>
                 <button class="btn-action btn-save" onclick="saveBindings()">
                     <i class="fas fa-save"></i> 保存绑定
                 </button>
@@ -694,6 +788,52 @@
                 <button class="btn-action btn-export" onclick="exportBindings()">
                     <i class="fas fa-download"></i> 导出数据
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片上传模态框 -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">
+                        <i class="fas fa-upload"></i> 上传食物图片
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <h6>拖拽图片到此处或点击选择文件</h6>
+                            <p class="text-muted">支持 JPG、PNG、GIF、WebP 格式，最大 10MB</p>
+                            <input type="file" id="photoInput" accept="image/*" style="display: none;" multiple>
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('photoInput').click()">
+                                <i class="fas fa-folder-open"></i> 选择文件
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 上传进度 -->
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="upload-status" id="uploadStatus">准备上传...</div>
+                    </div>
+                    
+                    <!-- 上传结果 -->
+                    <div class="upload-results" id="uploadResults" style="display: none;">
+                        <!-- 上传成功的图片将显示在这里 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="uploadBtn" onclick="uploadPhotos()" disabled>
+                        <i class="fas fa-upload"></i> 开始上传
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -802,7 +942,7 @@
         // 加载现有绑定关系
         async function loadExistingBindings() {
             try {
-                const response = await fetch('/tools/api/food-photo-bindings/');
+                const response = await fetch('/tools/api/food_photo_bindings/');
                 if (response.ok) {
                     const existingBindings = await response.json();
                     existingBindings.forEach(binding => {
@@ -834,7 +974,7 @@
                      ondragend="handleFoodDragEnd(event)">
                     ${bindings.has(food.id) ? '<i class="fas fa-check bound-indicator"></i>' : ''}
                     <div class="food-name">${food.name}</div>
-                    <div class="food-cuisine">菜系: ${getCuisineDisplay(food.cuisine)}</div>
+                    <div class="food-cuisine">菜系: ${getCuisineDisplay(food.category || food.cuisine)}</div>
                     <div class="food-tags">标签: ${food.tags ? food.tags.join(', ') : '无'}</div>
                 </div>
             `).join('');
@@ -982,12 +1122,51 @@
                     return photo.name.toLowerCase().endsWith('.jpg') || photo.name.toLowerCase().endsWith('.jpeg');
                 } else if (currentFilter === 'png') {
                     return photo.name.toLowerCase().endsWith('.png');
+                } else if (currentFilter === 'gif') {
+                    return photo.name.toLowerCase().endsWith('.gif');
+                } else if (currentFilter === 'webp') {
+                    return photo.name.toLowerCase().endsWith('.webp');
                 }
                 
                 return true; // 'all' filter
             });
             
+            // 更新筛选结果统计
+            updateFilterResultCount();
+            
             renderPhotos();
+        }
+        
+        // 更新筛选结果统计显示
+        function updateFilterResultCount() {
+            const count = filteredPhotos.length;
+            const total = photos.length;
+            const filterInfo = document.getElementById('filterResultCount');
+            
+            let filterText = '';
+            if (currentFilter === 'all') {
+                filterText = `显示全部照片 (${count}/${total})`;
+            } else if (currentFilter === 'bound') {
+                filterText = `已绑定照片 (${count}/${total})`;
+            } else if (currentFilter === 'unbound') {
+                filterText = `未绑定照片 (${count}/${total})`;
+            } else if (currentFilter === 'jpg') {
+                filterText = `JPG格式照片 (${count}/${total})`;
+            } else if (currentFilter === 'png') {
+                filterText = `PNG格式照片 (${count}/${total})`;
+            } else if (currentFilter === 'gif') {
+                filterText = `GIF格式照片 (${count}/${total})`;
+            } else if (currentFilter === 'webp') {
+                filterText = `WebP格式照片 (${count}/${total})`;
+            } else {
+                filterText = `筛选结果 (${count}/${total})`;
+            }
+            
+            if (searchTerm) {
+                filterText += ` - 搜索: "${searchTerm}"`;
+            }
+            
+            filterInfo.textContent = filterText;
         }
         
         // 拖拽开始
@@ -1053,15 +1232,42 @@
         }
         
         // 移除绑定
-        function removeBinding(photoName) {
-            const foodId = [...bindings.entries()].find(([_, photo]) => photo === photoName)?.[0];
-            if (foodId) {
-                bindings.delete(parseInt(foodId));
-                renderFoods();
-                renderPhotos();
-                updateBindingDisplay();
-                updateStats();
-                showMessage('绑定已移除', 'info');
+        async function removeBinding(photoName) {
+            try {
+                // 调用API删除数据库中的绑定
+                const response = await fetch('/tools/api/remove_food_photo_binding/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({photo_name: photoName})
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        // 从前端Map中删除绑定
+                        const foodId = [...bindings.entries()].find(([_, photo]) => photo === photoName)?.[0];
+                        if (foodId) {
+                            bindings.delete(parseInt(foodId));
+                        }
+                        
+                        // 重新渲染界面
+                        renderFoods();
+                        renderPhotos();
+                        updateBindingDisplay();
+                        updateStats();
+                        showMessage('绑定已移除', 'success');
+                    } else {
+                        showMessage(result.error || '删除失败', 'warning');
+                    }
+                } else {
+                    showMessage('网络错误，请重试', 'warning');
+                }
+            } catch (error) {
+                console.error('Error removing binding:', error);
+                showMessage('删除绑定时发生错误', 'warning');
             }
         }
         
@@ -1135,14 +1341,11 @@
             renderFoods(filtered);
         }
         
-        // 搜索过滤照片
-        function filterPhotos() {
+        // 搜索照片（重命名避免冲突）
+        function searchPhotos() {
             const query = document.getElementById('photoSearch').value.toLowerCase();
-            const filtered = photos.filter(photo => 
-                photo.name.toLowerCase().includes(query) ||
-                photo.display_name.toLowerCase().includes(query)
-            );
-            renderPhotos(filtered);
+            searchTerm = query;
+            applyFilters();
         }
         
         // 保存绑定关系
@@ -1156,7 +1359,7 @@
                     });
                 }
                 
-                const response = await fetch('/tools/api/food-photo-bindings/save/', {
+                const response = await fetch('/tools/api/save_food_photo_bindings/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1305,6 +1508,184 @@
             document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
             document.body.classList.remove('modal-open');
         });
+        
+        // 图片上传相关功能
+        let selectedFiles = [];
+        
+        // 显示上传模态框
+        function showUploadModal() {
+            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            modal.show();
+            setupUploadEventListeners();
+        }
+        
+        // 设置上传事件监听器
+        function setupUploadEventListeners() {
+            const uploadArea = document.getElementById('uploadArea');
+            const photoInput = document.getElementById('photoInput');
+            
+            // 点击上传区域选择文件
+            uploadArea.addEventListener('click', () => {
+                photoInput.click();
+            });
+            
+            // 文件选择事件
+            photoInput.addEventListener('change', handleFileSelect);
+            
+            // 拖拽事件
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+        }
+        
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            addFiles(files);
+        }
+        
+        // 处理拖拽悬停
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+        
+        // 处理拖拽离开
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+        
+        // 处理文件拖拽放置
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = Array.from(event.dataTransfer.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            addFiles(imageFiles);
+        }
+        
+        // 添加文件到上传列表
+        function addFiles(files) {
+            const validFiles = files.filter(file => {
+                // 检查文件类型
+                if (!file.type.startsWith('image/')) {
+                    showMessage(`文件 ${file.name} 不是图片格式`, 'warning');
+                    return false;
+                }
+                
+                // 检查文件大小 (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showMessage(`文件 ${file.name} 超过10MB限制`, 'warning');
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            selectedFiles = [...selectedFiles, ...validFiles];
+            updateUploadButton();
+            showMessage(`已选择 ${validFiles.length} 个文件`, 'info');
+        }
+        
+        // 更新上传按钮状态
+        function updateUploadButton() {
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+        
+        // 上传图片
+        async function uploadPhotos() {
+            if (selectedFiles.length === 0) {
+                showMessage('请先选择要上传的图片', 'warning');
+                return;
+            }
+            
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadStatus = document.getElementById('uploadStatus');
+            const uploadResults = document.getElementById('uploadResults');
+            const progressBar = uploadProgress.querySelector('.progress-bar');
+            
+            // 显示进度条
+            uploadProgress.style.display = 'block';
+            uploadResults.style.display = 'block';
+            uploadResults.innerHTML = '';
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const progress = ((i + 1) / selectedFiles.length) * 100;
+                
+                uploadStatus.textContent = `正在上传 ${file.name}...`;
+                progressBar.style.width = `${progress}%`;
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    
+                    const response = await fetch('/tools/api/upload_food_photo/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCsrfToken()
+                        },
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        successCount++;
+                        
+                        // 显示上传成功的图片
+                        const photoDiv = document.createElement('div');
+                        photoDiv.className = 'uploaded-photo';
+                        photoDiv.innerHTML = `
+                            <img src="${result.data.url}" alt="${result.data.filename}">
+                            <div class="photo-name">${result.data.filename}</div>
+                        `;
+                        uploadResults.appendChild(photoDiv);
+                        
+                        // 添加到照片列表
+                        const newPhoto = {
+                            id: Date.now() + Math.random(),
+                            name: result.data.filename,
+                            display_name: file.name,
+                            url: result.data.url,
+                            category: 'uploaded',
+                            uploaded_at: new Date().toISOString()
+                        };
+                        photos.push(newPhoto);
+                        
+                    } else {
+                        failCount++;
+                        showMessage(`上传 ${file.name} 失败: ${result.error}`, 'warning');
+                    }
+                    
+                } catch (error) {
+                    failCount++;
+                    console.error('Upload error:', error);
+                    showMessage(`上传 ${file.name} 失败: 网络错误`, 'warning');
+                }
+            }
+            
+            // 完成上传
+            uploadStatus.textContent = `上传完成！成功: ${successCount}, 失败: ${failCount}`;
+            progressBar.style.width = '100%';
+            
+            if (successCount > 0) {
+                showMessage(`成功上传 ${successCount} 张图片`, 'success');
+                // 重新渲染照片列表
+                renderPhotos();
+                updateStats();
+            }
+            
+            // 清空选择
+            selectedFiles = [];
+            document.getElementById('photoInput').value = '';
+            updateUploadButton();
+        }
     </script>
 </body>
 </html>
