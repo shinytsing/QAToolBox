@@ -27,8 +27,7 @@
         let globalMenuDropdownTimer = null;
         
         function showSettingsDropdown() {
-            console.log('🔧 showSettingsDropdown 被调用');
-            
+
             // 清除隐藏定时器
             if (globalSettingsDropdownTimer) {
                 clearTimeout(globalSettingsDropdownTimer);
@@ -45,13 +44,11 @@
             dropdownContent.style.display = 'block';
             dropdownContent.style.opacity = '1';
             dropdownContent.style.transform = 'scale(1) translateY(0)';
-            
-            console.log('✅ 设置菜单已显示');
+
         }
         
         function hideSettingsDropdownDelayed() {
-            console.log('🔧 hideSettingsDropdownDelayed 被调用');
-            
+
             // 设置延迟隐藏定时器
             globalSettingsDropdownTimer = setTimeout(() => {
                 hideSettingsDropdown();
@@ -59,8 +56,7 @@
         }
         
         function hideSettingsDropdown() {
-            console.log('🔧 hideSettingsDropdown 被调用');
-            
+
             const dropdownContent = document.getElementById('settingsDropdownContent');
             if (!dropdownContent) return;
             
@@ -68,13 +64,11 @@
             dropdownContent.style.display = 'none';
             dropdownContent.style.opacity = '0';
             dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
-            
-            console.log('✅ 设置菜单已隐藏');
+
         }
         
         function showMenuDropdown() {
-            console.log('🔧 showMenuDropdown 被调用');
-            
+
             // 清除隐藏定时器
             if (globalMenuDropdownTimer) {
                 clearTimeout(globalMenuDropdownTimer);
@@ -91,13 +85,11 @@
             dropdownContent.style.display = 'block';
             dropdownContent.style.opacity = '1';
             dropdownContent.style.transform = 'translateX(-50%) scale(1) translateY(0)';
-            
-            console.log('✅ 菜单已显示');
+
         }
         
         function hideMenuDropdownDelayed() {
-            console.log('🔧 hideMenuDropdownDelayed 被调用');
-            
+
             // 设置延迟隐藏定时器
             globalMenuDropdownTimer = setTimeout(() => {
                 hideMenuDropdown();
@@ -105,8 +97,7 @@
         }
         
         function hideMenuDropdown() {
-            console.log('🔧 hideMenuDropdown 被调用');
-            
+
             const dropdownContent = document.getElementById('menuDropdownContent');
             if (!dropdownContent) return;
             
@@ -114,13 +105,12 @@
             dropdownContent.style.display = 'none';
             dropdownContent.style.opacity = '0';
             dropdownContent.style.transform = 'translateX(-50%) scale(0.95) translateY(-10px)';
-            
-            console.log('✅ 菜单已隐藏');
+
         }
         
         // 添加缺失的模态框关闭函数
         function closeSettingsModal() {
-            console.log('❌ 关闭设置模态框');
+
             const settingsModal = document.getElementById('settingsModal');
             if (settingsModal) {
                 settingsModal.style.display = 'none';
@@ -131,7 +121,7 @@
         }
         
         function closeMenuModal() {
-            console.log('❌ 关闭菜单模态框');
+
             const menuModal = document.getElementById('menuModal');
             if (menuModal) {
                 menuModal.style.display = 'none';
@@ -2245,7 +2235,7 @@
             document.getElementById('topUiBar').style.display = 'flex';
             document.getElementById('topUiBar').style.opacity = '1';
             document.getElementById('topUiBar').style.visibility = 'visible';
-            console.log('🚀 顶部菜单立即显示');
+
         </script>
         <!-- 品牌标识 -->
         <div class="top-ui-brand" onclick="window.location.href='{% url 'home' %}'" style="display: flex !important; align-items: center !important; color: white !important; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5) !important; font-weight: bold !important; font-size: 1.2rem !important; cursor: pointer !important; transition: all 0.3s ease !important; padding: 8px 15px !important; border-radius: 20px !important; background: rgba(255, 255, 255, 0.1) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; position: relative !important; overflow: hidden !important;">
@@ -2868,7 +2858,7 @@
                 if (!navbar.classList.contains('unified-navbar')) {
                     navbar.classList.add('unified-navbar');
                 }
-                console.log('✅ 导航栏已优化');
+
             }
         };
         
@@ -2936,8 +2926,7 @@
                     
                     // 轻量级导航栏优化
                     setTimeout(() => window.safeCall('enhanceNavbar'), 50);
-                    
-                    console.log(`✅ 主题已切换到: ${this.themes[themeName].name}`);
+
                     return true;
                 }
                 return false;
@@ -2963,7 +2952,7 @@
                 if (typeof showNotification === 'function') {
                     showNotification(message, type);
                 } else {
-                    console.log(`[${type.toUpperCase()}] ${message}`);
+
                 }
             },
             
@@ -3229,8 +3218,7 @@
             topUiBar.style.borderBottom = '2px solid rgba(0, 0, 0, 0.2)';
             topUiBar.style.boxShadow = `0 8px 32px rgba(${darkR}, ${darkG}, ${darkB}, 0.4), 0 0 20px rgba(${darkR}, ${darkG}, ${darkB}, 0.3)`;
         }
-        
-        console.log(`🎨 顶部栏色调已调整为: ${isDark ? '深色背景' : '浅色背景'}, 主色调: ${dominantColor}`);
+
     }
     
     // 切换主题模式
@@ -3337,121 +3325,25 @@
             
             // 显示主题切换通知
             showThemeNotification(themeNames[theme] || theme);
-            
-            console.log(`🎨 已切换到${themeNames[theme] || theme}主题`);
-            
+
             // 跳转到对应的主题页面
             const targetPage = themePages[theme];
             if (targetPage) {
-                console.log(`准备跳转到: ${targetPage}`);
+
                 // 添加延迟，让用户看到切换效果
                 setTimeout(() => {
                     window.location.href = targetPage;
                 }, 500);
             } else {
-                console.log(`未找到主题页面: ${theme}`);
+
             }
         }
     }
     
     // 存储隐藏定时器
-    let hideDropdownTimer = null;
+    // hideDropdownTimer 已移至 top_ui_functions.js
     
-    // 显示用户下拉菜单
-    function showUserDropdown() {
-        console.log('🔧 showUserDropdown 被调用');
-        
-        // 清除隐藏定时器
-        if (hideDropdownTimer) {
-            clearTimeout(hideDropdownTimer);
-            hideDropdownTimer = null;
-            console.log('✅ 已清除隐藏定时器');
-        }
-        
-        const dropdownContent = document.getElementById('userDropdownContent');
-        const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
-        
-        if (!dropdownContent) {
-            console.error('❌ 用户下拉菜单元素未找到');
-            return;
-        }
-        
-        console.log('💡 正在显示菜单');
-        
-        // 显示菜单
-        dropdownContent.style.display = 'block';
-        dropdownContent.style.opacity = '1';
-        dropdownContent.style.transform = 'scale(1) translateY(0)';
-        dropdownContent.classList.add('show');
-        
-        if (chevronIcon) {
-            chevronIcon.style.transform = 'rotate(180deg)';
-        }
-        
-        console.log('✅ 菜单已显示');
-    }
-    
-    // 延迟隐藏用户下拉菜单
-    function hideUserDropdownDelayed() {
-        console.log('🔧 hideUserDropdownDelayed 被调用');
-        
-        // 设置延迟隐藏定时器
-        hideDropdownTimer = setTimeout(() => {
-            hideUserDropdown();
-        }, 300); // 300ms延迟，给用户时间移动鼠标
-        
-        console.log('⏰ 已设置300ms延迟隐藏定时器');
-    }
-    
-    // 立即隐藏用户下拉菜单
-    function hideUserDropdown() {
-        console.log('🔧 hideUserDropdown 被调用');
-        
-        const dropdownContent = document.getElementById('userDropdownContent');
-        const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
-        
-        if (!dropdownContent) {
-            console.error('❌ 用户下拉菜单元素未找到');
-            return;
-        }
-        
-        console.log('💡 正在隐藏菜单');
-        
-        // 隐藏菜单
-        dropdownContent.style.display = 'none';
-        dropdownContent.style.opacity = '0';
-        dropdownContent.style.transform = 'scale(0.95) translateY(-10px)';
-        dropdownContent.classList.remove('show');
-        
-        if (chevronIcon) {
-            chevronIcon.style.transform = 'rotate(0deg)';
-        }
-        
-        console.log('✅ 菜单已隐藏');
-    }
-    
-    // 保留原来的切换函数用于调试
-    function toggleUserDropdown() {
-        const dropdownContent = document.getElementById('userDropdownContent');
-        
-        if (!dropdownContent) {
-            console.error('用户下拉菜单元素未找到');
-            return;
-        }
-        
-        const isVisible = dropdownContent.style.display === 'block' && 
-                         dropdownContent.style.opacity !== '0' &&
-                         !dropdownContent.classList.contains('hidden');
-        
-        if (isVisible) {
-            hideUserDropdown();
-        } else {
-            showUserDropdown();
-        }
-    }
-    
-    // 由于现在使用悬浮触发，不再需要点击事件监听器
-    // 点击其他地方关闭下拉菜单的功能已被悬浮触发机制取代
+    // 用户下拉菜单函数已移至 top_ui_functions.js
     
     // 更新按钮颜色
     function updateButtonColors(colors) {
@@ -3814,7 +3706,7 @@
             // 异步播放，不阻塞UI
             setTimeout(() => {
                 audio.play().catch(function(error) {
-                    console.log('音乐自动播放被阻止:', error);
+
                 });
             }, 0);
         }
@@ -3916,11 +3808,11 @@
             
             // 添加音乐状态监听
             audio.addEventListener('play', function() {
-                console.log('主题音乐开始播放');
+
             });
             
             audio.addEventListener('pause', function() {
-                console.log('主题音乐已暂停');
+
             });
         });
 
@@ -4118,13 +4010,13 @@
         
     // 关闭建议界面
     function closeSuggestions() {
-            console.log('关闭建议界面被调用');
+
             const suggestions = document.querySelector('div[style*="z-index: 10000"]');
             if (suggestions) {
-                console.log('找到建议界面，正在关闭');
+
                 suggestions.remove();
             } else {
-                console.log('未找到建议界面');
+
             }
         }
         
@@ -4317,8 +4209,7 @@
         }
         // 文件预览功能
         function showFilePreview(files, inputId) {
-            console.log('开始预览文件:', files.length, '个文件');
-            
+
             const previewArea = document.getElementById('filePreviewArea');
             const imageContainer = document.getElementById('imagePreviewContainer');
             const videoContainer = document.getElementById('videoPreviewContainer');
@@ -4351,13 +4242,12 @@
                 hasImages = true;
                 Array.from(imageFiles).forEach((file, index) => {
                     const fileType = file.type;
-                    console.log('处理图片文件:', file.name, '类型:', fileType, '大小:', file.size);
-                    
+
                     if (fileType.startsWith('image/')) {
-                        console.log('检测到图片文件:', file.name);
+
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            console.log('图片加载成功:', file.name);
+
                             const imgDiv = document.createElement('div');
                             imgDiv.style.cssText = `
                                 display: inline-block;
@@ -4426,7 +4316,7 @@
                             imgDiv.appendChild(removeBtn);
                             imgDiv.appendChild(fileName);
                             imageContainer.appendChild(imgDiv);
-                            console.log('图片预览已添加到容器');
+
                         };
                         
                         reader.onerror = function() {
@@ -4442,13 +4332,12 @@
                 hasVideos = true;
                 Array.from(videoFiles).forEach((file, index) => {
                     const fileType = file.type;
-                    console.log('处理视频文件:', file.name, '类型:', fileType, '大小:', file.size);
-                    
+
                     if (fileType.startsWith('video/')) {
-                        console.log('检测到视频文件:', file.name);
+
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            console.log('视频加载成功:', file.name);
+
                             const videoDiv = document.createElement('div');
                             videoDiv.style.cssText = `
                                 display: inline-block;
@@ -4518,7 +4407,7 @@
                             videoDiv.appendChild(removeBtn);
                             videoDiv.appendChild(fileName);
                             videoContainer.appendChild(videoDiv);
-                            console.log('视频预览已添加到容器');
+
                         };
                         
                         reader.onerror = function() {
@@ -4532,8 +4421,7 @@
 
             
             // 显示预览区域
-            console.log('预览统计 - 图片:', hasImages, '视频:', hasVideos, '其他:', hasOtherFiles);
-            
+
             if (hasImages || hasVideos || hasOtherFiles) {
                 previewArea.style.display = 'block';
                 
@@ -4986,7 +4874,7 @@
                     var expectedTheme = pathToTheme[currentPath];
                     if (expectedTheme && expectedTheme !== currentTheme && themeConfig[expectedTheme]) {
                         // 如果当前页面路径与主题不匹配，自动切换到对应主题
-                        console.log('页面路径 ' + currentPath + ' 与当前主题 ' + currentTheme + ' 不匹配，自动切换到 ' + expectedTheme + ' 主题');
+
                         switchGlobalTheme(expectedTheme);
                     }
                 }, 100);
@@ -5006,7 +4894,7 @@
                     const contentType = response.headers.get('content-type');
                     if (!contentType || !contentType.includes('application/json')) {
                         // 如果返回的不是JSON，可能是重定向到登录页面，使用默认主题
-                        console.log('用户未登录，使用默认主题');
+
                         currentTheme = 'work';
                         applyGlobalTheme(currentTheme);
                         updateThemeBadge(currentTheme);
@@ -5029,7 +4917,7 @@
                     }
                 }
             } catch (error) {
-                console.log('Failed to load theme:', error);
+
                 // 出错时使用默认主题
                 currentTheme = 'work';
                 applyGlobalTheme(currentTheme);
@@ -5683,7 +5571,7 @@
                         }
                     }
                 } else {
-                    console.log('没有找到匹配的主题音乐或缺少播放URL');
+
                 }
             } catch (error) {
                 console.error('加载主题音乐失败:', error);
@@ -6402,7 +6290,7 @@
             function playGlitchSound(level) {
                 // 这里可以添加故障音效
                 // 由于浏览器限制，需要用户交互才能播放音频
-                console.log('故障等级:', level);
+
             }
             
             // 主题切换时重置故障等级
@@ -6474,7 +6362,7 @@
                         $dropdown.find('.dropdown-menu').toggleClass('show');
                     });
                 } else {
-                    console.log('jQuery未加载，使用备用下拉菜单方案');
+
                 }
             }
             
@@ -6607,23 +6495,21 @@
     // 解决WebSocket连接到错误端口的问题
     (function() {
         'use strict';
-        
-        console.log('🔧 WebSocket连接修复脚本已加载');
-        
+
         // 创建URL修复函数
         function fixWebSocketUrl(url) {
             if (url && typeof url === 'string') {
                 // 如果URL包含8001端口，替换为8000端口
                 if (url.includes('localhost:8001') || url.includes('127.0.0.1:8001')) {
                     const fixedUrl = url.replace(/localhost:8001|127\.0\.0\.1:8001/g, 'localhost:8000');
-                    console.log('🔧 修复WebSocket URL:', url, '->', fixedUrl);
+
                     return fixedUrl;
                 }
                 
                 // 如果URL包含8001端口但没有localhost，也进行修复
                 if (url.includes(':8001/')) {
                     const fixedUrl = url.replace(/:8001\//g, ':8000/');
-                    console.log('🔧 修复WebSocket URL:', url, '->', fixedUrl);
+
                     return fixedUrl;
                 }
             }
@@ -6635,8 +6521,7 @@
         
         // 创建新的WebSocket构造函数
         function FixedWebSocket(url, protocols) {
-            console.log('🔧 拦截WebSocket连接:', url);
-            
+
             // 修复URL
             const fixedUrl = fixWebSocketUrl(url);
             
@@ -6645,7 +6530,7 @@
             
             // 添加连接状态日志
             ws.addEventListener('open', function(event) {
-                console.log('✅ WebSocket连接成功:', fixedUrl);
+
             });
             
             ws.addEventListener('error', function(error) {
@@ -6653,7 +6538,7 @@
             });
             
             ws.addEventListener('close', function(event) {
-                console.log('🔌 WebSocket连接关闭:', fixedUrl, event.code, event.reason);
+
             });
             
             return ws;
@@ -6693,9 +6578,7 @@
         
         // 替换全局WebSocket
         window.WebSocket = FixedWebSocket;
-        
-        console.log('✅ WebSocket连接修复脚本已激活');
-        
+
         // forceApplyNavbarStyles 函数已在文件开头定义，这里删除重复定义
         
         // 页面加载完成后优化导航栏
@@ -6959,8 +6842,7 @@
                         }
                     }, 1000);
                 });
-                
-                console.log('✅ 彩蛋和下拉刷新功能已初始化');
+
             }
         
         // 初始化彩蛋和下拉刷新功能
@@ -6982,36 +6864,36 @@
         }
         
         function showSettings() {
-            console.log('⚙️ showSettings 被调用');
+
             // 显示设置面板
             const settingsModal = document.getElementById('settingsModal');
             if (settingsModal) {
                 settingsModal.style.display = 'block';
-                console.log('✅ 设置面板已显示');
+
             } else {
                 // 如果模态框不存在，创建一个
-                console.log('🔄 创建设置面板...');
+
                 createSettingsModal();
             }
         }
         
         // 切换移动菜单
         function toggleMobileMenu() {
-            console.log('📱 toggleMobileMenu 被调用');
+
             const menuModal = document.getElementById('menuModal');
             if (menuModal) {
                 menuModal.style.display = 'block';
-                console.log('✅ 菜单已显示');
+
             } else {
                 // 如果菜单模态框不存在，创建一个
-                console.log('🔄 创建菜单面板...');
+
                 createMenuModal();
             }
         }
         
         // 关闭设置模态框
         function closeSettingsModal() {
-            console.log('❌ 关闭设置面板');
+
             const settingsModal = document.getElementById('settingsModal');
             if (settingsModal) {
                 settingsModal.style.display = 'none';
@@ -7020,7 +6902,7 @@
         
         // 关闭菜单模态框
         function closeMenuModal() {
-            console.log('❌ 关闭菜单面板');
+
             const menuModal = document.getElementById('menuModal');
             if (menuModal) {
                 menuModal.style.display = 'none';
@@ -7340,8 +7222,7 @@
         
             // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('🔧 页面初始化开始');
-        
+
         // 添加点击外部关闭菜单的功能
         // 由于现在使用悬浮触发，不再需要这个点击事件监听器
         // 原来的点击关闭功能已被悬浮机制取代
@@ -7359,8 +7240,7 @@
                 topUiBar.style.opacity = '0';
                 topUiBar.style.transform = 'translateY(-100%)';
                 topUiBar.style.pointerEvents = 'none';
-                console.log('✅ 根据全局设置隐藏顶部栏');
-                
+
                 // 显示恢复按钮
                 showRestoreButton();
             } else {
@@ -7370,7 +7250,7 @@
                 topUiBar.style.opacity = '1';
                 topUiBar.style.transform = 'translateY(0)';
                 topUiBar.style.pointerEvents = 'auto';
-                console.log('✅ 顶部菜单已显示');
+
             }
         } else {
             console.error('❌ 找不到顶部菜单元素');
@@ -7382,14 +7262,8 @@
         const topUiBar = document.getElementById('topUiBar');
         if (topUiBar) {
             // 不要强制显示，让隐藏功能正常工作
-            console.log('✅ 页面加载完成，顶部菜单状态正常');
         }
     });
-        
-
-
-        
-    })();
     </script>
     
     <!-- 顶部栏功能JavaScript -->
@@ -7401,12 +7275,10 @@
     <!-- 强制修复用户菜单脚本 -->
     <script>
     // 强制修复用户菜单问题
-    console.log('🔧 加载强制修复脚本');
-    
+
     // 等待页面完全加载
     window.addEventListener('load', function() {
-        console.log('🔧 页面完全加载，开始强制修复');
-        
+
         // 强制修复用户菜单
         forceFixUserMenu();
         
@@ -7415,8 +7287,7 @@
     
     // 强制修复用户菜单
     function forceFixUserMenu() {
-        console.log('🔧 开始强制修复用户菜单');
-        
+
         const dropdownContent = document.getElementById('userDropdownContent');
         const userButton = document.querySelector('.top-ui-user');
         
@@ -7429,9 +7300,7 @@
             console.error('❌ 用户头像按钮未找到');
             return;
         }
-        
-        console.log('✅ 找到菜单元素和按钮');
-        
+
         // 强制设置初始状态
         dropdownContent.style.display = 'none';
         dropdownContent.style.opacity = '0';
@@ -7446,17 +7315,15 @@
         newUserButton.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('🔧 用户头像被点击');
+
             forceToggleUserDropdown();
         });
-        
-        console.log('✅ 用户菜单强制修复完成');
+
     }
     
     // 强制切换用户菜单
     function forceToggleUserDropdown() {
-        console.log('🔧 forceToggleUserDropdown 被调用');
-        
+
         const dropdownContent = document.getElementById('userDropdownContent');
         const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
         
@@ -7469,13 +7336,7 @@
         const isVisible = dropdownContent.style.display === 'block' && 
                          dropdownContent.style.opacity !== '0' &&
                          !dropdownContent.classList.contains('hidden');
-        
-        console.log('当前菜单状态:', {
-            display: dropdownContent.style.display,
-            opacity: dropdownContent.style.opacity,
-            isVisible: isVisible
-        });
-        
+
         if (isVisible) {
             // 隐藏菜单
             dropdownContent.style.display = 'none';
@@ -7486,8 +7347,7 @@
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(0deg)';
             }
-            
-            console.log('✅ 菜单已隐藏');
+
         } else {
             // 显示菜单
             dropdownContent.style.display = 'block';
@@ -7498,8 +7358,7 @@
             if (chevronIcon) {
                 chevronIcon.style.transform = 'rotate(180deg)';
             }
-            
-            console.log('✅ 菜单已显示');
+
         }
     }
     
@@ -7508,9 +7367,6 @@
     
     // 导出函数到全局作用域
     window.forceToggleUserDropdown = forceToggleUserDropdown;
-    
-    console.log('✅ 强制修复脚本加载完成');
-    
 
     </script>
     
@@ -7540,8 +7396,7 @@
             
             // 显示恢复按钮
             showRestoreButton();
-            
-            console.log('✅ 全局顶部栏已完全隐藏');
+
         }
     }
     
@@ -7617,8 +7472,7 @@
             topUiBar.style.opacity = '1';
             topUiBar.style.transform = 'translateY(0)';
             topUiBar.style.pointerEvents = 'auto';
-            
-            console.log('✅ 全局顶部栏已完全恢复');
+
         }
         
         if (restoreButton) {
@@ -7969,7 +7823,7 @@
         }
         {% else %}
         // 用户未登录，跳过聊天通知初始化
-        console.log('用户未登录，跳过聊天通知系统初始化');
+
         {% endif %}
     }
     

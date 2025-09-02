@@ -1318,7 +1318,7 @@ function toggleTuner() {
 function startTuner() {
   if (!tunerActive) {
     tunerActive = true;
-    console.log('🎚️ 开始调音...');
+
     // 模拟调音器数据
     simulateTuner();
   }
@@ -1326,7 +1326,7 @@ function startTuner() {
 
 function stopTuner() {
   tunerActive = false;
-  console.log('⏹️ 停止调音');
+
 }
 
 function simulateTuner() {
@@ -1351,7 +1351,7 @@ function simulateTuner() {
 
 function changeTuningMode() {
   const mode = document.getElementById('tuningMode').value;
-  console.log('🎵 切换调弦模式:', mode);
+
 }
 
 // 和弦训练器功能
@@ -1361,7 +1361,7 @@ function toggleChordTrainer() {
 }
 
 function startChordTraining() {
-  console.log('🤘 开始和弦训练...');
+
   updateChordDisplay();
 }
 
@@ -1382,7 +1382,7 @@ function updateChordDisplay() {
 }
 
 function showChordHeatmap() {
-  console.log('🔥 显示和弦热力图');
+
   alert('热力图功能：显示用户常按错的位置\n\n红色区域：经常按错\n黄色区域：偶尔按错\n绿色区域：按对');
 }
 
@@ -1413,8 +1413,7 @@ function startMetronome() {
   document.getElementById('metronomeBtn').textContent = '停止节拍器';
   document.getElementById('metronomeStatus').textContent = '运行中';
   document.getElementById('metronomeStatus').style.color = '#4CAF50';
-  console.log('🥁 开始节拍器，BPM:', currentBPM, '拍号:', timeSignature);
-  
+
   const interval = 60000 / currentBPM; // 毫秒
   beatCount = 0;
   metronomeInterval = setInterval(() => {
@@ -1436,7 +1435,7 @@ function stopMetronome() {
   document.getElementById('metronomeStatus').style.color = '#f44336';
   clearInterval(metronomeInterval);
   beatCount = 0;
-  console.log('⏹️ 停止节拍器');
+
 }
 
 function playMetronomeClick() {
@@ -1497,8 +1496,7 @@ function setBPM(bpm) {
     stopMetronome();
     startMetronome();
   }
-  
-  console.log('🎵 设置BPM为:', currentBPM);
+
 }
 
 function tapTempo() {
@@ -1523,8 +1521,7 @@ function tapTempo() {
     // 限制BPM范围
     const newBPM = Math.max(40, Math.min(200, calculatedBPM));
     setBPM(newBPM);
-    
-    console.log('👆 点击节拍计算BPM:', newBPM);
+
   }
   
   // 3秒后清除点击记录
@@ -1540,13 +1537,12 @@ function resetMetronome() {
   document.getElementById('timeSignature').value = '4/4';
   tapTempoTimes = [];
   beatCount = 0;
-  console.log('🔄 重置节拍器');
+
 }
 
 function updateTimeSignature() {
   timeSignature = document.getElementById('timeSignature').value;
-  console.log('🎼 更新拍号:', timeSignature);
-  
+
   if (metronomeActive) {
     stopMetronome();
     startMetronome();
@@ -1554,7 +1550,7 @@ function updateTimeSignature() {
 }
 
 function selectDrumStyle(style) {
-  console.log('🥁 选择鼓机风格:', style);
+
   const styles = {
     'rock': '摇滚风格：强力的4/4拍，适合练习强力和弦',
     'blues': '布鲁斯风格：12小节布鲁斯，适合练习蓝调音阶',
@@ -1564,7 +1560,7 @@ function selectDrumStyle(style) {
 }
 
 function startRhythmGame() {
-  console.log('🎮 开始节奏游戏');
+
   alert('节奏游戏：\n\n音符会从上方落下\n点击屏幕在正确时机击中音符\n练习节奏感和时机把握');
 }
 
@@ -1594,17 +1590,16 @@ function generatePracticePlan() {
     `;
     planList.appendChild(li);
   });
-  
-  console.log('📅 生成练习计划');
+
 }
 
 function updateProgress() {
-  console.log('📊 更新练习进度');
+
   alert('进度更新：\n\n今日练习时间：45分钟\n和弦准确率：78%\n节奏准确率：85%\n建议：加强F和弦练习');
 }
 
 function showProgressChart() {
-  console.log('📈 显示进步曲线');
+
   alert('进步曲线图：\n\n显示过去30天的练习数据\n包括：\n- 练习时长\n- 和弦准确率\n- 节奏准确率\n- 薄弱点预警');
 }
 
@@ -1615,24 +1610,23 @@ function toggleCommunityChallenge() {
 }
 
 function startChallenge() {
-  console.log('🏆 开始社区挑战');
+
   alert('挑战开始：\n\n曲目：《Knockin\' on Heaven\'s Door》前奏\n时长：15秒\n要求：准确弹奏和弦进行\n录制视频上传参与评分');
 }
 
 function uploadVideo() {
-  console.log('📹 上传练习视频');
+
   alert('视频上传：\n\n1. 录制15秒练习片段\n2. 确保音质清晰\n3. AI将自动评分：\n   - 节奏准确度\n   - 和弦清晰度\n   - 整体流畅度');
 }
 
 function viewLeaderboard() {
-  console.log('🏅 查看排行榜');
+
   alert('排行榜：\n\n🏆 第一名：张三 - 95分\n🥈 第二名：李四 - 92分\n🥉 第三名：王五 - 89分\n\n你的排名：第15名 - 78分');
 }
 
 // 极简模式
 function enterMinimalMode() {
-  console.log('🔲 进入极简模式');
-  
+
   // 进入全屏模式
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen();
@@ -1824,8 +1818,7 @@ function stopMinimalMetronome() {
 
 // 页面加载完成后的初始化
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🎸 吉他训练系统已加载');
-  
+
   // 初始化练习计划
   generatePracticePlan();
   
@@ -2357,11 +2350,11 @@ if (typeof loadThemeMusic === 'undefined') {
         
         // 自动播放（需要用户交互）
         audio.play().catch(error => {
-          console.log('自动播放失败，需要用户交互:', error);
+
         });
       }
     } catch (error) {
-      console.log('加载主题音乐失败:', error);
+
     }
   }
 }

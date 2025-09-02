@@ -1094,10 +1094,9 @@ function handleSubmit(e) {
         formData.location_region = locationData.region || '';
         formData.location_district = locationData.district || '';
         formData.location_address = locationData.address || formData.location;
-        
-        console.log('包含位置坐标的表单数据:', formData);
+
     } else {
-        console.log('未选择精确位置坐标');
+
     }
     
     // 发送请求
@@ -1176,8 +1175,7 @@ let searchTimeoutPublish = null;
 
 // 自动定位发布者
 function autoLocatePublisher() {
-    console.log('开始自动定位发布者');
-    
+
     const autoBtn = document.querySelector('.auto-locate-btn');
     if (autoBtn) {
         autoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 定位中...';
@@ -1187,7 +1185,7 @@ function autoLocatePublisher() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
-                console.log('自动定位成功:', position.coords);
+
                 const coords = {
                     lat: position.coords.latitude,
                     lon: position.coords.longitude
@@ -1215,8 +1213,7 @@ function autoLocatePublisher() {
 
 // 使用高德API反向地理编码
 function reverseGeocodeForPublish(coords) {
-    console.log('使用高德API反向地理编码:', coords);
-    
+
     fetch('/tools/api/map/reverse-geocode/', {
         method: 'POST',
         headers: {
@@ -1230,8 +1227,7 @@ function reverseGeocodeForPublish(coords) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('高德反向地理编码结果:', data);
-        
+
         if (data.success && data.location) {
             const locationInfo = {
                 name: data.location.address || `${data.location.city}${data.location.region}`,
@@ -1339,8 +1335,7 @@ function closeMapPicker() {
 
 // 搜索位置
 function searchLocationForPublish(query) {
-    console.log('搜索位置:', query);
-    
+
     // 清除之前的搜索超时
     if (searchTimeoutPublish) {
         clearTimeout(searchTimeoutPublish);
@@ -1360,8 +1355,7 @@ function searchLocationForPublish(query) {
 
 // 执行位置搜索
 function performLocationSearchForPublish(query) {
-    console.log('执行位置搜索:', query);
-    
+
     fetch('/tools/api/map/search-location/', {
         method: 'POST',
         headers: {
@@ -1374,8 +1368,7 @@ function performLocationSearchForPublish(query) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('位置搜索结果:', data);
-        
+
         if (data.success && data.suggestions) {
             displayLocationSuggestionsForPublish(data.suggestions);
         } else {
@@ -1417,8 +1410,7 @@ function displayLocationSuggestionsForPublish(suggestions) {
 function selectLocationSuggestionForPublish(element) {
     try {
         const locationData = JSON.parse(element.getAttribute('data-location'));
-        console.log('选择的位置:', locationData);
-        
+
         // 高亮选中项
         document.querySelectorAll('.location-suggestion-item').forEach(item => {
             item.classList.remove('selected');
@@ -1661,8 +1653,7 @@ function setSelectedLocation(locationData) {
     
     // 保存位置数据到全局变量以供表单提交使用
     window.selectedPublishLocation = locationData;
-    
-    console.log('已设置发布位置:', locationData);
+
 }
 
 // 获取CSRF Token

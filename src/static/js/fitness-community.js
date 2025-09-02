@@ -17,7 +17,7 @@ function toggleLike(postId) {
 
 // 打开健身社区
 function openFitnessCommunity() {
-  console.log('打开健身社区');
+
   // 可以在这里添加导航逻辑
 }
 
@@ -414,12 +414,12 @@ class FitnessCommunity {
   }
 
   searchByTopic(topic) {
-    console.log('搜索话题:', topic);
+
     // 这里可以实现话题搜索功能
   }
 
   viewUserProfile(user) {
-    console.log('查看用户资料:', user);
+
     // 这里可以实现用户资料查看功能
   }
 
@@ -432,7 +432,7 @@ class FitnessCommunity {
   }
 
   showComments(postId) {
-    console.log('显示评论:', postId);
+
     // 这里可以实现评论显示功能
   }
 
@@ -552,17 +552,16 @@ window.addEventListener('error', function(e) {
 
 // 确保在页面加载完成后所有功能都可用
 window.addEventListener('load', function() {
-  console.log('健身社区功能已加载完成');
-  
+
   // 检查关键元素是否存在
   const postsList = document.getElementById('postsList');
   if (postsList) {
-    console.log('找到帖子列表元素');
+
   }
   
   // 初始化健身社区（如果还没有初始化）
   if (!window.fitnessCommunity) {
-    console.log('重新初始化健身社区');
+
     window.fitnessCommunity = new FitnessCommunity();
   }
 });

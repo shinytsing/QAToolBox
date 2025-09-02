@@ -88,6 +88,44 @@
         animation: subtitlePulse 2s ease-in-out infinite;
     }
 
+    /* 管理员工具样式 */
+    .admin-tools {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .admin-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    .admin-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        color: white;
+        text-decoration: none;
+    }
+
+    .admin-btn:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
     @keyframes subtitlePulse {
         0%, 100% { opacity: 0.95; transform: scale(1); }
         50% { opacity: 1; transform: scale(1.02); }
@@ -1257,6 +1295,15 @@
     <div class="header-section">
                         <h1 class="header-title">🍽️ 中午吃什么</h1>
         <p class="header-subtitle">我其实一直有三个问题</p>
+        
+        <!-- 管理员专用入口 -->
+        {% if user.is_staff %}
+        <div class="admin-tools">
+            <a href="/tools/food_photo_binding/" class="admin-btn" title="食物照片绑定系统">
+                📸 照片绑定管理
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <div class="control-panel">
@@ -1536,7 +1583,6 @@ const deepseekFoodImages = {
 
 // 使用DeepSeek图片数据
 localFoodImages = deepseekFoodImages;
-console.log('DeepSeek食物图片已加载:', Object.keys(localFoodImages).length, '个食物');
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1618,8 +1664,7 @@ async function startRandomization() {
         });
         
         const data = await response.json();
-        console.log('API Response:', data);
-        
+
         if (data.success && data.recommendation) {
             // 验证数据结构
             if (!data.recommendation.food) {
@@ -1670,8 +1715,7 @@ async function startPureRandomization() {
         });
         
         const data = await response.json();
-        console.log('Pure Random API Response:', data);
-        
+
         if (data.success && data.recommendation) {
             // 验证数据结构
             if (!data.recommendation.food) {
@@ -1708,9 +1752,7 @@ function showResult(selectedFood, alternativeFoods) {
         resetUI();
         return;
     }
-    
-    console.log('showResult called with:', selectedFood, alternativeFoods);
-    
+
     document.getElementById('animationContainer').style.display = 'none';
     document.getElementById('resultContainer').style.display = 'block';
     
@@ -1725,7 +1767,7 @@ function showResult(selectedFood, alternativeFoods) {
     // 如果启用本地图片并且有对应的本地图片，优先使用本地图片
     if (useLocalImages && localFoodImages[selectedFood.name]) {
         imageUrl = localFoodImages[selectedFood.name];
-        console.log('使用本地图片:', selectedFood.name, '->', imageUrl);
+
     }
     
     if (imageUrl) {
@@ -1734,18 +1776,18 @@ function showResult(selectedFood, alternativeFoods) {
         foodImage.onerror = function() {
             // 防止无限循环，只允许一次回退
             if (this.dataset.fallbackAttempted) {
-                console.log('图片加载失败，隐藏图片');
+
                 this.style.display = 'none';
                 return;
             }
             
             // 如果本地图片加载失败，回退到原始图片
             if (useLocalImages && selectedFood.image_url && imageUrl !== selectedFood.image_url) {
-                console.log('本地图片加载失败，回退到原始图片');
+
                 this.dataset.fallbackAttempted = 'true';
                 this.src = selectedFood.image_url;
             } else {
-                console.log('图片加载失败，隐藏图片');
+
                 this.style.display = 'none';
             }
         };
@@ -1813,14 +1855,15 @@ function showResult(selectedFood, alternativeFoods) {
             const healthSection = document.createElement('div');
             healthSection.style.marginTop = '15px';
             healthSection.style.padding = '10px';
-            healthSection.style.background = 'linear-gradient(135deg, #e8f5e8, #f0f8f0)';
+            healthSection.style.background = 'linear-gradient(135deg, #ffffff, #f8f9fa)';
+            healthSection.style.border = '2px solid #e9ecef';
             healthSection.style.borderRadius = '8px';
             healthSection.style.gridColumn = '1 / -1';
             
             let healthInfo = '';
             if (selectedFood.health_score !== undefined) {
                 const healthColor = selectedFood.health_score >= 80 ? '#28a745' : selectedFood.health_score >= 60 ? '#ffc107' : '#dc3545';
-                healthInfo += `<div style="color: ${healthColor}; font-weight: bold;">🏥 健康评分: ${selectedFood.health_score}/100</div>`;
+                healthInfo += `<div style="color: ${healthColor}; font-weight: bold; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-size: 1.1em;">🏥 健康评分: ${selectedFood.health_score}/100</div>`;
             }
             
             const tags = [];
@@ -1830,7 +1873,7 @@ function showResult(selectedFood, alternativeFoods) {
             if (selectedFood.is_low_fat) tags.push('🍃 低脂');
             
             if (tags.length > 0) {
-                healthInfo += `<div style="margin-top: 5px; font-size: 0.9em;">${tags.join(' | ')}</div>`;
+                healthInfo += `<div style="margin-top: 5px; font-size: 0.9em; color: #2c3e50; font-weight: 600; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">${tags.join(' | ')}</div>`;
             }
             
             if (healthInfo) {

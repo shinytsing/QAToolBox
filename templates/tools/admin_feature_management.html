@@ -666,7 +666,7 @@ class AdminFeatureManagement {
 // 功能操作函数
 function editFeature(featureId) {
     // 这里可以打开编辑模态框或跳转到编辑页面
-    console.log('编辑功能:', featureId);
+
     alert('编辑功能 ID: ' + featureId + '\n（此功能需要在后台实现）');
 }
 
@@ -679,8 +679,7 @@ async function toggleFeature(featureId, currentStatus) {
 
     try {
         // 这里应该调用API来切换功能状态
-        console.log(`${action}功能:`, featureId);
-        
+
         // 模拟API调用
         const success = true; // 实际应该从API响应获取
         

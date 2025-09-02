@@ -848,7 +848,7 @@ let systemReady = false;
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 代理系统初始化...');
+
     initializeSystem();
     log('系统初始化完成');
 });
@@ -958,7 +958,7 @@ function log(message, type = 'info') {
     
     terminal.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
     terminal.scrollTop = terminal.scrollHeight;
-    console.log(`[${timestamp}] ${message}`);
+
 }
 
 // ===== 核心功能1: IP对比功能 =====

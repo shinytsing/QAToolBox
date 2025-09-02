@@ -30,7 +30,7 @@
                 <div class="particle"></div>
                 <div class="gear-inner">
                   <i class="fas fa-laptop-code"></i>
-                  <div class="gear-teeth"></div>
+                  <div class="gear-teeth" title="工作模式 - 高效办公，专注开发，提升生产力"></div>
                 </div>
               </div>
               <div class="gear gear-2" data-theme="life">
@@ -44,7 +44,7 @@
                 <div class="particle"></div>
                 <div class="gear-inner">
                   <i class="fas fa-heart"></i>
-                  <div class="gear-teeth"></div>
+                  <div class="gear-teeth" title="生活模式 - 记录美好时光，分享生活点滴"></div>
                 </div>
               </div>
               <div class="gear gear-3" data-theme="training">
@@ -58,10 +58,10 @@
                 <div class="particle"></div>
                 <div class="gear-inner">
                   <i class="fas fa-fire"></i>
-                  <div class="gear-teeth"></div>
+                  <div class="gear-teeth" title="训练模式 - 提升技能，挑战自我，持续成长"></div>
                 </div>
               </div>
-              <div class="gear gear-4" data-theme="cyberpunk">
+              <div class="gear gear-4" data-theme="emo">
                 <div class="emotion-wave"></div>
                 <div class="emotion-wave"></div>
                 <div class="emotion-wave"></div>
@@ -72,7 +72,7 @@
                 <div class="particle"></div>
                 <div class="gear-inner">
                   <i class="fas fa-music"></i>
-                  <div class="gear-teeth"></div>
+                  <div class="gear-teeth" title="情感模式 - 音乐陪伴，情感表达，心灵治愈"></div>
                 </div>
               </div>
             </div>
@@ -2023,7 +2023,7 @@ document.addEventListener('DOMContentLoaded', function() {
       e.stopPropagation();
       
       const theme = this.getAttribute('data-theme');
-      console.log('齿轮被点击:', theme); // 调试信息
+
       
       // 移除所有齿轮的活跃状态
       gears.forEach(g => g.classList.remove('active'));
@@ -2053,7 +2053,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 跳转到对应的工具页面
       const targetPage = themePageMapping[theme] || '/tools/work/';
-      console.log('准备跳转到:', targetPage); // 调试信息
+
       window.location.href = targetPage;
     });
   });

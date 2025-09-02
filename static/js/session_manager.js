@@ -45,33 +45,33 @@ class SessionManager {
                     this.isLoggedIn = true;
                     this.sessionData = data.data;
                     if (!this.initialCheckDone) {
-                        console.log('Session状态检查成功:', this.sessionData);
+                        console.log('用户已登录，开始session管理');
                         this.initialCheckDone = true;
                     }
                 } else {
                     this.isLoggedIn = false;
                     if (!this.initialCheckDone) {
-                        console.log('用户未登录');
+                        console.log('用户未登录，跳过session管理');
                         this.initialCheckDone = true;
                     }
                 }
             } else if (response.status === 401) {
-                // 401状态码表示未登录，这是正常的
+                // 401状态码表示未登录，这是正常的，不记录错误
                 this.isLoggedIn = false;
                 if (!this.initialCheckDone) {
-                    console.log('用户未登录 (401)');
+                    console.log('用户未登录，跳过session管理');
                     this.initialCheckDone = true;
                 }
             } else {
                 // 其他错误状态码
                 this.isLoggedIn = false;
                 if (!this.initialCheckDone) {
-                    console.log('Session状态检查失败，状态码:', response.status);
+                    console.log('检查登录状态失败，跳过session管理');
                     this.initialCheckDone = true;
                 }
             }
         } catch (error) {
-            console.error('检查登录状态失败:', error);
+            // 网络错误等，不记录为错误日志
             this.isLoggedIn = false;
             this.initialCheckDone = true;
         }
@@ -127,15 +127,19 @@ class SessionManager {
                     this.handleSessionExpired();
                 }
             } else if (response.status === 401) {
-                // 401状态码表示session已过期
-                console.log('Session已过期 (401)');
+                // 401状态码表示session已过期，这是正常的
                 this.handleSessionExpired();
             } else {
-                // 其他错误状态码
-                console.error('获取session状态失败，状态码:', response.status);
+                // 其他错误状态码，只在开发环境记录
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.warn('获取session状态失败，状态码:', response.status);
+                }
             }
         } catch (error) {
-            console.error('检查session状态失败:', error);
+            // 网络错误等，只在开发环境记录
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.warn('检查session状态失败:', error);
+            }
         }
     }
     
@@ -170,22 +174,29 @@ class SessionManager {
             if (contentType && contentType.includes('application/json')) {
                 const data = await response.json();
                 if (data.success) {
-                    console.log('Session已自动延长');
+                    console.log('Session延长成功');
                     this.sessionData.expires_in_days = 30;
                     this.hideSessionWarning();
                 } else {
-                    console.error('Session延长失败:', data.message);
+                    // 只在开发环境记录错误
+                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                        console.warn('Session延长失败:', data.message);
+                    }
                 }
             } else if (response.status === 401) {
                 // 401状态码表示用户未登录，session延长失败
-                console.log('Session延长失败：用户未登录 (401)');
                 this.handleSessionExpired();
             } else {
-                // 其他错误状态码
-                console.error('Session延长请求失败，状态码:', response.status);
+                // 其他错误状态码，只在开发环境记录
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.warn('Session延长请求失败，状态码:', response.status);
+                }
             }
         } catch (error) {
-            console.error('延长session失败:', error);
+            // 网络错误等，只在开发环境记录
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.warn('延长session失败:', error);
+            }
         }
     }
     
@@ -195,7 +206,7 @@ class SessionManager {
         
         // 如果用户超过30分钟没有活动，暂停session管理
         if (timeSinceLastActivity > 30 * 60 * 1000) {
-            console.log('用户长时间无活动，暂停session管理');
+
             return;
         }
         
@@ -332,7 +343,7 @@ class SessionManager {
     // 手动延长session（供外部调用）
     async manualExtendSession() {
         if (!this.isLoggedIn) {
-            console.log('用户未登录，无法延长session');
+
             return false;
         }
         

@@ -575,7 +575,7 @@ let currentRequestId = null;
 let roomId = null;
 let statusCheckInterval = null;
 let countdownInterval = null;
-let expireTimeout = null;
+// 移除expireTimeout变量
 let clickCount = 0;
 let clickTimer = null;
 
@@ -676,14 +676,7 @@ async function startHeartLink() {
                 // 启动倒计时
                 startCountdown();
                 
-                // 添加自动重试机制
-                setTimeout(() => {
-                    // 如果5秒后还没有匹配成功，尝试重新匹配
-                    if (currentRequestId && !roomId) {
-                        console.log('5秒后未匹配成功，尝试重新匹配...');
-                        retryMatch();
-                    }
-                }, 5000);
+                // 移除自动重试机制，让用户手动控制
             }
         } else {
             if (data.redirect_url) {
@@ -775,9 +768,7 @@ function startCountdown() {
     if (countdownInterval) {
         clearInterval(countdownInterval);
     }
-    if (expireTimeout) {
-        clearTimeout(expireTimeout);
-    }
+    // 移除expireTimeout清理逻辑
     
     // 设置10分钟倒计时
     let timeLeft = 10 * 60; // 10分钟 = 600秒
@@ -805,11 +796,7 @@ function startCountdown() {
     // 每秒更新倒计时
     countdownInterval = setInterval(updateCountdown, 1000);
     
-    // 10分钟后自动过期
-    expireTimeout = setTimeout(() => {
-        showNotification('匹配请求已过期', 'warning');
-        resetUI();
-    }, 10 * 60 * 1000);
+    // 移除自动过期逻辑，改为由后端控制
 }
 
 function startStatusCheck() {
@@ -846,11 +833,11 @@ function startStatusCheck() {
                     resetUI();
                 } else if (data.status === 'not_found') {
                     // 请求可能已被取消或匹配成功
-                    console.log('请求未找到，重置UI');
+
                     resetUI();
                 } else if (data.status === 'pending') {
                     // 继续等待，但检查是否等待时间过长
-                    console.log('等待匹配中...');
+
                 }
             } else {
                 console.error('状态检查失败:', data.error);
@@ -871,9 +858,7 @@ function handleMatchSuccess() {
         clearInterval(countdownInterval);
     }
     
-    if (expireTimeout) {
-        clearTimeout(expireTimeout);
-    }
+    // 移除expireTimeout清理逻辑
     
     const statusContainer = document.getElementById('status-container');
     const actionsContainer = document.getElementById('actions-container');
@@ -915,9 +900,7 @@ function handleReconnect(matchedUser) {
         clearInterval(countdownInterval);
     }
     
-    if (expireTimeout) {
-        clearTimeout(expireTimeout);
-    }
+    // 移除expireTimeout清理逻辑
     
     const statusContainer = document.getElementById('status-container');
     const actionsContainer = document.getElementById('actions-container');
@@ -984,8 +967,7 @@ function showCancelOption() {
 // 重试匹配函数
 async function retryMatch() {
     try {
-        console.log('开始重试匹配...');
-        
+
         // 先取消当前请求
         if (currentRequestId) {
             await cancelHeartLink();
@@ -1041,7 +1023,7 @@ function resetUI() {
     
     if (expireTimeout) {
         clearTimeout(expireTimeout);
-        expireTimeout = null;
+        // 移除expireTimeout重置
     }
 }
 
@@ -1116,7 +1098,7 @@ function showNotification(message, type = 'info') {
 
 // 页面加载时检查是否有未完成的匹配请求
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面加载完成，初始化秘密点击功能'); // 调试信息
+
     
     // 检查用户是否有活跃的聊天室
     checkActiveChatRoom();
@@ -1126,10 +1108,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 添加一个隐藏的调试提示
     setTimeout(() => {
-        console.log('💡 提示：在页面任意位置点击4次可以触发秘密功能');
+
     }, 2000);
-    
-    console.log('测试按钮已添加到页面右上角');
+
 });
 
 async function rejectReconnect() {
@@ -1212,7 +1193,7 @@ async function checkActiveChatRoom() {
 
 // 处理秘密点击事件
 function handleSecretClick(event) {
-    console.log('点击事件触发，当前计数:', clickCount); // 调试信息
+
     
     // 清除之前的计时器
     if (clickTimer) {
@@ -1221,17 +1202,17 @@ function handleSecretClick(event) {
     
     // 增加点击计数
     clickCount++;
-    console.log('点击计数增加到:', clickCount); // 调试信息
+
     
     // 设置新的计时器，3秒后重置计数
     clickTimer = setTimeout(() => {
-        console.log('计时器重置，计数清零'); // 调试信息
+
         clickCount = 0;
     }, 3000);
     
     // 如果点击了4次，显示数字匹配页面
     if (clickCount === 4) {
-        console.log('触发4次点击，显示数字匹配模态框'); // 调试信息
+
         clickCount = 0; // 重置计数
         showNumberMatchModal();
     }
@@ -1413,7 +1394,7 @@ async function cancelSecretMatch() {
 
 // 跳转到密码匹配页面
 function goToNumberMatch() {
-    console.log('跳转到密码匹配页面');
+
     window.location.href = '/tools/number-match/';
 }
 </script>

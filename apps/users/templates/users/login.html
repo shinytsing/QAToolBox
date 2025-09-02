@@ -975,8 +975,7 @@ function autoVerifyMathCaptcha() {
       // 显示失败信息和用户引导
       if (data.failure_info) {
         const failureInfo = data.failure_info;
-        console.log('验证失败:', failureInfo);
-        
+
         // 检查是否升级了验证码级别
         if (failureInfo.level > (currentCaptchaData?.level || 0)) {
           showStatus('info', '验证失败次数较多，正在升级验证方式...');
@@ -1098,8 +1097,7 @@ function verifyCurrentCaptcha() {
       // 显示失败信息和用户引导
       if (data.failure_info) {
         const failureInfo = data.failure_info;
-        console.log('验证失败:', failureInfo);
-        
+
         // 检查是否升级了验证码级别
         if (failureInfo.level > (currentCaptchaData?.level || 0)) {
           showStatus('info', '验证失败次数较多，正在升级验证方式...');

@@ -461,8 +461,7 @@ let glitchResetTimer = null;
 document.addEventListener('click', function(e) {
   // 增加点击计数
   workModeClickCount++;
-  console.log('极客模式点击次数:', workModeClickCount);
-  
+
   // 显示点击计数器
   const clickCounter = document.getElementById('clickCounter');
   const clickCount = document.getElementById('clickCount');
@@ -482,7 +481,7 @@ document.addEventListener('click', function(e) {
 
 // 激活赛博哥特模式
 function activateCyberpunkMode() {
-  console.log('⚡ 激活赛博哥特模式！');
+
   cyberpunkMode = true;
   
   // 添加赛博哥特样式
@@ -505,8 +504,7 @@ function activateCyberpunkMode() {
 // 增加故障等级
 function increaseGlitchLevel() {
   glitchLevel = Math.min(glitchLevel + 1, 5);
-  console.log('故障等级:', glitchLevel);
-  
+
   // 更新故障等级显示
   const glitchLevelSpan = document.getElementById('glitchLevel');
   const glitchBar = document.getElementById('glitchBar');
@@ -541,7 +539,7 @@ function increaseGlitchLevel() {
 
 // 重置故障等级
 function resetGlitchLevel() {
-  console.log('🔄 故障等级重置');
+
   glitchLevel = 0;
   
   // 更新显示
@@ -624,8 +622,7 @@ function showCyberpunkMessage() {
 
 // 页面加载完成后的初始化
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('极客模式页面加载完成');
-  
+
   // 隐藏计数器（初始状态）
   const clickCounter = document.getElementById('clickCounter');
   const glitchIndicator = document.getElementById('glitchIndicator');

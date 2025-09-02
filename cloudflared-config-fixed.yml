@@ -1,0 +1,22 @@
+tunnel: shenyiqing-tunnel
+ingress:
+  - hostname: shenyiqing.xin
+    service: http://localhost:8000
+    originRequest:
+      # 设置更长的超时时间
+      connectTimeout: 30s
+      tlsTimeout: 10s
+      tcpKeepAlive: 30s
+      keepAliveConnections: 10
+      keepAliveTimeout: 90s
+      # 设置更大的缓冲区
+      bufferSize: 65536
+      # 禁用压缩以避免大响应的问题
+      disableChunkedEncoding: false
+      # 设置 HTTP 超时
+      httpHostHeader: shenyiqing.xin
+      # 增加重试次数
+      retries: 3
+      # 设置连接池大小
+      poolConnections: 10
+  - service: http_status:404

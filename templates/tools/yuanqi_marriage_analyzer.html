@@ -529,7 +529,7 @@ function switchMode(mode) {
 }
 
 function analyzeMarriage() {
-    console.log('analyzeMarriage called, currentMode:', currentMode);
+
     if (isAnalyzing) return;
     
     try {
@@ -578,8 +578,7 @@ function analyzeCoupleMarriage() {
 }
 
 function analyzeSingleDestiny() {
-    console.log('analyzeSingleDestiny called');
-    
+
     // 获取输入数据
     const singleData = {
         name: document.getElementById('singleName').value.trim(),
@@ -590,9 +589,7 @@ function analyzeSingleDestiny() {
         expectedAge: document.getElementById('expectedAge').value,
         expectedPersonality: document.getElementById('expectedPersonality').value
     };
-    
-    console.log('singleData:', singleData);
-    
+
     // 验证输入
     if (!singleData.name || !singleData.gender || !singleData.birthDate) {
         showNotification('请填写姓名、性别和出生日期', 'warning');

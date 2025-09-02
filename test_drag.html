@@ -21,26 +21,21 @@
     <script src="/static/js/chat_notifications.js"></script>
     <script>
         // 手动初始化聊天通知管理器
-        console.log('开始初始化聊天通知管理器...');
-        
+
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM已加载，创建ChatNotificationManager实例...');
-            
+
             try {
                 window.testChatManager = new ChatNotificationManager();
-                console.log('ChatNotificationManager创建成功！');
-                
+
                 // 检查元素是否存在
                 setTimeout(() => {
                     const manager = document.getElementById('chat-notification-manager');
                     const icon = document.getElementById('notification-icon');
-                    
-                    console.log('Manager元素:', manager);
-                    console.log('Icon元素:', icon);
-                    
+
+
                     if (manager && icon) {
-                        console.log('✅ 聊天通知管理器元素已正确创建');
-                        console.log('现在可以尝试拖拽蓝色圆圈图标');
+
+
                     } else {
                         console.error('❌ 聊天通知管理器元素未找到');
                     }

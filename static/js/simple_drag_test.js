@@ -1,9 +1,7 @@
 // 简单的拖拽测试脚本
-console.log('简单拖拽测试脚本加载');
 
 function createTestDraggable() {
-    console.log('创建测试拖拽元素...');
-    
+
     // 移除可能存在的旧元素
     const existing = document.getElementById('test-drag-element');
     if (existing) {
@@ -51,7 +49,7 @@ function createTestDraggable() {
     }
     
     dragHandle.addEventListener('mousedown', (e) => {
-        console.log('🔥 测试元素鼠标按下');
+
         isDragging = true;
         startX = e.clientX - currentX;
         startY = e.clientY - currentY;
@@ -64,8 +62,7 @@ function createTestDraggable() {
     
     document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
-        
-        console.log('🔥 测试元素拖拽中...');
+
         e.preventDefault();
         
         currentX = e.clientX - startX;
@@ -76,7 +73,7 @@ function createTestDraggable() {
     
     document.addEventListener('mouseup', () => {
         if (isDragging) {
-            console.log('🔥 测试元素拖拽结束');
+
             isDragging = false;
             dragHandle.style.cursor = 'move';
             dragHandle.style.transform = `translate(${currentX}px, ${currentY}px)`;
@@ -88,8 +85,7 @@ function createTestDraggable() {
             }));
         }
     });
-    
-    console.log('✅ 测试拖拽元素创建完成！尝试拖拽红色圆圈🔥');
+
 }
 
 // 立即创建测试元素

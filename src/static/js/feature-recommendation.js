@@ -284,7 +284,7 @@
                 this.currentRecommendations = [data.data];
                 this.showRecommendationPopup();
             } else {
-                console.log('暂无可推荐的功能');
+
             }
         } catch (error) {
             console.error('获取推荐失败:', error);

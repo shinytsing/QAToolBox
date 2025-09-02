@@ -2426,7 +2426,7 @@ def cleanup_expired_heart_link_requests():
     from django.utils import timezone
     from datetime import timedelta
     
-    # 清理超过10分钟的pending请求（统一设置为10分钟）
+    # 清理超过10分钟的pending请求（固定10分钟过期）
     expired_requests = HeartLinkRequest.objects.filter(
         status='pending',
         created_at__lt=timezone.now() - timedelta(minutes=10)
@@ -2436,22 +2436,15 @@ def cleanup_expired_heart_link_requests():
         request.status = 'expired'
         request.save()
     
-    # 清理不活跃用户的pending请求（只有在用户超过30分钟不活跃时才清理，更宽松）
-    inactive_requests = HeartLinkRequest.objects.filter(status='pending')
-    for request in inactive_requests:
-        # 检查用户是否超过30分钟不活跃
-        try:
-            online_status = UserOnlineStatus.objects.filter(user=request.requester).first()
-            if online_status and online_status.last_seen:
-                if timezone.now() - online_status.last_seen > timedelta(minutes=30):
-                    request.status = 'expired'
-                    request.save()
-            elif request.requester.last_login:
-                if timezone.now() - request.requester.last_login > timedelta(minutes=45):
-                    request.status = 'expired'
-                    request.save()
-        except:
-            pass
+    # 清理超过60分钟的matched请求
+    expired_matched_requests = HeartLinkRequest.objects.filter(
+        status='matched',
+        matched_at__lt=timezone.now() - timedelta(minutes=60)
+    )
+    
+    for request in expired_matched_requests:
+        request.status = 'expired'
+        request.save()
 
 def disconnect_inactive_users():
     """断开不活跃用户的连接"""
@@ -2526,7 +2519,7 @@ def create_heart_link_request_api(request):
     
     if request.method == 'POST':
         try:
-            # 大幅减少清理频率，只在必要时清理（1%的概率，避免影响用户匹配）
+            # 定期清理过期请求（1%的概率，减少清理频率）
             import random
             if random.random() < 0.01:
                 cleanup_expired_heart_link_requests()
@@ -2703,15 +2696,9 @@ def check_heart_link_status_api(request):
         from datetime import timedelta
         import random
         
-        # 大幅减少清理频率，只有0.5%的概率执行清理，避免影响等待用户
+        # 定期清理过期请求（0.5%的概率，减少清理频率）
         if random.random() < 0.005:
-            expired_requests = HeartLinkRequest.objects.filter(
-                status='pending',
-                created_at__lt=timezone.now() - timedelta(minutes=10)
-            )
-            for request in expired_requests:
-                request.status = 'expired'
-                request.save()
+            cleanup_expired_heart_link_requests()
         
         # 查找用户的最新请求（包括所有状态）
         heart_link_request = HeartLinkRequest.objects.filter(
@@ -2725,92 +2712,37 @@ def check_heart_link_status_api(request):
                 'message': '没有找到请求记录'
             }, content_type='application/json', headers=response_headers)
         
-        # 检查pending状态的请求是否已过期（更宽松的检查）
+        # 检查pending状态的请求是否已过期（固定10分钟）
         if heart_link_request.status == 'pending':
-            # 检查用户是否活跃，如果活跃则自动续期
-            try:
-                online_status = UserOnlineStatus.objects.filter(user=request.user).first()
-                is_user_active = False
-                
-                if online_status and online_status.last_seen:
-                    # 如果用户5分钟内活跃，自动续期
-                    if timezone.now() - online_status.last_seen < timedelta(minutes=5):
-                        is_user_active = True
-                        # 自动续期：更新创建时间（延长5分钟）
-                        heart_link_request.created_at = timezone.now() - timedelta(minutes=5)
-                        heart_link_request.save()
-                
-                # 检查是否需要显示过期警告
-                from apps.tools.services.heart_link_notification import notification_service
-                warning_message = None
-                if notification_service.should_show_warning(heart_link_request):
-                    warning_message = notification_service.get_expiry_warning_message(heart_link_request)
-                
-                # 只有在请求确实超过10分钟且用户不活跃时才标记为过期
-                if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
-                    heart_link_request.status = 'expired'
-                    heart_link_request.save()
-                    return JsonResponse({
-                        'success': True,
-                        'status': 'expired',
-                        'message': '匹配请求已过期'
-                    }, content_type='application/json', headers=response_headers)
-                
-                # 返回pending状态，包含警告信息
-                response_data = {
+            # 简单检查：超过10分钟就过期
+            if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
+                heart_link_request.status = 'expired'
+                heart_link_request.save()
+                return JsonResponse({
                     'success': True,
-                    'status': 'pending',
-                    'message': '正在等待匹配...'
-                }
-                if warning_message:
-                    response_data['warning'] = warning_message
-                return JsonResponse(response_data, content_type='application/json', headers=response_headers)
-                    
-            except Exception as e:
-                # 如果检查失败，使用10分钟过期逻辑
-                if timezone.now() - heart_link_request.created_at > timedelta(minutes=10):
-                    heart_link_request.status = 'expired'
-                    heart_link_request.save()
-                    return JsonResponse({
-                        'success': True,
-                        'status': 'expired',
-                        'message': '匹配请求已过期'
-                    }, content_type='application/json', headers=response_headers)
-        
-        # 检查已匹配的请求是否应该过期（更宽松的条件）
-        if heart_link_request.status == 'matched' and heart_link_request.chat_room:
-            # 对于已匹配的请求，使用更宽松的活跃检查
-            # 只有在匹配时间超过60分钟且对方用户确实不活跃时才标记为过期
-            from datetime import timedelta
-            match_time_threshold = timedelta(minutes=60)
+                    'status': 'expired',
+                    'message': '匹配请求已过期'
+                }, content_type='application/json', headers=response_headers)
             
+            # 返回pending状态
+            return JsonResponse({
+                'success': True,
+                'status': 'pending',
+                'message': '正在等待匹配...'
+            }, content_type='application/json', headers=response_headers)
+        
+        # 检查已匹配的请求是否应该过期（固定60分钟）
+        if heart_link_request.status == 'matched' and heart_link_request.chat_room:
+            # 对于已匹配的请求，60分钟后过期
             if (heart_link_request.matched_at and 
-                timezone.now() - heart_link_request.matched_at > match_time_threshold and
-                heart_link_request.matched_with):
-                
-                # 检查对方用户是否超过20分钟不活跃
-                try:
-                    online_status = UserOnlineStatus.objects.filter(user=heart_link_request.matched_with).first()
-                    if online_status and online_status.last_seen:
-                        if timezone.now() - online_status.last_seen > timedelta(minutes=20):
-                            heart_link_request.status = 'expired'
-                            heart_link_request.save()
-                            return JsonResponse({
-                                'success': True,
-                                'status': 'expired',
-                                'message': '对方用户已离线，连接已断开'
-                            }, content_type='application/json', headers=response_headers)
-                    elif heart_link_request.matched_with.last_login:
-                        if timezone.now() - heart_link_request.matched_with.last_login > timedelta(minutes=30):
-                            heart_link_request.status = 'expired'
-                            heart_link_request.save()
-                            return JsonResponse({
-                                'success': True,
-                                'status': 'expired',
-                                'message': '对方用户已离线，连接已断开'
-                            }, content_type='application/json', headers=response_headers)
-                except:
-                    pass
+                timezone.now() - heart_link_request.matched_at > timedelta(minutes=60)):
+                heart_link_request.status = 'expired'
+                heart_link_request.save()
+                return JsonResponse({
+                    'success': True,
+                    'status': 'expired',
+                    'message': '匹配请求已过期'
+                }, content_type='application/json', headers=response_headers)
         
         # 检查是否已被匹配
         if heart_link_request.status == 'matched' and heart_link_request.chat_room:
@@ -8106,7 +8038,10 @@ def meditation_audio_api(request):
 @login_required
 def food_randomizer(request):
     """食物随机选择器页面"""
-    return render(request, 'tools/food_randomizer.html')
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'tools/food_randomizer.html', context)
 
 
 # 食物随机选择器API函数

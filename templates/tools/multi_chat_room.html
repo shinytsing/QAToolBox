@@ -789,7 +789,7 @@ function connectWebSocket() {
     socket.onopen = function(e) {
         isConnected = true;
         updateConnectionStatus(true);
-        console.log('WebSocket连接已建立');
+
     };
     
     socket.onmessage = function(e) {
@@ -800,8 +800,7 @@ function connectWebSocket() {
     socket.onclose = function(e) {
         isConnected = false;
         updateConnectionStatus(false);
-        console.log('WebSocket连接已关闭');
-        
+
         // 尝试重连
         setTimeout(connectWebSocket, 3000);
     };
@@ -842,7 +841,7 @@ function handleMessage(data) {
             showTypingIndicator(data.user.username);
             break;
         default:
-            console.log('未知消息类型:', data.type);
+
     }
 }
 
@@ -957,7 +956,7 @@ function sendImage(input) {
         .then(data => {
             hideUploadProgress();
             if (data.success) {
-                console.log('图片上传成功');
+
             } else {
                 alert('图片上传失败: ' + data.error);
             }
@@ -991,7 +990,7 @@ function sendFile(input) {
         .then(data => {
             hideUploadProgress();
             if (data.success) {
-                console.log('文件上传成功');
+
             } else {
                 alert('文件上传失败: ' + data.error);
             }
@@ -1025,7 +1024,7 @@ function sendVideo(input) {
         .then(data => {
             hideUploadProgress();
             if (data.success) {
-                console.log('视频上传成功');
+
             } else {
                 alert('视频上传失败: ' + data.error);
             }
@@ -1116,7 +1115,7 @@ function sendVoiceMessage(blob) {
     .then(data => {
         hideUploadProgress();
         if (data.success) {
-            console.log('语音发送成功');
+
         } else {
             alert('语音发送失败: ' + data.error);
         }

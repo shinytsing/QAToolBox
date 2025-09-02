@@ -26,8 +26,7 @@ function toggleTheme() {
         // 如果没有switchTheme函数，直接更新页面主题
         updatePageTheme(nextMode);
     }
-    
-    console.log(`主题已切换到: ${nextTheme} (${nextMode})`);
+
 }
 
 // 主题切换函数
@@ -48,7 +47,7 @@ function switchTheme(theme) {
         if (data.success) {
             // 更新页面主题
             updatePageTheme(theme);
-            console.log(`主题切换成功: ${theme}`);
+
         } else {
             console.error('主题切换失败:', data.error);
         }
@@ -109,21 +108,19 @@ function loadThemeCSS(theme) {
     link.href = cssUrl;
     link.id = `theme-css-${theme}`;
     document.head.appendChild(link);
-    
-    console.log(`🎨 已加载主题CSS: ${cssUrl}`);
+
 }
 
 // 显示设置面板
 function showSettings() {
-    console.log('⚙️ showSettings 被调用 (来自 top_ui_functions.js)');
-    
+
     const settingsModal = document.getElementById('settingsModal');
     if (settingsModal) {
         settingsModal.style.display = 'block';
-        console.log('✅ 设置面板已显示');
+
     } else {
         // 如果模态框不存在，创建一个
-        console.log('🔄 创建设置面板...');
+
         createSettingsModal();
     }
 }
@@ -145,12 +142,12 @@ function hideTopUI() {
     if (topUiBar) {
         topUiBar.style.setProperty('transform', 'translateY(-100%)', 'important');
         topUiBar.style.setProperty('opacity', '0', 'important');
-        console.log('🎯 顶部UI已隐藏');
+
         // 3秒后自动显示
         setTimeout(() => {
             topUiBar.style.setProperty('transform', 'translateY(0)', 'important');
             topUiBar.style.setProperty('opacity', '1', 'important');
-            console.log('🎯 顶部UI已恢复显示');
+
         }, 3000);
     } else {
         console.error('❌ 未找到topUiBar元素');
@@ -161,8 +158,7 @@ function hideTopUI() {
 let hideDropdownTimer = null;
 
 function showUserDropdown() {
-    console.log('🔧 showUserDropdown 被调用 (来自 top_ui_functions.js)');
-    
+
     // 清除隐藏定时器
     if (hideDropdownTimer) {
         clearTimeout(hideDropdownTimer);
@@ -186,13 +182,11 @@ function showUserDropdown() {
     if (chevronIcon) {
         chevronIcon.style.transform = 'rotate(180deg)';
     }
-    
-    console.log('✅ 菜单已显示');
+
 }
 
 function hideUserDropdownDelayed() {
-    console.log('🔧 hideUserDropdownDelayed 被调用 (来自 top_ui_functions.js)');
-    
+
     // 设置延迟隐藏定时器
     hideDropdownTimer = setTimeout(() => {
         hideUserDropdown();
@@ -200,8 +194,7 @@ function hideUserDropdownDelayed() {
 }
 
 function hideUserDropdown() {
-    console.log('🔧 hideUserDropdown 被调用 (来自 top_ui_functions.js)');
-    
+
     const dropdownContent = document.getElementById('userDropdownContent');
     const chevronIcon = document.querySelector('.top-ui-user .fa-chevron-down');
     
@@ -219,14 +212,12 @@ function hideUserDropdown() {
     if (chevronIcon) {
         chevronIcon.style.transform = 'rotate(0deg)';
     }
-    
-    console.log('✅ 菜单已隐藏');
+
 }
 
 // 保留切换函数用于调试
 function toggleUserDropdown() {
-    console.log('🔧 toggleUserDropdown 被调用 (来自 top_ui_functions.js)');
-    
+
     const dropdownContent = document.getElementById('userDropdownContent');
     
     if (!dropdownContent) {
@@ -406,19 +397,18 @@ function getCSRFToken() {
 
 // 音乐控制函数（占位符）
 function toggleMusic() {
-    console.log('播放/暂停音乐');
+
     alert('音乐控制功能开发中...');
 }
 
 function nextSong() {
-    console.log('下一首歌曲');
+
     alert('下一首歌曲功能开发中...');
 }
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎉 顶部栏功能已加载');
-    
+
     // 添加模态框按钮悬停效果
     document.addEventListener('mouseover', function(e) {
         if (e.target.classList.contains('menu-item') || e.target.classList.contains('theme-btn')) {

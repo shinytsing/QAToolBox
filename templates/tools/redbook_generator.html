@@ -516,7 +516,7 @@ function updateImageCounter() {
 
 // 更新图片列表显示
 function updateImageList() {
-    console.log('更新图片列表，当前图片数量:', uploadedImages.length);
+
     imageList.innerHTML = '';
     
     if (uploadedImages.length === 0) {
@@ -527,7 +527,7 @@ function updateImageList() {
     
     // 显示每张图片
     uploadedImages.forEach((imageData, index) => {
-        console.log(`创建图片项 ${index}:`, imageData.file.name);
+
         const imageItem = document.createElement('div');
         imageItem.className = 'image-item';
         imageItem.innerHTML = `
@@ -551,7 +551,7 @@ function updateImageList() {
 
 // 移除图片
 function removeImage(index) {
-    console.log(`删除图片 ${index}:`, uploadedImages[index].file.name);
+
     uploadedImages.splice(index, 1);
     updateImageList();
     errorMsg.style.display = 'none';
@@ -560,8 +560,7 @@ function removeImage(index) {
 
 // 按顺序处理文件
 function processFilesSequentially(files) {
-    console.log(`开始处理 ${files.length} 个文件`);
-    
+
     // 显示上传状态
     uploadStatus.style.display = 'block';
     uploadStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在处理 ${files.length} 张图片...`;
@@ -569,17 +568,16 @@ function processFilesSequentially(files) {
     let processedCount = 0;
     
     files.forEach((file, index) => {
-        console.log(`开始处理文件 ${index + 1}/${files.length}:`, file.name);
-        
+
         // 如果是HEIC文件，需要特殊处理
         if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
-            console.log('检测到HEIC文件，进行转换处理:', file.name);
+
             processHeicFile(file, index, processedCount, files.length);
         } else {
             // 普通图片文件处理
             const reader = new FileReader();
             reader.onload = function(e) {
-                console.log('文件读取完成:', file.name);
+
                 uploadedImages.push({
                     file: file,
                     preview: e.target.result,
@@ -587,8 +585,7 @@ function processFilesSequentially(files) {
                 });
                 
                 processedCount++;
-                console.log(`已处理 ${processedCount}/${files.length} 张图片`);
-                
+
                 // 更新状态
                 uploadStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在处理图片 (${processedCount}/${files.length})`;
                 
@@ -597,10 +594,9 @@ function processFilesSequentially(files) {
                 
                 // 如果所有文件都处理完成
                 if (processedCount === files.length) {
-                    console.log('所有文件处理完成');
+
                     uploadStatus.style.display = 'none';
-                    console.log('最终图片数组:', uploadedImages.map(img => img.file.name));
-                    
+
                     // 确保input被清空，以便下次选择
                     setTimeout(() => {
                         imageUpload.value = '';
@@ -629,8 +625,7 @@ function processFilesSequentially(files) {
 
 // 处理HEIC文件的函数
 function processHeicFile(file, index, processedCount, totalFiles) {
-    console.log('开始处理HEIC文件:', file.name, '文件类型:', file.type);
-    
+
     // 对于HEIC文件，直接添加到列表中，不尝试预览
     // 因为浏览器可能无法直接预览HEIC文件
     const canvas = document.createElement('canvas');
@@ -657,8 +652,7 @@ function processHeicFile(file, index, processedCount, totalFiles) {
     });
     
     processedCount++;
-    console.log(`已处理 ${processedCount}/${totalFiles} 张图片`);
-    
+
     // 更新状态
     uploadStatus.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在处理图片 (${processedCount}/${totalFiles})`;
     
@@ -667,10 +661,9 @@ function processHeicFile(file, index, processedCount, totalFiles) {
     
     // 如果所有文件都处理完成
     if (processedCount === totalFiles) {
-        console.log('所有文件处理完成');
+
         uploadStatus.style.display = 'none';
-        console.log('最终图片数组:', uploadedImages.map(img => img.file.name));
-        
+
         // 确保input被清空，以便下次选择
         setTimeout(() => {
             imageUpload.value = '';
@@ -682,10 +675,9 @@ function processHeicFile(file, index, processedCount, totalFiles) {
 function bindEventListeners() {
     // 文件上传事件
     imageUpload.addEventListener('change', function(e) {
-        console.log('文件上传事件触发');
+
         const files = Array.from(e.target.files);
-        console.log('选择的文件数量:', files.length);
-        
+
         if (files.length === 0) return;
         
         // 验证文件类型和大小
@@ -852,8 +844,7 @@ function bindEventListeners() {
     // 爆款文案按钮点击事件 - 已隐藏
     /*
     viralBtn.addEventListener('click', function() {
-        console.log('爆款文案按钮被点击');
-        
+
         if (uploadedImages.length === 0) {
             showError('请先上传图片，然后点击爆款文案按钮');
             return;

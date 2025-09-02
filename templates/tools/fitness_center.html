@@ -10,8 +10,7 @@
 <script>
 // 检测是否存在旧函数，如果存在则强制清除所有缓存
 if (typeof renderActivePlan !== 'undefined' || typeof initCurrentPlan !== 'undefined') {
-  console.log('检测到旧版本函数，正在清除所有缓存...');
-  
+
   // 清除localStorage
   localStorage.clear();
   
@@ -25,7 +24,7 @@ if (typeof renderActivePlan !== 'undefined' || typeof initCurrentPlan !== 'undef
         return caches.delete(name);
       }));
     }).then(function() {
-      console.log('所有缓存已清除，正在重新加载...');
+
       // 强制重新加载，不使用缓存
       window.location.reload(true);
     });
@@ -4174,19 +4173,17 @@ class CheckInCalendar {
   
   async loadPlanLibrary() {
     try {
-      console.log('开始加载计划库...');
+
       const response = await fetch('/tools/api/training_plans/list/');
-      console.log('API响应状态:', response.status);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log('计划库数据:', data);
-      
+
       if (data.success) {
-        console.log('找到计划数量:', data.plans ? data.plans.length : 0);
+
         this.renderPlanLibrary(data.plans || []);
         this.updatePlanStats(data.plans || []);
       } else {
@@ -4361,9 +4358,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error('仍然检测到旧函数 initCurrentPlan，请清除浏览器缓存');
     return;
   }
-  
-  console.log('=== 开始初始化健身中心页面（新版本）===');
-  
+
   try {
     window.checkInCalendar = new CheckInCalendar();
 
@@ -4387,16 +4382,15 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载当前激活的训练计划
 async function loadActivePlan() {
   try {
-    console.log('开始加载激活的训练计划...');
+
     const response = await fetch('/tools/api/training_plans/active/');
     const data = await response.json();
-    console.log('API返回数据:', data);
-    
+
     if (data.success && data.has_plan) {
-      console.log('找到激活计划:', data.plan);
+
       updatePlanDisplay(data.plan);
     } else {
-      console.log('没有激活的计划');
+
       showNoPlanDisplay();
     }
   } catch (error) {
@@ -4407,9 +4401,8 @@ async function loadActivePlan() {
 
 // 更新计划显示
 function updatePlanDisplay(plan) {
-  console.log('开始更新计划显示:', plan);
-  console.log('计划的week_schedule:', plan.week_schedule);
-  
+
+
   // 更新计划信息
   const planInfo = document.querySelector('.plan-info h4');
   const planDescription = document.querySelector('.plan-info p');
@@ -4423,9 +4416,8 @@ function updatePlanDisplay(plan) {
   
   // 更新训练日显示 - 只显示今天的训练
   const workoutPlan = document.getElementById('workoutPlan');
-  console.log('workoutPlan element:', workoutPlan);
-  console.log('plan.week_schedule:', plan.week_schedule);
-  
+
+
   if (workoutPlan && plan.week_schedule) {
     const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     
@@ -4449,11 +4441,10 @@ function updatePlanDisplay(plan) {
     }
     
     if (todaysPlan) {
-      console.log(`处理今天的训练计划:`, todaysPlan);
+
       const exerciseCount = todaysPlan.exercises ? todaysPlan.exercises.length : 0;
       const dayType = todaysPlan.type || todaysPlan.name || '训练';
-      console.log(`dayType: "${dayType}", exerciseCount: ${exerciseCount}`);
-      
+
       // 安全地获取训练部位
       let bodyParts = '未设置';
       if (todaysPlan.body_parts && Array.isArray(todaysPlan.body_parts)) {
@@ -4469,8 +4460,7 @@ function updatePlanDisplay(plan) {
       } else if (dayType && typeof dayType === 'string') {
         isRestDay = dayType.includes('休息');
       }
-      console.log(`isRestDay: ${isRestDay}`);
-      
+
       const exerciseText = exerciseCount > 0 ? `${exerciseCount}个动作` : 
         (isRestDay ? '恢复日' : '待添加');
       
@@ -4856,8 +4846,7 @@ async function openPlanTemplates() {
     }
     
     const data = await response.json();
-    console.log('API响应数据:', data);
-    
+
     if (data.success) {
       let templates = data.templates || data.data || [];
       
@@ -4868,8 +4857,7 @@ async function openPlanTemplates() {
           ...templates[key]
         }));
       }
-      
-      console.log('解析的模板数据:', templates);
+
       showPlanTemplatesModal(templates);
     } else {
       console.error('API返回错误:', data);
@@ -5015,22 +5003,17 @@ async function applyTemplate(templateId, templateName) {
   if (customName === null) return; // 用户取消
   
   try {
-    console.log('开始应用模板:', templateId, templateName, customName);
-    
+
     // 获取CSRF令牌
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
                       document.querySelector('meta[name=csrf-token]')?.content || 
                       getCookie('csrftoken') || '';
-    
-    console.log('CSRF令牌:', csrfToken);
-    
+
     const requestData = { 
       template_id: templateId,
       custom_name: customName.trim() || templateName
     };
-    
-    console.log('请求数据:', requestData);
-    
+
     const response = await fetch('/tools/api/training_plans/templates/apply/', {
       method: 'POST',
       headers: {
@@ -5039,9 +5022,7 @@ async function applyTemplate(templateId, templateName) {
       },
       body: JSON.stringify(requestData)
     });
-    
-    console.log('响应状态:', response.status, response.statusText);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('响应错误:', errorText);
@@ -5049,8 +5030,7 @@ async function applyTemplate(templateId, templateName) {
     }
     
     const data = await response.json();
-    console.log('响应数据:', data);
-    
+
     if (data.success) {
       // 关闭模态框
       document.querySelector('.checkin-modal').remove();
@@ -5089,8 +5069,7 @@ async function previewPlan(planId) {
 // 预览模板
 async function previewTemplate(templateId) {
   try {
-    console.log('开始预览模板:', templateId);
-    
+
     const response = await fetch('/tools/api/training_plans/templates/');
     
     if (!response.ok) {
@@ -5098,8 +5077,7 @@ async function previewTemplate(templateId) {
     }
     
     const data = await response.json();
-    console.log('预览模板API响应:', data);
-    
+
     if (data.success) {
       let template = null;
       const templates = data.templates || {};
@@ -5114,9 +5092,7 @@ async function previewTemplate(templateId) {
         // 处理数组格式的templates
         template = templates.find(t => t.id === templateId);
       }
-      
-      console.log('找到的模板:', template);
-      
+
       if (template) {
         showPlanPreviewModal(template);
       } else {

@@ -276,7 +276,7 @@ function connectWebSocket() {
         ws = new WebSocket(wsUrl);
         
         ws.onopen = function(event) {
-            console.log('WebSocket连接已建立');
+
             updateConnectionStatus('connected', '已连接');
             document.getElementById('sendBtn').disabled = false;
             reconnectAttempts = 0;
@@ -288,7 +288,7 @@ function connectWebSocket() {
         };
         
         ws.onclose = function(event) {
-            console.log('WebSocket连接已关闭:', event.code, event.reason);
+
             updateConnectionStatus('disconnected', '连接已断开');
             document.getElementById('sendBtn').disabled = true;
             

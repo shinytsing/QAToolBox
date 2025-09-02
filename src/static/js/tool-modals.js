@@ -404,8 +404,7 @@ function addExercise(dayIndex) {
 function savePlan() {
   const planName = document.getElementById('planName').value;
   const planDescription = document.getElementById('planDescription').value;
-  
-  console.log('保存计划:', { planName, planDescription });
+
   alert('计划保存成功！');
   closePlanEditor();
 }

@@ -1086,7 +1086,7 @@ function switchTheme(theme) {
     if (typeof window.switchTheme === 'function') {
         window.switchTheme(theme);
     } else {
-        console.log(`切换到${themes[theme]}主题`);
+
     }
 }
 
@@ -1114,40 +1114,39 @@ function switchLanguage(lang) {
             activeItem.appendChild(checkmark);
         }
     }
-    
-    console.log(`切换到${languages[lang]}语言`);
+
 }
 
 // 音乐控制功能
 function toggleMusic() {
-    console.log('播放/暂停音乐');
+
     // 这里可以集成实际的音乐播放器
 }
 
 function nextSong() {
-    console.log('下一首歌曲');
+
     // 这里可以集成实际的音乐播放器
 }
 
 function toggleMusicInfo() {
-    console.log('显示/隐藏音乐信息');
+
     // 这里可以集成实际的音乐播放器
 }
 
 // 系统设置功能
 function showSuggestions() {
-    console.log('显示我的建议');
+
     // 这里可以跳转到建议页面
 }
 
 function showFeedback() {
-    console.log('显示意见反馈');
+
     // 这里可以跳转到反馈页面
 }
 
 // 快捷功能
 function editAvatar() {
-    console.log('编辑头像');
+
     // 这里可以实现头像编辑功能
 }
 
@@ -1156,22 +1155,22 @@ function editProfile() {
 }
 
 function showThemeSettings() {
-    console.log('主题设置');
+
     // 这里可以显示主题设置面板
 }
 
 function showPrivacySettings() {
-    console.log('隐私设置');
+
     // 这里可以显示隐私设置面板
 }
 
 function showNotificationSettings() {
-    console.log('通知设置');
+
     // 这里可以显示通知设置面板
 }
 
 function showSecuritySettings() {
-    console.log('安全设置');
+
     // 这里可以显示安全设置面板
 }
 
@@ -1250,8 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             editAvatar();
         });
     }
-    
-    console.log('个人资料页面已加载，支持快捷键 Ctrl+1/2/3/4 切换主题');
+
 });
 </script>
 {% endblock %}

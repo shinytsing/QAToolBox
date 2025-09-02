@@ -217,6 +217,13 @@ class GenerateTestCasesAPI(APIView):
                 xmind_filename = outfile_name.replace('.mm', '.xmind')
                 xmind_path = os.path.join(output_dir, xmind_filename)
                 xmind.save(xmind_workbook, xmind_path)
+                
+                # 生成飞书导入格式文件（Markdown格式）
+                feishu_filename = outfile_name.replace('.mm', '_feishu.md')
+                feishu_path = os.path.join(output_dir, feishu_filename)
+                feishu_content = self._generate_feishu_format(test_cases, raw_response)
+                with open(feishu_path, 'w', encoding='utf-8') as f:
+                    f.write(feishu_content)
 
                 # 6. 保存到模型（记录批量信息）
                 log = ToolUsageLog.objects.create(

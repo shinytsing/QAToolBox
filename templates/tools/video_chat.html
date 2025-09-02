@@ -366,7 +366,7 @@ function connectWebSocket() {
     socket = new WebSocket(socketUrl);
     
     socket.onopen = function(event) {
-        console.log('WebSocket连接已建立');
+
         showStatus('连接已建立，等待对方加入...', 'success');
     };
     
@@ -376,7 +376,7 @@ function connectWebSocket() {
     };
     
     socket.onclose = function(event) {
-        console.log('WebSocket连接已关闭');
+
         if (event.code !== 1000) {
             showStatus('连接已断开', 'error');
         }
@@ -390,8 +390,7 @@ function connectWebSocket() {
 
 // 处理WebSocket消息
 async function handleWebSocketMessage(data) {
-    console.log('收到WebSocket消息:', data);
-    
+
     try {
         switch (data.type) {
             case 'video_offer':
@@ -412,7 +411,7 @@ async function handleWebSocketMessage(data) {
                 break;
                 
             default:
-                console.log('未知消息类型:', data.type);
+
         }
     } catch (error) {
         console.error('处理WebSocket消息失败:', error);
@@ -421,8 +420,7 @@ async function handleWebSocketMessage(data) {
 
 // 处理视频offer
 async function handleVideoOffer(offer) {
-    console.log('收到视频offer');
-    
+
     try {
         if (!peerConnection) {
             await initializeWebRTC(false); // 不创建offer，只初始化连接
@@ -462,8 +460,7 @@ async function handleVideoOffer(offer) {
 
 // 处理视频answer
 async function handleVideoAnswer(answer) {
-    console.log('收到视频answer');
-    
+
     if (peerConnection) {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
         showStatus('视频连接已建立', 'success');
@@ -472,8 +469,7 @@ async function handleVideoAnswer(answer) {
 
 // 处理ICE候选
 async function handleIceCandidate(candidate) {
-    console.log('收到ICE候选');
-    
+
     if (peerConnection) {
         await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
     }
@@ -588,7 +584,7 @@ async function initializeWebRTC(createOffer = true) {
     
     // 处理远程流
     peerConnection.ontrack = (event) => {
-        console.log('收到远程流');
+
         remoteStream = event.streams[0];
         document.getElementById('remoteVideo').srcObject = remoteStream;
         showStatus('视频连接已建立', 'success');

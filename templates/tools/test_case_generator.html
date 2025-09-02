@@ -1,25 +1,37 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI测试用例生成器</title>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}🚀 AI测试用例生成器 - 极客版{% endblock %}
+
+{% block extra_css %}
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <!-- 引入Font Awesome图标库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            /* 统一与主页色调（假设主页为深色主题） */
-            --primary-color: #007bff; /* 主色调与主页一致 */
-            --primary-dark: #0056b3;
-            --success-color: #28a745;
-            --error-color: #dc3545;
-            --loading-color: #0069d9;
-            --light-gray: #343a40; /* 深色背景 */
-            --medium-gray: #495057;
-            --dark-gray: #adb5bd;
-            --text-color: #f8f9fa; /* 浅色文字 */
-            --shadow: 0 2px 10px rgba(0,0,0,0.3);
+            /* 极客风格配色 */
+            --primary-color: #00ff88;
+            --primary-dark: #00cc6a;
+            --secondary-color: #00d4ff;
+            --accent-color: #ff6b35;
+            --warning-color: #ffd700;
+            --error-color: #ff4757;
+            --success-color: #2ed573;
+            --info-color: #3742fa;
+            
+            /* 深色主题 */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #666666;
+            --border-color: #333333;
+            --border-glow: rgba(0, 255, 136, 0.3);
+            
+            /* 动画效果 */
+            --glow-shadow: 0 0 20px var(--border-glow);
+            --glow-shadow-strong: 0 0 30px var(--primary-color);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -29,188 +41,526 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--light-gray);
-            color: var(--text-color);
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景动画效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 107, 53, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 网格背景 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            animation: gridMove 30s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
 
         #app {
-            background: #212529; /* 深色卡片背景 */
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            box-shadow: var(--glow-shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         }
 
-        #app:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        #app::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
 
         h1 {
-            color: var(--text-color);
             text-align: center;
+            color: var(--primary-color);
             margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--medium-gray);
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 0 20px var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        h1::after {
+            content: '⚡';
+            position: absolute;
+            right: -40px;
+            top: 0;
+            font-size: 1.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            font-style: italic;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            position: relative;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        textarea {
+        label::after {
+            content: ' ▸';
+            color: var(--primary-color);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        textarea, input[type="text"] {
             width: 100%;
-            padding: 15px;
-            margin-bottom: 5px;
-            border: 1px solid var(--medium-gray);
-            border-radius: 6px;
-            resize: vertical;
+            padding: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             font-family: inherit;
-            font-size: 14px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            background-color: #343a40;
-            color: var(--text-color);
+            font-size: 1rem;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: var(--transition);
+            resize: vertical;
+            position: relative;
         }
 
-        textarea:focus {
+        textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            box-shadow: var(--glow-shadow);
+            background: var(--bg-secondary);
         }
 
         #requirement {
             min-height: 150px;
+            font-size: 1.1rem;
         }
 
         #prompt {
-            min-height: 100px;
-        }
-
-        /* 默认提示词区域样式 */
-        #defaultPromptContainer {
-            margin: 15px 0;
-            border: 1px dashed var(--medium-gray);
-            border-radius: 6px;
-            padding: 10px;
-        }
-
-        #defaultPromptText {
             min-height: 120px;
-            font-size: 13px;
         }
 
-        .toggle-section {
-            margin-bottom: 8px;
+        .hint {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .hint::before {
+            content: '💡';
+            margin-right: 8px;
         }
 
         .toggle-btn {
+            background: rgba(0, 255, 136, 0.1);
             color: var(--primary-color);
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 14px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            transition: var(--transition);
             cursor: pointer;
-            text-decoration: underline;
-            width: auto;
-            display: inline;
-            justify-content: flex-start;
-            gap: 5px;
+            font-family: inherit;
         }
 
         .toggle-btn:hover {
-            color: #66b0ff;
-            background: none;
-            transform: none;
+            background: rgba(0, 255, 136, 0.2);
+            transform: translateY(-2px);
+            box-shadow: var(--glow-shadow);
+        }
+
+        #defaultPromptContainer {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: none;
         }
 
         button {
-            background-color: var(--primary-color);
-            color: white;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: var(--bg-primary);
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
             font-weight: 600;
-            transition: background-color 0.3s, transform 0.2s;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+            position: relative;
+            overflow: hidden;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        button:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-1px);
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: var(--glow-shadow-strong);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
         }
 
         button:active {
-            transform: translateY(1px);
+            transform: translateY(-1px);
         }
 
         button:disabled {
-            background-color: var(--medium-gray);
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 6px;
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: var(--bg-primary);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            margin: 30px 0;
+            padding: 25px;
+            background: var(--bg-tertiary);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
             display: none;
-            transition: opacity 0.3s;
         }
 
-        .error {
-            background-color: #492424;
-            color: var(--error-color);
+        .progress-container.active {
             display: block;
-            border-left: 4px solid var(--error-color);
+            animation: slideIn 0.5s ease-out;
         }
 
-        .success {
-            background-color: #244924;
-            color: var(--success-color);
-            display: block;
-            border-left: 4px solid var(--success-color);
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .loading {
-            background-color: #243a49;
-            color: var(--loading-color);
-            display: block;
-            border-left: 4px solid var(--loading-color);
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
-        .hint {
-            font-size: 12px;
-            color: var(--dark-gray);
-            margin: -5px 0 15px 0;
+        .progress-title {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .progress-percentage {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-step {
+            margin-top: 15px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
             font-style: italic;
-            padding-left: 5px;
         }
 
+        /* 结果显示区域 */
+        .result-container {
+            margin-top: 30px;
+            padding: 25px;
+            background: var(--bg-tertiary);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .result-container.active {
+            display: block;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-title {
+            color: var(--success-color);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .test-case-display {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: var(--text-primary);
+        }
+
+        .test-case-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .test-case-display::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .test-case-display::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .test-case-display::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* 消息提示 */
+        .message {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-weight: 500;
+            display: none;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        .message.success {
+            background: rgba(46, 213, 115, 0.1);
+            color: var(--success-color);
+            border-left-color: var(--success-color);
+        }
+
+        .message.error {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--error-color);
+            border-left-color: var(--error-color);
+        }
+
+        .message.loading {
+            background: rgba(55, 66, 250, 0.1);
+            color: var(--info-color);
+            border-left-color: var(--info-color);
+        }
+
+        .message.warning {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--warning-color);
+            border-left-color: var(--warning-color);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            #app {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        /* 加载动画 */
         .spinner {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            border: 3px solid rgba(0, 255, 136, 0.3);
             border-radius: 50%;
-            border-top-color: white;
+            border-top-color: var(--primary-color);
             animation: spin 1s ease-in-out infinite;
         }
 
@@ -218,186 +568,164 @@
             to { transform: rotate(360deg); }
         }
 
-        .example-toggle {
+        /* 极客风格装饰 */
+        .geek-decoration {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             color: var(--primary-color);
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 12px;
-            cursor: pointer;
-            text-decoration: underline;
-            margin-top: 5px;
-            width: auto;
-            display: inline;
+            font-size: 1.5rem;
+            animation: float 3s ease-in-out infinite;
         }
 
-        .example-toggle:hover {
-            color: #66b0ff;
-            background: none;
-            transform: none;
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
 
-        .examples {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #343a40;
-            border-radius: 4px;
-            font-size: 13px;
-            display: none;
+        /* 终端风格输入框 */
+        .terminal-input {
+            position: relative;
         }
 
-        .examples.active {
-            display: block;
+        .terminal-input::before {
+            content: '$ ';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+            font-weight: bold;
+            z-index: 1;
         }
 
-        .examples h4 {
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: var(--text-color);
+        .terminal-input textarea {
+            padding-left: 35px;
         }
 
-        .examples p {
-            margin-bottom: 8px;
-            color: var(--text-color);
+        /* 状态指示器 */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
         }
 
-        /* 抖动动画 */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        .status-indicator.online {
+            background: var(--success-color);
         }
 
-        /* 测试用例展示区域样式 */
-        .test-case-display {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #343a40;
-            border-radius: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.9rem;
-            border: 1px solid var(--medium-gray);
-            color: var(--text-color);
+        .status-indicator.processing {
+            background: var(--warning-color);
         }
 
-        /* 操作按钮区域 */
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .copy-btn, .download-btn {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            flex: 1;
-        }
-
-        /* 下载状态样式 */
-        .download-status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .download-success {
-            background-color: #244924;
-            color: var(--success-color);
-        }
-
-        .download-pending {
-            background-color: #243a49;
-            color: var(--loading-color);
-        }
-
-        .download-error {
-            background-color: #492424;
-            color: var(--error-color);
-        }
-
-        @media (max-width: 768px) {
-            .action-buttons {
-                flex-direction: column;
-                gap: 10px;
-            }
+        .status-indicator.error {
+            background: var(--error-color);
         }
     </style>
-</head>
-<body>
-    <div id="app">
+{% endblock %}
+{% block content %}
+<div id="app">
+        <div class="geek-decoration">⚡</div>
         <h1>AI测试用例生成器</h1>
+        <p class="subtitle">🚀 极客版 - 真正的后台任务，关闭页面也能继续运行</p>
 
-        <div class="form-group">
-            <label for="requirement">产品需求 <span style="color: var(--error-color)">*</span></label>
-            <textarea
-                id="requirement"
-                placeholder="请详细描述产品需求，例如：用户登录功能，支持手机号和邮箱登录，包含记住密码选项..."
-                required
-            ></textarea>
-            <!-- 删除查看示例按钮及示例内容 -->
-        </div>
-
-        <div class="form-group">
-            <label for="prompt">自定义提示词</label>
-            <textarea
-                id="prompt"
-                placeholder="请输入自定义提示词（使用{requirement}作为需求占位符），例如：根据{requirement}生成详细的测试用例..."
-            ></textarea>
-            <div class="hint">
-                提示：留空将使用默认提示词模板，生成包含多级结构的测试用例
-            </div>
-
-            <!-- 默认提示词查看/编辑区域 -->
-            <div class="toggle-section">
-                <button class="toggle-btn" onclick="toggleDefaultPrompt()">
-                    <i class="fas fa-cog"></i> 查看/编辑默认提示词模板
-                </button>
-            </div>
-            <div id="defaultPromptContainer" style="display: none;">
-                <textarea
-                    id="defaultPromptText"
-                    placeholder="默认提示词模板..."
-                ></textarea>
-                <div class="hint">
-                    提示：修改后将影响所有未输入自定义提示词的生成结果
+        <form id="testForm">
+            <div class="form-group">
+                <label for="requirement">产品需求</label>
+                <div class="terminal-input">
+                    <textarea
+                        id="requirement"
+                        placeholder="请详细描述产品需求，例如：用户登录功能，支持手机号和邮箱登录，包含记住密码选项..."
+                        required
+                    ></textarea>
                 </div>
             </div>
-        </div>
 
-        <div class="action-buttons" style="margin-bottom: 15px;">
-            <button id="resetBtn" class="btn btn-outline-primary">
+            <div class="form-group">
+                <label for="prompt">自定义提示词</label>
+                <textarea
+                    id="prompt"
+                    placeholder="请输入自定义提示词（使用{requirement}作为需求占位符），例如：根据{requirement}生成详细的测试用例..."
+                ></textarea>
+                <div class="hint">
+                    提示：留空将使用默认提示词模板，生成包含多级结构的测试用例
+                </div>
+
+                <div class="toggle-section">
+                    <button type="button" class="toggle-btn" onclick="toggleDefaultPrompt()">
+                        <i class="fas fa-cog"></i> 查看/编辑默认提示词模板
+                    </button>
+                </div>
+                <div id="defaultPromptContainer">
+                    <textarea
+                        id="defaultPromptText"
+                        placeholder="默认提示词模板..."
+                    ></textarea>
+                    <div class="hint">
+                        提示：修改后将影响所有未输入自定义提示词的生成结果
+                    </div>
+                </div>
+            </div>
+
+                    <div class="action-buttons">
+            <button type="button" id="resetBtn" class="btn-outline">
                 <i class="fas fa-undo"></i> 重置
             </button>
-            <button id="generateBtn">
-                <i class="fas fa-magic"></i> 生成测试用例
+            <button type="submit" id="generateBtn">
+                <i class="fas fa-rocket"></i> 开始生成
+            </button>
+            <button type="button" id="taskManagerBtn" class="btn-outline" onclick="window.open('/tools/task_manager/', '_blank')">
+                <i class="fas fa-tasks"></i> 任务管理器
             </button>
         </div>
+        </form>
 
-        <div id="result"></div>
+        <!-- 进度条容器 -->
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="status-indicator processing"></span>
+                    任务处理中...
+                </div>
+                <div class="progress-percentage" id="progressPercentage">0%</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-step" id="progressStep">准备中...</div>
+        </div>
 
-        <!-- 测试用例展示区域 -->
-        <div id="testCaseDisplayContainer" style="display: none;">
+        <!-- 结果显示容器 -->
+        <div id="resultContainer" class="result-container">
+            <div class="result-header">
+                <div class="result-title">
+                    <span class="status-indicator online"></span>
+                    生成完成
+                </div>
+            </div>
             <div class="test-case-display" id="testCaseDisplay"></div>
             <div class="action-buttons">
-                <button class="copy-btn" id="copyBtn">
-                    <i class="fas fa-copy"></i> 复制用例
+                <button class="btn-outline" id="copyBtn">
+                    <i class="fas fa-copy"></i> 复制内容
                 </button>
-                <button class="download-btn" id="downloadBtn">
-                    <i class="fas fa-download"></i> 下载FreeMind
+                <button class="btn-outline" id="downloadTxtBtn" style="display: none;">
+                    <i class="fas fa-file-alt"></i> 下载TXT
                 </button>
-                <button class="download-btn" id="xmindDownloadBtn" style="background-color: #ff6b35;">
+                <button class="btn-primary" id="downloadXmindBtn" style="display: none;">
                     <i class="fas fa-sitemap"></i> 下载XMind
                 </button>
+                <button class="btn-secondary" id="downloadFeishuBtn" style="display: none;">
+                    <i class="fas fa-file-code"></i> 下载飞书格式
+                </button>
             </div>
-            <div class="download-status" id="downloadStatus" style="display: none;"></div>
         </div>
     </div>
+
+    <!-- 消息容器 -->
+    <div id="messageContainer"></div>
 
     <script>
         const DEFAULT_PROMPT = `作为资深测试工程师，请根据以下产品需求生成专业的测试用例：
@@ -429,60 +757,373 @@
 产品需求：{requirement}
 
 请生成完整、可执行的测试用例，确保覆盖全面且符合实际测试工作需求。
-- 每个测试维度结束处添加"维度覆盖总结"，说明已覆盖的场景数量及比例`
-;
+- 每个测试维度结束处添加"维度覆盖总结"，说明已覆盖的场景数量及比例`;
 
+        let currentTaskId = null;
+        let statusCheckInterval = null;
 
-        // 页面加载完成后初始化事件绑定
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化默认提示词文本框
-            const defaultPromptEl = document.getElementById('defaultPromptText');
-            defaultPromptEl.value = DEFAULT_PROMPT;
-
-            // 绑定生成按钮点击事件
-            const generateBtn = document.getElementById('generateBtn');
-            generateBtn.addEventListener('click', generateCases);
-
-            // 绑定重置按钮点击事件
-            const resetBtn = document.getElementById('resetBtn');
-            resetBtn.addEventListener('click', resetForm);
-
-            // 绑定复制按钮点击事件
-            const copyBtn = document.getElementById('copyBtn');
-            copyBtn.addEventListener('click', copyTestCase);
-
-            // 绑定下载按钮点击事件
-            const downloadBtn = document.getElementById('downloadBtn');
-            downloadBtn.addEventListener('click', downloadTestCase);
-
-            // 绑定XMind下载按钮点击事件
-            const xmindDownloadBtn = document.getElementById('xmindDownloadBtn');
-            xmindDownloadBtn.addEventListener('click', downloadXMind);
-
-            console.log('生成按钮事件已绑定，等待点击...');
+            initializePage();
+            bindEvents();
         });
 
-        // 切换默认提示词区域显示/隐藏
+        function initializePage() {
+            // 初始化默认提示词
+            document.getElementById('defaultPromptText').value = DEFAULT_PROMPT;
+            
+            // 显示在线状态
+            showMessage('系统已就绪，准备接受任务', 'success');
+        }
+
+        function bindEvents() {
+            // 表单提交事件
+            document.getElementById('testForm').addEventListener('submit', handleFormSubmit);
+            
+            // 重置按钮事件
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+            
+            // 复制按钮事件
+            document.getElementById('copyBtn').addEventListener('click', copyContent);
+            
+            // 下载按钮事件
+            document.getElementById('downloadTxtBtn').addEventListener('click', downloadTxtContent);
+            document.getElementById('downloadXmindBtn').addEventListener('click', downloadXmindFile);
+            document.getElementById('downloadFeishuBtn').addEventListener('click', downloadFeishuFile);
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const requirement = document.getElementById('requirement').value.trim();
+            const prompt = document.getElementById('prompt').value.trim();
+            
+            if (!requirement) {
+                showMessage('请输入产品需求内容', 'error');
+                return;
+            }
+            
+            // 禁用提交按钮
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<div class="spinner"></div> 创建任务中...';
+            
+            // 创建异步任务
+            createAsyncTask(requirement, prompt);
+        }
+
+        function createAsyncTask(requirement, prompt) {
+            const csrfToken = getCookie('csrftoken');
+            const finalPrompt = prompt || document.getElementById('defaultPromptText').value;
+            
+            axios.post('/tools/api/async/generate-testcases/', {
+                requirement: requirement,
+                prompt: finalPrompt
+            }, {
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                            if (response.data.success) {
+                currentTaskId = response.data.task_id;
+                showMessage('后台任务创建成功！您可以关闭页面，任务完成后会通知您', 'success');
+                showProgress();
+                startStatusCheck();
+            } else {
+                showMessage('任务创建失败：' + (response.data.error || '未知错误'), 'error');
+            }
+            })
+            .catch(error => {
+                console.error('创建任务失败:', error);
+                let errorMsg = '创建任务失败，请稍后重试';
+                if (error.response) {
+                    errorMsg = error.response.data.error || `服务器错误 (${error.response.status})`;
+                }
+                showMessage(errorMsg, 'error');
+            })
+            .finally(() => {
+                // 恢复提交按钮
+                const generateBtn = document.getElementById('generateBtn');
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-rocket"></i> 开始生成';
+            });
+        }
+
+        function showProgress() {
+            document.getElementById('progressContainer').classList.add('active');
+            document.getElementById('resultContainer').classList.remove('active');
+        }
+
+        function startStatusCheck() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+            
+            statusCheckInterval = setInterval(() => {
+                checkTaskStatus();
+            }, 2000); // 每2秒检查一次
+        }
+
+        function checkTaskStatus() {
+            if (!currentTaskId) return;
+            
+            axios.get(`/tools/api/async/task/${currentTaskId}/`)
+            .then(response => {
+                const task = response.data;
+                updateProgress(task);
+                
+                if (task.status === 'completed' || task.status === 'failed') {
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                    
+                    if (task.status === 'completed') {
+                        showResult(task.result);
+                        showMessage('测试用例生成完成！', 'success');
+                        // 发送系统通知
+                        sendSystemNotification('测试用例生成完成');
+                    } else {
+                        showMessage('任务执行失败：' + (task.error || '未知错误'), 'error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('检查任务状态失败:', error);
+            });
+        }
+
+        function updateProgress(task) {
+            const progressFill = document.getElementById('progressFill');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const progressStep = document.getElementById('progressStep');
+            
+            const progress = task.progress || 0;
+            progressFill.style.width = progress + '%';
+            progressPercentage.textContent = progress + '%';
+            
+            if (task.current_step) {
+                progressStep.textContent = `当前步骤：${task.current_step}`;
+            }
+        }
+
+        function showResult(result) {
+            document.getElementById('resultContainer').classList.add('active');
+            document.getElementById('progressContainer').classList.remove('active');
+            
+            const testCaseDisplay = document.getElementById('testCaseDisplay');
+            testCaseDisplay.innerHTML = result
+                .replace(/#{2}\s(.*?)\n/g, '<h2 style="color: var(--primary-color); margin: 20px 0 10px 0;">$1</h2>')
+                .replace(/#{3}\s(.*?)\n/g, '<h3 style="color: var(--secondary-color); margin: 15px 0 8px 0;">$1</h3>')
+                .replace(/#{4}\s(.*?)\n/g, '<h4 style="color: var(--accent-color); margin: 10px 0 5px 0;">$1</h4>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--primary-color);">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em style="color: var(--secondary-color);">$1</em>')
+                .replace(/\n/g, '<br>');
+            
+            // 显示下载按钮
+            document.getElementById('downloadTxtBtn').style.display = 'flex';
+            document.getElementById('downloadXmindBtn').style.display = 'flex';
+            document.getElementById('downloadFeishuBtn').style.display = 'flex';
+            
+            // 保存结果到全局变量供下载使用
+            window.currentTestResult = result;
+        }
+
+        function resetForm() {
+            document.getElementById('testForm').reset();
+            document.getElementById('defaultPromptContainer').style.display = 'none';
+            document.getElementById('progressContainer').classList.remove('active');
+            document.getElementById('resultContainer').classList.remove('active');
+            document.getElementById('testCaseDisplay').innerHTML = '';
+            
+            // 隐藏下载按钮
+            document.getElementById('downloadTxtBtn').style.display = 'none';
+            document.getElementById('downloadXmindBtn').style.display = 'none';
+            document.getElementById('downloadFeishuBtn').style.display = 'none';
+            
+            hideMessage();
+            
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                statusCheckInterval = null;
+            }
+            
+            currentTaskId = null;
+        }
+
+        function copyContent() {
+            const testCaseText = document.getElementById('testCaseDisplay').textContent;
+            navigator.clipboard.writeText(testCaseText).then(() => {
+                showMessage('内容已复制到剪贴板！', 'success');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showMessage('复制失败，请手动选择复制', 'error');
+            });
+        }
+
+        function downloadTxtContent() {
+            const testCaseText = window.currentTestResult || document.getElementById('testCaseDisplay').textContent;
+            const blob = new Blob([testCaseText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `测试用例_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('TXT格式测试用例已下载！', 'success');
+        }
+        
+        function downloadXmindFile() {
+            // 从服务器下载XMind文件
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `测试用例_${timestamp}.xmind`;
+            
+            // 创建下载链接
+            const downloadUrl = `/tools/download/${filename}`;
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showMessage('XMind文件已下载！', 'success');
+        }
+        
+        function downloadFeishuFile() {
+            // 从服务器下载飞书格式文件
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `测试用例_${timestamp}_feishu.md`;
+            
+            // 创建下载链接
+            const downloadUrl = `/tools/download/${filename}`;
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            showMessage('飞书格式文件已下载！', 'success');
+        }
+
         function toggleDefaultPrompt() {
             const container = document.getElementById('defaultPromptContainer');
-            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            const isVisible = container.style.display !== 'none';
+            container.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                const customPrompt = document.getElementById('prompt').value.trim();
+                if (!customPrompt) {
+                    document.getElementById('prompt').value = document.getElementById('defaultPromptText').value;
+                }
+            }
         }
 
-        // 显示消息提示
-        function showMessage(text, type) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.textContent = text;
-            resultDiv.className = type;
-            resultDiv.style.display = 'block';
-            resultDiv.style.opacity = '0';
-
-            // 淡入动画
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            
+            container.appendChild(messageDiv);
+            
+            // 3秒后自动隐藏
             setTimeout(() => {
-                resultDiv.style.opacity = '1';
-            }, 10);
+                messageDiv.style.display = 'none';
+                container.removeChild(messageDiv);
+            }, 3000);
         }
 
-        // 获取Cookie（用于CSRF验证）
+        function hideMessage() {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = '';
+        }
+
+        function sendNotification(title, message) {
+            // 检查浏览器是否支持通知
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body: message,
+                        icon: '/static/favicon.ico'
+                    });
+                } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification(title, {
+                                body: message,
+                                icon: '/static/favicon.ico'
+                            });
+                        }
+                    });
+                }
+            }
+            
+            // 发送到聊天通知系统
+            if (window.chatNotificationManager) {
+                // 创建系统通知消息
+                const notificationData = {
+                    title: title,
+                    message: message,
+                    type: 'system',
+                    timestamp: new Date().toISOString()
+                };
+                
+                // 调用聊天通知系统显示通知
+                try {
+                    // 这里可以调用聊天通知系统的API来显示通知
+                    fetch('/tools/api/notifications/create/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(notificationData)
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log('通知已发送到聊天系统');
+                        }
+                    }).catch(error => {
+                        console.error('发送通知到聊天系统失败:', error);
+                    });
+                } catch (error) {
+                    console.error('通知系统错误:', error);
+                }
+            }
+        }
+        
+        function sendSystemNotification(message) {
+            // 简化的系统通知函数
+            fetch('/tools/api/notifications/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    title: '测试用例生成完成',
+                    message: message,
+                    type: 'system'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('系统通知已发送');
+                } else {
+                    console.error('发送系统通知失败:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('发送系统通知时出错:', error);
+            });
+        }
+
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -498,269 +1139,16 @@
             return cookieValue;
         }
 
-        // 重置表单
-        function resetForm() {
-            document.getElementById('requirement').value = '';
-            document.getElementById('prompt').value = '';
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('testCaseDisplayContainer').style.display = 'none';
-            document.getElementById('testCaseDisplay').innerHTML = '';
-            document.getElementById('downloadStatus').style.display = 'none';
-        }
-
-        // 复制测试用例
-        function copyTestCase() {
-            const testCaseText = document.getElementById('testCaseDisplay').textContent;
-            navigator.clipboard.writeText(testCaseText).then(() => {
-                const originalText = document.getElementById('copyBtn').innerHTML;
-                document.getElementById('copyBtn').innerHTML = '<i class="fas fa-check"></i> 已复制';
-
-                setTimeout(() => {
-                    document.getElementById('copyBtn').innerHTML = originalText;
-                }, 2000);
-            }).catch(err => {
-                console.error('复制失败: ', err);
-                showMessage('复制失败，请手动复制', 'error');
-            });
-        }
-
-        // 下载测试用例 - 优化Google浏览器兼容性
-        function downloadTestCase() {
-            if (window.downloadUrl) {
-                // 显示下载状态
-                const downloadStatus = document.getElementById('downloadStatus');
-                downloadStatus.textContent = '正在下载FreeMind文件...';
-                downloadStatus.className = 'download-status download-pending';
-                downloadStatus.style.display = 'flex';
-
-                // 使用fetch API进行下载，提高兼容性
-                fetch(window.downloadUrl, {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    // 创建下载链接
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = window.fileName || 'test_cases.mm';
-                    a.style.display = 'none';
-                    
-                    // 执行下载
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    
-                    // 清理URL对象
-                    window.URL.revokeObjectURL(url);
-                    
-                    // 更新下载状态为成功
-                    downloadStatus.textContent = 'FreeMind文件下载成功！';
-                    downloadStatus.className = 'download-status download-success';
-                    
-                    setTimeout(() => {
-                        downloadStatus.style.display = 'none';
-                    }, 3000);
-                })
-                .catch(error => {
-                    console.error('下载失败:', error);
-                    downloadStatus.textContent = '下载失败，请重试';
-                    downloadStatus.className = 'download-status download-error';
-                    
-                    setTimeout(() => {
-                        downloadStatus.style.display = 'none';
-                    }, 3000);
-                });
-            } else {
-                showMessage('没有可下载的文件', 'error');
+        // 页面卸载时清理定时器
+        window.addEventListener('beforeunload', function() {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
             }
-        }
+        });
 
-        // 下载XMind文件 - 优化Google浏览器兼容性
-        function downloadXMind() {
-            if (window.xmindDownloadUrl) {
-                // 显示下载状态
-                const downloadStatus = document.getElementById('downloadStatus');
-                downloadStatus.textContent = '正在下载XMind文件...';
-                downloadStatus.className = 'download-status download-pending';
-                downloadStatus.style.display = 'flex';
-
-                // 使用fetch API进行下载，提高兼容性
-                fetch(window.xmindDownloadUrl, {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    // 创建下载链接
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = window.xmindFileName || 'test_cases.xmind';
-                    a.style.display = 'none';
-                    
-                    // 执行下载
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    
-                    // 清理URL对象
-                    window.URL.revokeObjectURL(url);
-                    
-                    // 更新下载状态为成功
-                    downloadStatus.textContent = 'XMind文件下载成功！可在飞书中导入';
-                    downloadStatus.className = 'download-status download-success';
-                    
-                    setTimeout(() => {
-                        downloadStatus.style.display = 'none';
-                    }, 3000);
-                })
-                .catch(error => {
-                    console.error('下载失败:', error);
-                    downloadStatus.textContent = '下载失败，请重试';
-                    downloadStatus.className = 'download-status download-error';
-                    
-                    setTimeout(() => {
-                        downloadStatus.style.display = 'none';
-                    }, 3000);
-                });
-            } else {
-                showMessage('没有可下载的XMind文件', 'error');
-            }
-        }
-
-        // 生成测试用例的核心函数
-        function generateCases() {
-            console.log('开始执行生成测试用例函数');
-
-            // 获取DOM元素
-            const requirement = document.getElementById('requirement').value.trim();
-            let prompt = document.getElementById('prompt').value.trim();
-            const resultDiv = document.getElementById('result');
-            const generateBtn = document.getElementById('generateBtn');
-            const originalBtnText = generateBtn.innerHTML;
-            // 获取用户可能修改的默认提示词
-            const customDefaultPrompt = document.getElementById('defaultPromptText').value.trim();
-
-            // 输入验证
-            if (!requirement) {
-                showMessage('请输入产品需求内容', 'error');
-                // 抖动动画提示
-                const reqElement = document.getElementById('requirement');
-                reqElement.style.animation = 'none';
-                setTimeout(() => {
-                    reqElement.style.animation = 'shake 0.5s';
-                }, 10);
-                return;
-            }
-
-            // 如果用户未输入提示词，使用（可能被修改的）默认提示词
-            if (!prompt) {
-                prompt = customDefaultPrompt || DEFAULT_PROMPT;
-            }
-
-            // 显示加载状态
-            showMessage('正在生成测试用例，请稍候...', 'loading');
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '<div class="spinner"></div> 生成中...';
-            // 隐藏之前的测试用例显示
-            document.getElementById('testCaseDisplayContainer').style.display = 'none';
-
-            // 获取CSRF Token（关键验证）
-            const csrfToken = getCookie('csrftoken');
-            if (!csrfToken) {
-                showMessage('无法获取验证信息，请刷新页面重试', 'error');
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnText;
-                return;
-            }
-
-
-            console.log('准备发送请求到 /tools/api_GenerateTestcases/GenerateTestcases/');
-            axios.post('/tools/api/generate-testcases/', {  // 修正后的URL
-                requirement: requirement,
-                prompt: prompt
-            }, {
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                    'Content-Type': 'application/json'
-                },
-                timeout: 6000000  // 60秒超时设置，避免无限等待
-            })
-            .then(response => {
-                console.log('请求成功，响应数据:', response.data);
-
-                // 隐藏结果消息，显示测试用例
-                resultDiv.style.display = 'none';
-
-                // 显示测试用例
-                const testCaseDisplay = document.getElementById('testCaseDisplay');
-                // 安全检查并获取测试用例内容
-                const testCasesContent = response.data.test_cases || response.data.raw_response || '未获取到测试用例内容';
-                
-                // 将Markdown格式转换为HTML显示
-                testCaseDisplay.innerHTML = testCasesContent
-                    .replace(/#{2}\s(.*?)\n/g, '<h2>$1</h2>')
-                    .replace(/#{3}\s(.*?)\n/g, '<h3>$1</h3>')
-                    .replace(/#{4}\s(.*?)\n/g, '<h4>$1</h4>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/\n/g, '<br>');
-
-                document.getElementById('testCaseDisplayContainer').style.display = 'block';
-                
-                // 保存下载链接和文件名
-                if (response.data.download_url) {
-                    window.downloadUrl = response.data.download_url;
-                    window.fileName = response.data.file_name;
-                }
-                if (response.data.xmind_download_url) {
-                    window.xmindDownloadUrl = response.data.xmind_download_url;
-                    window.xmindFileName = response.data.xmind_file_name;
-                }
-            })
-            .catch(error => {
-                console.error('请求失败:', error);
-                let errorMsg = '生成测试用例失败，请稍后重试';
-
-                // 详细错误信息处理
-                if (error.response) {
-                    // 服务器返回错误
-                    errorMsg = error.response.data.error ||
-                              `服务器错误 (状态码: ${error.response.status})`;
-                } else if (error.request) {
-                    // 无响应错误
-                    errorMsg = '未收到服务器响应，请检查网络连接';
-                } else {
-                    // 请求配置错误
-                    errorMsg = `请求错误: ${error.message}`;
-                }
-
-                showMessage(errorMsg, 'error');
-            })
-            .finally(() => {
-                // 恢复按钮状态
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnText;
-            });
+        // 请求通知权限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
         }
     </script>
-</body>
-</html>
+{% endblock %}

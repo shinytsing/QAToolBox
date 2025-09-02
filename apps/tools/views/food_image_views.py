@@ -17,38 +17,48 @@ logger = logging.getLogger(__name__)
 @require_http_methods(["GET"])
 @login_required
 def api_photos(request):
-    """获取照片列表API - 使用真实照片文件"""
+    """获取照片列表API - 动态扫描静态文件夹"""
     try:
+        import os
+        from django.conf import settings
+        
         # 获取查询参数
         category = request.GET.get('category', 'all')
         limit = int(request.GET.get('limit', 200))
         offset = int(request.GET.get('offset', 0))
         
-        # 使用真实的照片文件数据（从实际存在的文件中获取）
-        real_photos = [
-            'beef-4805622_1280.jpg', 'bibimbap-1738580_1280.jpg', 'braise-pork-1398308_1280.jpg',
-            'bread-1836411_1280.jpg', 'bread-6725352_1280.jpg', 'chinese-3855829_1280.jpg',
-            'chinese-5233490_1280.jpg', 'chinese-5233510_1280.jpg', 'chinese-841179_1280.jpg',
-            'chinese-915325_1280.jpg', 'chinese-916623_1280.jpg', 'chinese-916629_1280.jpg',
-            'chongqing-6764962_1280.jpg', 'crayfish-866400_1280.jpg', 'cross-bridge-tofu-4866594_1280.jpg',
-            'duck-2097959_1280.jpg', 'duck-253846_1280.jpg', 'eat-235771_1280.jpg',
-            'egg-roll-6353108_1280.jpg', 'food-3228058_1280.jpg', 'food-5983402_1280.jpg',
-            'food-5983403_1280.jpg', 'food-835469_1280.jpg', 'food-and-drink-8076626_1280.jpg',
-            'food-photography-2358899_1280.jpg', 'food-photography-2610863_1280.jpg', 'food-photography-2610864_1280.jpg',
-            'food-shoot-675564_1280.jpg', 'green-dragon-vegetable-1707089_1280.jpg', 'korean-barbecue-8579177_1280.jpg',
-            'lanzhou-6896276_1280.jpg', 'macarons-2179198_1280.jpg', 'mapo-tofu-2570173_1280.jpg',
-            'pancakes-2139844_1280.jpg', 'pasta-7209002_1280.jpg', 'pizza-6478478_1280.jpg',
-            'ramen-4647408_1280.jpg', 'ramen-4647411_1280.jpg', 'ramen-7382882_1280.jpg',
-            'rice-6364832_1280.jpg', 'roast-3416333_1280.jpg', 'seafood-4265995_1280.jpg',
-            'seafood-4265999_1280.jpg', 'shrimp-6902940_1280.jpg', 'steak-6278031_1280.jpg',
-            'steak-6714964_1280.jpg', 'steamed-fish-3495930_1280.jpg', 'sushi-2009611_1280.jpg',
-            'the-pork-fried-rice-made-908333_1280.jpg', 'tofu-7525311_1280.jpg', 'toppokki-1607479_1280.jpg',
-            'udon-noodles-4065311_1280.jpg', 'vegetarian-1141242_1280.jpg'
-        ]
+        # 扫描静态文件夹中的图片文件
+        # 使用STATICFILES_DIRS中的第一个目录（开发环境）
+        static_base_dir = settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.STATIC_ROOT
+        static_food_dir = os.path.join(static_base_dir, 'img', 'food')
+        
+        if not os.path.exists(static_food_dir):
+            logger.warning(f"静态文件夹不存在: {static_food_dir}")
+            return JsonResponse([], safe=False)
+        
+        # 获取所有图片文件
+        image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+        photo_files = []
+        
+        for filename in os.listdir(static_food_dir):
+            if any(filename.lower().endswith(ext) for ext in image_extensions):
+                # 跳过带随机后缀的文件（如 .ebe15523056a.jpg）
+                # 检查文件名是否包含随机后缀（12位十六进制字符）
+                if '.' in filename:
+                    parts = filename.split('.')
+                    if len(parts) >= 3:  # 有多个点号
+                        # 检查倒数第二个部分是否是随机后缀（12位十六进制字符）
+                        second_last = parts[-2]
+                        if len(second_last) == 12 and all(c in '0123456789abcdef' for c in second_last.lower()):
+                            continue
+                photo_files.append(filename)
+        
+        # 按文件名排序
+        photo_files.sort()
         
         # 生成照片数据
         photos_data = []
-        for i, photo_file in enumerate(real_photos):
+        for i, photo_file in enumerate(photo_files):
             # 根据文件名推断菜系
             photo_category = 'chinese'  # 默认中餐
             if 'japanese' in photo_file or 'ramen' in photo_file:
@@ -59,9 +69,15 @@ def api_photos(request):
                 photo_category = 'western'
             elif 'chinese' in photo_file:
                 photo_category = 'chinese'
+            elif photo_file.startswith('uuid'):  # 用户上传的文件
+                photo_category = 'uploaded'
             
             # 生成显示名称
-            display_name = photo_file.replace('_1280.jpg', '').replace('-', ' ').title()
+            if photo_file.startswith('uuid'):
+                # 用户上传的文件，使用原始文件名或简化显示
+                display_name = f"上传图片 {i+1}"
+            else:
+                display_name = photo_file.replace('_1280.jpg', '').replace('-', ' ').title()
             
             photos_data.append({
                 'id': i + 1,

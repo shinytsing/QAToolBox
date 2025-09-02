@@ -1250,7 +1250,7 @@ class EnhancedTrainingPlanEditor {
         // 自动保存到本地存储
         try {
             localStorage.setItem('fitness_plan_draft', JSON.stringify(this.planData));
-            console.log('自动保存完成');
+
         } catch (error) {
             console.error('自动保存失败:', error);
         }

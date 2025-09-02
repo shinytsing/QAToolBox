@@ -825,7 +825,7 @@ async function selectMeditationAudio(category) {
                 
                 showNotification(`🎵 已切换到${meditationAudioCategories[category].name}音效`, 'success');
             }).catch(error => {
-                console.log('音频播放失败:', error);
+
                 showNotification(`🎵 音效获取成功，但播放失败，请检查网络连接`, 'warning');
                 
                 // 显示音效信息（即使播放失败）
@@ -901,7 +901,7 @@ function playCustomAudio() {
             
             showNotification('🎵 自定义冥想音效播放成功', 'success');
         }).catch(e => {
-            console.log('自定义音频播放失败:', e);
+
             showNotification('❌ 自定义冥想音效播放失败', 'error');
         });
     }
@@ -997,7 +997,7 @@ function startMeditation() {
         // 恢复音频播放
         if (audioPlayer && audioPlayer.paused) {
             audioPlayer.play().catch(error => {
-                console.log('音频恢复播放失败:', error);
+
             });
         }
         
@@ -1122,11 +1122,13 @@ function playCompletionSound() {
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.3);
     } catch (e) {
-        console.log('提示音播放失败:', e);
+
         // 备用方案：使用简单的音频文件
         const completionSound = new Audio('/static/audio/thursday.mp3');
         completionSound.volume = 0.3;
-        completionSound.play().catch(e => console.log('备用提示音播放失败:', e));
+        completionSound.play().catch(e => {
+            // 备用提示音播放失败
+        });
     }
 }
 

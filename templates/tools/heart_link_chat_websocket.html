@@ -731,7 +731,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         if (hasUnread) {
-            console.log('Found unread messages, marking as read');
+
             markMessagesAsRead();
         }
     }, 2000);
@@ -739,8 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化表情按钮功能
     const emojiBtn = document.getElementById('emoji-btn');
     if (emojiBtn) {
-        console.log('Emoji button found:', emojiBtn);
-        
+
         // 移除可能存在的旧事件监听器
         emojiBtn.removeEventListener('click', handleEmojiClick);
         
@@ -750,8 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 确保按钮可点击
         emojiBtn.style.pointerEvents = 'auto';
         emojiBtn.style.cursor = 'pointer';
-        
-        console.log('Emoji button event listener added');
+
     } else {
         console.error('Emoji button not found!');
     }
@@ -759,15 +757,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化发送按钮功能
     const sendBtn = document.getElementById('send-btn');
     if (sendBtn) {
-        console.log('Send button found:', sendBtn);
-        
+
         // 移除可能存在的旧事件监听器
         sendBtn.removeEventListener('click', handleSendClick);
         
         // 添加新的事件监听器
         sendBtn.addEventListener('click', handleSendClick);
-        
-        console.log('Send button event listener added');
+
     } else {
         console.error('Send button not found!');
     }
@@ -775,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 表情按钮点击处理函数
 function handleEmojiClick(e) {
-    console.log('Emoji button clicked!', e);
+
     e.preventDefault();
     e.stopPropagation();
     toggleEmojiPicker();
@@ -783,24 +779,23 @@ function handleEmojiClick(e) {
 
 // 发送按钮点击处理函数
 function handleSendClick(e) {
-    console.log('Send button clicked!', e);
+
     e.preventDefault();
     e.stopPropagation();
     
     // 检查冷却状态
     if (sendCooldown) {
-        console.log('Send button blocked by cooldown');
+
         return;
     }
     
     // 检查按钮状态
     const sendBtn = document.getElementById('send-btn');
     if (sendBtn.disabled) {
-        console.log('Send button blocked by disabled state');
+
         return;
     }
-    
-    console.log('Sending message via button click');
+
     sendMessage();
 }
 
@@ -861,7 +856,7 @@ function updateExistingMessageStatus(messages) {
                 if (message.is_read && statusElement.textContent === '未读') {
                     statusElement.textContent = '已读';
                     statusElement.style.color = '#4CAF50';
-                    console.log(`Updated message ${message.id} status to read`);
+
                     hasUpdates = true;
                 }
             }
@@ -869,7 +864,7 @@ function updateExistingMessageStatus(messages) {
     });
     
     if (hasUpdates) {
-        console.log('Updated existing message read status');
+
     }
 }
 
@@ -931,11 +926,10 @@ function addMessageToChat(message) {
 }
 
 function sendMessage() {
-    console.log('sendMessage called, sendCooldown:', sendCooldown);
-    
+
     // 检查冷却状态
     if (sendCooldown) {
-        console.log('Message blocked by cooldown');
+
         return;
     }
     
@@ -943,7 +937,7 @@ function sendMessage() {
     const content = input.value.trim();
     
     if (!content) {
-        console.log('Message blocked: empty content');
+
         return;
     }
     
@@ -952,9 +946,7 @@ function sendMessage() {
     
     const sendBtn = document.getElementById('send-btn');
     sendBtn.disabled = true;
-    
-    console.log('Sending message:', content);
-    
+
     fetch(`/tools/api/chat/${roomId}/send/`, {
         method: 'POST',
         headers: {
@@ -992,7 +984,7 @@ function sendMessage() {
 }
 
 function setSendCooldown(duration) {
-    console.log('Setting send cooldown for', duration, 'ms');
+
     sendCooldown = true;
     const cooldownElement = document.getElementById('send-cooldown');
     cooldownElement.textContent = '发送冷却中...';
@@ -1005,7 +997,7 @@ function setSendCooldown(duration) {
     sendCooldownTimer = setTimeout(() => {
         sendCooldown = false;
         cooldownElement.textContent = '';
-        console.log('Send cooldown expired');
+
     }, duration);
 }
 
@@ -1013,19 +1005,17 @@ function handleKeyDown(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         event.stopPropagation();
-        
-        console.log('Enter key pressed, sendCooldown:', sendCooldown);
-        
+
         // 检查冷却状态
         if (sendCooldown) {
-            console.log('Enter blocked by cooldown');
+
             return false;
         }
         
         // 检查按钮状态
         const sendBtn = document.getElementById('send-btn');
         if (sendBtn.disabled) {
-            console.log('Enter blocked by disabled button');
+
             return false;
         }
         
@@ -1033,11 +1023,10 @@ function handleKeyDown(event) {
         const input = document.getElementById('chat-input');
         const content = input.value.trim();
         if (!content) {
-            console.log('Enter blocked: empty content');
+
             return false;
         }
-        
-        console.log('Sending message via Enter key');
+
         sendMessage();
         
         return false;
@@ -1080,7 +1069,7 @@ function markMessagesAsRead() {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.marked_count > 0) {
-            console.log(`Marked ${data.marked_count} messages as read`);
+
             // 更新本地消息状态
             updateLocalMessageStatus();
             // 重新加载消息以获取最新的已读状态
@@ -1139,7 +1128,7 @@ function updateLocalMessageStatus() {
     });
     
     if (hasUpdates) {
-        console.log('Updated local message status to read');
+
     }
 }
 

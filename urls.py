@@ -58,15 +58,20 @@ urlpatterns = [
     # path('share/', include('apps.share.urls')),
     # Favicon路由
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
+    # Apple Touch Icon路由
+    path('apple-touch-icon.png', RedirectView.as_view(url='/static/apple-touch-icon.png', permanent=True)),
+    path('apple-touch-icon-precomposed.png', RedirectView.as_view(url='/static/apple-touch-icon-precomposed.png', permanent=True)),
 ]
 
 # 开发环境下提供媒体文件访问和debug_toolbar
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    # 自定义静态文件服务，禁用缓存
-    urlpatterns += [
-        path('static/<path:path>', custom_static_serve, name='custom_static'),
-    ]
+    # 使用Django标准静态文件服务
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # 自定义静态文件服务，禁用缓存（备用）
+    # urlpatterns += [
+    #     path('static/<path:path>', custom_static_serve, name='custom_static'),
+    # ]
     # 开发环境添加debug_toolbar
     try:
         import debug_toolbar

@@ -527,8 +527,7 @@ document.addEventListener('click', function(e) {
     
     // 增加点击计数
     lifeModeClickCount++;
-    console.log('生活模式点击次数:', lifeModeClickCount);
-    
+
     // 显示点击计数器
     const clickCounter = document.getElementById('clickCounter');
     const clickCount = document.getElementById('clickCount');
@@ -552,8 +551,7 @@ document.addEventListener('click', function(e) {
 
 // 生活日记按钮点击处理函数
 function goToLifeDiary() {
-    console.log('点击生活日记按钮');
-    
+
     try {
         // 跳转到简单生活日记页面
         window.location.href = '{% url "tools:simple_diary" %}';
@@ -567,7 +565,7 @@ function goToLifeDiary() {
 // 爆款文案按钮点击处理函数 - 已隐藏
 /*
 function goToRedbookGenerator() {
-    console.log('点击爆款文案按钮');
+
     try {
         // 添加点击反馈
         const button = event.target;
@@ -590,8 +588,7 @@ function goToRedbookGenerator() {
 
 // 冥想指导按钮点击处理函数
 function goToMeditationGuide() {
-    console.log('点击冥想指导按钮');
-    
+
     try {
         // 跳转到冥想指导页面
         window.location.href = '{% url "tools:meditation_guide" %}';
@@ -604,8 +601,7 @@ function goToMeditationGuide() {
 
 // 心动链接按钮点击处理函数
 function goToHeartLink() {
-    console.log('点击心动链接按钮');
-    
+
     try {
         // 跳转到心动链接页面
         window.location.href = '{% url "tools:heart_link" %}';
@@ -618,8 +614,7 @@ function goToHeartLink() {
 
 // 旅游攻略按钮点击处理函数
 function goToTravelGuide() {
-    console.log('点击旅游攻略按钮');
-    
+
     try {
         // 添加点击反馈
         const button = event.target;
@@ -642,8 +637,7 @@ function goToTravelGuide() {
 // 自动求职机按钮点击处理函数 - 已隐藏
 /*
 function goToJobSearchMachine() {
-    console.log('点击自动求职机按钮');
-    
+
     try {
         // 添加点击反馈
         const button = event.target;
@@ -666,8 +660,7 @@ function goToJobSearchMachine() {
 
 // 食物随机选择器按钮点击处理函数
 function goToFoodRandomizer() {
-    console.log('点击食物随机选择器按钮');
-    
+
     try {
         // 跳转到食物随机选择器页面
         window.location.href = '{% url "tools:food_randomizer" %}';
@@ -680,8 +673,7 @@ function goToFoodRandomizer() {
 
 // 船宝按钮点击处理函数
 function goToShipBao() {
-    console.log('点击船宝按钮');
-    
+
     try {
         // 跳转到船宝页面
         window.location.href = '{% url "tools:shipbao_home" %}';
@@ -694,8 +686,7 @@ function goToShipBao() {
 
 // 搭子按钮点击处理函数
 function goToBuddy() {
-    console.log('点击搭子按钮');
-    
+
     try {
         // 跳转到搭子页面
         window.location.href = '{% url "tools:buddy_home" %}';
@@ -708,7 +699,7 @@ function goToBuddy() {
 
 // 激活幸福满屏模式
 function activateHappinessMode() {
-    console.log('🎉 激活幸福满屏模式！');
+
     happinessMode = true;
     
     // 添加幸福满屏样式
@@ -813,7 +804,7 @@ function createHeartRain() {
 // 播放幸福音效
 function playHappinessSound() {
     // 这里可以添加音效播放逻辑
-    console.log('🎵 播放幸福音效');
+
 }
 
 // 显示幸福提示
@@ -847,7 +838,7 @@ function showHappinessMessage() {
 
 // 停用幸福满屏模式
 function deactivateHappinessMode() {
-    console.log('恢复正常模式');
+
     happinessMode = false;
     
     const container = document.querySelector('.rage-container');
@@ -890,13 +881,11 @@ function deactivateHappinessMode() {
 
 // 页面加载完成后添加调试信息
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('生活模式页面加载完成');
-    
+
     // 为所有卡片添加事件监听器和调试信息
     const cards = document.querySelectorAll('.training-card');
     cards.forEach((card, index) => {
-        console.log(`卡片 ${index + 1} 找到:`, card.querySelector('.training-title')?.textContent.trim());
-        
+
         // 添加鼠标悬停效果
         card.addEventListener('mouseenter', function() {
             this.style.cursor = 'pointer';
@@ -910,7 +899,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 添加页面点击调试
     document.addEventListener('click', function(e) {
         if (e.target.closest('.training-card')) {
-            console.log('点击了卡片:', e.target.closest('.training-card').querySelector('.training-title')?.textContent);
+
         }
     });
     

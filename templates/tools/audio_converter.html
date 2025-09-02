@@ -1007,15 +1007,13 @@ function convertAudioFiles() {
                     metadata: data.metadata || {},
                     albumCover: data.album_cover || null
                 });
-                
-                console.log(`文件 ${file.name} 转换成功，已添加到列表`);
+
             } else {
                 console.error(`文件 ${file.name} 转换失败:`, data.message);
             }
             
             if (completedCount === totalFiles) {
-                console.log(`转换完成！共处理 ${totalFiles} 个文件，成功 ${audioFiles.length} 个`);
-                
+
                 setTimeout(() => {
                     convertBtn.disabled = false;
                     convertBtn.querySelector('i').style.display = 'none';
@@ -1042,8 +1040,7 @@ function convertAudioFiles() {
             console.error(`文件 ${file.name} 转换错误:`, error);
             
             if (completedCount === totalFiles) {
-                console.log(`转换完成（有错误）！共处理 ${totalFiles} 个文件，成功 ${audioFiles.length} 个`);
-                
+
                 setTimeout(() => {
                     convertBtn.disabled = false;
                     convertBtn.querySelector('i').style.display = 'none';
@@ -1166,24 +1163,22 @@ function addAudioFile(audioFile) {
     
     // 立即加载元数据
     audioElement.load();
-    
-    console.log(`音频元素 ${audioFile.id} 已创建并添加到DOM`);
-    
+
     // 添加加载状态监听
     audioElement.addEventListener('loadstart', () => {
-        console.log(`音频 ${audioFile.id} 开始加载`);
+
     });
     
     audioElement.addEventListener('loadedmetadata', () => {
-        console.log(`音频 ${audioFile.id} 元数据已加载，时长: ${formatTime(audioElement.duration)}`);
+
     });
     
     audioElement.addEventListener('canplay', () => {
-        console.log(`音频 ${audioFile.id} 可以播放，时长: ${formatTime(audioElement.duration)}`);
+
     });
     
     audioElement.addEventListener('canplaythrough', () => {
-        console.log(`音频 ${audioFile.id} 可以流畅播放，时长: ${formatTime(audioElement.duration)}`);
+
     });
     
     audioElement.addEventListener('error', (e) => {
@@ -1195,13 +1190,12 @@ function addAudioFile(audioFile) {
     
     // 添加音频事件监听
     audioElement.addEventListener('loadedmetadata', () => {
-        console.log(`音频 ${audioFile.id} 元数据已加载，时长: ${audioElement.duration}`);
+
         updateAudioDuration(audioFile.id, audioElement.duration);
     });
     
     // 立即获取文件大小，不等待元数据加载
-    console.log(`开始获取音频 ${audioFile.id} 的文件大小:`, audioUrl);
-    
+
     // 尝试多种方式获取文件大小
     const tryGetFileSize = async () => {
         try {
@@ -1413,7 +1407,7 @@ function setVolume(volume, audioId) {
         // 将百分比转换为0-1范围
         const volumeLevel = volume / 100;
         audioElement.volume = volumeLevel;
-        console.log(`设置音频 ${audioId} 音量为 ${volume}% (${volumeLevel.toFixed(2)})`);
+
     } else {
         console.warn('音频元素未找到，无法设置音量');
     }
@@ -1421,8 +1415,7 @@ function setVolume(volume, audioId) {
 
 // 进度条点击处理
 function handleProgressClick(event, audioId) {
-    console.log('handleProgressClick 被调用，audioId:', audioId);
-    
+
     const audioItem = document.querySelector(`[data-id="${audioId}"]`);
     if (!audioItem) {
         console.error('找不到音频项:', audioId);
@@ -1466,43 +1459,30 @@ function handleProgressClick(event, audioId) {
     const progressPercent = (clickX / rect.width) * 100;
     const clampedProgress = Math.max(0, Math.min(100, progressPercent));
     const newTime = (clampedProgress / 100) * audioElement.duration;
-    
-    console.log('进度条点击:', {
-        clickX,
-        rectWidth: rect.width,
-        progressPercent,
-        clampedProgress,
-        duration: audioElement.duration,
-        newTime,
-        formattedTime: formatTime(newTime)
-    });
-    
+
     // 设置音频播放时间
-    console.log('设置currentTime前:', formatTime(audioElement.currentTime));
-    console.log('准备设置currentTime为:', formatTime(newTime));
-    
+
+
     // 记录点击前的播放状态
     const wasPlaying = !audioElement.paused;
-    console.log('点击前播放状态:', wasPlaying ? '播放中' : '已暂停');
-    
+
     // 尝试不同的方法来设置currentTime
     const setCurrentTimeWithRetry = async () => {
         try {
             // 方法1: 直接设置
-            console.log('方法1: 直接设置currentTime');
+
             audioElement.currentTime = newTime;
-            console.log('直接设置后时间:', formatTime(audioElement.currentTime));
-            
+
             // 等待一下再检查
             await new Promise(resolve => setTimeout(resolve, 100));
             
             if (Math.abs(audioElement.currentTime - newTime) < 0.1) {
-                console.log('✅ 方法1成功');
+
                 // 如果点击前是播放状态，则恢复播放
                 if (wasPlaying) {
-                    console.log('恢复播放状态');
+
                     audioElement.play().then(() => {
-                        console.log('✅ 播放已恢复');
+
                     }).catch(error => {
                         console.error('恢复播放失败:', error);
                     });
@@ -1511,22 +1491,21 @@ function handleProgressClick(event, audioId) {
             }
             
             // 方法2: 先播放再暂停
-            console.log('方法2: 先播放再暂停');
+
             await audioElement.play();
             await new Promise(resolve => setTimeout(resolve, 50));
             audioElement.pause();
             audioElement.currentTime = newTime;
-            console.log('播放暂停后时间:', formatTime(audioElement.currentTime));
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
             
             if (Math.abs(audioElement.currentTime - newTime) < 0.1) {
-                console.log('✅ 方法2成功');
+
                 // 如果点击前是播放状态，则恢复播放
                 if (wasPlaying) {
-                    console.log('恢复播放状态');
+
                     audioElement.play().then(() => {
-                        console.log('✅ 播放已恢复');
+
                     }).catch(error => {
                         console.error('恢复播放失败:', error);
                     });
@@ -1535,21 +1514,20 @@ function handleProgressClick(event, audioId) {
             }
             
             // 方法3: 重新加载音频
-            console.log('方法3: 重新加载音频');
+
             audioElement.load();
             await new Promise(resolve => setTimeout(resolve, 200));
             audioElement.currentTime = newTime;
-            console.log('重新加载后时间:', formatTime(audioElement.currentTime));
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
             
             if (Math.abs(audioElement.currentTime - newTime) < 0.1) {
-                console.log('✅ 方法3成功');
+
                 // 如果点击前是播放状态，则恢复播放
                 if (wasPlaying) {
-                    console.log('恢复播放状态');
+
                     audioElement.play().then(() => {
-                        console.log('✅ 播放已恢复');
+
                     }).catch(error => {
                         console.error('恢复播放失败:', error);
                     });
@@ -1571,19 +1549,17 @@ function handleProgressClick(event, audioId) {
     
     // 监听seeked事件来确保跳转成功
     const onSeeked = () => {
-        console.log(`✅ seeked事件触发，音频 ${audioId} 跳转到 ${clampedProgress.toFixed(1)}% (${formatTime(audioElement.currentTime)})`);
+
         audioElement.removeEventListener('seeked', onSeeked);
     };
     
     audioElement.addEventListener('seeked', onSeeked);
-    
-    console.log(`音频 ${audioId} 跳转到 ${clampedProgress.toFixed(1)}% (${formatTime(newTime)})`);
+
 }
 
 // 进度条拖动处理
 function handleProgressDrag(event, audioId) {
-    console.log('handleProgressDrag 被调用，audioId:', audioId);
-    
+
     event.preventDefault();
     event.stopPropagation();
     
@@ -1628,35 +1604,24 @@ function handleProgressDrag(event, audioId) {
     
     // 记录拖动开始前的播放状态
     const wasPlaying = !audioElement.paused;
-    console.log('拖动开始前播放状态:', wasPlaying ? '播放中' : '已暂停');
-    
+
     // 立即更新到点击位置
     const clickX = clientX - rect.left;
     const progress = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
     const newTime = (progress / 100) * audioElement.duration;
-    
-    console.log('开始拖动:', {
-        clickX,
-        rectWidth: rect.width,
-        progress,
-        duration: audioElement.duration,
-        newTime,
-        formattedTime: formatTime(newTime)
-    });
-    
-    console.log('设置currentTime前:', formatTime(audioElement.currentTime));
-    console.log('准备设置currentTime为:', formatTime(newTime));
-    
+
+
+
     // 先暂停音频，确保可以设置时间
     if (wasPlaying) {
-        console.log('暂停音频播放');
+
         audioElement.pause();
     }
     
     // 尝试设置currentTime
     try {
         audioElement.currentTime = newTime;
-        console.log('currentTime设置完成，当前时间:', formatTime(audioElement.currentTime));
+
     } catch (error) {
         console.error('设置currentTime时出错:', error);
     }
@@ -1676,19 +1641,11 @@ function handleProgressDrag(event, audioId) {
         const moveX = moveClientX - currentRect.left;
         const moveProgress = Math.max(0, Math.min(100, (moveX / currentRect.width) * 100));
         const moveTime = (moveProgress / 100) * audioElement.duration;
-        
-        console.log('拖动中:', {
-            moveX,
-            rectWidth: currentRect.width,
-            moveProgress,
-            moveTime,
-            formattedTime: formatTime(moveTime)
-        });
-        
+
         // 尝试设置currentTime
         try {
             audioElement.currentTime = moveTime;
-            console.log('拖动中currentTime设置完成:', formatTime(audioElement.currentTime));
+
         } catch (error) {
             console.error('拖动中设置currentTime时出错:', error);
         }
@@ -1697,7 +1654,7 @@ function handleProgressDrag(event, audioId) {
     }
     
     function onEnd() {
-        console.log('拖动结束');
+
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onEnd);
         document.removeEventListener('touchmove', onMove);
@@ -1709,9 +1666,9 @@ function handleProgressDrag(event, audioId) {
         
         // 如果拖动前是播放状态，则恢复播放
         if (wasPlaying) {
-            console.log('恢复播放状态');
+
             audioElement.play().then(() => {
-                console.log('✅ 播放已恢复');
+
             }).catch(error => {
                 console.error('恢复播放失败:', error);
             });
@@ -1737,8 +1694,7 @@ function handleProgressDrag(event, audioId) {
 
 // 初始化进度条事件委托
 function initProgressBarEventDelegation() {
-    console.log('初始化进度条事件委托');
-    
+
     // 进度条点击事件委托
     document.addEventListener('click', (e) => {
         const progressBar = e.target.closest('.progress-bar');
@@ -1757,7 +1713,7 @@ function initProgressBarEventDelegation() {
         if (progressBar) {
             const audioId = parseInt(progressBar.dataset.audioId);
             if (audioId) {
-                console.log('进度条拖动事件委托触发，audioId:', audioId);
+
                 handleProgressDrag(e, audioId);
             }
         }
@@ -1769,14 +1725,12 @@ function initProgressBarEventDelegation() {
         if (progressBar) {
             const audioId = parseInt(progressBar.dataset.audioId);
             if (audioId) {
-                console.log('进度条触摸事件委托触发，audioId:', audioId);
+
                 handleProgressDrag(e, audioId);
             }
         }
     });
-    
-    console.log('✅ 进度条事件委托初始化完成');
-    
+
     // 键盘快捷键支持
     document.addEventListener('keydown', (e) => {
         if (currentPlayingAudio) {
@@ -1853,7 +1807,7 @@ function handleError(error, context) {
 
 // 成功处理函数
 function handleSuccess(message, data = null) {
-    console.log(`成功 [${message}]:`, data);
+
     showResult('success', message);
 }
 
@@ -1866,8 +1820,8 @@ function validateAudioFile(file) {
         throw new Error(`不支持的文件格式: ${fileExtension}`);
     }
     
-    if (file.size > 100 * 1024 * 1024) { // 100MB限制
-        throw new Error('文件大小不能超过100MB');
+    if (file.size > 500 * 1024 * 1024) { // 500MB限制
+        throw new Error('文件大小不能超过500MB');
     }
     
     return true;
@@ -2450,8 +2404,7 @@ function showDecodeComplete(audioId, fileSize) {
 
 // 测试进度条功能
 function testProgressBar(audioId) {
-    console.log(`=== 测试进度条功能 (音频ID: ${audioId}) ===`);
-    
+
     const audioItem = document.querySelector(`[data-id="${audioId}"]`);
     if (!audioItem) {
         console.error('找不到音频项:', audioId);
@@ -2467,47 +2420,36 @@ function testProgressBar(audioId) {
     // 测试跳转到50%位置
     if (audioElement.duration && !isNaN(audioElement.duration)) {
         const testTime = audioElement.duration * 0.5;
-        console.log(`✅ 测试跳转到50%位置: ${formatTime(testTime)}`);
-        console.log('音频元素状态:', {
-            readyState: audioElement.readyState,
-            networkState: audioElement.networkState,
-            duration: audioElement.duration,
-            currentTime: audioElement.currentTime,
-            paused: audioElement.paused,
-            ended: audioElement.ended
-        });
-        
+
+
         // 记录测试前的播放状态
         const wasPlaying = !audioElement.paused;
-        console.log('测试前播放状态:', wasPlaying ? '播放中' : '已暂停');
-        
+
         // 先暂停音频
         if (wasPlaying) {
-            console.log('暂停音频播放');
+
             audioElement.pause();
         }
         
         // 尝试设置currentTime
         try {
-            console.log('设置currentTime前:', formatTime(audioElement.currentTime));
+
             audioElement.currentTime = testTime;
-            console.log('设置currentTime后:', formatTime(audioElement.currentTime));
-            
+
             // 验证设置结果
             setTimeout(() => {
                 const actualTime = audioElement.currentTime;
-                console.log('验证currentTime设置结果:', formatTime(actualTime));
-                
+
                 if (Math.abs(actualTime - testTime) < 0.1) {
-                    console.log('✅ currentTime设置成功');
+
                     updateAudioProgress(audioId, actualTime, audioElement.duration);
                     showResult('success', `✅ 进度条测试成功！跳转到 ${formatTime(actualTime)}`);
                     
                     // 如果测试前是播放状态，则恢复播放
                     if (wasPlaying) {
-                        console.log('恢复播放状态');
+
                         audioElement.play().then(() => {
-                            console.log('✅ 播放已恢复');
+
                         }).catch(error => {
                             console.error('恢复播放失败:', error);
                         });
@@ -2528,86 +2470,72 @@ function testProgressBar(audioId) {
         
     } else {
         console.warn('❌ 音频未准备好，无法测试');
-        console.log('音频元素状态:', {
-            readyState: audioElement.readyState,
-            networkState: audioElement.networkState,
-            duration: audioElement.duration,
-            currentTime: audioElement.currentTime
-        });
+
         showResult('error', '❌ 音频未准备好，无法测试进度条');
     }
 }
 
 // 调试所有进度条
 function debugAllProgressBars() {
-    console.log('=== 调试所有进度条 ===');
-    
+
     const progressBars = document.querySelectorAll('.progress-bar');
-    console.log(`找到 ${progressBars.length} 个进度条`);
-    
+
     progressBars.forEach((bar, index) => {
-        console.log(`进度条 ${index + 1}:`, bar);
-        console.log('  - data-audio-id:', bar.dataset.audioId);
-        
+
+
         const audioItem = bar.closest('.audio-file-item');
         if (audioItem) {
             const audioId = audioItem.dataset.id;
             const audioElement = audioItem.querySelector('audio');
-            console.log('  - audioItem audioId:', audioId);
-            console.log('  - audioElement:', audioElement ? '存在' : '不存在');
+
+
             if (audioElement) {
-                console.log('  - duration:', audioElement.duration);
-                console.log('  - readyState:', audioElement.readyState);
-                console.log('  - currentTime:', audioElement.currentTime);
+
+
+
             }
         }
-        console.log('---');
+
     });
-    
-    console.log('=== 调试完成 ===');
+
 }
 
 // 强制更新所有音频状态
 function forceUpdateAllAudioStatus() {
-    console.log('=== 强制更新所有音频状态 ===');
-    
+
     const audioItems = document.querySelectorAll('.audio-file-item');
-    console.log(`找到 ${audioItems.length} 个音频项`);
-    
+
     audioItems.forEach((item, index) => {
         const audioId = item.dataset.id;
         const audioElement = item.querySelector('audio');
         const timeDisplay = item.querySelector('.player-time');
-        
-        console.log(`音频 ${index + 1} (ID: ${audioId}):`);
+
         if (audioElement) {
-            console.log('  - src:', audioElement.src);
-            console.log('  - readyState:', audioElement.readyState);
-            console.log('  - networkState:', audioElement.networkState);
-            console.log('  - duration:', audioElement.duration);
-            console.log('  - currentTime:', audioElement.currentTime);
-            console.log('  - paused:', audioElement.paused);
-            console.log('  - ended:', audioElement.ended);
-            console.log('  - crossOrigin:', audioElement.crossOrigin);
-            console.log('  - preload:', audioElement.preload);
-            
+
+
+
+
+
+
+
+
+
             // 尝试重新加载音频
-            console.log('  - 尝试重新加载音频...');
+
             audioElement.load();
             
             if (audioElement.duration && !isNaN(audioElement.duration)) {
                 updateAudioDuration(audioId, audioElement.duration);
-                console.log(`✅ 音频 ${index + 1} 状态已更新，时长: ${formatTime(audioElement.duration)}`);
+
             } else {
-                console.log(`❌ 音频 ${index + 1} 未准备好，readyState: ${audioElement.readyState}`);
+
             }
         } else {
-            console.log('  - 音频元素不存在');
+
         }
-        console.log('---');
+
     });
-    
-    console.log('=== 强制更新完成 ===');
+
 }
 
 // 获取CSRF Token
@@ -2628,7 +2556,7 @@ function getCookie(name) {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面加载完成，初始化进度条事件委托');
+
     initProgressBarEventDelegation();
 });
 </script>

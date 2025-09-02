@@ -65,7 +65,7 @@ class EnhancedChatManager {
             this.socket = new WebSocket(wsUrl);
             
             this.socket.onopen = (event) => {
-                console.log('WebSocket连接成功');
+
                 this.updateState('connected');
                 this.reconnectAttempts = 0;
                 this.startHeartbeat();
@@ -77,7 +77,7 @@ class EnhancedChatManager {
             };
             
             this.socket.onclose = (event) => {
-                console.log('WebSocket连接关闭:', event.code, event.reason);
+
                 this.updateState('disconnected');
                 this.stopHeartbeat();
                 
@@ -120,7 +120,7 @@ class EnhancedChatManager {
         
         this.reconnectTimer = setTimeout(() => {
             this.reconnectAttempts++;
-            console.log(`尝试重连 (${this.reconnectAttempts}/${this.options.maxReconnectAttempts})`);
+
             this.connect();
         }, delay);
     }
@@ -161,7 +161,7 @@ class EnhancedChatManager {
         if (this.connectionState === 'connected') {
             this.sendMessageImmediate(message);
         } else {
-            console.log('连接未建立，消息已加入队列:', messageId);
+
         }
         
         return messageId;
@@ -193,9 +193,7 @@ class EnhancedChatManager {
             // 标记为已发送
             this.sentMessages.set(message.id, message);
             this.removeFromQueue(message.id);
-            
-            console.log('消息发送成功:', message.id);
-            
+
         } catch (error) {
             console.error('发送消息失败:', error);
             // 消息发送失败，会在下次重连时重试
@@ -272,7 +270,7 @@ class EnhancedChatManager {
             
             // 处理连接建立
             if (messageType === 'connection_established') {
-                console.log('连接已建立:', content);
+
                 return;
             }
             
@@ -305,9 +303,7 @@ class EnhancedChatManager {
                 this.onReadStatus(content);
                 return;
             }
-            
-            console.log('收到消息:', messageData);
-            
+
         } catch (error) {
             console.error('处理消息失败:', error);
         }
@@ -339,17 +335,17 @@ class EnhancedChatManager {
         this.isOnline = isOnline;
         
         if (isOnline && this.connectionState === 'disconnected') {
-            console.log('网络恢复，尝试重连');
+
             this.connect();
         } else if (!isOnline) {
-            console.log('网络断开');
+
             this.updateState('error');
         }
     }
     
     checkConnection() {
         if (this.connectionState !== 'connected' && this.isOnline) {
-            console.log('检查连接状态，尝试重连');
+
             this.connect();
         }
     }
@@ -538,7 +534,7 @@ function handleTyping(data) {
 // 处理已读状态
 function handleReadStatus(data) {
     // 可以在这里更新消息的已读状态
-    console.log('消息已读:', data);
+
 }
 
 // 创建消息元素
@@ -750,35 +746,35 @@ function handleFileUpload(event) {
 // 初始化语音录制
 function initVoiceRecording() {
     // 语音录制功能实现
-    console.log('语音录制功能初始化');
+
 }
 
 // 切换语音录制
 function toggleVoiceRecording() {
-    console.log('切换语音录制');
+
 }
 
 // 初始化视频通话
 function initVideoCall() {
     // 视频通话功能实现
-    console.log('视频通话功能初始化');
+
 }
 
 // 切换视频通话
 function toggleVideoCall() {
-    console.log('切换视频通话');
+
 }
 
 // 加载参与者
 function loadParticipants() {
     // 这里可以从服务器加载参与者列表
-    console.log('加载参与者列表');
+
 }
 
 // 更新参与者
 function updateParticipants() {
     // 更新参与者列表显示
-    console.log('更新参与者列表');
+
 }
 
 // 添加系统消息

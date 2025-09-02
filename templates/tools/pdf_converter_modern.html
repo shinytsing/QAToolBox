@@ -2627,8 +2627,7 @@ function removeFile() {
 
 // 转换文件
 function convertFile() {
-  console.log('convertFile called, selectedType:', selectedType, 'selectedFile:', selectedFile);
-  
+
   if (!selectedType) {
     showNotification('请先选择转换类型！', 'error');
     return;
@@ -2913,8 +2912,7 @@ function convertAgain() {
   
   // 显示成功通知
   showNotification('已重置转换界面，可以开始新的转换', 'success');
-  
-  console.log('convertAgain: 界面已重置');
+
 }
 
 // 文本转PDF转换
@@ -3183,7 +3181,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 加载转换统计数据
 function loadConversionStats() {
-  console.log('🔍 开始加载转换统计数据...');
+
   // 获取CSRF令牌
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   
@@ -3209,7 +3207,7 @@ function loadConversionStats() {
       }
     })
     .then(data => {
-      console.log('📊 收到统计数据:', data);
+
       if (data.success) {
         // 更新统计数据
         const stats = data.stats;
@@ -3261,7 +3259,7 @@ function loadConversionStats() {
         }
         
         // 更新统计数据显示
-        console.log('🔄 更新页面显示:', {totalConversions, totalFiles, avgSpeed, userSatisfaction});
+
         const totalConversionsElement = document.getElementById('totalConversions');
         const totalFilesElement = document.getElementById('totalFiles');
         const avgSpeedElement = document.getElementById('avgSpeed');
@@ -3273,8 +3271,7 @@ function loadConversionStats() {
         if (userSatisfactionElement) {
           userSatisfactionElement.textContent = userSatisfaction.toFixed(1) + '%';
         }
-        console.log('✅ 页面数据已更新');
-        
+
         // 更新最近转换记录
         updateRecentConversions(stats.recent_conversions);
       } else {
@@ -3308,13 +3305,11 @@ function loadConversionStats() {
 
 // 更新最近转换记录
 function updateRecentConversions(recentData) {
-  console.log('收到最近转换数据:', recentData);
-  console.log('数据类型:', typeof recentData);
-  console.log('数据长度:', recentData ? recentData.length : 'null');
-  
+
+
+
   const recentContainer = document.getElementById('recentConversions');
-  console.log('找到容器元素:', !!recentContainer);
-  
+
   if (!recentData || recentData.length === 0) {
     recentContainer.innerHTML = `
       <div class="recent-item-modern" onclick="goToConversionTypes()">
@@ -3411,9 +3406,7 @@ function updateRecentConversions(recentData) {
             
             const rating = parseInt(this.dataset.rating);
             const recordId = ratingStars.dataset.recordId;
-            
-            console.log('🌟 星星被点击:', {rating, recordId, element: this});
-            
+
             if (rating && recordId) {
               // 立即更新视觉效果
               updateStarVisual(ratingStars, rating);
@@ -3465,8 +3458,7 @@ function generateStarRating(rating, readonly = false) {
 
 // 提交满意度评分
 function submitRating(recordId, rating) {
-  console.log('🌟 提交评分:', {recordId, rating});
-  
+
   // 显示加载状态
   showNotification('正在提交评分...', 'info');
   
@@ -3482,11 +3474,11 @@ function submitRating(recordId, rating) {
     })
   })
   .then(response => {
-    console.log('🌟 评分响应状态:', response.status);
+
     return response.json();
   })
   .then(data => {
-    console.log('🌟 评分响应数据:', data);
+
     if (data.success) {
       showNotification(`✨ 评分提交成功！感谢您的反馈`, 'success');
       // 刷新统计数据以更新满意度
@@ -4036,8 +4028,7 @@ function checkPDFConverterStatus() {
             if (data.success) {
                 const status = data.status;
                 const features = data.features || {};
-                console.log('PDF转换器状态:', status);
-                
+
                 // 如果pdf2docx不可用，显示警告
                 if (features.pdf_to_word === false) {
                     showNotification('PDF转换功能可能受限，请检查系统状态', 'warning');
@@ -4178,8 +4169,7 @@ function showStatusDialog(content) {
 
 // 可靠的下载函数
 function downloadFile(url, filename) {
-    console.log(`开始下载: ${url}, 文件名: ${filename}`);
-    
+
     if (!url) {
         console.error('下载URL为空');
         showNotification('下载链接无效', 'error');
@@ -4190,9 +4180,7 @@ function downloadFile(url, filename) {
     if (!url.startsWith('http')) {
         url = window.location.origin + url;
     }
-    
-    console.log(`完整下载URL: ${url}`);
-    
+
     // 方法1: 使用fetch下载
     fetch(url, {
         method: 'GET',
@@ -4202,17 +4190,15 @@ function downloadFile(url, filename) {
         credentials: 'same-origin'
     })
     .then(response => {
-        console.log('Download response status:', response.status);
-        console.log('Download response headers:', response.headers);
-        
+
+
         if (response.ok) {
             return response.blob();
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     })
     .then(blob => {
-        console.log('Download blob size:', blob.size);
-        
+
         if (blob.size === 0) {
             throw new Error('下载的文件大小为0');
         }
@@ -4231,15 +4217,14 @@ function downloadFile(url, filename) {
         // 清理
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
-        
-        console.log(`下载成功: ${filename}`);
+
         showNotification(`文件 "${filename}" 下载成功`, 'success');
     })
     .catch(error => {
         console.error(`下载失败: ${error.message}`);
         
         // 方法2: 备用下载方法 - 直接链接
-        console.log('尝试备用下载方法...');
+
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
@@ -4248,8 +4233,7 @@ function downloadFile(url, filename) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        console.log(`使用备用方法下载: ${filename}`);
+
         showNotification(`使用备用方法下载: ${filename}`, 'info');
         
         // 方法3: 如果还是失败，提示用户手动下载
@@ -4262,15 +4246,13 @@ function downloadFile(url, filename) {
 // 增强的批量下载函数
 function downloadMultipleFiles(downloadLinks) {
     if (!downloadLinks || downloadLinks.length === 0) {
-        console.log('没有文件需要下载');
+
         return;
     }
-    
-    console.log(`开始批量下载 ${downloadLinks.length} 个文件`);
-    
+
     downloadLinks.forEach((link, index) => {
         setTimeout(() => {
-            console.log(`下载第 ${index + 1} 个文件: ${link.filename}`);
+
             downloadFile(link.url, link.filename);
             showNotification(`正在下载: ${link.filename}`, 'info');
         }, index * 1500); // 每个文件间隔1.5秒下载

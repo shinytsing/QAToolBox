@@ -345,7 +345,7 @@ async function loadLoginPage() {
             // 监听iframe加载完成事件
             const iframe = document.getElementById('bossLoginFrame');
             iframe.onload = function() {
-                console.log('Boss直聘登录页面加载完成');
+
                 document.getElementById('loginStatusText').textContent = '页面已加载，请开始登录';
             };
             
@@ -537,14 +537,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('loginCheckFailed', function() {
         if (retryCount < maxRetries) {
             retryCount++;
-            console.log(`登录检查失败，第${retryCount}次重试...`);
+
             setTimeout(() => {
                 checkLoginStatus();
             }, 2000 * retryCount); // 递增延迟
         }
     });
-    
-    console.log('自动求职机已初始化，支持嵌入式登录');
+
 });
 </script>
 {% endblock %} 

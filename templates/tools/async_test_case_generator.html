@@ -1,0 +1,879 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}异步测试用例生成器{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #8b5cf6;
+        --primary-hover: #7c3aed;
+        --secondary-color: #a855f7;
+        --accent-color: #c084fc;
+        --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --card-background: rgba(255, 255, 255, 0.95);
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.15);
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --info-color: #3b82f6;
+    }
+
+    body {
+        background: var(--background-gradient);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--text-primary);
+    }
+
+    #app {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: var(--card-background);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+        text-align: center;
+        color: var(--primary-color);
+        margin-bottom: 30px;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+    }
+
+    textarea, input[type="text"] {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: var(--border-radius-sm);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+    }
+
+    textarea:focus, input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    button {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: var(--border-radius-sm);
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    }
+
+    button:active {
+        transform: translateY(0);
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-outline-primary {
+        background: transparent;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        box-shadow: none;
+    }
+
+    .btn-outline-primary:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-success:hover:not(:disabled) {
+        background: linear-gradient(135deg, #059669, var(--success-color));
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, var(--info-color), #2563eb);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-info:hover:not(:disabled) {
+        background: linear-gradient(135deg, #2563eb, var(--info-color));
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    }
+
+    #result {
+        margin-top: 30px;
+        padding: 25px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        display: none;
+    }
+
+    .hint {
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: var(--border-radius-sm);
+        padding: 15px;
+        margin: 15px 0;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    #defaultPromptContainer {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: var(--border-radius-sm);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        display: none;
+    }
+
+    .toggle-btn {
+        background: rgba(139, 92, 246, 0.1);
+        color: var(--primary-color);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        padding: 10px 20px;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9rem;
+        margin: 10px 0;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-btn:hover {
+        background: rgba(139, 92, 246, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .test-case-display {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: var(--border-radius-sm);
+        padding: 20px;
+        margin: 20px 0;
+        max-height: 600px;
+        overflow-y: auto;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+
+    .download-status {
+        margin-top: 15px;
+        padding: 10px;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: var(--border-radius-sm);
+        color: var(--success-color);
+        font-size: 0.9rem;
+        display: none;
+    }
+
+    /* 异步任务特有样式 */
+    .task-status {
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: var(--border-radius);
+        border-left: 4px solid;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+        box-shadow: var(--shadow);
+    }
+    
+    .task-pending {
+        border-left-color: var(--text-secondary);
+        background: rgba(107, 114, 128, 0.1);
+    }
+    
+    .task-running {
+        border-left-color: var(--info-color);
+        background: rgba(59, 130, 246, 0.1);
+    }
+    
+    .task-completed {
+        border-left-color: var(--success-color);
+        background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .task-failed {
+        border-left-color: var(--error-color);
+        background: rgba(239, 68, 68, 0.1);
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 25px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 15px 0;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        transition: width 0.5s ease;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .task-list {
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--border-radius);
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+    }
+    
+    .task-item {
+        padding: 15px;
+        margin: 10px 0;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+    }
+    
+    .task-item:hover {
+        background: rgba(139, 92, 246, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .task-item.active {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .task-history-card {
+        background: var(--card-background);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 20px;
+    }
+
+    .task-history-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .task-history-body {
+        padding: 20px;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        #app {
+            margin: 10px;
+            padding: 15px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        button {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+
+    /* 消息提示样式 */
+    .message {
+        padding: 15px 20px;
+        border-radius: var(--border-radius-sm);
+        margin: 15px 0;
+        font-weight: 500;
+        display: none;
+        animation: slideIn 0.3s ease;
+    }
+
+    .message.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .message.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--error-color);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .message.loading {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info-color);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="app">
+    <h1>🚀 异步测试用例生成器</h1>
+    <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px; font-size: 1.1rem;">
+        支持长时间任务的后台处理，避免超时问题，让AI有充足时间生成高质量的测试用例
+    </p>
+
+    <form id="asyncTestForm">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="requirement">📋 产品需求：</label>
+            <textarea 
+                id="requirement" 
+                name="requirement" 
+                rows="4" 
+                placeholder="请详细描述您要测试的产品需求，例如：用户登录功能、购物车功能、支付流程等。描述越详细，生成的测试用例越精准。"
+                required
+            ></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="prompt">🎯 自定义提示词（可选）：</label>
+            <textarea 
+                id="prompt" 
+                name="prompt" 
+                rows="6" 
+                placeholder="请输入自定义提示词（使用{requirement}作为需求占位符），例如：根据{requirement}生成详细的测试用例..."
+            ></textarea>
+            <div class="hint">
+                提示：留空将使用默认提示词模板，生成包含多级结构的测试用例
+            </div>
+
+            <!-- 默认提示词查看/编辑区域 -->
+            <div class="toggle-section">
+                <button type="button" class="toggle-btn" onclick="toggleDefaultPrompt()">
+                    <i class="fas fa-cog"></i> 查看/编辑默认提示词模板
+                </button>
+            </div>
+            <div id="defaultPromptContainer" style="display: none;">
+                <textarea
+                    id="defaultPromptText"
+                    placeholder="默认提示词模板..."
+                ></textarea>
+                <div class="hint">
+                    提示：修改后将影响所有未输入自定义提示词的生成结果
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button type="button" id="resetBtn" class="btn-outline-primary">
+                <i class="fas fa-undo"></i> 重置
+            </button>
+            <button type="submit" id="submitBtn">
+                <i class="fas fa-rocket"></i> 开始异步生成
+            </button>
+        </div>
+        
+        <!-- 提示信息 -->
+        <div class="hint" style="margin-top: 10px; text-align: center; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 8px;">
+            ✅ <strong>异步优势：</strong> 不受超时限制，后台处理，可关闭页面等待，支持复杂需求生成
+        </div>
+    </form>
+
+    <!-- 任务状态显示 -->
+    <div id="taskStatus" style="display: none;">
+        <div class="task-status" id="statusDisplay">
+            <h5><i class="fas fa-tasks"></i> 任务状态</h5>
+            <div id="statusText">准备中...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div id="progressText">0%</div>
+            <div id="currentStep" style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;"></div>
+        </div>
+    </div>
+
+    <!-- 结果显示 -->
+    <div id="resultDisplay" style="display: none;">
+        <h5><i class="fas fa-check-circle"></i> 生成结果</h5>
+        <div id="testCaseContent" class="test-case-display"></div>
+        <div class="action-buttons">
+            <button class="btn-success" id="downloadBtn" style="display: none;">
+                <i class="fas fa-download"></i> 下载测试用例
+            </button>
+            <button class="btn-info" id="copyBtn">
+                <i class="fas fa-copy"></i> 复制内容
+            </button>
+        </div>
+        <div class="download-status" id="downloadStatus"></div>
+    </div>
+
+    <!-- 任务历史 -->
+    <div class="task-history-card">
+        <div class="task-history-header">
+            <h5><i class="fas fa-history"></i> 任务历史</h5>
+            <button class="btn-outline-primary" id="refreshTasksBtn">
+                <i class="fas fa-refresh"></i> 刷新
+            </button>
+        </div>
+        <div class="task-history-body">
+            <div id="taskList" class="task-list">
+                <div class="text-center text-muted">暂无任务</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 消息提示容器 -->
+<div id="messageContainer"></div>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+let currentTaskId = null;
+let statusCheckInterval = null;
+
+// 页面加载时获取任务列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadTaskList();
+    loadDefaultPrompt();
+});
+
+// 加载默认提示词
+function loadDefaultPrompt() {
+    const defaultPrompt = `作为资深测试工程师，请根据以下产品需求生成专业的测试用例：
+
+## 测试用例要求
+1. **功能测试**：核心功能、业务流程、数据流转
+2. **界面测试**：UI交互、响应式布局、用户体验
+3. **性能测试**：响应时间、并发处理、资源消耗
+4. **兼容性测试**：多设备、多浏览器、多系统版本
+5. **安全测试**：数据安全、权限控制、输入验证
+6. **异常测试**：错误处理、边界条件、异常场景
+
+## 用例结构（每个用例必须包含）
+- **用例ID**：TC-模块-序号（如：TC-登录-001）
+- **用例标题**：简洁明确的功能描述
+- **测试场景**：具体的业务场景
+- **前置条件**：系统状态、数据准备
+- **测试步骤**：详细的操作步骤（1.2.3...）
+- **预期结果**：具体的验证点
+- **优先级**：P0/P1/P2（P0最高）
+- **测试类型**：功能/性能/安全/兼容性
+
+## 输出格式
+- 使用Markdown格式
+- 按功能模块分类（## 模块名称）
+- 每个模块至少包含10个用例
+- 用例分布：正向40% + 异常30% + 边界30%
+
+产品需求：{requirement}
+
+请生成完整、可执行的测试用例，确保覆盖全面且符合实际测试工作需求。
+- 每个测试维度结束处添加"维度覆盖总结"，说明已覆盖的场景数量及比例`;
+
+    document.getElementById('defaultPromptText').value = defaultPrompt;
+}
+
+// 切换默认提示词显示
+function toggleDefaultPrompt() {
+    const container = document.getElementById('defaultPromptContainer');
+    const isVisible = container.style.display !== 'none';
+    container.style.display = isVisible ? 'none' : 'block';
+    
+    if (!isVisible) {
+        const customPrompt = document.getElementById('prompt').value.trim();
+        if (!customPrompt) {
+            document.getElementById('prompt').value = document.getElementById('defaultPromptText').value;
+        }
+    }
+}
+
+// 重置表单
+document.getElementById('resetBtn').addEventListener('click', function() {
+    document.getElementById('asyncTestForm').reset();
+    document.getElementById('defaultPromptContainer').style.display = 'none';
+    document.getElementById('taskStatus').style.display = 'none';
+    document.getElementById('resultDisplay').style.display = 'none';
+    document.getElementById('testCaseContent').innerHTML = '';
+    hideMessage();
+});
+
+// 表单提交
+document.getElementById('asyncTestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const requirement = document.getElementById('requirement').value.trim();
+    const prompt = document.getElementById('prompt').value.trim();
+    
+    if (!requirement) {
+        showMessage('请输入产品需求', 'error');
+        return;
+    }
+    
+    // 禁用提交按钮
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 创建任务中...';
+    
+    // 创建异步任务
+    createAsyncTask(requirement, prompt);
+});
+
+// 创建异步任务
+function createAsyncTask(requirement, prompt) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const finalPrompt = prompt || document.getElementById('defaultPromptText').value;
+    
+    axios.post('/tools/api/async/generate-testcases/', {
+        requirement: requirement,
+        prompt: finalPrompt
+    }, {
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.data.success) {
+            currentTaskId = response.data.task_id;
+            showMessage('任务创建成功！开始后台处理...', 'success');
+            showTaskStatus();
+            startStatusCheck();
+            loadTaskList(); // 刷新任务列表
+        } else {
+            showMessage('任务创建失败：' + (response.data.error || '未知错误'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('创建任务失败:', error);
+        let errorMsg = '创建任务失败，请稍后重试';
+        if (error.response) {
+            errorMsg = error.response.data.error || `服务器错误 (${error.response.status})`;
+        }
+        showMessage(errorMsg, 'error');
+    })
+    .finally(() => {
+        // 恢复提交按钮
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-rocket"></i> 开始异步生成';
+    });
+}
+
+// 显示任务状态
+function showTaskStatus() {
+    document.getElementById('taskStatus').style.display = 'block';
+    document.getElementById('resultDisplay').style.display = 'none';
+}
+
+// 开始状态检查
+function startStatusCheck() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+    
+    statusCheckInterval = setInterval(() => {
+        checkTaskStatus();
+    }, 2000); // 每2秒检查一次
+}
+
+// 检查任务状态
+function checkTaskStatus() {
+    if (!currentTaskId) return;
+    
+            axios.get(`/tools/api/async/task/${currentTaskId}/`)
+    .then(response => {
+        const task = response.data;
+        updateTaskStatus(task);
+        
+        if (task.status === 'completed' || task.status === 'failed') {
+            clearInterval(statusCheckInterval);
+            statusCheckInterval = null;
+            
+            if (task.status === 'completed') {
+                showResult(task.result);
+                showMessage('测试用例生成完成！', 'success');
+            } else {
+                showMessage('任务执行失败：' + (task.error || '未知错误'), 'error');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('检查任务状态失败:', error);
+    });
+}
+
+// 更新任务状态显示
+function updateTaskStatus(task) {
+    const statusDisplay = document.getElementById('statusDisplay');
+    const statusText = document.getElementById('statusText');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const currentStep = document.getElementById('currentStep');
+    
+    // 更新状态类
+    statusDisplay.className = `task-status task-${task.status}`;
+    
+    // 更新状态文本
+    const statusMap = {
+        'pending': '等待处理...',
+        'running': '正在生成中...',
+        'completed': '生成完成！',
+        'failed': '生成失败'
+    };
+    statusText.textContent = statusMap[task.status] || task.status;
+    
+    // 更新进度
+    const progress = task.progress || 0;
+    progressFill.style.width = progress + '%';
+    progressText.textContent = progress + '%';
+    
+    // 更新当前步骤
+    if (task.current_step) {
+        currentStep.textContent = `当前步骤：${task.current_step}`;
+    }
+}
+
+// 显示结果
+function showResult(result) {
+    document.getElementById('resultDisplay').style.display = 'block';
+    document.getElementById('taskStatus').style.display = 'none';
+    
+    const testCaseContent = document.getElementById('testCaseContent');
+    testCaseContent.innerHTML = result
+        .replace(/#{2}\s(.*?)\n/g, '<h2>$1</h2>')
+        .replace(/#{3}\s(.*?)\n/g, '<h3>$1</h3>')
+        .replace(/#{4}\s(.*?)\n/g, '<h4>$1</h4>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+}
+
+// 加载任务列表
+function loadTaskList() {
+    axios.get('/tools/api/async/tasks/')
+    .then(response => {
+        const tasks = response.data.tasks || [];
+        const taskList = document.getElementById('taskList');
+        
+        if (tasks.length === 0) {
+            taskList.innerHTML = '<div class="text-center text-muted">暂无任务</div>';
+            return;
+        }
+        
+        taskList.innerHTML = tasks.map(task => {
+            const statusClass = `task-${task.status}`;
+            const statusText = {
+                'pending': '等待中',
+                'running': '进行中',
+                'completed': '已完成',
+                'failed': '失败'
+            }[task.status] || task.status;
+            
+            const isActive = currentTaskId === task.id ? 'active' : '';
+            
+            return `
+                <div class="task-item ${isActive}" onclick="selectTask('${task.id}')">
+                    <div style="font-weight: 600; margin-bottom: 5px;">
+                        ${task.requirement.substring(0, 50)}${task.requirement.length > 50 ? '...' : ''}
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                        状态：${statusText} | 进度：${task.progress || 0}% | 
+                        创建时间：${new Date(task.created_at).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    })
+    .catch(error => {
+        console.error('加载任务列表失败:', error);
+    });
+}
+
+// 选择任务
+function selectTask(taskId) {
+    currentTaskId = taskId;
+    loadTaskList(); // 刷新列表以更新active状态
+    
+    // 获取任务详情
+            axios.get(`/tools/api/async/task/${taskId}/`)
+    .then(response => {
+        const task = response.data;
+        if (task.status === 'completed') {
+            showResult(task.result);
+            document.getElementById('resultDisplay').style.display = 'block';
+            document.getElementById('taskStatus').style.display = 'none';
+        } else if (task.status === 'running' || task.status === 'pending') {
+            showTaskStatus();
+            updateTaskStatus(task);
+            startStatusCheck();
+        }
+    })
+    .catch(error => {
+        console.error('获取任务详情失败:', error);
+    });
+}
+
+// 刷新任务列表
+document.getElementById('refreshTasksBtn').addEventListener('click', function() {
+    loadTaskList();
+});
+
+// 复制内容
+document.getElementById('copyBtn').addEventListener('click', function() {
+    const testCaseText = document.getElementById('testCaseContent').textContent;
+    navigator.clipboard.writeText(testCaseText).then(() => {
+        showMessage('内容已复制到剪贴板！', 'success');
+    }).catch(err => {
+        console.error('复制失败:', err);
+        showMessage('复制失败，请手动选择复制', 'error');
+    });
+});
+
+// 下载功能
+document.getElementById('downloadBtn').addEventListener('click', function() {
+    const testCaseText = document.getElementById('testCaseContent').textContent;
+    const blob = new Blob([testCaseText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `测试用例_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showMessage('测试用例已下载！', 'success');
+});
+
+// 显示消息
+function showMessage(message, type) {
+    const container = document.getElementById('messageContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    messageDiv.textContent = message;
+    messageDiv.style.display = 'block';
+    
+    container.appendChild(messageDiv);
+    
+    // 3秒后自动隐藏
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+        container.removeChild(messageDiv);
+    }, 3000);
+}
+
+// 隐藏消息
+function hideMessage() {
+    const container = document.getElementById('messageContainer');
+    container.innerHTML = '';
+}
+
+// 页面卸载时清理定时器
+window.addEventListener('beforeunload', function() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+});
+</script>
+{% endblock %}

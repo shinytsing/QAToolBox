@@ -1,0 +1,30 @@
+[Unit]
+Description=QAToolBox Django Application
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=gaojie
+Group=staff
+WorkingDirectory=/Users/gaojie/Desktop/PycharmProjects/QAToolBox
+Environment=DJANGO_SETTINGS_MODULE=config.settings.production
+Environment=PYTHONPATH=/Users/gaojie/Desktop/PycharmProjects/QAToolBox
+ExecStart=/Users/gaojie/Desktop/PycharmProjects/QAToolBox/venv/bin/python manage.py runserver 0.0.0.0:8000 --noreload
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qatoolbox
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/Users/gaojie/Desktop/PycharmProjects/QAToolBox/media
+ReadWritePaths=/Users/gaojie/Desktop/PycharmProjects/QAToolBox/logs
+
+[Install]
+WantedBy=multi-user.target

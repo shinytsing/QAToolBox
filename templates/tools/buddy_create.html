@@ -1419,7 +1419,7 @@ function initMap() {
         
         // 地图加载完成后的回调
         map.on('complete', function() {
-            console.log('地图加载完成');
+
             updateMapStatus('✅', '地图已就绪');
             showSearchTip('地图已加载完成，您可以搜索地点或直接点击地图选择位置', 'success');
         });
@@ -1566,7 +1566,7 @@ function searchSuggestion(keyword) {
 // 获取当前位置（用于地图）
 function getCurrentLocationForMap() {
     if (!navigator.geolocation) {
-        console.log('浏览器不支持定位功能');
+
         return;
     }
     
@@ -1594,7 +1594,7 @@ function getCurrentLocationForMap() {
             }, 2000);
         },
         function(error) {
-            console.log('定位失败：', error.message);
+
             locationBtn.textContent = originalText;
             locationBtn.disabled = false;
         },

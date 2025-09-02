@@ -263,7 +263,6 @@ class ChatNotificationManager {
         let startX, startY, hasMoved = false;
         
         icon.addEventListener('mousedown', (e) => {
-            console.log('鼠标按下开始拖拽');
             this.isDragging = true;
             hasMoved = false;
             startX = e.clientX - this.xOffset;
@@ -278,8 +277,7 @@ class ChatNotificationManager {
 
         document.addEventListener('mousemove', (e) => {
             if (!this.isDragging) return;
-            
-            console.log('正在拖拽移动');
+
             hasMoved = true;
             e.preventDefault();
             
@@ -294,7 +292,6 @@ class ChatNotificationManager {
 
         document.addEventListener('mouseup', () => {
             if (this.isDragging) {
-                console.log('拖拽结束，移动了吗:', hasMoved);
                 this.isDragging = false;
                 icon.style.cursor = 'move';
                 manager.classList.remove('dragging');
@@ -313,7 +310,6 @@ class ChatNotificationManager {
 
         // 点击图标切换显示/隐藏（只有在没有拖拽时才触发）
         icon.addEventListener('click', (e) => {
-            console.log('click事件触发，isDragging:', this.isDragging, 'hasMoved:', hasMoved);
             e.stopPropagation();
             if (!this.isDragging && !hasMoved) {
                 this.toggleDropdown();
@@ -339,14 +335,10 @@ class ChatNotificationManager {
         });
     }
 
-
-
     setTranslate(xPos, yPos) {
         const manager = document.getElementById('chat-notification-manager');
         manager.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
     }
-
-
 
     savePosition() {
         localStorage.setItem('chatNotificationPosition', JSON.stringify({

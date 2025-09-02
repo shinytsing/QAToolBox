@@ -307,7 +307,7 @@ class ShareManager {
             }).then(() => {
                 this.showToast('分享成功');
             }).catch((error) => {
-                console.log('分享失败:', error);
+
             });
         } else {
             // 降级到弹窗分享
@@ -401,7 +401,7 @@ class ShareManager {
             },
             body: JSON.stringify(shareData)
         }).catch(error => {
-            console.log('分享记录失败:', error);
+
         });
     }
     

@@ -902,25 +902,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 初始化收藏按钮状态
 function initializeFavoriteButton() {
-    console.log('initializeFavoriteButton 被调用');
-    
+
     const favoriteBtn = document.querySelector('.favorite-btn');
     const isFavorited = {% if is_favorited %}true{% else %}false{% endif %};
-    
-    console.log('初始化时找到的按钮:', favoriteBtn);
-    console.log('服务器传递的收藏状态:', isFavorited);
-    
+
+
     if (favoriteBtn) {
-        console.log('调用updateFavoriteButton进行初始化');
+
         updateFavoriteButton(isFavorited);
     } else {
         console.error('初始化时未找到收藏按钮');
         // 延迟一段时间再尝试
         setTimeout(() => {
-            console.log('延迟500ms后重试查找收藏按钮');
+
             const retryBtn = document.querySelector('.favorite-btn');
             if (retryBtn) {
-                console.log('重试成功找到按钮');
+
                 updateFavoriteButton(isFavorited);
             } else {
                 console.error('重试后仍未找到收藏按钮');
@@ -931,11 +928,10 @@ function initializeFavoriteButton() {
 
 // 初始化交易按钮状态
 function initializeTransactionButton() {
-    console.log('initializeTransactionButton 被调用');
-    
+
     const transactionBtn = document.querySelector('.transaction-btn');
     if (!transactionBtn) {
-        console.log('未找到交易按钮（可能是发布者视图）');
+
         return;
     }
     
@@ -944,9 +940,7 @@ function initializeTransactionButton() {
         console.error('商品ID无效');
         return;
     }
-    
-    console.log('检查交易状态，商品ID:', itemId);
-    
+
     // 检查是否已经发起过交易
     fetch(`/tools/api/shipbao/transaction-status/${itemId}/`, {
         method: 'GET',
@@ -957,7 +951,7 @@ function initializeTransactionButton() {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('交易状态检查结果:', data);
+
         if (data.has_transaction) {
             updateTransactionButton(true, data.transaction_status);
         } else {
@@ -972,8 +966,7 @@ function initializeTransactionButton() {
 
 // 更新交易按钮状态
 function updateTransactionButton(hasTransaction, transactionStatus = null) {
-    console.log('updateTransactionButton 被调用，参数:', hasTransaction, transactionStatus);
-    
+
     const transactionBtn = document.querySelector('.transaction-btn');
     if (!transactionBtn) {
         console.error('未找到交易按钮');
@@ -986,14 +979,14 @@ function updateTransactionButton(hasTransaction, transactionStatus = null) {
         transactionBtn.classList.add('btn-success');
         transactionBtn.classList.remove('btn-secondary');
         transactionBtn.disabled = true;
-        console.log('设置为已发起交易状态');
+
     } else {
         // 未发起交易
         transactionBtn.innerHTML = '<i class="fas fa-handshake"></i> 发起交易';
         transactionBtn.classList.add('btn-secondary');
         transactionBtn.classList.remove('btn-success');
         transactionBtn.disabled = false;
-        console.log('设置为可发起交易状态');
+
     }
 }
 
@@ -1054,7 +1047,7 @@ function calculateDistance(userLat, userLon) {
         }
     } else {
         // 如果商品没有精确坐标，尝试使用地址进行估算
-        console.log('商品没有精确坐标，无法计算精确距离');
+
         const distanceElement = document.getElementById('item-distance');
         if (distanceElement) {
             distanceElement.textContent = '距离未知';
@@ -1117,19 +1110,17 @@ function searchLocation(query) {
     // 显示加载状态
     const suggestionsContainer = document.getElementById('locationSuggestions');
     suggestionsContainer.innerHTML = '<div class="loading-suggestion">正在搜索位置...</div>';
-    
-    console.log('正在搜索位置:', query);
-    
+
     // 调用地图选择器API
     fetch(`/tools/api/map_picker/?query=${encodeURIComponent(query)}`)
         .then(response => {
-            console.log('地图API响应状态:', response.status);
+
             return response.json();
         })
         .then(data => {
-            console.log('地图API响应数据:', data);
+
             if (data.success && data.suggestions && data.suggestions.length > 0) {
-                console.log(`找到${data.suggestions.length}个位置建议`);
+
                 suggestionsContainer.innerHTML = data.suggestions.map(suggestion => 
                     `<div class="location-suggestion" onclick="selectLocation('${suggestion.name}', ${JSON.stringify(suggestion).replace(/"/g, '&quot;')})">
                         <div class="suggestion-name">${suggestion.name}</div>
@@ -1137,7 +1128,7 @@ function searchLocation(query) {
                     </div>`
                 ).join('');
             } else {
-                console.log('API返回成功但无建议，生成备用建议');
+
                 generateFallbackSuggestions(query, suggestionsContainer);
             }
         })
@@ -1350,9 +1341,7 @@ function contactSeller() {
         showErrorMessage('商品ID无效');
         return;
     }
-    
-    console.log('开始联系卖家，商品ID:', itemId);
-    
+
     // 获取用户输入的消息
     const message = prompt('请输入您想对卖家说的话：') || '你好，我对您的商品感兴趣，想进一步了解。';
     
@@ -1368,22 +1357,20 @@ function contactSeller() {
         })
     })
     .then(response => {
-        console.log('API响应状态:', response.status);
+
         return response.json();
     })
     .then(data => {
-        console.log('API响应数据:', data);
-        
+
         if (data.success) {
             if (data.queue_info) {
                 // 加入队列
-                console.log('加入队列:', data.queue_info);
+
                 showQueueInfo(data.queue_info);
             } else if (data.chat_url || data.redirect_url) {
                 // 直接进入聊天
                 const chatUrl = data.chat_url || data.redirect_url;
-                console.log('跳转到聊天室:', chatUrl);
-                
+
                 // 显示成功提示和聊天室链接
                 showChatRoomCreatedNotification(chatUrl);
                 
@@ -1392,11 +1379,11 @@ function contactSeller() {
                     window.location.href = chatUrl;
                 }, 2000);
             } else {
-                console.log('API返回成功但没有提供聊天URL');
+
                 showSuccessMessage(data.message || '联系卖家成功');
             }
         } else {
-            console.log('API返回失败:', data.error);
+
             if (data.queue_info) {
                 showQueueInfo(data.queue_info);
             } else {
@@ -1448,7 +1435,7 @@ function makeOffer() {
             
             // 特殊处理：如果错误是"已经发起过交易请求"，更新按钮状态
             if (data.error && data.error.includes('已经发起过交易请求')) {
-                console.log('检测到已经发起过交易，更新按钮状态');
+
                 updateTransactionButton(true, 'initiated');
                 showSuccessMessage('您已经发起过交易请求');
             }
@@ -1484,11 +1471,9 @@ function getCookie(name) {
 
 // 切换收藏状态
 function toggleFavorite() {
-    console.log('toggleFavorite 函数被调用');
-    
+
     const itemId = ITEM_ID;
-    console.log('商品ID:', itemId);
-    
+
     if (!itemId) {
         console.error('商品ID无效');
         showErrorMessage('商品ID无效');
@@ -1496,8 +1481,7 @@ function toggleFavorite() {
     }
     
     const favoriteBtn = document.querySelector('.favorite-btn');
-    console.log('找到的收藏按钮:', favoriteBtn);
-    
+
     if (!favoriteBtn) {
         console.error('收藏按钮未找到');
         showErrorMessage('收藏按钮未找到');
@@ -1505,23 +1489,19 @@ function toggleFavorite() {
     }
     
     const isCurrentlyFavorited = favoriteBtn.classList.contains('favorited');
-    console.log('当前收藏状态:', isCurrentlyFavorited);
-    console.log('按钮的所有类:', favoriteBtn.className);
-    
+
+
     const action = isCurrentlyFavorited ? 'remove' : 'add';
-    console.log('执行操作:', action);
-    
+
     // 立即更新按钮状态以提供即时反馈
     favoriteBtn.disabled = true;
     const originalHTML = favoriteBtn.innerHTML;
     favoriteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
     
     const newFavoritedState = !isCurrentlyFavorited;
-    console.log('新的收藏状态应该是:', newFavoritedState);
-    
-    console.log('准备发送请求到:', '/tools/api/shipbao/favorites/');
-    console.log('请求数据:', { item_id: itemId, action: action });
-    
+
+
+
     fetch('/tools/api/shipbao/favorites/', {
         method: 'POST',
         headers: {
@@ -1534,36 +1514,35 @@ function toggleFavorite() {
         })
     })
     .then(response => {
-        console.log('API响应状态:', response.status);
+
         return response.json();
     })
     .then(data => {
-        console.log('API响应数据:', data);
-        
+
         if (data.success) {
-            console.log('API调用成功');
+
             showSuccessMessage(data.message);
-            console.log('调用updateFavoriteButton，参数:', data.is_favorited);
+
             updateFavoriteButton(data.is_favorited);
         } else {
             console.error('API调用失败:', data.error);
             
             // 特殊处理：如果错误是"已经收藏过"，说明实际状态是已收藏
             if (data.error && data.error.includes('已经收藏过')) {
-                console.log('检测到已经收藏过，更新为已收藏状态');
+
                 updateFavoriteButton(true);
                 showSuccessMessage('商品已在收藏列表中');
             } 
             // 特殊处理：如果错误是"尚未收藏"，说明实际状态是未收藏
             else if (data.error && data.error.includes('尚未收藏')) {
-                console.log('检测到尚未收藏，更新为未收藏状态');
+
                 updateFavoriteButton(false);
                 showErrorMessage('商品尚未收藏');
             }
             else {
                 showErrorMessage(data.error || '操作失败');
                 // 恢复原始状态
-                console.log('恢复原始状态:', isCurrentlyFavorited);
+
                 updateFavoriteButton(isCurrentlyFavorited);
             }
         }
@@ -1572,39 +1551,35 @@ function toggleFavorite() {
         console.error('请求出错:', error);
         showErrorMessage('操作失败，请稍后重试');
         // 恢复原始状态
-        console.log('网络错误，恢复原始状态:', isCurrentlyFavorited);
+
         updateFavoriteButton(isCurrentlyFavorited);
     })
     .finally(() => {
         // 重新启用按钮
-        console.log('重新启用按钮');
+
         favoriteBtn.disabled = false;
     });
 }
 
 // 更新收藏按钮状态
 function updateFavoriteButton(isFavorited) {
-    console.log('updateFavoriteButton 被调用，参数:', isFavorited);
-    
+
     const favoriteBtn = document.querySelector('.favorite-btn');
-    console.log('在updateFavoriteButton中找到的按钮:', favoriteBtn);
-    
+
     if (favoriteBtn) {
-        console.log('更新前按钮类名:', favoriteBtn.className);
-        console.log('更新前按钮HTML:', favoriteBtn.innerHTML);
-        
+
+
         if (isFavorited) {
             favoriteBtn.innerHTML = '<i class="fas fa-heart" style="color: #e74c3c;"></i> 已收藏';
             favoriteBtn.classList.add('favorited');
-            console.log('设置为已收藏状态');
+
         } else {
             favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> 收藏';
             favoriteBtn.classList.remove('favorited');
-            console.log('设置为未收藏状态');
+
         }
-        
-        console.log('更新后按钮类名:', favoriteBtn.className);
-        console.log('更新后按钮HTML:', favoriteBtn.innerHTML);
+
+
     } else {
         console.error('updateFavoriteButton: 未找到收藏按钮');
     }
@@ -2054,8 +2029,7 @@ let searchTimeout = null;
 
 // 自动定位用户
 function autoLocateUser() {
-    console.log('开始自动定位用户');
-    
+
     // 更新按钮状态
     const autoBtn = document.querySelector('.auto-locate-btn');
     if (autoBtn) {
@@ -2073,7 +2047,7 @@ function autoLocateUser() {
         navigator.geolocation.getCurrentPosition(
             // 成功回调
             function(position) {
-                console.log('自动定位成功:', position.coords);
+
                 const coords = {
                     lat: position.coords.latitude,
                     lon: position.coords.longitude
@@ -2104,8 +2078,7 @@ function autoLocateUser() {
 
 // 使用高德API反向地理编码
 function reverseGeocodeWithAmap(coords) {
-    console.log('使用高德API反向地理编码:', coords);
-    
+
     fetch('/tools/api/map/reverse-geocode/', {
         method: 'POST',
         headers: {
@@ -2119,8 +2092,7 @@ function reverseGeocodeWithAmap(coords) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('高德反向地理编码结果:', data);
-        
+
         if (data.success && data.location) {
             const locationInfo = {
                 city: data.location.city || '未知城市',
@@ -2192,8 +2164,7 @@ function showLocationError(message) {
 
 // 搜索位置建议
 function searchLocationSuggestions(query) {
-    console.log('搜索位置建议:', query);
-    
+
     // 清除之前的搜索超时
     if (searchTimeout) {
         clearTimeout(searchTimeout);
@@ -2213,8 +2184,7 @@ function searchLocationSuggestions(query) {
 
 // 执行位置搜索
 function performLocationSearch(query) {
-    console.log('执行位置搜索:', query);
-    
+
     fetch('/tools/api/map/search-location/', {
         method: 'POST',
         headers: {
@@ -2227,8 +2197,7 @@ function performLocationSearch(query) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('位置搜索结果:', data);
-        
+
         if (data.success && data.suggestions) {
             displayLocationSuggestions(data.suggestions);
         } else {
@@ -2268,8 +2237,7 @@ function displayLocationSuggestions(suggestions) {
 function selectLocationSuggestion(element) {
     try {
         const locationData = JSON.parse(element.getAttribute('data-location'));
-        console.log('选择的位置:', locationData);
-        
+
         selectedLocationInfo = locationData;
         
         // 更新输入框
@@ -2357,8 +2325,7 @@ function confirmManualLocation() {
 
 // 地理编码位置
 function geocodeLocation(locationInfo) {
-    console.log('地理编码位置:', locationInfo);
-    
+
     fetch('/tools/api/map/geocode/', {
         method: 'POST',
         headers: {
@@ -2371,8 +2338,7 @@ function geocodeLocation(locationInfo) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('地理编码结果:', data);
-        
+
         if (data.success && data.location) {
             locationInfo.lat = data.location.lat;
             locationInfo.lon = data.location.lon;
@@ -2420,7 +2386,7 @@ function saveUserLocation(location) {
     // 保存到localStorage
     try {
         localStorage.setItem('user_location', JSON.stringify(location));
-        console.log('位置已保存到本地存储:', location);
+
     } catch (error) {
         console.error('保存位置到本地存储失败:', error);
     }
@@ -2437,9 +2403,9 @@ function saveUserLocation(location) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('位置已保存到服务器');
+
         } else {
-            console.log('保存位置到服务器失败:', data.error);
+
         }
     })
     .catch(error => {

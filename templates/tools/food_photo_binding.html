@@ -117,14 +117,45 @@
         }
         
         .food-item.bound {
-            background: #e8f5e8;
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
             border-color: #4caf50;
+            border-width: 3px;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+            position: relative;
+        }
+        
+        .food-item.bound::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(76, 175, 80, 0.1) 50%, transparent 70%);
+            border-radius: 8px;
+            pointer-events: none;
         }
         
         .food-name {
             font-weight: bold;
             color: #333;
             margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .bound-photo-info {
+            font-size: 0.8em;
+            color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: normal;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
         }
         
         .food-cuisine {
@@ -140,10 +171,26 @@
         
         .bound-indicator {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            color: #4caf50;
-            font-size: 1.2em;
+            top: 8px;
+            right: 8px;
+            color: #fff;
+            background: #4caf50;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+            z-index: 10;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
         
         /* 照片网格样式 */
@@ -301,6 +348,20 @@
         .photo-item.has-binding {
             border-color: #4caf50;
             border-style: solid;
+        }
+        
+        .photo-item.highlighted {
+            border-color: #ff9800;
+            box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
+            transform: scale(1.05);
+            z-index: 100;
+            animation: highlightPulse 1s ease-in-out;
+        }
+        
+        @keyframes highlightPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1.05); }
         }
         
         .photo-img {
@@ -542,6 +603,37 @@
             box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
         }
         
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .search-clear-btn:hover {
+            color: #666;
+            background: #f5f5f5;
+        }
+        
+        .search-info {
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 3px solid #2196f3;
+        }
+        
         /* 统计信息样式 */
         .stats {
             display: flex;
@@ -665,7 +757,12 @@
                 <div class="panel">
                     <h4><i class="fas fa-utensils"></i> 食物列表</h4>
                     <div class="search-box">
-                        <input type="text" class="search-input" id="foodSearch" placeholder="搜索食物...">
+                        <div class="search-input-wrapper">
+                            <input type="text" class="search-input" id="foodSearch" placeholder="搜索食物名称、菜系、标签...">
+                            <button class="search-clear-btn" id="foodSearchClear" onclick="clearFoodSearch()" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="food-list" id="foodList">
                         <div class="loading">
@@ -682,7 +779,12 @@
                     
                     <!-- 搜索和筛选 -->
                     <div class="quick-search">
-                        <input type="text" class="search-input" id="photoSearch" placeholder="搜索照片名称...">
+                        <div class="search-input-wrapper">
+                            <input type="text" class="search-input" id="photoSearch" placeholder="搜索照片名称、菜系、标签...">
+                            <button class="search-clear-btn" id="photoSearchClear" onclick="clearPhotoSearch()" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="search-filters">
@@ -855,23 +957,50 @@
         let searchTerm = '';
         
         // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            loadFoods();
-            loadPhotos();
-            loadExistingBindings();
+        document.addEventListener('DOMContentLoaded', async function() {
             setupEventListeners();
+            
+            // 按顺序加载数据
+            await loadFoods();
+            await loadPhotos();
+            await loadExistingBindings();
+            
+            console.log('页面初始化完成');
         });
         
         // 设置事件监听器
         function setupEventListeners() {
-            // 搜索功能
-            document.getElementById('foodSearch').addEventListener('input', filterFoods);
+            // 食物搜索功能
+            const foodSearchInput = document.getElementById('foodSearch');
+            const foodSearchClear = document.getElementById('foodSearchClear');
+            
+            foodSearchInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim();
+                filterFoods();
+                
+                // 显示/隐藏清除按钮
+                if (query) {
+                    foodSearchClear.style.display = 'block';
+                } else {
+                    foodSearchClear.style.display = 'none';
+                }
+            });
             
             // 照片搜索功能
-            document.getElementById('photoSearch').addEventListener('input', function(e) {
+            const photoSearchInput = document.getElementById('photoSearch');
+            const photoSearchClear = document.getElementById('photoSearchClear');
+            
+            photoSearchInput.addEventListener('input', function(e) {
                 searchTerm = e.target.value.trim();
                 currentPage = 1; // 重置到第一页
                 applyFilters();
+                
+                // 显示/隐藏清除按钮
+                if (searchTerm) {
+                    photoSearchClear.style.display = 'block';
+                } else {
+                    photoSearchClear.style.display = 'none';
+                }
             });
             
             // 键盘快捷键支持
@@ -948,8 +1077,14 @@
                     existingBindings.forEach(binding => {
                         bindings.set(binding.food_id, binding.photo_name);
                     });
+                    
+                    // 重新渲染食物列表和照片列表以显示绑定状态
+                    renderFoods();
+                    renderPhotos();
                     updateBindingDisplay();
                     updateStats();
+                    
+                    console.log(`加载了 ${existingBindings.length} 个绑定关系`);
                 }
             } catch (error) {
                 console.error('Error loading bindings:', error);
@@ -966,18 +1101,27 @@
                 return;
             }
             
-            foodList.innerHTML = foodsToRender.map(food => `
-                <div class="food-item ${bindings.has(food.id) ? 'bound' : ''}" 
-                     draggable="true" 
-                     data-food-id="${food.id}"
-                     ondragstart="handleFoodDragStart(event, ${food.id})"
-                     ondragend="handleFoodDragEnd(event)">
-                    ${bindings.has(food.id) ? '<i class="fas fa-check bound-indicator"></i>' : ''}
-                    <div class="food-name">${food.name}</div>
-                    <div class="food-cuisine">菜系: ${getCuisineDisplay(food.category || food.cuisine)}</div>
-                    <div class="food-tags">标签: ${food.tags ? food.tags.join(', ') : '无'}</div>
-                </div>
-            `).join('');
+            foodList.innerHTML = foodsToRender.map(food => {
+                const boundPhotoName = bindings.get(food.id);
+                const boundPhoto = boundPhotoName ? photos.find(p => p.name === boundPhotoName) : null;
+                
+                return `
+                    <div class="food-item ${bindings.has(food.id) ? 'bound' : ''}" 
+                         draggable="true" 
+                         data-food-id="${food.id}"
+                         ondragstart="handleFoodDragStart(event, ${food.id})"
+                         ondragend="handleFoodDragEnd(event)"
+                         ${boundPhoto ? `onclick="highlightBoundPhoto('${boundPhoto.name}')" title="点击查看绑定的照片"` : ''}>
+                        ${bindings.has(food.id) ? '<i class="fas fa-check bound-indicator"></i>' : ''}
+                        <div class="food-name">
+                            ${food.name}
+                            ${boundPhoto ? `<span class="bound-photo-info">→ ${boundPhoto.display_name}</span>` : ''}
+                        </div>
+                        <div class="food-cuisine">菜系: ${getCuisineDisplay(food.category || food.cuisine)}</div>
+                        <div class="food-tags">标签: ${food.tags ? food.tags.join(', ') : '无'}</div>
+                    </div>
+                `;
+            }).join('');
         }
         
         // 渲染照片网格
@@ -1108,9 +1252,17 @@
         function applyFilters() {
             filteredPhotos = photos.filter(photo => {
                 // 搜索筛选
-                if (searchTerm && !photo.name.toLowerCase().includes(searchTerm.toLowerCase()) 
-                    && !photo.display_name.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    return false;
+                if (searchTerm) {
+                    const query = searchTerm.toLowerCase();
+                    const matchesName = photo.name && photo.name.toLowerCase().includes(query);
+                    const matchesDisplayName = photo.display_name && photo.display_name.toLowerCase().includes(query);
+                    const matchesCategory = photo.category && photo.category.toLowerCase().includes(query);
+                    const matchesTags = photo.tags && Array.isArray(photo.tags) && 
+                                      photo.tags.some(tag => tag.toLowerCase().includes(query));
+                    
+                    if (!matchesName && !matchesDisplayName && !matchesCategory && !matchesTags) {
+                        return false;
+                    }
                 }
                 
                 // 状态筛选
@@ -1281,6 +1433,34 @@
             return null;
         }
         
+        // 高亮显示绑定的照片
+        function highlightBoundPhoto(photoName) {
+            // 移除之前的高亮
+            document.querySelectorAll('.photo-item.highlighted').forEach(item => {
+                item.classList.remove('highlighted');
+            });
+            
+            // 找到对应的照片元素
+            const photoElement = document.querySelector(`[data-photo-name="${photoName}"]`);
+            if (photoElement) {
+                // 添加高亮效果
+                photoElement.classList.add('highlighted');
+                
+                // 滚动到照片位置
+                photoElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // 3秒后移除高亮
+                setTimeout(() => {
+                    photoElement.classList.remove('highlighted');
+                }, 3000);
+                
+                showMessage(`已定位到绑定的照片: ${photoName}`, 'info');
+            }
+        }
+        
         // 更新绑定关系显示
         function updateBindingDisplay() {
             const bindingList = document.getElementById('bindingList');
@@ -1332,13 +1512,83 @@
         
         // 搜索过滤食物
         function filterFoods() {
-            const query = document.getElementById('foodSearch').value.toLowerCase();
-            const filtered = foods.filter(food => 
-                food.name.toLowerCase().includes(query) ||
-                food.cuisine.toLowerCase().includes(query) ||
-                (food.tags && food.tags.some(tag => tag.toLowerCase().includes(query)))
-            );
+            const query = document.getElementById('foodSearch').value.toLowerCase().trim();
+            
+            if (!query) {
+                // 如果搜索框为空，显示所有食物
+                renderFoods();
+                return;
+            }
+            
+            const filtered = foods.filter(food => {
+                // 搜索食物名称
+                if (food.name && food.name.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                // 搜索菜系
+                if (food.cuisine && food.cuisine.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                // 搜索分类
+                if (food.category && food.category.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                // 搜索标签
+                if (food.tags && Array.isArray(food.tags)) {
+                    return food.tags.some(tag => tag.toLowerCase().includes(query));
+                }
+                
+                // 搜索描述
+                if (food.description && food.description.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                return false;
+            });
+            
             renderFoods(filtered);
+            
+            // 更新食物列表统计
+            const foodList = document.getElementById('foodList');
+            const searchInfo = document.createElement('div');
+            searchInfo.className = 'search-info';
+            searchInfo.innerHTML = `<small class="text-muted">搜索 "${query}" 找到 ${filtered.length} 个结果</small>`;
+            
+            // 移除之前的搜索信息
+            const existingInfo = foodList.querySelector('.search-info');
+            if (existingInfo) {
+                existingInfo.remove();
+            }
+            
+            // 添加新的搜索信息
+            if (query && filtered.length > 0) {
+                foodList.insertBefore(searchInfo, foodList.firstChild);
+            }
+        }
+        
+        // 清除食物搜索
+        function clearFoodSearch() {
+            const foodSearchInput = document.getElementById('foodSearch');
+            const foodSearchClear = document.getElementById('foodSearchClear');
+            
+            foodSearchInput.value = '';
+            foodSearchClear.style.display = 'none';
+            filterFoods();
+        }
+        
+        // 清除照片搜索
+        function clearPhotoSearch() {
+            const photoSearchInput = document.getElementById('photoSearch');
+            const photoSearchClear = document.getElementById('photoSearchClear');
+            
+            photoSearchInput.value = '';
+            photoSearchClear.style.display = 'none';
+            searchTerm = '';
+            currentPage = 1;
+            applyFilters();
         }
         
         // 搜索照片（重命名避免冲突）
@@ -1676,6 +1926,8 @@
             
             if (successCount > 0) {
                 showMessage(`成功上传 ${successCount} 张图片`, 'success');
+                // 重新应用过滤器以更新filteredPhotos数组
+                applyFilters();
                 // 重新渲染照片列表
                 renderPhotos();
                 updateStats();

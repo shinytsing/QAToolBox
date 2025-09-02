@@ -3542,12 +3542,11 @@ function displayNewFormatGuide(detailedGuide) {
 
 // 显示目的地概览信息（支持DeepSeek + 免费API数据）
 function displayDestinationInfo(guide) {
-  console.log('显示概览信息:', guide);
-  console.log('目的地信息:', guide.destination_info);
-  console.log('天气信息:', guide.weather_info);
-  console.log('汇率信息:', guide.currency_info);
-  console.log('时区信息:', guide.timezone_info);
-  
+
+
+
+
+
   // 目的地信息
   const destinationInfo = document.getElementById('destinationInfo');
   if (destinationInfo) {
@@ -3635,7 +3634,7 @@ function displayDestinationInfo(guide) {
 // 显示增强内容（已废弃，使用新的标签页系统）
 function displayEnhancedContent(guide) {
   // 这个函数已不再使用，保留以避免错误
-  console.log('displayEnhancedContent已废弃，使用新的标签页系统');
+
 }
 
 // 显示景点详情
@@ -4151,8 +4150,7 @@ function createSection(title, content) {
 
 // 格式化详细攻略
 function formatDetailedGuide(content) {
-  console.log('formatDetailedGuide 输入:', content, '类型:', typeof content);
-  
+
   // 确保content是字符串类型
   if (typeof content !== 'string') {
     console.warn('formatDetailedGuide: content不是字符串类型，尝试转换:', content);
@@ -4840,7 +4838,7 @@ function showTravelForm() {
 // 显示攻略列表
 function showGuidesList() {
   // 功能已隐藏
-  console.log('我的攻略功能已隐藏');
+
   return;
 }
 
@@ -5197,7 +5195,7 @@ function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
     // 使用现代Clipboard API
     navigator.clipboard.writeText(text).then(() => {
-      console.log('链接已复制到剪贴板');
+
     }).catch(err => {
       console.error('复制失败:', err);
       fallbackCopyToClipboard(text);
@@ -5221,7 +5219,7 @@ function fallbackCopyToClipboard(text) {
   
   try {
     document.execCommand('copy');
-    console.log('链接已复制到剪贴板（降级方案）');
+
   } catch (err) {
     console.error('复制失败:', err);
   }
@@ -5407,7 +5405,7 @@ function showToast(message) {
 document.addEventListener('DOMContentLoaded', function() {
   // 检查分享模态框是否存在，如果不存在则创建
   if (!document.getElementById('shareModal')) {
-    console.log('分享模态框不存在，正在创建...');
+
     createShareModal();
   }
 });
@@ -5467,7 +5465,7 @@ let currentGoodPeopleGuide = null;
 // 显示好心人攻略列表
 function showGoodPeopleGuides() {
   // 功能已隐藏
-  console.log('好心人攻略功能已隐藏');
+
   return;
 }
 

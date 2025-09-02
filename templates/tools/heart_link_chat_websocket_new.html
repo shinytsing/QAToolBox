@@ -596,17 +596,14 @@ const roomId = '{{ room_id }}';
 
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面加载完成，开始初始化... [版本: 2024-01-01-v2]');
-    
+
     // 检查roomId是否有效
     if (!roomId || roomId === 'undefined' || roomId === 'null' || roomId === '') {
         console.error('❌ 无效的roomId:', roomId);
         console.error('无法初始化聊天功能');
         return;
     }
-    
-    console.log('✅ roomId有效:', roomId);
-    
+
     // 延迟一点初始化，确保DOM完全准备好
     setTimeout(() => {
         initializeEventListeners();
@@ -617,14 +614,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 初始化事件监听器
 function initializeEventListeners() {
-    console.log('初始化事件监听器...');
-    
+
     // 表情按钮 - 彻底重写
-    console.log('🎭 开始初始化表情按钮...');
+
     const emojiBtn = document.getElementById('emoji-btn');
     if (emojiBtn) {
-        console.log('✅ 找到表情按钮，开始配置...');
-        
+
         // 清除所有旧事件
         emojiBtn.removeEventListener('click', handleEmojiClick);
         emojiBtn.onclick = null;
@@ -638,7 +633,7 @@ function initializeEventListeners() {
         
         // 使用简单直接的事件处理
         emojiBtn.onclick = function(e) {
-            console.log('🎭 表情按钮被点击！');
+
             e.preventDefault();
             e.stopPropagation();
             toggleEmojiPicker();
@@ -646,25 +641,24 @@ function initializeEventListeners() {
         
         // 添加hover效果验证按钮响应
         emojiBtn.onmouseenter = function() {
-            console.log('🎭 鼠标进入表情按钮');
+
             this.style.backgroundColor = '#e9ecef';
         };
         
         emojiBtn.onmouseleave = function() {
-            console.log('🎭 鼠标离开表情按钮');
+
             this.style.backgroundColor = '';
         };
-        
-        console.log('✅ 表情按钮事件绑定完成');
+
     } else {
         console.error('❌ 表情按钮未找到！');
         setTimeout(() => {
-            console.log('🔍 延迟查找表情按钮...');
+
             const delayedBtn = document.getElementById('emoji-btn');
             if (delayedBtn) {
-                console.log('⏰ 延迟找到表情按钮，重新绑定...');
+
                 delayedBtn.onclick = function(e) {
-                    console.log('🎭 延迟绑定的表情按钮被点击！');
+
                     e.preventDefault();
                     e.stopPropagation();
                     toggleEmojiPicker();
@@ -722,24 +716,20 @@ function initializeEventListeners() {
 function handleEmojiClick(event) {
     event.preventDefault();
     event.stopPropagation();
-    
-    console.log('表情按钮被点击');
-    
+
     const picker = document.getElementById('emoji-picker');
     if (picker) {
         // 检查当前显示状态
         const isCurrentlyVisible = picker.classList.contains('show') || 
                                   picker.style.display === 'block' ||
                                   getComputedStyle(picker).display === 'block';
-        
-        console.log('当前可见状态:', isCurrentlyVisible);
-        
+
         if (isCurrentlyVisible) {
             // 隐藏
             picker.classList.remove('show');
             picker.style.display = 'none';
             picker.style.visibility = 'hidden';
-            console.log('表情选择器显示状态: false (隐藏)');
+
         } else {
             // 显示
             picker.classList.add('show');
@@ -749,7 +739,7 @@ function handleEmojiClick(event) {
             picker.style.zIndex = '99999';
             picker.style.bottom = '100%';
             picker.style.left = '0';
-            console.log('表情选择器显示状态: true (显示)');
+
         }
     } else {
         console.error('表情选择器未找到');
@@ -767,15 +757,13 @@ function connectWebSocket() {
     
     // 检查是否已经连接
     if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log('✅ WebSocket已经连接，无需重复连接');
+
         return;
     }
     
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/chat/${roomId}/`;
-    
-    console.log('🔌 尝试连接WebSocket:', wsUrl);
-    
+
     try {
         socket = new WebSocket(wsUrl);
     } catch (error) {
@@ -784,7 +772,7 @@ function connectWebSocket() {
     }
     
     socket.onopen = function(event) {
-        console.log('WebSocket连接已建立');
+
         updateConnectionStatus(true);
         reconnectAttempts = 0;
     };
@@ -795,14 +783,14 @@ function connectWebSocket() {
     };
     
     socket.onclose = function(event) {
-        console.log('WebSocket连接已关闭，代码:', event.code, '原因:', event.reason);
+
         updateConnectionStatus(false);
         
         // 如果不是正常关闭，尝试重连
         if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
             setTimeout(() => {
                 reconnectAttempts++;
-                console.log(`尝试重新连接... (${reconnectAttempts}/${maxReconnectAttempts})`);
+
                 // 检查roomId是否仍然有效
                 if (roomId && roomId !== 'undefined' && roomId !== 'null' && roomId !== '') {
                     connectWebSocket();
@@ -838,11 +826,10 @@ function updateConnectionStatus(connected) {
 
 // 处理WebSocket消息
 function handleWebSocketMessage(data) {
-    console.log('收到WebSocket消息:', data);
-    
+
     switch (data.type) {
         case 'connection_established':
-            console.log('WebSocket连接成功');
+
             break;
             
         case 'chat_message':
@@ -854,13 +841,13 @@ function handleWebSocketMessage(data) {
             break;
             
         case 'user_joined':
-            console.log('用户加入聊天室:', data.username);
+
             showSystemMessage(`${data.username} 加入了聊天室`);
             break;
             
         case 'new_message':
             // 收到新消息通知，刷新消息列表
-            console.log('收到新消息通知，刷新消息列表');
+
             loadInitialMessages();
             break;
             
@@ -877,7 +864,7 @@ function handleWebSocketMessage(data) {
             break;
             
         default:
-            console.log('未知消息类型:', data.type);
+
     }
 }
 
@@ -888,9 +875,7 @@ function loadInitialMessages() {
         console.error('❌ 无效的roomId，无法加载消息:', roomId);
         return;
     }
-    
-    console.log('📨 加载初始消息，roomId:', roomId);
-    
+
     fetch(`/tools/api/chat/${roomId}/messages/`)
         .then(response => response.json())
         .then(data => {
@@ -1005,15 +990,13 @@ function sendMessage() {
     const content = input.value.trim();
     
     if (!content) {
-        console.log('Message blocked: empty content');
+
         return;
     }
     
     const sendBtn = document.getElementById('send-btn');
     sendBtn.disabled = true;
-    
-    console.log('Sending message:', content);
-    
+
     // 通过WebSocket发送消息
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
@@ -1046,18 +1029,17 @@ function handleKeyDown(event) {
         
         const sendBtn = document.getElementById('send-btn');
         if (sendBtn.disabled) {
-            console.log('Enter blocked by disabled button');
+
             return false;
         }
         
         const input = document.getElementById('chat-input');
         const content = input.value.trim();
         if (!content) {
-            console.log('Enter blocked: empty content');
+
             return false;
         }
-        
-        console.log('Sending message via Enter key');
+
         sendMessage();
         
         return false;
@@ -1112,8 +1094,7 @@ function showSystemMessage(message) {
 
 // 发送视频通话邀请
 function sendVideoCallInvite() {
-    console.log('发送视频通话邀请...');
-    
+
     // 通过WebSocket发送邀请
     if (socket && socket.readyState === WebSocket.OPEN) {
         const message = {
@@ -1123,8 +1104,7 @@ function sendVideoCallInvite() {
         };
         
         socket.send(JSON.stringify(message));
-        console.log('视频邀请已发送');
-        
+
         // 在聊天中显示邀请消息
         showVideoInviteMessage('您', '发起了视频通话邀请', roomId, true);
     } else {
@@ -1135,31 +1115,28 @@ function sendVideoCallInvite() {
 
 // 处理收到的视频通话邀请
 function handleVideoCallInvite(data) {
-    console.log('收到视频通话邀请:', data);
-    
+
     // 在聊天中显示邀请消息
     showVideoInviteMessage(data.username || '对方', '邀请您进行视频通话', data.room_id || roomId, false);
 }
 
 // 处理视频通话状态更新
 function handleVideoCallStatus(data) {
-    console.log('🎥 收到视频通话状态更新:', data);
-    
+
     if (data.message_id) {
-        console.log('🎥 查找消息ID:', data.message_id);
+
         // 查找所有可能的消息ID（因为可能有多个视频邀请消息）
         const allVideoInvites = document.querySelectorAll('.video-invite-message');
-        console.log('🎥 找到的视频邀请消息数量:', allVideoInvites.length);
-        
+
         allVideoInvites.forEach((invite, index) => {
             const messageId = invite.id;
-            console.log(`🎥 处理邀请 ${index + 1}: messageId=${messageId}`);
+
             if (messageId) {
                 updateVideoCallStatus(messageId, data.status, data.username || '对方');
             }
         });
     } else {
-        console.log('⚠️ 缺少message_id，无法更新状态');
+
     }
 }
 
@@ -1263,7 +1240,7 @@ function monitorVideoCallStatus(videoRoomId, messageId) {
                 }
             }
         } catch (error) {
-            console.log('检查视频聊天室状态失败:', error);
+
         }
         
         if (checkCount > maxChecks) {
@@ -1322,8 +1299,7 @@ function updateVideoCallStatus(messageId, status, userInfo) {
 
 // 加入视频通话
 function joinVideoCall(videoRoomId, messageId) {
-    console.log('加入视频通话:', videoRoomId);
-    
+
     // 更新状态
     if (messageId) {
         updateVideoCallStatus(messageId, 'joined', '您');
@@ -1347,8 +1323,7 @@ function joinVideoCall(videoRoomId, messageId) {
 
 // 拒绝视频通话
 function declineVideoCall(messageId) {
-    console.log('拒绝视频通话');
-    
+
     // 更新状态
     if (messageId) {
         updateVideoCallStatus(messageId, 'declined', '您');
@@ -1369,7 +1344,7 @@ function declineVideoCall(messageId) {
 
 // 切换表情选择器
 function toggleEmojiPicker() {
-    console.log('🎭 切换表情选择器...');
+
     const picker = document.getElementById('emoji-picker');
     if (!picker) {
         console.error('❌ 表情选择器未找到');
@@ -1378,20 +1353,18 @@ function toggleEmojiPicker() {
     
     // 检查当前显示状态
     const isCurrentlyVisible = picker.classList.contains('show');
-    
-    console.log('🎭 当前状态分析:');
-    console.log('  - classList.contains("show"):', isCurrentlyVisible);
-    
+
+
     if (isCurrentlyVisible) {
         // 隐藏表情选择器
-        console.log('🎭 执行隐藏操作...');
+
         picker.classList.remove('show');
         picker.style.display = 'none';
         picker.style.visibility = 'hidden';
-        console.log('✅ 表情选择器已隐藏');
+
     } else {
         // 显示表情选择器 - 强制设置所有必要样式
-        console.log('🎭 执行显示操作... [v2.0强化版本]');
+
         picker.classList.add('show');
         
         // 强制设置样式，确保显示
@@ -1409,14 +1382,12 @@ function toggleEmojiPicker() {
         picker.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
         picker.style.minWidth = '200px';
         picker.style.maxWidth = '300px';
-        
-        console.log('✅ 表情选择器已显示 [强制样式设置完成]');
-        
+
         // 延迟添加关闭监听器
         setTimeout(() => {
             function closeEmojiPicker(e) {
                 if (!picker.contains(e.target) && !e.target.closest('#emoji-btn')) {
-                    console.log('🎭 点击外部，关闭表情选择器');
+
                     picker.classList.remove('show');
                     picker.style.display = 'none';
                     picker.style.visibility = 'hidden';
@@ -1434,14 +1405,14 @@ function toggleEmojiPicker() {
         const finalOpacity = getComputedStyle(picker).opacity;
         const finalZIndex = getComputedStyle(picker).zIndex;
         const hasShowClass = picker.classList.contains('show');
-        console.log('🎭 最终状态验证:');
-        console.log('  - display =', finalDisplay);
-        console.log('  - visibility =', finalVisibility);
-        console.log('  - opacity =', finalOpacity);
-        console.log('  - zIndex =', finalZIndex);
-        console.log('  - hasShowClass =', hasShowClass);
-        console.log('  - offsetWidth =', picker.offsetWidth);
-        console.log('  - offsetHeight =', picker.offsetHeight);
+
+
+
+
+
+
+
+
     }, 100);
 }
 
@@ -1533,8 +1504,7 @@ function handleImageUpload(event) {
         if (progressDiv) progressDiv.style.display = 'none';
         if (data.success) {
             // 图片上传成功，通过WebSocket广播给其他用户
-            console.log('图片上传成功:', data.message);
-            
+
             // 发送WebSocket消息通知其他用户有新图片
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
@@ -1542,7 +1512,7 @@ function handleImageUpload(event) {
                     'message_id': data.message.id,
                     'room_id': roomId
                 }));
-                console.log('已通知其他用户有新图片消息');
+
             }
             
             // 本地刷新消息列表
@@ -1605,8 +1575,7 @@ function handleFileUpload(event) {
     .then(data => {
         if (data.success) {
             // 文件上传成功，通过WebSocket广播给其他用户
-            console.log('文件上传成功:', data.message);
-            
+
             // 发送WebSocket消息通知其他用户有新文件
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
@@ -1614,7 +1583,7 @@ function handleFileUpload(event) {
                     'message_id': data.message.id,
                     'room_id': roomId
                 }));
-                console.log('已通知其他用户有新文件消息');
+
             }
             
             // 本地刷新消息列表
@@ -1681,8 +1650,7 @@ function startRecording() {
             
             // 开始录音计时
             startRecordingTimer();
-            
-            console.log('开始录音');
+
         })
         .catch(error => {
             console.error('录音失败:', error);
@@ -1706,8 +1674,7 @@ function stopRecording() {
         
         // 停止计时
         stopRecordingTimer();
-        
-        console.log('停止录音');
+
     }
 }
 
@@ -1743,8 +1710,7 @@ function uploadAudio(audioBlob) {
         if (progressDiv) progressDiv.style.display = 'none';
         if (data.success) {
             // 语音上传成功，通过WebSocket广播给其他用户
-            console.log('语音上传成功:', data.message);
-            
+
             // 发送WebSocket消息通知其他用户有新语音
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
@@ -1752,7 +1718,7 @@ function uploadAudio(audioBlob) {
                     'message_id': data.message.id,
                     'room_id': roomId
                 }));
-                console.log('已通知其他用户有新语音消息');
+
             }
             
             // 本地刷新消息列表
@@ -1804,9 +1770,7 @@ function markMessagesAsRead() {
             const messageDiv = el.closest('.message');
             return messageDiv.getAttribute('data-message-id');
         });
-        
-        console.log('标记消息为已读:', messageIds);
-        
+
         // 通过WebSocket发送已读状态
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
@@ -1834,7 +1798,7 @@ function markMessagesAsRead() {
         })
         .then(data => {
             if (data.success) {
-                console.log('API标记已读成功');
+
             }
         })
         .catch(error => {
@@ -1860,7 +1824,7 @@ function updateMessageReadStatus(messageIds, username) {
 // 处理用户打字状态
 function handleUserTyping(username, isTyping) {
     // 可以在这里显示"对方正在输入..."的提示
-    console.log(`${username} ${isTyping ? '正在输入' : '停止输入'}`);
+
 }
 
 // 自动调整输入框高度
@@ -1877,7 +1841,7 @@ function scrollToBottom() {
 
 // 打开图片模态框
 function openImageModal(imageUrl) {
-    console.log('打开图片预览:', imageUrl);
+
     const modalElement = document.getElementById('imageModal');
     const modalImage = document.getElementById('modal-image');
     
@@ -1889,15 +1853,14 @@ function openImageModal(imageUrl) {
     
     // 确保图片URL是完整的
     const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : window.location.origin + imageUrl;
-    console.log('完整图片URL:', fullImageUrl);
-    
+
     // 先设置图片源
     modalImage.src = fullImageUrl;
     window.currentImageUrl = fullImageUrl; // 保存图片URL用于下载
     
     // 确保图片加载完成后再显示模态框
     modalImage.onload = function() {
-        console.log('图片加载完成，显示模态框');
+
         try {
             // 检查Bootstrap是否可用
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -1964,7 +1927,7 @@ function downloadImage() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        console.log('图片下载已开始');
+
     } catch (error) {
         console.error('下载图片失败:', error);
         // 备用方案：在新窗口打开
@@ -1974,8 +1937,7 @@ function downloadImage() {
 
 // 下载文件
 function downloadFile(fileUrl, fileName) {
-    console.log('开始下载文件:', fileName, 'URL:', fileUrl);
-    
+
     // 如果是聊天室文件，使用专门的下载API
     if (fileUrl.includes('/media/chat_')) {
         // 从URL中提取消息ID
@@ -1985,8 +1947,7 @@ function downloadFile(fileUrl, fileName) {
         
         if (messageId) {
             const downloadUrl = `/tools/api/chat/${roomId}/download/${messageId}/`;
-            console.log('使用聊天室下载API:', downloadUrl);
-            
+
             // 创建一个隐藏的下载链接
             const link = document.createElement('a');
             link.href = downloadUrl;
@@ -2021,7 +1982,7 @@ function downloadFile(fileUrl, fileName) {
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
-                console.log('文件下载已开始:', fileName);
+
             })
             .catch(error => {
                 console.error('下载文件失败:', error);
@@ -2085,12 +2046,12 @@ setInterval(() => {
                 console.error('❌ 心跳包发送失败:', error);
                 // 如果心跳包发送失败，可能需要重新连接
                 if (error.name === 'InvalidStateError' || error.name === 'NetworkError') {
-                    console.log('检测到连接状态异常，尝试重新连接...');
+
                     connectWebSocket();
                 }
             }
         } else if (socket && socket.readyState === WebSocket.CLOSED) {
-            console.log('检测到WebSocket连接已断开，尝试重连...');
+
             // 检查roomId是否仍然有效
             if (roomId && roomId !== 'undefined' && roomId !== 'null' && roomId !== '') {
                 connectWebSocket();

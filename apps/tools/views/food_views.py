@@ -81,7 +81,7 @@ def api_food_photo_bindings(request):
     try:
         # 获取查询参数
         user_id = request.GET.get('user_id', request.user.id)
-        limit = int(request.GET.get('limit', 20))
+        limit = int(request.GET.get('limit', 1000))
         
         # 获取真实的食物照片绑定数据
         from apps.tools.models.legacy_models import FoodPhotoBinding
@@ -243,12 +243,24 @@ def api_upload_food_photo(request):
         file_extension = os.path.splitext(photo_file.name)[1]
         unique_filename = f"{uuid.uuid4()}{file_extension}"
         
-        # 保存文件
-        file_path = f"food_photos/{unique_filename}"
-        saved_path = default_storage.save(file_path, photo_file)
+        # 保存文件到静态文件夹
+        import shutil
+        import os
+        from django.conf import settings
+        
+        # 使用STATICFILES_DIRS中的第一个目录（开发环境）
+        static_base_dir = settings.STATICFILES_DIRS[0] if settings.STATICFILES_DIRS else settings.STATIC_ROOT
+        static_food_dir = os.path.join(static_base_dir, 'img', 'food')
+        os.makedirs(static_food_dir, exist_ok=True)
+        
+        # 保存文件到静态文件夹
+        target_path = os.path.join(static_food_dir, unique_filename)
+        with open(target_path, 'wb+') as destination:
+            for chunk in photo_file.chunks():
+                destination.write(chunk)
         
         # 获取文件URL
-        file_url = default_storage.url(saved_path)
+        file_url = f'/static/img/food/{unique_filename}'
         
         logger.info(f"上传食物照片: 用户 {request.user.id}, 文件 {unique_filename}")
         

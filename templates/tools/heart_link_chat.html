@@ -729,8 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 测试表情按钮功能
     const emojiBtn = document.getElementById('emoji-btn');
     if (emojiBtn) {
-        console.log('Emoji button found:', emojiBtn);
-        
+
         // 移除可能存在的旧事件监听器
         emojiBtn.removeEventListener('click', handleEmojiClick);
         
@@ -740,15 +739,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // 测试按钮是否可点击
         emojiBtn.style.pointerEvents = 'auto';
         emojiBtn.style.cursor = 'pointer';
-        
-        console.log('Emoji button event listener added');
+
     } else {
         console.error('Emoji button not found!');
     }
     
     // 表情按钮点击处理函数
     function handleEmojiClick(e) {
-        console.log('Emoji button clicked!', e);
+
         e.preventDefault();
         e.stopPropagation();
         toggleEmojiPicker();
@@ -1025,7 +1023,7 @@ function updateLocalMessageStatus() {
 }
 
 function toggleEmojiPicker() {
-    console.log('toggleEmojiPicker called'); // 调试日志
+
     const picker = document.getElementById('emoji-picker');
     if (!picker) {
         console.error('Emoji picker not found!');
@@ -1033,18 +1031,17 @@ function toggleEmojiPicker() {
     }
     
     const currentDisplay = picker.style.display;
-    console.log('Current display:', currentDisplay); // 调试日志
+
     
     // 检查当前状态并切换
     if (currentDisplay === 'none' || currentDisplay === '') {
         picker.style.display = 'block';
-        console.log('Showing emoji picker');
+
     } else {
         picker.style.display = 'none';
-        console.log('Hiding emoji picker');
+
     }
-    
-    console.log('New display:', picker.style.display); // 调试日志
+
 }
 
 function insertEmoji(emoji) {

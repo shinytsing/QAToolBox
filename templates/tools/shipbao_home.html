@@ -1041,8 +1041,7 @@ let isLocationInputVisible = false;
 
 // 初始化位置信息
 function initializeLocation() {
-    console.log('开始初始化位置信息');
-    
+
     // 显示位置区域
     const locationDisplay = document.getElementById('location-display');
     if (locationDisplay) {
@@ -1054,7 +1053,7 @@ function initializeLocation() {
     if (savedLocation) {
         try {
             userLocation = JSON.parse(savedLocation);
-            console.log('从本地存储加载位置:', userLocation);
+
             updateLocationDisplay(userLocation);
             return;
         } catch (e) {
@@ -1068,7 +1067,7 @@ function initializeLocation() {
 
 // 请求用户位置
 function requestUserLocation() {
-    console.log('请求用户位置权限');
+
     const locationText = document.getElementById('location-text');
     
     if (locationText) {
@@ -1079,7 +1078,7 @@ function requestUserLocation() {
         navigator.geolocation.getCurrentPosition(
             // 成功回调
             function(position) {
-                console.log('成功获取地理位置:', position.coords);
+
                 const coords = {
                     lat: position.coords.latitude,
                     lon: position.coords.longitude
@@ -1108,8 +1107,7 @@ function requestUserLocation() {
 
 // 使用坐标获取详细地址信息
 function getLocationDetails(coords) {
-    console.log('使用坐标获取地址详情:', coords);
-    
+
     fetch('/tools/api/map/reverse-geocode/', {
         method: 'POST',
         headers: {
@@ -1123,8 +1121,7 @@ function getLocationDetails(coords) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('地址解析结果:', data);
-        
+
         if (data.success && data.location) {
             const locationInfo = {
                 city: data.location.city || '未知城市',
@@ -1167,8 +1164,7 @@ function handleLocationError(error) {
             errorMessage = '位置获取失败，请手动输入';
             break;
     }
-    
-    console.log('位置错误:', errorMessage);
+
     showLocationInput(errorMessage);
 }
 
@@ -1235,8 +1231,7 @@ function saveLocation() {
     }
     
     const cityName = input.value.trim();
-    console.log('手动保存位置:', cityName);
-    
+
     // 创建位置对象
     const locationInfo = {
         city: cityName,
@@ -1254,8 +1249,7 @@ function saveLocation() {
 
 // 地理编码城市名称
 function geocodeCity(cityName, locationInfo) {
-    console.log('对城市进行地理编码:', cityName);
-    
+
     fetch('/tools/api/map/geocode/', {
         method: 'POST',
         headers: {
@@ -1268,8 +1262,7 @@ function geocodeCity(cityName, locationInfo) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('城市编码结果:', data);
-        
+
         if (data.success && data.location) {
             locationInfo.lat = data.location.lat;
             locationInfo.lon = data.location.lon;
@@ -1302,8 +1295,7 @@ function geocodeCity(cityName, locationInfo) {
 function saveLocationToStorage(location) {
     try {
         localStorage.setItem('shipbao_user_location', JSON.stringify(location));
-        console.log('位置已保存到本地存储:', location);
-        
+
         // 同时发送到服务器保存（如果用户已登录）
         saveLocationToServer(location);
     } catch (e) {
@@ -1324,9 +1316,9 @@ function saveLocationToServer(location) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log('位置已保存到服务器');
+
         } else {
-            console.log('保存位置到服务器失败:', data.error);
+
         }
     })
     .catch(error => {
@@ -1341,8 +1333,7 @@ function getCurrentUserLocation() {
 
 // 页面初始化 - 统一的DOMContentLoaded事件处理
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面初始化...');
-    
+
     // 初始化位置信息
     initializeLocation();
     
@@ -1357,7 +1348,7 @@ document.addEventListener('DOMContentLoaded', function() {
     allFilterElements.forEach(element => {
         if (element) {
             element.addEventListener('change', () => {
-                console.log('筛选条件改变，重新加载物品');
+
                 loadItems(1); // 重置到第一页
             });
         }
@@ -1375,12 +1366,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 输入事件（防抖）
         searchInput.addEventListener('input', debounce(() => {
-            console.log('搜索条件改变，重新加载物品');
+
             loadItems(1);
         }, 500));
     }
-    
-    console.log('页面初始化完成');
+
 });
 
 // 防抖函数

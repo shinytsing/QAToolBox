@@ -192,7 +192,7 @@ class MobileOptimization {
     
     onSwipeUp() {
         // 向上滑动
-        console.log('Swipe up detected');
+
     }
     
     onSwipeDown() {
@@ -615,13 +615,13 @@ class MobileOptimization {
     // 显示滑动返回提示
     showSwipeBackHint() {
         // 可以显示一个提示用户可以滑动返回的UI
-        console.log('Swipe back hint');
+
     }
     
     // 显示下拉刷新
     showPullToRefresh() {
         // 实现下拉刷新功能
-        console.log('Pull to refresh');
+
     }
     
     // 公共方法：显示Toast

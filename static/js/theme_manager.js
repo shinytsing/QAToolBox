@@ -65,7 +65,7 @@ class ThemeManager {
      * 初始化主题管理器
      */
     init() {
-        console.log('🎨 主题管理器初始化');
+
         this.applyTheme(this.currentTheme);
         this.setupEventListeners();
         
@@ -108,9 +108,7 @@ class ThemeManager {
             console.error(`❌ 无效的主题: ${theme}`);
             return false;
         }
-        
-        console.log(`🎨 切换到主题: ${theme}`);
-        
+
         try {
             // 应用主题样式
             this.applyTheme(theme);
@@ -126,8 +124,7 @@ class ThemeManager {
             
             // 触发主题切换事件
             this.triggerThemeChangeEvent(theme);
-            
-            console.log(`✅ 主题切换成功: ${theme}`);
+
             return true;
             
         } catch (error) {
@@ -198,8 +195,7 @@ class ThemeManager {
         link.href = cssUrl;
         link.id = `theme-css-${theme}`;
         document.head.appendChild(link);
-        
-        console.log(`🎨 已加载主题CSS: ${cssUrl}`);
+
     }
     
     /**
@@ -254,9 +250,7 @@ class ThemeManager {
             if (!data.success) {
                 throw new Error(data.error || '保存失败');
             }
-            
-            console.log('✅ 主题已保存到服务器');
-            
+
         } catch (error) {
             console.warn('⚠️ 保存主题到服务器失败:', error.message);
             // 不抛出错误，因为本地保存已经成功
@@ -457,5 +451,3 @@ window.ThemeManager = new ThemeManager();
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ThemeManager;
 }
-
-console.log('✅ 主题管理器加载完成');

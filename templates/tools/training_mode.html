@@ -855,8 +855,7 @@ let maniaResetTimer = null;
 document.addEventListener('click', function(e) {
   // 增加点击计数
   trainingModeClickCount++;
-  console.log('狂暴模式点击次数:', trainingModeClickCount);
-  
+
   // 显示点击计数器
   const clickCounter = document.getElementById('clickCounter');
   const clickCount = document.getElementById('clickCount');
@@ -876,7 +875,7 @@ document.addEventListener('click', function(e) {
 
 // 激活血色模式
 function activateBloodMode() {
-  console.log('🩸 激活血色模式！');
+
   bloodMode = true;
   
   // 添加血色样式
@@ -899,8 +898,7 @@ function activateBloodMode() {
 // 增加狂躁症等级
 function increaseManiaLevel() {
   maniaLevel = Math.min(maniaLevel + 1, 5);
-  console.log('狂躁症等级:', maniaLevel);
-  
+
   // 更新狂躁症等级显示
   const maniaLevelSpan = document.getElementById('maniaLevel');
   const maniaBar = document.getElementById('maniaBar');
@@ -935,7 +933,7 @@ function increaseManiaLevel() {
 
 // 重置狂躁症等级
 function resetManiaLevel() {
-  console.log('🔄 狂躁症等级重置');
+
   maniaLevel = 0;
   
   // 更新显示

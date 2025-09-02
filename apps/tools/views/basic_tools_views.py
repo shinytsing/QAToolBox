@@ -24,6 +24,11 @@ def test_case_generator(request):
     """测试用例生成器页面"""
     return render(request, 'tools/test_case_generator.html')
 
+@login_required
+def task_manager(request):
+    """后台任务管理器页面"""
+    return render(request, 'tools/task_manager.html')
+
 
 @login_required
 def redbook_generator(request):

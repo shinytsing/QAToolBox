@@ -152,30 +152,35 @@
 
         /* 选择框特殊样式 */
         select.form-control {
-            background-image: linear-gradient(45deg, transparent 50%, #667eea 50%), 
-                              linear-gradient(135deg, #667eea 50%, transparent 50%);
-            background-position: calc(100% - 30px) calc(1em + 2px), calc(100% - 25px) calc(1em + 2px);
-            background-size: 6px 6px, 6px 6px;
-            background-repeat: no-repeat;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
             background-color: #ffffff;
             color: #1a252f;
             font-weight: 700;
             padding-right: 45px; /* 为下拉箭头留出更多空间 */
             font-size: 16px;
             text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px 16px;
         }
 
 select.form-control:focus {
-    background-image: linear-gradient(45deg, transparent 50%, #5a6fd8 50%), 
-                      linear-gradient(135deg, #5a6fd8 50%, transparent 50%);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6fd8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
     background-color: #ffffff;
     color: #333333;
 }
 
 select.form-control:hover {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
     background-color: #f8f9fa;
     color: #333333;
 }
@@ -938,7 +943,7 @@ function hideProgress(progressId) {
          
          if (data.compression_info && typeof data.compression_info === 'object') {
              const info = data.compression_info;
-             console.log('压缩信息:', info); // 添加调试信息
+
              html += `
                  <div class="zip-info">
                      <h4>📊 压缩文件信息</h4>

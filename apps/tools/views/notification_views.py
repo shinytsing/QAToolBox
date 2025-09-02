@@ -271,3 +271,68 @@ def get_notification_summary_api(request):
             'success': False,
             'error': error_msg
         }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def create_system_notification_api(request):
+    """创建系统通知API"""
+    try:
+        data = json.loads(request.body)
+        title = data.get('title', '系统通知')
+        message = data.get('message', '')
+        notification_type = data.get('type', 'system')
+        
+        if not message:
+            return JsonResponse({
+                'success': False,
+                'error': '通知消息不能为空'
+            })
+        
+        # 创建系统聊天室（如果不存在）
+        from django.contrib.auth.models import User
+        admin_user = User.objects.filter(username='admin').first()
+        if not admin_user:
+            admin_user = request.user
+        
+        system_room, created = ChatRoom.objects.get_or_create(
+            name='系统通知',
+            defaults={
+                'description': '系统任务完成通知',
+                'is_public': False,
+                'created_by': admin_user
+            }
+        )
+        
+        # 创建系统消息
+        system_message = ChatMessage.objects.create(
+            room=system_room,
+            sender=admin_user,
+            content=f"**{title}**\n\n{message}",
+            message_type='system'
+        )
+        
+        # 为当前用户创建通知
+        ChatNotification.objects.create(
+            user=request.user,
+            room=system_room,
+            message=system_message
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': '系统通知已创建',
+            'notification_id': system_message.id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': '无效的JSON数据'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'创建系统通知失败: {str(e)}'
+        }, status=500)

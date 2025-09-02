@@ -76,7 +76,7 @@ function clearAllLocalStorage() {
     keysToRemove.forEach(key => {
         try {
             localStorage.removeItem(key);
-            console.log(`已清除localStorage: ${key}`);
+
         } catch (error) {
             console.error(`清除localStorage失败 ${key}:`, error);
         }
@@ -99,7 +99,7 @@ function clearAllSessionStorage() {
     keysToRemove.forEach(key => {
         try {
             sessionStorage.removeItem(key);
-            console.log(`已清除sessionStorage: ${key}`);
+
         } catch (error) {
             console.error(`清除sessionStorage失败 ${key}:`, error);
         }
@@ -234,8 +234,7 @@ function completeUserLogout() {
     if (window.userToken) {
         window.userToken = null;
     }
-    
-    console.log('用户认证状态已完全清除');
+
 }
 
 // 页面加载时检查登出状态

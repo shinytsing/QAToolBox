@@ -36,8 +36,7 @@ class TrainingPlanEditor {
           this.showNotification('💡 提示：点击左侧周安排中的训练部位可直接编辑', 'info', 5000);
         }, 1000);
       }
-      
-      console.log('训练计划编辑器初始化完成');
+
     } catch (error) {
       console.error('训练计划编辑器初始化失败:', error);
     }
@@ -595,7 +594,7 @@ class TrainingPlanEditor {
         };
         
         weekSettingsBtn.addEventListener('click', this.handleWeekSettingsClick);
-        console.log('周安排按钮事件绑定成功');
+
         return true;
       } else {
         console.warn('未找到周安排按钮元素，将在100ms后重试');
@@ -615,7 +614,7 @@ class TrainingPlanEditor {
   }
   
   showWeekSettings() {
-    console.log('showWeekSettings方法被调用');
+
     this.showNotification('周安排设置功能开发中...', 'info');
   }
 
@@ -705,7 +704,7 @@ class TrainingPlanEditor {
         this.planData.week_schedule = templateData;
         
         // 确保模板中的预设动作能够正确加载到exercise-drop-zone
-        console.log('加载模板数据:', templateData);
+
       } else {
         // 如果API失败，使用本地模板
         this.planData.week_schedule = this.getTemplateSchedule(mode);
@@ -951,9 +950,7 @@ class TrainingPlanEditor {
       console.warn(`找不到模块 ${module} 的放置区域`);
       return;
     }
-    
-    console.log(`重新渲染模块 ${module}, 动作数量: ${exercises.length}`);
-    
+
     if (exercises.length === 0) {
       dropZone.innerHTML = `
         <i class="fas fa-plus"></i>
@@ -966,7 +963,7 @@ class TrainingPlanEditor {
       // 重新生成每个动作卡片
       exercises.forEach((exercise, index) => {
         const cardHTML = this.createExerciseCard(exercise, module, index);
-        console.log(`创建卡片 ${index}: ${exercise.name}`);
+
         dropZone.insertAdjacentHTML('beforeend', cardHTML);
       });
     }
@@ -1612,9 +1609,7 @@ class TrainingPlanEditor {
     this.draggedElement = event.target.closest('.exercise-card');
     this.draggedModule = this.draggedElement.dataset.module;
     this.draggedIndex = parseInt(this.draggedElement.dataset.index);
-    
-    console.log('开始拖拽:', {module: this.draggedModule, index: this.draggedIndex});
-    
+
     // 设置拖拽效果
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/html', this.draggedElement.outerHTML);
@@ -1656,8 +1651,7 @@ class TrainingPlanEditor {
   }
 
   handleDragEnd(event) {
-    console.log('拖拽结束');
-    
+
     // 重置拖拽元素样式
     if (this.draggedElement) {
       this.draggedElement.style.opacity = '1';
@@ -1680,9 +1674,7 @@ class TrainingPlanEditor {
   reorderExercises(module, fromIndex, toIndex) {
     const currentDay = this.planData.week_schedule[this.currentDay];
     const exercises = currentDay.modules[module];
-    
-    console.log('拖拽重排序:', {module, fromIndex, toIndex, exercisesCount: exercises.length});
-    
+
     // 确保索引有效
     if (fromIndex < 0 || fromIndex >= exercises.length || toIndex < 0 || toIndex >= exercises.length) {
       console.warn('无效的拖拽索引:', fromIndex, toIndex, 'exercises.length:', exercises.length);
@@ -1691,19 +1683,17 @@ class TrainingPlanEditor {
     
     // 如果是同一个位置，不需要移动
     if (fromIndex === toIndex) {
-      console.log('同位置拖拽，忽略');
+
       return;
     }
     
     // 创建数组的深度拷贝进行操作
     const exercisesCopy = exercises.map(ex => ({...ex}));
     const movedExercise = exercisesCopy.splice(fromIndex, 1)[0];
-    console.log('移动的动作:', movedExercise ? movedExercise.name : 'undefined');
-    
+
     if (movedExercise) {
       exercisesCopy.splice(toIndex, 0, movedExercise);
-      console.log('重排序后的动作列表:', exercisesCopy.map((ex, idx) => `${idx}: ${ex.name}`));
-      
+
       // 更新原始数据
       currentDay.modules[module] = exercisesCopy;
       
@@ -1903,7 +1893,7 @@ async function selectTemplate(templateName) {
 }
 
 function previewPlan() {
-  console.log('previewPlan called, editor:', editor);
+
   if (!editor) {
     alert('编辑器未初始化，请刷新页面重试');
     return;
@@ -1935,7 +1925,7 @@ function previewPlan() {
 }
 
 function savePlan() {
-  console.log('savePlan called, editor:', editor);
+
   if (!editor) {
     alert('编辑器未初始化，请刷新页面重试');
     return;
@@ -1989,17 +1979,14 @@ function savePlan() {
         };
       }).filter(day => day.exercises.length > 0) // 只保存有内容的天
     };
-    
-    console.log('保存数据:', saveData);
-    
+
     // 显示保存中状态
     editor.showNotification('正在保存训练计划...', 'info');
     
     // 获取CSRF token
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-    console.log('CSRF Token:', csrfToken);
-    console.log('保存数据到API:', saveData);
-    
+
+
     // 保存到服务器
     fetch('/tools/api/training_plans/editor/save/', {
       method: 'POST',
@@ -2282,7 +2269,7 @@ function searchExercises() {
 
 // 全局备用函数
 function showWeekSettings() {
-  console.log('全局showWeekSettings函数被调用');
+
   if (window.editor && typeof window.editor.showWeekSettings === 'function') {
     window.editor.showWeekSettings();
   } else {
@@ -2294,17 +2281,15 @@ function showWeekSettings() {
 let editor;
 document.addEventListener('DOMContentLoaded', function() {
   try {
-    console.log('开始初始化训练计划编辑器...');
+
     editor = new TrainingPlanEditor();
-    console.log('训练计划编辑器初始化成功');
-    
+
     // 验证全局函数是否正确定义
-    console.log('检查全局函数:');
-    console.log('- importPlan:', typeof importPlan);
-    console.log('- savePlan:', typeof savePlan);
-    console.log('- previewPlan:', typeof previewPlan);
-    console.log('- editor.generatePreviewHTML:', typeof editor.generatePreviewHTML);
-    
+
+
+
+
+
     // 页面加载完成后显示内容
     const container = document.querySelector('.plan-editor-container');
     if (container) {
