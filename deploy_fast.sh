@@ -96,14 +96,30 @@ install_compose_fast() {
         return 0
     fi
     
-    # 使用pip安装Docker Compose（更快）
-    log_info "使用pip安装Docker Compose..."
-    pip3 install docker-compose -i https://pypi.tuna.tsinghua.edu.cn/simple/
+    # 使用apt安装Docker Compose（避免Python环境问题）
+    log_info "使用apt安装Docker Compose..."
+    apt-get install -y docker-compose-plugin
     
-    # 创建软链接
-    ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-    
-    log_success "Docker Compose安装完成"
+    # 检查是否安装成功
+    if command -v docker-compose &> /dev/null; then
+        log_success "Docker Compose安装完成"
+    else
+        # 如果apt安装失败，尝试直接下载
+        log_info "apt安装失败，尝试直接下载..."
+        
+        # 使用wget下载（比curl更稳定）
+        COMPOSE_VERSION="v2.24.0"
+        wget -O /usr/local/bin/docker-compose "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)"
+        
+        if [[ -f /usr/local/bin/docker-compose ]]; then
+            chmod +x /usr/local/bin/docker-compose
+            ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+            log_success "Docker Compose下载安装完成"
+        else
+            log_error "Docker Compose安装失败"
+            exit 1
+        fi
+    fi
 }
 
 # 安装基础依赖

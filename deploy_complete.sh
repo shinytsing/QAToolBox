@@ -160,8 +160,8 @@ install_docker_compose() {
         
         # 检查是否下载成功
         if [[ ! -f /usr/local/bin/docker-compose ]]; then
-            log_error "Docker Compose下载失败，使用pip安装..."
-            pip3 install docker-compose
+            log_error "Docker Compose下载失败，使用apt安装..."
+            apt-get install -y docker-compose-plugin
         else
             # 添加执行权限
             chmod +x /usr/local/bin/docker-compose
