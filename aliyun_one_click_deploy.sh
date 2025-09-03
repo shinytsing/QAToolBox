@@ -32,10 +32,12 @@ echo "🚀 QAToolBox 阿里云一键部署脚本"
 echo "=================================="
 echo ""
 
-# 检查是否为root用户
+# 检查用户权限
 if [[ $EUID -eq 0 ]]; then
-   log_error "请不要使用root用户运行此脚本"
-   exit 1
+   log_warning "检测到root用户，将使用root权限部署"
+   USER="root"
+else
+   USER="$USER"
 fi
 
 # 1. 安装git（如果没有）
