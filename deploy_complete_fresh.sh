@@ -113,9 +113,9 @@ pip install chardet==5.2.0
 pip install jieba==0.42.1
 pip install googletrans==4.0.0rc1
 pip install transformers==4.35.2
-pip install torch==2.1.1
-pip install torchvision==0.16.1
-pip install torchaudio==2.1.1
+pip install torch==2.2.0
+pip install torchvision==0.17.0
+pip install torchaudio==2.2.0
 log_success "其他依赖安装完成"
 
 # 8. 安装requirements.txt中的剩余依赖（跳过已安装的）
