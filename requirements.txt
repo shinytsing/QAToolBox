@@ -146,6 +146,13 @@ black==23.12.1
 isort==5.13.2
 bandit==1.7.5
 
+# ===== Docker和容器化支持 =====
+docker==6.1.3
+docker-compose==1.29.2
+
+# ===== 健康检查支持 =====
+django-health-check==3.17.0
+
 # ===== 基础依赖（按字母排序，避免冲突） =====
 certifi==2025.1.31
 charset-normalizer==3.4.1
