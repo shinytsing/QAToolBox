@@ -247,16 +247,47 @@ def get_notification_summary_api(request):
         logger = logging.getLogger(__name__)
         logger.info(f"获取通知摘要 - 用户: {request.user.username}")
         
-        # 直接返回空通知，避免数据库结构问题
-        response_data = {
-            'success': True,
-            'total_unread': 0,
-            'latest_notification': None,
-            'has_unread': False,
-            'user': request.user.username,
-            'timestamp': str(timezone.now()),
-            'note': 'Notification system working'
-        }
+        # 获取聊天通知
+        try:
+            unread_notifications = ChatNotification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).select_related('room', 'message', 'message__sender').order_by('-created_at')
+            
+            total_unread = unread_notifications.count()
+            latest_notification = None
+            
+            if unread_notifications.exists():
+                latest = unread_notifications.first()
+                latest_notification = {
+                    'id': latest.id,
+                    'room_id': latest.room.room_id,
+                    'room_name': latest.room.name,
+                    'sender_username': latest.message.sender.username,
+                    'message_preview': latest.message.content[:50] + ('...' if len(latest.message.content) > 50 else ''),
+                    'created_at': latest.created_at.isoformat()
+                }
+            
+            response_data = {
+                'success': True,
+                'total_unread': total_unread,
+                'latest_notification': latest_notification,
+                'has_unread': total_unread > 0,
+                'user': request.user.username,
+                'timestamp': str(timezone.now())
+            }
+        except Exception as db_error:
+            # 如果数据库查询失败，返回空通知
+            logger.warning(f"数据库查询失败，返回空通知: {db_error}")
+            response_data = {
+                'success': True,
+                'total_unread': 0,
+                'latest_notification': None,
+                'has_unread': False,
+                'user': request.user.username,
+                'timestamp': str(timezone.now()),
+                'note': 'Database query failed, returning empty notifications'
+            }
         
         logger.info(f"通知摘要响应: {response_data}")
         return JsonResponse(response_data)

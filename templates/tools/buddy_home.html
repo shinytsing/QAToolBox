@@ -735,7 +735,7 @@
         <!-- 位置信息显示 -->
         <div class="location-display" id="location-display" style="display: none;">
             <div class="location-text">
-                <i class="fas fa-map-marker-alt location-icon"></i>
+                <i class="fas fa-map-marker-alt location-icon" onclick="reLocateUser()" title="点击重新定位"></i>
                 <span id="location-text">正在获取位置信息...</span>
                 <button class="edit-location-btn" onclick="toggleLocationInput()">编辑</button>
             </div>
@@ -844,11 +844,95 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 获取位置信息
 function getLocationInfo() {
-    // 尝试从localStorage获取保存的位置
+    // 优先检查用户是否手动设置过位置
+    const userSetLocation = localStorage.getItem('buddy_user_location');
+    if (userSetLocation) {
+        try {
+            userLocation = JSON.parse(userSetLocation);
+            showLocationInfo(userLocation);
+            return; // 用户已手动设置位置，不再自动定位
+        } catch (e) {
+            console.error('解析用户设置的位置数据失败:', e);
+        }
+    }
+    
+    // 如果没有用户设置的位置，优先使用GPS定位
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // 使用反向地理编码获取地址信息
+                fetch('/tools/api/map/reverse-geocode/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        lat: lat,
+                        lon: lon
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.location) {
+                        userLocation = {
+                            city: data.location.city || data.location.address,
+                            region: data.location.region || data.location.address,
+                            address: data.location.address,
+                            lat: lat,
+                            lon: lon,
+                            source: 'gps'
+                        };
+                        showLocationInfo(userLocation);
+                        localStorage.setItem('user_location', JSON.stringify(userLocation));
+                        console.log('GPS定位成功:', userLocation);
+                    } else {
+                        // GPS定位失败，使用IP定位
+                        getIPLocation();
+                    }
+                })
+                .catch(error => {
+                    console.error('反向地理编码失败:', error);
+                    // GPS定位失败，使用IP定位
+                    getIPLocation();
+                });
+            },
+            function(error) {
+                console.error('GPS定位失败:', error);
+                // GPS定位失败，使用IP定位
+                getIPLocation();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5分钟缓存
+            }
+        );
+    } else {
+        // 不支持GPS定位，使用IP定位
+        getIPLocation();
+    }
+}
+
+// 获取IP定位信息
+function getIPLocation() {
+    // 先检查是否有缓存的位置信息
     const savedLocation = localStorage.getItem('user_location');
     if (savedLocation) {
-        userLocation = JSON.parse(savedLocation);
-        showLocationInfo(userLocation);
+        try {
+            const cachedLocation = JSON.parse(savedLocation);
+            // 如果缓存的位置是GPS定位的，直接使用
+            if (cachedLocation.source === 'gps') {
+                userLocation = cachedLocation;
+                showLocationInfo(userLocation);
+                return;
+            }
+        } catch (e) {
+            console.error('解析缓存位置数据失败:', e);
+        }
     }
     
     // 获取IP定位信息
@@ -856,13 +940,17 @@ function getLocationInfo() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.location) {
-                userLocation = data.location;
+                userLocation = {
+                    ...data.location,
+                    source: 'ip'
+                };
                 showLocationInfo(userLocation);
                 localStorage.setItem('user_location', JSON.stringify(userLocation));
+                console.log('IP定位成功:', userLocation);
             }
         })
         .catch(error => {
-            console.error('获取位置信息失败:', error);
+            console.error('获取IP位置信息失败:', error);
         });
 }
 
@@ -872,10 +960,106 @@ function showLocationInfo(location) {
     const locationText = document.getElementById('location-text');
     
     if (location && location.city && location.city !== '未知') {
-        locationText.textContent = `当前位置：${location.city}，${location.region}`;
+        let displayText = `当前位置：${location.city}`;
+        if (location.region && location.region !== location.city && location.region !== '本地') {
+            displayText += `，${location.region}`;
+        }
+        
+        // 如果有经纬度信息，显示精度信息
+        if (location.lat && location.lon) {
+            const source = location.source === 'gps' ? 'GPS' : 'IP';
+            displayText += ` (${source}定位)`;
+        }
+        
+        locationText.textContent = displayText;
         locationDisplay.style.display = 'block';
+        
+        // 在控制台输出详细位置信息用于调试
+        console.log('当前位置信息:', {
+            city: location.city,
+            region: location.region,
+            address: location.address,
+            lat: location.lat,
+            lon: location.lon,
+            source: location.source
+        });
     } else {
         locationDisplay.style.display = 'none';
+    }
+}
+
+// 重新定位用户位置
+function reLocateUser() {
+    const locationText = document.getElementById('location-text');
+    if (locationText) {
+        locationText.textContent = '正在重新定位...';
+    }
+    
+    // 清除缓存的位置信息
+    localStorage.removeItem('user_location');
+    localStorage.removeItem('buddy_user_location');
+    userLocation = null;
+    
+    // 重新获取位置信息
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // 使用反向地理编码获取地址信息
+                fetch('/tools/api/map/reverse-geocode/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        lat: lat,
+                        lon: lon
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.location) {
+                        userLocation = {
+                            city: data.location.city || '未知城市',
+                            region: data.location.region || data.location.city || '未知地区',
+                            country: data.location.country || '中国',
+                            lat: lat,
+                            lon: lon,
+                            source: 'gps'
+                        };
+                        showLocationInfo(userLocation);
+                        localStorage.setItem('user_location', JSON.stringify(userLocation));
+                        
+                        // 重新加载活动列表以应用新的位置信息
+                        loadEvents();
+                    } else {
+                        // 如果反向地理编码失败，使用IP定位
+                        getLocationInfo();
+                    }
+                })
+                .catch(error => {
+                    console.error('反向地理编码失败:', error);
+                    // 如果反向地理编码失败，使用IP定位
+                    getLocationInfo();
+                });
+            },
+            function(error) {
+                console.error('GPS定位失败:', error);
+                // GPS定位失败，使用IP定位
+                getLocationInfo();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        // 浏览器不支持GPS定位，使用IP定位
+        getLocationInfo();
     }
 }
 
@@ -916,6 +1100,7 @@ function saveLocation() {
                 userLocation = data.location;
                 showLocationInfo(userLocation);
                 localStorage.setItem('user_location', JSON.stringify(userLocation));
+                localStorage.setItem('buddy_user_location', JSON.stringify(userLocation));
                 
                 // 隐藏输入框
                 document.getElementById('location-input-container').style.display = 'none';
@@ -931,13 +1116,15 @@ function saveLocation() {
             // 使用默认位置信息
             userLocation = {
                 city: city,
-                region: '用户设置',
+                region: city, // 使用城市名称作为地区
                 country: '中国',
                 lat: 39.9042,
-                lon: 116.4074
+                lon: 116.4074,
+                source: 'manual'
             };
             showLocationInfo(userLocation);
             localStorage.setItem('user_location', JSON.stringify(userLocation));
+            localStorage.setItem('buddy_user_location', JSON.stringify(userLocation));
             document.getElementById('location-input-container').style.display = 'none';
             loadEvents();
         });

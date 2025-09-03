@@ -667,7 +667,7 @@ def web_proxy_api(request):
                         test_url, 
                         proxies=test_proxies, 
                         timeout=5, 
-                        verify=False,
+                        verify=True,
                         headers={'Accept-Encoding': 'identity'}  # 禁用压缩
                     )
                     if test_response.status_code == 200:
@@ -714,7 +714,7 @@ def web_proxy_api(request):
                             test_url, 
                             proxies=test_proxies, 
                             timeout=5, 
-                            verify=False,
+                            verify=True,
                             headers={'Accept-Encoding': 'identity'}
                         )
                         if test_response.status_code == 200:
@@ -750,7 +750,9 @@ def web_proxy_api(request):
         session.headers.update(headers)
         
         try:
-            logger.info(f"尝试访问: {target_url}, 代理: {proxy_config['name'] if proxy_config else 'Direct'}")
+            logger.info(f"🌐 尝试访问: {target_url}")
+            logger.info(f"🔧 代理配置: {proxy_config['name'] if proxy_config else 'Direct'}")
+            logger.info(f"📊 请求头: {headers}")
             
             # 先尝试直接访问（如果代理失败）
             try:
@@ -758,20 +760,20 @@ def web_proxy_api(request):
                     target_url,
                     proxies=proxies,
                     timeout=30,
-                    verify=False,  # 忽略SSL验证
+                    verify=True,  # 启用SSL验证
                     allow_redirects=True
                 )
-                logger.info(f"代理访问成功: {response.status_code}")
+                logger.info(f"✅ 代理访问成功: {response.status_code} - {target_url}")
             except Exception as proxy_error:
-                logger.warning(f"代理访问失败: {proxy_error}, 尝试直接访问")
+                logger.warning(f"⚠️ 代理访问失败: {proxy_error}, 尝试直接访问")
                 # 代理失败时，尝试直接访问
                 response = session.get(
                     target_url,
                     timeout=30,
-                    verify=False,
+                    verify=True,
                     allow_redirects=True
                 )
-                logger.info(f"直接访问成功: {response.status_code}")
+                logger.info(f"✅ 直接访问成功: {response.status_code} - {target_url}")
             
             if response.status_code == 200:
                 # 获取响应内容和类型
@@ -853,9 +855,22 @@ def web_proxy_api(request):
                         content = re.sub(r'url\("/', f'url("{base_url}/', content)
                         content = re.sub(r"url\('/", f"url('{base_url}/", content)
                         
-                        # 移除可能导致问题的脚本和不安全内容
-                        content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
+                        # 处理脚本内容，移除危险脚本但保留必要的功能脚本
+                        # 移除明显危险的脚本
+                        content = re.sub(r'<script[^>]*src[^>]*>.*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
+                        # 移除包含危险关键词的内联脚本
+                        dangerous_keywords = ['eval', 'document.write', 'innerHTML', 'outerHTML', 'location.href']
+                        for keyword in dangerous_keywords:
+                            content = re.sub(rf'<script[^>]*>.*?{keyword}.*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
+                        # 移除javascript:协议
                         content = re.sub(r'javascript:', 'void(0); //', content, flags=re.IGNORECASE)
+                        
+                        # 移除X-Frame-Options相关的meta标签和头部
+                        content = re.sub(r'<meta[^>]*http-equiv=["\']?X-Frame-Options["\']?[^>]*>', '', content, flags=re.IGNORECASE)
+                        content = re.sub(r'<meta[^>]*http-equiv=["\']?Content-Security-Policy["\']?[^>]*>', '', content, flags=re.IGNORECASE)
+                        
+                        # 不再动态添加CSP meta标签，避免浏览器警告
+                        # 改为在响应头中设置CSP策略
                         
                     except Exception as regex_error:
                         logger.warning(f"URL替换失败: {regex_error}, 使用原始内容")
@@ -882,7 +897,7 @@ def web_proxy_api(request):
                             target_url,
                             proxies=proxies,
                             timeout=30,
-                            verify=False,
+                            verify=True,
                             allow_redirects=True,
                             headers=headers
                         )
@@ -894,7 +909,8 @@ def web_proxy_api(request):
                     except Exception as retry_error:
                         logger.warning(f"重新获取失败: {retry_error}")
                 
-                return JsonResponse({
+                # 创建响应并设置CSP头
+                json_response = JsonResponse({
                     'success': True,
                     'data': {
                         'content': content,
@@ -907,12 +923,53 @@ def web_proxy_api(request):
                         'charset_used': charset if 'charset' in locals() else 'unknown'
                     }
                 })
+                
+                # 设置CSP响应头，允许iframe嵌入
+                json_response['Content-Security-Policy'] = "frame-ancestors 'self' *"
+                
+                return json_response
             else:
-                logger.warning(f"目标网站响应错误: {response.status_code}")
-                return JsonResponse({
-                    'success': False,
-                    'error': f'目标网站响应错误: {response.status_code}，请稍后重试'
-                })
+                logger.warning(f"❌ 目标网站响应错误: {response.status_code} - {target_url}")
+                # 对于400错误，尝试不同的User-Agent和请求头
+                if response.status_code == 400:
+                    try:
+                        logger.info("🔄 尝试使用不同的User-Agent重新请求")
+                        headers = {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.5',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Connection': 'keep-alive',
+                            'Upgrade-Insecure-Requests': '1'
+                        }
+                        retry_response = session.get(
+                            target_url,
+                            proxies=proxies,
+                            timeout=30,
+                            verify=True,
+                            allow_redirects=True,
+                            headers=headers
+                        )
+                        if retry_response.status_code == 200:
+                            content = retry_response.text
+                            logger.info("✅ 使用新User-Agent重试成功")
+                        else:
+                            logger.warning(f"❌ 重试后仍然失败: {retry_response.status_code}")
+                            return JsonResponse({
+                                'success': False,
+                                'error': f'目标网站响应错误: {response.status_code}，请检查网址是否正确'
+                            })
+                    except Exception as retry_error:
+                        logger.error(f"💥 重试请求失败: {retry_error}")
+                        return JsonResponse({
+                            'success': False,
+                            'error': f'目标网站响应错误: {response.status_code}，请检查网址是否正确'
+                        })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'目标网站响应错误: {response.status_code}，请稍后重试'
+                    })
                 
         except requests.exceptions.Timeout:
             return JsonResponse({

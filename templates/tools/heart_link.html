@@ -1021,10 +1021,7 @@ function resetUI() {
         countdownInterval = null;
     }
     
-    if (expireTimeout) {
-        clearTimeout(expireTimeout);
-        // 移除expireTimeout重置
-    }
+    // expireTimeout变量已被移除，无需清理
 }
 
 function getCookie(name) {

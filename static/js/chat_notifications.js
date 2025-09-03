@@ -477,7 +477,7 @@ class ChatNotificationManager {
         }
 
         const html = this.notifications.map(notification => `
-            <div class="notification-item" onclick="chatNotificationManager.openChatRoom('${notification.room_id}')">
+            <div class="notification-item" onclick="chatNotificationManager.openChatRoom('${notification.room_id}', '${notification.message_type || ''}')">
                 <div class="notification-content">
                     <div class="notification-info">
                         <div class="notification-room">${notification.room_name}</div>
@@ -515,11 +515,30 @@ class ChatNotificationManager {
         this.isVisible = false;
     }
 
-    async openChatRoom(roomId) {
+    async openChatRoom(roomId, messageType = null) {
         // 标记该聊天室的通知为已读
         await this.markRoomAsRead(roomId);
         
-        // 跳转到聊天室
+        // 根据消息类型进行不同的跳转
+        if (messageType === 'system') {
+            // 系统通知 - 检查是否是测试用例生成完成通知
+            const notification = this.notifications.find(n => n.room_id === roomId);
+            if (notification && notification.message_preview.includes('测试用例生成')) {
+                // 跳转到测试用例生成任务列表
+                window.location.href = '/tools/test-case-generator/';
+                return;
+            }
+        }
+        
+        // 检查是否是ShipBao商品咨询通知
+        const notification = this.notifications.find(n => n.room_id === roomId);
+        if (notification && (notification.room_name.includes('商品') || notification.message_preview.includes('商品'))) {
+            // ShipBao商品咨询 - 跳转到对应的聊天室
+            window.location.href = `/tools/heart_link/chat/${roomId}/`;
+            return;
+        }
+        
+        // 默认跳转到聊天室
         window.location.href = `/tools/heart_link/chat/${roomId}/`;
     }
 

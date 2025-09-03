@@ -1,0 +1,1148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clash内嵌代理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Clash仪表板样式 */
+.clash-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+    color: #e6e6e6;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.clash-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 255, 231, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 107, 157, 0.05) 0%, transparent 50%);
+    z-index: -1;
+    animation: clashMatrix 25s ease-in-out infinite;
+}
+
+@keyframes clashMatrix {
+    0%, 100% { 
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.8;
+    }
+    33% { 
+        transform: translateY(-10px) rotate(0.5deg);
+        opacity: 1;
+    }
+    66% { 
+        transform: translateY(5px) rotate(-0.5deg);
+        opacity: 0.9;
+    }
+}
+
+.clash-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.clash-title {
+    color: #00ffe7;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(0, 255, 231, 0.5);
+    animation: clashGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes clashGlow {
+    from { text-shadow: 0 0 20px rgba(0, 255, 231, 0.5); }
+    to { text-shadow: 0 0 30px rgba(0, 255, 231, 0.8), 0 0 40px rgba(0, 255, 231, 0.3); }
+}
+
+.clash-subtitle {
+    color: #8a9ba8;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+/* 安全提示样式 */
+.security-notice {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin: 1rem auto;
+    max-width: 600px;
+    backdrop-filter: blur(10px);
+}
+
+.notice-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffc107;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.notice-content i {
+    font-size: 1.1rem;
+    color: #ffc107;
+}
+
+.clash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.clash-card {
+    background: linear-gradient(135deg, rgba(26,31,46,0.9) 0%, rgba(0,255,231,0.1) 100%);
+    border: 1px solid rgba(0, 255, 231, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.clash-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.clash-card:hover::after {
+    transform: scaleX(1);
+}
+
+.clash-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: #00ffe7;
+    box-shadow: 0 8px 32px rgba(0, 255, 231, 0.2);
+}
+
+.clash-card-title {
+    color: #00ffe7;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.clash-card-title i {
+    font-size: 1.2rem;
+}
+
+.clash-btn {
+    background: linear-gradient(135deg, #00ffe7 0%, #00bfff 50%, #ff6b9d 100%);
+    color: #0a0e17;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    margin: 0.5rem;
+}
+
+.clash-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 255, 231, 0.3);
+}
+
+.clash-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.clash-btn.secondary {
+    background: transparent;
+    color: #00ffe7;
+    border: 2px solid #00ffe7;
+}
+
+.clash-btn.secondary:hover {
+    background: #00ffe7;
+    color: #0a0e17;
+}
+
+.clash-btn.danger {
+    background: linear-gradient(135deg, #ff4444 0%, #ff6b6b 100%);
+}
+
+.clash-btn.success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.clash-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff4444;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.running {
+    background: #00ff41;
+}
+
+.status-indicator.starting {
+    background: #ffaa00;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.clash-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-number {
+    color: #00ffe7;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #8a9ba8;
+    font-size: 0.9rem;
+}
+
+.clash-terminal {
+    background: #111417;
+    color: #00ffe7;
+    font-family: 'Courier New', monospace;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.clash-terminal::before {
+    content: '$ ';
+    color: #00bfff;
+    font-weight: bold;
+}
+
+.proxy-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 1rem 0;
+}
+
+.proxy-item {
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.proxy-info {
+    flex: 1;
+}
+
+.proxy-name {
+    color: #00ffe7;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.proxy-details {
+    color: #8a9ba8;
+    font-size: 0.9rem;
+}
+
+.proxy-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.proxy-btn {
+    background: rgba(0, 255, 231, 0.1);
+    color: #00ffe7;
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.proxy-btn:hover {
+    background: rgba(0, 255, 231, 0.2);
+}
+
+.proxy-btn.active {
+    background: #00ffe7;
+    color: #0a0e17;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 255, 231, 0.3);
+    border-radius: 50%;
+    border-top-color: #00ffe7;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .clash-container {
+        padding: 1rem;
+    }
+    
+    .clash-title {
+        font-size: 2rem;
+    }
+    
+    .clash-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .clash-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 解决方案显示样式 */
+.solution-container {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.solution-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.solution-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 255, 231, 0.3);
+    transform: translateY(-2px);
+}
+
+.solution-title {
+    color: #00ffe7;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.solution-description {
+    color: #8a9ba8;
+    font-size: 0.9rem;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+}
+
+.difficulty-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.difficulty-easy {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.difficulty-medium {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.difficulty-hard {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.command-block {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 8px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #00ff41;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.download-links {
+    margin-top: 10px;
+}
+
+.download-links ul {
+    margin: 5px 0 0 0;
+    padding-left: 20px;
+}
+
+.download-links li {
+    margin-bottom: 5px;
+}
+
+.download-links a {
+    color: #00bfff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.download-links a:hover {
+    color: #00ffe7;
+    text-decoration: underline;
+}
+
+.manual-guide {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.guide-title {
+    color: #ffa500;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+}
+
+.guide-steps {
+    margin-bottom: 15px;
+}
+
+.guide-steps ol {
+    margin: 0 0 15px 0;
+    padding-left: 20px;
+}
+
+.guide-steps li {
+    margin-bottom: 8px;
+    color: #e6e6e6;
+    line-height: 1.4;
+}
+
+.troubleshooting {
+    margin-top: 15px;
+}
+
+.troubleshooting ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.troubleshooting li {
+    margin-bottom: 5px;
+    color: #8a9ba8;
+    line-height: 1.4;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="clash-container">
+    <div class="clash-header">
+        <h1 class="clash-title">
+            <i class="fas fa-shield-alt"></i>
+            Clash内嵌代理系统
+        </h1>
+        <p class="clash-subtitle">🚀 一键启动Clash代理，轻松访问外网</p>
+        
+        <!-- 安全提示 -->
+        <div class="security-notice">
+            <div class="notice-content">
+                <i class="fas fa-info-circle"></i>
+                <span>这是公共代理管理界面，敏感配置信息已隐藏保护</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统状态 -->
+    <div class="clash-stats" id="clashStats">
+        <div class="stat-card">
+            <div class="stat-number" id="clashStatus">检测中...</div>
+            <div class="stat-label">服务状态</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="clashUptime">-</div>
+            <div class="stat-label">运行时间</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="clashHttpPort">7890</div>
+            <div class="stat-label">HTTP端口</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="clashSocksPort">7891</div>
+            <div class="stat-label">SOCKS端口</div>
+        </div>
+    </div>
+
+    <!-- 主要功能 -->
+    <div class="clash-grid">
+        <!-- 服务控制 -->
+        <div class="clash-card">
+            <h3 class="clash-card-title">
+                <i class="fas fa-power-off"></i>
+                服务控制
+            </h3>
+            <div class="clash-status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">检测中...</span>
+            </div>
+            <div>
+                <button class="clash-btn success" onclick="startClash()" id="startBtn">
+                    <i class="fas fa-play"></i>
+                    启动服务
+                </button>
+                <button class="clash-btn danger" onclick="stopClash()" id="stopBtn">
+                    <i class="fas fa-stop"></i>
+                    停止服务
+                </button>
+                <button class="clash-btn secondary" onclick="restartClash()" id="restartBtn">
+                    <i class="fas fa-redo"></i>
+                    重启服务
+                </button>
+            </div>
+        </div>
+
+        <!-- 连接测试 -->
+        <div class="clash-card">
+            <h3 class="clash-card-title">
+                <i class="fas fa-network-wired"></i>
+                连接测试
+            </h3>
+            <p>测试Clash代理连接状态和网络访问能力</p>
+            <button class="clash-btn" onclick="testConnection()">
+                <i class="fas fa-wifi"></i>
+                测试连接
+            </button>
+            <div class="clash-terminal" id="connectionResults"></div>
+        </div>
+
+        <!-- 代理管理 -->
+        <div class="clash-card" style="grid-column: span 2;">
+            <h3 class="clash-card-title">
+                <i class="fas fa-server"></i>
+                代理管理
+            </h3>
+            <div class="proxy-list" id="proxyList">
+                <div class="loading"></div> 加载代理列表...
+            </div>
+        </div>
+
+        <!-- 自动安装 -->
+        <div class="clash-card">
+            <h3 class="clash-card-title">
+                <i class="fas fa-download"></i>
+                自动安装
+            </h3>
+            <p>自动检测系统并安装Clash代理软件</p>
+            <button class="clash-btn" onclick="installClash()">
+                <i class="fas fa-download"></i>
+                安装Clash
+            </button>
+            <div class="clash-terminal" id="installResults"></div>
+        </div>
+
+        <!-- 配置管理 - 已隐藏 -->
+        <!--
+        <div class="clash-card">
+            <h3 class="clash-card-title">
+                <i class="fas fa-cog"></i>
+                配置管理
+            </h3>
+            <p>管理Clash配置文件和代理规则</p>
+            <button class="clash-btn secondary" onclick="showConfig()">
+                <i class="fas fa-file-code"></i>
+                查看配置
+            </button>
+            <button class="clash-btn secondary" onclick="exportConfig()">
+                <i class="fas fa-download"></i>
+                导出配置
+            </button>
+        </div>
+        -->
+    </div>
+
+    <!-- 终端输出 -->
+    <div class="clash-terminal" id="clashTerminal">
+        Clash内嵌代理系统已启动...
+        输入 'help' 查看可用命令
+    </div>
+</div>
+
+<script>
+// Clash内嵌代理系统
+let clashStatus = null;
+let proxyList = [];
+let statusCheckInterval = null;
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeClashSystem();
+    startStatusCheck();
+});
+
+// 初始化Clash系统
+async function initializeClashSystem() {
+    try {
+        log('正在初始化Clash内嵌代理系统...');
+        await checkClashStatus();
+        await loadProxyList();
+        log('✅ Clash系统初始化完成');
+    } catch (error) {
+        log(`❌ 系统初始化失败: ${error.message}`, 'error');
+    }
+}
+
+// 检查Clash状态
+async function checkClashStatus() {
+    try {
+        const response = await fetch('/tools/api/clash/status/');
+        const data = await response.json();
+        
+        if (data.success) {
+            clashStatus = data.data;
+            updateStatusDisplay();
+        } else {
+            log(`❌ 获取状态失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 状态检查失败: ${error.message}`, 'error');
+    }
+}
+
+// 更新状态显示
+function updateStatusDisplay() {
+    if (!clashStatus) return;
+    
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const clashStatusEl = document.getElementById('clashStatus');
+    const clashUptimeEl = document.getElementById('clashUptime');
+    
+    if (clashStatus.is_running) {
+        statusIndicator.className = 'status-indicator running';
+        statusText.textContent = '运行中';
+        clashStatusEl.textContent = '运行中';
+        clashStatusEl.style.color = '#00ff41';
+        
+        if (clashStatus.uptime) {
+            clashUptimeEl.textContent = formatUptime(clashStatus.uptime);
+        }
+        
+        // 更新按钮状态
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        document.getElementById('restartBtn').disabled = false;
+    } else {
+        statusIndicator.className = 'status-indicator';
+        statusText.textContent = '已停止';
+        clashStatusEl.textContent = '已停止';
+        clashStatusEl.style.color = '#ff4444';
+        clashUptimeEl.textContent = '-';
+        
+        // 更新按钮状态
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('restartBtn').disabled = true;
+    }
+}
+
+// 格式化运行时间
+function formatUptime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${secs}s`;
+    } else {
+        return `${secs}s`;
+    }
+}
+
+// 启动Clash
+async function startClash() {
+    try {
+        log('正在启动Clash服务...');
+        document.getElementById('startBtn').innerHTML = '<div class="loading"></div> 启动中...';
+        document.getElementById('startBtn').disabled = true;
+        
+        const response = await fetch('/tools/api/clash/start/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            log(`✅ ${data.message}`, 'success');
+            await checkClashStatus();
+        } else {
+            log(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 启动失败: ${error.message}`, 'error');
+    } finally {
+        document.getElementById('startBtn').innerHTML = '<i class="fas fa-play"></i> 启动服务';
+        document.getElementById('startBtn').disabled = false;
+    }
+}
+
+// 停止Clash
+async function stopClash() {
+    try {
+        log('正在停止Clash服务...');
+        document.getElementById('stopBtn').innerHTML = '<div class="loading"></div> 停止中...';
+        document.getElementById('stopBtn').disabled = true;
+        
+        const response = await fetch('/tools/api/clash/stop/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            log(`✅ ${data.message}`, 'success');
+            await checkClashStatus();
+        } else {
+            log(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 停止失败: ${error.message}`, 'error');
+    } finally {
+        document.getElementById('stopBtn').innerHTML = '<i class="fas fa-stop"></i> 停止服务';
+        document.getElementById('stopBtn').disabled = false;
+    }
+}
+
+// 重启Clash
+async function restartClash() {
+    try {
+        log('正在重启Clash服务...');
+        document.getElementById('restartBtn').innerHTML = '<div class="loading"></div> 重启中...';
+        document.getElementById('restartBtn').disabled = true;
+        
+        const response = await fetch('/tools/api/clash/restart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            log(`✅ ${data.message}`, 'success');
+            await checkClashStatus();
+        } else {
+            log(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 重启失败: ${error.message}`, 'error');
+    } finally {
+        document.getElementById('restartBtn').innerHTML = '<i class="fas fa-redo"></i> 重启服务';
+        document.getElementById('restartBtn').disabled = false;
+    }
+}
+
+// 测试连接
+async function testConnection() {
+    try {
+        log('正在测试Clash连接...');
+        const resultsDiv = document.getElementById('connectionResults');
+        resultsDiv.innerHTML = '<div class="loading"></div> 测试中...';
+        
+        const response = await fetch('/tools/api/clash/test-connection/');
+        const data = await response.json();
+        
+        if (data.success) {
+            resultsDiv.innerHTML = `<div style="color: #00ff41;">✅ ${data.message}</div>`;
+            log(`✅ 连接测试成功: ${data.message}`, 'success');
+        } else {
+            resultsDiv.innerHTML = `<div style="color: #ff4444;">❌ ${data.error}</div>`;
+            log(`❌ 连接测试失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 连接测试失败: ${error.message}`, 'error');
+        document.getElementById('connectionResults').innerHTML = `<div style="color: #ff4444;">❌ ${error.message}</div>`;
+    }
+}
+
+// 加载代理列表
+async function loadProxyList() {
+    try {
+        const response = await fetch('/tools/api/clash/proxy-info/');
+        const data = await response.json();
+        
+        if (data.success) {
+            proxyList = data.data;
+            updateProxyListDisplay();
+        } else {
+            log(`❌ 加载代理列表失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 加载代理列表失败: ${error.message}`, 'error');
+    }
+}
+
+// 更新代理列表显示
+function updateProxyListDisplay() {
+    const proxyListDiv = document.getElementById('proxyList');
+    
+    if (!proxyList || Object.keys(proxyList).length === 0) {
+        proxyListDiv.innerHTML = '<div style="color: #8a9ba8;">暂无代理节点</div>';
+        return;
+    }
+    
+    let html = '';
+    for (const [groupName, groupData] of Object.entries(proxyList)) {
+        if (groupData.type === 'Selector' || groupData.type === 'URLTest') {
+            html += `<div style="margin-bottom: 1rem;">`;
+            html += `<h4 style="color: #00ffe7; margin-bottom: 0.5rem;">${groupName}</h4>`;
+            
+            if (groupData.all) {
+                for (const proxyName of groupData.all) {
+                    const isSelected = groupData.now === proxyName;
+                    html += `
+                        <div class="proxy-item">
+                            <div class="proxy-info">
+                                <div class="proxy-name">${proxyName}</div>
+                                <div class="proxy-details">类型: ${groupData.type}</div>
+                            </div>
+                            <div class="proxy-actions">
+                                <button class="proxy-btn ${isSelected ? 'active' : ''}" 
+                                        onclick="switchProxy('${groupName}', '${proxyName}')"
+                                        ${isSelected ? 'disabled' : ''}>
+                                    ${isSelected ? '当前' : '切换'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            html += `</div>`;
+        }
+    }
+    
+    proxyListDiv.innerHTML = html || '<div style="color: #8a9ba8;">暂无可用代理</div>';
+}
+
+// 切换代理
+async function switchProxy(group, proxy) {
+    try {
+        log(`正在切换到代理: ${proxy}`);
+        
+        const response = await fetch('/tools/api/clash/switch-proxy/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                group: group,
+                proxy: proxy
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            log(`✅ ${data.message}`, 'success');
+            await loadProxyList(); // 重新加载代理列表
+        } else {
+            log(`❌ ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 切换代理失败: ${error.message}`, 'error');
+    }
+}
+
+// 安装Clash
+async function installClash() {
+    try {
+        log('正在安装Clash...');
+        const resultsDiv = document.getElementById('installResults');
+        resultsDiv.innerHTML = '<div class="loading"></div> 安装中...';
+        
+        const response = await fetch('/tools/api/clash/install/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            resultsDiv.innerHTML = `<div style="color: #00ff41;">✅ ${data.message}</div>`;
+            log(`✅ 安装成功: ${data.message}`, 'success');
+        } else {
+            // 显示详细的错误信息和解决方案
+            let errorHtml = `<div style="color: #ff4444; margin-bottom: 15px;">❌ ${data.message || data.error}</div>`;
+            
+            // 如果有解决方案，显示它们
+            if (data.solutions && data.solutions.length > 0) {
+                errorHtml += '<div style="margin-top: 15px;"><h4 style="color: #ffa500; margin-bottom: 10px;">💡 解决方案:</h4>';
+                
+                data.solutions.forEach((solution, index) => {
+                    errorHtml += `
+                        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+                            <h5 style="color: #495057; margin: 0 0 8px 0;">${solution.title}</h5>
+                            <p style="color: #6c757d; margin: 0 0 10px 0; font-size: 14px;">${solution.description}</p>
+                            <span style="background: ${solution.difficulty === '简单' ? '#d4edda' : solution.difficulty === '中等' ? '#fff3cd' : '#f8d7da'}; 
+                                      color: ${solution.difficulty === '简单' ? '#155724' : solution.difficulty === '中等' ? '#856404' : '#721c24'}; 
+                                      padding: 2px 8px; border-radius: 12px; font-size: 12px;">${solution.difficulty}</span>
+                    `;
+                    
+                    // 显示命令
+                    if (solution.commands && solution.commands.length > 0) {
+                        errorHtml += '<div style="margin-top: 10px;"><strong>命令:</strong><pre style="background: #e9ecef; padding: 8px; border-radius: 4px; font-size: 12px; margin: 5px 0 0 0; overflow-x: auto;">';
+                        solution.commands.forEach(cmd => {
+                            errorHtml += `${cmd}\n`;
+                        });
+                        errorHtml += '</pre></div>';
+                    }
+                    
+                    // 显示下载链接
+                    if (solution.links && solution.links.length > 0) {
+                        errorHtml += '<div style="margin-top: 10px;"><strong>下载链接:</strong><ul style="margin: 5px 0 0 0; padding-left: 20px;">';
+                        solution.links.forEach(link => {
+                            errorHtml += `<li><a href="${link.url}" target="_blank" style="color: #007bff;">${link.name}</a> - ${link.description}</li>`;
+                        });
+                        errorHtml += '</ul></div>';
+                    }
+                    
+                    errorHtml += '</div>';
+                });
+                
+                errorHtml += '</div>';
+            }
+            
+            // 如果有手动安装指南，显示它
+            if (data.manual_guide) {
+                errorHtml += `
+                    <div style="margin-top: 15px;">
+                        <h4 style="color: #ffa500; margin-bottom: 10px;">📖 详细安装指南 (${data.manual_guide.system_info}):</h4>
+                        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px;">
+                            <h5 style="color: #495057; margin: 0 0 10px 0;">安装步骤:</h5>
+                            <ol style="margin: 0 0 15px 0; padding-left: 20px;">
+                `;
+                
+                data.manual_guide.steps.forEach(step => {
+                    errorHtml += `<li style="margin-bottom: 5px;">${step}</li>`;
+                });
+                
+                errorHtml += `
+                            </ol>
+                            <h5 style="color: #495057; margin: 0 0 10px 0;">故障排除:</h5>
+                            <ul style="margin: 0; padding-left: 20px;">
+                `;
+                
+                data.manual_guide.troubleshooting.forEach(tip => {
+                    errorHtml += `<li style="margin-bottom: 5px;">${tip}</li>`;
+                });
+                
+                errorHtml += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsDiv.innerHTML = errorHtml;
+            log(`❌ 安装失败: ${data.message || data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 安装失败: ${error.message}`, 'error');
+        document.getElementById('installResults').innerHTML = `<div style="color: #ff4444;">❌ ${error.message}</div>`;
+    }
+}
+
+// 显示配置
+async function showConfig() {
+    try {
+        const response = await fetch('/tools/api/clash/config/');
+        const data = await response.json();
+        
+        if (data.success) {
+            const configWindow = window.open('', '_blank', 'width=800,height=600');
+            configWindow.document.write(`
+                <html>
+                <head>
+                    <title>Clash配置</title>
+                    <style>
+                        body { font-family: monospace; background: #1a1a1a; color: #00ff00; padding: 20px; }
+                        pre { background: #000; padding: 15px; border-radius: 5px; overflow-x: auto; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Clash配置文件</h2>
+                    <pre>${data.data.config}</pre>
+                </body>
+                </html>
+            `);
+        } else {
+            log(`❌ 获取配置失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 获取配置失败: ${error.message}`, 'error');
+    }
+}
+
+// 导出配置
+async function exportConfig() {
+    try {
+        const response = await fetch('/tools/api/clash/config/');
+        const data = await response.json();
+        
+        if (data.success) {
+            const blob = new Blob([data.data.config], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'clash-config.yaml';
+            a.click();
+            URL.revokeObjectURL(url);
+            log('✅ 配置已导出', 'success');
+        } else {
+            log(`❌ 导出配置失败: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        log(`❌ 导出配置失败: ${error.message}`, 'error');
+    }
+}
+
+// 开始状态检查
+function startStatusCheck() {
+    statusCheckInterval = setInterval(async () => {
+        await checkClashStatus();
+    }, 5000); // 每5秒检查一次状态
+}
+
+// 停止状态检查
+function stopStatusCheck() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
+    }
+}
+
+// 日志输出
+function log(message, type = 'info') {
+    const terminal = document.getElementById('clashTerminal');
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'error' ? '#ff4444' : type === 'success' ? '#00ff41' : '#00ffe7';
+    
+    terminal.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+    terminal.scrollTop = terminal.scrollHeight;
+}
+
+// 获取CSRF Token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', function() {
+    stopStatusCheck();
+});
+
+log('🚀 Clash内嵌代理系统已启动');
+log('💡 系统将自动检测和启动Clash代理服务');
+</script>
+{% endblock %}

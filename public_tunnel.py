@@ -14,29 +14,21 @@ import urllib.parse
 import json
 
 class PublicTunnelHandler(BaseHTTPRequestHandler):
-    pass
     def do_GET(self):
-        pass
         self.forward_request()
     
     def do_POST(self):
-        pass
         self.forward_request()
     
     def do_PUT(self):
-        pass
         self.forward_request()
     
     def do_DELETE(self):
-        pass
         self.forward_request()
     
     def forward_request(self):
-        pass
         try:
             # 构建目标URL
-            pass
-            pass
             target_url = f"http://localhost:8000{self.path}"
             
             # 获取请求头
@@ -51,26 +43,12 @@ class PublicTunnelHandler(BaseHTTPRequestHandler):
             
             # 发送请求到本地Django服务
             if self.command == 'GET':
-                pass
-                pass
                 response = requests.get(target_url, headers=headers, timeout=10)
             elif self.command == 'POST':
-                pass
-                pass
-                pass
-                pass
                 response = requests.post(target_url, headers=headers, data=post_data, timeout=10)
             elif self.command == 'PUT':
-                pass
-                pass
-                pass
-                pass
                 response = requests.put(target_url, headers=headers, data=post_data, timeout=10)
             elif self.command == 'DELETE':
-                pass
-                pass
-                pass
-                pass
                 response = requests.delete(target_url, headers=headers, timeout=10)
             
             # 返回响应
@@ -83,20 +61,14 @@ class PublicTunnelHandler(BaseHTTPRequestHandler):
             
             # 复制响应头
             for header, value in response.headers.items():
-                pass
-                pass
                 if header.lower() not in ['content-encoding', 'transfer-encoding']:
-                    pass
-                    pass
                     self.send_header(header, value)
             
             self.end_headers()
             self.wfile.write(response.content)
             
         except Exception as e:
-            pass
-            pass
-            pass
+            print(f"请求转发失败: {e}")
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -106,7 +78,6 @@ class PublicTunnelHandler(BaseHTTPRequestHandler):
     
     def do_OPTIONS(self):
         # 处理CORS预检请求
-        pass
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -115,31 +86,24 @@ class PublicTunnelHandler(BaseHTTPRequestHandler):
     
     def log_message(self, format, *args):
         # 简化日志输出
-        pass
         print(f"[{time.strftime('%H:%M:%S')}] {format % args}")
 
 def start_public_tunnel(port=9000):
-    pass
     """启动公共隧道服务器"""
     try:
-        pass
-        pass
+        print(f"🚀 启动公网隧道服务器，端口: {port}")
         server = HTTPServer(('0.0.0.0', port), PublicTunnelHandler)
-
+        print(f"✅ 隧道服务器启动成功！")
+        print(f"📡 外网访问地址: http://您的公网IP:{port}")
+        print(f"🔄 转发到本地: http://localhost:8000")
+        print("按 Ctrl+C 停止服务")
         server.serve_forever()
     except KeyboardInterrupt:
-
-        pass
-        pass
-        pass
+        print("\n🛑 隧道服务器已停止")
         server.shutdown()
     except Exception as e:
+        print(f"隧道服务器启动失败: {e}")
 
-pass
-pass
-pass
 if __name__ == "__main__":
-    pass
-    pass
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 9000
     start_public_tunnel(port)

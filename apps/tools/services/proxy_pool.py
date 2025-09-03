@@ -257,7 +257,7 @@ class ProxyPool:
                     source_config['url'], 
                     headers=headers, 
                     timeout=20,
-                    verify=False  # 忽略SSL验证问题
+                    verify=True  # 启用SSL验证
                 )
                 
                 if response.status_code == 200:
@@ -427,7 +427,7 @@ class ProxyPool:
                 headers={
                     'User-Agent': self.get_random_user_agent()
                 },
-                verify=False
+                verify=True
             )
             
             response_time = time.time() - start_time

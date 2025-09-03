@@ -77,7 +77,18 @@ class ChatRoom(models.Model):
     def is_heart_link_room(self):
         """检查是否是心动链接聊天室"""
         try:
-            return hasattr(self, 'heart_link_requests') and self.heart_link_requests.exists()
+            # 检查是否有心动链接请求
+            if hasattr(self, 'heart_link_requests') and self.heart_link_requests.exists():
+                return True
+            
+            # 检查是否是ShipBao商品咨询聊天室（一对一私密聊天）
+            if (self.room_type == 'private' and 
+                self.user1 and self.user2 and 
+                hasattr(self, 'shipbao_inquiries') and 
+                self.shipbao_inquiries.exists()):
+                return True
+                
+            return False
         except Exception:
             return False
     

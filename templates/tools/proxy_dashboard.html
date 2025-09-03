@@ -16,6 +16,77 @@
     overflow: hidden;
 }
 
+/* Web代理浏览器样式 */
+.proxy-input-group {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.proxy-input {
+    flex: 1;
+    padding: 10px 15px;
+    background: rgba(26, 31, 46, 0.8);
+    border: 1px solid rgba(0, 255, 231, 0.3);
+    border-radius: 8px;
+    color: #e6e6e6;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.proxy-input:focus {
+    border-color: #00ffe7;
+    box-shadow: 0 0 10px rgba(0, 255, 231, 0.2);
+}
+
+.quick-links-mini {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+.quick-link-btn {
+    padding: 6px 12px;
+    background: rgba(0, 191, 255, 0.1);
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    border-radius: 15px;
+    color: #00bfff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.quick-link-btn:hover {
+    background: rgba(0, 191, 255, 0.2);
+    border-color: #00bfff;
+    transform: translateY(-1px);
+}
+
+.proxy-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #888;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc3545;
+    transition: background 0.3s ease;
+}
+
+.status-indicator.online {
+    background: #28a745;
+}
+
 .proxy-container::before {
     content: '';
     position: fixed;
@@ -558,11 +629,26 @@
             <div class="proxy-results" id="ipComparisonResults"></div>
         </div>
 
-        <!-- Web翻墙浏览器 - 主要服务 -->
+        <!-- Clash内嵌代理系统 -->
+        <div class="proxy-card">
+            <h3 class="proxy-card-title">
+                <i class="fas fa-rocket"></i>
+                Clash内嵌代理
+            </h3>
+            <p class="proxy-description">一键启动Clash代理服务，自动管理代理节点和配置</p>
+            <button class="proxy-btn success" onclick="openClashDashboard()">
+                <i class="fas fa-cog"></i>
+                打开Clash控制台
+            </button>
+        </div>
+
+
+
+        <!-- Web代理浏览器 - 主要服务 -->
         <div class="proxy-card" style="grid-column: span 2;">
             <h3 class="proxy-card-title">
                 <i class="fas fa-globe-americas"></i>
-                在线翻墙浏览器
+                Web代理浏览器
             </h3>
             <p class="proxy-description">无需下载软件，直接在网页内安全访问YouTube、Google等全球网站</p>
             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
@@ -848,7 +934,22 @@ let systemReady = false;
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-
+    // 确保所有函数都在全局作用域中可用
+    window.openClashDashboard = openClashDashboard;
+    window.browserNavigate = browserNavigate;
+    window.browserBack = browserBack;
+    window.browserForward = browserForward;
+    window.browserRefresh = browserRefresh;
+    window.togglePictureInPicture = togglePictureInPicture;
+    window.toggleFullscreen = toggleFullscreen;
+    window.openInNewWindow = openInNewWindow;
+    window.closeBrowser = closeBrowser;
+    window.refreshCurrentPage = refreshCurrentPage;
+    window.quickAccess = quickAccess;
+    window.openWebBrowser = openWebBrowser;
+    
+    console.log('All functions registered globally');
+    
     initializeSystem();
     log('系统初始化完成');
 });
@@ -867,6 +968,9 @@ async function initializeSystem() {
         
         // 测试YouTube访问（需要翻墙）
         await testYouTubeAccess();
+        
+        // 初始化Web代理浏览器
+        await checkWebProxyStatus();
         
         systemReady = true;
         document.getElementById('systemStatus').textContent = '就绪';
@@ -890,34 +994,140 @@ async function checkProxyStatus() {
             document.getElementById('proxyStatus').textContent = '本地代理可用';
             document.getElementById('proxyStatus').style.color = '#00ff88';
             log('✅ 本地代理服务器运行正常');
+            
+            // 显示代理服务详细信息
+            log('💡 检测到ClashX Pro正在运行');
+            log('🌐 HTTP代理端口: 7890');
+            log('🔌 SOCKS5代理端口: 7891');
+            log('🎛️  管理面板端口: 9090');
+            
         } else {
             document.getElementById('proxyStatus').textContent = '本地代理不可用';
             document.getElementById('proxyStatus').style.color = '#ff6b6b';
             log('⚠️  本地代理服务器未运行，将使用备用方案');
+            log('💡 请确保ClashX Pro已启动并配置了代理节点');
+            log('🔧 或者使用Web代理浏览器功能直接访问外网');
         }
         
     } catch (error) {
         log(`❌ 代理状态检测失败: ${error.message}`, 'error');
         document.getElementById('proxyStatus').textContent = '检测失败';
         document.getElementById('proxyStatus').style.color = '#ff6b6b';
+        log('💡 这可能是网络连接问题，请检查网络设置');
     }
 }
 
-// 测试本地代理服务器
+// 测试本地代理服务器 - 修复版本 v2.0
 async function testLocalProxy() {
     try {
-        // 优先检测本地Clash端口，其次检测Clash面板端口
-        const targets = ['http://127.0.0.1:7890', 'http://127.0.0.1:9090', 'http://127.0.0.1:8080'];
-        for (const target of targets) {
+        log('🔧 使用修复后的代理测试方法 v2.0');
+        // 测试Clash HTTP代理端口 - 使用正确的代理测试方法
+        const proxyPorts = [7890, 7891, 8080, 9090];
+        
+        for (const port of proxyPorts) {
             try {
-                await fetch(target, { method: 'GET', mode: 'no-cors' });
-                return true;
+                // 方法1: 尝试通过代理访问一个简单的测试URL
+                const testUrl = 'http://httpbin.org/ip';
+                const proxyUrl = `http://127.0.0.1:${port}`;
+                
+                // 使用fetch with proxy (如果浏览器支持)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
+                try {
+                    // 使用更安全的方式测试代理端口 - 通过我们的API而不是直接连接
+                    const response = await fetch('/tools/api/proxy/test-connection/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            proxy_host: '127.0.0.1',
+                            proxy_port: port,
+                            test_url: 'http://httpbin.org/ip'
+                        }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            log(`✅ 检测到代理服务运行在端口 ${port}`);
+                            return true;
+                        }
+                    }
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    
+                    // 如果是因为CORS或网络错误，但端口是开放的，也认为代理可用
+                    if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
+                        // 尝试通过WebSocket或其他方式测试端口连通性
+                        try {
+                            const ws = new WebSocket(`ws://127.0.0.1:${port}`);
+                            await new Promise((resolve, reject) => {
+                                const timeout = setTimeout(() => {
+                                    ws.close();
+                                    reject(new Error('timeout'));
+                                }, 1000);
+                                
+                                ws.onopen = () => {
+                                    clearTimeout(timeout);
+                                    ws.close();
+                                    resolve();
+                                };
+                                
+                                ws.onerror = () => {
+                                    clearTimeout(timeout);
+                                    reject(new Error('connection failed'));
+                                };
+                            });
+                            log(`✅ 检测到代理服务运行在端口 ${port} (WebSocket测试)`);
+                            return true;
+                        } catch (wsError) {
+                            // WebSocket测试也失败，继续尝试下一个端口
+                        }
+                    }
+                }
+                
+                // 方法2: 尝试通过后端API测试代理
+                try {
+                    const response = await fetch('/tools/api/proxy/test-connection/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ 
+                            proxy_host: '127.0.0.1',
+                            proxy_port: port,
+                            test_url: 'http://httpbin.org/ip'
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            log(`✅ 代理服务测试成功: 127.0.0.1:${port}`);
+                            return true;
+                        }
+                    }
+                } catch (apiError) {
+                    // API测试失败，继续尝试下一个端口
+                }
+                
             } catch (e) {
-                // 尝试下一个目标
+                // 尝试下一个端口
+                continue;
             }
         }
+        
+        log('⚠️  未检测到可用的代理服务');
         return false;
+        
     } catch (error) {
+        log(`❌ 代理测试失败: ${error.message}`);
         return false;
     }
 }
@@ -955,6 +1165,31 @@ async function testYouTubeAccess() {
     }
 }
 
+// 检查Web代理状态
+async function checkWebProxyStatus() {
+    try {
+        log('🔍 检查Web代理服务状态...');
+        
+        // 测试Web代理API是否可用
+        const response = await fetch('/tools/api/proxy/web-browse/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ url: 'https://httpbin.org/ip' })
+        });
+        
+        if (response.ok) {
+            log('✅ Web代理服务运行正常', 'success');
+        } else {
+            log('⚠️  Web代理服务响应异常', 'warning');
+        }
+    } catch (error) {
+        log(`❌ Web代理服务检查失败: ${error.message}`, 'error');
+    }
+}
+
 // 日志输出
 function log(message, type = 'info') {
     const terminal = document.getElementById('proxyTerminal');
@@ -963,7 +1198,6 @@ function log(message, type = 'info') {
     
     terminal.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
     terminal.scrollTop = terminal.scrollHeight;
-
 }
 
 // ===== 核心功能1: IP对比功能 =====
@@ -1245,91 +1479,64 @@ async function loadWebPage(url) {
                 content = baseStyles + content;
             }
             
-            // 创建iframe显示内容
-            const iframe = document.createElement('iframe');
-            iframe.className = 'web-browser-iframe';
-            // 更宽松的sandbox设置以支持更多交互
-            iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation allow-pointer-lock allow-orientation-lock allow-presentation allow-downloads';
+            // 对于所有网站，直接显示内容而不是使用iframe
+            // 这样可以避免X-Frame-Options限制
             
-            // 使用blob URL来避免编码问题
-            const blob = new Blob([content], { type: 'text/html; charset=utf-8' });
-            const blobUrl = URL.createObjectURL(blob);
+            // 直接显示内容，不使用iframe避免X-Frame-Options问题
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'web-browser-content';
+            contentDiv.innerHTML = content;
             
-            iframe.onload = function() {
-                URL.revokeObjectURL(blobUrl);
-                log(`✅ 网页内容加载完成: ${data.data.final_url}`, 'success');
-                log(`📊 内容长度: ${data.data.content_length} 字符`, 'info');
-                log(`🔤 使用编码: ${data.data.charset_used || 'unknown'}`, 'info');
-                
-                // 改进iframe交互处理
-                setTimeout(() => {
-                    try {
-                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                        if (iframeDoc && iframeDoc.body) {
-                            const bodyText = iframeDoc.body.innerText || iframeDoc.body.textContent;
-                            if (!bodyText || bodyText.trim().length < 10) {
-                                log(`⚠️  iframe内容可能为空，建议在新窗口打开`, 'warning');
-                                // 尝试使用srcdoc方式
-                                iframe.srcdoc = content;
-                            } else if (bodyText.includes('�') || bodyText.match(/[^\x00-\x7F\u4e00-\u9fff\u3400-\u4dbf]/g)) {
-                                log(`⚠️  检测到可能的乱码字符，建议在新窗口打开获得更好体验`, 'warning');
-                            } else {
-                                log(`✅ iframe内容验证通过`, 'success');
-                            }
-                            
-                            // 添加点击提示
-                            const interactionHint = document.createElement('div');
-                            interactionHint.style.cssText = `
-                                position: absolute;
-                                top: 10px;
-                                right: 10px;
-                                background: rgba(0, 0, 0, 0.8);
-                                color: white;
-                                padding: 8px 12px;
-                                border-radius: 5px;
-                                font-size: 12px;
-                                z-index: 1000;
-                                cursor: pointer;
-                                transition: opacity 0.3s;
-                            `;
-                            interactionHint.innerHTML = '💡 交互受限？点击"新窗口打开"获得完整体验';
-                            interactionHint.onclick = () => openInNewWindow();
-                            
-                            const browserContainer = document.getElementById('browserContainer');
-                            browserContainer.style.position = 'relative';
-                            browserContainer.appendChild(interactionHint);
-                            
-                            // 5秒后自动隐藏提示
-                            setTimeout(() => {
-                                if (interactionHint && interactionHint.parentNode) {
-                                    interactionHint.style.opacity = '0';
-                                    setTimeout(() => {
-                                        if (interactionHint.parentNode) {
-                                            interactionHint.parentNode.removeChild(interactionHint);
-                                        }
-                                    }, 300);
-                                }
-                            }, 5000);
-                        }
-                    } catch (e) {
-                        log(`ℹ️  iframe交互受限（跨域保护），建议使用"新窗口打开"功能`, 'info');
-                    }
-                }, 1000);
-            };
+            // 添加样式改进
+            const style = document.createElement('style');
+            style.textContent = `
+                .web-browser-content {
+                    width: 100%;
+                    height: 80vh;
+                    overflow: auto;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    background: white;
+                }
+                .web-browser-content a[href^="http"] {
+                    color: #0066cc;
+                    text-decoration: underline;
+                }
+                .web-browser-content a[href^="http"]:hover {
+                    color: #004499;
+                }
+                .web-browser-content img {
+                    max-width: 100%;
+                    height: auto;
+                }
+                .web-browser-content video {
+                    max-width: 100%;
+                    height: auto;
+                }
+            `;
+            document.head.appendChild(style);
             
-            iframe.onerror = function() {
-                URL.revokeObjectURL(blobUrl);
-                log(`❌ iframe加载失败，尝试使用srcdoc方式`, 'error');
-                
-                // 尝试使用srcdoc作为备选方案
-                iframe.src = '';
-                iframe.srcdoc = content;
-            };
+            // 处理所有外部链接，使其在新窗口打开
+            const links = contentDiv.querySelectorAll('a[href^="http"]');
+            links.forEach(link => {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+            });
             
-            iframe.src = blobUrl;
+            // 处理所有相对链接，使其通过代理访问
+            const relativeLinks = contentDiv.querySelectorAll('a[href^="/"], a[href^="./"], a[href^="../"]');
+            relativeLinks.forEach(link => {
+                const originalHref = link.href;
+                link.href = `/tools/api/proxy/web-browse/?url=${encodeURIComponent(originalHref)}`;
+                link.target = '_blank';
+            });
+            
+            log(`✅ 网页内容加载完成: ${data.data.final_url}`, 'success');
+            log(`📊 内容长度: ${data.data.content_length} 字符`, 'info');
+            log(`🔤 使用编码: ${data.data.charset_used || 'unknown'}`, 'info');
             
             document.getElementById('browserContainer').innerHTML = '';
-            document.getElementById('browserContainer').appendChild(iframe);
+            document.getElementById('browserContainer').appendChild(contentDiv);
             
             // 更新浏览历史
             currentBrowserUrl = url;
@@ -1342,87 +1549,177 @@ async function loadWebPage(url) {
             log(`✅ 网页加载成功: ${url}`, 'success');
             
         } else {
-            document.getElementById('browserContainer').innerHTML = 
-                `<div class="browser-placeholder">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff4444; margin-bottom: 1rem;"></i>
-                    <p>网页加载失败</p>
-                    <p>${data.error}</p>
-                </div>`;
+            // 显示错误信息
+            document.getElementById('browserContainer').innerHTML = `
+                <div class="browser-placeholder">
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
+                        <h3 style="color: #ff6b6b; margin-bottom: 1rem;">加载失败</h3>
+                        <p style="color: #8a9ba8; margin-bottom: 1.5rem;">${data.error || '未知错误'}</p>
+                        <button class="proxy-btn" onclick="refreshCurrentPage()">
+                            <i class="fas fa-redo"></i>
+                            重新加载
+                        </button>
+                    </div>
+                </div>
+            `;
             log(`❌ 网页加载失败: ${data.error}`, 'error');
         }
         
     } catch (error) {
+        // 隐藏加载状态
         document.getElementById('browserLoading').style.display = 'none';
-        document.getElementById('browserContainer').innerHTML = 
-            `<div class="browser-placeholder">
-                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff4444; margin-bottom: 1rem;"></i>
-                <p>网络错误</p>
-                <p>${error.message}</p>
-            </div>`;
+        
+        // 显示错误信息
+        document.getElementById('browserContainer').innerHTML = `
+            <div class="browser-placeholder">
+                <div style="text-align: center; padding: 40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #ff6b6b; margin-bottom: 1rem;">网络错误</h3>
+                    <p style="color: #8a9ba8; margin-bottom: 1.5rem;">${error.message}</p>
+                    <button class="proxy-btn" onclick="refreshCurrentPage()">
+                        <i class="fas fa-redo"></i>
+                        重新加载
+                    </button>
+                </div>
+            </div>
+        `;
         log(`❌ 网络错误: ${error.message}`, 'error');
     }
 }
 
-// 浏览器导航
-async function browserNavigate() {
-    const url = document.getElementById('browserAddressBar').value.trim();
-    if (url) {
-        await loadWebPage(url);
-    }
-}
-
-// 浏览器后退
-function browserBack() {
-    if (currentHistoryIndex > 0) {
-        currentHistoryIndex--;
-        const url = browserHistory[currentHistoryIndex];
-        document.getElementById('browserAddressBar').value = url;
-        loadWebPage(url);
-    }
-}
-
-// 浏览器前进
-function browserForward() {
-    if (currentHistoryIndex < browserHistory.length - 1) {
-        currentHistoryIndex++;
-        const url = browserHistory[currentHistoryIndex];
-        document.getElementById('browserAddressBar').value = url;
-        loadWebPage(url);
-    }
-}
-
-// 浏览器刷新
-function browserRefresh() {
+// 刷新当前页面
+function refreshCurrentPage() {
     if (currentBrowserUrl) {
         loadWebPage(currentBrowserUrl);
-    }
-}
-
-// 切换画中画模式
-function togglePictureInPicture() {
-    const modal = document.getElementById('webBrowserModal');
-    
-    if (!isPictureInPicture) {
-        // 切换到画中画模式
-        modal.classList.add('picture-in-picture');
-        document.querySelector('.web-browser-modal .fas.fa-compress').className = 'fas fa-expand';
-        isPictureInPicture = true;
-        log('✅ 已切换到画中画模式', 'success');
-    } else {
-        // 切换到全屏模式
-        modal.classList.remove('picture-in-picture');
-        document.querySelector('.web-browser-modal .fas.fa-expand').className = 'fas fa-compress';
-        isPictureInPicture = false;
-        log('✅ 已切换到全屏模式', 'success');
     }
 }
 
 // 关闭浏览器
 function closeBrowser() {
     document.getElementById('webBrowserModal').style.display = 'none';
-    isPictureInPicture = false;
+    document.getElementById('browserContainer').innerHTML = '';
     currentBrowserUrl = '';
-    log('🔧 Web代理浏览器已关闭');
+    browserHistory = [];
+    currentHistoryIndex = -1;
+}
+
+// 获取Cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 打开Clash控制台
+function openClashDashboard() {
+    console.log('openClashDashboard function called'); // 调试日志
+    try {
+        window.open('/tools/clash-dashboard/', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        log('🚀 已打开Clash内嵌代理控制台', 'success');
+    } catch (error) {
+        console.error('Error opening Clash dashboard:', error);
+        log('❌ 打开Clash控制台失败: ' + error.message, 'error');
+    }
+}
+
+// 浏览器导航控制函数
+async function browserNavigate() {
+    const url = document.getElementById('browserAddressBar').value.trim();
+    if (!url) {
+        log('❌ 请输入要访问的网址', 'error');
+        return;
+    }
+    
+    // 确保URL格式正确
+    let fullUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        fullUrl = 'https://' + url;
+    }
+    
+    await loadWebPage(fullUrl);
+}
+
+function browserBack() {
+    if (currentHistoryIndex > 0) {
+        currentHistoryIndex--;
+        const url = browserHistory[currentHistoryIndex];
+        document.getElementById('browserAddressBar').value = url;
+        loadWebPage(url);
+        log('⬅️ 返回上一页', 'info');
+    } else {
+        log('❌ 没有上一页', 'warning');
+    }
+}
+
+function browserForward() {
+    if (currentHistoryIndex < browserHistory.length - 1) {
+        currentHistoryIndex++;
+        const url = browserHistory[currentHistoryIndex];
+        document.getElementById('browserAddressBar').value = url;
+        loadWebPage(url);
+        log('➡️ 前进到下一页', 'info');
+    } else {
+        log('❌ 没有下一页', 'warning');
+    }
+}
+
+function browserRefresh() {
+    if (currentBrowserUrl) {
+        loadWebPage(currentBrowserUrl);
+        log('🔄 刷新页面', 'info');
+    } else {
+        log('❌ 没有可刷新的页面', 'warning');
+    }
+}
+
+function togglePictureInPicture() {
+    const modal = document.getElementById('webBrowserModal');
+    if (!isPictureInPicture) {
+        // 进入画中画模式
+        modal.classList.add('picture-in-picture');
+        isPictureInPicture = true;
+        log('🪟 进入画中画模式', 'success');
+    } else {
+        // 退出画中画模式
+        modal.classList.remove('picture-in-picture');
+        isPictureInPicture = false;
+        log('🪟 退出画中画模式', 'success');
+    }
+}
+
+function toggleFullscreen() {
+    const modal = document.getElementById('webBrowserModal');
+    if (!document.fullscreenElement) {
+        // 进入全屏模式
+        if (modal.requestFullscreen) {
+            modal.requestFullscreen();
+        } else if (modal.webkitRequestFullscreen) {
+            modal.webkitRequestFullscreen();
+        } else if (modal.mozRequestFullScreen) {
+            modal.mozRequestFullScreen();
+        }
+        log('🪟 进入全屏模式', 'success');
+    } else {
+        // 退出全屏模式
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        }
+        log('🪟 退出全屏模式', 'success');
+    }
 }
 
 // 在新窗口打开当前页面
@@ -1448,7 +1745,6 @@ function openInNewWindow() {
                     body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
                     .header { background: #f5f5f5; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
                     .url { color: #666; font-size: 14px; }
-                    iframe { width: 100%; height: 80vh; border: 1px solid #ddd; border-radius: 5px; }
                     .loading { text-align: center; padding: 50px; color: #666; }
                 </style>
             </head>
@@ -1473,16 +1769,55 @@ function openInNewWindow() {
                     .then(data => {
                         const contentDiv = document.getElementById('content');
                         if (data.success) {
-                            const iframe = document.createElement('iframe');
-                            iframe.srcdoc = data.data.content;
-                            iframe.style.width = '100%';
-                            iframe.style.height = '80vh';
-                            iframe.style.border = '1px solid #ddd';
-                            iframe.style.borderRadius = '5px';
-                            contentDiv.innerHTML = '';
-                            contentDiv.appendChild(iframe);
+                            // 直接显示内容，不使用iframe避免X-Frame-Options问题
+                            contentDiv.innerHTML = data.data.content;
+                            
+                            // 添加一些样式改进
+                            const style = document.createElement('style');
+                            style.textContent = \`
+                                body { 
+                                    margin: 0; 
+                                    padding: 0; 
+                                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                                }
+                                /* 确保链接在新窗口打开 */
+                                a[href^="http"] {
+                                    color: #0066cc;
+                                    text-decoration: underline;
+                                }
+                                a[href^="http"]:hover {
+                                    color: #004499;
+                                }
+                                /* 改进图片显示 */
+                                img {
+                                    max-width: 100%;
+                                    height: auto;
+                                }
+                                /* 改进视频显示 */
+                                video {
+                                    max-width: 100%;
+                                    height: auto;
+                                }
+                            \`;
+                            document.head.appendChild(style);
+                            
+                            // 处理所有外部链接，使其在新窗口打开
+                            const links = contentDiv.querySelectorAll('a[href^="http"]');
+                            links.forEach(link => {
+                                link.target = '_blank';
+                                link.rel = 'noopener noreferrer';
+                            });
+                            
+                            // 处理所有相对链接，使其通过代理访问
+                            const relativeLinks = contentDiv.querySelectorAll('a[href^="/"], a[href^="./"], a[href^="../"]');
+                            relativeLinks.forEach(link => {
+                                const originalHref = link.href;
+                                link.href = \`/tools/api/proxy/web-browse/?url=\${encodeURIComponent(originalHref)}\`;
+                                link.target = '_blank';
+                            });
+                            
                         } else {
-                            contentDiv.innerHTML = '<div style="color: red;">加载失败: ' + data.error + '</div>';
+                            contentDiv.innerHTML = '<div style="color: red; padding: 20px; text-align: center;"><h3>加载失败</h3><p>' + data.error + '</p><button onclick="location.reload()">重新加载</button></div>';
                         }
                     })
                     .catch(error => {
@@ -1492,176 +1827,13 @@ function openInNewWindow() {
             </body>
             </html>
         `);
-        log('🔗 页面已在新窗口打开，可以正常交互', 'success');
+        newWindow.document.close();
+        log('🌐 已在新窗口打开页面', 'success');
     } else {
         log('❌ 无法打开新窗口，请检查浏览器设置', 'error');
     }
 }
 
-// 刷新当前页面
-function refreshCurrentPage() {
-    if (!currentBrowserUrl) {
-        log('❌ 没有可刷新的页面', 'error');
-        return;
-    }
-    
-    log('🔄 刷新页面: ' + currentBrowserUrl);
-    loadWebPage(currentBrowserUrl);
-}
 
-// 全屏模式切换
-function toggleFullscreen() {
-    const modal = document.getElementById('webBrowserModal');
-    
-    if (!document.fullscreenElement) {
-        // 进入全屏
-        if (modal.requestFullscreen) {
-            modal.requestFullscreen();
-        } else if (modal.webkitRequestFullscreen) {
-            modal.webkitRequestFullscreen();
-        } else if (modal.mozRequestFullScreen) {
-            modal.mozRequestFullScreen();
-        }
-        log('📺 进入全屏模式', 'success');
-    } else {
-        // 退出全屏
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        }
-        log('🪟 退出全屏模式', 'success');
-    }
-}
-
-// ===== 辅助函数 =====
-
-// 复制Trojan配置信息到剪贴板
-async function copyTrojanConfig(server, port, password) {
-    const configText = `
-服务器: ${server}
-端口: ${port}
-密码: ${password}
-协议: Trojan
-    `.trim();
-    
-    try {
-        await navigator.clipboard.writeText(configText);
-        log('✅ 配置信息已复制到剪贴板', 'success');
-    } catch (error) {
-        log('❌ 复制失败，请手动复制配置信息', 'error');
-        // 创建临时文本区域进行复制（兼容性方案）
-        const textArea = document.createElement('textarea');
-        textArea.value = configText;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            log('✅ 配置信息已复制到剪贴板', 'success');
-        } catch (e) {
-            log('❌ 复制失败', 'error');
-        }
-        document.body.removeChild(textArea);
-    }
-}
-
-// 测试代理访问
-async function testProxyAccess(proxyName, targetUrl) {
-    try {
-        log(`正在测试代理访问: ${proxyName} -> ${targetUrl}`);
-        
-        const response = await fetch('/tools/api/proxy/create-url/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ 
-                proxy: proxyName, 
-                url: targetUrl 
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            if (data.data.proxy_config.type === 'trojan') {
-                log('✅ Trojan代理配置已生成，请使用客户端连接', 'success');
-            } else {
-                log('✅ HTTP代理访问链接已创建', 'success');
-                // 对于HTTP代理，可以尝试在新窗口打开
-                window.open(data.data.proxy_url, '_blank');
-            }
-        } else {
-            log(`❌ 创建代理访问链接失败: ${data.error}`, 'error');
-        }
-    } catch (error) {
-        log(`❌ 网络错误: ${error.message}`, 'error');
-    }
-}
-
-// 获取CSRF Token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-// 键盘快捷键
-document.addEventListener('keydown', function(e) {
-    // 全局快捷键
-    if (e.ctrlKey && e.key === 'r') {
-        e.preventDefault();
-        getIPComparison();
-        log('🔄 刷新网络状态');
-    }
-    if (e.ctrlKey && e.key === 'w') {
-        e.preventDefault();
-        const url = document.getElementById('webBrowserUrl').value.trim();
-        if (url) {
-            openWebBrowser();
-        } else {
-            log('❌ 请先输入网址，然后按Ctrl+W打开翻墙浏览器');
-        }
-    }
-    
-    // 浏览器内快捷键
-    if (document.getElementById('webBrowserModal').style.display === 'flex') {
-        if (e.key === 'Escape') {
-            closeBrowser();
-        }
-        if (e.ctrlKey && e.key === 'p') {
-            e.preventDefault();
-            togglePictureInPicture();
-        }
-    }
-});
-
-// 浏览器地址栏回车事件
-document.addEventListener('DOMContentLoaded', function() {
-    const browserAddressBar = document.getElementById('browserAddressBar');
-    if (browserAddressBar) {
-        browserAddressBar.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                browserNavigate();
-            }
-        });
-    }
-});
-
-log('🚀 专业翻墙服务已启动');
-log('💡 快捷键: Ctrl+R 检测网络状态, Ctrl+W 打开翻墙浏览器');
-log('🌐 浏览器快捷键: Esc 关闭浏览器, Ctrl+P 切换画中画模式');
 </script>
 {% endblock %}

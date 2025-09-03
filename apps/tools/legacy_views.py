@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -3058,6 +3059,10 @@ def send_message_api(request, room_id):
                 content=content,
                 message_type='text'
             )
+            
+            # 创建聊天通知
+            from .views.notification_views import create_chat_notification
+            create_chat_notification(message)
             
             return JsonResponse({
                 'success': True,
@@ -10568,14 +10573,88 @@ def shipbao_publish(request):
 def shipbao_detail(request, item_id):
     """船宝物品详情页面"""
     try:
-        item = ShipBaoItem.objects.get(id=item_id)
-        return render(request, 'tools/shipbao_detail.html', {
+        item = ShipBaoItem.objects.get(id=item_id, status='pending')
+        
+        # 增加浏览次数
+        item.view_count += 1
+        item.save()
+        
+        # 检查用户是否已收藏
+        is_favorited = False
+        if request.user.is_authenticated:
+            from .models.legacy_models import ShipBaoFavorite
+            is_favorited = ShipBaoFavorite.objects.filter(
+                user=request.user,
+                item=item
+            ).exists()
+        
+        # 获取想要此商品的人数
+        want_count = item.want_count
+        
+        # 如果是卖家，获取想要此商品的用户列表
+        interested_users = []
+        if request.user.is_authenticated and request.user == item.seller:
+            from .models.legacy_models import ShipBaoWantItem, ShipBaoTransaction, ShipBaoMessage
+            want_list = ShipBaoWantItem.objects.filter(
+                item=item
+            ).select_related('user').order_by('-created_at')
+            
+            interested_users = []
+            for want in want_list:
+                # 获取该用户相关的交易消息
+                transaction_messages = []
+                try:
+                    # 查找该用户与当前商品的交易
+                    transaction = ShipBaoTransaction.objects.filter(
+                        item=item,
+                        buyer=want.user
+                    ).first()
+                    
+                    if transaction:
+                        # 获取该交易的所有消息，按时间排序
+                        messages = ShipBaoMessage.objects.filter(
+                            transaction=transaction
+                        ).order_by('created_at')
+                        
+                        for msg in messages:
+                            transaction_messages.append({
+                                'content': msg.content,
+                                'message_type': msg.message_type,
+                                'offer_price': float(msg.offer_price) if msg.offer_price else None,
+                                'created_at': msg.created_at.isoformat(),
+                                'sender': msg.sender.username
+                            })
+                except Exception as e:
+                    print(f"获取交易消息失败: {e}")
+                
+                interested_users.append({
+                    'user_id': want.user.id,
+                    'username': want.user.username,
+                    'message': want.message,
+                    'created_at': want.created_at.isoformat(),
+                    'transaction_messages': transaction_messages
+                })
+        
+        context = {
             'item': item,
-            'item_id': item_id  # 添加item_id到模板上下文
-        })
+            'item_id': item_id,
+            'is_favorited': is_favorited,
+            'want_count': want_count,
+            'interested_users': interested_users,
+            'is_seller': request.user.is_authenticated and request.user == item.seller
+        }
+        
     except ShipBaoItem.DoesNotExist:
-        messages.error(request, '物品不存在')
-        return redirect('shipbao_home')
+        context = {
+            'item': None,
+            'item_id': item_id,
+            'is_favorited': False,
+            'want_count': 0,
+            'interested_users': [],
+            'is_seller': False
+        }
+    
+    return render(request, 'tools/shipbao_detail.html', context)
 
 
 @login_required
@@ -10586,13 +10665,46 @@ def shipbao_transactions(request):
 
 @login_required
 def shipbao_chat(request, transaction_id):
-    """船宝私信页面"""
+    """船宝私信页面 - 直接创建聊天室"""
     try:
         transaction = ShipBaoTransaction.objects.get(id=transaction_id)
         if transaction.buyer != request.user and transaction.seller != request.user:
             messages.error(request, '无权访问此交易')
             return redirect('shipbao_transactions')
-        return render(request, 'tools/shipbao_chat.html', {'transaction': transaction})
+        
+        # 使用心动链接聊天系统创建聊天室
+        from ..models.chat_models import ChatRoom, ChatMessage
+        from django.db.models import Q
+        import uuid
+        
+        # 确定聊天对象
+        if request.user == transaction.buyer:
+            other_user = transaction.seller
+        else:
+            other_user = transaction.buyer
+        
+        # 查找是否已有聊天室
+        chat_room = ChatRoom.objects.filter(
+            Q(user1=request.user, user2=other_user) |
+            Q(user1=other_user, user2=request.user)
+        ).filter(
+            room_type='private'
+        ).first()
+        
+        # 如果没有聊天室，创建一个新的
+        if not chat_room:
+            chat_room = ChatRoom.objects.create(
+                room_id=str(uuid.uuid4()),
+                user1=request.user,
+                user2=other_user,
+                room_type='private',
+                status='active',
+                name=f"关于商品: {transaction.item.title}"
+            )
+        
+        # 重定向到聊天室
+        return redirect('heart_link_chat', room_id=chat_room.room_id)
+        
     except ShipBaoTransaction.DoesNotExist:
         messages.error(request, '交易不存在')
         return redirect('shipbao_transactions')
@@ -10749,6 +10861,58 @@ def shipbao_items_api(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
+def shipbao_check_transaction_api(request):
+    """检查交易记录API"""
+    try:
+        data = json.loads(request.body)
+        item_id = data.get('item_id')
+        user_id = data.get('user_id')
+        
+        if not item_id:
+            return JsonResponse({
+                'success': False,
+                'error': '缺少商品ID'
+            })
+        
+        try:
+            item = ShipBaoItem.objects.get(id=item_id, status='pending')
+        except ShipBaoItem.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': '商品不存在'
+            })
+        
+        # 查找交易记录
+        from ..models.legacy_models import ShipBaoTransaction
+        transaction = ShipBaoTransaction.objects.filter(
+            item=item,
+            buyer=request.user,
+            status__in=['initiated', 'negotiating', 'pending']
+        ).first()
+        
+        if transaction:
+            return JsonResponse({
+                'success': True,
+                'transaction_id': transaction.id,
+                'has_transaction': True
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'transaction_id': None,
+                'has_transaction': False
+            })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'检查交易记录失败: {str(e)}'
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
 def shipbao_initiate_transaction_api(request):
     """发起船宝交易API"""
     try:
@@ -10772,24 +10936,107 @@ def shipbao_initiate_transaction_api(request):
         
         # 检查是否是自己发布的物品
         if item.seller == request.user:
+            # 卖家联系买家的情况，直接创建聊天室，不创建交易记录
+            buyer_id = data.get('buyer_id')
+            if not buyer_id:
+                return JsonResponse({
+                    'success': False,
+                    'message': '请指定要联系的买家'
+                })
+            
+            # 确保buyer_id是整数
+            try:
+                buyer_id = int(buyer_id)
+            except (ValueError, TypeError):
+                return JsonResponse({
+                    'success': False,
+                    'message': '买家ID格式错误'
+                })
+            
+            # 直接创建聊天室
+            from .models.chat_models import ChatRoom
+            from django.db.models import Q
+            import uuid
+            
+            # 获取买家用户
+            from django.contrib.auth.models import User
+            try:
+                buyer_user = User.objects.get(id=buyer_id)
+            except User.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'message': '买家不存在'
+                })
+            
+            # 查找是否已有聊天室
+            chat_room = ChatRoom.objects.filter(
+                Q(user1=request.user, user2=buyer_user) |
+                Q(user1=buyer_user, user2=request.user)
+            ).filter(
+                room_type='private'
+            ).first()
+            
+            # 如果没有聊天室，创建一个新的
+            if not chat_room:
+                chat_room = ChatRoom.objects.create(
+                    room_id=str(uuid.uuid4()),
+                    user1=request.user,
+                    user2=buyer_user,
+                    room_type='private',
+                    status='active',
+                    name=f"关于商品: {item.title}"
+                )
+            
+            # 如果有消息，创建消息记录
+            message = data.get('message', '')
+            if message:
+                from .models.chat_models import ChatMessage
+                ChatMessage.objects.create(
+                    room=chat_room,
+                    sender=request.user,
+                    message_type='text',
+                    content=message
+                )
+            
             return JsonResponse({
-                'success': False,
-                'message': '不能购买自己发布的物品'
+                'success': True,
+                'message': '聊天室创建成功',
+                'chat_room_id': chat_room.room_id
             })
+        else:
+            # 买家联系卖家的情况
+            # 检查是否已经发起过交易
+            if ShipBaoTransaction.objects.filter(item=item, buyer=request.user).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': '您已经发起过此物品的交易'
+                })
+            
+            # 创建交易（买家联系卖家）
+            transaction = ShipBaoTransaction.objects.create(
+                item=item,
+                buyer=request.user,
+                seller=item.seller
+            )
         
-        # 检查是否已经发起过交易
-        if ShipBaoTransaction.objects.filter(item=item, buyer=request.user).exists():
-            return JsonResponse({
-                'success': False,
-                'message': '您已经发起过此物品的交易'
-            })
-        
-        # 创建交易
-        transaction = ShipBaoTransaction.objects.create(
-            item=item,
-            buyer=request.user,
-            seller=item.seller
-        )
+        # 如果有消息，创建消息记录
+        message = data.get('message', '')
+        if message:
+            from ..models.legacy_models import ShipBaoMessage
+            message_type = 'text'
+            offer_price = data.get('offer_price')
+            
+            # 如果有出价，设置为报价类型
+            if offer_price:
+                message_type = 'offer'
+            
+            ShipBaoMessage.objects.create(
+                transaction=transaction,
+                sender=request.user,
+                message_type=message_type,
+                content=message,
+                offer_price=offer_price
+            )
         
         # 更新物品状态
         item.status = 'reserved'

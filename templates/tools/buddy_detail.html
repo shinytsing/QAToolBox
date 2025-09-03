@@ -276,10 +276,11 @@
     color: #2c3e50;
     margin-bottom: 15px;
     font-size: 1.2rem;
-    font-weight: 600;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 8px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .creator-info {
@@ -371,12 +372,29 @@
 .restriction-item {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    align-items: center;
+    padding: 12px 0;
     border-bottom: 1px solid #e9ecef;
 }
 
 .restriction-item:last-child {
     border-bottom: none;
+}
+
+.restriction-item span:first-child {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.restriction-item span:last-child {
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.95rem;
+    background: #f8f9fa;
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
 }
 
 /* 操作按钮 */

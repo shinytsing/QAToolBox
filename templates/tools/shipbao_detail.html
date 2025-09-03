@@ -228,6 +228,35 @@
     margin-bottom: 25px;
 }
 
+.want-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.want-btn:hover {
+    background: linear-gradient(135deg, #229954, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.want-btn.wanted {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.want-btn.wanted:hover {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
 .btn {
     flex: 1;
     padding: 15px 25px;
@@ -279,12 +308,13 @@
 }
 
 .location-section {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 25px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .location-header {
@@ -532,12 +562,13 @@
 
 /* 想要此商品的用户样式 */
 .want-count-section {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 25px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .want-count-header {
@@ -557,27 +588,124 @@
 }
 
 .interested-user-item {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(52, 152, 219, 0.2);
+    padding: 12px 15px;
+    background: rgba(52, 152, 219, 0.1);
+    border-bottom: 1px solid rgba(52, 152, 219, 0.2);
 }
 
 .user-name {
     font-weight: 600;
     color: #2c3e50;
+    font-size: 16px;
 }
 
-.user-status {
-    color: #7f8c8d;
+.user-time {
+    color: #34495e;
     font-size: 12px;
-    padding: 4px 8px;
-    background: #ecf0f1;
+    font-weight: 500;
+}
+
+.user-want-message {
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    color: #2c3e50;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.user-want-message strong {
+    color: #2980b9;
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+.transaction-messages {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.transaction-messages strong {
+    color: #c0392b;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.messages-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.message-item {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #3498db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.message-sender {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.message-time {
+    color: #34495e;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.message-content {
+    color: #2c3e50;
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.offer-price {
+    display: inline-block;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    padding: 2px 8px;
     border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.message-text {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.user-actions {
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    text-align: right;
 }
 
 .btn-chat {
@@ -680,15 +808,15 @@
     <button class="back-btn" onclick="history.back()">← 返回</button>
     
     <div class="item-detail-card">
-        <!-- 调试信息 -->
-        <div style="background: #f8f9fa; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
+        <!-- 调试信息 - 已隐藏 -->
+        <!-- <div style="background: #f8f9fa; padding: 10px; margin: 10px; border-radius: 5px; font-size: 12px;">
             <strong>调试信息：</strong><br>
             商品ID: {{ item.id }}<br>
             收藏状态: {{ is_favorited }}<br>
             想要人数: {{ want_count }}<br>
             是否卖家: {{ is_seller }}<br>
             用户: {{ user.username }}
-        </div>
+        </div> -->
         
         <!-- 商品图片 -->
         <div class="item-images">
@@ -724,7 +852,9 @@
             </div>
             
             <div class="item-tags">
-                <span class="item-tag">{{ item.category_display }}</span>
+                {% if item.category_display %}
+                    <span class="item-tag">{{ item.category_display }}</span>
+                {% endif %}
                 {% if item.can_bargain %}
                     <span class="item-tag">💬 可议价</span>
                 {% endif %}
@@ -814,11 +944,46 @@
                     <h4>想要此商品的用户：</h4>
                     {% for user in interested_users %}
                     <div class="interested-user-item">
-                        <span class="user-name">{{ user.buyer__username }}</span>
-                        <span class="user-status">{{ user.status }}</span>
-                        <button class="btn-chat" onclick="chatWithUser('{{ user.buyer__id }}', '{{ item.id }}')">
-                            <i class="fas fa-comments"></i> 联系
-                        </button>
+                        <div class="user-info">
+                            <span class="user-name">{{ user.username }}</span>
+                            <span class="user-time">{{ user.created_at|slice:":16" }}</span>
+                        </div>
+                        
+                        <!-- 想要留言 -->
+                        {% if user.message %}
+                        <div class="user-want-message">
+                            <strong>想要留言：</strong>{{ user.message }}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 交易消息 -->
+                        {% if user.transaction_messages %}
+                        <div class="transaction-messages">
+                            <strong>交易消息：</strong>
+                            <div class="messages-list">
+                                {% for msg in user.transaction_messages %}
+                                <div class="message-item">
+                                    <div class="message-header">
+                                        <span class="message-sender">{{ msg.sender }}</span>
+                                        <span class="message-time">{{ msg.created_at|slice:":16" }}</span>
+                                    </div>
+                                    <div class="message-content">
+                                        {% if msg.message_type == 'offer' and msg.offer_price %}
+                                            <span class="offer-price">💰 报价：¥{{ msg.offer_price }}</span>
+                                        {% endif %}
+                                        <span class="message-text">{{ msg.content }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="user-actions">
+                            <button class="btn-chat" onclick="chatWithUser('{{ user.user_id }}', '{{ item.id }}')">
+                                <i class="fas fa-comments"></i> 联系
+                            </button>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -832,12 +997,17 @@
                     <button class="btn btn-primary" onclick="contactSeller()">
                         <i class="fas fa-comments"></i> 联系卖家
                     </button>
-                                    <button class="btn btn-secondary transaction-btn" onclick="makeOffer()">
-                    <i class="fas fa-handshake"></i> 发起交易
-                </button>
-                    <button class="btn btn-outline favorite-btn {% if is_favorited %}favorited{% endif %}" onclick="toggleFavorite()">
-                        <i class="fas fa-heart"></i> {% if is_favorited %}已收藏{% else %}收藏{% endif %}
+                    <button class="btn btn-secondary transaction-btn" onclick="makeOffer()">
+                        <i class="fas fa-handshake"></i> 发起交易
                     </button>
+                    <button class="btn btn-success want-btn" onclick="toggleWantItem()">
+                        <i class="fas fa-heart"></i> 想要此商品
+                    </button>
+                    {% if not is_seller %}
+                    <button class="btn btn-outline favorite-btn {% if is_favorited %}favorited{% endif %}" onclick="toggleFavorite()">
+                        <i class="fas fa-star"></i> {% if is_favorited %}已收藏{% else %}收藏{% endif %}
+                    </button>
+                    {% endif %}
                 {% else %}
                     <!-- 发布者操作按钮 -->
                     <button class="btn btn-secondary" onclick="editProduct()">
@@ -886,7 +1056,7 @@
 {% block extra_js %}
 <script>
 // 全局变量
-const ITEM_ID = {% if item_id %}{{ item_id }}{% else %}null{% endif %};
+const ITEM_ID = {% if item.id %}{{ item.id }}{% else %}null{% endif %};
 let currentLocation = null;
 let selectedLocation = null;
 let selectedLocationData = null;
@@ -898,31 +1068,36 @@ document.addEventListener('DOMContentLoaded', function() {
     loadItemImages();
     initializeFavoriteButton();
     initializeTransactionButton();
+    
+    // 自动获取用户位置信息
+    autoGetUserLocation();
+    
+    // 初始化WebSocket
+    initWebSocket();
 });
 
 // 初始化收藏按钮状态
 function initializeFavoriteButton() {
-
     const favoriteBtn = document.querySelector('.favorite-btn');
     const isFavorited = {% if is_favorited %}true{% else %}false{% endif %};
 
-
     if (favoriteBtn) {
-
         updateFavoriteButton(isFavorited);
     } else {
-        console.error('初始化时未找到收藏按钮');
-        // 延迟一段时间再尝试
-        setTimeout(() => {
-
-            const retryBtn = document.querySelector('.favorite-btn');
-            if (retryBtn) {
-
-                updateFavoriteButton(isFavorited);
-            } else {
-                console.error('重试后仍未找到收藏按钮');
-            }
-        }, 500);
+        // 如果是卖家，不显示收藏按钮是正常的
+        const isSeller = {{ item.seller.id|default:"null" }} === {{ user.id|default:"null" }};
+        if (!isSeller) {
+            console.warn('初始化时未找到收藏按钮');
+            // 延迟一段时间再尝试
+            setTimeout(() => {
+                const retryBtn = document.querySelector('.favorite-btn');
+                if (retryBtn) {
+                    updateFavoriteButton(isFavorited);
+                } else {
+                    console.warn('重试后仍未找到收藏按钮');
+                }
+            }, 500);
+        }
     }
 }
 
@@ -1011,6 +1186,92 @@ function getLocationInfo() {
         })
         .catch(error => {
             console.error('获取位置信息失败:', error);
+        });
+}
+
+// 自动获取用户位置信息（进入详情页时自动调用）
+function autoGetUserLocation() {
+    console.log('自动获取用户位置信息...');
+    
+    // 检查是否已经有位置信息
+    const savedLocation = localStorage.getItem('user_location');
+    if (savedLocation) {
+        try {
+            const location = JSON.parse(savedLocation);
+            // 如果位置信息是最近5分钟内获取的，直接使用
+            if (location.timestamp && (Date.now() - location.timestamp) < 300000) {
+                console.log('使用缓存的位置信息:', location);
+                userLocation = location;
+                updateLocationDisplay(userLocation);
+                return;
+            }
+        } catch (e) {
+            console.error('解析缓存位置信息失败:', e);
+        }
+    }
+    
+    // 更新位置显示为正在获取
+    const locationElement = document.getElementById('current-location');
+    if (locationElement) {
+        locationElement.textContent = '正在自动获取位置信息...';
+    }
+    
+    // 优先使用GPS定位
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                console.log('GPS定位成功:', position.coords);
+                const coords = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude
+                };
+                
+                // 使用反向地理编码获取详细地址
+                reverseGeocodeWithAmap(coords);
+            },
+            function(error) {
+                console.error('GPS定位失败:', error);
+                // GPS失败，使用IP定位
+                getIPLocationFallback();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5分钟缓存
+            }
+        );
+    } else {
+        console.log('浏览器不支持GPS定位，使用IP定位');
+        getIPLocationFallback();
+    }
+}
+
+// IP定位备用方案
+function getIPLocationFallback() {
+    console.log('使用IP定位...');
+    
+    fetch('/tools/api/location/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.location) {
+                const locationInfo = {
+                    ...data.location,
+                    timestamp: Date.now(),
+                    source: 'ip'
+                };
+                
+                userLocation = locationInfo;
+                updateLocationDisplay(userLocation);
+                localStorage.setItem('user_location', JSON.stringify(userLocation));
+                console.log('IP定位成功:', locationInfo);
+            } else {
+                console.error('IP定位失败:', data.error);
+                showLocationError('位置获取失败，请手动选择位置');
+            }
+        })
+        .catch(error => {
+            console.error('IP定位请求失败:', error);
+            showLocationError('位置服务不可用，请手动选择位置');
         });
 }
 
@@ -1397,16 +1658,235 @@ function contactSeller() {
     });
 }
 
-// 发起交易
-function makeOffer() {
-    const message = prompt('请输入您的交易意向：');
-    if (message === null) return; // 用户取消
-    
+// 想要此商品
+function toggleWantItem() {
     const itemId = ITEM_ID;
     
     if (!itemId) {
         showErrorMessage('商品ID无效');
         return;
+    }
+
+    // 获取用户输入的消息
+    const message = prompt('请输入您想对卖家说的话（可选）：') || '';
+    
+    fetch('/tools/api/shipbao/want-item/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            action: 'add',
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage('已表示想要此商品！');
+            // 更新想要按钮状态
+            updateWantButton(true);
+            // 延迟刷新页面以更新想要人数
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showErrorMessage(data.error || '操作失败');
+        }
+    })
+    .catch(error => {
+        console.error('想要商品失败:', error);
+        showErrorMessage('操作失败，请稍后重试');
+    });
+}
+
+// 更新想要按钮状态
+function updateWantButton(isWanted) {
+    const wantBtn = document.querySelector('.want-btn');
+    if (wantBtn) {
+        if (isWanted) {
+            wantBtn.innerHTML = '<i class="fas fa-heart"></i> 已想要';
+            wantBtn.classList.add('wanted');
+        } else {
+            wantBtn.innerHTML = '<i class="fas fa-heart"></i> 想要此商品';
+            wantBtn.classList.remove('wanted');
+        }
+    }
+}
+
+// 发起交易
+function makeOffer() {
+    // 创建出价输入对话框
+    const offerDialog = createOfferDialog();
+    document.body.appendChild(offerDialog);
+}
+
+// 创建出价对话框
+function createOfferDialog() {
+    const dialog = document.createElement('div');
+    dialog.className = 'offer-dialog-overlay';
+    dialog.innerHTML = `
+        <div class="offer-dialog">
+            <div class="offer-dialog-header">
+                <h3>发起交易</h3>
+                <button class="close-btn" onclick="closeOfferDialog()">&times;</button>
+            </div>
+            <div class="offer-dialog-content">
+                <div class="form-group">
+                    <label for="offer-price">出价金额（元）：</label>
+                    <input type="number" id="offer-price" placeholder="请输入您的出价" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="offer-message">交易留言：</label>
+                    <textarea id="offer-message" placeholder="请输入您的交易意向或留言..." rows="4"></textarea>
+                </div>
+            </div>
+            <div class="offer-dialog-actions">
+                <button class="btn-cancel" onclick="closeOfferDialog()">取消</button>
+                <button class="btn-confirm" onclick="submitOffer()">确认发起交易</button>
+            </div>
+        </div>
+    `;
+    
+    // 添加样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .offer-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .offer-dialog {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .offer-dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .offer-dialog-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        .offer-dialog-content {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .offer-dialog-actions {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            justify-content: flex-end;
+        }
+        .btn-cancel, .btn-confirm {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-confirm {
+            background: #3498db;
+            color: white;
+        }
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+        .btn-confirm:hover {
+            background: #2980b9;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    return dialog;
+}
+
+// 关闭出价对话框
+function closeOfferDialog() {
+    const dialog = document.querySelector('.offer-dialog-overlay');
+    if (dialog) {
+        dialog.remove();
+    }
+}
+
+// 提交出价
+function submitOffer() {
+    const priceInput = document.getElementById('offer-price');
+    const messageInput = document.getElementById('offer-message');
+    
+    const price = priceInput.value.trim();
+    const message = messageInput.value.trim();
+    
+    if (!price && !message) {
+        showErrorMessage('请输入出价金额或交易留言');
+        return;
+    }
+    
+    const itemId = ITEM_ID;
+    if (!itemId) {
+        showErrorMessage('商品ID无效');
+        return;
+    }
+    
+    // 构建请求数据
+    const requestData = {
+        item_id: itemId,
+        message: message || '发起交易'
+    };
+    
+    // 如果有出价，添加到请求数据中
+    if (price) {
+        requestData.offer_price = parseFloat(price);
     }
     
     fetch('/tools/api/shipbao/initiate-transaction/', {
@@ -1415,15 +1895,14 @@ function makeOffer() {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken')
         },
-        body: JSON.stringify({
-            item_id: itemId,
-            message: message
-        })
+        body: JSON.stringify(requestData)
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showSuccessMessage('交易请求已发送！');
+            // 关闭对话框
+            closeOfferDialog();
             // 更新交易按钮状态
             updateTransactionButton(true, 'initiated');
             // 延迟刷新页面以更新想要人数
@@ -1435,7 +1914,6 @@ function makeOffer() {
             
             // 特殊处理：如果错误是"已经发起过交易请求"，更新按钮状态
             if (data.error && data.error.includes('已经发起过交易请求')) {
-
                 updateTransactionButton(true, 'initiated');
                 showSuccessMessage('您已经发起过交易请求');
             }
@@ -1449,8 +1927,63 @@ function makeOffer() {
 
 // 与用户聊天
 function chatWithUser(userId, itemId) {
-    // 这里可以跳转到聊天页面
-    window.open(`/tools/shipbao/chat/${itemId}/?user=${userId}`, '_blank');
+    // 直接创建交易并进入聊天室
+    createTransactionAndChat(userId, itemId);
+}
+
+// 创建交易并进入聊天室
+function createTransactionAndChat(userId, itemId) {
+    // 检查当前用户是否是卖家
+    const itemSellerId = {{ item.seller.id|default:"null" }};
+    const currentUserId = {{ user.id|default:"null" }};
+    const isSeller = itemSellerId === currentUserId;
+    
+    let message;
+    if (isSeller) {
+        message = prompt('请输入您想对买家说的话：') || '你好，我是卖家，想与您进一步沟通。';
+    } else {
+        message = prompt('请输入您想对卖家说的话：') || '你好，我对您的商品感兴趣，想进一步了解。';
+    }
+    
+    // 构建请求数据
+    const requestData = {
+        item_id: itemId,
+        message: message
+    };
+    
+    // 如果是卖家联系买家，需要添加buyer_id
+    if (isSeller) {
+        requestData.buyer_id = userId;
+    }
+    
+    fetch('/tools/api/shipbao/initiate-transaction/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.transaction_id) {
+                // 买家联系卖家，跳转到交易聊天室
+                window.open(`/tools/shipbao/chat/${data.transaction_id}/`, '_blank');
+            } else if (data.chat_room_id) {
+                // 卖家联系买家，直接跳转到聊天室
+                window.open(`/tools/heart_link/chat/${data.chat_room_id}/`, '_blank');
+            } else {
+                showSuccessMessage('联系成功！');
+            }
+        } else {
+            showErrorMessage('创建联系失败：' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('创建联系失败:', error);
+        showErrorMessage('创建联系失败，请稍后重试');
+    });
 }
 
 // 获取Cookie值
@@ -1483,8 +2016,12 @@ function toggleFavorite() {
     const favoriteBtn = document.querySelector('.favorite-btn');
 
     if (!favoriteBtn) {
-        console.error('收藏按钮未找到');
-        showErrorMessage('收藏按钮未找到');
+        // 如果是卖家，不显示收藏按钮是正常的
+        const isSeller = {{ item.seller.id|default:"null" }} === {{ user.id|default:"null" }};
+        if (!isSeller) {
+            console.error('收藏按钮未找到');
+            showErrorMessage('收藏按钮未找到');
+        }
         return;
     }
     
@@ -2014,13 +2551,10 @@ async function refreshQueueStatus() {
     }
 }
 
-// 页面加载完成后初始化WebSocket
-document.addEventListener('DOMContentLoaded', function() {
-    getLocationInfo();
-    loadItemImages();
-    initializeFavoriteButton();
-    initWebSocket();
-});
+// WebSocket初始化函数
+function initWebSocket() {
+    // WebSocket初始化逻辑
+}
 
 // ==================== 增强的位置管理功能 ====================
 
@@ -2108,6 +2642,7 @@ function reverseGeocodeWithAmap(coords) {
             saveUserLocation(locationInfo);
             updateLocationDisplay(locationInfo);
             showSuccessMessage('自动定位成功！');
+            console.log('自动定位成功:', locationInfo);
         } else {
             console.error('反向地理编码失败:', data.error);
             showLocationError('位置解析失败，请手动选择');
@@ -2438,23 +2973,27 @@ function openMapPicker() {
 }
 
 .location-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #2c3e50;
     padding: 10px 15px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 14px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .location-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(52, 152, 219, 0.5);
+    color: #3498db;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .location-btn:active {
@@ -2465,6 +3004,8 @@ function openMapPicker() {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: rgba(255, 255, 255, 0.6);
+    color: #7f8c8d;
 }
 
 /* 位置输入容器 */

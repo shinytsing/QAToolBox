@@ -168,6 +168,263 @@ body {
 .location-display .location-icon {
     color: #4facfe;
     font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.location-display .location-icon:hover {
+    color: #3498db;
+    background-color: rgba(79, 172, 254, 0.1);
+    transform: scale(1.1);
+}
+
+/* 位置输入组样式 */
+.location-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.location-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 14px;
+}
+
+.map-picker-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.map-picker-btn:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.location-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cancel-btn {
+    background: #95a5a6 !important;
+}
+
+.cancel-btn:hover {
+    background: #7f8c8d !important;
+}
+
+/* 地图选择器模态框样式 */
+.map-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-picker-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.map-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: #3498db;
+    color: white;
+}
+
+.map-picker-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.map-picker-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.map-picker-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.map-search-container {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.map-search-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.search-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.search-btn:hover {
+    background: #2980b9;
+}
+
+.current-location-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 14px;
+}
+
+.current-location-btn:hover {
+    background: #229954;
+}
+
+.location-suggestions {
+    max-height: 200px;
+    overflow-y: auto;
+    border-bottom: 1px solid #eee;
+}
+
+.suggestion-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background 0.3s ease;
+}
+
+.suggestion-item:hover {
+    background: #f8f9fa;
+}
+
+.suggestion-item.selected {
+    background: #e3f2fd !important;
+    border-left: 4px solid #2196f3 !important;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    transform: translateX(2px);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.suggestion-address {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.map-container {
+    height: 300px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.map-placeholder {
+    text-align: center;
+    color: #7f8c8d;
+}
+
+.map-picker-actions {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    justify-content: flex-end;
+}
+
+.confirm-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 14px;
+}
+
+.confirm-btn:hover:not(:disabled) {
+    background: #229954;
+}
+
+.confirm-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background: #95a5a6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-size: 14px;
+}
+
+.cancel-btn:hover {
+    background: #7f8c8d;
 }
 
 .location-input-container {
@@ -620,13 +877,21 @@ body {
         <!-- 位置信息显示 -->
         <div class="location-display" id="location-display" style="display: none;">
             <div class="location-text">
-                <i class="fas fa-map-marker-alt location-icon"></i>
+                <i class="fas fa-map-marker-alt location-icon" onclick="reLocateUser()" title="点击重新定位"></i>
                 <span id="location-text">正在获取位置信息...</span>
                 <button class="edit-location-btn" onclick="toggleLocationInput()">编辑</button>
             </div>
             <div class="location-input-container" id="location-input-container">
-                <input type="text" class="location-input" id="location-input" placeholder="请输入您的城市，如：北京、上海、深圳...">
-                <button class="edit-location-btn" onclick="saveLocation()" style="margin-top: 8px;">保存</button>
+                <div class="location-input-group">
+                    <input type="text" class="location-input" id="location-input" placeholder="请输入您的城市，如：北京、上海、深圳...">
+                    <button class="map-picker-btn" onclick="openMapPicker()" title="在地图上选择位置">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                </div>
+                <div class="location-actions">
+                    <button class="edit-location-btn" onclick="saveLocation()">保存</button>
+                    <button class="edit-location-btn cancel-btn" onclick="toggleLocationInput()">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -682,6 +947,7 @@ body {
             <div class="filter-item">
                 <label>📏 距离范围</label>
                 <select id="distance-filter">
+                    <option value="">不限距离</option>
                     <option value="50">50公里内</option>
                     <option value="20">20公里内</option>
                     <option value="10">10公里内</option>
@@ -725,6 +991,52 @@ body {
         📝 发布物品
     </button>
 </div>
+
+<!-- 地图选择器模态框 -->
+<div class="map-picker-modal" id="mapPickerModal" style="display: none;">
+    <div class="map-picker-content">
+        <div class="map-picker-header">
+            <h3>📍 选择您的位置</h3>
+            <button class="map-picker-close" onclick="closeMapPicker()">&times;</button>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="map-search-container">
+            <div class="search-input-group">
+                <input type="text" id="mapSearchInput" placeholder="搜索地址、商圈、地标..." class="map-search-input">
+                <button class="search-btn" onclick="searchLocationOnMap()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <button class="current-location-btn" onclick="getCurrentLocationForMap()">
+                <i class="fas fa-crosshairs"></i> 当前位置
+            </button>
+        </div>
+        
+        <!-- 搜索建议 -->
+        <div class="location-suggestions" id="locationSuggestions">
+            <!-- 搜索建议将在这里显示 -->
+        </div>
+        
+        <!-- 地图容器 -->
+        <div class="map-container" id="mapContainer">
+            <div class="map-placeholder">
+                <i class="fas fa-map" style="font-size: 48px; color: #ddd; margin-bottom: 10px;"></i>
+                <p>地图加载中...</p>
+            </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="map-picker-actions">
+            <button class="confirm-btn" onclick="confirmLocationSelection()" id="confirmLocationBtn" disabled>
+                <i class="fas fa-check"></i> 确认选择
+            </button>
+            <button class="cancel-btn" onclick="closeMapPicker()">
+                <i class="fas fa-times"></i> 取消
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -732,16 +1044,101 @@ body {
 let currentPage = 1;
 let currentFilters = {};
 let userLocation = null;
+let selectedLocation = null; // 地图选择器选中的位置
 
 // 页面加载完成后的初始化将在下面的统一DOMContentLoaded事件中处理
 
 // 获取位置信息
 function getLocationInfo() {
-    // 尝试从localStorage获取保存的位置
+    // 优先检查用户是否手动设置过位置
+    const userSetLocation = localStorage.getItem('shipbao_user_location');
+    if (userSetLocation) {
+        try {
+            userLocation = JSON.parse(userSetLocation);
+            showLocationInfo(userLocation);
+            return; // 用户已手动设置位置，不再自动定位
+        } catch (e) {
+            console.error('解析用户设置的位置数据失败:', e);
+        }
+    }
+    
+    // 如果没有用户设置的位置，优先使用GPS定位
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // 使用反向地理编码获取地址信息
+                fetch('/tools/api/map/reverse-geocode/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        lat: lat,
+                        lon: lon
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.location) {
+                        userLocation = {
+                            city: data.location.city || data.location.address,
+                            region: data.location.region || data.location.address,
+                            address: data.location.address,
+                            lat: lat,
+                            lon: lon,
+                            source: 'gps'
+                        };
+                        showLocationInfo(userLocation);
+                        localStorage.setItem('user_location', JSON.stringify(userLocation));
+                        console.log('GPS定位成功:', userLocation);
+                    } else {
+                        // GPS定位失败，使用IP定位
+                        getIPLocation();
+                    }
+                })
+                .catch(error => {
+                    console.error('反向地理编码失败:', error);
+                    // GPS定位失败，使用IP定位
+                    getIPLocation();
+                });
+            },
+            function(error) {
+                console.error('GPS定位失败:', error);
+                // GPS定位失败，使用IP定位
+                getIPLocation();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5分钟缓存
+            }
+        );
+    } else {
+        // 不支持GPS定位，使用IP定位
+        getIPLocation();
+    }
+}
+
+// 获取IP定位信息
+function getIPLocation() {
+    // 先检查是否有缓存的位置信息
     const savedLocation = localStorage.getItem('user_location');
     if (savedLocation) {
-        userLocation = JSON.parse(savedLocation);
-        showLocationInfo(userLocation);
+        try {
+            const cachedLocation = JSON.parse(savedLocation);
+            // 如果缓存的位置是GPS定位的，直接使用
+            if (cachedLocation.source === 'gps') {
+                userLocation = cachedLocation;
+                showLocationInfo(userLocation);
+                return;
+            }
+        } catch (e) {
+            console.error('解析缓存位置数据失败:', e);
+        }
     }
     
     // 获取IP定位信息
@@ -749,14 +1146,92 @@ function getLocationInfo() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.location) {
-                userLocation = data.location;
+                userLocation = {
+                    ...data.location,
+                    source: 'ip'
+                };
                 showLocationInfo(userLocation);
                 localStorage.setItem('user_location', JSON.stringify(userLocation));
+                console.log('IP定位成功:', userLocation);
             }
         })
         .catch(error => {
-            console.error('获取位置信息失败:', error);
+            console.error('获取IP位置信息失败:', error);
         });
+}
+
+// 重新定位用户位置
+function reLocateUser() {
+    const locationText = document.getElementById('location-text');
+    if (locationText) {
+        locationText.textContent = '正在重新定位...';
+    }
+    
+    // 清除缓存的位置信息
+    localStorage.removeItem('user_location');
+    localStorage.removeItem('shipbao_user_location');
+    userLocation = null;
+    
+    // 重新获取位置信息
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // 使用反向地理编码获取地址信息
+                fetch('/tools/api/map/reverse-geocode/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        lat: lat,
+                        lon: lon
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.location) {
+                        userLocation = {
+                            city: data.location.city || '未知城市',
+                            region: data.location.region || data.location.city || '未知地区',
+                            country: data.location.country || '中国',
+                            lat: lat,
+                            lon: lon
+                        };
+                        showLocationInfo(userLocation);
+                        localStorage.setItem('user_location', JSON.stringify(userLocation));
+                        
+                        // 重新加载物品列表以应用新的位置信息
+                        loadItems();
+                    } else {
+                        // 如果反向地理编码失败，使用IP定位
+                        getLocationInfo();
+                    }
+                })
+                .catch(error => {
+                    console.error('反向地理编码失败:', error);
+                    // 如果反向地理编码失败，使用IP定位
+                    getLocationInfo();
+                });
+            },
+            function(error) {
+                console.error('GPS定位失败:', error);
+                // GPS定位失败，使用IP定位
+                getLocationInfo();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        // 浏览器不支持GPS定位，使用IP定位
+        getLocationInfo();
+    }
 }
 
 // 显示位置信息
@@ -765,8 +1240,29 @@ function showLocationInfo(location) {
     const locationText = document.getElementById('location-text');
     
     if (location && location.city && location.city !== '未知') {
-        locationText.textContent = `当前位置：${location.city}，${location.region}`;
+        let displayText = `当前位置：${location.city}`;
+        if (location.region && location.region !== location.city && location.region !== '本地') {
+            displayText += `，${location.region}`;
+        }
+        
+        // 如果有经纬度信息，显示精度信息
+        if (location.lat && location.lon) {
+            const source = location.source === 'gps' ? 'GPS' : 'IP';
+            displayText += ` (${source}定位)`;
+        }
+        
+        locationText.textContent = displayText;
         locationDisplay.style.display = 'block';
+        
+        // 在控制台输出详细位置信息用于调试
+        console.log('当前位置信息:', {
+            city: location.city,
+            region: location.region,
+            address: location.address,
+            lat: location.lat,
+            lon: location.lon,
+            source: location.source
+        });
     } else {
         locationDisplay.style.display = 'none';
     }
@@ -824,7 +1320,7 @@ function saveLocation() {
             // 使用默认位置信息
             userLocation = {
                 city: city,
-                region: '用户设置',
+                region: city, // 使用城市名称作为地区
                 country: '中国',
                 lat: 39.9042,
                 lon: 116.4074
@@ -859,8 +1355,8 @@ function loadItems(page = 1) {
     const priceFilter = document.getElementById('price-filter').value;
     if (priceFilter) {
         const [min, max] = priceFilter.split('-');
-        if (min) filters.min_price = min;
-        if (max && max !== '+') filters.max_price = max;
+        if (min) filters.price_min = min;
+        if (max && max !== '+') filters.price_max = max;
     }
     
     // 添加位置信息
@@ -868,6 +1364,18 @@ function loadItems(page = 1) {
         filters.city = userLocation.city;
         filters.lat = userLocation.lat;
         filters.lon = userLocation.lon;
+    }
+    
+    // 处理地区筛选
+    const locationFilter = document.getElementById('location-filter').value;
+    if (locationFilter) {
+        filters.location_city = locationFilter;
+    }
+    
+    // 处理距离范围筛选
+    const distanceFilter = document.getElementById('distance-filter').value;
+    if (distanceFilter) {
+        filters.max_distance = distanceFilter;
     }
     
     currentFilters = filters;
@@ -909,6 +1417,25 @@ function searchItems() {
     loadItems(1);
 }
 
+// 格式化距离显示
+function formatDistance(distance) {
+    if (distance === null || distance === undefined) {
+        return '📍 距离未知';
+    }
+    
+    if (typeof distance === 'number') {
+        if (distance < 1) {
+            return `📍 ${(distance * 1000).toFixed(0)}米`;
+        } else if (distance < 10) {
+            return `📍 ${distance.toFixed(1)}公里`;
+        } else {
+            return `📍 ${distance.toFixed(0)}公里`;
+        }
+    }
+    
+    return '📍 距离未知';
+}
+
 // 显示物品列表
 function displayItems(items) {
     const container = document.getElementById('items-container');
@@ -932,10 +1459,12 @@ function displayItems(items) {
             price: item?.price || 0,
             main_image: item?.main_image || null,
             condition_stars: item?.condition_stars || '未知',
-            distance: item?.distance || '未知距离',
+            distance: item?.distance || null,
+            distance_display: formatDistance(item?.distance),
             category_display: item?.category_display || '其他',
             can_bargain: item?.can_bargain || false,
-            delivery_option: item?.delivery_option || 'pickup'
+            delivery_option: item?.delivery_option || 'pickup',
+            location: item?.location || {}
         };
         
         return `
@@ -951,10 +1480,10 @@ function displayItems(items) {
                 <div class="item-price">¥${safeItem.price}</div>
                 <div class="item-meta">
                     <span class="item-condition">${safeItem.condition_stars}</span>
-                    <span class="item-location">${safeItem.distance}</span>
+                    <span class="item-location">${safeItem.distance_display}</span>
                 </div>
                 <div class="item-tags">
-                    <span class="item-tag">${safeItem.category_display}</span>
+                    ${safeItem.category_display ? `<span class="item-tag">${safeItem.category_display}</span>` : ''}
                     ${safeItem.can_bargain ? '<span class="item-tag">💬 可议价</span>' : ''}
                     <span class="item-tag">${safeItem.delivery_option === 'pickup' ? '📦 自提' : 
                         safeItem.delivery_option === 'delivery' ? '🚚 送货' : '📦🚚 自提/送货'}</span>
@@ -1041,27 +1570,37 @@ let isLocationInputVisible = false;
 
 // 初始化位置信息
 function initializeLocation() {
-
     // 显示位置区域
     const locationDisplay = document.getElementById('location-display');
     if (locationDisplay) {
         locationDisplay.style.display = 'block';
     }
     
-    // 尝试从localStorage获取保存的位置
-    const savedLocation = localStorage.getItem('shipbao_user_location');
-    if (savedLocation) {
+    // 优先检查用户是否手动设置过位置
+    const userSetLocation = localStorage.getItem('shipbao_user_location');
+    if (userSetLocation) {
         try {
-            userLocation = JSON.parse(savedLocation);
-
+            userLocation = JSON.parse(userSetLocation);
             updateLocationDisplay(userLocation);
-            return;
+            return; // 用户已手动设置位置，不再自动定位
         } catch (e) {
-            console.error('解析保存的位置数据失败:', e);
+            console.error('解析用户设置的位置数据失败:', e);
         }
     }
     
-    // 如果没有保存的位置，尝试获取用户位置
+    // 如果没有用户设置的位置，尝试获取自动定位的位置
+    const savedLocation = localStorage.getItem('user_location');
+    if (savedLocation) {
+        try {
+            userLocation = JSON.parse(savedLocation);
+            updateLocationDisplay(userLocation);
+            return;
+        } catch (e) {
+            console.error('解析自动定位的位置数据失败:', e);
+        }
+    }
+    
+    // 如果都没有，尝试获取用户位置
     requestUserLocation();
 }
 
@@ -1186,9 +1725,9 @@ function updateLocationDisplay(location) {
         userLocation = location;
         
         let displayText = '';
-        if (location.city && location.city !== '未知城市') {
+        if (location.city && location.city !== '未知城市' && location.city !== '未知') {
             displayText = `📍 ${location.city}`;
-            if (location.region && location.region !== location.city) {
+            if (location.region && location.region !== location.city && location.region !== '本地') {
                 displayText += `，${location.region}`;
             }
         } else {
@@ -1334,11 +1873,8 @@ function getCurrentUserLocation() {
 // 页面初始化 - 统一的DOMContentLoaded事件处理
 document.addEventListener('DOMContentLoaded', function() {
 
-    // 初始化位置信息
+    // 初始化位置信息（只调用一个函数）
     initializeLocation();
-    
-    // 获取位置信息（兼容旧代码）
-    getLocationInfo();
     
     // 初始化物品列表
     loadItems();
@@ -1384,6 +1920,246 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+// ==================== 地图选择器功能 ====================
+
+// 打开地图选择器
+function openMapPicker() {
+    const modal = document.getElementById('mapPickerModal');
+    modal.style.display = 'flex';
+    
+    // 初始化地图选择器
+    initializeMapPicker();
+}
+
+// 关闭地图选择器
+function closeMapPicker() {
+    const modal = document.getElementById('mapPickerModal');
+    modal.style.display = 'none';
+    selectedLocation = null;
+    
+    // 重置确认按钮状态
+    const confirmBtn = document.getElementById('confirmLocationBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+    }
+}
+
+// 初始化地图选择器
+function initializeMapPicker() {
+    // 显示预设的城市选择
+    showCitySuggestions();
+    
+    // 绑定搜索事件
+    const searchInput = document.getElementById('mapSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(() => {
+            const query = searchInput.value.trim();
+            if (query.length > 1) {
+                searchLocationOnMap(query);
+            } else {
+                showCitySuggestions();
+            }
+        }, 300));
+    }
+}
+
+// 显示城市建议
+function showCitySuggestions() {
+    const suggestions = [
+        { name: '北京市', address: '北京市', lat: 39.9042, lon: 116.4074 },
+        { name: '上海市', address: '上海市', lat: 31.2304, lon: 121.4737 },
+        { name: '广州市', address: '广东省广州市', lat: 23.1291, lon: 113.2644 },
+        { name: '深圳市', address: '广东省深圳市', lat: 22.3193, lon: 114.1694 },
+        { name: '杭州市', address: '浙江省杭州市', lat: 30.2741, lon: 120.1551 },
+        { name: '南京市', address: '江苏省南京市', lat: 32.0603, lon: 118.7969 },
+        { name: '武汉市', address: '湖北省武汉市', lat: 30.5928, lon: 114.3055 },
+        { name: '成都市', address: '四川省成都市', lat: 30.5728, lon: 104.0668 },
+        { name: '西安市', address: '陕西省西安市', lat: 34.3416, lon: 108.9398 },
+        { name: '重庆市', address: '重庆市', lat: 29.4316, lon: 106.9123 }
+    ];
+    
+    displaySuggestions(suggestions);
+}
+
+// 搜索位置
+function searchLocationOnMap(query) {
+    if (!query) {
+        showCitySuggestions();
+        return;
+    }
+    
+    // 使用地图API搜索位置
+    fetch(`/tools/api/map_picker/?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.suggestions) {
+                displaySuggestions(data.suggestions);
+            } else {
+                // 如果API失败，显示预设建议
+                showCitySuggestions();
+            }
+        })
+        .catch(error => {
+            console.error('位置搜索失败:', error);
+            showCitySuggestions();
+        });
+}
+
+// 显示搜索建议
+function displaySuggestions(suggestions) {
+    const container = document.getElementById('locationSuggestions');
+    if (!container) return;
+    
+    if (!suggestions || suggestions.length === 0) {
+        container.innerHTML = '<div class="suggestion-item">未找到相关位置</div>';
+        return;
+    }
+    
+    const html = suggestions.map(item => `
+        <div class="suggestion-item" onclick="selectLocationFromMap('${item.name}', '${item.address}', ${item.lat}, ${item.lon}, event)">
+            <div class="suggestion-name">${item.name}</div>
+            <div class="suggestion-address">${item.address}</div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+// 从地图选择位置
+function selectLocationFromMap(name, address, lat, lon, event) {
+    console.log('selectLocationFromMap called:', { name, address, lat, lon, event });
+    
+    selectedLocation = {
+        name: name,
+        address: address,
+        lat: lat,
+        lon: lon
+    };
+    
+    // 自动填充位置输入框
+    const locationInput = document.getElementById('location-input');
+    if (locationInput) {
+        locationInput.value = name;
+    }
+    
+    // 启用确认按钮
+    const confirmBtn = document.getElementById('confirmLocationBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+    }
+    
+    // 高亮选中的项目
+    const items = document.querySelectorAll('.suggestion-item');
+    console.log('Found suggestion items:', items.length);
+    items.forEach(item => item.classList.remove('selected'));
+    
+    // 如果传入了event对象，使用它来找到对应的元素
+    if (event && event.target) {
+        console.log('Using event.target:', event.target);
+        const targetItem = event.target.closest('.suggestion-item');
+        console.log('Found target item:', targetItem);
+        if (targetItem) {
+            targetItem.classList.add('selected');
+            console.log('Added selected class to:', targetItem);
+        }
+    } else {
+        // 如果没有event对象，通过内容匹配找到对应的元素
+        const targetItem = Array.from(items).find(item => {
+            const nameElement = item.querySelector('.suggestion-name');
+            return nameElement && nameElement.textContent === name;
+        });
+        console.log('Found target item by name:', targetItem);
+        if (targetItem) {
+            targetItem.classList.add('selected');
+            console.log('Added selected class to:', targetItem);
+        }
+    }
+}
+
+// 获取当前位置用于地图
+function getCurrentLocationForMap() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // 使用反向地理编码获取地址
+                fetch(`/tools/api/map_picker/?lat=${lat}&lon=${lon}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.location) {
+                            selectLocationFromMap(
+                                data.location.city || '当前位置',
+                                data.location.address || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                                lat,
+                                lon,
+                                null
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        console.error('反向地理编码失败:', error);
+                        // 使用坐标作为位置
+                        selectLocationFromMap(
+                            '当前位置',
+                            `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                            lat,
+                            lon,
+                            null
+                        );
+                    });
+            },
+            function(error) {
+                alert('获取当前位置失败，请手动选择位置');
+            }
+        );
+    } else {
+        alert('您的浏览器不支持定位功能');
+    }
+}
+
+// 确认位置选择
+function confirmLocationSelection() {
+    if (!selectedLocation) {
+        alert('请先选择一个位置');
+        return;
+    }
+    
+    // 更新位置输入框
+    const locationInput = document.getElementById('location-input');
+    if (locationInput) {
+        locationInput.value = selectedLocation.name;
+    }
+    
+    // 保存位置信息
+    const locationInfo = {
+        city: selectedLocation.name,
+        region: selectedLocation.address,
+        address: selectedLocation.address,
+        lat: selectedLocation.lat,
+        lon: selectedLocation.lon,
+        timestamp: Date.now(),
+        manual: true
+    };
+    
+    // 保存到本地存储
+    localStorage.setItem('shipbao_user_location', JSON.stringify(locationInfo));
+    userLocation = locationInfo;
+    
+    // 更新显示
+    showLocationInfo(locationInfo);
+    
+    // 关闭地图选择器
+    closeMapPicker();
+    
+    // 隐藏位置输入框
+    toggleLocationInput();
+    
+    // 重新加载物品列表
+    loadItems(1);
 }
 </script>
 {% endblock %}

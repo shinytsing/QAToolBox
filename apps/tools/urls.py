@@ -143,7 +143,7 @@ from .legacy_views import (
     user_generated_travel_guide_detail_api, user_generated_travel_guide_download_api,
     user_generated_travel_guide_use_api, user_generated_travel_guide_upload_attachment_api,
     shipbao_create_item_api, shipbao_initiate_transaction_api,
-    shipbao_send_message_api, shipbao_messages_api, buddy_create_event_api,
+    shipbao_send_message_api, shipbao_messages_api, shipbao_check_transaction_api, buddy_create_event_api,
     buddy_events_api, buddy_join_event_api, buddy_approve_member_api,
     buddy_send_message_api, buddy_messages_api, generate_boss_qr_code_api,
     get_boss_login_page_url_api, get_boss_user_token_api, 
@@ -169,7 +169,7 @@ from .legacy_views import (
 # 从shipbao视图导入
 from .views.shipbao_views import (
     shipbao_favorites_api, shipbao_items_api, 
-    shipbao_initiate_transaction_api, shipbao_contact_seller_api,
+    shipbao_contact_seller_api,
     shipbao_inquiry_queue_api, shipbao_want_item_api, shipbao_want_list_api, shipbao_contact_wanter_api,
     shipbao_remove_item_api, shipbao_mark_sold_api, shipbao_transaction_status_api, save_user_location_api,
     map_search_location_api, map_reverse_geocode_api, map_geocode_api
@@ -243,6 +243,20 @@ from .proxy_view import (
     download_v2ray_config_api,  # 新功能: 下载V2Ray配置
     web_proxy_api  # 新功能: Web代理浏览
 )
+
+# 导入Clash内嵌代理系统视图
+from .views.clash_views import (
+    clash_dashboard, clash_status_api, clash_start_api, clash_stop_api, clash_restart_api,
+    clash_test_connection_api, clash_proxy_info_api, clash_switch_proxy_api, clash_install_api,
+    clash_config_api, clash_update_config_api, clash_add_proxy_api, clash_remove_proxy_api
+)
+
+# 导入浏览器代理配置视图
+from .views.browser_proxy_views import (
+    configure_browser_proxy, disable_browser_proxy, get_proxy_status, quick_proxy_setup, test_proxy_connection
+)
+
+
 
 
 
@@ -850,6 +864,30 @@ urlpatterns = [
     path('api/proxy/download-v2ray/', download_v2ray_config_api, name='download_v2ray_config_api'),  # 新功能: 下载V2Ray配置
     path('api/proxy/web-browse/', web_proxy_api, name='web_proxy_api'),  # 新功能: Web代理浏览
     
+    # Clash内嵌代理系统路由
+    path('clash-dashboard/', clash_dashboard, name='clash_dashboard'),
+    path('api/clash/status/', clash_status_api, name='clash_status_api'),
+    path('api/clash/start/', clash_start_api, name='clash_start_api'),
+    path('api/clash/stop/', clash_stop_api, name='clash_stop_api'),
+    path('api/clash/restart/', clash_restart_api, name='clash_restart_api'),
+    path('api/clash/test-connection/', clash_test_connection_api, name='clash_test_connection_api'),
+    path('api/clash/proxy-info/', clash_proxy_info_api, name='clash_proxy_info_api'),
+    path('api/clash/switch-proxy/', clash_switch_proxy_api, name='clash_switch_proxy_api'),
+    path('api/clash/install/', clash_install_api, name='clash_install_api'),
+    path('api/clash/config/', clash_config_api, name='clash_config_api'),
+    path('api/clash/update-config/', clash_update_config_api, name='clash_update_config_api'),
+    path('api/clash/add-proxy/', clash_add_proxy_api, name='clash_add_proxy_api'),
+    path('api/clash/remove-proxy/', clash_remove_proxy_api, name='clash_remove_proxy_api'),
+    
+    # 浏览器代理配置路由
+    path('api/browser-proxy/configure/', configure_browser_proxy, name='configure_browser_proxy'),
+    path('api/browser-proxy/disable/', disable_browser_proxy, name='disable_browser_proxy'),
+    path('api/browser-proxy/status/', get_proxy_status, name='get_proxy_status'),
+    path('api/browser-proxy/quick-setup/', quick_proxy_setup, name='quick_proxy_setup'),
+    path('api/proxy/test-connection/', test_proxy_connection, name='test_proxy_connection'),
+    
+
+    
     # 健身营养定制系统路由 - 已隐藏
     # path('nutrition-dashboard/', nutrition_dashboard, name='nutrition_dashboard'),
     # path('nutrition-profile-setup/', nutrition_profile_setup, name='nutrition_profile_setup'),
@@ -886,6 +924,7 @@ urlpatterns = [
     path('api/shipbao/items/', shipbao_items_api, name='shipbao_items_api'),
     path('api/shipbao/favorites/', shipbao_favorites_api, name='shipbao_favorites_api'),
     path('api/shipbao/initiate-transaction/', shipbao_initiate_transaction_api, name='shipbao_initiate_transaction_api'),
+    path('api/shipbao/check-transaction/', shipbao_check_transaction_api, name='shipbao_check_transaction_api'),
     path('api/shipbao/contact-seller/', shipbao_contact_seller_api, name='shipbao_contact_seller_api'),
     path('api/shipbao/inquiry-queue/<int:item_id>/', shipbao_inquiry_queue_api, name='shipbao_inquiry_queue_api'),
     path('api/shipbao/want-item/', shipbao_want_item_api, name='shipbao_want_item_api'),

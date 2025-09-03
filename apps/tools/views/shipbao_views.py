@@ -190,9 +190,11 @@ def shipbao_items_api(request):
         
         # 地区筛选参数
         location_city = request.GET.get('location_city', '').strip()
+        user_city = request.GET.get('city', '').strip()  # 用户位置城市
         user_lat = request.GET.get('user_lat')
         user_lon = request.GET.get('user_lon')
-        max_distance = request.GET.get('max_distance', 50)
+        max_distance_str = request.GET.get('max_distance', '')
+        max_distance = float(max_distance_str) if max_distance_str else None
         
         # 构建查询
         queryset = ShipBaoItem.objects.filter(
@@ -213,7 +215,37 @@ def shipbao_items_api(request):
         
         # 地区筛选
         if location_city:
-            queryset = queryset.filter(location_city__icontains=location_city)
+            if location_city == 'nearby':
+                # 附近筛选 - 需要用户位置信息
+                if user_lat and user_lon:
+                    # 这里先不过滤，在后续处理中根据距离筛选
+                    pass
+                else:
+                    # 没有位置信息时，显示同城商品
+                    queryset = queryset.filter(location_city__isnull=False)
+            elif location_city == 'same-city':
+                # 同城筛选 - 需要用户位置信息
+                if user_lat and user_lon:
+                    # 这里先不过滤，在后续处理中根据距离筛选
+                    pass
+                else:
+                    # 没有位置信息时，显示所有有城市信息的商品
+                    queryset = queryset.filter(location_city__isnull=False)
+            elif location_city == 'same-region':
+                # 同省筛选 - 需要用户位置信息
+                if user_lat and user_lon:
+                    # 这里先不过滤，在后续处理中根据距离筛选
+                    pass
+                else:
+                    # 没有位置信息时，显示所有有城市信息的商品
+                    queryset = queryset.filter(location_city__isnull=False)
+            else:
+                # 具体城市筛选
+                queryset = queryset.filter(location_city__icontains=location_city)
+        else:
+            # 没有设置地区筛选条件，但有用户位置信息时，显示所有商品让距离筛选处理
+            # 如果没有用户位置信息，也显示所有商品
+            pass
         
         # 价格筛选
         if price_min:
@@ -234,7 +266,7 @@ def shipbao_items_api(request):
             queryset = queryset.order_by('-favorite_count')
         elif sort_by == 'distance' and user_lat and user_lon:
             # 距离排序需要特殊处理，这里先用创建时间排序
-            # TODO: 实现真正的距离排序
+            # 距离排序将在后续处理中实现
             queryset = queryset.order_by('-created_at')
         else:  # created_at or default
             queryset = queryset.order_by('-created_at')
@@ -253,6 +285,26 @@ def shipbao_items_api(request):
                     distance = item.calculate_distance_to(float(user_lat), float(user_lon))
                 except (ValueError, TypeError):
                     distance = None
+            
+            # 根据距离范围筛选
+            if user_lat and user_lon and distance is not None and max_distance is not None:
+                # 距离范围筛选
+                if distance > max_distance:
+                    continue
+                
+                # 地区筛选逻辑
+                if location_city == 'nearby':
+                    # 附近筛选 - 20公里内
+                    if distance > 20:
+                        continue
+                elif location_city == 'same-city':
+                    # 同城筛选 - 50公里内
+                    if distance > 50:
+                        continue
+                elif location_city == 'same-region':
+                    # 同省筛选 - 200公里内
+                    if distance > 200:
+                        continue
             
             # 检查用户是否已收藏
             is_favorited = False
@@ -280,7 +332,7 @@ def shipbao_items_api(request):
                     'address': item.location_address,
                     'display': item.get_location_display()
                 },
-                'distance': distance,
+                'distance': round(distance, 2) if distance is not None else None,
                 'view_count': item.view_count,
                 'favorite_count': item.favorite_count,
                 'is_favorited': is_favorited,
@@ -291,6 +343,10 @@ def shipbao_items_api(request):
                     'username': item.seller.username
                 }
             })
+        
+        # 如果按距离排序，需要重新排序
+        if sort_by == 'distance' and user_lat and user_lon:
+            items_data.sort(key=lambda x: x['distance'] if x['distance'] is not None else float('inf'))
         
         return JsonResponse({
             'success': True,

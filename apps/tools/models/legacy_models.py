@@ -206,7 +206,7 @@ class ShipBaoInquiry(models.Model):
     item = models.ForeignKey('ShipBaoItem', on_delete=models.CASCADE, verbose_name='商品', related_name='inquiries')
     buyer = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='买家', related_name='shipbao_inquiries')
     seller = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='卖家', related_name='received_inquiries')
-    chat_room = models.ForeignKey('tools.ChatRoom', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='聊天室')
+    chat_room = models.ForeignKey('tools.ChatRoom', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='聊天室', related_name='shipbao_inquiries')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')
     initial_message = models.TextField(blank=True, verbose_name='初始消息')
     priority_score = models.IntegerField(default=0, verbose_name='优先级分数')  # 基于买家信誉等计算
@@ -3058,6 +3058,11 @@ class ShipBaoItem(models.Model):
     def get_condition_stars(self):
         """获取新旧程度星级显示"""
         return '★' * self.condition + '☆' * (5 - self.condition)
+    
+    def get_category_display(self):
+        """获取分类显示名称"""
+        category_dict = dict(self.CATEGORY_CHOICES)
+        return category_dict.get(self.category, '其他')
     
     def get_main_image(self):
         """获取主图"""

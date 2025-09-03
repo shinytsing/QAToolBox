@@ -40,8 +40,8 @@ class IPLocationService:
         # 本地IP地址处理
         if ip in ['127.0.0.1', 'localhost', '::1']:
             location_data = {
-                'city': '本地',
-                'region': '本地',
+                'city': '北京',
+                'region': '北京市',
                 'country': '中国',
                 'lat': 39.9042,
                 'lon': 116.4074,

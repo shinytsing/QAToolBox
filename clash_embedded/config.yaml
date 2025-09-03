@@ -1,0 +1,141 @@
+port: 7890
+socks-port: 7891
+allow-lan: false
+mode: rule
+log-level: silent
+external-controller: 127.0.0.1:9090
+secret: ""
+dns:
+  enable: true
+  ipv6: false
+  nameserver:
+    - 223.5.5.5
+    - 180.76.76.76
+    - 119.29.29.29
+    - 8.8.8.8
+    - 1.1.1.1
+  fallback:
+    - 8.8.8.8
+    - tls://dns.rubyfish.cn:853
+    - tls://1.0.0.1:853
+    - tls://dns.google:853
+    - https://dns.rubyfish.cn/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://dns.google/dns-query
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+      - 127.0.0.1/32
+    domain:
+      - +.google.com
+      - +.facebook.com
+      - +.youtube.com
+      - +.xn--ngstr-lra8j.com
+      - +.google.cn
+      - +.googleapis.cn
+      - +.gvt1.com
+proxies:
+  - name: HongKong-IPLC-HK-1
+    type: trojan
+    server: iplc-hk-1.trojanwheel.com
+    port: 465
+    password: GUGm7DHtpSx7SuPyUD
+    alpn:
+      - h2
+      - http/1.1
+    skip-cert-verify: true
+  - name: Japan-TY-1
+    type: trojan
+    server: ty-1.rise-fuji.com
+    port: 443
+    password: GUGm7DHtpSx7SuPyUD
+    alpn:
+      - h2
+      - http/1.1
+    skip-cert-verify: true
+  - name: UnitedStates-US-1
+    type: trojan
+    server: us-1.regentgrandvalley.com
+    port: 443
+    password: GUGm7DHtpSx7SuPyUD
+    alpn:
+      - h2
+      - http/1.1
+    skip-cert-verify: true
+  - name: Singapore-SG-1
+    type: trojan
+    server: sg-1.victoriamitrepeak.com
+    port: 443
+    password: GUGm7DHtpSx7SuPyUD
+    alpn:
+      - h2
+      - http/1.1
+    skip-cert-verify: true
+  - name: Netherlands-NL-1
+    type: trojan
+    server: nl-1.concert-geb.com
+    port: 443
+    password: GUGm7DHtpSx7SuPyUD
+    alpn:
+      - h2
+      - http/1.1
+    skip-cert-verify: true
+proxy-groups:
+  - name: Proxy
+    type: select
+    proxies:
+      - Auto
+      - HongKong-IPLC-HK-1
+      - Japan-TY-1
+      - UnitedStates-US-1
+      - Singapore-SG-1
+      - Netherlands-NL-1
+  - name: Auto
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    proxies:
+      - HongKong-IPLC-HK-1
+      - Japan-TY-1
+      - UnitedStates-US-1
+      - Singapore-SG-1
+      - Netherlands-NL-1
+rules:
+  - DOMAIN-SUFFIX,chatgpt.com,Proxy
+  - DOMAIN-SUFFIX,ghcr.io,Proxy
+  - DOMAIN-SUFFIX,googleapis.cn,Proxy
+  - DOMAIN-KEYWORD,googleapis.cn,Proxy
+  - DOMAIN-SUFFIX,cn,DIRECT
+  - DOMAIN-SUFFIX,126.com,DIRECT
+  - DOMAIN-SUFFIX,163.com,DIRECT
+  - DOMAIN-SUFFIX,baidu.com,DIRECT
+  - DOMAIN-SUFFIX,bilibili.com,DIRECT
+  - DOMAIN-SUFFIX,qq.com,DIRECT
+  - DOMAIN-SUFFIX,weibo.com,DIRECT
+  - DOMAIN-SUFFIX,zhihu.com,DIRECT
+  - DOMAIN-KEYWORD,google,Proxy
+  - DOMAIN-KEYWORD,gmail,Proxy
+  - DOMAIN-KEYWORD,youtube,Proxy
+  - DOMAIN-KEYWORD,facebook,Proxy
+  - DOMAIN-KEYWORD,twitter,Proxy
+  - DOMAIN-KEYWORD,instagram,Proxy
+  - DOMAIN-KEYWORD,github,Proxy
+  - DOMAIN-SUFFIX,google.com,Proxy
+  - DOMAIN-SUFFIX,youtube.com,Proxy
+  - DOMAIN-SUFFIX,facebook.com,Proxy
+  - DOMAIN-SUFFIX,twitter.com,Proxy
+  - DOMAIN-SUFFIX,instagram.com,Proxy
+  - DOMAIN-SUFFIX,github.com,Proxy
+  - DOMAIN-SUFFIX,stackoverflow.com,Proxy
+  - DOMAIN-SUFFIX,medium.com,Proxy
+  - DOMAIN-SUFFIX,reddit.com,Proxy
+  - DOMAIN-SUFFIX,telegram.org,Proxy
+  - DOMAIN-SUFFIX,local,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,Proxy
