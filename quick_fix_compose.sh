@@ -1,138 +1,82 @@
 #!/bin/bash
-# =============================================================================
-# 快速修复docker-compose.yml语法错误
-# =============================================================================
+
+# 快速修复Docker Compose安装问题
+# 使用多种方法确保快速安装
 
 set -e
 
-echo "🔧 修复docker-compose.yml语法错误..."
+# 颜色输出
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-cd /home/qatoolbox/QAToolBox
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# 创建正确的docker-compose.yml
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
+log_info "快速修复Docker Compose安装..."
 
-services:
-  # PostgreSQL数据库
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: qatoolbox
-      POSTGRES_USER: qatoolbox
-      POSTGRES_PASSWORD: QAToolBox2024
-      POSTGRES_HOST_AUTH_METHOD: trust
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - qatoolbox_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U qatoolbox"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+# 停止当前下载
+pkill -f "wget.*docker-compose" 2>/dev/null || true
+pkill -f "curl.*docker-compose" 2>/dev/null || true
 
-  # Redis缓存
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - qatoolbox_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+# 方法1: 使用apt安装docker-compose-plugin
+log_info "方法1: 使用apt安装docker-compose-plugin..."
+apt-get update -y
+apt-get install -y docker-compose-plugin
 
-  # QAToolBox主应用
-  web:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    command: >
-      sh -c "
-        echo '等待数据库启动...' &&
-        sleep 15 &&
-        python manage.py migrate --noinput &&
-        python manage.py collectstatic --noinput &&
-        python manage.py shell -c \"
-from django.contrib.auth import get_user_model;
-User = get_user_model();
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@shenyiqing.xin', 'admin123456');
-    print('管理员用户创建完成');
-else:
-    print('管理员用户已存在');
-        \" &&
-        echo '启动Gunicorn服务器...' &&
-        gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60 --log-level info
-      "
-    environment:
-      - DEBUG=False
-      - DJANGO_SETTINGS_MODULE=config.settings.docker_production
-      - DJANGO_SECRET_KEY=django-docker-secret-key-12345
-      - DB_NAME=qatoolbox
-      - DB_USER=qatoolbox
-      - DB_PASSWORD=QAToolBox2024
-      - DB_HOST=db
-      - DB_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
-      - ALLOWED_HOSTS=shenyiqing.xin,www.shenyiqing.xin,47.103.143.152,localhost,127.0.0.1,web
-    volumes:
-      - .:/app
-      - static_volume:/app/static
-      - media_volume:/app/media
-    ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - qatoolbox_network
+# 检查是否安装成功
+if command -v docker-compose &> /dev/null; then
+    log_success "Docker Compose安装成功: $(docker-compose --version)"
+    exit 0
+fi
 
-volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  static_volume:
-    driver: local
-  media_volume:
-    driver: local
+# 方法2: 使用国内镜像源下载
+log_info "方法2: 使用国内镜像源下载..."
 
-networks:
-  qatoolbox_network:
-    driver: bridge
-EOF
+# 尝试多个国内镜像源
+MIRROR_URLS=(
+    "https://mirror.ghproxy.com/https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64"
+    "https://get.daocloud.io/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64"
+    "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64"
+)
 
-echo "✅ docker-compose.yml修复完成"
+for url in "${MIRROR_URLS[@]}"; do
+    log_info "尝试从 $url 下载..."
+    if wget --timeout=30 --tries=3 -O /usr/local/bin/docker-compose "$url"; then
+        chmod +x /usr/local/bin/docker-compose
+        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+        log_success "Docker Compose下载安装成功"
+        exit 0
+    else
+        log_warning "下载失败，尝试下一个镜像源..."
+    fi
+done
 
-# 验证YAML语法
-echo "🧪 验证YAML语法..."
-docker compose config
+# 方法3: 使用pipx安装（避免Python环境问题）
+log_info "方法3: 使用pipx安装..."
+apt-get install -y pipx
+pipx install docker-compose
 
-echo "🔨 开始构建Docker镜像..."
-docker compose build --no-cache
+# 检查是否安装成功
+if command -v docker-compose &> /dev/null; then
+    log_success "Docker Compose安装成功: $(docker-compose --version)"
+    exit 0
+fi
 
-echo "🚀 启动容器..."
-docker compose up -d
+# 方法4: 使用snap安装
+log_info "方法4: 使用snap安装..."
+apt-get install -y snapd
+snap install docker-compose
 
-echo "📊 查看容器状态..."
-sleep 10
-docker compose ps
+# 检查是否安装成功
+if command -v docker-compose &> /dev/null; then
+    log_success "Docker Compose安装成功: $(docker-compose --version)"
+    exit 0
+fi
 
-echo "✅ 修复完成！"
-EOF
-
-chmod +x quick_fix_compose.sh
+log_error "所有安装方法都失败了"
+exit 1
