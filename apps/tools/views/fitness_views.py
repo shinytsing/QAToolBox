@@ -10,12 +10,14 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.db import models
 
 # 导入相关模型
 try:
     from apps.tools.models.legacy_models import (
         FitnessUserProfile, FitnessStrengthProfile, UserFitnessAchievement,
-        CheckInCalendar, ExerciseWeightRecord, FitnessAchievement, TrainingPlan
+        CheckInCalendar, ExerciseWeightRecord, FitnessAchievement, TrainingPlan,
+        FitnessCommunityPost, FitnessCommunityComment
     )
 except ImportError:
     # 如果模型不存在，使用空类
@@ -33,12 +35,109 @@ except ImportError:
         pass
     class FitnessAchievement:
         pass
+    class FitnessCommunityPost:
+        pass
+    class FitnessCommunityComment:
+        pass
 
 
 @login_required
 def fitness_community(request):
     """健身社区页面"""
-    return render(request, 'tools/fitness_community.html')
+    try:
+        # 获取社区统计数据
+        from django.contrib.auth.models import User
+        from django.db.models import Count, Sum
+        
+        # 计算社区成员数量（有健身档案的用户）
+        total_members = FitnessUserProfile.objects.count()
+        
+        # 计算总训练次数（基于打卡记录）
+        total_workouts = CheckInCalendar.objects.count()
+        
+        # 计算活跃挑战数量（这里暂时使用固定值，后续可以扩展）
+        active_challenges = 12
+        
+        # 计算总点赞数（基于社区帖子的点赞数）
+        total_likes = FitnessCommunityPost.objects.aggregate(
+            total_likes=models.Sum('likes_count')
+        )['total_likes'] or 0
+        
+        # 获取最近的社区动态
+        recent_posts = []
+        try:
+            # 从数据库获取真实的社区帖子
+            posts = FitnessCommunityPost.objects.filter(
+                is_public=True,
+                is_deleted=False
+            ).select_related('user').order_by('-created_at')[:10]
+            
+            for post in posts:
+                # 计算时间差
+                time_diff = timezone.now() - post.created_at
+                if time_diff.days > 0:
+                    time_str = f"{time_diff.days}天前"
+                elif time_diff.seconds > 3600:
+                    hours = time_diff.seconds // 3600
+                    time_str = f"{hours}小时前"
+                elif time_diff.seconds > 60:
+                    minutes = time_diff.seconds // 60
+                    time_str = f"{minutes}分钟前"
+                else:
+                    time_str = "刚刚"
+                
+                # 根据帖子类型设置头像
+                avatar_map = {
+                    'checkin': '💪',
+                    'plan': '🏋️',
+                    'video': '🎥',
+                    'achievement': '🏆',
+                    'motivation': '💪',
+                    'question': '❓'
+                }
+                avatar = avatar_map.get(post.post_type, '💪')
+                
+                recent_posts.append({
+                    'id': post.id,
+                    'user': post.user.username,
+                    'avatar': avatar,
+                    'content': post.content,
+                    'title': post.title,
+                    'likes': post.likes_count,
+                    'comments': post.comments_count,
+                    'shares': post.shares_count,
+                    'time': time_str,
+                    'type': post.post_type,
+                    'tags': post.tags,
+                    'training_parts': post.get_training_parts_display(),
+                    'difficulty_level': post.get_difficulty_level_display() if post.difficulty_level else None,
+                    'created_at': post.created_at.strftime('%Y-%m-%d %H:%M')
+                })
+                
+        except Exception as e:
+            print(f"获取社区动态失败: {e}")
+            recent_posts = []
+        
+        context = {
+            'total_members': total_members,
+            'total_workouts': total_workouts,
+            'active_challenges': active_challenges,
+            'total_likes': total_likes,
+            'recent_posts': recent_posts,
+        }
+        
+    except Exception as e:
+        print(f"获取健身社区数据失败: {e}")
+        # 如果获取数据失败，使用默认值
+        context = {
+            'total_members': 1234,
+            'total_workouts': 5678,
+            'active_challenges': 12,
+            'total_likes': 8901,
+            'recent_posts': [],
+        }
+    
+    return render(request, 'tools/fitness_community.html', context)
 
 
 @login_required

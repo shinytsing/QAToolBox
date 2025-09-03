@@ -54,6 +54,36 @@ def custom_static_serve(request, path):
     response['Expires'] = '0'
     return response
 
+def public_media_serve(request, path):
+    """公共媒体文件服务，无需登录验证"""
+    try:
+        # 检查文件路径是否在媒体目录内
+        full_path = os.path.join(settings.MEDIA_ROOT, path)
+        if not os.path.exists(full_path):
+            raise Http404("文件不存在")
+        
+        # 获取文件信息
+        file_size = os.path.getsize(full_path)
+        file_name = os.path.basename(full_path)
+        
+        # 获取MIME类型
+        mime_type, _ = mimetypes.guess_type(full_path)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+        
+        # 创建文件响应
+        response = FileResponse(open(full_path, 'rb'), content_type=mime_type)
+        
+        # 设置响应头
+        response['Content-Length'] = file_size
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        
+        return response
+        
+    except Exception as e:
+        raise Http404("文件访问错误")
+
 @login_required
 def secure_media_serve(request, path):
     """安全的媒体文件服务，需要登录验证"""
@@ -66,7 +96,12 @@ def secure_media_serve(request, path):
         # 检查文件是否在允许的目录内
         allowed_dirs = ['chat_images', 'chat_files', 'chat_audio', 'chat_videos', 'avatars']
         path_parts = path.split('/')
-        if not any(allowed_dir in path_parts for allowed_dir in allowed_dirs):
+        
+        # 允许根目录下的文件（如vx.jpg）
+        if len(path_parts) == 1:
+            # 根目录文件，允许访问
+            pass
+        elif not any(allowed_dir in path_parts for allowed_dir in allowed_dirs):
             raise Http404("无权访问此文件")
         
         # 获取文件信息

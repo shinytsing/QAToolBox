@@ -504,6 +504,74 @@
         color: #e2e8f0;
     }
 }
+
+.no-posts-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.no-posts-message i {
+    font-size: 3rem;
+    color: #ccc;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.no-posts-message p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.post-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    padding: 0 15px;
+}
+
+.post-type {
+    font-size: 0.8rem;
+    color: #667eea;
+    background: #f0f4ff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.post-meta {
+    padding: 10px 15px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.training-parts, .difficulty-level {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.post-tags {
+    padding: 10px 15px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    background: #e8f4fd;
+    color: #1890ff;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    border: 1px solid #d6e4ff;
+}
 </style>
 {% endblock %}
 
@@ -573,87 +641,76 @@
                 </div>
             </div>
             
+            {% for post in recent_posts %}
             <div class="post-item">
                 <div class="post-header">
-                    <div class="post-avatar">张</div>
+                    <div class="post-avatar">{{ post.avatar }}</div>
                     <div class="post-info">
-                        <div class="post-author">张健身</div>
-                        <div class="post-time">2小时前</div>
+                        <div class="post-author">{{ post.user }}</div>
+                        <div class="post-time">{{ post.time }}</div>
+                        {% if post.type %}
+                        <div class="post-type">
+                            {% if post.type == 'checkin' %}打卡分享
+                            {% elif post.type == 'plan' %}训练计划
+                            {% elif post.type == 'video' %}训练视频
+                            {% elif post.type == 'achievement' %}成就分享
+                            {% elif post.type == 'motivation' %}励志分享
+                            {% elif post.type == 'question' %}问题讨论
+                            {% else %}{{ post.type }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
+                {% if post.title %}
+                <div class="post-title">{{ post.title }}</div>
+                {% endif %}
                 <div class="post-content">
-                    今天完成了30分钟的HIIT训练，感觉超级棒！坚持了一个月，体重已经减了5公斤，继续加油！💪
+                    {{ post.content }}
                 </div>
-                <img src="{% static 'img/fitness/workout.jpg' %}" alt="训练照片" class="post-image" style="display: none;">
+                {% if post.training_parts %}
+                <div class="post-meta">
+                    <span class="training-parts">
+                        <i class="fas fa-dumbbell"></i> {{ post.training_parts }}
+                    </span>
+                    {% if post.difficulty_level %}
+                    <span class="difficulty-level">
+                        <i class="fas fa-signal"></i> {{ post.difficulty_level }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if post.tags %}
+                <div class="post-tags">
+                    {% for tag in post.tags %}
+                    <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div class="post-actions-bar">
                     <button class="action-btn" onclick="toggleLike(this)">
                         <i class="fas fa-heart"></i>
-                        <span>24</span>
+                        <span>{{ post.likes }}</span>
                     </button>
                     <button class="action-btn" onclick="showComments()">
                         <i class="fas fa-comment"></i>
-                        <span>8</span>
+                        <span>{{ post.comments }}</span>
                     </button>
                     <button class="action-btn" onclick="sharePost()">
                         <i class="fas fa-share"></i>
-                        <span>分享</span>
+                        <span>{{ post.shares|default:"0" }}</span>
                     </button>
                 </div>
             </div>
-            
-            <div class="post-item">
-                <div class="post-header">
-                    <div class="post-avatar">李</div>
-                    <div class="post-info">
-                        <div class="post-author">李力量</div>
-                        <div class="post-time">5小时前</div>
-                    </div>
-                </div>
-                <div class="post-content">
-                    深蹲训练日！今天突破了个人记录，完成了150kg的深蹲，感谢教练的指导！🏋️‍♂️
-                </div>
-                <div class="post-actions-bar">
-                    <button class="action-btn liked" onclick="toggleLike(this)">
-                        <i class="fas fa-heart"></i>
-                        <span>56</span>
-                    </button>
-                    <button class="action-btn" onclick="showComments()">
-                        <i class="fas fa-comment"></i>
-                        <span>15</span>
-                    </button>
-                    <button class="action-btn" onclick="sharePost()">
-                        <i class="fas fa-share"></i>
-                        <span>分享</span>
-                    </button>
-                </div>
+            {% empty %}
+            <div class="no-posts-message">
+                <i class="fas fa-info-circle"></i>
+                <p>暂无社区动态，成为第一个分享的人吧！</p>
+                <button class="btn-primary" onclick="showPostForm()" style="margin-top: 15px;">
+                    <i class="fas fa-plus"></i> 发布第一条动态
+                </button>
             </div>
-            
-            <div class="post-item">
-                <div class="post-header">
-                    <div class="post-avatar">王</div>
-                    <div class="post-info">
-                        <div class="post-author">王瑜伽</div>
-                        <div class="post-time">1天前</div>
-                    </div>
-                </div>
-                <div class="post-content">
-                    完成了90分钟的瑜伽课程，身心都得到了放松。瑜伽不仅锻炼身体，更是一种生活态度。🧘‍♀️
-                </div>
-                <div class="post-actions-bar">
-                    <button class="action-btn" onclick="toggleLike(this)">
-                        <i class="fas fa-heart"></i>
-                        <span>32</span>
-                    </button>
-                    <button class="action-btn" onclick="showComments()">
-                        <i class="fas fa-comment"></i>
-                        <span>12</span>
-                    </button>
-                    <button class="action-btn" onclick="sharePost()">
-                        <i class="fas fa-share"></i>
-                        <span>分享</span>
-                    </button>
-                </div>
-            </div>
+            {% endfor %}
         </div>
         
         <div class="sidebar">

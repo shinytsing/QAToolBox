@@ -4310,7 +4310,7 @@ function forceClearCache() {
 
 // 覆盖任何可能存在的旧函数
 window.renderActivePlan = undefined;
-window.initCurrentPlan = undefined;
+// 注意：不要将initCurrentPlan设置为undefined，因为页面初始化时需要调用它
 
 // 全屏训练计划功能
 function togglePlanFullscreen() {

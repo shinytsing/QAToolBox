@@ -19,7 +19,7 @@ import time
 from django.contrib import admin
 from django.urls import include, path
 from apps.tools.views.health_views import HealthCheckView, DetailedHealthCheckView
-from views import home_view, tool_view, welcome_view, theme_demo_view, version_history_view, help_page_view, custom_static_serve, secure_media_serve
+from views import home_view, tool_view, welcome_view, theme_demo_view, version_history_view, help_page_view, custom_static_serve, secure_media_serve, public_media_serve
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
@@ -67,19 +67,23 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     # 使用Django标准静态文件服务
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()
+    # 备用：直接使用staticfiles目录
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     # 自定义静态文件服务，禁用缓存（备用）
     # urlpatterns += [
     #     path('static/<path:path>', custom_static_serve, name='custom_static'),
     # ]
     # 开发环境添加debug_toolbar
-    try:
-        import debug_toolbar
-        urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
-    except ImportError:
-        pass
+    if 'debug_toolbar' in settings.INSTALLED_APPS:
+        try:
+            import debug_toolbar
+            urlpatterns = [path('__debug__/', include(debug_toolbar.urls))] + urlpatterns
+        except ImportError:
+            pass
 else:
-    # 生产环境使用安全的媒体文件服务
+    # 生产环境使用公共媒体文件服务
     urlpatterns += [
-        path('media/<path:path>', secure_media_serve, name='secure_media'),
+        path('media/<path:path>', public_media_serve, name='public_media'),
     ]

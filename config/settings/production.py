@@ -6,9 +6,9 @@ from .base import *
 # 生产环境特定配置
 DEBUG = False
 
-# 安全配置 (初始部署时关闭SSL重定向，配置SSL后再开启)
-SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if SECURE_SSL_REDIRECT else None
+# 安全配置 - Cloudflare SSL
+SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
@@ -16,13 +16,17 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# 生产环境数据库配置 - 使用SQLite简化部署
+# 生产环境数据库配置 - 使用PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'qatoolbox_production'),
+        'USER': os.environ.get('DB_USER', 'qatoolbox'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
         'OPTIONS': {
-            'timeout': 60,
+            'sslmode': 'prefer',
         },
     }
 }
@@ -72,14 +76,15 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'user': '1000/minute'
 }
 
-# 生产环境CORS配置 - 更新为新域名
+# 生产环境CORS配置 - Cloudflare域名
 CORS_ALLOWED_ORIGINS = [
     "http://shenyiqing.xin",
     "https://shenyiqing.xin",
     "http://www.shenyiqing.xin", 
-    "https://shenyiqing.xin",
+    "https://www.shenyiqing.xin",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://192.168.0.118:8000",
 ]
 
 # 允许的主机 - 配置外网访问

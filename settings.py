@@ -160,6 +160,7 @@ STATIC_URL = '/static/'
 # 静态文件源目录（开发环境）
 STATICFILES_DIRS = [
     BASE_DIR / 'src/static',
+    BASE_DIR / 'static',
 ]
 
 # 收集静态文件的目录（生产环境）
