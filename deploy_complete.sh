@@ -36,6 +36,16 @@ log_info "=========================================="
 install_system_dependencies() {
     log_info "步骤1: 更新系统并安装基础依赖..."
     
+    # 配置国内镜像源
+    log_info "配置国内镜像源..."
+    cat > /etc/apt/sources.list << EOF
+deb https://mirrors.aliyun.com/ubuntu/ $(lsb_release -cs) main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ $(lsb_release -cs)-security main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ $(lsb_release -cs)-updates main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ $(lsb_release -cs)-proposed main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ $(lsb_release -cs)-backports main restricted universe multiverse
+EOF
+    
     # 更新包列表
     apt-get update -y
     
@@ -78,12 +88,15 @@ install_docker() {
     if command -v docker &> /dev/null; then
         log_info "Docker已安装: $(docker --version)"
     else
+        # 使用国内镜像源安装Docker
+        log_info "使用国内镜像源安装Docker..."
+        
         # 添加Docker官方GPG密钥
         curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         
-        # 设置稳定版仓库
+        # 设置稳定版仓库（使用国内镜像）
         echo \
-            "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
             $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
         
         # 更新包索引
@@ -92,7 +105,25 @@ install_docker() {
         # 安装Docker Engine
         apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
         
+        # 配置Docker镜像加速器
+        mkdir -p /etc/docker
+        cat > /etc/docker/daemon.json << EOF
+{
+    "registry-mirrors": [
+        "https://docker.mirrors.ustc.edu.cn",
+        "https://hub-mirror.c.163.com",
+        "https://mirror.baidubce.com"
+    ],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "100m",
+        "max-file": "3"
+    }
+}
+EOF
+        
         # 启动Docker服务
+        systemctl daemon-reload
         systemctl start docker
         systemctl enable docker
         
@@ -107,14 +138,37 @@ install_docker_compose() {
     if command -v docker-compose &> /dev/null; then
         log_info "Docker Compose已安装: $(docker-compose --version)"
     else
-        # 下载Docker Compose
-        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        # 使用国内镜像源下载Docker Compose
+        log_info "使用国内镜像源下载Docker Compose..."
         
-        # 添加执行权限
-        chmod +x /usr/local/bin/docker-compose
+        # 尝试多个镜像源
+        COMPOSE_URLS=(
+            "https://mirror.ghproxy.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
+            "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
+            "https://get.daocloud.io/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)"
+        )
         
-        # 创建软链接
-        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+        for url in "${COMPOSE_URLS[@]}"; do
+            log_info "尝试从 $url 下载..."
+            if curl -L --connect-timeout 10 --max-time 60 "$url" -o /usr/local/bin/docker-compose; then
+                log_success "Docker Compose下载成功"
+                break
+            else
+                log_warning "下载失败，尝试下一个镜像源..."
+            fi
+        done
+        
+        # 检查是否下载成功
+        if [[ ! -f /usr/local/bin/docker-compose ]]; then
+            log_error "Docker Compose下载失败，使用pip安装..."
+            pip3 install docker-compose
+        else
+            # 添加执行权限
+            chmod +x /usr/local/bin/docker-compose
+            
+            # 创建软链接
+            ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+        fi
         
         log_success "Docker Compose安装完成"
     fi
