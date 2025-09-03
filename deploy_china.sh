@@ -162,18 +162,18 @@ start_services() {
     log_info "启动Docker服务..."
     
     # 停止现有服务
-    $COMPOSE_CMD -f docker-compose.china.yml down 2>/dev/null || true
+    $COMPOSE_CMD down 2>/dev/null || true
     
     # 清理旧的镜像和容器
     docker system prune -f
     
     # 构建镜像
     log_info "构建Docker镜像..."
-    $COMPOSE_CMD -f docker-compose.china.yml build --no-cache
+    $COMPOSE_CMD build --no-cache
     
     # 启动服务
     log_info "启动Docker服务..."
-    $COMPOSE_CMD -f docker-compose.china.yml up -d
+    $COMPOSE_CMD up -d
     
     # 等待服务启动
     log_info "等待服务启动..."
@@ -189,7 +189,7 @@ setup_database() {
     # 等待数据库服务完全启动
     log_info "等待数据库服务启动..."
     for i in {1..30}; do
-        if $COMPOSE_CMD -f docker-compose.china.yml exec -T db pg_isready -U qatoolbox -d qatoolbox_production &>/dev/null; then
+        if $COMPOSE_CMD exec -T db pg_isready -U qatoolbox -d qatoolbox_production &>/dev/null; then
             log_info "数据库服务已就绪"
             break
         else
@@ -200,11 +200,11 @@ setup_database() {
     
     # 运行数据库迁移
     log_info "运行数据库迁移..."
-    $COMPOSE_CMD -f docker-compose.china.yml exec -T web python manage.py migrate
+    $COMPOSE_CMD exec -T web python manage.py migrate
     
     # 创建超级用户
     log_info "创建超级用户..."
-    $COMPOSE_CMD -f docker-compose.china.yml exec -T web python manage.py shell -c "
+    $COMPOSE_CMD exec -T web python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='admin').exists():
@@ -216,7 +216,7 @@ else:
     
     # 收集静态文件
     log_info "收集静态文件..."
-    $COMPOSE_CMD -f docker-compose.china.yml exec -T web python manage.py collectstatic --noinput
+    $COMPOSE_CMD exec -T web python manage.py collectstatic --noinput
     
     log_success "数据库初始化完成"
 }
@@ -227,7 +227,7 @@ health_check() {
     
     # 检查容器状态
     log_info "检查容器状态..."
-    $COMPOSE_CMD -f docker-compose.china.yml ps
+    $COMPOSE_CMD ps
     
     # 检查应用健康状态
     log_info "检查应用健康状态..."
@@ -262,11 +262,11 @@ show_result() {
     echo "  - 邮箱: admin@shenyiqing.xin"
     echo
     log_info "🛠️  常用管理命令:"
-    echo "  - 查看服务状态: $COMPOSE_CMD -f docker-compose.china.yml ps"
-    echo "  - 查看日志: $COMPOSE_CMD -f docker-compose.china.yml logs -f"
-    echo "  - 重启服务: $COMPOSE_CMD -f docker-compose.china.yml restart"
-    echo "  - 停止服务: $COMPOSE_CMD -f docker-compose.china.yml down"
-    echo "  - 进入容器: $COMPOSE_CMD -f docker-compose.china.yml exec web bash"
+    echo "  - 查看服务状态: $COMPOSE_CMD ps"
+    echo "  - 查看日志: $COMPOSE_CMD logs -f"
+    echo "  - 重启服务: $COMPOSE_CMD restart"
+    echo "  - 停止服务: $COMPOSE_CMD down"
+    echo "  - 进入容器: $COMPOSE_CMD exec web bash"
     echo
     log_success "✨ 部署成功！请访问 http://47.103.143.152:8000 查看应用"
     log_success "=========================================="
