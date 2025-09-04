@@ -142,12 +142,12 @@ click-repl==0.3.0
 
 # ===== 代码质量 =====
 flake8==6.1.0
-black==23.12.1
+black>=23.0.0,<24.0.0
 isort==5.13.2
 bandit==1.7.5
 mypy==1.8.0
 pylint==3.0.3
-safety==2.3.5
+safety>=2.3.5
 
 # ===== 基础依赖（按字母排序，避免冲突） =====
 certifi==2025.1.31
@@ -161,7 +161,7 @@ importlib_resources==6.5.2
 Jinja2==3.1.5
 kiwisolver==1.4.7
 MarkupSafe==3.0.2
-packaging==24.2
+packaging>=21.3,<22.0
 platformdirs==4.3.6
 pyparsing==3.2.1
 soupsieve==2.6
