@@ -6,15 +6,15 @@ from .base import *
 # 生产环境特定配置
 DEBUG = False
 
-# 安全配置 - Cloudflare SSL
-SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+# 安全配置 - 禁用HTTPS重定向避免CORS问题
+SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = 0  # 禁用HSTS
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # 改为SAMEORIGIN避免CORS问题
 
 # 生产环境数据库配置 - 使用PostgreSQL
 DATABASES = {
@@ -31,7 +31,7 @@ DATABASES = {
     }
 }
 
-# 生产环境缓存配置 - 使用本地内存缓存简化部署  
+# 生产环境缓存配置 - 使用本地内存缓存
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -76,31 +76,34 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'user': '1000/minute'
 }
 
-# 生产环境CORS配置 - Cloudflare域名
-CORS_ALLOWED_ORIGINS = [
-    "http://shenyiqing.xin",
-    "https://shenyiqing.xin",
-    "http://www.shenyiqing.xin", 
-    "https://www.shenyiqing.xin",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://192.168.0.118:8000",
+# 生产环境CORS配置 - 允许所有来源避免CORS问题
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 # 允许的主机 - 配置外网访问
 ALLOWED_HOSTS = [
     'shenyiqing.xin',
     'www.shenyiqing.xin',
+    '47.103.143.152',
     'localhost',
     '127.0.0.1',
     '0.0.0.0',
-    '192.168.0.118',  # 本机内网IP
     '*',  # 允许所有主机用于外网访问
 ]
 
-# 生产环境安全头 - 移除导致警告的COOP头
+# 生产环境安全头 - 禁用可能导致CORS问题的头
 SECURE_REFERRER_POLICY = 'no-referrer-when-downgrade'
-# SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'  # 禁用避免警告
 
 # 生产环境文件上传限制
 DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB

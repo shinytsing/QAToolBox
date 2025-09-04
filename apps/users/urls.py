@@ -10,7 +10,7 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
 
-
+    # 验证码相关
     path('generate-progressive-captcha/', views.generate_progressive_captcha, name='generate_progressive_captcha'),
     path('verify-progressive-captcha/', views.verify_progressive_captcha, name='verify_progressive_captcha'),
     
@@ -38,10 +38,10 @@ urlpatterns = [
     # 头像上传测试页面
     path('avatar_test/', views.avatar_test_view, name='avatar_test'),
     
-    # 用户认证API
+    # 用户认证API - 修复路径
+    path('api/session-status/', views.session_status_api, name='session_status_api'),
     path('api/logout/', views.user_logout_api, name='user_logout_api'),
     path('api/extend-session/', views.extend_session_api, name='extend_session_api'),
-    path('api/session-status/', views.session_status_api, name='session_status_api'),
     
     # 测试页面
     path('test-logout/', views.test_logout_view, name='test_logout'),

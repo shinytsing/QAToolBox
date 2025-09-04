@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-08-23T15:54:46.218228",
+  "features_tested": [
+    "地图功能和地址定位",
+    "联系卖家功能（集成心动链接）",
+    "聊天系统消息通知",
+    "商品想要功能",
+    "收藏功能",
+    "API端点测试"
+  ],
+  "statistics": {
+    "total_items": 2,
+    "total_want_records": 1,
+    "total_favorites": 1,
+    "total_chat_rooms": 279,
+    "total_notifications": 1
+  }
+}
