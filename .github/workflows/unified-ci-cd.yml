@@ -494,6 +494,13 @@ jobs:
           docker-compose exec -T web python manage.py collectstatic --noinput
           
           echo "✅ 零停机部署完成"
+          
+          # 输出部署状态信息
+          echo "🚀 部署成功！"
+          echo "🌐 访问地址: http://47.103.143.152"
+          echo "🌐 域名访问: http://shenyiqing.xin"
+          echo "📊 部署时间: $(date)"
+          echo "📝 提交信息: ${{ github.sha }}"
 
   # ===== 7. 紧急部署 =====
   emergency-deploy:
@@ -628,6 +635,7 @@ jobs:
     
     - name: 发送邮件通知
       uses: dawidd6/action-send-mail@v3
+      continue-on-error: true
       with:
         server_address: smtp.gmail.com
         server_port: 587
