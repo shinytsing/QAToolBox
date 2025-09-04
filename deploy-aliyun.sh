@@ -41,7 +41,7 @@ fi
 # 克隆项目
 if [ ! -d "QAToolBox" ]; then
     echo "📥 克隆项目..."
-    git clone https://github.com/your-username/QAToolBox.git
+    git clone https://github.com/shinytsing/QAToolbox.git
     cd QAToolBox
 else
     echo "📥 更新项目..."
