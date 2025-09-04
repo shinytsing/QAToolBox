@@ -8,7 +8,7 @@ import os
 
 def init_sentry():
     """初始化Sentry监控"""
-    if hasattr(settings, 'SENTRY_DSN') and settings.SENTRY_DSN:
+    if hasattr(settings, "SENTRY_DSN") and settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             integrations=[
@@ -21,9 +21,9 @@ def init_sentry():
             # 错误采样率
             profiles_sample_rate=0.1,
             # 环境
-            environment=os.getenv('ENVIRONMENT', 'development'),
+            environment=os.getenv("ENVIRONMENT", "development"),
             # 发布版本
-            release=os.getenv('VERSION', '1.0.0'),
+            release=os.getenv("VERSION", "1.0.0"),
             # 调试模式
             debug=settings.DEBUG,
             # 发送PII数据
@@ -48,11 +48,13 @@ def capture_message(message, level="info", context=None):
 def set_user(user):
     """设置用户信息"""
     if user and user.is_authenticated:
-        sentry_sdk.set_user({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-        })
+        sentry_sdk.set_user(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            }
+        )
 
 
 def set_tag(key, value):

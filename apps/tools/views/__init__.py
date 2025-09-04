@@ -6,6 +6,7 @@ from .music_views import *
 from .vanity_views import *
 from .desire_views import *
 from .travel_views import *
+
 # from .chat_views import *  # 暂时注释掉，直到修复导入问题
 from .social_media_views import (
     social_subscription_demo,
@@ -31,32 +32,27 @@ from ..legacy_views import (
     convert_audio_file,
     decrypt_ncm_file,
     audio_converter_api,
-    
     # 旅行指南相关
     generate_travel_guide,
     generate_travel_guide_with_deepseek,
     export_travel_guide_api,
     format_travel_guide_for_export,
-    
     # 心链相关
     create_heart_link_request_api,
     check_heart_link_status_api,
     cleanup_expired_heart_link_requests,
     disconnect_inactive_users,
-    
     # 聊天相关API
     get_chat_messages_api,
     send_message_api,
     update_online_status_api,
     get_online_users_api,
     get_active_chat_rooms_api,
-    
     # 生活日记相关API
     life_diary_api,
     emo_diary_api,
     creative_writer_api,
     fitness_api,
-    
     # 社交订阅相关API
     add_social_subscription_api,
     get_subscriptions_api,
@@ -64,17 +60,14 @@ from ..legacy_views import (
     get_notifications_api,
     mark_notification_read_api,
     get_subscription_stats_api,
-    
     # 抖音分析相关API
     douyin_analysis_api,
     get_douyin_analysis_api,
     generate_product_preview_api,
     get_douyin_analysis_list_api,
-    
     # 模式相关API
     record_mode_click_api,
     get_user_preferred_mode_api,
-    
     # 三重觉醒相关API
     create_fitness_workout_api,
     create_code_workout_api,
@@ -85,12 +78,10 @@ from ..legacy_views import (
     record_exhaustion_audio_api,
     create_exhaustion_proof_api,
     create_copilot_collaboration_api,
-    
     # 食物随机选择器相关API
     start_food_randomization_api,
     pause_food_randomization_api,
     rate_food_api,
-    
     # 页面视图
     emo_diary,
     creative_writer,
@@ -108,7 +99,6 @@ from ..legacy_views import (
     fitness_tools,
     food_randomizer,
     audio_converter_view,
-    
     # 其他常用函数
     is_admin,
     admin_required,

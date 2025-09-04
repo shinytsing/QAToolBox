@@ -112,13 +112,13 @@ class GenerateTestCasesAPI(APIView):
         try:
             start_time = datetime.now()
             # 1. 获取并验证请求参数
-            requirement = request.data.get('requirement', '').strip()
-            user_prompt = request.data.get('prompt', '').strip()
+            requirement = request.data.get("requirement", "").strip()
+            user_prompt = request.data.get("prompt", "").strip()
             # 批量生成参数处理
-            is_batch = request.data.get('is_batch', False)
-            batch_id = int(request.data.get('batch_id', 0))
-            total_batches = int(request.data.get('total_batches', 1))
-            print("请求在此:"+requirement,user_prompt)
+            is_batch = request.data.get("is_batch", False)
+            batch_id = int(request.data.get("batch_id", 0))
+            total_batches = int(request.data.get("total_batches", 1))
+            print("请求在此:" + requirement, user_prompt)
             logger.info(
                 f"用户 {request.user.username} 发起测试用例生成请求，"
                 f"需求长度: {len(requirement)}，批量模式: {is_batch}，"
@@ -129,22 +129,18 @@ class GenerateTestCasesAPI(APIView):
             # 参数验证增强
             if not requirement:
                 logger.warning("测试用例生成请求缺少requirement参数")
-                return Response(
-                    {'error': '请输入产品需求内容'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({"error": "请输入产品需求内容"}, status=status.HTTP_400_BAD_REQUEST)
 
             # 批量生成参数验证
             if is_batch:
                 if total_batches < 1 or total_batches > self.MAX_BATCH_COUNT:
                     return Response(
-                        {'error': f'批量生成最大支持{self.MAX_BATCH_COUNT}个批次'},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {"error": f"批量生成最大支持{self.MAX_BATCH_COUNT}个批次"}, status=status.HTTP_400_BAD_REQUEST
                     )
                 if batch_id < 0 or batch_id >= total_batches:
                     return Response(
-                        {'error': f'批次ID {batch_id} 超出有效范围 (0-{total_batches - 1})'},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {"error": f"批次ID {batch_id} 超出有效范围 (0-{total_batches - 1})"},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             # 处理文件名（增强安全性和可读性）
@@ -167,44 +163,32 @@ class GenerateTestCasesAPI(APIView):
             final_prompt = user_prompt if user_prompt else self.DEFAULT_PROMPT.format(requirement=requirement)
 
             # 验证提示词中是否包含需求占位符（如果是自定义提示词）
-            if user_prompt and '{requirement}' not in user_prompt:
+            if user_prompt and "{requirement}" not in user_prompt:
                 logger.warning(f"用户 {request.user.username} 使用的自定义提示词中未包含{{requirement}}占位符")
 
             # 2. 调用DeepSeek API生成测试用例（传递批量参数）
             try:
                 deepseek = DeepSeekClient()
                 raw_response = deepseek.generate_test_cases(
-                    requirement,
-                    final_prompt,
-                    is_batch=is_batch,
-                    batch_id=batch_id,
-                    total_batches=total_batches
+                    requirement, final_prompt, is_batch=is_batch, batch_id=batch_id, total_batches=total_batches
                 )
                 if not raw_response:
                     raise ValueError("未从API获取到有效响应")
             except Exception as e:
                 logger.error(f"DeepSeek API调用失败: {str(e)}", exc_info=True)
-                return Response(
-                    {'error': f'AI接口调用失败: {str(e)}'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            print("deepseek返回"+raw_response)
+                return Response({"error": f"AI接口调用失败: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print("deepseek返回" + raw_response)
             # 3. 解析API响应为结构化数据
             test_cases = self._parse_test_cases(raw_response)
 
             # 4. 确保输出目录存在
-            output_dir = os.path.join(settings.MEDIA_ROOT, 'tool_outputs')
+            output_dir = os.path.join(settings.MEDIA_ROOT, "tool_outputs")
             os.makedirs(output_dir, exist_ok=True)
 
             # 5. 创建多种格式文件（FreeMind和XMind）
             try:
                 # 生成FreeMind格式文件
-                with tempfile.NamedTemporaryFile(
-                        suffix='.mm',
-                        delete=False,
-                        mode='w',
-                        encoding='utf-8'
-                ) as tmp:
+                with tempfile.NamedTemporaryFile(suffix=".mm", delete=False, mode="w", encoding="utf-8") as tmp:
                     # 生成FreeMind XML内容
                     mindmap_xml = self._generate_freemind(test_cases)
                     tmp.write(mindmap_xml)
@@ -214,32 +198,35 @@ class GenerateTestCasesAPI(APIView):
                 # 生成XMind格式文件
                 xmind_test_cases = {"content": raw_response, "title": "AI生成测试用例"}
                 xmind_workbook = self._generate_xmind(xmind_test_cases)
-                xmind_filename = outfile_name.replace('.mm', '.xmind')
+                xmind_filename = outfile_name.replace(".mm", ".xmind")
                 xmind_path = os.path.join(output_dir, xmind_filename)
                 xmind.save(xmind_workbook, xmind_path)
-                
+
                 # 生成飞书导入格式文件（Markdown格式）
-                feishu_filename = outfile_name.replace('.mm', '_feishu.md')
+                feishu_filename = outfile_name.replace(".mm", "_feishu.md")
                 feishu_path = os.path.join(output_dir, feishu_filename)
                 feishu_content = self._generate_feishu_format(test_cases, raw_response)
-                with open(feishu_path, 'w', encoding='utf-8') as f:
+                with open(feishu_path, "w", encoding="utf-8") as f:
                     f.write(feishu_content)
 
                 # 6. 保存到模型（记录批量信息）
                 log = ToolUsageLog.objects.create(
                     user=request.user,
-                    tool_type='TEST_CASE',
-                    input_data=json.dumps({
-                        'requirement': requirement,
-                        'prompt': final_prompt,
-                        'is_batch': is_batch,
-                        'batch_id': batch_id,
-                        'total_batches': total_batches
-                    }, ensure_ascii=False)  # 确保中文正常序列化
+                    tool_type="TEST_CASE",
+                    input_data=json.dumps(
+                        {
+                            "requirement": requirement,
+                            "prompt": final_prompt,
+                            "is_batch": is_batch,
+                            "batch_id": batch_id,
+                            "total_batches": total_batches,
+                        },
+                        ensure_ascii=False,
+                    ),  # 确保中文正常序列化
                 )
 
                 # 使用Django的File类处理文件保存
-                with open(tmp.name, 'rb') as f:
+                with open(tmp.name, "rb") as f:
                     log.output_file.save(outfile_name, File(f), save=True)
 
                 # 清理临时文件
@@ -248,7 +235,7 @@ class GenerateTestCasesAPI(APIView):
             except Exception as file_err:
                 logger.error(f"文件处理失败: {str(file_err)}", exc_info=True)
                 # 尝试清理临时文件
-                if 'tmp' in locals() and os.path.exists(tmp.name):
+                if "tmp" in locals() and os.path.exists(tmp.name):
                     os.unlink(tmp.name)
                 raise Exception(f"文件生成失败: {str(file_err)}")
 
@@ -260,24 +247,24 @@ class GenerateTestCasesAPI(APIView):
                 logger.warning(f"用户 {request.user.username} 测试用例生成成功，但文件未找到: {saved_file_path}")
 
             response_data = {
-                'download_url': f'/tools/download/{outfile_name}',
-                'xmind_download_url': f'/tools/download/{xmind_filename}',
-                'log_id': log.id,
-                'raw_response': raw_response,
-                'test_cases': raw_response,  # 添加前端期望的字段
-                'is_batch': is_batch,
-                'batch_id': batch_id,
-                'total_batches': total_batches,
-                'file_name': outfile_name,
-                'xmind_file_name': xmind_filename
+                "download_url": f"/tools/download/{outfile_name}",
+                "xmind_download_url": f"/tools/download/{xmind_filename}",
+                "log_id": log.id,
+                "raw_response": raw_response,
+                "test_cases": raw_response,  # 添加前端期望的字段
+                "is_batch": is_batch,
+                "batch_id": batch_id,
+                "total_batches": total_batches,
+                "file_name": outfile_name,
+                "xmind_file_name": xmind_filename,
             }
 
             # 如果是最后一批，添加打包下载标识
             if is_batch and (batch_id + 1) == total_batches:
-                response_data['is_final_batch'] = True
+                response_data["is_final_batch"] = True
                 # 生成批次相关文件的标识前缀，用于前端后续打包下载
                 batch_prefix = f"{cleaned_req}_{current_time}_batch_"
-                response_data['batch_prefix'] = batch_prefix
+                response_data["batch_prefix"] = batch_prefix
 
             # 计算处理时间并记录
             processing_time = (datetime.now() - start_time).total_seconds()
@@ -294,13 +281,10 @@ class GenerateTestCasesAPI(APIView):
                 f"用户 {request.user.username} 测试用例生成失败，"
                 f"耗时: {(datetime.now() - start_time).total_seconds():.2f}秒，"
                 f"错误: {str(e)}",
-                exc_info=True
+                exc_info=True,
             )
 
-            return Response(
-                {'error': f'服务器处理失败: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": f"服务器处理失败: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _parse_test_cases(self, raw_response):
         """解析API响应为层级结构，增强鲁棒性"""
@@ -310,7 +294,7 @@ class GenerateTestCasesAPI(APIView):
         line_number = 0  # 用于错误定位
 
         try:
-            for line in raw_response.split('\n'):
+            for line in raw_response.split("\n"):
                 line_number += 1
                 line = line.strip()
 
@@ -319,13 +303,13 @@ class GenerateTestCasesAPI(APIView):
                     continue
 
                 # 处理标题行（# 开头）
-                if line.startswith('#'):
+                if line.startswith("#"):
                     # 如果有未完成的用例，添加到当前章节
                     if current_case and current_section:
-                        sections[current_section].append('\n'.join(current_case))
+                        sections[current_section].append("\n".join(current_case))
                         current_case = []
                     # 设置新章节（支持多级标题，但统一处理为一级章节）
-                    current_section = line.lstrip('# ').strip()
+                    current_section = line.lstrip("# ").strip()
                     # 处理可能的重复章节名
                     if current_section in sections:
                         # 添加计数器避免覆盖
@@ -336,43 +320,37 @@ class GenerateTestCasesAPI(APIView):
                             counter += 1
                     sections[current_section] = []
                 # 处理列表项（- 或 * 开头）
-                elif line.startswith(('-', '*')) and current_section:
+                elif line.startswith(("-", "*")) and current_section:
                     # 如果有未完成的用例，添加到当前章节
                     if current_case:
-                        sections[current_section].append('\n'.join(current_case))
+                        sections[current_section].append("\n".join(current_case))
                         current_case = []
                     # 添加新用例的第一行
-                    current_case.append(line.lstrip('-* ').strip())
+                    current_case.append(line.lstrip("-* ").strip())
                 # 处理用例的多行内容
                 elif current_case and current_section:
                     current_case.append(line)
 
             # 添加最后一个用例
             if current_case and current_section:
-                sections[current_section].append('\n'.join(current_case))
+                sections[current_section].append("\n".join(current_case))
 
             # 如果没有解析到任何章节，创建一个默认章节
             if not sections:
                 sections["默认测试场景"] = [raw_response]
 
-            return {
-                "title": "AI生成测试用例",
-                "structure": sections
-            }
+            return {"title": "AI生成测试用例", "structure": sections}
 
         except Exception as e:
             logger.error(f"解析测试用例失败，行号: {line_number}, 错误: {str(e)}")
             # 解析失败时返回原始内容作为备用
-            return {
-                "title": "AI生成测试用例（解析可能存在问题）",
-                "structure": {"解析异常内容": [raw_response]}
-            }
+            return {"title": "AI生成测试用例（解析可能存在问题）", "structure": {"解析异常内容": [raw_response]}}
 
     def _generate_freemind(self, test_cases):
         """生成飞书兼容的FreeMind格式XML，增强兼容性处理"""
         try:
             # 避免XML命名空间问题
-            ET.register_namespace('', 'http://freemind.sourceforge.net/wiki/index.php/XML')
+            ET.register_namespace("", "http://freemind.sourceforge.net/wiki/index.php/XML")
 
             # FreeMind根节点
             map_root = ET.Element("map")
@@ -393,7 +371,7 @@ class GenerateTestCasesAPI(APIView):
                 else:
                     # 直接的字典格式
                     structure_data = test_cases
-            
+
             # 构建层级结构：场景（一级节点）-> 测试用例（二级节点）
             for scene, cases in structure_data.items():
                 if not scene or not cases:  # 跳过空场景或空用例
@@ -421,14 +399,14 @@ class GenerateTestCasesAPI(APIView):
                     case_node.set("STYLE", "bullet")
 
             # 格式化XML - 优化飞书兼容性
-            rough_string = ET.tostring(map_root, 'utf-8')
+            rough_string = ET.tostring(map_root, "utf-8")
             reparsed = minidom.parseString(rough_string)
-            
+
             # 生成标准FreeMind XML格式，确保飞书兼容
-            pretty_xml = reparsed.toprettyxml(indent="  ", encoding='utf-8').decode('utf-8')
-            
+            pretty_xml = reparsed.toprettyxml(indent="  ", encoding="utf-8").decode("utf-8")
+
             # 确保XML声明正确且包含UTF-8编码
-            if not pretty_xml.startswith('<?xml'):
+            if not pretty_xml.startswith("<?xml"):
                 pretty_xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + pretty_xml
             elif 'encoding="UTF-8"' not in pretty_xml:
                 # 如果XML声明存在但没有UTF-8编码，替换它
@@ -450,11 +428,9 @@ class GenerateTestCasesAPI(APIView):
         """XML特殊字符转义，防止XML生成失败"""
         if not text:
             return ""
-        return text.replace("&", "&amp;") \
-            .replace("<", "&lt;") \
-            .replace(">", "&gt;") \
-            .replace("\"", "&quot;") \
-            .replace("'", "&apos;")
+        return (
+            text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&apos;")
+        )
 
     def _generate_xmind(self, test_cases):
         """生成XMind格式文件，支持飞书导入"""
@@ -463,51 +439,51 @@ class GenerateTestCasesAPI(APIView):
             workbook = xmind.load("test_cases.xmind")
             sheet = workbook.getPrimarySheet()
             root_topic = sheet.getRootTopic()
-            
+
             # 设置根主题
             root_topic.setTitle("AI生成测试用例")
-            
+
             # 解析测试用例内容，构建层级结构
             content = test_cases.get("content", "")
-            lines = content.split('\n')
-            
+            lines = content.split("\n")
+
             current_section = None
             current_section_topic = None
-            
+
             for line in lines:
                 line = line.strip()
                 if not line:
                     continue
-                    
+
                 # 检测二级标题（## 模块名称）
-                if line.startswith('## '):
+                if line.startswith("## "):
                     current_section = line[3:].strip()
                     current_section_topic = root_topic.addSubTopic()
                     current_section_topic.setTitle(current_section)
-                    
+
                 # 检测用例（以 - 开头）
-                elif line.startswith('- ') and current_section_topic:
+                elif line.startswith("- ") and current_section_topic:
                     case_content = line[2:].strip()
                     case_topic = current_section_topic.addSubTopic()
                     case_topic.setTitle(case_content)
-                    
+
                 # 检测用例详情（以 * 开头）
-                elif line.startswith('* ') and current_section_topic:
+                elif line.startswith("* ") and current_section_topic:
                     detail_content = line[2:].strip()
                     if current_section_topic.getSubTopics():
                         last_case = current_section_topic.getSubTopics()[-1]
                         detail_topic = last_case.addSubTopic()
                         detail_topic.setTitle(detail_content)
-            
+
             # 如果没有解析到内容，创建默认结构
             if not root_topic.getSubTopics():
                 default_section = root_topic.addSubTopic()
                 default_section.setTitle("测试用例")
                 default_case = default_section.addSubTopic()
                 default_case.setTitle("请查看生成的测试用例内容")
-            
+
             return workbook
-            
+
         except Exception as e:
             logger.error(f"生成XMind文件失败: {str(e)}", exc_info=True)
             # 生成失败时返回基础XMind结构

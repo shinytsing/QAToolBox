@@ -9,9 +9,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent  # 指向 QAToolbox 目录
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
+
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -22,5 +23,6 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
