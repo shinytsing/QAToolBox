@@ -11,7 +11,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Deploy to server
       uses: appleboy/ssh-action@v0.1.5
@@ -19,10 +19,11 @@ jobs:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
         script: |
-          cd ~/QAToolBox || exit 1
+          cd ~/QAToolBox || cd /home/qatoolbox/QAToolBox || exit 1
           git pull origin main
-          docker-compose -f docker-compose.china.yml down
-          docker-compose -f docker-compose.china.yml up -d --build
+          chmod +x quick-fix-deploy.sh
+          ./quick-fix-deploy.sh
           echo "部署完成！"
 
