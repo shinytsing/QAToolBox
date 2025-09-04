@@ -7,16 +7,35 @@ from .base import *
 DEBUG = True
 TESTING = True
 
-# 使用内存数据库加速测试
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
-        'OPTIONS': {
-            'timeout': 20,
+# 测试环境数据库配置 - 支持PostgreSQL和SQLite
+import os
+
+# 如果设置了DATABASE_URL环境变量，使用PostgreSQL
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'test_qatoolbox'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'prefer',
+            },
         }
     }
-}
+else:
+    # 默认使用SQLite内存数据库
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+            'OPTIONS': {
+                'timeout': 20,
+            }
+        }
+    }
 
 # 测试环境缓存配置
 CACHES = {

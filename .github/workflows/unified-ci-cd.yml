@@ -1,0 +1,719 @@
+name: QAToolBox Unified CI/CD Pipeline
+
+# 统一CI/CD流程：根据分支和事件类型执行不同的流程
+on:
+  push:
+    branches: [ main, develop, feature/*, hotfix/*, release/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      workflow_type:
+        description: '选择工作流类型'
+        required: true
+        default: 'ci'
+        type: choice
+        options:
+        - ci
+        - cd-delivery
+        - cd-deployment
+        - emergency-deploy
+      environment:
+        description: '部署环境 (仅CD流程)'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      skip_tests:
+        description: '跳过测试 (紧急情况)'
+        required: false
+        default: false
+        type: boolean
+      force_deploy:
+        description: '强制部署 (跳过质量检查)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NOTIFICATION_EMAIL: "1009383129@qq.com"
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # ===== 1. 代码质量检查 =====
+  code-quality:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' || 
+      github.event_name == 'pull_request' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.workflow_type != 'emergency-deploy')
+    outputs:
+      quality-passed: ${{ steps.quality-check.outputs.passed }}
+      quality-score: ${{ steps.quality-check.outputs.score }}
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 black isort mypy bandit safety pylint coverage
+    
+    - name: 代码格式化检查
+      run: |
+        echo "::group::Black代码格式检查"
+        black --check --diff . || (echo "::error::代码格式问题" && exit 1)
+        echo "::endgroup::"
+        
+        echo "::group::导入排序检查"
+        isort --check-only --diff . || (echo "::error::导入排序问题" && exit 1)
+        echo "::endgroup::"
+    
+    - name: 静态代码分析
+      run: |
+        echo "::group::Flake8代码检查"
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        echo "::endgroup::"
+        
+        echo "::group::MyPy类型检查"
+        mypy apps/ --ignore-missing-imports --junit-xml=mypy-report.xml || true
+        echo "::endgroup::"
+    
+    - name: 安全漏洞扫描
+      run: |
+        echo "::group::Bandit安全扫描"
+        bandit -r apps/ -f json -o bandit-report.json || true
+        bandit -r apps/ -f txt
+        echo "::endgroup::"
+        
+        echo "::group::依赖漏洞扫描"
+        safety check --json --output safety-report.json || true
+        safety check
+        echo "::endgroup::"
+    
+    - name: 质量门禁检查
+      id: quality-check
+      run: |
+        QUALITY_PASSED=true
+        QUALITY_SCORE=100
+        
+        # 检查安全问题
+        if [ -f bandit-report.json ]; then
+          HIGH_ISSUES=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
+          if [ "$HIGH_ISSUES" -gt "5" ]; then
+            echo "::error::安全问题过多: $HIGH_ISSUES"
+            QUALITY_PASSED=false
+            QUALITY_SCORE=$((QUALITY_SCORE - HIGH_ISSUES * 10))
+          fi
+        fi
+        
+        # 检查依赖漏洞
+        if [ -f safety-report.json ]; then
+          VULNERABILITIES=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+          if [ "$VULNERABILITIES" -gt "0" ]; then
+            echo "::error::发现依赖漏洞: $VULNERABILITIES"
+            QUALITY_PASSED=false
+            QUALITY_SCORE=$((QUALITY_SCORE - VULNERABILITIES * 15))
+          fi
+        fi
+        
+        echo "passed=$QUALITY_PASSED" >> $GITHUB_OUTPUT
+        echo "score=$QUALITY_SCORE" >> $GITHUB_OUTPUT
+        echo "代码质量评分: $QUALITY_SCORE/100"
+        
+        if [ "$QUALITY_PASSED" = "false" ]; then
+          exit 1
+        fi
+
+  # ===== 2. 单元测试 =====
+  unit-tests:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    needs: code-quality
+    if: |
+      always() && 
+      (needs.code-quality.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      (github.event_name == 'push' || github.event_name == 'pull_request' || 
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.workflow_type != 'emergency-deploy'))
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_qatoolbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    outputs:
+      test-result: ${{ steps.tests.outputs.result }}
+      coverage: ${{ steps.coverage.outputs.percentage }}
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-django pytest-cov pytest-xdist pytest-html
+    
+    - name: 数据库迁移
+      run: |
+        python manage.py migrate --settings=config.settings.testing
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
+        REDIS_URL: redis://localhost:6379/0
+    
+    - name: 运行单元测试
+      id: tests
+      run: |
+        pytest tests/ \
+          --cov=apps \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term \
+          --junit-xml=test-results.xml \
+          --html=test-report.html \
+          --self-contained-html \
+          -v \
+          --maxfail=10 \
+          --tb=short \
+          --durations=10
+        
+        TEST_RESULT=$?
+        echo "result=$TEST_RESULT" >> $GITHUB_OUTPUT
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
+        REDIS_URL: redis://localhost:6379/0
+    
+    - name: 提取覆盖率
+      id: coverage
+      run: |
+        COVERAGE=$(python -c "
+        import xml.etree.ElementTree as ET
+        try:
+            root = ET.parse('coverage.xml').getroot()
+            coverage = float(root.attrib['line-rate']) * 100
+            print(f'{coverage:.1f}')
+        except:
+            print('0.0')
+        ")
+        echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "测试覆盖率: $COVERAGE%"
+        
+        # 覆盖率门禁：低于80%不允许通过
+        COVERAGE_INT=$(echo $COVERAGE | cut -d. -f1)
+        if [ "$COVERAGE_INT" -lt "80" ]; then
+          echo "::error::测试覆盖率不达标: $COVERAGE% (要求: ≥80%)"
+          exit 1
+        else
+          echo "::notice::测试覆盖率达标: $COVERAGE%"
+        fi
+
+  # ===== 3. 集成测试 =====
+  integration-tests:
+    name: 集成测试
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: |
+      always() && 
+      (needs.unit-tests.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      (github.event_name == 'push' || github.event_name == 'pull_request' || 
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.workflow_type != 'emergency-deploy'))
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install requests selenium pytest
+    
+    - name: 运行集成测试
+      run: |
+        echo "运行API集成测试..."
+        pytest tests/integration/ -v --tb=short || true
+        echo "集成测试完成"
+
+  # ===== 4. 构建Docker镜像 =====
+  build:
+    name: 构建Docker镜像
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests]
+    if: |
+      always() && 
+      (needs.code-quality.result == 'success' || github.event.inputs.force_deploy == 'true') &&
+      (needs.unit-tests.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || 
+       github.event_name == 'workflow_dispatch')
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 登录容器注册表
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 提取元数据
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: 构建Docker镜像
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+  # ===== 5. 持续交付 (手动触发) =====
+  cd-delivery:
+    name: 持续交付
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, build]
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      github.event.inputs.workflow_type == 'cd-delivery' &&
+      (needs.code-quality.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      (needs.unit-tests.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      needs.build.result == 'success'
+    environment: 
+      name: ${{ github.event.inputs.environment }}
+      url: ${{ github.event.inputs.environment == 'production' && 'http://shenyiqing.xin' || 'http://staging.shenyiqing.xin' }}
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 部署前检查
+      run: |
+        echo "🔍 执行部署前检查..."
+        ENV="${{ github.event.inputs.environment }}"
+        echo "目标环境: $ENV"
+        echo "镜像标签: ${{ needs.build.outputs.image-tag }}"
+        echo "✅ 部署前检查通过"
+    
+    - name: 部署到目标环境
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ github.event.inputs.environment == 'production' && secrets.SERVER_HOST || secrets.STAGING_HOST }}
+        username: ${{ github.event.inputs.environment == 'production' && secrets.SERVER_USER || secrets.STAGING_USER }}
+        key: ${{ github.event.inputs.environment == 'production' && secrets.SERVER_SSH_KEY || secrets.STAGING_SSH_KEY }}
+        port: ${{ github.event.inputs.environment == 'production' && secrets.SERVER_PORT || secrets.STAGING_PORT || 22 }}
+        script: |
+          echo "🚀 开始部署到${{ github.event.inputs.environment }}环境..."
+          
+          # 根据环境选择目录
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            cd ~/QAToolBox || exit 1
+          else
+            cd ~/QAToolBox-staging || {
+              echo "暂存目录不存在，创建中..."
+              git clone https://github.com/shinytsing/QAToolBox.git QAToolBox-staging
+              cd QAToolBox-staging
+            }
+          fi
+          
+          # 拉取最新代码
+          git pull origin ${{ github.ref_name }}
+          
+          # 执行部署
+          chmod +x quick-fix-deploy.sh
+          ./quick-fix-deploy.sh
+          
+          # 健康检查
+          sleep 30
+          if curl -f http://localhost/health/ > /dev/null 2>&1; then
+            echo "✅ 部署成功！"
+          else
+            echo "❌ 部署失败"
+            exit 1
+          fi
+
+  # ===== 6. 持续部署 (自动触发) =====
+  cd-deployment:
+    name: 持续部署
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, build]
+    if: |
+      github.ref == 'refs/heads/main' && 
+      github.event_name == 'push' &&
+      (needs.code-quality.result == 'success' || github.event.inputs.force_deploy == 'true') &&
+      (needs.unit-tests.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      needs.build.result == 'success'
+    environment: 
+      name: production
+      url: http://shenyiqing.xin
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 创建部署备份
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "📦 创建部署前备份..."
+          cd ~/QAToolBox || exit 1
+          
+          BACKUP_DIR="./backups/auto-deploy-$(date +%Y%m%d-%H%M%S)"
+          mkdir -p $BACKUP_DIR
+          
+          # 备份数据库
+          if docker-compose ps db | grep -q "Up"; then
+            docker-compose exec -T db pg_dump -U qatoolbox qatoolbox_production > $BACKUP_DIR/database.sql
+          fi
+          
+          # 备份媒体文件
+          if [ -d "media" ]; then
+            tar -czf $BACKUP_DIR/media.tar.gz media/
+          fi
+          
+          # 记录当前版本
+          git rev-parse HEAD > $BACKUP_DIR/previous_commit.txt
+          echo "${{ github.sha }}" > $BACKUP_DIR/new_commit.txt
+          
+          echo "✅ 备份完成: $BACKUP_DIR"
+    
+    - name: 执行零停机部署
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "🚀 执行零停机自动部署..."
+          
+          cd ~/QAToolBox || exit 1
+          
+          # 拉取最新代码
+          git fetch origin
+          git checkout main
+          git reset --hard origin/main
+          
+          # 更新配置文件
+          if [ -f ".env.production" ] && [ ! -f ".env" ]; then
+            cp .env.production .env
+          fi
+          
+          # 滚动更新部署
+          docker-compose build --no-cache web
+          docker-compose up -d --no-deps web
+          
+          # 等待新容器启动
+          sleep 30
+          
+          # 健康检查
+          for i in {1..10}; do
+            if curl -f http://localhost:8000/health/ > /dev/null 2>&1; then
+              echo "✅ 新容器健康检查通过"
+              break
+            fi
+            if [ $i -eq 10 ]; then
+              echo "❌ 新容器健康检查失败"
+              exit 1
+            fi
+            echo "等待新容器启动... ($i/10)"
+            sleep 10
+          done
+          
+          # 更新其他服务
+          docker-compose up -d
+          
+          # 运行数据库迁移
+          docker-compose exec -T web python manage.py migrate --noinput
+          
+          # 收集静态文件
+          docker-compose exec -T web python manage.py collectstatic --noinput
+          
+          echo "✅ 零停机部署完成"
+
+  # ===== 7. 紧急部署 =====
+  emergency-deploy:
+    name: 紧急部署
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      github.event.inputs.workflow_type == 'emergency-deploy'
+    environment: 
+      name: production
+      url: http://shenyiqing.xin
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 紧急部署警告
+      run: |
+        echo "⚠️  紧急部署模式"
+        echo "跳过所有质量检查和测试"
+        echo "直接部署到生产环境"
+    
+    - name: 执行紧急部署
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "🚨 执行紧急部署..."
+          
+          cd ~/QAToolBox || exit 1
+          
+          # 拉取最新代码
+          git pull origin main
+          
+          # 直接部署
+          chmod +x quick-fix-deploy.sh
+          ./quick-fix-deploy.sh
+          
+          # 基础健康检查
+          sleep 30
+          if curl -f http://localhost/health/ > /dev/null 2>&1; then
+            echo "✅ 紧急部署完成"
+          else
+            echo "❌ 紧急部署失败"
+            exit 1
+          fi
+
+  # ===== 8. 部署后验证 =====
+  post-deployment-tests:
+    name: 部署后验证
+    runs-on: ubuntu-latest
+    needs: [cd-delivery, cd-deployment, emergency-deploy]
+    if: |
+      always() && 
+      (needs.cd-delivery.result == 'success' || needs.cd-deployment.result == 'success' || needs.emergency-deploy.result == 'success')
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: 安装验证依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+    
+    - name: 运行部署验证
+      run: |
+        echo "🔍 运行部署后验证..."
+        python scripts/post_deployment_verification.py --url http://shenyiqing.xin || true
+        
+        # 基础健康检查
+        for endpoint in "http://47.103.143.152/health/" "http://shenyiqing.xin/health/"; do
+          if curl -f "$endpoint" > /dev/null 2>&1; then
+            echo "✅ $endpoint 健康检查通过"
+          else
+            echo "❌ $endpoint 健康检查失败"
+          fi
+        done
+
+  # ===== 9. 通知 =====
+  notification:
+    name: 发送通知
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, build, cd-delivery, cd-deployment, emergency-deploy, post-deployment-tests]
+    if: always()
+    steps:
+    - name: 准备通知数据
+      id: prepare
+      run: |
+        # 收集所有作业的状态
+        QUALITY_STATUS="${{ needs.code-quality.result || 'skipped' }}"
+        TESTS_STATUS="${{ needs.unit-tests.result || 'skipped' }}"
+        BUILD_STATUS="${{ needs.build.result || 'skipped' }}"
+        DELIVERY_STATUS="${{ needs.cd-delivery.result || 'skipped' }}"
+        DEPLOYMENT_STATUS="${{ needs.cd-deployment.result || 'skipped' }}"
+        EMERGENCY_STATUS="${{ needs.emergency-deploy.result || 'skipped' }}"
+        VERIFY_STATUS="${{ needs.post-deployment-tests.result || 'skipped' }}"
+        
+        # 确定整体状态
+        if [[ "$DEPLOYMENT_STATUS" == "success" || "$DELIVERY_STATUS" == "success" || "$EMERGENCY_STATUS" == "success" ]]; then
+          OVERALL_STATUS="SUCCESS"
+          STATUS_ICON="✅"
+        elif [[ "$VERIFY_STATUS" == "failure" ]]; then
+          OVERALL_STATUS="VERIFICATION_FAILED"
+          STATUS_ICON="⚠️"
+        elif [[ "$TESTS_STATUS" == "failure" ]]; then
+          OVERALL_STATUS="TESTS_FAILED"
+          STATUS_ICON="🧪❌"
+        elif [[ "$QUALITY_STATUS" == "failure" ]]; then
+          OVERALL_STATUS="QUALITY_FAILED"
+          STATUS_ICON="📊❌"
+        else
+          OVERALL_STATUS="PARTIAL"
+          STATUS_ICON="⚠️"
+        fi
+        
+        echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+        echo "status_icon=$STATUS_ICON" >> $GITHUB_OUTPUT
+        echo "quality_status=$QUALITY_STATUS" >> $GITHUB_OUTPUT
+        echo "tests_status=$TESTS_STATUS" >> $GITHUB_OUTPUT
+        echo "build_status=$BUILD_STATUS" >> $GITHUB_OUTPUT
+        echo "delivery_status=$DELIVERY_STATUS" >> $GITHUB_OUTPUT
+        echo "deployment_status=$DEPLOYMENT_STATUS" >> $GITHUB_OUTPUT
+        echo "emergency_status=$EMERGENCY_STATUS" >> $GITHUB_OUTPUT
+        echo "verify_status=$VERIFY_STATUS" >> $GITHUB_OUTPUT
+    
+    - name: 发送邮件通知
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "${{ steps.prepare.outputs.status_icon }} QAToolBox CI/CD - ${{ steps.prepare.outputs.overall_status }}"
+        to: ${{ env.NOTIFICATION_EMAIL }}
+        from: QAToolBox CI/CD <${{ secrets.EMAIL_USERNAME }}>
+        html_body: |
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; }
+              .header { background: #f4f4f4; padding: 20px; border-radius: 5px; }
+              .status-success { color: #28a745; }
+              .status-failure { color: #dc3545; }
+              .status-warning { color: #ffc107; }
+              .job-status { margin: 10px 0; padding: 10px; border-left: 4px solid #ddd; }
+              .job-success { border-left-color: #28a745; background: #f8fff9; }
+              .job-failure { border-left-color: #dc3545; background: #fff8f8; }
+              .job-warning { border-left-color: #ffc107; background: #fffef8; }
+              .details { margin: 20px 0; }
+              .footer { margin-top: 30px; font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>${{ steps.prepare.outputs.status_icon }} QAToolBox 统一CI/CD报告</h2>
+              <p><strong>仓库:</strong> ${{ github.repository }}</p>
+              <p><strong>分支:</strong> ${{ github.ref_name }}</p>
+              <p><strong>提交:</strong> ${{ github.sha }}</p>
+              <p><strong>触发者:</strong> ${{ github.actor }}</p>
+              <p><strong>工作流类型:</strong> ${{ github.event.inputs.workflow_type || '自动触发' }}</p>
+            </div>
+            
+            <div class="details">
+              <h3>📊 流程状态概览</h3>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.quality_status }}">
+                <strong>代码质量检查:</strong> ${{ steps.prepare.outputs.quality_status }}
+                <br><small>静态分析、安全扫描、代码格式化</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.tests_status }}">
+                <strong>单元测试:</strong> ${{ steps.prepare.outputs.tests_status }}
+                <br><small>测试覆盖率: ${{ needs.unit-tests.outputs.coverage || 'N/A' }}%</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.build_status }}">
+                <strong>Docker构建:</strong> ${{ steps.prepare.outputs.build_status }}
+                <br><small>镜像构建和推送</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.delivery_status }}">
+                <strong>持续交付:</strong> ${{ steps.prepare.outputs.delivery_status }}
+                <br><small>手动触发部署</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.deployment_status }}">
+                <strong>持续部署:</strong> ${{ steps.prepare.outputs.deployment_status }}
+                <br><small>自动部署到生产环境</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.emergency_status }}">
+                <strong>紧急部署:</strong> ${{ steps.prepare.outputs.emergency_status }}
+                <br><small>跳过检查的紧急部署</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.verify_status }}">
+                <strong>部署后验证:</strong> ${{ steps.prepare.outputs.verify_status }}
+                <br><small>健康检查和功能验证</small>
+              </div>
+            </div>
+            
+            <div class="details">
+              <h3>🌐 访问链接</h3>
+              <ul>
+                <li><strong>生产环境:</strong> <a href="http://shenyiqing.xin">http://shenyiqing.xin</a></li>
+                <li><strong>IP访问:</strong> <a href="http://47.103.143.152">http://47.103.143.152</a></li>
+                <li><strong>GitHub Actions:</strong> <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">查看详情</a></li>
+              </ul>
+            </div>
+            
+            <div class="footer">
+              <p>这是QAToolBox统一CI/CD系统的自动化通知。</p>
+              <p>如需支持，请联系开发团队。</p>
+            </div>
+          </body>
+          </html>
