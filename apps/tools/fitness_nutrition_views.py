@@ -1,7 +1,7 @@
 # NutriCoach Pro功能已隐藏 - 此文件中的所有功能暂时停用
 # 如需重新启用，请取消注释相关代码并在urls.py中重新启用路由
 
-"""
+# 此文件已被注释，Black 将跳过此文件
 import json
 from datetime import datetime, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
@@ -392,4 +392,3 @@ def nutrition_settings(request):
             messages.error(request, f'设置更新失败：{str(e)}')
     
     return render(request, 'tools/nutrition_settings.html', {'profile': profile})
-"""
