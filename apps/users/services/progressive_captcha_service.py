@@ -108,7 +108,7 @@ class ProgressiveCaptchaService:
         cache.set(cache_key, str(answer), timeout=300)  # 5分钟过期
         
         captcha_data = {
-            'id': captcha_id,
+            'captcha_id': captcha_id,
             'type': 'simple_math',
             'question': question,
             'answer': str(answer),

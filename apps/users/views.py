@@ -1065,6 +1065,7 @@ def generate_progressive_captcha(request):
             session_key = request.session.session_key
         
         result = captcha_service.generate_captcha(session_key)
+        print(f"生成验证码结果: {result}")
         return JsonResponse(result)
         
     except Exception as e:
@@ -1083,7 +1084,11 @@ def verify_progressive_captcha(request):
         captcha_type = data.get('captcha_type')
         user_input = data.get('user_input')
         
+        # 添加调试信息
+        print(f"验证码验证请求: captcha_id={captcha_id}, captcha_type={captcha_type}, user_input={user_input}")
+        
         if not all([captcha_id, captcha_type, user_input is not None]):
+            print(f"参数检查失败: captcha_id={captcha_id}, captcha_type={captcha_type}, user_input={user_input}")
             return JsonResponse({
                 'success': False,
                 'message': '缺少必要的验证参数'
