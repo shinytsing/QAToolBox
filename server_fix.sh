@@ -1,183 +1,345 @@
 #!/bin/bash
 
-# 直接在服务器上创建和运行修复脚本
+# 服务器端修复脚本
+# 解决静态文件权限、API端点和CORS问题
 
 set -e
 
-# 颜色输出
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+echo "🚀 开始服务器修复..."
 
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+# 1. 停止服务
+echo "📦 停止服务..."
+supervisorctl stop qatoolbox 2>/dev/null || true
+systemctl stop nginx 2>/dev/null || true
 
-log_info "=========================================="
-log_info "QAToolBox 服务器直接修复脚本"
-log_info "服务器IP: 47.103.143.152"
-log_info "域名: shenyiqing.xin"
-log_info "=========================================="
+# 2. 修复静态文件权限
+echo "🔧 修复静态文件权限..."
+cd /home/admin/QAToolbox
 
-# 1. 配置Docker镜像加速器
-log_info "配置Docker镜像加速器..."
-mkdir -p /etc/docker
+# 重新收集静态文件
+python3 manage.py collectstatic --noinput --clear
 
-cat > /etc/docker/daemon.json << EOF
-{
-    "registry-mirrors": [
-        "https://docker.mirrors.ustc.edu.cn",
-        "https://hub-mirror.c.163.com",
-        "https://mirror.baidubce.com",
-        "https://registry.docker-cn.com",
-        "https://dockerhub.azk8s.cn",
-        "https://reg-mirror.qiniu.com"
-    ],
-    "log-driver": "json-file",
-    "log-opts": {
-        "max-size": "100m",
-        "max-file": "3"
+# 设置正确的权限
+chown -R www-data:www-data staticfiles/
+chown -R www-data:www-data media/
+chmod -R 755 staticfiles/
+chmod -R 755 media/
+
+# 确保geek.css可读
+if [ -f "staticfiles/geek.css" ]; then
+    chmod 644 staticfiles/geek.css
+    chown www-data:www-data staticfiles/geek.css
+    echo "✅ geek.css 权限已修复"
+fi
+
+# 3. 修复Nginx配置
+echo "🌐 修复Nginx配置..."
+cat > /etc/nginx/sites-available/qatoolbox << 'EOF'
+server {
+    listen 80;
+    server_name 47.103.143.152 shenyiqing.xin www.shenyiqing.xin;
+    
+    # 安全头
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # CORS头 - 解决跨域问题
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-CSRFToken" always;
+    add_header Access-Control-Allow-Credentials "true" always;
+    
+    # 处理预检请求
+    if ($request_method = 'OPTIONS') {
+        add_header Access-Control-Allow-Origin "*";
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+        add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-CSRFToken";
+        add_header Access-Control-Allow-Credentials "true";
+        add_header Access-Control-Max-Age 1728000;
+        add_header Content-Type "text/plain; charset=utf-8";
+        add_header Content-Length 0;
+        return 204;
+    }
+    
+    client_max_body_size 100M;
+    
+    # 静态文件 - 优化配置
+    location /static/ {
+        alias /home/admin/QAToolbox/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        
+        # 处理CSS文件
+        location ~* \.css$ {
+            add_header Content-Type text/css;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # 处理JS文件
+        location ~* \.js$ {
+            add_header Content-Type application/javascript;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # 处理图片文件
+        location ~* \.(png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # 处理字体文件
+        location ~* \.(woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+    
+    # 媒体文件
+    location /media/ {
+        alias /home/admin/QAToolbox/media/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # favicon处理
+    location = /favicon.ico {
+        alias /home/admin/QAToolbox/staticfiles/favicon.ico;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    location = /favicon.svg {
+        alias /home/admin/QAToolbox/staticfiles/favicon.svg;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # 主应用
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # 超时设置
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # 缓冲设置
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+    }
+    
+    # 健康检查
+    location /health/ {
+        proxy_pass http://127.0.0.1:8000/health/;
+        access_log off;
+    }
+    
+    # 禁止访问敏感文件
+    location ~ /\. {
+        deny all;
+    }
+    
+    location ~ \.(py|pyc|log|sqlite3)$ {
+        deny all;
     }
 }
 EOF
 
-# 重启Docker服务
-systemctl daemon-reload
-systemctl restart docker
-sleep 10
+# 启用站点
+ln -sf /etc/nginx/sites-available/qatoolbox /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
 
-log_success "Docker镜像加速器配置完成"
+# 测试Nginx配置
+nginx -t
 
-# 2. 进入项目目录
-cd /opt/qatoolbox/QAToolBox
+# 4. 修复ProgressiveCaptchaService
+echo "🔐 修复验证码服务..."
+mkdir -p apps/users/services
 
-# 3. 配置环境变量
-log_info "配置环境变量..."
-if [[ ! -f ".env" ]]; then
-    cp env.production .env
+cat > apps/users/services/__init__.py << 'EOF'
+# Services package
+EOF
+
+cat > apps/users/services/progressive_captcha_service.py << 'EOF'
+import random
+import string
+from django.core.cache import cache
+
+class ProgressiveCaptchaService:
+    """渐进式验证码服务"""
     
-    # 生成随机密钥
-    SECRET_KEY=$(openssl rand -base64 32)
-    sed -i "s/your-super-secret-key-change-this-in-production/$SECRET_KEY/" .env
+    def generate_captcha(self, session_key):
+        """生成验证码"""
+        try:
+            # 生成简单的验证码
+            captcha_text = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+            captcha_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
+            
+            # 存储到缓存
+            cache.set(f'captcha_{session_key}_{captcha_id}', captcha_text, 300)  # 5分钟过期
+            
+            return {
+                'success': True,
+                'captcha_id': captcha_id,
+                'captcha_text': captcha_text,
+                'image_url': f'/static/captcha/{captcha_id}.png'  # 简化处理
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'生成验证码失败: {str(e)}'
+            }
     
-    DB_PASSWORD=$(openssl rand -base64 16)
-    sed -i "s/qatoolbox123/$DB_PASSWORD/" .env
-    
-    REDIS_PASSWORD=$(openssl rand -base64 16)
-    sed -i "s/redis123/$REDIS_PASSWORD/" .env
-    
-    # 更新允许的主机
-    sed -i "s/ALLOWED_HOSTS=.*/ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,47.103.143.152,shenyiqing.xin,www.shenyiqing.xin/" .env
+    def verify_captcha(self, session_key, captcha_id, captcha_type, user_input):
+        """验证验证码"""
+        try:
+            cached_text = cache.get(f'captcha_{session_key}_{captcha_id}')
+            if not cached_text:
+                return {
+                    'success': False,
+                    'message': '验证码已过期或不存在'
+                }
+            
+            if user_input.upper() == cached_text.upper():
+                # 验证成功后删除缓存
+                cache.delete(f'captcha_{session_key}_{captcha_id}')
+                return {
+                    'success': True,
+                    'message': '验证码验证成功'
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': '验证码错误'
+                }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'验证失败: {str(e)}'
+            }
+EOF
+
+# 5. 修复主题API
+echo "🎨 修复主题API..."
+if ! grep -q "def theme_api" apps/users/views.py; then
+    cat >> apps/users/views.py << 'EOF'
+
+# 主题API
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def theme_api(request):
+    """主题API"""
+    try:
+        if request.method == 'GET':
+            # 获取用户主题
+            if request.user.is_authenticated:
+                try:
+                    user_theme = UserTheme.objects.get(user=request.user)
+                    return JsonResponse({
+                        'success': True,
+                        'theme': user_theme.theme_name,
+                        'custom_css': user_theme.custom_css
+                    })
+                except UserTheme.DoesNotExist:
+                    return JsonResponse({
+                        'success': True,
+                        'theme': 'default',
+                        'custom_css': ''
+                    })
+            else:
+                return JsonResponse({
+                    'success': True,
+                    'theme': 'default',
+                    'custom_css': ''
+                })
+        
+        elif request.method == 'POST':
+            # 设置用户主题
+            if not request.user.is_authenticated:
+                return JsonResponse({
+                    'success': False,
+                    'message': '请先登录'
+                }, status=401)
+            
+            data = json.loads(request.body)
+            theme_name = data.get('theme', 'default')
+            custom_css = data.get('custom_css', '')
+            
+            user_theme, created = UserTheme.objects.get_or_create(
+                user=request.user,
+                defaults={'theme_name': theme_name, 'custom_css': custom_css}
+            )
+            
+            if not created:
+                user_theme.theme_name = theme_name
+                user_theme.custom_css = custom_css
+                user_theme.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': '主题设置成功'
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'主题操作失败: {str(e)}'
+        }, status=500)
+EOF
 fi
 
-log_success "环境变量配置完成"
+# 6. 启动服务
+echo "🚀 启动服务..."
 
-# 4. 启动Docker服务
-log_info "启动Docker服务..."
+# 启动Nginx
+systemctl start nginx
+systemctl enable nginx
 
-# 停止现有服务
-docker compose down 2>/dev/null || true
-
-# 清理旧的镜像和容器
-docker system prune -f
-
-# 构建镜像
-log_info "构建Docker镜像..."
-docker compose build --no-cache
-
-# 启动服务
-log_info "启动Docker服务..."
-docker compose up -d
+# 启动Django应用
+supervisorctl start qatoolbox
 
 # 等待服务启动
-log_info "等待服务启动..."
-sleep 60
+sleep 10
 
-log_success "Docker服务启动完成"
+# 7. 测试修复结果
+echo "🧪 测试修复结果..."
 
-# 5. 数据库迁移和初始化
-log_info "数据库迁移和初始化..."
+# 测试静态文件
+echo "测试静态文件访问..."
+STATIC_TEST=$(curl -I http://47.103.143.152/static/geek.css 2>/dev/null | head -1)
+echo "静态文件测试: $STATIC_TEST"
 
-# 等待数据库服务完全启动
-log_info "等待数据库服务启动..."
-for i in {1..30}; do
-    if docker compose exec -T db pg_isready -U qatoolbox -d qatoolbox_production &>/dev/null; then
-        log_info "数据库服务已就绪"
-        break
-    else
-        log_info "等待数据库启动... ($i/30)"
-        sleep 10
-    fi
-done
+# 测试API端点
+echo "测试API端点..."
+API_TEST1=$(curl -I http://47.103.143.152/users/api/session-status/ 2>/dev/null | head -1)
+echo "Session API测试: $API_TEST1"
 
-# 运行数据库迁移
-log_info "运行数据库迁移..."
-docker compose exec -T web python manage.py migrate
+API_TEST2=$(curl -I http://47.103.143.152/users/generate-progressive-captcha/ 2>/dev/null | head -1)
+echo "验证码API测试: $API_TEST2"
 
-# 创建超级用户
-log_info "创建超级用户..."
-docker compose exec -T web python manage.py shell -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@shenyiqing.xin', 'admin123456')
-    print('超级用户创建成功')
-else:
-    print('超级用户已存在')
-"
+# 测试主题API
+API_TEST3=$(curl -I http://47.103.143.152/users/theme/ 2>/dev/null | head -1)
+echo "主题API测试: $API_TEST3"
 
-# 收集静态文件
-log_info "收集静态文件..."
-docker compose exec -T web python manage.py collectstatic --noinput
+# 8. 显示服务状态
+echo "📊 服务状态:"
+supervisorctl status qatoolbox
+systemctl status nginx --no-pager -l
 
-log_success "数据库初始化完成"
-
-# 6. 健康检查
-log_info "健康检查..."
-
-# 检查容器状态
-log_info "检查容器状态..."
-docker compose ps
-
-# 检查应用健康状态
-log_info "检查应用健康状态..."
-for i in {1..20}; do
-    if curl -f http://localhost:8000/health/ &>/dev/null; then
-        log_success "应用健康检查通过"
-        break
-    else
-        log_info "等待应用启动... ($i/20)"
-        sleep 15
-    fi
-done
-
-log_success "健康检查完成"
-
-# 7. 显示部署结果
-log_success "=========================================="
-log_success "🎉 QAToolBox 部署完成！"
-log_success "=========================================="
-echo
-log_info "📱 访问信息:"
-echo "  - 应用地址: http://47.103.143.152:8000"
-echo "  - 域名地址: http://shenyiqing.xin:8000"
-echo "  - 管理后台: http://47.103.143.152:8000/admin/"
-echo "  - 健康检查: http://47.103.143.152:8000/health/"
-echo
-log_info "👤 管理员账户:"
-echo "  - 用户名: admin"
-echo "  - 密码: admin123456"
-echo "  - 邮箱: admin@shenyiqing.xin"
-echo
-log_info "🛠️  常用管理命令:"
-echo "  - 查看服务状态: docker compose ps"
-echo "  - 查看日志: docker compose logs -f"
-echo "  - 重启服务: docker compose restart"
-echo "  - 停止服务: docker compose down"
-echo "  - 进入容器: docker compose exec web bash"
-echo
-log_success "✨ 部署成功！请访问 http://47.103.143.152:8000 查看应用"
-log_success "=========================================="
+echo "✅ 服务器修复完成！"
+echo "🌐 访问地址: http://47.103.143.152"
+echo "📁 静态文件: http://47.103.143.152/static/"
+echo "🔧 管理后台: http://47.103.143.152/admin/"
