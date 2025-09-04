@@ -22,75 +22,13 @@ echo "2. 停止所有服务..."
 supervisorctl stop qatoolbox 2>/dev/null || true
 systemctl stop nginx 2>/dev/null || true
 
-echo "3. 彻底删除并重新创建staticfiles目录..."
-rm -rf /home/admin/QAToolbox/staticfiles/
-mkdir -p /home/admin/QAToolbox/staticfiles
+echo "3. 彻底修复权限..."
 
-echo "4. 重新收集静态文件..."
-python manage.py collectstatic --noinput --settings=config.settings.production
-
-echo "5. 手动复制缺失的文件..."
-# 复制CSS文件
-if [ -f "static/geek.css" ]; then
-    cp static/geek.css staticfiles/
-    echo "复制 geek.css"
-fi
-
-if [ -f "static/responsive.css" ]; then
-    cp static/responsive.css staticfiles/
-    echo "复制 responsive.css"
-fi
-
-if [ -f "static/css/feature-recommendation.css" ]; then
-    mkdir -p staticfiles/css
-    cp static/css/feature-recommendation.css staticfiles/css/
-    echo "复制 feature-recommendation.css"
-fi
-
-# 复制JS文件
-if [ -f "static/js/top_ui_functions.js" ]; then
-    mkdir -p staticfiles/js
-    cp static/js/top_ui_functions.js staticfiles/js/
-    echo "复制 top_ui_functions.js"
-fi
-
-if [ -f "static/js/theme_manager.js" ]; then
-    cp static/js/theme_manager.js staticfiles/js/
-    echo "复制 theme_manager.js"
-fi
-
-if [ -f "static/js/session_manager.js" ]; then
-    cp static/js/session_manager.js staticfiles/js/
-    echo "复制 session_manager.js"
-fi
-
-if [ -f "static/js/feature-recommendation.js" ]; then
-    cp static/js/feature-recommendation.js staticfiles/js/
-    echo "复制 feature-recommendation.js"
-fi
-
-if [ -f "static/js/auth.js" ]; then
-    cp static/js/auth.js staticfiles/js/
-    echo "复制 auth.js"
-fi
-
-# 复制favicon文件
-if [ -f "static/favicon.ico" ]; then
-    cp static/favicon.ico staticfiles/
-    echo "复制 favicon.ico"
-fi
-
-if [ -f "static/favicon.svg" ]; then
-    cp static/favicon.svg staticfiles/
-    echo "复制 favicon.svg"
-fi
-
-echo "6. 彻底修复权限..."
-# 修复项目目录权限
+# 首先修复项目目录权限
 chown -R admin:admin /home/admin/QAToolbox/
 chmod -R 755 /home/admin/QAToolbox/
 
-# 修复staticfiles目录权限
+# 然后修复staticfiles目录权限
 chown -R www-data:www-data /home/admin/QAToolbox/staticfiles/
 chmod -R 755 /home/admin/QAToolbox/staticfiles/
 
@@ -98,20 +36,16 @@ chmod -R 755 /home/admin/QAToolbox/staticfiles/
 find /home/admin/QAToolbox/staticfiles/ -type d -exec chmod 755 {} \;
 find /home/admin/QAToolbox/staticfiles/ -type f -exec chmod 644 {} \;
 
-# 再次修复权限
+# 再次修复权限，确保www-data可以访问
 chown -R www-data:www-data /home/admin/QAToolbox/staticfiles/
 chmod -R 755 /home/admin/QAToolbox/staticfiles/
 
-echo "7. 检查关键文件权限..."
+echo "4. 检查关键文件权限..."
 ls -la /home/admin/QAToolbox/staticfiles/geek.css 2>/dev/null || echo "geek.css 不存在"
 ls -la /home/admin/QAToolbox/staticfiles/responsive.css 2>/dev/null || echo "responsive.css 不存在"
 ls -la /home/admin/QAToolbox/staticfiles/css/feature-recommendation.css 2>/dev/null || echo "feature-recommendation.css 不存在"
-ls -la /home/admin/QAToolbox/staticfiles/js/top_ui_functions.js 2>/dev/null || echo "top_ui_functions.js 不存在"
-ls -la /home/admin/QAToolbox/staticfiles/js/auth.js 2>/dev/null || echo "auth.js 不存在"
-ls -la /home/admin/QAToolbox/staticfiles/favicon.ico 2>/dev/null || echo "favicon.ico 不存在"
-ls -la /home/admin/QAToolbox/staticfiles/favicon.svg 2>/dev/null || echo "favicon.svg 不存在"
 
-echo "8. 测试文件访问权限..."
+echo "5. 测试文件访问权限..."
 if [ -f "/home/admin/QAToolbox/staticfiles/geek.css" ]; then
     sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/geek.css && echo "geek.css 可读" || echo "geek.css 不可读"
 fi
@@ -120,56 +54,85 @@ if [ -f "/home/admin/QAToolbox/staticfiles/responsive.css" ]; then
     sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/responsive.css && echo "responsive.css 可读" || echo "responsive.css 不可读"
 fi
 
-if [ -f "/home/admin/QAToolbox/staticfiles/css/feature-recommendation.css" ]; then
-    sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/css/feature-recommendation.css && echo "feature-recommendation.css 可读" || echo "feature-recommendation.css 不可读"
+echo "6. 检查SELinux状态..."
+if command -v getenforce >/dev/null 2>&1; then
+    getenforce
+    if [ "$(getenforce)" = "Enforcing" ]; then
+        echo "SELinux处于强制模式，设置上下文..."
+        setsebool -P httpd_can_network_connect 1 2>/dev/null || true
+        setsebool -P httpd_read_user_content 1 2>/dev/null || true
+        # 设置文件上下文
+        chcon -R -t httpd_exec_t /home/admin/QAToolbox/staticfiles/ 2>/dev/null || true
+    fi
+else
+    echo "SELinux未安装或未启用"
 fi
 
-if [ -f "/home/admin/QAToolbox/staticfiles/js/top_ui_functions.js" ]; then
-    sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/js/top_ui_functions.js && echo "top_ui_functions.js 可读" || echo "top_ui_functions.js 不可读"
-fi
-
-if [ -f "/home/admin/QAToolbox/staticfiles/js/auth.js" ]; then
-    sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/js/auth.js && echo "auth.js 可读" || echo "auth.js 不可读"
-fi
-
-if [ -f "/home/admin/QAToolbox/staticfiles/favicon.ico" ]; then
-    sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/favicon.ico && echo "favicon.ico 可读" || echo "favicon.ico 不可读"
-fi
-
-if [ -f "/home/admin/QAToolbox/staticfiles/favicon.svg" ]; then
-    sudo -u www-data test -r /home/admin/QAToolbox/staticfiles/favicon.svg && echo "favicon.svg 可读" || echo "favicon.svg 不可读"
-fi
-
-echo "9. 创建简单的Nginx配置..."
+echo "7. 创建优化的Nginx配置..."
 cat > /etc/nginx/sites-available/qatoolbox << 'NGINX_EOF'
 server {
     listen 80;
     server_name shenyiqing.xin www.shenyiqing.xin 47.103.143.152;
     
-    # 静态文件
+    # 安全头
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    # 静态文件 - 优化配置
     location /static/ {
         alias /home/admin/QAToolbox/staticfiles/;
         expires 30d;
+        add_header Cache-Control "public, immutable";
         access_log off;
+        
+        # 处理CSS文件
+        location ~* \.css$ {
+            add_header Content-Type text/css;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # 处理JS文件
+        location ~* \.js$ {
+            add_header Content-Type application/javascript;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # 处理图片文件
+        location ~* \.(png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+        
+        # 处理字体文件
+        location ~* \.(woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
     }
     
     # 媒体文件
     location /media/ {
         alias /home/admin/QAToolbox/media/;
         expires 30d;
+        add_header Cache-Control "public, immutable";
         access_log off;
     }
     
-    # favicon
+    # favicon处理
     location = /favicon.ico {
         alias /home/admin/QAToolbox/staticfiles/favicon.ico;
         expires 1y;
+        add_header Cache-Control "public, immutable";
         access_log off;
     }
     
     location = /favicon.svg {
         alias /home/admin/QAToolbox/staticfiles/favicon.svg;
         expires 1y;
+        add_header Cache-Control "public, immutable";
         access_log off;
     }
     
@@ -180,29 +143,40 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+        proxy_buffering off;
+    }
+    
+    # 健康检查
+    location /health/ {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
     }
 }
 NGINX_EOF
 
-echo "10. 启用站点..."
+echo "8. 启用站点..."
 ln -sf /etc/nginx/sites-available/qatoolbox /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 
-echo "11. 测试Nginx配置..."
+echo "9. 测试Nginx配置..."
 nginx -t
 
-echo "12. 启动服务..."
+echo "10. 启动服务..."
 systemctl start nginx
 supervisorctl start qatoolbox
 
-echo "13. 等待服务启动..."
+echo "11. 等待服务启动..."
 sleep 10
 
-echo "14. 检查服务状态..."
+echo "12. 检查服务状态..."
 systemctl status nginx --no-pager -l
 supervisorctl status qatoolbox
 
-echo "15. 测试静态文件访问..."
+echo "13. 测试静态文件访问..."
 echo "测试CSS文件:"
 curl -I http://47.103.143.152/static/geek.css 2>/dev/null | head -1 || echo "geek.css 访问失败"
 curl -I http://47.103.143.152/static/responsive.css 2>/dev/null | head -1 || echo "responsive.css 访问失败"
@@ -216,10 +190,10 @@ echo "测试favicon:"
 curl -I http://47.103.143.152/static/favicon.ico 2>/dev/null | head -1 || echo "favicon.ico 访问失败"
 curl -I http://47.103.143.152/static/favicon.svg 2>/dev/null | head -1 || echo "favicon.svg 访问失败"
 
-echo "16. 测试网站访问..."
+echo "14. 测试网站访问..."
 curl -s http://47.103.143.152/ > /dev/null && echo "网站访问成功" || echo "网站访问失败"
 
-echo "17. 检查错误日志..."
+echo "15. 检查错误日志..."
 echo "Nginx错误日志:"
 tail -n 5 /var/log/nginx/error.log
 
