@@ -114,7 +114,7 @@ class NutritionCoachService:
     def _build_meal_plan_prompt(self, user_data: Dict, calories: float, macros: Dict) -> str:
         """构建DeepSeek提示词"""
         return f"""
-请为以下健身用户生成一周的个性化饮食计划：
+请为以下健身用户生成一周的个性化饮食计划:
 
 用户信息：
 - 年龄：{user_data['age']}岁

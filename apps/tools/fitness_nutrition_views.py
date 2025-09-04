@@ -350,7 +350,7 @@ def nutrition_progress(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def nutrition_api_generate_plan(request):
-    """API接口：生成饮食计划"""
+    """API接口: 生成饮食计划"""
     try:
         data = json.loads(request.body)
         service = NutritionCoachService()

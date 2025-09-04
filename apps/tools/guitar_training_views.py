@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models import Q, Count, Avg
 import json
 import random
+import numpy as np
 from datetime import datetime, timedelta
 from .models import ToolUsageLog
 from django.contrib.auth.models import User

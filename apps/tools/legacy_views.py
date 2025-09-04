@@ -11,6 +11,7 @@ import json
 import os
 import requests
 import random
+import logging
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.db import models
@@ -22,6 +23,8 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 from django.core.cache import cache
 import time
+
+logger = logging.getLogger(__name__)
 
 
 # 管理员权限检查函数
