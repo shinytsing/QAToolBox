@@ -150,11 +150,6 @@ from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProce
 # from .services.job_search_service import JobSearchService
 
 
-
-
-
-
-
 @login_required
 def test_case_generator(request):
     """测试用例生成器页面"""

@@ -158,7 +158,7 @@ def nutrition_generate_plan(request):
                             protein=meal_data["nutrition"]["protein"],
                             carbs=meal_data["nutrition"]["carbs"],
                             fat=meal_data["nutrition"]["fat"],
-                            ideal_time=self._get_ideal_time(meal_data["meal_type"]),
+                            ideal_time=_get_ideal_time(meal_data["meal_type"]),
                         )
 
                 # 生成提醒
