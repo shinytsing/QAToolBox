@@ -51,7 +51,7 @@ Pillow>=10.0.0
 # ===== 数据处理和分析 =====
 pandas>=2.1.0
 numpy>=1.26.0
-matplotlib==3.7.5
+matplotlib>=3.8.0
 pyecharts==2.0.4
 
 # ===== 文档处理 =====
@@ -75,22 +75,22 @@ pytesseract==0.3.10
 # ===== 音频处理 =====
 pydub==0.25.1
 mutagen==1.47.0
-librosa==0.10.1
-scipy==1.9.3
-soundfile==0.12.1
-audioread==3.0.1
-resampy==0.4.2
+librosa>=0.10.1
+scipy>=1.11.0
+soundfile>=0.12.1
+audioread>=3.0.1
+resampy>=0.4.2
 
 # ===== 浏览器自动化 =====
-selenium==4.15.2
-webdriver-manager==4.0.1
+selenium>=4.15.2
+webdriver-manager>=4.0.1
 
 # ===== 加密和安全 =====
-cryptography==41.0.7
+cryptography>=41.0.7
 
 # ===== 时间和日期 =====
-python-dateutil==2.8.2
-pytz==2023.3
+python-dateutil>=2.8.2
+pytz>=2023.3
 
 # ===== 工具库 =====
 tenacity==8.2.3
