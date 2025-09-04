@@ -278,11 +278,11 @@ deploy_project_code() {
     
     # 方式1: 尝试Git克隆（多个源）
     local git_urls=(
-        "https://gitee.com/shinytsing/QAToolbox.git"
-        "https://github.com.cnpmjs.org/shinytsing/QAToolbox.git"
-        "https://hub.fastgit.xyz/shinytsing/QAToolbox.git"
-        "https://ghproxy.com/https://github.com/shinytsing/QAToolbox.git"
-        "https://github.com/shinytsing/QAToolbox.git"
+        "https://gitee.com/shinytsing/QAToolBox.git"
+        "https://github.com.cnpmjs.org/shinytsing/QAToolBox.git"
+        "https://hub.fastgit.xyz/shinytsing/QAToolBox.git"
+        "https://ghproxy.com/https://github.com/shinytsing/QAToolBox.git"
+        "https://github.com/shinytsing/QAToolBox.git"
     )
     
     local cloned=false
@@ -304,9 +304,9 @@ deploy_project_code() {
         cd "$PROJECT_DIR"
         
         local zip_urls=(
-            "https://ghproxy.com/https://github.com/shinytsing/QAToolbox/archive/refs/heads/main.zip"
-            "https://github.com/shinytsing/QAToolbox/archive/refs/heads/main.zip"
-            "https://codeload.github.com/shinytsing/QAToolbox/zip/refs/heads/main"
+            "https://ghproxy.com/https://github.com/shinytsing/QAToolBox/archive/refs/heads/main.zip"
+            "https://github.com/shinytsing/QAToolBox/archive/refs/heads/main.zip"
+            "https://codeload.github.com/shinytsing/QAToolBox/zip/refs/heads/main"
         )
         
         local downloaded=false
@@ -315,10 +315,10 @@ deploy_project_code() {
             if timeout 120 curl -L "$zip_url" -o main.zip 2>/dev/null; then
                 if unzip -q main.zip 2>/dev/null; then
                     # 移动文件到正确位置
-                    if [ -d "QAToolbox-main" ]; then
-                        mv QAToolbox-main/* . 2>/dev/null || true
-                        mv QAToolbox-main/.* . 2>/dev/null || true
-                        rmdir QAToolbox-main 2>/dev/null || true
+                    if [ -d "QAToolBox-main" ]; then
+                        mv QAToolBox-main/* . 2>/dev/null || true
+                        mv QAToolBox-main/.* . 2>/dev/null || true
+                        rmdir QAToolBox-main 2>/dev/null || true
                     elif [ -d "QAToolBox-main" ]; then
                         mv QAToolBox-main/* . 2>/dev/null || true
                         mv QAToolBox-main/.* . 2>/dev/null || true

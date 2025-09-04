@@ -88,7 +88,7 @@ OPENWEATHER_API_KEY=<你的天气API密钥>
 ## 📝 GitHub配置步骤
 
 ### 1. 进入GitHub仓库设置
-1. 打开 https://github.com/shinytsing/QAToolbox
+1. 打开 https://github.com/shinytsing/QAToolBox
 2. 点击 `Settings` 标签
 3. 在左侧菜单找到 `Secrets and variables` → `Actions`
 

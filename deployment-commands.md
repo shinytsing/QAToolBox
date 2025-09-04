@@ -15,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/shinytsing/QAToolbox/main/deploy-al
 ### 方法3：分步执行
 ```bash
 # 1. 克隆项目
-git clone https://github.com/shinytsing/QAToolbox.git
+git clone https://github.com/shinytsing/QAToolBox.git
 cd QAToolBox
 
 # 2. 配置环境变量

@@ -113,7 +113,7 @@ jobs:
           # 切换到暂存项目目录
           cd ~/QAToolBox-staging || {
             echo "暂存目录不存在，创建中..."
-            git clone https://github.com/shinytsing/QAToolbox.git QAToolBox-staging
+            git clone https://github.com/shinytsing/QAToolBox.git QAToolBox-staging
             cd QAToolBox-staging
           }
           
