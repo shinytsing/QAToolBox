@@ -642,8 +642,8 @@ jobs:
       uses: dawidd6/action-send-mail@v3
       continue-on-error: true
       with:
-        server_address: smtp.gmail.com
-        server_port: 587
+        server_address: ${{ secrets.EMAIL_SMTP_SERVER || 'smtp.gmail.com' }}
+        server_port: ${{ secrets.EMAIL_SMTP_PORT || 587 }}
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
         subject: "${{ steps.prepare.outputs.status_icon }} QAToolBox CI/CD - ${{ steps.prepare.outputs.overall_status }}"
@@ -736,5 +736,13 @@ jobs:
       run: |
         echo "⚠️ 邮件通知已跳过 - 未配置EMAIL_USERNAME或EMAIL_PASSWORD"
         echo "如需邮件通知，请在GitHub Secrets中配置："
-        echo "- EMAIL_USERNAME: 你的Gmail邮箱"
-        echo "- EMAIL_PASSWORD: 你的Gmail应用密码"
+        echo "- EMAIL_USERNAME: 你的邮箱地址"
+        echo "- EMAIL_PASSWORD: 你的邮箱密码或应用密码"
+        echo "- EMAIL_SMTP_SERVER: SMTP服务器地址（可选，默认smtp.gmail.com）"
+        echo "- EMAIL_SMTP_PORT: SMTP端口（可选，默认587）"
+        echo ""
+        echo "支持的邮件服务："
+        echo "- Gmail: smtp.gmail.com:587"
+        echo "- Outlook: smtp-mail.outlook.com:587"
+        echo "- Yahoo: smtp.mail.yahoo.com:587"
+        echo "- QQ邮箱: smtp.qq.com:587"
