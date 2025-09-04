@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# QAToolBox 完整依赖部署脚本
-# 使用完整的requirements文件，包含所有实际使用的依赖
+# QAToolBox 完整部署脚本
+# 包含所有依赖、数据库迁移、用户创建等完整功能
 
 set -e
 
@@ -18,16 +18,10 @@ log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 log_info "=========================================="
-log_info "QAToolBox 完整依赖部署脚本"
+log_info "QAToolBox 完整部署脚本"
 log_info "服务器IP: 47.103.143.152"
 log_info "域名: shenyiqing.xin"
 log_info "=========================================="
-
-# 检查是否为root用户
-if [[ $EUID -ne 0 ]]; then
-   log_error "此脚本需要root权限运行"
-   exit 1
-fi
 
 # 1. 检查系统环境
 log_info "检查系统环境..."
@@ -55,7 +49,7 @@ apt-get install -y \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
-    libfreetype-dev \
+    libfreetype6-dev \
     liblcms2-dev \
     libwebp-dev \
     libharfbuzz-dev \
@@ -70,11 +64,7 @@ apt-get install -y \
     libasound2-dev \
     libpulse-dev \
     libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libyaml-dev \
-    cython3 \
-    libmagic1 \
-    libmagic-dev
+    libgstreamer-plugins-base1.0-dev
 
 # 4. 创建虚拟环境
 log_info "创建虚拟环境..."
@@ -86,7 +76,7 @@ log_info "升级pip和基础工具..."
 pip install --upgrade pip
 pip install --upgrade setuptools wheel
 
-# 6. 安装Python依赖（使用完整依赖文件）
+# 6. 安装Python依赖
 log_info "安装Python依赖..."
 
 # 先安装基础依赖
@@ -98,34 +88,6 @@ pip install celery
 pip install gunicorn
 pip install django-cors-headers
 pip install django-health-check
-
-# 安装系统监控
-pip install psutil
-
-# 安装限流控制
-pip install ratelimit
-
-# 安装图像处理依赖
-pip install pillow
-pip install pillow-heif
-pip install opencv-python
-
-# 安装数据处理依赖
-pip install "numpy>=1.26.0"
-pip install "pandas>=2.1.0"
-pip install matplotlib
-
-# 安装机器学习依赖
-pip install torch torchvision
-
-# 安装WebSocket支持
-pip install websockets
-
-# 安装文件类型检测
-pip install python-magic
-
-# 安装其他工具
-pip install xmind
 
 # 安装Django相关依赖
 pip install djangorestframework
@@ -164,6 +126,15 @@ pip install beautifulsoup4
 pip install lxml
 pip install html5lib
 
+# 安装图像处理
+pip install pillow
+
+# 安装数据处理和分析
+pip install pandas
+pip install numpy
+pip install matplotlib
+pip install pyecharts
+
 # 安装文档处理
 pip install python-docx
 pip install python-pptx
@@ -177,6 +148,7 @@ pip install pdfminer.six
 pip install PyMuPDF
 pip install pdf2docx
 pip install docx2pdf
+pip install xmind
 
 # 安装OCR和图像识别
 pip install pytesseract
@@ -254,6 +226,10 @@ pip install flake8
 pip install black
 pip install isort
 pip install bandit
+
+# 安装Docker支持
+pip install docker
+pip install docker-compose
 
 # 安装基础依赖
 pip install certifi
@@ -351,7 +327,7 @@ python manage.py collectstatic --noinput
 
 # 13. 创建Gunicorn配置文件
 log_info "创建Gunicorn配置文件..."
-cat > gunicorn.conf.py << 'GUNICORN_EOF'
+cat > gunicorn.conf.py << 'EOF'
 bind = "127.0.0.1:8000"
 workers = 4
 worker_class = "sync"
@@ -364,7 +340,7 @@ preload_app = True
 accesslog = "/opt/qatoolbox/logs/gunicorn_access.log"
 errorlog = "/opt/qatoolbox/logs/gunicorn_error.log"
 loglevel = "info"
-GUNICORN_EOF
+EOF
 
 # 14. 创建日志目录
 log_info "创建日志目录..."
@@ -372,7 +348,7 @@ mkdir -p /opt/qatoolbox/logs
 
 # 15. 创建systemd服务文件
 log_info "创建systemd服务文件..."
-cat > /etc/systemd/system/qatoolbox.service << 'SERVICE_EOF'
+cat > /etc/systemd/system/qatoolbox.service << 'EOF'
 [Unit]
 Description=QAToolBox Django Application
 After=network.target postgresql.service redis-server.service
@@ -390,11 +366,11 @@ RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
-SERVICE_EOF
+EOF
 
 # 16. 配置Nginx
 log_info "配置Nginx..."
-cat > /etc/nginx/sites-available/qatoolbox << 'NGINX_EOF'
+cat > /etc/nginx/sites-available/qatoolbox << 'EOF'
 server {
     listen 80;
     server_name 47.103.143.152 shenyiqing.xin www.shenyiqing.xin;
@@ -429,7 +405,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
-NGINX_EOF
+EOF
 
 # 启用Nginx站点
 ln -sf /etc/nginx/sites-available/qatoolbox /etc/nginx/sites-enabled/
@@ -477,7 +453,7 @@ ufw --force enable
 
 # 22. 显示部署结果
 log_success "=========================================="
-log_success "🎉 QAToolBox 完整依赖部署完成！"
+log_success "🎉 QAToolBox 完整部署完成！"
 log_success "=========================================="
 echo
 log_info "📱 访问信息:"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# QAToolBox 一键部署脚本
-# 包含所有依赖、数据库迁移、用户创建等完整功能
+# QAToolBox 最终完整部署脚本
+# 修复所有依赖问题，包含完整功能
 
 set -e
 
@@ -18,7 +18,7 @@ log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 log_info "=========================================="
-log_info "QAToolBox 一键部署脚本"
+log_info "QAToolBox 最终完整部署脚本"
 log_info "服务器IP: 47.103.143.152"
 log_info "域名: shenyiqing.xin"
 log_info "=========================================="
@@ -70,7 +70,9 @@ apt-get install -y \
     libasound2-dev \
     libpulse-dev \
     libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev
+    libgstreamer-plugins-base1.0-dev \
+    libyaml-dev \
+    cython3
 
 # 4. 创建虚拟环境
 log_info "创建虚拟环境..."
@@ -233,8 +235,9 @@ pip install black
 pip install isort
 pip install bandit
 
-# 安装Docker支持
+# 安装Docker支持（修复版本）
 pip install docker
+pip install PyYAML
 pip install docker-compose
 
 # 安装基础依赖
@@ -459,7 +462,7 @@ ufw --force enable
 
 # 22. 显示部署结果
 log_success "=========================================="
-log_success "🎉 QAToolBox 一键部署完成！"
+log_success "🎉 QAToolBox 最终完整部署完成！"
 log_success "=========================================="
 echo
 log_info "📱 访问信息:"

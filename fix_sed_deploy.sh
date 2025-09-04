@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# QAToolBox 一键部署脚本
-# 包含所有依赖、数据库迁移、用户创建等完整功能
+# 修复sed问题的部署方案
 
 set -e
 
@@ -18,16 +17,10 @@ log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 log_info "=========================================="
-log_info "QAToolBox 一键部署脚本"
+log_info "修复sed问题的部署方案"
 log_info "服务器IP: 47.103.143.152"
 log_info "域名: shenyiqing.xin"
 log_info "=========================================="
-
-# 检查是否为root用户
-if [[ $EUID -ne 0 ]]; then
-   log_error "此脚本需要root权限运行"
-   exit 1
-fi
 
 # 1. 检查系统环境
 log_info "检查系统环境..."
@@ -41,53 +34,23 @@ cd /home/admin/QAToolbox
 # 3. 安装系统依赖
 log_info "安装系统依赖..."
 apt-get update
-apt-get install -y \
-    python3-pip \
-    python3-venv \
-    python3-dev \
-    libpq-dev \
-    postgresql-client \
-    redis-tools \
-    nginx \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    libjpeg-dev \
-    libpng-dev \
-    libtiff-dev \
-    libfreetype6-dev \
-    liblcms2-dev \
-    libwebp-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    libxcb1-dev \
-    tesseract-ocr \
-    tesseract-ocr-chi-sim \
-    tesseract-ocr-chi-tra \
-    ffmpeg \
-    libsndfile1 \
-    portaudio19-dev \
-    libasound2-dev \
-    libpulse-dev \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev
+apt-get install -y python3-pip python3-venv python3-dev libpq-dev postgresql-client redis-tools nginx build-essential
 
 # 4. 创建虚拟环境
 log_info "创建虚拟环境..."
 python3 -m venv venv
 source venv/bin/activate
 
-# 5. 升级pip和基础工具
-log_info "升级pip和基础工具..."
+# 5. 修复setuptools问题
+log_info "修复setuptools问题..."
 pip install --upgrade pip
 pip install --upgrade setuptools wheel
 
-# 6. 安装Python依赖
+# 6. 安装Python依赖（分步安装）
 log_info "安装Python依赖..."
 
 # 先安装基础依赖
 pip install django
-pip install django-environ
 pip install psycopg2-binary
 pip install redis
 pip install celery
@@ -95,170 +58,14 @@ pip install gunicorn
 pip install django-cors-headers
 pip install django-health-check
 
-# 安装Django相关依赖
-pip install djangorestframework
-pip install django-crispy-forms
-pip install django-filter
-pip install crispy-bootstrap5
-pip install django-simple-captcha
-pip install django-ratelimit
-pip install django-ranged-response
-pip install django-extensions
-
-# 安装异步支持
-pip install channels
-pip install channels-redis
-pip install daphne
-pip install asgiref
-
-# 安装数据库和缓存
-pip install django-redis
-pip install django-cacheops
-pip install django-db-connection-pool
-
-# 安装任务队列
-pip install django-celery-beat
-
-# 安装Web服务器和静态文件
-pip install whitenoise
-
-# 安装环境配置
-pip install python-dotenv
-
-# 安装HTTP请求和网络
+# 安装其他依赖
+pip install pillow
 pip install requests
-pip install urllib3
 pip install beautifulsoup4
 pip install lxml
-pip install html5lib
-
-# 安装图像处理
-pip install pillow
-
-# 安装数据处理和分析
-pip install pandas
-pip install numpy
-pip install matplotlib
-pip install pyecharts
-
-# 安装文档处理
-pip install python-docx
-pip install python-pptx
 pip install openpyxl
-pip install xlrd
-pip install xlwt
-pip install reportlab
-pip install pypdfium2
-pip install pdfplumber
-pip install pdfminer.six
-pip install PyMuPDF
-pip install pdf2docx
-pip install docx2pdf
-pip install xmind
-
-# 安装OCR和图像识别
-pip install pytesseract
-
-# 安装音频处理
-pip install pydub
-pip install mutagen
-pip install librosa
-pip install scipy
-pip install soundfile
-pip install audioread
-pip install resampy
-
-# 安装浏览器自动化
-pip install selenium
-pip install webdriver-manager
-
-# 安装加密和安全
-pip install cryptography
-
-# 安装时间和日期
-pip install python-dateutil
-pip install pytz
-
-# 安装工具库
-pip install tenacity
-pip install prettytable
-pip install qrcode
-pip install simplejson
-pip install six
-
-# 安装金融数据
-pip install yfinance
-pip install multitasking
-
-# 安装数据库ORM
-pip install peewee
-
-# 安装生产环境监控
-pip install sentry-sdk
-pip install structlog
-pip install django-csp
-pip install gevent
-pip install django-debug-toolbar
-
-# 安装测试框架
-pip install pytest
-pip install pytest-django
-pip install pytest-cov
-pip install pytest-mock
-pip install pytest-xdist
-pip install pytest-html
-
-# 安装测试工具
-pip install requests-mock
-pip install factory-boy
-pip install faker
-pip install responses
-pip install freezegun
-pip install model-bakery
-pip install coverage
-
-# 安装额外必需依赖
-pip install kombu
-pip install billiard
-pip install vine
-pip install amqp
-pip install click
-pip install click-didyoumean
-pip install click-plugins
-pip install click-repl
-
-# 安装代码质量工具
-pip install flake8
-pip install black
-pip install isort
-pip install bandit
-
-# 安装Docker支持
-pip install docker
-pip install docker-compose
-
-# 安装基础依赖
-pip install certifi
-pip install charset-normalizer
-pip install contourpy
-pip install cycler
-pip install fonttools
-pip install frozendict
-pip install idna
-pip install importlib_resources
-pip install Jinja2
-pip install kiwisolver
-pip install MarkupSafe
-pip install packaging
-pip install platformdirs
-pip install pyparsing
-pip install soupsieve
-pip install sqlparse
-pip install typing_extensions
-pip install tzdata
-pip install wcwidth
-pip install webencodings
-pip install zipp
+pip install python-dotenv
+pip install whitenoise
 
 log_success "Python依赖安装完成"
 
@@ -459,7 +266,7 @@ ufw --force enable
 
 # 22. 显示部署结果
 log_success "=========================================="
-log_success "🎉 QAToolBox 一键部署完成！"
+log_success "🎉 QAToolBox 部署完成！"
 log_success "=========================================="
 echo
 log_info "📱 访问信息:"
