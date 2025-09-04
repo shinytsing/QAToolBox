@@ -76,25 +76,23 @@ jobs:
     - name: 代码格式化检查
       run: |
         echo "::group::Black代码格式检查"
-        black --check --diff . || echo "::warning::代码格式需要调整"
+        black --check --diff .
         echo "::endgroup::"
         
         echo "::group::导入排序检查"
-        isort --check-only --diff . || echo "::warning::导入排序需要调整"
+        isort --check-only --diff .
         echo "::endgroup::"
-      continue-on-error: true
     
     - name: 静态代码分析
       run: |
         echo "::group::Flake8代码检查"
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics || true
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
         echo "::endgroup::"
         
         echo "::group::MyPy类型检查"
-        mypy apps/ --ignore-missing-imports --junit-xml=mypy-report.xml || true
+        mypy apps/ --ignore-missing-imports --junit-xml=mypy-report.xml
         echo "::endgroup::"
-      continue-on-error: true
     
     - name: 安全漏洞扫描
       run: |
@@ -138,12 +136,12 @@ jobs:
         echo "score=$QUALITY_SCORE" >> $GITHUB_OUTPUT
         echo "代码质量评分: $QUALITY_SCORE/100"
         
-        # 只有在严重问题时才失败
-        if [ "$QUALITY_SCORE" -lt "30" ]; then
-          echo "::error::代码质量严重不达标，评分: $QUALITY_SCORE/100"
+        # 严格质量门禁：任何质量问题都导致失败
+        if [ "$QUALITY_PASSED" = "false" ]; then
+          echo "::error::代码质量不达标，评分: $QUALITY_SCORE/100"
           exit 1
-        elif [ "$QUALITY_PASSED" = "false" ]; then
-          echo "::warning::代码质量需要改进，但允许继续执行"
+        else
+          echo "::notice::代码质量达标，评分: $QUALITY_SCORE/100"
         fi
 
   # ===== 2. 单元测试 =====
@@ -211,24 +209,18 @@ jobs:
     - name: 运行单元测试
       id: tests
       run: |
-        # 先运行基本的Django测试
-        python manage.py test --settings=config.settings.testing --verbosity=2
-        
-        # 然后运行pytest测试（如果存在）
-        if [ -d "tests" ]; then
-          pytest tests/ \
-            --cov=apps \
-            --cov-report=xml \
-            --cov-report=html \
-            --cov-report=term \
-            --junit-xml=test-results.xml \
-            --html=test-report.html \
-            --self-contained-html \
-            -v \
-            --maxfail=10 \
-            --tb=short \
-            --durations=10
-        fi
+        pytest tests/ \
+          --cov=apps \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term \
+          --junit-xml=test-results.xml \
+          --html=test-report.html \
+          --self-contained-html \
+          -v \
+          --maxfail=10 \
+          --tb=short \
+          --durations=10
         
         TEST_RESULT=$?
         echo "result=$TEST_RESULT" >> $GITHUB_OUTPUT
