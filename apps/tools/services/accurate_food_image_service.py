@@ -1,9 +1,11 @@
-import requests
 import json
 import random
 import time
 from typing import Dict, List, Optional
+
 from django.conf import settings
+
+import requests
 
 
 class AccurateFoodImageService:

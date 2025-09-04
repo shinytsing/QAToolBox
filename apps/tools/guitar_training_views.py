@@ -1,15 +1,18 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from django.db.models import Q, Count, Avg
 import json
 import random
-import numpy as np
 from datetime import datetime, timedelta
-from .models import ToolUsageLog
+
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Avg, Count, Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
+import numpy as np
+
+from .models import ToolUsageLog
 
 
 class GuitarTrainingSystem:
@@ -667,6 +670,7 @@ def download_tab_api(request, tab_id):
 def save_audio_file(audio_file, user):
     """保存音频文件"""
     import os
+
     from django.conf import settings
 
     # 创建用户专属目录
@@ -703,10 +707,11 @@ def create_tab_task(user, file_path, original_name):
 def analyze_audio(file_path):
     """分析音频文件"""
     try:
+        import warnings
+
         import librosa
         import numpy as np
         from scipy import signal
-        import warnings
 
         warnings.filterwarnings("ignore")
 
@@ -771,8 +776,9 @@ def analyze_audio(file_path):
 
 def basic_audio_analysis(file_path):
     """基础音频分析（当librosa不可用时）"""
-    import wave
     import struct
+    import wave
+
     import numpy as np
 
     try:
@@ -1282,10 +1288,12 @@ def time_capsule_diary_view(request):
 def get_achievements_api(request):
     """获取用户成就API"""
     try:
-        from .models import Achievement, TimeCapsule
-        from datetime import datetime, timedelta
         import logging
+        from datetime import datetime, timedelta
+
         from django.conf import settings
+
+        from .models import Achievement, TimeCapsule
 
         logger = logging.getLogger(__name__)
 
@@ -1408,7 +1416,7 @@ def get_achievements_api(request):
 def check_time_capsule_achievements(user):
     """检查并授予时光胶囊相关成就"""
     try:
-        from .models import TimeCapsule, Achievement
+        from .models import Achievement, TimeCapsule
 
         # 检查时光旅人成就（连续记录7天）
         capsules = TimeCapsule.objects.filter(user=user).order_by("-created_at")
@@ -1437,7 +1445,7 @@ def time_capsule_history_view(request):
     from django.conf import settings
 
     try:
-        from .models import TimeCapsule, Achievement
+        from .models import Achievement, TimeCapsule
 
         # 获取用户的胶囊
         capsules = TimeCapsule.objects.filter(user=request.user).order_by("-created_at")

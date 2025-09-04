@@ -1,12 +1,13 @@
+import json
+import logging
+import os
 import threading
 import time
-import json
 import uuid
-import os
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from .utils import DeepSeekClient
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -352,7 +353,8 @@ class AsyncTaskManager:
         """创建任务完成通知"""
         try:
             from django.contrib.auth.models import User
-            from .models import ChatNotification, ChatRoom, ChatMessage
+
+            from .models import ChatMessage, ChatNotification, ChatRoom
 
             # 获取admin用户
             admin_user = User.objects.filter(username="admin").first()

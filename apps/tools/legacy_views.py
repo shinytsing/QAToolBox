@@ -1,28 +1,27 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse, HttpResponse
-from django.utils import timezone
-from django.contrib import messages
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 import json
-import os
-import requests
-import random
 import logging
-from django.utils import timezone
-from datetime import datetime, timedelta
-from django.db import models
-from decimal import Decimal
-import uuid
-from PIL import Image
-from io import BytesIO
-from django.core.files.base import ContentFile
-from django.conf import settings
-from django.core.cache import cache
+import os
+import random
 import time
+import uuid
+from datetime import datetime, timedelta
+from decimal import Decimal
+from io import BytesIO
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.cache import cache
+from django.core.files.base import ContentFile
+from django.db import models
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+import requests
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +42,16 @@ def admin_required(view_func):
     return decorated_view
 
 
-from .models import LifeDiaryEntry, LifeStatistics, LifeGoal, LifeGoalProgress
-from .models import ChatRoom, HeartLinkRequest, UserOnlineStatus, ChatMessage
+from .models import (
+    ChatMessage,
+    ChatRoom,
+    HeartLinkRequest,
+    LifeDiaryEntry,
+    LifeGoal,
+    LifeGoalProgress,
+    LifeStatistics,
+    UserOnlineStatus,
+)
 
 
 def validate_budget_range(budget_min, budget_max):
@@ -73,61 +80,79 @@ def validate_budget_range(budget_min, budget_max):
     return None  # 验证通过
 
 
-# 三重觉醒改造计划API
-from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProcessor
+# 用户资料相关导入
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from apps.users.models import Profile, UserMembership, UserTheme
+
+# 搭子（同城活动匹配）相关模型导入
+# 船宝（二手线下交易）相关模型导入
+# 食物随机选择器相关导入
+# 旅游攻略相关模型导入
+# VanityOS 模型导入
 from .models import (
-    FitnessWorkoutSession,
-    CodeWorkoutSession,
-    ExhaustionProof,
     AIDependencyMeter,
+    BasedDevAvatar,
+    BuddyEvent,
+    BuddyEventChat,
+    BuddyEventMember,
+    BuddyEventMessage,
+    BuddyEventReport,
+    BuddyEventReview,
+    BuddyUserProfile,
+    CodeWorkoutSession,
     CoPilotCollaboration,
     DailyWorkoutChallenge,
+    DesireDashboard,
+    DesireFulfillment,
+    DesireItem,
+    ExhaustionProof,
+    FitnessWorkoutSession,
+    FoodHistory,
+    FoodItem,
+    FoodRandomizationSession,
+    FoodRandomizer,
     PainCurrency,
+    ShipBaoItem,
+    ShipBaoMessage,
+    ShipBaoTransaction,
+    ShipBaoUserProfile,
+    SinPoints,
+    Sponsor,
+    TarotCard,
+    TarotCommunity,
+    TarotCommunityComment,
+    TarotEnergyCalendar,
+    TarotReading,
+    TarotSpread,
+    TravelGuide,
+    VanityTask,
+    VanityWealth,
     WorkoutDashboard,
 )
 
 # 欲望仪表盘API
 from .services.desire_dashboard import DesireDashboardService, DesireVisualizationService
-from .models import DesireDashboard, DesireItem, DesireFulfillment
 
-# VanityOS 模型导入
-from .models import VanityWealth, SinPoints, Sponsor, VanityTask, BasedDevAvatar
+# 塔罗牌相关导入
+from .services.tarot_service import TarotService
 
-# 旅游攻略相关模型导入
-from .models import TravelGuide
+# 三重觉醒改造计划API
+from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProcessor
 
 # 自动求职机相关模型导入 - 已隐藏
 # from .models import JobSearchRequest, JobApplication, JobSearchProfile, JobSearchStatistics
 # from .services.job_search_service import JobSearchService
 
-# 塔罗牌相关导入
-from .services.tarot_service import TarotService
-from .models import TarotCard, TarotSpread, TarotReading, TarotEnergyCalendar, TarotCommunity, TarotCommunityComment
 
-# 食物随机选择器相关导入
-from .models import FoodRandomizer, FoodItem, FoodRandomizationSession, FoodHistory
 
-# 船宝（二手线下交易）相关模型导入
-from .models import ShipBaoItem, ShipBaoTransaction, ShipBaoMessage, ShipBaoUserProfile
 
-# 搭子（同城活动匹配）相关模型导入
-from .models import (
-    BuddyEvent,
-    BuddyEventMember,
-    BuddyEventChat,
-    BuddyEventMessage,
-    BuddyUserProfile,
-    BuddyEventReview,
-    BuddyEventReport,
-)
 
-# 用户资料相关导入
-from django.contrib.auth.models import User
-from apps.users.models import Profile, UserMembership, UserTheme
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 
 
 @login_required
@@ -791,9 +816,10 @@ def music_api(request):
 def search_netease_music(keyword):
     """搜索网易云音乐"""
     try:
-        import requests
         import re
         from urllib.parse import quote
+
+        import requests
 
         # 网易云音乐搜索API
         search_url = (
@@ -1134,7 +1160,7 @@ def mark_notification_read_api(request):
 def get_subscription_stats_api(request):
     """获取订阅统计信息API"""
     try:
-        from apps.tools.models import SocialMediaSubscription, SocialMediaNotification
+        from apps.tools.models import SocialMediaNotification, SocialMediaSubscription
 
         total_subscriptions = SocialMediaSubscription.objects.filter(user=request.user).count()
         active_subscriptions = SocialMediaSubscription.objects.filter(user=request.user, status="active").count()
@@ -2200,8 +2226,9 @@ def fitness_api(request):
 # 辅助函数
 def is_user_active(user):
     """检查用户是否活跃（10分钟内有过活动）"""
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     # 检查用户最后活动时间
     try:
@@ -2221,8 +2248,9 @@ def is_user_active(user):
 
 def cleanup_expired_heart_link_requests():
     """清理过期的心动链接请求"""
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     # 清理超过10分钟的pending请求（固定10分钟过期）
     expired_requests = HeartLinkRequest.objects.filter(status="pending", created_at__lt=timezone.now() - timedelta(minutes=10))
@@ -2243,8 +2271,9 @@ def cleanup_expired_heart_link_requests():
 
 def disconnect_inactive_users():
     """断开不活跃用户的连接"""
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     # 查找活跃的聊天室
     active_rooms = ChatRoom.objects.filter(status="active")
@@ -2483,8 +2512,8 @@ def check_heart_link_status_api(request):
     try:
         # 减少过期清理的频率，只在必要时清理
         # 清理超过10分钟的pending请求（只清理真正过期的）
-        from datetime import timedelta
         import random
+        from datetime import timedelta
 
         # 定期清理过期请求（0.5%的概率，减少清理频率）
         if random.random() < 0.005:
@@ -3090,8 +3119,9 @@ def get_active_chat_rooms_api(request):
         )
 
     try:
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         # 获取用户参与的活跃聊天室
         user_rooms = ChatRoom.objects.filter(status="active", user1=request.user) | ChatRoom.objects.filter(
@@ -3167,6 +3197,7 @@ def export_diary_data(request, data):
     try:
         import csv
         from io import StringIO
+
         from django.http import HttpResponse
 
         export_type = data.get("type", "diary")  # diary, goals, all
@@ -3322,7 +3353,7 @@ def get_douyin_analysis_api(request):
         if not analysis_id:
             return JsonResponse({"success": False, "error": "缺少分析ID"}, content_type="application/json")
 
-        from .models import DouyinVideoAnalysis, DouyinVideo
+        from .models import DouyinVideo, DouyinVideoAnalysis
 
         analysis = DouyinVideoAnalysis.objects.get(id=analysis_id, user=request.user)
         videos = DouyinVideo.objects.filter(analysis=analysis).order_by("-likes")[:10]
@@ -7209,9 +7240,11 @@ def feature_list_api(request):
 def recommendation_stats_api(request):
     """获取推荐统计API"""
     try:
-        from .models import FeatureRecommendation
-        from django.db.models import Count, Q
         from datetime import datetime, timedelta
+
+        from django.db.models import Count, Q
+
+        from .models import FeatureRecommendation
 
         # 获取查询参数
         days = int(request.GET.get("days", 30))
@@ -8102,8 +8135,8 @@ def audio_converter_api(request):
             logger.info(f"Python环境: {sys.executable}")
             logger.info(f"Python版本: {sys.version}")
 
-            from pydub import AudioSegment
             import pydub
+            from pydub import AudioSegment
 
             logger.info(f"pydub导入成功: {pydub.__file__}")
         except ImportError as e:
@@ -8127,12 +8160,13 @@ def audio_converter_api(request):
             return JsonResponse({"success": False, "message": "不支持的文件格式，请上传NCM、MP3、WAV、FLAC或M4A文件"})
 
         # 创建临时目录
-        import tempfile
         import os
-        from django.conf import settings
-        from django.core.files.storage import default_storage
-        from django.core.files.base import ContentFile
+        import tempfile
         import uuid
+
+        from django.conf import settings
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
 
         temp_dir = os.path.join(settings.MEDIA_ROOT, "temp_audio")
         os.makedirs(temp_dir, exist_ok=True)
@@ -8488,12 +8522,13 @@ def convert_audio_file(input_path, output_path, target_format):
 def decrypt_ncm_file(ncm_path):
     """解密NCM文件"""
     try:
-        import struct
         import base64
         import json
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-        from cryptography.hazmat.backends import default_backend
         import os
+        import struct
+
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
         # 检查文件是否存在
         if not os.path.exists(ncm_path):
@@ -8783,10 +8818,10 @@ def decrypt_ncm_file(ncm_path):
 def decrypt_ncm_file_fallback(ncm_path):
     """NCM文件备用解密方案 - 完全重写版本"""
     try:
-        import struct
-        import os
-        import uuid
         import json
+        import os
+        import struct
+        import uuid
 
         try:
             from Crypto.Cipher import AES
@@ -9138,9 +9173,9 @@ def convert_ncm_file_native(input_path, output_path, target_format):
     """原生NCM文件转换，绕过pydub和ffmpeg"""
     try:
         import os
-        import wave
         import struct
         import uuid
+        import wave
 
         print(f"开始原生转换: {input_path} -> {output_path} ({target_format})")
 
@@ -9535,7 +9570,7 @@ def user_generated_travel_guide_api(request):
 def user_generated_travel_guide_detail_api(request, guide_id):
     """获取用户生成攻略详情API"""
     try:
-        from .models import UserGeneratedTravelGuide, TravelGuideUsage
+        from .models import TravelGuideUsage, UserGeneratedTravelGuide
 
         guide = UserGeneratedTravelGuide.objects.get(id=guide_id, is_public=True, is_approved=True)
 
@@ -9583,7 +9618,7 @@ def user_generated_travel_guide_download_api(request, guide_id):
         if not request.user.is_authenticated:
             return JsonResponse({"success": False, "error": "请先登录后再下载攻略"}, status=401)
 
-        from .models import UserGeneratedTravelGuide, TravelGuideUsage
+        from .models import TravelGuideUsage, UserGeneratedTravelGuide
 
         guide = UserGeneratedTravelGuide.objects.get(id=guide_id, is_public=True, is_approved=True)
 
@@ -9622,7 +9657,7 @@ def user_generated_travel_guide_use_api(request, guide_id):
         if not request.user.is_authenticated:
             return JsonResponse({"success": False, "error": "请先登录后再使用攻略"}, status=401)
 
-        from .models import UserGeneratedTravelGuide, TravelGuideUsage
+        from .models import TravelGuideUsage, UserGeneratedTravelGuide
 
         guide = UserGeneratedTravelGuide.objects.get(id=guide_id, is_public=True, is_approved=True)
 
@@ -9729,7 +9764,7 @@ def shipbao_detail(request, item_id):
         # 如果是卖家，获取想要此商品的用户列表
         interested_users = []
         if request.user.is_authenticated and request.user == item.seller:
-            from .models.legacy_models import ShipBaoWantItem, ShipBaoTransaction, ShipBaoMessage
+            from .models.legacy_models import ShipBaoMessage, ShipBaoTransaction, ShipBaoWantItem
 
             want_list = ShipBaoWantItem.objects.filter(item=item).select_related("user").order_by("-created_at")
 
@@ -9806,9 +9841,11 @@ def shipbao_chat(request, transaction_id):
             return redirect("shipbao_transactions")
 
         # 使用心动链接聊天系统创建聊天室
-        from ..models.chat_models import ChatRoom, ChatMessage
-        from django.db.models import Q
         import uuid
+
+        from django.db.models import Q
+
+        from ..models.chat_models import ChatMessage, ChatRoom
 
         # 确定聊天对象
         if request.user == transaction.buyer:
@@ -10046,12 +10083,13 @@ def shipbao_initiate_transaction_api(request):
                 return JsonResponse({"success": False, "message": "买家ID格式错误"})
 
             # 直接创建聊天室
-            from .models.chat_models import ChatRoom
-            from django.db.models import Q
             import uuid
 
             # 获取买家用户
             from django.contrib.auth.models import User
+            from django.db.models import Q
+
+            from .models.chat_models import ChatRoom
 
             try:
                 buyer_user = User.objects.get(id=buyer_id)
@@ -10580,12 +10618,13 @@ def decrypt_ncm_file_correct(ncm_path):
     基于ncmdump库的实现，同时提取专辑封面
     """
     try:
-        import struct
         import binascii
-        from Crypto.Cipher import AES
-        from Crypto.Util.Padding import unpad
         import json
         import logging
+        import struct
+
+        from Crypto.Cipher import AES
+        from Crypto.Util.Padding import unpad
 
         logger = logging.getLogger(__name__)
 

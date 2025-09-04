@@ -3,9 +3,11 @@
 填充丰富的食物营养数据的管理命令 - 200+菜品
 """
 
-from django.core.management.base import BaseCommand
-from apps.tools.models import FoodNutrition
 import random
+
+from django.core.management.base import BaseCommand
+
+from apps.tools.models import FoodNutrition
 
 
 class Command(BaseCommand):

@@ -3,8 +3,10 @@
 """
 
 from typing import Dict, List
+
 from django.utils import timezone
-from apps.tools.models import SocialMediaSubscription, SocialMediaNotification
+
+from apps.tools.models import SocialMediaNotification, SocialMediaSubscription
 
 
 class NotificationService:

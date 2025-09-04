@@ -7,14 +7,15 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.core.files.storage import default_storage
+from django.db.models import Avg, Count, Q, Sum
+from django.http import FileResponse, Http404, JsonResponse
 from django.utils import timezone
-from django.http import JsonResponse, Http404, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.conf import settings
-from django.core.files.storage import default_storage
-from django.db.models import Count, Avg, Sum, Q
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +66,9 @@ def pdf_converter_status_api(request):
 def pdf_converter_stats_api(request):
     """PDF转换器统计API - 真实实现"""
     try:
-        from ..models.legacy_models import PDFConversionRecord
         from django.db.models import Avg
+
+        from ..models.legacy_models import PDFConversionRecord
 
         # 获取所有转换记录（全站统计）
         if request.user.is_authenticated:

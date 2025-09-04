@@ -4,17 +4,18 @@ VanityOS相关视图
 """
 
 import json
-from django.shortcuts import render
+
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.http import JsonResponse
+from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
-from django.db import models
 
 # 导入相关模型
 try:
-    from apps.tools.models import VanityWealth, SinPoints, Sponsor, VanityTask, BasedDevAvatar
+    from apps.tools.models import BasedDevAvatar, SinPoints, Sponsor, VanityTask, VanityWealth
 except ImportError:
     # 如果模型不存在，使用空类
     class VanityWealth:

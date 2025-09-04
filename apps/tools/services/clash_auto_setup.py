@@ -1,11 +1,12 @@
-import os
-import sys
-import subprocess
-import platform
-import requests
 import logging
-from typing import Tuple, Dict, List
+import os
+import platform
+import subprocess
+import sys
 from pathlib import Path
+from typing import Dict, List, Tuple
+
+import requests
 
 logger = logging.getLogger(__name__)
 

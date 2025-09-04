@@ -1,12 +1,13 @@
-import time
 import json
 import logging
-from django.utils.deprecation import MiddlewareMixin
-from django.http import JsonResponse
+import time
+from datetime import timedelta
+
 from django.contrib.sessions.backends.cache import SessionStore
 from django.core.cache import cache
+from django.http import JsonResponse
 from django.utils import timezone
-from datetime import timedelta
+from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger(__name__)
 

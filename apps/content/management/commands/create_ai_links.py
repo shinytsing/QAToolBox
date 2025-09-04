@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
+
 from apps.content.models import AILink
-from apps.content.utils import extract_favicon_url, download_and_save_icon, get_domain_from_url, get_default_icon_url
+from apps.content.utils import download_and_save_icon, extract_favicon_url, get_default_icon_url, get_domain_from_url
 
 
 class Command(BaseCommand):

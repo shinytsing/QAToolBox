@@ -1,13 +1,15 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
 import json
 import logging
-from ..services.clash_service import clash_service
-from ..services.clash_config_manager import ClashConfigManager
 import platform
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+from ..services.clash_config_manager import ClashConfigManager
+from ..services.clash_service import clash_service
 
 logger = logging.getLogger(__name__)
 

@@ -8,18 +8,19 @@ import random
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-from django.utils import timezone
+
 from django.contrib.auth.models import User
-from django.db.models import Q, Sum, Count, Avg
 from django.core.cache import cache
+from django.db.models import Avg, Count, Q, Sum
+from django.utils import timezone
 
 from ..models import (
-    DesireDashboard,
-    DesireItem,
-    DesireFulfillment,
-    FitnessWorkoutSession,
     CodeWorkoutSession,
     DailyWorkoutChallenge,
+    DesireDashboard,
+    DesireFulfillment,
+    DesireItem,
+    FitnessWorkoutSession,
 )
 
 

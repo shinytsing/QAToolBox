@@ -2,12 +2,14 @@
 增强版地图服务 - 集成高德地图API，提供准确的地址定位和地图显示
 """
 
-import requests
 import json
 import logging
-from django.core.cache import cache
-from django.conf import settings
 from typing import Dict, List, Optional, Tuple
+
+from django.conf import settings
+from django.core.cache import cache
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +293,7 @@ class EnhancedMapService:
         Returns:
             距离（公里）
         """
-        from math import radians, cos, sin, asin, sqrt
+        from math import asin, cos, radians, sin, sqrt
 
         # 将经纬度转换为弧度
         lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])

@@ -3,18 +3,20 @@
 包括查询优化、缓存优化、连接池优化等
 """
 
+import gc
+import json
 import logging
 import time
-import json
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection, connections
 from django.db.models import QuerySet
 from django.utils import timezone
-from typing import Dict, List, Any, Optional, Tuple
+
 import psutil
-import gc
 
 logger = logging.getLogger(__name__)
 

@@ -1,13 +1,14 @@
+import json
+import os
+import traceback
+from typing import Dict, List, Optional, Tuple
+
+import cv2
+import numpy as np
 import torch
 import torchvision.transforms as transforms
-from torchvision.models import resnet50, ResNet50_Weights
 from PIL import Image
-import numpy as np
-import cv2
-import os
-import json
-import traceback
-from typing import Dict, List, Tuple, Optional
+from torchvision.models import ResNet50_Weights, resnet50
 
 
 class RealFoodImageRecognition:

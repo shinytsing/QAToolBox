@@ -3,10 +3,12 @@
 测试数据库操作和数据一致性
 """
 
-import pytest
-from django.db import transaction, IntegrityError
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+
+import pytest
+
 from tests.conftest import UserFactory
 
 User = get_user_model()
@@ -214,8 +216,8 @@ class TestDatabasePerformance:
 
     def test_query_count(self):
         """测试查询次数"""
-        from django.test import override_settings
         from django.db import connection
+        from django.test import override_settings
 
         # 创建测试数据
         UserFactory.create_batch(100)

@@ -4,15 +4,15 @@
 自动配置Chrome/Edge/Safari等浏览器的代理设置
 """
 
-import os
-import sys
 import json
-import subprocess
+import logging
+import os
 import platform
 import shutil
-from typing import Dict, List, Tuple, Optional
+import subprocess
+import sys
 from pathlib import Path
-import logging
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

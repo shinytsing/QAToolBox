@@ -1,13 +1,14 @@
-import requests
 import json
-import time
-import re
-from typing import Dict, List, Optional
-from datetime import datetime
 import os
-from bs4 import BeautifulSoup
-import urllib.parse
 import random
+import re
+import time
+import urllib.parse
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import requests
+from bs4 import BeautifulSoup
 
 
 class TravelDataService:
@@ -1015,8 +1016,8 @@ class TravelDataService:
 
     def _get_fallback_weather_data(self, destination: str) -> Dict:
         """获取备用天气数据"""
-        import random
         import datetime
+        import random
 
         # 根据季节生成合理的模拟天气数据
         current_month = datetime.datetime.now().month

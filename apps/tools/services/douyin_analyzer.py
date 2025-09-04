@@ -1,11 +1,14 @@
-import requests
 import json
-import time
 import random
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+
 from django.utils import timezone
-from ..models import DouyinVideoAnalysis, DouyinVideo
+
+import requests
+
+from ..models import DouyinVideo, DouyinVideoAnalysis
 from .douyin_crawler import DouyinCrawler
 
 
@@ -196,8 +199,9 @@ class DouyinAnalyzer:
     def _call_deepseek_api(self, prompt: str) -> str:
         """调用DeepSeek API，带重试机制和更长超时"""
         import os
-        import requests
         import time
+
+        import requests
 
         api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:

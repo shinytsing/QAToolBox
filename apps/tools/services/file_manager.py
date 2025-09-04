@@ -2,16 +2,18 @@
 文件管理器 - 处理文件分片上传和图片缩略图生成
 """
 
-import os
 import hashlib
-import mimetypes
-from typing import List, Dict, Optional, Tuple
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.conf import settings
-from PIL import Image
 import io
+import mimetypes
+import os
 import uuid
+from typing import Dict, List, Optional, Tuple
+
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+
+from PIL import Image
 
 
 class FileManager:

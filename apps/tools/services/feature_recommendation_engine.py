@@ -9,13 +9,15 @@
 import random
 import uuid
 from datetime import datetime, timedelta
-from django.utils import timezone
+
 from django.contrib.auth.models import User
-from django.db.models import Q, Count, Avg, F
 from django.core.cache import cache
+from django.db.models import Avg, Count, F, Q
+from django.utils import timezone
+
+from apps.users.models import UserModePreference
 
 from ..models import Feature, FeatureRecommendation, UserFeaturePermission, UserFirstVisit
-from apps.users.models import UserModePreference
 
 
 class FeatureRecommendationEngine:

@@ -3,22 +3,23 @@
 ZIP功能视图
 支持多文件打包和单文件压缩打包
 """
-import os
 import json
+import logging
+import os
+import shutil
 import tempfile
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.conf import settings
-import logging
-import shutil
 
-from ..services.zip_service import zip_service
 from ..services.enhanced_compression_service import enhanced_compression_service
+from ..services.zip_service import zip_service
 
 logger = logging.getLogger(__name__)
 

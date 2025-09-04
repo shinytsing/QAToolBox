@@ -1,7 +1,9 @@
+import random
+
 from django.core.management.base import BaseCommand
+
 from apps.tools.models import FoodItem
 from apps.tools.services.accurate_food_image_service import AccurateFoodImageService
-import random
 
 
 class Command(BaseCommand):

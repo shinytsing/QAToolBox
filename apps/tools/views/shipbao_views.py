@@ -4,17 +4,18 @@
 """
 
 import json
-from django.shortcuts import render, get_object_or_404
+
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 # 导入相关模型
-from ..models.legacy_models import ShipBaoItem, ShipBaoTransaction, ShipBaoUserProfile, ShipBaoFavorite, ShipBaoWantItem
+from ..models.legacy_models import ShipBaoFavorite, ShipBaoItem, ShipBaoTransaction, ShipBaoUserProfile, ShipBaoWantItem
 
 
 def shipbao_home(request):
@@ -405,12 +406,14 @@ def shipbao_contact_seller_api(request):
             return JsonResponse({"success": False, "error": "不能联系自己"})
 
         # 使用心动链接聊天系统
-        from ..models.chat_models import ChatRoom, ChatMessage
         import uuid
+
+        from django.db import IntegrityError, transaction
+
+        from ..models.chat_models import ChatMessage, ChatRoom
 
         # 使用咨询队列系统来管理并发
         from ..models.legacy_models import ShipBaoInquiry
-        from django.db import transaction, IntegrityError
 
         # 首先检查是否已经有咨询记录
         existing_inquiry = ShipBaoInquiry.objects.filter(item=item, buyer=request.user).first()
@@ -739,8 +742,9 @@ def shipbao_contact_wanter_api(request):
             return JsonResponse({"success": False, "error": "权限不足"})
 
         # 使用心动链接聊天系统创建聊天室
-        from ..models.chat_models import ChatRoom, ChatMessage
         import uuid
+
+        from ..models.chat_models import ChatMessage, ChatRoom
 
         # 查找是否已有聊天室
         chat_room = (

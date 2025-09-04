@@ -1,8 +1,10 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
 import os
-from apps.tools.models import FoodItem
 import random
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
+from apps.tools.models import FoodItem
 
 
 class Command(BaseCommand):

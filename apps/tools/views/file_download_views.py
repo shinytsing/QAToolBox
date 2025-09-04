@@ -1,9 +1,10 @@
-import os
-import mimetypes
 import logging
-from django.http import FileResponse, Http404, JsonResponse
-from django.contrib.auth.decorators import login_required
+import mimetypes
+import os
+
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.http import FileResponse, Http404, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)

@@ -4,11 +4,12 @@
 """
 
 from django.contrib import admin
-from django.utils.html import format_html
-from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.db import models
-from .models import NutritionCategory, FoodNutrition, FoodNutritionHistory, FoodRandomizationLog
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+
+from .models import FoodNutrition, FoodNutritionHistory, FoodRandomizationLog, NutritionCategory
 
 
 @admin.register(NutritionCategory)

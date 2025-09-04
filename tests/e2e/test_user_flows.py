@@ -3,9 +3,10 @@
 使用Playwright测试完整的用户交互流程
 """
 
+import time
+
 import pytest
 from playwright.sync_api import Page, expect
-import time
 
 
 class TestUserRegistrationFlow:

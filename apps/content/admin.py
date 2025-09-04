@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Article, Comment, Suggestion, Feedback, AILink, Announcement, FeatureAccess, UserFeatureAccess
+
+from .models import AILink, Announcement, Article, Comment, FeatureAccess, Feedback, Suggestion, UserFeatureAccess
 
 
 @admin.register(Article)

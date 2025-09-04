@@ -1,10 +1,12 @@
-import requests
 import json
-import time
-import random
-from typing import Dict, List, Optional, Tuple
-from django.conf import settings
 import logging
+import random
+import time
+from typing import Dict, List, Optional, Tuple
+
+from django.conf import settings
+
+import requests
 
 logger = logging.getLogger(__name__)
 

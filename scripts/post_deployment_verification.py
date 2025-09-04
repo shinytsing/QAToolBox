@@ -4,11 +4,12 @@
 用于验证部署的应用是否正常工作
 """
 
-import requests
-import time
-import sys
 import json
+import sys
+import time
 from urllib.parse import urljoin
+
+import requests
 
 
 class DeploymentVerifier:

@@ -1,8 +1,10 @@
-import requests
 import json
+import logging
 import random
 from typing import Dict, List, Optional
-import logging
+
+import requests
+
 from .peace_music_service import peace_music_service
 
 logger = logging.getLogger(__name__)

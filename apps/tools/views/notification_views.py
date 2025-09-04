@@ -3,14 +3,15 @@
 """
 
 import json
-from django.http import JsonResponse
+
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
+from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
-from django.db.models import Q, Count
 
-from ..models.chat_models import ChatNotification, ChatRoom, ChatMessage
+from ..models.chat_models import ChatMessage, ChatNotification, ChatRoom
 
 
 @csrf_exempt

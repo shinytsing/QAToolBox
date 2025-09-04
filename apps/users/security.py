@@ -1,13 +1,14 @@
-import re
 import html
 import logging
+import re
 import time
 from collections import defaultdict
-from django.utils.deprecation import MiddlewareMixin
-from django.http import HttpResponseForbidden, HttpResponse
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.http import HttpResponse, HttpResponseForbidden
+from django.utils.deprecation import MiddlewareMixin
 from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)

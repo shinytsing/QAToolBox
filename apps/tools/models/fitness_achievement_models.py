@@ -1,8 +1,9 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from datetime import timedelta
 import json
+from datetime import timedelta
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils import timezone
 
 
 class FitnessAchievementModule(models.Model):

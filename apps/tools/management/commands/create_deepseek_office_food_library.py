@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from apps.tools.models import FoodItem, FoodHistory, FoodRandomizationSession
+
+from apps.tools.models import FoodHistory, FoodItem, FoodRandomizationSession
 
 
 class Command(BaseCommand):

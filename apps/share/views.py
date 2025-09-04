@@ -2,17 +2,19 @@ import json
 import random
 import string
 from datetime import timedelta
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponse
+
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
-from django.conf import settings
-from django.urls import reverse
-from django.core.paginator import Paginator
-from django.db.models import Q, Count
-from .models import ShareRecord, ShareLink, ShareAnalytics
+
+from .models import ShareAnalytics, ShareLink, ShareRecord
 from .utils import generate_short_code, get_client_ip, get_share_urls
 
 

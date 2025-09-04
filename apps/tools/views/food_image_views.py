@@ -6,10 +6,11 @@
 import json
 import logging
 from datetime import datetime, timedelta
+
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ def api_photos(request):
     """获取照片列表API - 动态扫描静态文件夹"""
     try:
         import os
+
         from django.conf import settings
 
         # 获取查询参数

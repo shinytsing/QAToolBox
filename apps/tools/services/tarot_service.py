@@ -3,15 +3,17 @@
 处理塔罗牌相关的业务逻辑
 """
 
-import random
 import logging
+import random
 from datetime import datetime, timedelta
-from django.core.cache import cache
+
 from django.conf import settings
+from django.core.cache import cache
 from django.db import models
+
 import requests
 
-from ..models.tarot_models import TarotCard, TarotSpread, TarotReading, TarotEnergyCalendar
+from ..models.tarot_models import TarotCard, TarotEnergyCalendar, TarotReading, TarotSpread
 
 logger = logging.getLogger(__name__)
 

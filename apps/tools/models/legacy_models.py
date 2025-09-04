@@ -1,14 +1,14 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Index, Q
-import random
 import json
+import random
+
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db import models
+from django.db.models import Index, Q
+from django.utils import timezone
 
 # 导入聊天模型以避免循环导入
-from .chat_models import ChatRoom, ChatMessage
-
+from .chat_models import ChatMessage, ChatRoom
 
 # ToolUsageLog 已移至 base_models.py，这里不再重复定义
 # LifeDiaryEntry已移到diary_models.py，避免重复定义
@@ -3215,7 +3215,7 @@ class ShipBaoItem(models.Model):
         if not self.latitude or not self.longitude:
             return None
 
-        from math import radians, cos, sin, asin, sqrt
+        from math import asin, cos, radians, sin, sqrt
 
         # 将经纬度转换为弧度
         lat1, lon1, lat2, lon2 = map(radians, [self.latitude, self.longitude, target_lat, target_lon])

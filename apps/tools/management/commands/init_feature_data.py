@@ -4,8 +4,9 @@
 初始化功能推荐系统数据
 """
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
 from apps.tools.models import Feature
 
 

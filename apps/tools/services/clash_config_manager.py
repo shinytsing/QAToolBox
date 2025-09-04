@@ -1,8 +1,9 @@
-import yaml
 import json
 import logging
-from typing import Dict, List, Optional
 from pathlib import Path
+from typing import Dict, List, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

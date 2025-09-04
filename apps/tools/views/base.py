@@ -1,16 +1,17 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse, HttpResponse
-from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.core.cache import cache
-from django.db.models import Q, Count, Avg, Sum
-from django.views import View
-from django.utils.decorators import method_decorator
-from functools import wraps
 import json
 import logging
+from functools import wraps
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.cache import cache
+from django.db.models import Avg, Count, Q, Sum
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
 

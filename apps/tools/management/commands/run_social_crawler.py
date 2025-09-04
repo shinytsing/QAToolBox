@@ -1,10 +1,12 @@
+import random
+import time
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from apps.tools.models import SocialMediaSubscription, SocialMediaNotification
+
+from apps.tools.models import SocialMediaNotification, SocialMediaSubscription
 from apps.tools.services.social_media_crawler import run_continuous_crawler
-import time
-import random
-from datetime import timedelta
 
 
 class Command(BaseCommand):

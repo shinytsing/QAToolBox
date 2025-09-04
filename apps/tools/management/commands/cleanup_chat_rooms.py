@@ -1,8 +1,10 @@
+import logging
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
-from apps.tools.models import ChatRoom, UserOnlineStatus, HeartLinkRequest
-import logging
+
+from apps.tools.models import ChatRoom, HeartLinkRequest, UserOnlineStatus
 
 logger = logging.getLogger(__name__)
 

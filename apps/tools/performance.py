@@ -1,15 +1,16 @@
-import time
-import logging
 import functools
-from django.core.cache import cache
-from django.db import connection
+import logging
+import time
+
 from django.conf import settings
+from django.core.cache import cache
+from django.core.paginator import Paginator
+from django.db import connection
+from django.db.models import Prefetch, Q
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_cookie
-from django.db.models import Prefetch, Q
-from django.core.paginator import Paginator
 
 logger = logging.getLogger(__name__)
 

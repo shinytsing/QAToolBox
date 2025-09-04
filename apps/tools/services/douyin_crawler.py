@@ -1,13 +1,15 @@
-import requests
 import json
-import time
+import logging
+import random
 import re
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+from urllib.parse import parse_qs, urlparse
+
 from django.utils import timezone
-from urllib.parse import urlparse, parse_qs
-import random
-import logging
+
+import requests
 
 # 尝试导入增强HTTP客户端，如果失败则使用普通requests
 try:

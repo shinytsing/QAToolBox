@@ -3,9 +3,10 @@
 用于模拟大量用户并发访问，测试系统性能
 """
 
-from locust import HttpUser, task, between
-import random
 import json
+import random
+
+from locust import HttpUser, between, task
 
 
 class WebsiteUser(HttpUser):

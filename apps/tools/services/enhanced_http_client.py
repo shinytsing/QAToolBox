@@ -3,13 +3,15 @@
 增强的HTTP客户端 - 集成代理池和反爬虫机制
 """
 
-import requests
+import logging
 import random
 import time
-import logging
-from typing import Dict, Optional, Any, List
+from typing import Any, Dict, List, Optional
+
+import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
 from .proxy_pool import proxy_pool
 
 logger = logging.getLogger(__name__)

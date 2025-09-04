@@ -1,15 +1,17 @@
+import asyncio
+import gzip
 import json
 import logging
-import gzip
 import time
-import asyncio
+
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
 
 try:
-    from channels.generic.websocket import AsyncWebsocketConsumer
     from channels.db import database_sync_to_async
-    from .models.chat_models import ChatRoom, ChatMessage, UserOnlineStatus
+    from channels.generic.websocket import AsyncWebsocketConsumer
+
+    from .models.chat_models import ChatMessage, ChatRoom, UserOnlineStatus
 
     CHANNELS_AVAILABLE = True
 except ImportError:
@@ -32,9 +34,9 @@ except ImportError:
 
     CHANNELS_AVAILABLE = False
 from .services.reconnection_manager import (
-    ReconnectionManager,
     ConnectionConfig,
     MessageCompressor,
+    ReconnectionManager,
     get_reconnection_manager,
     remove_reconnection_manager,
 )
@@ -571,8 +573,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def get_user_profile_data(self, user):
         """获取用户资料数据"""
         try:
-            from apps.users.models import Profile, UserMembership, UserTheme
             from django.utils import timezone
+
+            from apps.users.models import Profile, UserMembership, UserTheme
 
             profile = Profile.objects.filter(user=user).first()
             membership = UserMembership.objects.filter(user=user).first()

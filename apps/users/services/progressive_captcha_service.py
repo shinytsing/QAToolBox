@@ -2,13 +2,14 @@
 渐进式验证码服务 - 简化版
 """
 
-import random
 import json
+import random
 import time
+import uuid
+from datetime import timedelta
+
 from django.core.cache import cache
 from django.utils import timezone
-from datetime import timedelta
-import uuid
 
 
 class ProgressiveCaptchaService:

@@ -6,17 +6,19 @@
 import json
 import logging
 import random
-import requests
 from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.conf import settings
-from django.core.cache import cache
-from django.db import transaction
 
-from ..models.tarot_models import TarotCard, TarotSpread, TarotReading, TarotEnergyCalendar
+import requests
+
+from ..models.tarot_models import TarotCard, TarotEnergyCalendar, TarotReading, TarotSpread
 
 logger = logging.getLogger(__name__)
 

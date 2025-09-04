@@ -16,24 +16,26 @@ Including another URLconf
 """
 
 import time
-from django.contrib import admin
-from django.urls import include, path
-from apps.tools.views.health_views import HealthCheckView, DetailedHealthCheckView
-from views import (
-    home_view,
-    tool_view,
-    welcome_view,
-    theme_demo_view,
-    version_history_view,
-    help_page_view,
-    custom_static_serve,
-    secure_media_serve,
-)
-from django.shortcuts import render
-from django.http import HttpResponse
+
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.urls import include, path
 from django.views.generic import RedirectView
+
+from apps.tools.views.health_views import DetailedHealthCheckView, HealthCheckView
+from views import (
+    custom_static_serve,
+    help_page_view,
+    home_view,
+    secure_media_serve,
+    theme_demo_view,
+    tool_view,
+    version_history_view,
+    welcome_view,
+)
 
 
 def modern_demo_view(request):

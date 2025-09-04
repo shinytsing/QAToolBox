@@ -1,12 +1,13 @@
-import os
 import base64
-import requests
-import json
-import traceback
-from typing import Dict, List, Tuple, Optional
-from PIL import Image
 import io
+import json
 import logging
+import os
+import traceback
+from typing import Dict, List, Optional, Tuple
+
+import requests
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,15 @@
-import requests
 import json
-import time
 import random
-from typing import List, Dict, Optional
+import time
+from typing import Dict, List, Optional
+
 from django.conf import settings
-from django.utils import timezone
 from django.core.cache import cache
-from ..models import JobSearchRequest, JobApplication, JobSearchProfile
+from django.utils import timezone
+
+import requests
+
+from ..models import JobApplication, JobSearchProfile, JobSearchRequest
 from .boss_zhipin_api import BossZhipinAPI
 
 

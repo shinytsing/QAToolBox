@@ -4,24 +4,27 @@
 # 此文件已被注释，Black 将跳过此文件
 import json
 from datetime import datetime, timedelta
-from django.shortcuts import render, redirect, get_object_or_404
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import models, transaction
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib import messages
-from django.db import transaction
-from .services.nutrition_coach_service import NutritionCoachService
+
 from .models import (
-    FitnessUserProfile as FitnessProfile,
     DietPlan,
-    Meal,
-    NutritionReminder,
-    MealLog,
-    WeightTracking,
-    FoodDatabase,
 )
-from django.db import models
+from .models import FitnessUserProfile as FitnessProfile
+from .models import (
+    FoodDatabase,
+    Meal,
+    MealLog,
+    NutritionReminder,
+    WeightTracking,
+)
+from .services.nutrition_coach_service import NutritionCoachService
 
 
 @login_required

@@ -3,9 +3,11 @@
 代理池管理命令
 """
 
-from django.core.management.base import BaseCommand
-from apps.tools.services.proxy_pool import proxy_pool
 import json
+
+from django.core.management.base import BaseCommand
+
+from apps.tools.services.proxy_pool import proxy_pool
 
 
 class Command(BaseCommand):

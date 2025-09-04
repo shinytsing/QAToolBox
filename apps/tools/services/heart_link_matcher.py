@@ -4,12 +4,14 @@
 提供更智能的匹配算法，考虑用户在线时间、匹配历史等因素
 """
 
-from django.db import transaction
-from django.db.models import Q, Count, Avg
-from django.utils import timezone
-from datetime import timedelta
 import random
-from apps.tools.models import HeartLinkRequest, ChatRoom, UserOnlineStatus
+from datetime import timedelta
+
+from django.db import transaction
+from django.db.models import Avg, Count, Q
+from django.utils import timezone
+
+from apps.tools.models import ChatRoom, HeartLinkRequest, UserOnlineStatus
 from apps.users.models import UserActivityLog
 
 

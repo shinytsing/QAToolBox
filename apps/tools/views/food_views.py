@@ -3,10 +3,11 @@
 import json
 import logging
 from datetime import datetime, timedelta
+
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ def api_save_food_photo_bindings(request):
                     return JsonResponse({"success": False, "error": f"缺少必需字段: {field}"}, status=400)
 
         # 获取真实的食物照片绑定数据
-        from apps.tools.models.legacy_models import FoodPhotoBinding, FoodItem
+        from apps.tools.models.legacy_models import FoodItem, FoodPhotoBinding
 
         saved_bindings = []
         for binding in bindings:
@@ -220,16 +221,18 @@ def api_upload_food_photo(request):
             return JsonResponse({"success": False, "error": "文件大小不能超过10MB"}, status=400)
 
         # 生成文件名
-        import uuid
         import os
+        import uuid
+
         from django.core.files.storage import default_storage
 
         file_extension = os.path.splitext(photo_file.name)[1]
         unique_filename = f"{uuid.uuid4()}{file_extension}"
 
         # 保存文件到静态文件夹
-        import shutil
         import os
+        import shutil
+
         from django.conf import settings
 
         # 使用STATICFILES_DIRS中的第一个目录（开发环境）

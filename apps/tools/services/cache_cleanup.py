@@ -5,9 +5,10 @@
 
 import logging
 from datetime import datetime, timedelta
-from django.core.cache import cache
+from typing import Any, Dict, List
+
 from django.conf import settings
-from typing import Dict, List, Any
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 

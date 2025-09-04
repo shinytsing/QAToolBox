@@ -1,8 +1,9 @@
 import random
 import string
 import urllib.parse
-from django.utils import timezone
+
 from django.http import HttpRequest
+from django.utils import timezone
 
 
 def generate_short_code(length=8):

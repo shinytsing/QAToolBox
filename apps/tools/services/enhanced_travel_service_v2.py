@@ -1,13 +1,16 @@
 import hashlib
 import json
 import logging
-import time
 import random
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import requests
-from django.utils import timezone
+
 from django.conf import settings
+from django.utils import timezone
+
+import requests
+
 from .overview_data_service import OverviewDataService
 
 logger = logging.getLogger(__name__)

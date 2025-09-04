@@ -1,21 +1,24 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.core.paginator import Paginator
-from django.template.defaulttags import register
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 import json
 import os
 import uuid
 from datetime import datetime
-from .models import Article, Comment, Suggestion, Feedback, Announcement, AILink, FeatureAccess, UserFeatureAccess
-from .forms import ArticleForm, CommentForm
-from .utils import extract_favicon_url, download_and_save_icon, get_domain_from_url
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.defaulttags import register
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
 from apps.users.models import UserRole
+
+from .forms import ArticleForm, CommentForm
+from .models import AILink, Announcement, Article, Comment, FeatureAccess, Feedback, Suggestion, UserFeatureAccess
+from .utils import download_and_save_icon, extract_favicon_url, get_domain_from_url
 
 
 # 注册模板过滤器
@@ -143,8 +146,10 @@ def admin_suggestions(request):
 @login_required
 @admin_required
 def admin_dashboard(request):
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
+
     from apps.users.models import User, UserActionLog
 
     # 获取统计数据
@@ -477,6 +482,7 @@ def admin_reply_feedback(request):
 @admin_required
 def admin_dashboard_stats_api(request):
     from django.utils import timezone
+
     from apps.users.models import User, UserActionLog
 
     try:

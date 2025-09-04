@@ -1,10 +1,12 @@
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+import os
 import re
+from urllib.parse import urljoin, urlparse
+
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-import os
+
+import requests
+from bs4 import BeautifulSoup
 
 
 def extract_favicon_url(url):

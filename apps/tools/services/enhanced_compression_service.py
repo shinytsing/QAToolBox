@@ -3,18 +3,18 @@
 增强压缩服务
 支持多种压缩算法和更好的压缩效果
 """
-import os
-import zipfile
-import tempfile
-import shutil
-import gzip
 import bz2
-import lzma
-import tarfile
-import mimetypes
-from datetime import datetime
-from typing import List, Dict, Tuple, Optional
+import gzip
 import logging
+import lzma
+import mimetypes
+import os
+import shutil
+import tarfile
+import tempfile
+import zipfile
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

@@ -5,8 +5,9 @@ Django settings for QAToolBox project.
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+
 import environ
+from dotenv import load_dotenv
 
 # 首先定义BASE_DIR
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

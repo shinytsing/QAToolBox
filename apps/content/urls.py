@@ -1,41 +1,42 @@
 from django.urls import path
+
 from . import views
 
 app_name = "content"
 
 from .views import (
-    article_list,
-    article_detail,
-    article_create,
-    article_edit,
-    article_delete,
-    suggestions_api,
-    feedback_api,
-    upload_media_api,
-    admin_suggestions,
-    admin_feedback,
-    admin_reply_suggestion,
-    admin_reply_feedback,
+    admin_announcements,
+    admin_batch_change_status_api,
     admin_dashboard,
     admin_dashboard_stats_api,
-    admin_batch_change_status_api,
-    announcement_list_api,
+    admin_feedback,
+    admin_reply_feedback,
+    admin_reply_suggestion,
+    admin_suggestions,
+    ai_links_view,
     announcement_admin_api,
     announcement_delete_api,
-    admin_announcements,
-    ai_links_view,
-    fetch_ai_link_icon,
+    announcement_list_api,
+    article_create,
+    article_delete,
+    article_detail,
+    article_edit,
+    article_list,
     create_ai_links_from_list,
+    feedback_api,
+    fetch_ai_link_icon,
+    suggestions_api,
+    upload_media_api,
 )
 from .views_admin_features import (
     admin_feature_management,
+    admin_init_default_features_api,
     admin_user_feature_access,
+    batch_update_feature_status_api,
+    batch_update_user_feature_access_api,
     feature_list_api,
     update_feature_status_api,
     update_user_feature_access_api,
-    batch_update_feature_status_api,
-    batch_update_user_feature_access_api,
-    admin_init_default_features_api,
 )
 
 urlpatterns = [

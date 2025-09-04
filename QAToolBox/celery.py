@@ -4,9 +4,11 @@
 Celery 配置
 """
 import os
+
+from django.conf import settings
+
 from celery import Celery
 from celery.schedules import crontab
-from django.conf import settings
 
 # 设置默认Django设置模块
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.base")
@@ -237,7 +239,7 @@ def monitoring_data_collection_task(self):
 
 
 # Celery信号处理
-from celery.signals import worker_ready, worker_shutdown, task_success, task_failure
+from celery.signals import task_failure, task_success, worker_ready, worker_shutdown
 
 
 @worker_ready.connect

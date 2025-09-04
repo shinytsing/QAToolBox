@@ -1,11 +1,12 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Index, Q
-import random
 import json
+import random
 from datetime import timedelta
+
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db import models
+from django.db.models import Index, Q
+from django.utils import timezone
 
 
 class ChatRoom(models.Model):
@@ -327,8 +328,9 @@ class HeartLinkRequest(models.Model):
 
     def is_expired(self):
         """检查是否过期（10分钟）"""
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         return timezone.now() > self.created_at + timedelta(minutes=10)
 

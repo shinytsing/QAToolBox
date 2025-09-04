@@ -1,9 +1,10 @@
-import requests
+import json
 import random
 import time
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 from urllib.parse import quote
-import json
+
+import requests
 
 
 class FreeMusicAPI:

@@ -1,14 +1,14 @@
 import asyncio
+import gzip
 import json
 import logging
 import time
+import weakref
 import zlib
-import gzip
-from typing import Dict, List, Optional, Callable, Any
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from collections import deque
-import weakref
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

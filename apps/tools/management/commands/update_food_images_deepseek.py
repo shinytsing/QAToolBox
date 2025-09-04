@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
-from apps.tools.services.deepseek_food_images import get_food_image_coverage, DEEPSEEK_FOOD_IMAGES
+
 from apps.tools.models import FoodItem
+from apps.tools.services.deepseek_food_images import DEEPSEEK_FOOD_IMAGES, get_food_image_coverage
 
 
 class Command(BaseCommand):

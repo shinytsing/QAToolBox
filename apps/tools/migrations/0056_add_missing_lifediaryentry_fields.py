@@ -1,7 +1,7 @@
 # Generated manually to fix missing fields in LifeDiaryEntry model
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):

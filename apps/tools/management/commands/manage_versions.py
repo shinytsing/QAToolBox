@@ -3,11 +3,12 @@ Django管理命令：版本管理
 用于添加、更新和查看项目版本信息
 """
 
+import os
+import sys
+from datetime import datetime
+
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
-from datetime import datetime
-import sys
-import os
 
 # 添加项目路径
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))

@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from apps.tools.models.diary_models import DiaryTemplate, DailyQuestion
+
+from apps.tools.models.diary_models import DailyQuestion, DiaryTemplate
 
 
 class Command(BaseCommand):

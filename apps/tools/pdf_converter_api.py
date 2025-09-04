@@ -5,16 +5,17 @@ PDF转换引擎API
 支持PDF与Word、图片等格式的相互转换
 """
 
-import os
 import json
 import logging
+import os
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
 
 try:
     import fitz  # PyMuPDF
@@ -23,11 +24,12 @@ try:
 except ImportError:
     FITZ_AVAILABLE = False
     print("警告: PyMuPDF (fitz) 未安装，PDF转换功能将受限")
-from PIL import Image
-import io
 import base64
-from datetime import datetime
+import io
 import uuid
+from datetime import datetime
+
+from PIL import Image
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -135,8 +137,8 @@ class PDFConverter:
             pdf_file.seek(0)
 
             # 使用pdf2docx进行真实转换
-            import tempfile
             import os
+            import tempfile
 
             # 创建临时文件
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
@@ -346,8 +348,9 @@ class PDFConverter:
             zoom = 300 / 72.0
             mat = fitz.Matrix(zoom, zoom)
 
-            from PIL import Image as PILImage  # 避免命名冲突
             import io as _io
+
+            from PIL import Image as PILImage  # 避免命名冲突
 
             for page_index in range(len(doc)):
                 page = doc.load_page(page_index)
@@ -478,14 +481,14 @@ class PDFConverter:
             # 检查必要的库
             try:
                 from docx import Document
-                from reportlab.pdfgen import canvas
                 from reportlab.lib.pagesizes import A4
-                from reportlab.pdfbase import pdfmetrics
-                from reportlab.pdfbase.ttfonts import TTFont
-                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
                 from reportlab.lib.units import inch
+                from reportlab.pdfbase import pdfmetrics
                 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+                from reportlab.pdfbase.ttfonts import TTFont
+                from reportlab.pdfgen import canvas
+                from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
             except ImportError as e:
                 error_msg = f"缺少必要的库: {str(e)}\\n"
                 error_msg += "请安装以下依赖:\\n"
@@ -496,8 +499,8 @@ class PDFConverter:
                 return False, error_msg, None
 
             # 创建临时文件
-            import tempfile
             import os
+            import tempfile
 
             with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as temp_docx:
                 temp_docx.write(word_file.read())
@@ -1053,14 +1056,14 @@ class PDFConverter:
         try:
             # 检查reportlab库是否可用
             try:
-                from reportlab.pdfgen import canvas
                 from reportlab.lib.pagesizes import A4
-                from reportlab.pdfbase import pdfmetrics
-                from reportlab.pdfbase.ttfonts import TTFont
-                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
                 from reportlab.lib.units import inch
+                from reportlab.pdfbase import pdfmetrics
                 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+                from reportlab.pdfbase.ttfonts import TTFont
+                from reportlab.pdfgen import canvas
+                from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
             except ImportError:
                 return False, "reportlab库未安装，无法进行文本转PDF转换", None
 
@@ -1149,8 +1152,8 @@ class PDFConverter:
                 return False, "PyMuPDF (fitz) 库未安装，无法进行PDF转文本转换", None
 
             # 创建临时文件
-            import tempfile
             import os
+            import tempfile
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
                 # 写入PDF内容
@@ -1240,8 +1243,9 @@ def pdf_converter_api(request):
     """PDF转换API主入口"""
     try:
         # 导入模型
-        from .models.legacy_models import PDFConversionRecord
         import time
+
+        from .models.legacy_models import PDFConversionRecord
 
         # 创建转换器实例
         converter = PDFConverter()
@@ -1424,9 +1428,9 @@ def pdf_converter_api(request):
                 conversion_record.save()
         elif file_type == "pdf_to_images":
             # 创建ZIP文件包含所有图片
+            import base64
             import zipfile
             from io import BytesIO
-            import base64
 
             zip_buffer = BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:

@@ -3,12 +3,15 @@ API集成测试
 测试API端点的完整功能
 """
 
-import pytest
 import json
-from django.urls import reverse
+
 from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
+from django.urls import reverse
+
+import pytest
 from rest_framework import status
+from rest_framework.test import APIClient
+
 from tests.conftest import UserFactory
 
 User = get_user_model()
@@ -113,6 +116,7 @@ class TestUserAPI:
         """测试用户头像上传"""
         # 创建测试图片数据
         import io
+
         from PIL import Image
 
         image = Image.new("RGB", (100, 100), color="red")

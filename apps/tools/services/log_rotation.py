@@ -3,13 +3,14 @@
 定期轮转和压缩日志文件
 """
 
-import os
 import gzip
-import shutil
 import logging
+import os
+import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from django.conf import settings
 
 logger = logging.getLogger(__name__)

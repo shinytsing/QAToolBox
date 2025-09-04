@@ -1,9 +1,11 @@
 import logging
 import time
+
 from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+
 import requests
 
 logger = logging.getLogger(__name__)

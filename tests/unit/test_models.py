@@ -2,10 +2,12 @@
 模型单元测试
 """
 
-import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+
+import pytest
+
 from tests.conftest import UserFactory
 
 User = get_user_model()

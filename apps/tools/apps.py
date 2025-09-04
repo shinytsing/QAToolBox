@@ -34,13 +34,12 @@ class ToolsConfig(AppConfig):
         try:
             # 导入服务 (已移除测试模块)
             # from .services.auto_test_runner import initialize_auto_testing
+            from .services.database_sharding import check_shards_health
             from .services.monitoring_service import periodic_health_check
             from .services.performance_optimizer import run_performance_optimization
-            from .services.database_sharding import check_shards_health
 
             # 初始化服务 (跳过测试模块)
             # initialize_auto_testing()
-
             # 启动定时任务
             self._start_scheduled_tasks()
 
@@ -55,6 +54,7 @@ class ToolsConfig(AppConfig):
         try:
             import threading
             import time
+
             from django.core.cache import cache
 
             def run_scheduled_tasks():

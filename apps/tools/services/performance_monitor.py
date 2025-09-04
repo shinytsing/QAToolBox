@@ -1,17 +1,19 @@
-import time
-import psutil
+import json
 import logging
+import statistics
+import threading
+import time
+from datetime import datetime, timedelta
+from functools import wraps
+from typing import Any, Dict, List, Optional
+
 from django.core.cache import cache
 from django.http import JsonResponse
-from django.views import View
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from functools import wraps
-from typing import Dict, Any, List, Optional
-import json
-import threading
-from datetime import datetime, timedelta
-import statistics
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -221,8 +223,7 @@ class DatabaseMonitor:
     def get_database_stats():
         """获取数据库统计信息"""
         try:
-            from django.db import connection
-            from django.db import connections
+            from django.db import connection, connections
 
             stats = {}
 

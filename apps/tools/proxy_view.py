@@ -1,15 +1,17 @@
-from django.shortcuts import render
+import json
+import logging
+import socket
+import subprocess
+import time
+from typing import Dict, List, Optional
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-import json
+
 import requests
-import time
-import subprocess
-import socket
-from typing import Dict, List, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 

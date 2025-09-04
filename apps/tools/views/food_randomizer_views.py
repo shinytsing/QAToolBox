@@ -7,13 +7,15 @@ import json
 import logging
 import random
 from datetime import datetime, timedelta
+
+from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.db import models
+
 from apps.tools.models import FoodNutrition, FoodRandomizationLog
-from apps.tools.models.legacy_models import FoodItem, FoodPhotoBinding, FoodHistory, FoodRandomizationSession
+from apps.tools.models.legacy_models import FoodHistory, FoodItem, FoodPhotoBinding, FoodRandomizationSession
 
 logger = logging.getLogger(__name__)
 
@@ -365,6 +367,7 @@ def food_randomizer_rate_api(request):
             # 通过session_id查找记录（session_id通常是ISO格式的时间戳）
             try:
                 from datetime import datetime, timedelta
+
                 from django.utils import timezone
 
                 # 解析session_id为datetime对象

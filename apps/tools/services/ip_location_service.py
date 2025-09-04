@@ -1,8 +1,10 @@
-import requests
 import json
-from django.core.cache import cache
-from django.conf import settings
 import logging
+
+from django.conf import settings
+from django.core.cache import cache
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +162,7 @@ class IPLocationService:
 
     def calculate_distance(self, lat1, lon1, lat2, lon2):
         """计算两点间距离（公里）"""
-        from math import radians, cos, sin, asin, sqrt
+        from math import asin, cos, radians, sin, sqrt
 
         # 将经纬度转换为弧度
         lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])

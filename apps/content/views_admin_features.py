@@ -1,12 +1,15 @@
-from django.shortcuts import render, get_object_or_404, redirect
+import json
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-import json
-from .models import FeatureAccess, UserFeatureAccess
+
 from apps.users.models import UserRole
+
+from .models import FeatureAccess, UserFeatureAccess
 
 
 def admin_required(view_func):

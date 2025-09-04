@@ -1,8 +1,9 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.core.cache import cache
 from datetime import timedelta
+
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db import models
+from django.utils import timezone
 
 
 class TravelGuide(models.Model):
@@ -376,7 +377,7 @@ def calculate_distance_to(self, target_lat, target_lon):
     if not self.location_latitude or not self.location_longitude:
         return None
 
-    from math import radians, cos, sin, asin, sqrt
+    from math import asin, cos, radians, sin, sqrt
 
     # 将经纬度转换为弧度
     lat1, lon1, lat2, lon2 = map(radians, [self.location_latitude, self.location_longitude, target_lat, target_lon])

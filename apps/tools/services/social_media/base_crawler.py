@@ -6,9 +6,12 @@ import random
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-import requests
+
 from django.utils import timezone
-from apps.tools.models import SocialMediaSubscription, SocialMediaNotification
+
+import requests
+
+from apps.tools.models import SocialMediaNotification, SocialMediaSubscription
 
 
 class BaseSocialMediaCrawler:

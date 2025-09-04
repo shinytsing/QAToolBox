@@ -3,9 +3,9 @@
 营养信息相关的数据库模型
 """
 
-from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 
 class NutritionCategory(models.Model):

@@ -3,17 +3,19 @@
 用于监控应用状态
 """
 
-from django.http import JsonResponse
-from django.views import View
-from django.db import connection
-from django.core.cache import cache
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 import logging
-import time
-import psutil
 import os
+import time
+
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.db import connection
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views import View
+
+import psutil
 
 logger = logging.getLogger(__name__)
 

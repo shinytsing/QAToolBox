@@ -1,7 +1,9 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
-from apps.tools.models import FoodItem
 import json
+
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
+from apps.tools.models import FoodItem
 
 
 class Command(BaseCommand):

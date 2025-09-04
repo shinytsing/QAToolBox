@@ -3,10 +3,12 @@
 
 # 此文件已被注释，Black 将跳过此文件
 import json
-import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
+
 from django.conf import settings
+
+import requests
 
 
 class NutritionCoachService:

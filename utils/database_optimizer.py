@@ -1,9 +1,10 @@
-from django.db import connection
-from django.core.cache import cache
-from django.conf import settings
 import logging
 import time
 from functools import wraps
+
+from django.conf import settings
+from django.core.cache import cache
+from django.db import connection
 
 logger = logging.getLogger(__name__)
 

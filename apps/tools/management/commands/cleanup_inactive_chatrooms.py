@@ -3,12 +3,13 @@
 自动删除2小时内无活动的聊天室
 """
 
+import logging
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
-import logging
 
-from apps.tools.models.chat_models import ChatRoom, ChatMessage
+from apps.tools.models.chat_models import ChatMessage, ChatRoom
 
 logger = logging.getLogger(__name__)
 

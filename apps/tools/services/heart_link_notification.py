@@ -4,8 +4,10 @@ Heart Link 通知服务
 用于在请求即将过期时通知用户
 """
 
-from django.utils import timezone
 from datetime import timedelta
+
+from django.utils import timezone
+
 from apps.tools.models import HeartLinkRequest, UserOnlineStatus
 
 

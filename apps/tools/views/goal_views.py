@@ -1,29 +1,30 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Q, Count, Avg, Sum, Max
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views import View
 import json
 import logging
+
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.db.models import Avg, Count, Max, Q, Sum
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from ..models import LifeGoal, LifeGoalProgress, LifeStatistics
 from .base import (
     BaseView,
     CachedViewMixin,
-    PaginationMixin,
-    SearchMixin,
     FilterMixin,
     OrderMixin,
-    success_response,
-    error_response,
+    PaginationMixin,
+    SearchMixin,
     cache_response,
-    validate_request_data,
+    error_response,
     rate_limit,
+    success_response,
+    validate_request_data,
 )
 
 logger = logging.getLogger(__name__)

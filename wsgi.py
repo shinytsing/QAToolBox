@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
 import os
 import sys
 from pathlib import Path
+
 from django.core.wsgi import get_wsgi_application
 
 # 添加项目根目录到Python路径

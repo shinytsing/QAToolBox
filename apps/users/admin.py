@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Profile, UserRole, UserStatus, UserMembership, UserActionLog, UserTheme, UserModePreference
+
+from .models import Profile, UserActionLog, UserMembership, UserModePreference, UserRole, UserStatus, UserTheme
 
 
 @admin.register(Profile)

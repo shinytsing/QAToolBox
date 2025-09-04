@@ -4,11 +4,13 @@
 
 import json
 import logging
+
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
 from ..services.browser_proxy_config import browser_proxy_config
 
 logger = logging.getLogger(__name__)
@@ -114,8 +116,9 @@ def test_proxy_connection(request):
         proxy_port = data.get("proxy_port", 7890)
         test_url = data.get("test_url", "http://httpbin.org/ip")
 
-        import requests
         import socket
+
+        import requests
 
         # 首先测试端口是否开放
         try:

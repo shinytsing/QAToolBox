@@ -6,10 +6,11 @@
 import json
 import logging
 from datetime import datetime, timedelta
+
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +21,9 @@ logger = logging.getLogger(__name__)
 def checkin_add_api(request):
     """添加签到记录API - 真实实现"""
     try:
-        from apps.tools.models.legacy_models import CheckInCalendar, CheckInDetail
         from django.utils.dateparse import parse_date
+
+        from apps.tools.models.legacy_models import CheckInCalendar, CheckInDetail
 
         # 解析请求数据
         data = json.loads(request.body)

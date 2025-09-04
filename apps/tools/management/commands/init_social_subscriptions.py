@@ -1,8 +1,10 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
-from apps.tools.models import SocialMediaSubscription, SocialMediaNotification, SocialMediaPlatformConfig
-from django.utils import timezone
 import random
+
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from apps.tools.models import SocialMediaNotification, SocialMediaPlatformConfig, SocialMediaSubscription
 
 
 class Command(BaseCommand):

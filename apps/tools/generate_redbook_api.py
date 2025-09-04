@@ -1,18 +1,21 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from .utils import DeepSeekClient  # 复用已有的DeepSeek客户端
-from .models import ToolUsageLog
 import base64
-import requests
 import json
 import logging
-import tempfile
 import os
+import tempfile
 from datetime import datetime
+
+from django.shortcuts import render
+
 import pillow_heif  # 添加HEIC支持
+import requests
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import ToolUsageLog
+from .utils import DeepSeekClient  # 复用已有的DeepSeek客户端
 
 # 配置日志
 logger = logging.getLogger(__name__)

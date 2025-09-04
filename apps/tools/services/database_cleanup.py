@@ -5,12 +5,14 @@
 
 import logging
 from datetime import datetime, timedelta
-from django.db import connection
-from django.core.cache import cache
+from typing import Any, Dict, List
+
 from django.conf import settings
-from apps.tools.models import ToolUsageLog, SocialMediaSubscription
+from django.core.cache import cache
+from django.db import connection
+
+from apps.tools.models import SocialMediaSubscription, ToolUsageLog
 from apps.users.models import User
-from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +160,7 @@ class DatabaseCleanupService:
         """清理孤立文件"""
         try:
             import os
+
             from django.conf import settings
 
             media_root = settings.MEDIA_ROOT

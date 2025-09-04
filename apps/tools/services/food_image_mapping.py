@@ -220,8 +220,8 @@ def recognize_food_from_image(image_path, confidence_threshold=0.7):
     # 这里可以集成真实的图像识别API，如Google Vision API、Azure Computer Vision等
     # 目前返回模拟结果
 
-    import random
     import os
+    import random
 
     # 基于文件名或路径进行简单的识别
     filename = os.path.basename(image_path).lower()

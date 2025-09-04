@@ -1,10 +1,12 @@
-import requests
 import json
 import logging
 import time
 from datetime import datetime
 from typing import Dict, Optional
+
 from django.conf import settings
+
+import requests
 
 logger = logging.getLogger(__name__)
 

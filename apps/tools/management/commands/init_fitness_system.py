@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from apps.tools.models.fitness_achievement_models import FitnessAchievementModule, EnhancedFitnessAchievement
-from apps.tools.models.exercise_library_models import MuscleGroup, BodyPart, Equipment, Exercise
+
+from apps.tools.models.exercise_library_models import BodyPart, Equipment, Exercise, MuscleGroup
+from apps.tools.models.fitness_achievement_models import EnhancedFitnessAchievement, FitnessAchievementModule
 from apps.tools.models.training_plan_models import TrainingPlanCategory
 
 

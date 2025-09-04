@@ -4,15 +4,17 @@ pytest配置文件
 """
 
 import os
+from unittest.mock import Mock, patch
+
 import django
-import pytest
 from django.conf import settings
-from django.test import Client
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from faker import Faker
+from django.test import Client
+
 import factory
-from unittest.mock import Mock, patch
+import pytest
+from faker import Faker
 
 # 设置Django配置
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")

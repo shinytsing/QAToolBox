@@ -1,17 +1,19 @@
-import os
-import sys
 import json
-import yaml
-import time
+import logging
+import os
 import signal
 import subprocess
+import sys
 import threading
-import requests
-import logging
-from typing import Dict, List, Optional, Tuple
+import time
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 from django.conf import settings
 from django.core.cache import cache
+
+import requests
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -340,8 +342,8 @@ class ClashEmbeddedService:
     def download_clash_binary(self) -> Tuple[bool, str]:
         """下载Clash二进制文件 - 使用备用方案"""
         try:
-            import platform
             import gzip
+            import platform
             import shutil
 
             system = platform.system().lower()

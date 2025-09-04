@@ -1,11 +1,12 @@
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Index, Q
-import random
 import json
+import random
 from datetime import timedelta
+
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.db import models
+from django.db.models import Index, Q
+from django.utils import timezone
 
 
 class LifeGoal(models.Model):

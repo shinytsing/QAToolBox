@@ -1,6 +1,7 @@
+import os
+
 from celery import Celery
 from celery.schedules import crontab
-import os
 
 # 设置Django环境
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")

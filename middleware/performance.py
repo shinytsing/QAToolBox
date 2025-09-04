@@ -1,9 +1,11 @@
-import time
 import logging
+import time
+
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import JsonResponse
+
 from utils.database_optimizer import db_monitor
 
 logger = logging.getLogger(__name__)

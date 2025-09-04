@@ -6,10 +6,11 @@
 import json
 import logging
 from datetime import datetime, timedelta
+
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +21,9 @@ logger = logging.getLogger(__name__)
 def achievements_api(request):
     """获取成就列表API - 真实实现"""
     try:
-        from ..models.legacy_models import PDFConversionRecord
         from django.db.models import Count, Q
+
+        from ..models.legacy_models import PDFConversionRecord
 
         # 获取用户转换统计
         user_conversions = PDFConversionRecord.objects.filter(user=request.user)

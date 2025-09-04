@@ -4,17 +4,18 @@
 监控应用各个组件的健康状态
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import json
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional
+
 import psutil
 import requests
-import subprocess
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional
-from pathlib import Path
 
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent.parent))
@@ -25,9 +26,9 @@ import django
 
 django.setup()
 
-from django.db import connections
-from django.core.cache import cache
 from django.conf import settings
+from django.core.cache import cache
+from django.db import connections
 
 
 @dataclass
@@ -350,8 +351,8 @@ class HealthChecker:
     def check_ssl_certificate(self) -> HealthCheckResult:
         """检查SSL证书"""
         try:
-            import ssl
             import socket
+            import ssl
             from urllib.parse import urlparse
 
             if not self.base_url.startswith("https://"):

@@ -1,21 +1,22 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Q, Count, Avg
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views import View
-from django.core.files.storage import default_storage
-from django.db import connection
 import json
 import logging
 import os
 from datetime import datetime, timedelta
 
-from ..models.diary_models import LifeDiaryEntry, DiaryAchievement, DiaryTemplate, DailyQuestion
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.core.files.storage import default_storage
+from django.db import connection
+from django.db.models import Avg, Count, Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+from ..models.diary_models import DailyQuestion, DiaryAchievement, DiaryTemplate, LifeDiaryEntry
 from .base import BaseView
 
 logger = logging.getLogger(__name__)

@@ -6,8 +6,9 @@
 import socket
 import threading
 import time
-import requests
 from urllib.parse import urlparse
+
+import requests
 
 
 class LocalProxyServer:

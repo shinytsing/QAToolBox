@@ -7,13 +7,15 @@ import json
 import logging
 import os
 import time
-import requests
 from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.conf import settings
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -70,12 +72,13 @@ def deepseek_api(request):
 def get_boss_login_page_screenshot_api(request):
     """获取BOSS登录页面截图API - 真实实现"""
     try:
+        import logging
         import os
         import time
-        import logging
+
         from django.conf import settings
-        from django.core.files.storage import default_storage
         from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
 
         logger = logging.getLogger(__name__)
 
@@ -84,8 +87,8 @@ def get_boss_login_page_screenshot_api(request):
             from selenium import webdriver
             from selenium.webdriver.chrome.options import Options
             from selenium.webdriver.common.by import By
-            from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
+            from selenium.webdriver.support.ui import WebDriverWait
         except ImportError:
             return JsonResponse({"success": False, "error": "Selenium未安装，无法进行网页截图"}, status=500)
 
@@ -404,8 +407,8 @@ def create_job_search_request_api(request):
     """创建求职请求API - 真实实现"""
     try:
         import json
-        import uuid
         import logging
+        import uuid
         from datetime import datetime
 
         logger = logging.getLogger(__name__)

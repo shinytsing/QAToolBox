@@ -1,13 +1,12 @@
-from celery import shared_task
-from django.utils import timezone
-from datetime import timedelta
-from .models import ChatRoom, UserOnlineStatus, HeartLinkRequest
 import logging
+from datetime import datetime, time, timedelta
 
-from datetime import datetime, time
 from django.utils import timezone
-from .fitness_nutrition_models import NutritionReminder, MealLog, DietPlan, Meal
 
+from celery import shared_task
+
+from .fitness_nutrition_models import DietPlan, Meal, MealLog, NutritionReminder
+from .models import ChatRoom, HeartLinkRequest, UserOnlineStatus
 
 logger = logging.getLogger(__name__)
 

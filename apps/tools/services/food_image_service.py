@@ -1,7 +1,8 @@
-import requests
 import json
 import random
 from typing import Dict, List, Optional
+
+import requests
 
 
 class FoodImageService:

@@ -5,15 +5,16 @@
 """
 
 import json
-from django.shortcuts import render
-from django.http import JsonResponse
+
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 
-from apps.tools.services.monitoring_service import monitoring_service
 from apps.tools.services.cache_service import CacheManager
+from apps.tools.services.monitoring_service import monitoring_service
 
 
 def is_admin(user):

@@ -1,28 +1,24 @@
+import json
 import re
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
-from .forms import UserEditForm
-from .forms import LoginForm
-from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
+from django.contrib.sessions.backends.cache import SessionStore
+from django.core.paginator import Paginator
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.defaulttags import register
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.core.paginator import Paginator
-from django.utils import timezone
-from datetime import timedelta
-import json
-from .forms import UserRegistrationForm, UserLoginForm, ProfileEditForm
-from .models import UserRole, UserStatus, UserMembership, UserActionLog, Profile, UserTheme, UserActivityLog, UserSessionStats
-from django.contrib.sessions.backends.cache import SessionStore
-from apps.content.views import admin_required
-from django.template.defaulttags import register
 
+from apps.content.views import admin_required
+
+from .forms import LoginForm, ProfileEditForm, UserEditForm, UserLoginForm, UserRegistrationForm
+from .models import Profile, UserActionLog, UserActivityLog, UserMembership, UserRole, UserSessionStats, UserStatus, UserTheme
 from .services.progressive_captcha_service import ProgressiveCaptchaService
 
 
@@ -204,8 +200,9 @@ def user_logout(request):
 
         # 记录登出活动
         try:
-            from .models import UserActivityLog, UserSessionStats
             from django.core.cache import cache
+
+            from .models import UserActivityLog, UserSessionStats
 
             x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
             if x_forwarded_for:
@@ -304,8 +301,9 @@ def admin_user_management(request):
     )
 
     # 统计信息
-    from django.utils import timezone
     from datetime import datetime, timedelta
+
+    from django.utils import timezone
 
     total_users = User.objects.count()
     active_users = User.objects.filter(is_active=True).count()
@@ -581,10 +579,12 @@ def admin_batch_operation_api(request):
 @login_required
 @admin_required
 def admin_user_monitoring(request):
-    from django.utils import timezone
     from datetime import timedelta
-    from django.db.models import Count, Avg
-    from .models import UserActivityLog, APIUsageStats, UserSessionStats
+
+    from django.db.models import Avg, Count
+    from django.utils import timezone
+
+    from .models import APIUsageStats, UserActivityLog, UserSessionStats
 
     # 获取今日数据
     today = timezone.now().date()
@@ -638,10 +638,12 @@ def admin_user_monitoring(request):
 @login_required
 @admin_required
 def admin_monitoring_stats_api(request):
-    from django.utils import timezone
     from datetime import timedelta
-    from django.db.models import Count, Avg
-    from .models import UserActivityLog, APIUsageStats, UserSessionStats
+
+    from django.db.models import Avg, Count
+    from django.utils import timezone
+
+    from .models import APIUsageStats, UserActivityLog, UserSessionStats
 
     try:
         # 获取今日数据
@@ -739,6 +741,7 @@ def admin_monitoring_stats_api(request):
 @admin_required
 def admin_force_logout_api(request, user_id):
     import json
+
     from django.contrib.auth import logout
     from django.contrib.sessions.models import Session
 
@@ -891,11 +894,13 @@ def upload_avatar(request):
 
         # 图片处理：压缩和调整大小
         try:
-            from PIL import Image
             import io
             import os
+
             from django.conf import settings
             from django.core.files.base import ContentFile
+
+            from PIL import Image
 
             # 打开图片
             img = Image.open(avatar_file)
@@ -971,6 +976,7 @@ def upload_avatar(request):
         except ImportError:
             # 如果没有Pillow库，使用原始文件
             import os
+
             from django.conf import settings
 
             file_extension = os.path.splitext(avatar_file.name)[1]
@@ -1078,8 +1084,9 @@ def user_logout_api(request):
 
         # 记录登出活动
         try:
-            from .models import UserActivityLog, UserSessionStats
             from django.core.cache import cache
+
+            from .models import UserActivityLog, UserSessionStats
 
             x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
             if x_forwarded_for:

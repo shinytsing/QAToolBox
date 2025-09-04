@@ -1,13 +1,16 @@
-import requests
-import json
-import time
-import random
-import qrcode
 import base64
+import json
+import random
+import time
 from io import BytesIO
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
+
 from django.conf import settings
 from django.core.cache import cache
+
+import qrcode
+import requests
+
 from .boss_zhipin_selenium import BossZhipinSeleniumService
 
 
