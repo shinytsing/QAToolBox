@@ -21,15 +21,15 @@ daphne==4.0.0
 asgiref==3.8.1
 
 # ===== 数据库和缓存 =====
-redis==4.6.0
-django-redis==5.4.0
-django-cacheops==7.0.2
-psycopg2-binary==2.9.7
-django-db-connection-pool==1.2.4
+redis>=5.0.0
+django-redis>=5.4.0
+django-cacheops>=7.0.2
+psycopg2-binary>=2.9.7
+django-db-connection-pool>=1.2.4
 
 # ===== 任务队列 =====
-celery==5.3.4
-django-celery-beat==2.5.0
+celery>=5.3.4
+django-celery-beat>=2.5.0
 
 # ===== Web服务器和静态文件 =====
 gunicorn==21.2.0
@@ -46,11 +46,11 @@ lxml==4.9.3
 html5lib==1.1
 
 # ===== 图像处理 =====
-Pillow==9.5.0
+Pillow>=10.0.0
 
 # ===== 数据处理和分析 =====
-pandas==2.0.3
-numpy==1.24.4
+pandas>=2.1.0
+numpy>=1.26.0
 matplotlib==3.7.5
 pyecharts==2.0.4
 
