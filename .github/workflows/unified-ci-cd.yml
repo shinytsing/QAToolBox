@@ -639,8 +639,19 @@ jobs:
         echo "emergency_status=$EMERGENCY_STATUS" >> $GITHUB_OUTPUT
         echo "verify_status=$VERIFY_STATUS" >> $GITHUB_OUTPUT
     
+    - name: 检查邮件配置
+      id: email-check
+      run: |
+        if [ -n "${{ secrets.EMAIL_USERNAME }}" ] && [ -n "${{ secrets.EMAIL_PASSWORD }}" ]; then
+          echo "EMAIL_CONFIGURED=true" >> $GITHUB_ENV
+          echo "email_configured=true" >> $GITHUB_OUTPUT
+        else
+          echo "EMAIL_CONFIGURED=false" >> $GITHUB_ENV
+          echo "email_configured=false" >> $GITHUB_OUTPUT
+        fi
+    
     - name: 发送邮件通知
-      if: ${{ secrets.EMAIL_USERNAME && secrets.EMAIL_PASSWORD }}
+      if: ${{ env.EMAIL_CONFIGURED == 'true' }}
       uses: dawidd6/action-send-mail@v3
       continue-on-error: true
       with:
@@ -734,7 +745,7 @@ jobs:
           </html>
     
     - name: 邮件通知状态
-      if: ${{ !secrets.EMAIL_USERNAME || !secrets.EMAIL_PASSWORD }}
+      if: ${{ env.EMAIL_CONFIGURED == 'false' }}
       run: |
         echo "⚠️ 邮件通知已跳过 - 未配置EMAIL_USERNAME或EMAIL_PASSWORD"
         echo "如需邮件通知，请在GitHub Secrets中配置："
