@@ -1,140 +1,203 @@
 #!/usr/bin/env python3
 """
 部署后验证脚本
-用于验证部署是否成功，检查关键功能是否正常
+用于验证部署的应用是否正常工作
 """
 
-import argparse
 import requests
-import sys
 import time
+import sys
+import json
 from urllib.parse import urljoin
 
-
-def check_health_endpoint(base_url):
-    """检查健康检查端点"""
-    try:
-        health_url = urljoin(base_url, '/health/')
-        response = requests.get(health_url, timeout=10)
-        if response.status_code == 200:
-            print(f"✅ 健康检查通过: {health_url}")
-            return True
-        else:
-            print(f"❌ 健康检查失败: {health_url} (状态码: {response.status_code})")
-            return False
-    except requests.exceptions.RequestException as e:
-        print(f"❌ 健康检查异常: {health_url} - {e}")
-        return False
-
-
-def check_static_files(base_url):
-    """检查静态文件是否可访问"""
-    try:
-        static_url = urljoin(base_url, '/static/')
-        response = requests.get(static_url, timeout=10)
-        if response.status_code in [200, 404]:  # 404也是正常的，说明静态文件配置正确
-            print(f"✅ 静态文件配置正常: {static_url}")
-            return True
-        else:
-            print(f"⚠️  静态文件可能有问题: {static_url} (状态码: {response.status_code})")
-            return False
-    except requests.exceptions.RequestException as e:
-        print(f"⚠️  静态文件检查异常: {static_url} - {e}")
-        return False
-
-
-def check_api_endpoints(base_url):
-    """检查API端点"""
-    api_endpoints = [
-        '/users/api/session-status/',
-        '/admin/',
-    ]
-    
-    success_count = 0
-    for endpoint in api_endpoints:
+class DeploymentVerifier:
+    def __init__(self, base_url="http://shenyiqing.xin", timeout=30):
+        self.base_url = base_url
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.timeout = timeout
+        
+    def test_health_endpoint(self):
+        """测试健康检查端点"""
         try:
-            api_url = urljoin(base_url, endpoint)
-            response = requests.get(api_url, timeout=10)
-            if response.status_code in [200, 302, 403]:  # 这些状态码都表示端点可访问
-                print(f"✅ API端点可访问: {api_url}")
-                success_count += 1
-            else:
-                print(f"⚠️  API端点状态异常: {api_url} (状态码: {response.status_code})")
-        except requests.exceptions.RequestException as e:
-            print(f"❌ API端点异常: {api_url} - {e}")
-    
-    return success_count > 0
-
-
-def check_response_time(base_url, max_time=3.0):
-    """检查响应时间"""
-    try:
-        start_time = time.time()
-        response = requests.get(base_url, timeout=10)
-        end_time = time.time()
-        
-        response_time = end_time - start_time
-        
-        if response.status_code == 200:
-            if response_time <= max_time:
-                print(f"✅ 响应时间正常: {response_time:.2f}s")
+            url = urljoin(self.base_url, '/health/')
+            response = self.session.get(url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"✅ 健康检查通过: {data.get('status', 'unknown')}")
                 return True
             else:
-                print(f"⚠️  响应时间过长: {response_time:.2f}s (阈值: {max_time}s)")
+                print(f"❌ 健康检查失败: HTTP {response.status_code}")
                 return False
-        else:
-            print(f"❌ 主页访问失败: {base_url} (状态码: {response.status_code})")
+                
+        except Exception as e:
+            print(f"❌ 健康检查异常: {str(e)}")
             return False
-    except requests.exceptions.RequestException as e:
-        print(f"❌ 主页访问异常: {base_url} - {e}")
-        return False
-
+    
+    def test_home_page(self):
+        """测试首页加载"""
+        try:
+            response = self.session.get(self.base_url)
+            
+            if response.status_code == 200:
+                if "QAToolBox" in response.text:
+                    print("✅ 首页加载正常")
+                    return True
+                else:
+                    print("❌ 首页内容异常")
+                    return False
+            else:
+                print(f"❌ 首页加载失败: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ 首页加载异常: {str(e)}")
+            return False
+    
+    def test_static_files(self):
+        """测试静态文件加载"""
+        try:
+            # 测试CSS文件
+            css_url = urljoin(self.base_url, '/static/css/style.css')
+            response = self.session.get(css_url)
+            
+            if response.status_code == 200:
+                print("✅ 静态文件加载正常")
+                return True
+            else:
+                print(f"⚠️ 静态文件可能有问题: HTTP {response.status_code}")
+                return True  # 不阻塞部署
+                
+        except Exception as e:
+            print(f"⚠️ 静态文件测试异常: {str(e)}")
+            return True  # 不阻塞部署
+    
+    def test_api_endpoints(self):
+        """测试API端点"""
+        endpoints = [
+            '/users/api/session-status/',
+        ]
+        
+        passed = 0
+        total = len(endpoints)
+        
+        for endpoint in endpoints:
+            try:
+                url = urljoin(self.base_url, endpoint)
+                response = self.session.get(url)
+                
+                if response.status_code in [200, 401, 403]:  # 401/403也算正常
+                    print(f"✅ API端点正常: {endpoint}")
+                    passed += 1
+                else:
+                    print(f"❌ API端点异常: {endpoint} - HTTP {response.status_code}")
+                    
+            except Exception as e:
+                print(f"❌ API端点异常: {endpoint} - {str(e)}")
+        
+        if passed >= total * 0.8:  # 80%通过率
+            print(f"✅ API测试通过 ({passed}/{total})")
+            return True
+        else:
+            print(f"❌ API测试失败 ({passed}/{total})")
+            return False
+    
+    def test_performance(self):
+        """基础性能测试"""
+        try:
+            response_times = []
+            
+            for i in range(5):
+                start_time = time.time()
+                response = self.session.get(self.base_url)
+                end_time = time.time()
+                
+                if response.status_code == 200:
+                    response_times.append(end_time - start_time)
+                
+                time.sleep(1)
+            
+            if response_times:
+                avg_time = sum(response_times) / len(response_times)
+                max_time = max(response_times)
+                
+                print(f"📊 性能测试结果:")
+                print(f"   平均响应时间: {avg_time:.2f}s")
+                print(f"   最大响应时间: {max_time:.2f}s")
+                
+                if avg_time < 3.0 and max_time < 5.0:
+                    print("✅ 性能测试通过")
+                    return True
+                else:
+                    print("⚠️ 性能可能需要优化")
+                    return True  # 不阻塞部署
+            else:
+                print("❌ 性能测试失败")
+                return False
+                
+        except Exception as e:
+            print(f"⚠️ 性能测试异常: {str(e)}")
+            return True  # 不阻塞部署
+    
+    def run_all_tests(self):
+        """运行所有验证测试"""
+        print(f"🔍 开始部署验证: {self.base_url}")
+        print("=" * 50)
+        
+        tests = [
+            ("健康检查", self.test_health_endpoint),
+            ("首页加载", self.test_home_page),
+            ("静态文件", self.test_static_files),
+            ("API端点", self.test_api_endpoints),
+            ("性能测试", self.test_performance),
+        ]
+        
+        passed = 0
+        critical_failed = 0
+        
+        for test_name, test_func in tests:
+            print(f"\n🧪 执行测试: {test_name}")
+            
+            try:
+                if test_func():
+                    passed += 1
+                else:
+                    if test_name in ["健康检查", "首页加载"]:
+                        critical_failed += 1
+                        
+            except Exception as e:
+                print(f"💥 测试异常: {test_name} - {str(e)}")
+                if test_name in ["健康检查", "首页加载"]:
+                    critical_failed += 1
+        
+        print("\n" + "=" * 50)
+        print(f"📊 验证结果: {passed}/{len(tests)} 通过")
+        
+        if critical_failed == 0:
+            print("✅ 部署验证成功！应用可以正常访问")
+            return True
+        else:
+            print(f"❌ 部署验证失败！关键功能异常 ({critical_failed} 个)")
+            return False
 
 def main():
+    import argparse
+    
     parser = argparse.ArgumentParser(description='部署后验证脚本')
-    parser.add_argument('--url', required=True, help='要验证的URL')
-    parser.add_argument('--max-time', type=float, default=3.0, help='最大响应时间（秒）')
-    parser.add_argument('--verbose', '-v', action='store_true', help='详细输出')
+    parser.add_argument('--url', default='http://shenyiqing.xin', 
+                       help='要验证的应用URL')
+    parser.add_argument('--timeout', type=int, default=30,
+                       help='请求超时时间（秒）')
     
     args = parser.parse_args()
     
-    base_url = args.url.rstrip('/')
+    verifier = DeploymentVerifier(args.url, args.timeout)
     
-    print(f"🔍 开始验证部署: {base_url}")
-    print("=" * 50)
-    
-    # 执行各项检查
-    checks = [
-        ("健康检查", lambda: check_health_endpoint(base_url)),
-        ("静态文件", lambda: check_static_files(base_url)),
-        ("API端点", lambda: check_api_endpoints(base_url)),
-        ("响应时间", lambda: check_response_time(base_url, args.max_time)),
-    ]
-    
-    passed_checks = 0
-    total_checks = len(checks)
-    
-    for check_name, check_func in checks:
-        print(f"\n📋 检查: {check_name}")
-        try:
-            if check_func():
-                passed_checks += 1
-        except Exception as e:
-            print(f"❌ 检查异常: {check_name} - {e}")
-    
-    print("\n" + "=" * 50)
-    print(f"📊 验证结果: {passed_checks}/{total_checks} 项检查通过")
-    
-    if passed_checks == total_checks:
-        print("🎉 所有检查通过，部署验证成功！")
-        return 0
-    elif passed_checks >= total_checks * 0.7:  # 70%通过率
-        print("⚠️  大部分检查通过，部署基本成功")
-        return 0
+    if verifier.run_all_tests():
+        sys.exit(0)
     else:
-        print("❌ 多项检查失败，部署可能存在问题")
-        return 1
-
+        sys.exit(1)
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

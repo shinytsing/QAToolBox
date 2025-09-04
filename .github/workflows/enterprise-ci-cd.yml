@@ -1,0 +1,587 @@
+name: Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, release/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      skip_tests:
+        description: 'Skip tests (emergency deployment)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NOTIFICATION_EMAIL: "1009383129@qq.com"
+
+jobs:
+  # 1. 代码质量检查阶段
+  code-quality:
+    name: Code Quality & Security Scan
+    runs-on: ubuntu-latest
+    outputs:
+      quality-passed: ${{ steps.quality-check.outputs.passed }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 完整历史，用于质量分析
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 black isort mypy bandit safety pylint coverage sonar-scanner
+    
+    - name: Code formatting check
+      run: |
+        echo "::group::Black formatting check"
+        black --check --diff . || (echo "::error::Code formatting issues found" && exit 1)
+        echo "::endgroup::"
+        
+        echo "::group::Import sorting check"
+        isort --check-only --diff . || (echo "::error::Import sorting issues found" && exit 1)
+        echo "::endgroup::"
+    
+    - name: Linting with Flake8
+      run: |
+        echo "::group::Flake8 linting"
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics --format=json --output-file=flake8-report.json
+        echo "::endgroup::"
+    
+    - name: Type checking with MyPy
+      run: |
+        echo "::group::MyPy type checking"
+        mypy apps/ --ignore-missing-imports --junit-xml=mypy-report.xml || true
+        echo "::endgroup::"
+    
+    - name: Security scan with Bandit
+      run: |
+        echo "::group::Security scan"
+        bandit -r apps/ -f json -o bandit-report.json || true
+        bandit -r apps/ -f txt
+        echo "::endgroup::"
+    
+    - name: Dependency vulnerability scan
+      run: |
+        echo "::group::Dependency scan"
+        safety check --json --output safety-report.json || true
+        safety check
+        echo "::endgroup::"
+    
+    - name: Code complexity analysis
+      run: |
+        echo "::group::Code complexity"
+        pylint apps/ --output-format=json --reports=yes > pylint-report.json || true
+        pylint apps/ --reports=yes
+        echo "::endgroup::"
+    
+    - name: Quality gate check
+      id: quality-check
+      run: |
+        # 质量门禁检查
+        QUALITY_PASSED=true
+        
+        # 检查Bandit安全问题
+        if [ -f bandit-report.json ]; then
+          HIGH_ISSUES=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
+          if [ "$HIGH_ISSUES" -gt "5" ]; then
+            echo "::error::Too many security issues found: $HIGH_ISSUES"
+            QUALITY_PASSED=false
+          fi
+        fi
+        
+        # 检查Safety漏洞
+        if [ -f safety-report.json ]; then
+          VULNERABILITIES=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+          if [ "$VULNERABILITIES" -gt "0" ]; then
+            echo "::warning::Security vulnerabilities found: $VULNERABILITIES"
+          fi
+        fi
+        
+        echo "passed=$QUALITY_PASSED" >> $GITHUB_OUTPUT
+    
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: quality-reports
+        path: |
+          flake8-report.json
+          mypy-report.xml
+          bandit-report.json
+          safety-report.json
+          pylint-report.json
+        retention-days: 30
+
+  # 2. 单元测试阶段
+  unit-tests:
+    name: Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    needs: code-quality
+    if: needs.code-quality.outputs.quality-passed == 'true' || github.event.inputs.skip_tests == 'true'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_qatoolbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    outputs:
+      test-results: ${{ steps.test-results.outputs.result }}
+      coverage: ${{ steps.coverage-results.outputs.coverage }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-django pytest-cov pytest-xdist pytest-html
+    
+    - name: Run database migrations
+      run: |
+        python manage.py migrate --settings=config.settings.development
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
+        REDIS_URL: redis://localhost:6379/0
+    
+    - name: Run unit tests
+      id: test-results
+      run: |
+        pytest tests/ \
+          --cov=apps \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term \
+          --cov-fail-under=80 \
+          --junit-xml=test-results.xml \
+          --html=test-report.html \
+          --self-contained-html \
+          -v \
+          --maxfail=5 \
+          --tb=short
+        
+        TEST_RESULT=$?
+        echo "result=$TEST_RESULT" >> $GITHUB_OUTPUT
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
+        REDIS_URL: redis://localhost:6379/0
+    
+    - name: Extract coverage percentage
+      id: coverage-results
+      run: |
+        COVERAGE=$(python -c "import xml.etree.ElementTree as ET; root = ET.parse('coverage.xml').getroot(); print(f\"{float(root.attrib['line-rate'])*100:.1f}\")")
+        echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "Coverage: $COVERAGE%"
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          test-results.xml
+          test-report.html
+          coverage.xml
+          htmlcov/
+        retention-days: 30
+    
+    - name: Test results comment
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const coverage = '${{ steps.coverage-results.outputs.coverage }}';
+          const testResult = '${{ steps.test-results.outputs.result }}';
+          const status = testResult == '0' ? '✅ PASSED' : '❌ FAILED';
+          
+          const comment = `
+          ## 🧪 Test Results
+          
+          **Status:** ${status}
+          **Coverage:** ${coverage}%
+          
+          [View detailed test report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # 3. 集成测试阶段
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: needs.unit-tests.outputs.test-results == '0' || github.event.inputs.skip_tests == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install requests selenium
+    
+    - name: Run integration tests
+      run: |
+        # 这里可以运行API集成测试
+        echo "Running integration tests..."
+        python -m pytest tests/integration/ -v || true
+
+  # 4. 构建阶段
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+    
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        image: ${{ steps.meta.outputs.tags }}
+        format: spdx-json
+        output-file: sbom.spdx.json
+    
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: sbom.spdx.json
+
+  # 5. 安全扫描阶段
+  security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ needs.build.outputs.image-tag }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # 6. 部署到暂存环境
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to staging server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        port: ${{ secrets.STAGING_PORT || 22 }}
+        script: |
+          cd ~/QAToolBox-staging
+          git pull origin develop
+          docker-compose -f docker-compose.staging.yml down
+          docker-compose -f docker-compose.staging.yml up -d --build
+          sleep 30
+          curl -f http://localhost:8001/health/ || exit 1
+
+  # 7. 部署到生产环境
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          cd ~/QAToolBox || cd /home/qatoolbox/QAToolBox || exit 1
+          git pull origin main
+          chmod +x quick-fix-deploy.sh
+          ./quick-fix-deploy.sh
+          
+          # 健康检查
+          sleep 60
+          if curl -f http://localhost/health/ > /dev/null 2>&1; then
+            echo "✅ 部署成功！"
+          else
+            echo "❌ 部署失败"
+            docker-compose logs web
+            exit 1
+          fi
+
+  # 8. 部署后验证
+  post-deployment-tests:
+    name: Post-Deployment Verification
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always() && (needs.deploy-production.result == 'success' || needs.deploy-production.result == 'failure')
+    steps:
+    - name: Health check
+      run: |
+        echo "Running health checks..."
+        curl -f http://47.103.143.152/health/ || exit 1
+        curl -f http://shenyiqing.xin/health/ || exit 1
+    
+    - name: Performance test
+      run: |
+        echo "Running basic performance test..."
+        for i in {1..10}; do
+          curl -w "@-" -o /dev/null -s http://shenyiqing.xin/ <<< "time_total: %{time_total}\n"
+        done
+
+  # 9. 通知阶段
+  notification:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, build, deploy-production, post-deployment-tests]
+    if: always()
+    steps:
+    - name: Prepare notification data
+      id: prepare
+      run: |
+        # 收集所有作业的状态
+        QUALITY_STATUS="${{ needs.code-quality.result || 'skipped' }}"
+        TESTS_STATUS="${{ needs.unit-tests.result || 'skipped' }}"
+        BUILD_STATUS="${{ needs.build.result || 'skipped' }}"
+        DEPLOY_STATUS="${{ needs.deploy-production.result || 'skipped' }}"
+        VERIFY_STATUS="${{ needs.post-deployment-tests.result || 'skipped' }}"
+        
+        # 确定整体状态
+        if [[ "$DEPLOY_STATUS" == "success" && "$VERIFY_STATUS" == "success" ]]; then
+          OVERALL_STATUS="SUCCESS"
+          STATUS_ICON="✅"
+        elif [[ "$DEPLOY_STATUS" == "failure" || "$VERIFY_STATUS" == "failure" ]]; then
+          OVERALL_STATUS="DEPLOYMENT_FAILED"
+          STATUS_ICON="❌"
+        elif [[ "$TESTS_STATUS" == "failure" ]]; then
+          OVERALL_STATUS="TESTS_FAILED"
+          STATUS_ICON="🧪❌"
+        elif [[ "$QUALITY_STATUS" == "failure" ]]; then
+          OVERALL_STATUS="QUALITY_FAILED"
+          STATUS_ICON="📊❌"
+        else
+          OVERALL_STATUS="PARTIAL"
+          STATUS_ICON="⚠️"
+        fi
+        
+        echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+        echo "status_icon=$STATUS_ICON" >> $GITHUB_OUTPUT
+        echo "quality_status=$QUALITY_STATUS" >> $GITHUB_OUTPUT
+        echo "tests_status=$TESTS_STATUS" >> $GITHUB_OUTPUT
+        echo "build_status=$BUILD_STATUS" >> $GITHUB_OUTPUT
+        echo "deploy_status=$DEPLOY_STATUS" >> $GITHUB_OUTPUT
+        echo "verify_status=$VERIFY_STATUS" >> $GITHUB_OUTPUT
+    
+    - name: Send email notification
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "${{ steps.prepare.outputs.status_icon }} QAToolBox CI/CD Pipeline - ${{ steps.prepare.outputs.overall_status }}"
+        to: ${{ env.NOTIFICATION_EMAIL }}
+        from: QAToolBox CI/CD <${{ secrets.EMAIL_USERNAME }}>
+        html_body: |
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; }
+              .header { background: #f4f4f4; padding: 20px; border-radius: 5px; }
+              .status-success { color: #28a745; }
+              .status-failure { color: #dc3545; }
+              .status-warning { color: #ffc107; }
+              .job-status { margin: 10px 0; padding: 10px; border-left: 4px solid #ddd; }
+              .job-success { border-left-color: #28a745; background: #f8fff9; }
+              .job-failure { border-left-color: #dc3545; background: #fff8f8; }
+              .job-warning { border-left-color: #ffc107; background: #fffef8; }
+              .details { margin: 20px 0; }
+              .footer { margin-top: 30px; font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>${{ steps.prepare.outputs.status_icon }} QAToolBox CI/CD Pipeline Report</h2>
+              <p><strong>Repository:</strong> ${{ github.repository }}</p>
+              <p><strong>Branch:</strong> ${{ github.ref_name }}</p>
+              <p><strong>Commit:</strong> ${{ github.sha }}</p>
+              <p><strong>Triggered by:</strong> ${{ github.actor }}</p>
+              <p><strong>Run ID:</strong> ${{ github.run_id }}</p>
+              <p><strong>Timestamp:</strong> ${{ github.event.head_commit.timestamp }}</p>
+            </div>
+            
+            <div class="details">
+              <h3>Pipeline Status Overview</h3>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.quality_status }}">
+                <strong>Code Quality & Security:</strong> ${{ steps.prepare.outputs.quality_status }}
+                <br><small>Static analysis, security scan, code formatting</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.tests_status }}">
+                <strong>Unit Tests & Coverage:</strong> ${{ steps.prepare.outputs.tests_status }}
+                <br><small>Test coverage: ${{ needs.unit-tests.outputs.coverage || 'N/A' }}%</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.build_status }}">
+                <strong>Build & Package:</strong> ${{ steps.prepare.outputs.build_status }}
+                <br><small>Docker image build and registry push</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.deploy_status }}">
+                <strong>Production Deployment:</strong> ${{ steps.prepare.outputs.deploy_status }}
+                <br><small>Deployment to server 47.103.143.152</small>
+              </div>
+              
+              <div class="job-status job-${{ steps.prepare.outputs.verify_status }}">
+                <strong>Post-Deployment Verification:</strong> ${{ steps.prepare.outputs.verify_status }}
+                <br><small>Health checks and basic performance tests</small>
+              </div>
+            </div>
+            
+            <div class="details">
+              <h3>Access Links</h3>
+              <ul>
+                <li><strong>Production URL:</strong> <a href="http://shenyiqing.xin">http://shenyiqing.xin</a></li>
+                <li><strong>IP Access:</strong> <a href="http://47.103.143.152">http://47.103.143.152</a></li>
+                <li><strong>GitHub Actions:</strong> <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Pipeline Details</a></li>
+              </ul>
+            </div>
+            
+            <div class="footer">
+              <p>This is an automated notification from QAToolBox CI/CD Pipeline.</p>
+              <p>For support, contact the development team.</p>
+            </div>
+          </body>
+          </html>
+    
+    - name: Create deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Overall Status:** ${{ steps.prepare.outputs.status_icon }} ${{ steps.prepare.outputs.overall_status }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Code Quality | ${{ steps.prepare.outputs.quality_status }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Unit Tests | ${{ steps.prepare.outputs.tests_status }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Build | ${{ steps.prepare.outputs.build_status }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Deploy | ${{ steps.prepare.outputs.deploy_status }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Verification | ${{ steps.prepare.outputs.verify_status }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Access URLs:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Production: http://shenyiqing.xin" >> $GITHUB_STEP_SUMMARY
+        echo "- IP Access: http://47.103.143.152" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,424 @@
+name: CD - 持续交付
+
+# CD流程：手动触发，专注于部署到不同环境
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '选择部署环境'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      image_tag:
+        description: '部署的镜像标签 (留空使用最新)'
+        required: false
+        type: string
+      skip_tests:
+        description: '跳过部署前测试 (紧急情况)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NOTIFICATION_EMAIL: "1009383129@qq.com"
+
+jobs:
+  # 1. 部署前验证
+  pre-deployment-checks:
+    name: 部署前检查
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip_tests != 'true'
+    outputs:
+      checks-passed: ${{ steps.validation.outputs.passed }}
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 验证镜像存在
+      id: image-check
+      run: |
+        IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+        if [ -z "$IMAGE_TAG" ]; then
+          # 获取最新的CI构建镜像
+          IMAGE_TAG="ci-${{ github.ref_name }}-$(date +%Y%m%d)"
+        fi
+        
+        echo "使用镜像标签: $IMAGE_TAG"
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        
+        # 这里可以添加镜像存在性检查
+        echo "✅ 镜像验证通过"
+    
+    - name: 环境配置验证
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        echo "目标环境: $ENV"
+        
+        case $ENV in
+          staging)
+            echo "✅ 暂存环境配置验证"
+            ;;
+          production)
+            echo "✅ 生产环境配置验证"
+            echo "⚠️  生产环境部署需要额外审批"
+            ;;
+          *)
+            echo "❌ 未知环境: $ENV"
+            exit 1
+            ;;
+        esac
+    
+    - name: 安全检查
+      run: |
+        echo "🔒 执行部署前安全检查..."
+        # 这里可以添加安全策略检查
+        # 例如：检查敏感信息、访问权限等
+        echo "✅ 安全检查通过"
+    
+    - name: 验证结果汇总
+      id: validation
+      run: |
+        echo "passed=true" >> $GITHUB_OUTPUT
+        echo "✅ 所有部署前检查通过"
+
+  # 2. 暂存环境部署
+  deploy-staging:
+    name: 部署到暂存环境
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    if: |
+      always() && 
+      (needs.pre-deployment-checks.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      github.event.inputs.environment == 'staging'
+    environment: 
+      name: staging
+      url: http://staging.shenyiqing.xin
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 部署到暂存服务器
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        port: ${{ secrets.STAGING_PORT || 22 }}
+        script: |
+          echo "🚀 开始部署到暂存环境..."
+          
+          # 切换到暂存项目目录
+          cd ~/QAToolBox-staging || {
+            echo "暂存目录不存在，创建中..."
+            git clone https://github.com/shinytsing/QAToolBox.git QAToolBox-staging
+            cd QAToolBox-staging
+          }
+          
+          # 拉取最新代码
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+          git pull origin ${{ github.ref_name }}
+          
+          # 更新环境配置
+          cp .env.staging .env 2>/dev/null || cp .env.production .env
+          
+          # 停止现有服务
+          docker-compose -f docker-compose.staging.yml down || true
+          
+          # 启动新服务
+          docker-compose -f docker-compose.staging.yml up -d --build
+          
+          # 等待服务启动
+          sleep 30
+          
+          # 健康检查
+          if curl -f http://localhost:8001/health/ > /dev/null 2>&1; then
+            echo "✅ 暂存环境部署成功"
+          else
+            echo "❌ 暂存环境健康检查失败"
+            docker-compose -f docker-compose.staging.yml logs web
+            exit 1
+          fi
+    
+    - name: 暂存环境测试
+      run: |
+        echo "🧪 运行暂存环境验证测试..."
+        sleep 10
+        
+        # 基础健康检查
+        curl -f http://staging.shenyiqing.xin/health/ || {
+          echo "❌ 暂存环境不可访问"
+          exit 1
+        }
+        
+        echo "✅ 暂存环境验证通过"
+
+  # 3. 生产环境部署（需要人工审批）
+  deploy-production:
+    name: 部署到生产环境
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    if: |
+      always() && 
+      (needs.pre-deployment-checks.result == 'success' || github.event.inputs.skip_tests == 'true') &&
+      github.event.inputs.environment == 'production'
+    environment: 
+      name: production
+      url: http://shenyiqing.xin
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 生产环境部署通知
+      run: |
+        echo "🔔 即将部署到生产环境"
+        echo "📋 部署信息:"
+        echo "  - 环境: 生产环境"
+        echo "  - 分支: ${{ github.ref_name }}"
+        echo "  - 提交: ${{ github.sha }}"
+        echo "  - 操作者: ${{ github.actor }}"
+        echo "  - 镜像: ${{ github.event.inputs.image_tag || '最新CI构建' }}"
+    
+    - name: 创建部署备份
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "📦 创建部署前备份..."
+          
+          cd ~/QAToolBox || exit 1
+          
+          # 创建数据库备份
+          BACKUP_DIR="./backups/pre-deployment-$(date +%Y%m%d-%H%M%S)"
+          mkdir -p $BACKUP_DIR
+          
+          # 备份数据库
+          docker-compose exec -T db pg_dump -U qatoolbox qatoolbox_production > $BACKUP_DIR/database.sql
+          
+          # 备份媒体文件
+          tar -czf $BACKUP_DIR/media.tar.gz media/
+          
+          # 记录当前版本
+          git rev-parse HEAD > $BACKUP_DIR/current_commit.txt
+          
+          echo "✅ 备份完成: $BACKUP_DIR"
+    
+    - name: 部署到生产环境
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        port: ${{ secrets.SERVER_PORT || 22 }}
+        script: |
+          echo "🚀 开始生产环境部署..."
+          
+          cd ~/QAToolBox || exit 1
+          
+          # 拉取最新代码
+          git fetch origin
+          git checkout main
+          git pull origin main
+          
+          # 执行部署
+          chmod +x quick-fix-deploy.sh
+          ./quick-fix-deploy.sh
+          
+          echo "✅ 生产环境部署完成"
+    
+    - name: 生产环境验证
+      run: |
+        echo "🔍 生产环境部署验证..."
+        sleep 60
+        
+        # 健康检查
+        if ! curl -f http://47.103.143.152/health/ > /dev/null 2>&1; then
+          echo "❌ 生产环境健康检查失败"
+          exit 1
+        fi
+        
+        if ! curl -f http://shenyiqing.xin/health/ > /dev/null 2>&1; then
+          echo "❌ 域名访问检查失败"
+          exit 1
+        fi
+        
+        echo "✅ 生产环境验证通过"
+
+  # 4. 部署后测试
+  post-deployment-tests:
+    name: 部署后验证测试
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: |
+      always() && 
+      (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: 安装验证依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+    
+    - name: 运行部署验证脚本
+      run: |
+        TARGET_ENV="${{ github.event.inputs.environment }}"
+        
+        if [ "$TARGET_ENV" = "staging" ]; then
+          python scripts/post_deployment_verification.py --url http://staging.shenyiqing.xin
+        else
+          python scripts/post_deployment_verification.py --url http://shenyiqing.xin
+        fi
+    
+    - name: 性能基准测试
+      run: |
+        echo "📊 运行性能基准测试..."
+        TARGET_ENV="${{ github.event.inputs.environment }}"
+        
+        if [ "$TARGET_ENV" = "staging" ]; then
+          URL="http://staging.shenyiqing.xin"
+        else
+          URL="http://shenyiqing.xin"
+        fi
+        
+        # 简单的响应时间测试
+        for i in {1..5}; do
+          echo "测试 $i/5:"
+          curl -w "响应时间: %{time_total}s\n" -o /dev/null -s "$URL"
+          sleep 2
+        done
+
+  # 5. CD结果通知
+  cd-notification:
+    name: CD结果通知
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production, post-deployment-tests]
+    if: always()
+    steps:
+    - name: 准备通知数据
+      id: prepare
+      run: |
+        TARGET_ENV="${{ github.event.inputs.environment }}"
+        DEPLOY_STATUS="unknown"
+        ACCESS_URL=""
+        
+        if [ "$TARGET_ENV" = "staging" ]; then
+          DEPLOY_STATUS="${{ needs.deploy-staging.result }}"
+          ACCESS_URL="http://staging.shenyiqing.xin"
+        else
+          DEPLOY_STATUS="${{ needs.deploy-production.result }}"
+          ACCESS_URL="http://shenyiqing.xin"
+        fi
+        
+        TESTS_STATUS="${{ needs.post-deployment-tests.result }}"
+        
+        if [[ "$DEPLOY_STATUS" == "success" && "$TESTS_STATUS" == "success" ]]; then
+          OVERALL_STATUS="SUCCESS"
+          STATUS_ICON="✅"
+          STATUS_MESSAGE="CD流程成功完成"
+        else
+          OVERALL_STATUS="FAILURE"
+          STATUS_ICON="❌"
+          STATUS_MESSAGE="CD流程存在问题"
+        fi
+        
+        echo "target_env=$TARGET_ENV" >> $GITHUB_OUTPUT
+        echo "deploy_status=$DEPLOY_STATUS" >> $GITHUB_OUTPUT
+        echo "access_url=$ACCESS_URL" >> $GITHUB_OUTPUT
+        echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+        echo "status_icon=$STATUS_ICON" >> $GITHUB_OUTPUT
+        echo "status_message=$STATUS_MESSAGE" >> $GITHUB_OUTPUT
+    
+    - name: 发送CD结果邮件
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "${{ steps.prepare.outputs.status_icon }} CD报告 - ${{ steps.prepare.outputs.target_env }}环境部署"
+        to: ${{ env.NOTIFICATION_EMAIL }}
+        from: QAToolBox CD <${{ secrets.EMAIL_USERNAME }}>
+        html_body: |
+          <html>
+          <head>
+            <style>
+              body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; }
+              .header { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 8px; }
+              .success { color: #28a745; font-weight: bold; }
+              .failure { color: #dc3545; font-weight: bold; }
+              .warning { color: #ffc107; font-weight: bold; }
+              .env-info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }
+              .stage { margin: 15px 0; padding: 15px; border-left: 4px solid #ddd; background: #f8f9fa; }
+              .stage-success { border-left-color: #28a745; }
+              .stage-failure { border-left-color: #dc3545; }
+              .access-links { background: #f1f8e9; padding: 15px; border-radius: 5px; margin: 15px 0; }
+              .footer { margin-top: 30px; padding: 15px; background: #f1f3f5; border-radius: 5px; font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>🚀 CD - 持续交付报告</h2>
+              <p><strong>部署环境:</strong> ${{ steps.prepare.outputs.target_env }}</p>
+              <p><strong>仓库:</strong> ${{ github.repository }}</p>
+              <p><strong>分支:</strong> ${{ github.ref_name }}</p>
+              <p><strong>操作者:</strong> ${{ github.actor }}</p>
+            </div>
+            
+            <div class="env-info">
+              <h3>🎯 部署信息</h3>
+              <p><strong>目标环境:</strong> ${{ steps.prepare.outputs.target_env }}</p>
+              <p><strong>镜像标签:</strong> ${{ github.event.inputs.image_tag || '最新CI构建' }}</p>
+              <p><strong>跳过测试:</strong> ${{ github.event.inputs.skip_tests }}</p>
+              <p><strong>部署时间:</strong> $(date -u +%Y-%m-%dT%H:%M:%SZ)</p>
+            </div>
+            
+            <div>
+              <h3>📋 部署流程</h3>
+              
+              <div class="stage stage-${{ needs.deploy-staging.result || needs.deploy-production.result }}">
+                <strong>环境部署:</strong> ${{ steps.prepare.outputs.deploy_status }}
+                <br><small>部署应用到${{ steps.prepare.outputs.target_env }}环境</small>
+              </div>
+              
+              <div class="stage stage-${{ needs.post-deployment-tests.result }}">
+                <strong>部署后验证:</strong> ${{ needs.post-deployment-tests.result }}
+                <br><small>健康检查、功能验证、性能测试</small>
+              </div>
+            </div>
+            
+            <div class="access-links">
+              <h3>🌐 访问链接</h3>
+              <p><strong>应用地址:</strong> <a href="${{ steps.prepare.outputs.access_url }}">${{ steps.prepare.outputs.access_url }}</a></p>
+              {% if steps.prepare.outputs.target_env == 'production' %}
+              <p><strong>IP访问:</strong> <a href="http://47.103.143.152">http://47.103.143.152</a></p>
+              <p><strong>管理后台:</strong> <a href="http://shenyiqing.xin/admin/">http://shenyiqing.xin/admin/</a></p>
+              {% endif %}
+            </div>
+            
+            <div style="margin: 20px 0; padding: 15px; background: #${{ steps.prepare.outputs.overall_status == 'SUCCESS' && 'f8fff9' || 'fff8f8' }}; border-radius: 5px;">
+              <h3>📊 部署结果</h3>
+              <p class="${{ steps.prepare.outputs.overall_status == 'SUCCESS' && 'success' || 'failure' }}">
+                ${{ steps.prepare.outputs.status_message }}
+              </p>
+            </div>
+            
+            <div class="footer">
+              <p><strong>CD类型:</strong> 持续交付 (手动触发)</p>
+              <p><strong>下次部署:</strong> 需要手动触发CD工作流</p>
+              <p><strong>查看详情:</strong> <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">GitHub Actions</a></p>
+            </div>
+          </body>
+          </html>

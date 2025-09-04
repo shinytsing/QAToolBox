@@ -1,0 +1,522 @@
+name: CI - 持续集成
+
+# CI流程：每次代码提交都触发，专注于代码质量和测试
+on:
+  push:
+    branches: [ develop, feature/*, hotfix/* ]
+  pull_request:
+    branches: [ develop, main ]
+  workflow_dispatch:
+
+env:
+  NOTIFICATION_EMAIL: "1009383129@qq.com"
+
+jobs:
+  # 1. 代码质量检查 - CI的核心组成部分
+  code-quality:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    outputs:
+      quality-score: ${{ steps.quality-gate.outputs.score }}
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史用于分析
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 black isort mypy bandit safety pylint
+    
+    - name: 代码格式化检查
+      id: formatting
+      run: |
+        echo "::group::Black代码格式检查"
+        BLACK_RESULT=0
+        black --check --diff . || BLACK_RESULT=$?
+        echo "black_score=$BLACK_RESULT" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+        
+        echo "::group::导入排序检查"
+        ISORT_RESULT=0
+        isort --check-only --diff . || ISORT_RESULT=$?
+        echo "isort_score=$ISORT_RESULT" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+    
+    - name: 静态代码分析
+      id: linting
+      run: |
+        echo "::group::Flake8代码检查"
+        FLAKE8_ERRORS=$(flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics | tail -1)
+        echo "flake8_errors=$FLAKE8_ERRORS" >> $GITHUB_OUTPUT
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics --format=json --output-file=flake8-report.json
+        echo "::endgroup::"
+        
+        echo "::group::MyPy类型检查"
+        MYPY_RESULT=0
+        mypy apps/ --ignore-missing-imports --junit-xml=mypy-report.xml || MYPY_RESULT=$?
+        echo "mypy_score=$MYPY_RESULT" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+    
+    - name: 安全漏洞扫描
+      id: security
+      run: |
+        echo "::group::Bandit安全扫描"
+        bandit -r apps/ -f json -o bandit-report.json || true
+        SECURITY_ISSUES=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
+        echo "security_issues=$SECURITY_ISSUES" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+        
+        echo "::group::依赖漏洞扫描"
+        safety check --json --output safety-report.json || true
+        VULNERABILITY_COUNT=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+        echo "vulnerabilities=$VULNERABILITY_COUNT" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+    
+    - name: 代码复杂度分析
+      id: complexity
+      run: |
+        echo "::group::代码复杂度分析"
+        pylint apps/ --output-format=json --reports=yes > pylint-report.json || true
+        # 提取代码质量评分
+        PYLINT_SCORE=$(jq '.score // 0' pylint-report.json 2>/dev/null || echo "0")
+        echo "pylint_score=$PYLINT_SCORE" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+    
+    - name: 质量门禁评估
+      id: quality-gate
+      run: |
+        # 计算综合质量评分
+        BLACK_SCORE=${{ steps.formatting.outputs.black_score }}
+        ISORT_SCORE=${{ steps.formatting.outputs.isort_score }}
+        FLAKE8_ERRORS=${{ steps.linting.outputs.flake8_errors }}
+        MYPY_SCORE=${{ steps.linting.outputs.mypy_score }}
+        SECURITY_ISSUES=${{ steps.security.outputs.security_issues }}
+        VULNERABILITIES=${{ steps.security.outputs.vulnerabilities }}
+        
+        QUALITY_SCORE=100
+        
+        # 格式化问题扣分
+        if [ "$BLACK_SCORE" != "0" ]; then
+          QUALITY_SCORE=$((QUALITY_SCORE - 20))
+          echo "::error::代码格式不符合标准"
+        fi
+        
+        if [ "$ISORT_SCORE" != "0" ]; then
+          QUALITY_SCORE=$((QUALITY_SCORE - 10))
+          echo "::error::导入排序不符合标准"
+        fi
+        
+        # 代码错误扣分
+        if [ "$FLAKE8_ERRORS" -gt "0" ]; then
+          QUALITY_SCORE=$((QUALITY_SCORE - FLAKE8_ERRORS * 5))
+          echo "::error::发现 $FLAKE8_ERRORS 个代码问题"
+        fi
+        
+        # 安全问题扣分
+        if [ "$SECURITY_ISSUES" -gt "0" ]; then
+          QUALITY_SCORE=$((QUALITY_SCORE - SECURITY_ISSUES * 10))
+          echo "::error::发现 $SECURITY_ISSUES 个安全问题"
+        fi
+        
+        if [ "$VULNERABILITIES" -gt "0" ]; then
+          QUALITY_SCORE=$((QUALITY_SCORE - VULNERABILITIES * 15))
+          echo "::error::发现 $VULNERABILITIES 个依赖漏洞"
+        fi
+        
+        # 确保评分不低于0
+        if [ "$QUALITY_SCORE" -lt "0" ]; then
+          QUALITY_SCORE=0
+        fi
+        
+        echo "score=$QUALITY_SCORE" >> $GITHUB_OUTPUT
+        echo "代码质量评分: $QUALITY_SCORE/100"
+        
+        # 质量门禁：评分低于70分不允许通过
+        if [ "$QUALITY_SCORE" -lt "70" ]; then
+          echo "::error::代码质量不达标，评分: $QUALITY_SCORE/100 (要求: ≥70)"
+          exit 1
+        else
+          echo "::notice::代码质量检查通过，评分: $QUALITY_SCORE/100"
+        fi
+    
+    - name: 上传质量报告
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: quality-reports-${{ github.run_id }}
+        path: |
+          flake8-report.json
+          mypy-report.xml
+          bandit-report.json
+          safety-report.json
+          pylint-report.json
+        retention-days: 30
+
+  # 2. 单元测试 - CI的核心组成部分
+  unit-tests:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    needs: code-quality
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_qatoolbox
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    outputs:
+      test-result: ${{ steps.tests.outputs.result }}
+      coverage: ${{ steps.coverage.outputs.percentage }}
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-django pytest-cov pytest-xdist pytest-html coverage
+    
+    - name: 数据库迁移
+      run: |
+        python manage.py migrate --settings=config.settings.testing
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
+        REDIS_URL: redis://localhost:6379/0
+    
+    - name: 运行单元测试
+      id: tests
+      run: |
+        pytest tests/ \
+          --cov=apps \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term \
+          --junit-xml=test-results.xml \
+          --html=test-report.html \
+          --self-contained-html \
+          -v \
+          --maxfail=10 \
+          --tb=short \
+          --durations=10
+        
+        TEST_RESULT=$?
+        echo "result=$TEST_RESULT" >> $GITHUB_OUTPUT
+        
+        if [ $TEST_RESULT -eq 0 ]; then
+          echo "::notice::所有单元测试通过"
+        else
+          echo "::error::单元测试失败"
+        fi
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
+        REDIS_URL: redis://localhost:6379/0
+    
+    - name: 提取覆盖率
+      id: coverage
+      run: |
+        # 提取覆盖率百分比
+        COVERAGE=$(python -c "
+        import xml.etree.ElementTree as ET
+        try:
+            root = ET.parse('coverage.xml').getroot()
+            coverage = float(root.attrib['line-rate']) * 100
+            print(f'{coverage:.1f}')
+        except:
+            print('0.0')
+        ")
+        echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "测试覆盖率: $COVERAGE%"
+        
+        # 覆盖率门禁：低于80%不允许通过
+        COVERAGE_INT=$(echo $COVERAGE | cut -d. -f1)
+        if [ "$COVERAGE_INT" -lt "80" ]; then
+          echo "::error::测试覆盖率不达标: $COVERAGE% (要求: ≥80%)"
+          exit 1
+        else
+          echo "::notice::测试覆盖率达标: $COVERAGE%"
+        fi
+    
+    - name: 上传测试报告
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports-${{ github.run_id }}
+        path: |
+          test-results.xml
+          test-report.html
+          coverage.xml
+          htmlcov/
+        retention-days: 30
+    
+    - name: PR评论测试结果
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const testResult = '${{ steps.tests.outputs.result }}';
+          const coverage = '${{ steps.coverage.outputs.percentage }}';
+          const qualityScore = '${{ needs.code-quality.outputs.quality-score }}';
+          
+          const testStatus = testResult == '0' ? '✅ 通过' : '❌ 失败';
+          const coverageStatus = parseFloat(coverage) >= 80 ? '✅' : '❌';
+          const qualityStatus = parseInt(qualityScore) >= 70 ? '✅' : '❌';
+          
+          const comment = `
+          ## 🔍 CI - 持续集成报告
+          
+          | 检查项目 | 状态 | 结果 |
+          |---------|------|------|
+          | 代码质量 | ${qualityStatus} | ${qualityScore}/100 |
+          | 单元测试 | ${testStatus} | ${testResult == '0' ? '所有测试通过' : '测试失败'} |
+          | 测试覆盖率 | ${coverageStatus} | ${coverage}% |
+          
+          ### 📊 详细信息
+          - **代码质量要求**: ≥70分
+          - **测试覆盖率要求**: ≥80%
+          - **构建时间**: ${{ github.event.head_commit.timestamp }}
+          
+          [查看详细报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # 3. 集成测试
+  integration-tests:
+    name: 集成测试
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: needs.unit-tests.outputs.test-result == '0'
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install requests selenium pytest
+    
+    - name: 运行集成测试
+      run: |
+        echo "运行API集成测试..."
+        pytest tests/integration/ -v --tb=short || true
+        echo "集成测试完成"
+
+  # 4. 构建制品 - CI的最终产物
+  build-artifacts:
+    name: 构建部署制品
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests]
+    if: |
+      always() && 
+      needs.code-quality.result == 'success' && 
+      needs.unit-tests.result == 'success' &&
+      (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped')
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      build-time: ${{ steps.build-info.outputs.time }}
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+    
+    - name: 设置Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 登录容器注册表
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 提取元数据
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=ci-{{branch}}-{{date 'YYYYMMDD-HHmmss'}}
+    
+    - name: 构建Docker镜像
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+    
+    - name: 记录构建信息
+      id: build-info
+      run: |
+        echo "time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+        echo "✅ Docker镜像构建完成"
+        echo "📦 镜像标签: ${{ steps.meta.outputs.tags }}"
+
+  # 5. CI结果通知
+  ci-notification:
+    name: CI结果通知
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests, build-artifacts]
+    if: always()
+    steps:
+    - name: 准备通知数据
+      id: prepare
+      run: |
+        QUALITY_STATUS="${{ needs.code-quality.result }}"
+        TESTS_STATUS="${{ needs.unit-tests.result }}"
+        INTEGRATION_STATUS="${{ needs.integration-tests.result }}"
+        BUILD_STATUS="${{ needs.build-artifacts.result }}"
+        
+        QUALITY_SCORE="${{ needs.code-quality.outputs.quality-score || '0' }}"
+        COVERAGE="${{ needs.unit-tests.outputs.coverage || '0' }}"
+        
+        # 确定整体CI状态
+        if [[ "$QUALITY_STATUS" == "success" && "$TESTS_STATUS" == "success" && "$BUILD_STATUS" == "success" ]]; then
+          OVERALL_STATUS="SUCCESS"
+          STATUS_ICON="✅"
+          STATUS_MESSAGE="CI流程成功完成"
+        else
+          OVERALL_STATUS="FAILURE"
+          STATUS_ICON="❌"
+          STATUS_MESSAGE="CI流程存在问题"
+        fi
+        
+        echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+        echo "status_icon=$STATUS_ICON" >> $GITHUB_OUTPUT
+        echo "status_message=$STATUS_MESSAGE" >> $GITHUB_OUTPUT
+        echo "quality_score=$QUALITY_SCORE" >> $GITHUB_OUTPUT
+        echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+    
+    - name: 发送CI结果邮件
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "${{ steps.prepare.outputs.status_icon }} CI报告 - ${{ github.repository }} (${{ github.ref_name }})"
+        to: ${{ env.NOTIFICATION_EMAIL }}
+        from: QAToolBox CI <${{ secrets.EMAIL_USERNAME }}>
+        html_body: |
+          <html>
+          <head>
+            <style>
+              body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; }
+              .status-success { color: #28a745; font-weight: bold; }
+              .status-failure { color: #dc3545; font-weight: bold; }
+              .metric { display: inline-block; margin: 10px 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; }
+              .stage { margin: 15px 0; padding: 15px; border-left: 4px solid #ddd; background: #f8f9fa; }
+              .stage-success { border-left-color: #28a745; }
+              .stage-failure { border-left-color: #dc3545; }
+              .footer { margin-top: 30px; padding: 15px; background: #f1f3f5; border-radius: 5px; font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>🔄 CI - 持续集成报告</h2>
+              <p><strong>仓库:</strong> ${{ github.repository }}</p>
+              <p><strong>分支:</strong> ${{ github.ref_name }}</p>
+              <p><strong>提交:</strong> ${{ github.sha }}</p>
+              <p><strong>触发者:</strong> ${{ github.actor }}</p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+              <h3>📊 CI指标概览</h3>
+              <div class="metric">
+                <strong>代码质量:</strong> ${{ steps.prepare.outputs.quality_score }}/100
+              </div>
+              <div class="metric">
+                <strong>测试覆盖率:</strong> ${{ steps.prepare.outputs.coverage }}%
+              </div>
+              <div class="metric">
+                <strong>整体状态:</strong> 
+                <span class="status-${{ needs.code-quality.result == 'success' && needs.unit-tests.result == 'success' && needs.build-artifacts.result == 'success' && 'success' || 'failure' }}">
+                  ${{ steps.prepare.outputs.status_message }}
+                </span>
+              </div>
+            </div>
+            
+            <div>
+              <h3>🔍 各阶段详情</h3>
+              
+              <div class="stage stage-${{ needs.code-quality.result }}">
+                <strong>代码质量检查:</strong> ${{ needs.code-quality.result }}
+                <br><small>静态分析、格式化检查、安全扫描</small>
+              </div>
+              
+              <div class="stage stage-${{ needs.unit-tests.result }}">
+                <strong>单元测试:</strong> ${{ needs.unit-tests.result }}
+                <br><small>测试覆盖率: ${{ steps.prepare.outputs.coverage }}%</small>
+              </div>
+              
+              <div class="stage stage-${{ needs.integration-tests.result }}">
+                <strong>集成测试:</strong> ${{ needs.integration-tests.result }}
+                <br><small>API集成测试和端到端测试</small>
+              </div>
+              
+              <div class="stage stage-${{ needs.build-artifacts.result }}">
+                <strong>构建制品:</strong> ${{ needs.build-artifacts.result }}
+                <br><small>Docker镜像构建和推送</small>
+              </div>
+            </div>
+            
+            <div class="footer">
+              <p><strong>CI完成时间:</strong> ${{ needs.build-artifacts.outputs.build-time || '未知' }}</p>
+              <p><strong>下一步:</strong> 代码合并后可触发CD流程进行部署</p>
+              <p><strong>查看详情:</strong> <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">GitHub Actions</a></p>
+            </div>
+          </body>
+          </html>
