@@ -18,6 +18,12 @@ from faker import Faker
 
 # 设置Django配置
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
+# 强制设置测试数据库环境变量
+os.environ["DB_NAME"] = "qatoolbox_test"
+os.environ["DB_USER"] = "gaojie"
+os.environ["DB_PASSWORD"] = ""
+os.environ["DB_HOST"] = "localhost"
+os.environ["DB_PORT"] = "5432"
 django.setup()
 
 User = get_user_model()
@@ -27,7 +33,18 @@ fake = Faker("zh_CN")
 @pytest.fixture(scope="session")
 def django_db_setup():
     """数据库设置"""
-    settings.DATABASES["default"] = {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}
+    # 使用PostgreSQL数据库进行测试，与生产环境保持一致
+    settings.DATABASES["default"] = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "qatoolbox_test",
+        "USER": "gaojie",
+        "PASSWORD": "",
+        "HOST": "localhost",
+        "PORT": "5432",
+        "OPTIONS": {
+            "connect_timeout": 10,
+        }
+    }
 
 
 @pytest.fixture

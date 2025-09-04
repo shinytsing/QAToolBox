@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+# 延迟导入以避免循环导入
+
 
 class FitnessAchievementModule(models.Model):
     """健身成就模块"""
@@ -102,6 +104,8 @@ class EnhancedFitnessAchievement(models.Model):
 
     def get_unlock_progress(self, user):
         """获取用户解锁进度"""
+        from .legacy_models import UserFitnessAchievement
+        
         try:
             user_achievement = UserFitnessAchievement.objects.get(user=user, achievement=self)
             return user_achievement.progress
@@ -195,7 +199,7 @@ class EnhancedFitnessAchievement(models.Model):
 
     def _check_consistency_condition(self, user, condition):
         """检查连续性条件"""
-        from .fitness_models import FitnessStrengthProfile
+        from .fitness_models import EnhancedFitnessStrengthProfile
 
         if "streak_days" in condition:
             try:
@@ -216,6 +220,7 @@ class EnhancedFitnessAchievement(models.Model):
     def _check_social_condition(self, user, condition):
         """检查社交互动条件"""
         if "shared_achievements" in condition:
+            from .legacy_models import UserFitnessAchievement
             count = UserFitnessAchievement.objects.filter(user=user, is_shared=True).count()
             return count >= condition["shared_achievements"]
 
@@ -230,6 +235,7 @@ class EnhancedFitnessAchievement(models.Model):
             return count >= condition["total_workouts"]
 
         if "achievements_earned" in condition:
+            from .legacy_models import UserFitnessAchievement
             count = UserFitnessAchievement.objects.filter(user=user).count()
             return count >= condition["achievements_earned"]
 
@@ -293,6 +299,7 @@ class EnhancedUserFitnessAchievement(models.Model):
         """佩戴徽章"""
         if self.is_completed and not self.is_equipped:
             # 取消其他同模块的佩戴状态
+            from .legacy_models import UserFitnessAchievement
             UserFitnessAchievement.objects.filter(
                 user=self.user, achievement__module=self.achievement.module, is_equipped=True
             ).update(is_equipped=False, equipped_at=None)

@@ -105,13 +105,23 @@ from .models import (
     BuddyEventReport,
     BuddyEventReview,
     BuddyUserProfile,
+    CheckInCalendar,
     CodeWorkoutSession,
     CoPilotCollaboration,
     DailyWorkoutChallenge,
     DesireDashboard,
     DesireFulfillment,
     DesireItem,
+    EnhancedFitnessStrengthProfile,
     ExhaustionProof,
+    ExerciseWeightRecord,
+    FitnessAchievement,
+    FitnessCommunityComment,
+    FitnessCommunityLike,
+    FitnessCommunityPost,
+    FitnessFollow,
+    FitnessStrengthProfile,
+    FitnessUserProfile,
     FitnessWorkoutSession,
     FoodHistory,
     FoodItem,
@@ -131,6 +141,7 @@ from .models import (
     TarotReading,
     TarotSpread,
     TravelGuide,
+    UserFitnessAchievement,
     VanityTask,
     VanityWealth,
     WorkoutDashboard,
@@ -145,9 +156,9 @@ from .services.tarot_service import TarotService
 # 三重觉醒改造计划API
 from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProcessor
 
-# 自动求职机相关模型导入 - 已隐藏
-# from .models import JobSearchRequest, JobApplication, JobSearchProfile, JobSearchStatistics
-# from .services.job_search_service import JobSearchService
+# 自动求职机相关模型导入
+from .models import JobSearchRequest, JobApplication, JobSearchProfile, JobSearchStatistics
+from .services.job_search_service import JobSearchService
 
 
 @login_required

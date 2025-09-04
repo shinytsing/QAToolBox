@@ -17,6 +17,7 @@ from apps.tools.models.fitness_achievement_models import (
     UserBadgeShowcase,
 )
 from apps.tools.models.fitness_models import EnhancedFitnessUserProfile
+from apps.tools.models.legacy_models import FitnessUserProfile
 from apps.tools.models.training_plan_models import (
     EnhancedTrainingPlan,
     PlanLibrary,

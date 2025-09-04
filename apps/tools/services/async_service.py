@@ -117,6 +117,8 @@ def update_user_stats(user_id: int):
 def update_global_stats():
     """更新全局统计信息"""
     try:
+        from django.contrib.auth.models import User
+        
         stats = {
             "total_users": User.objects.count(),
             "total_capsules": TimeCapsule.objects.count(),

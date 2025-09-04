@@ -100,6 +100,9 @@ from .social_media_models import (
 # 塔罗牌模型从tarot_models导入
 from .tarot_models import TarotCard, TarotCommunity, TarotCommunityComment, TarotEnergyCalendar, TarotReading, TarotSpread
 
+# 健身模型从fitness_models导入
+from .fitness_models import EnhancedFitnessStrengthProfile, EnhancedExerciseWeightRecord
+
 # 旅游攻略模型从travel_models导入
 from .travel_models import (
     TravelCity,
@@ -163,6 +166,8 @@ __all__ = [
     "WorkoutDashboard",
     "TrainingPlan",
     "FitnessUserProfile",
+    "EnhancedFitnessStrengthProfile",
+    "EnhancedExerciseWeightRecord",
     # NutriCoach Pro相关模型已隐藏
     # 'DietPlan',
     # 'Meal',

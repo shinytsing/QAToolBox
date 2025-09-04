@@ -14,7 +14,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import FileResponse, Http404, HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -23,8 +23,11 @@ from django.views import View
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from apps.tools.models.chat_models import ChatMessage, ChatRoom, HeartLinkRequest
+from apps.tools.models import UserOnlineStatus
 
 from .base import BaseView, CachedViewMixin, PaginationMixin, cache_response
 
@@ -186,6 +189,8 @@ def send_message(request, room_id):
         create_chat_notification(message)
 
         # 通过WebSocket发送消息
+        channel_layer = get_channel_layer()
+        channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             f"chat_{room_id}",
             {
@@ -272,6 +277,7 @@ def join_chat_room(request, room_id):
         room.save()
 
         # 通过WebSocket通知
+        channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             f"chat_{room_id}",
             {
@@ -320,6 +326,7 @@ def leave_chat_room(request, room_id):
         room.save()
 
         # 通过WebSocket通知
+        channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             f"chat_{room_id}",
             {
@@ -594,6 +601,7 @@ def accept_heart_link(request, request_id):
         room.save()
 
         # 通过WebSocket通知
+        channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             f"chat_{room.room_id}",
             {
@@ -695,6 +703,7 @@ class ChatAPIView(BaseView, CachedViewMixin, PaginationMixin):
             create_chat_notification(message)
 
             # 通过WebSocket发送消息
+            channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 f"chat_{room_id}",
                 {

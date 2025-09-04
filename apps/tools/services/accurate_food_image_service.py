@@ -24,6 +24,9 @@ class AccurateFoodImageService:
         self.accurate_food_images = {}
         self.comprehensive_images = get_food_images_by_cuisine("chinese")
         self.accurate_food_images.update(self.comprehensive_images)
+        
+        # 保存导入的函数引用
+        self.get_food_image = get_food_image
 
         # 备用图片池 - 按菜系分类
         self.fallback_images_by_cuisine = {
@@ -59,7 +62,7 @@ class AccurateFoodImageService:
     def get_accurate_food_image(self, food_name: str, cuisine: str = "chinese") -> str:
         """获取准确的食物图片URL"""
         # 使用全面的图片映射服务
-        return get_food_image(food_name, cuisine)
+        return self.get_food_image(food_name, cuisine)
 
     def search_pexels_image(self, query: str) -> Optional[str]:
         """使用Pexels API搜索食物图片"""

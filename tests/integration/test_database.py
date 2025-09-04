@@ -182,9 +182,9 @@ class TestDatabaseQueries:
         assert len(users) == 3
 
         # 测试聚合查询
-        from django.db.models import Count
+        from django.db.models import Count, Q
 
-        stats = User.objects.aggregate(total=Count("id"), active=Count("id", filter=models.Q(is_active=True)))
+        stats = User.objects.aggregate(total=Count("id"), active=Count("id", filter=Q(is_active=True)))
         assert stats["total"] >= 8
         assert stats["active"] >= 5
 
