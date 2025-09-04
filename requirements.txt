@@ -170,4 +170,4 @@ typing_extensions==4.12.2
 tzdata==2025.1
 wcwidth==0.2.13
 webencodings==0.5.1
-zipp==3.21.0# 强制更新以触发新的GitHub Actions构建
+zipp==3.21.0
