@@ -94,14 +94,8 @@ jobs:
         mypy apps/ --ignore-missing-imports --junit-xml=mypy-report.xml
         echo "::endgroup::"
     
-    - name: 安全漏洞扫描
+    - name: 依赖漏洞扫描
       run: |
-        echo "::group::Bandit安全扫描"
-        echo "跳过安全扫描以避免工作流中断"
-        echo "注意：安全扫描已在本地完成，显示0个问题"
-        echo "安全扫描完成"
-        echo "::endgroup::"
-        
         echo "::group::依赖漏洞扫描"
         safety check --json --output safety-report.json || true
         safety check
