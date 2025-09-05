@@ -6,7 +6,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    DJANGO_SETTINGS_MODULE=config.settings.production
+    DJANGO_SETTINGS_MODULE=config.settings.production_simple
 
 # 设置工作目录
 WORKDIR /app
@@ -64,10 +64,11 @@ RUN mkdir -p /app/logs \
     && mkdir -p /app/task_storage
 
 # 设置权限
-RUN chmod +x /app/manage.py
+RUN chmod +x /app/manage.py \
+    && chmod +x /app/start.sh
 
-# 收集静态文件
-RUN python manage.py collectstatic --noinput --settings=config.settings.production
+# 在构建阶段跳过collectstatic，在容器启动时执行
+# 这样可以避免在构建时需要数据库连接
 
 # 创建非root用户
 RUN useradd --create-home --shell /bin/bash app \
@@ -81,5 +82,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-# 启动命令
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--keep-alive", "2", "--max-requests", "1000", "--max-requests-jitter", "100", "wsgi:application"]
+# 启动命令 - 使用启动脚本
+CMD ["./start.sh"]
