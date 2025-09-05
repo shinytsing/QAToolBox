@@ -43,7 +43,7 @@ def django_db_setup():
         "PORT": "5432",
         "OPTIONS": {
             "connect_timeout": 10,
-        }
+        },
     }
 
 

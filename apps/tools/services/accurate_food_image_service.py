@@ -24,7 +24,7 @@ class AccurateFoodImageService:
         self.accurate_food_images = {}
         self.comprehensive_images = get_food_images_by_cuisine("chinese")
         self.accurate_food_images.update(self.comprehensive_images)
-        
+
         # 保存导入的函数引用
         self.get_food_image = get_food_image
 

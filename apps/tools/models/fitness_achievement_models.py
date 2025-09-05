@@ -105,7 +105,7 @@ class EnhancedFitnessAchievement(models.Model):
     def get_unlock_progress(self, user):
         """获取用户解锁进度"""
         from .legacy_models import UserFitnessAchievement
-        
+
         try:
             user_achievement = UserFitnessAchievement.objects.get(user=user, achievement=self)
             return user_achievement.progress
@@ -221,6 +221,7 @@ class EnhancedFitnessAchievement(models.Model):
         """检查社交互动条件"""
         if "shared_achievements" in condition:
             from .legacy_models import UserFitnessAchievement
+
             count = UserFitnessAchievement.objects.filter(user=user, is_shared=True).count()
             return count >= condition["shared_achievements"]
 
@@ -236,6 +237,7 @@ class EnhancedFitnessAchievement(models.Model):
 
         if "achievements_earned" in condition:
             from .legacy_models import UserFitnessAchievement
+
             count = UserFitnessAchievement.objects.filter(user=user).count()
             return count >= condition["achievements_earned"]
 
@@ -300,6 +302,7 @@ class EnhancedUserFitnessAchievement(models.Model):
         if self.is_completed and not self.is_equipped:
             # 取消其他同模块的佩戴状态
             from .legacy_models import UserFitnessAchievement
+
             UserFitnessAchievement.objects.filter(
                 user=self.user, achievement__module=self.achievement.module, is_equipped=True
             ).update(is_equipped=False, equipped_at=None)
