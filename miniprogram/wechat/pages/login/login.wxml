@@ -1,0 +1,133 @@
+<!--pages/login/login.wxml-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <view class="page-title">欢迎使用</view>
+    <view class="page-subtitle">QAToolBox</view>
+  </view>
+
+  <!-- 登录方式切换 -->
+  <view class="login-tabs">
+    <view 
+      class="tab-item {{loginType === 'password' ? 'active' : ''}}"
+      data-type="password"
+      bindtap="onSwitchLoginType"
+    >
+      密码登录
+    </view>
+    <view 
+      class="tab-item {{loginType === 'phone' ? 'active' : ''}}"
+      data-type="phone"
+      bindtap="onSwitchLoginType"
+    >
+      手机登录
+    </view>
+    <view 
+      class="tab-item {{loginType === 'wechat' ? 'active' : ''}}"
+      data-type="wechat"
+      bindtap="onSwitchLoginType"
+    >
+      微信登录
+    </view>
+  </view>
+
+  <!-- 密码登录表单 -->
+  <view class="login-form" wx:if="{{loginType === 'password'}}">
+    <view class="input-group">
+      <view class="input-label">用户名</view>
+      <input 
+        class="input" 
+        placeholder="请输入用户名"
+        data-field="username"
+        value="{{formData.username}}"
+        bindinput="onInputChange"
+      />
+    </view>
+    <view class="input-group">
+      <view class="input-label">密码</view>
+      <input 
+        class="input" 
+        type="password"
+        placeholder="请输入密码"
+        data-field="password"
+        value="{{formData.password}}"
+        bindinput="onInputChange"
+      />
+    </view>
+    <view class="form-actions">
+      <view class="forgot-password" bindtap="onForgotPassword">忘记密码？</view>
+    </view>
+    <button 
+      class="btn btn-primary login-btn" 
+      bindtap="onPasswordLogin"
+      disabled="{{isLogging}}"
+    >
+      {{isLogging ? '登录中...' : '登录'}}
+    </button>
+  </view>
+
+  <!-- 手机登录表单 -->
+  <view class="login-form" wx:if="{{loginType === 'phone'}}">
+    <view class="input-group">
+      <view class="input-label">手机号</view>
+      <input 
+        class="input" 
+        type="number"
+        placeholder="请输入手机号"
+        data-field="phone"
+        value="{{formData.phone}}"
+        bindinput="onInputChange"
+      />
+    </view>
+    <view class="input-group">
+      <view class="input-label">验证码</view>
+      <view class="code-input-group">
+        <input 
+          class="input code-input" 
+          type="number"
+          placeholder="请输入验证码"
+          data-field="code"
+          value="{{formData.code}}"
+          bindinput="onInputChange"
+        />
+        <button 
+          class="btn btn-secondary code-btn" 
+          bindtap="onSendCode"
+          disabled="{{countdown > 0}}"
+        >
+          {{countdown > 0 ? countdown + 's' : '发送验证码'}}
+        </button>
+      </view>
+    </view>
+    <button 
+      class="btn btn-primary login-btn" 
+      bindtap="onPhoneLogin"
+      disabled="{{isLogging}}"
+    >
+      {{isLogging ? '登录中...' : '登录'}}
+    </button>
+  </view>
+
+  <!-- 微信登录 -->
+  <view class="login-form" wx:if="{{loginType === 'wechat'}}">
+    <view class="wechat-login-content">
+      <view class="wechat-icon">💬</view>
+      <view class="wechat-title">微信一键登录</view>
+      <view class="wechat-desc">使用微信账号快速登录</view>
+    </view>
+    <button 
+      class="btn btn-success login-btn" 
+      bindtap="onWechatLogin"
+      disabled="{{isLogging}}"
+    >
+      {{isLogging ? '登录中...' : '微信登录'}}
+    </button>
+  </view>
+
+  <!-- 其他操作 -->
+  <view class="other-actions">
+    <view class="register-link" bindtap="onRegister">
+      还没有账号？立即注册
+    </view>
+  </view>
+</view>

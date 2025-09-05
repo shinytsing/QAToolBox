@@ -1,0 +1,235 @@
+/* pages/fitness/fitness.wxss */
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.profile-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profile-avatar image {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8rpx;
+}
+
+.profile-level {
+  font-size: 24rpx;
+  color: #409eff;
+  margin-bottom: 12rpx;
+}
+
+.profile-exp {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.exp-bar {
+  flex: 1;
+  height: 8rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.exp-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #67c23a);
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.exp-text {
+  font-size: 20rpx;
+  color: #909399;
+  white-space: nowrap;
+}
+
+.goals-content {
+  display: grid;
+  gap: 20rpx;
+}
+
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.goal-label {
+  width: 120rpx;
+  font-size: 24rpx;
+  color: #606266;
+  flex-shrink: 0;
+}
+
+.goal-progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8rpx;
+  background: #f0f0f0;
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #67c23a);
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 20rpx;
+  color: #909399;
+  white-space: nowrap;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+}
+
+.action-item:active {
+  transform: scale(0.95);
+  background: #e3f2fd;
+}
+
+.action-icon {
+  font-size: 40rpx;
+  margin-bottom: 12rpx;
+}
+
+.action-text {
+  font-size: 24rpx;
+  color: #303133;
+  font-weight: 500;
+}
+
+.workout-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 12rpx;
+  background: #e3f2fd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  font-size: 24rpx;
+}
+
+.workout-status {
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+.workout-status.completed {
+  background: #f0f9ff;
+  color: #409eff;
+}
+
+.workout-status.in_progress {
+  background: #fff7e6;
+  color: #e6a23c;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
+}
+
+.achievement-item {
+  text-align: center;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
+}
+
+.achievement-item.earned {
+  background: #f0f9ff;
+  border: 2rpx solid #409eff;
+}
+
+.achievement-item.earned .achievement-icon {
+  color: #409eff;
+}
+
+.achievement-icon {
+  font-size: 32rpx;
+  margin-bottom: 12rpx;
+  color: #c0c4cc;
+}
+
+.achievement-name {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 8rpx;
+}
+
+.achievement-desc {
+  font-size: 20rpx;
+  color: #606266;
+  line-height: 1.4;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  color: #909399;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  margin-bottom: 12rpx;
+}
+
+.empty-desc {
+  font-size: 24rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.8;
+}

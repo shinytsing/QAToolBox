@@ -1,0 +1,94 @@
+/* pages/login/login.wxss */
+
+.login-tabs {
+  display: flex;
+  background: white;
+  border-radius: 16rpx;
+  margin-bottom: 30rpx;
+  overflow: hidden;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  font-size: 28rpx;
+  color: #606266;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active {
+  background: #409eff;
+  color: white;
+}
+
+.login-form {
+  background: white;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  margin-bottom: 30rpx;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 30rpx;
+}
+
+.forgot-password {
+  color: #409eff;
+  font-size: 24rpx;
+}
+
+.login-btn {
+  width: 100%;
+  margin-top: 20rpx;
+}
+
+.code-input-group {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+}
+
+.code-input {
+  flex: 1;
+}
+
+.code-btn {
+  width: 200rpx;
+  flex-shrink: 0;
+}
+
+.wechat-login-content {
+  text-align: center;
+  padding: 60rpx 0;
+}
+
+.wechat-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.wechat-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12rpx;
+}
+
+.wechat-desc {
+  font-size: 24rpx;
+  color: #909399;
+}
+
+.other-actions {
+  text-align: center;
+  margin-top: 40rpx;
+}
+
+.register-link {
+  color: #409eff;
+  font-size: 28rpx;
+}

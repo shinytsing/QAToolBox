@@ -1,0 +1,181 @@
+<!--pages/fitness/fitness.wxml-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <view class="page-title">健身管理</view>
+    <view class="page-subtitle">记录每一次训练，见证每一次成长</view>
+  </view>
+
+  <!-- 用户资料 -->
+  <view class="card" wx:if="{{userProfile}}">
+    <view class="user-profile">
+      <view class="profile-avatar">
+        <image src="{{userProfile.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      </view>
+      <view class="profile-info">
+        <view class="profile-name">{{userProfile.username}}</view>
+        <view class="profile-level">Lv.{{userProfile.level || 1}}</view>
+        <view class="profile-exp">
+          <view class="exp-bar">
+            <view class="exp-progress" style="width: {{userProfile.exp_percentage || 0}}%"></view>
+          </view>
+          <view class="exp-text">{{userProfile.current_exp || 0}}/{{userProfile.next_level_exp || 1000}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 数据统计 -->
+  <view class="stats-card">
+    <view class="stats-header">
+      <view class="stats-title">数据统计</view>
+      <view class="stats-refresh" bindtap="onViewDetail" data-type="stats">
+        <text class="refresh-icon">📊</text>
+      </view>
+    </view>
+    <view class="stats-content">
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalWorkouts}}</view>
+        <view class="stat-label">总训练次数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalMinutes}}</view>
+        <view class="stat-label">总训练时长(分钟)</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalCalories}}</view>
+        <view class="stat-label">总消耗卡路里</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.streakDays}}</view>
+        <view class="stat-label">连续训练天数</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 本周目标 -->
+  <view class="card">
+    <view class="card-header">
+      <view class="card-title">本周目标</view>
+      <view class="card-action" bindtap="onSetGoals">
+        <text>设置</text>
+      </view>
+    </view>
+    <view class="goals-content">
+      <view class="goal-item">
+        <view class="goal-label">训练次数</view>
+        <view class="goal-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{(currentWeek.workouts / goals.weeklyWorkouts) * 100}}%"></view>
+          </view>
+          <view class="progress-text">{{currentWeek.workouts}}/{{goals.weeklyWorkouts}}</view>
+        </view>
+      </view>
+      <view class="goal-item">
+        <view class="goal-label">训练时长</view>
+        <view class="goal-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{(currentWeek.minutes / goals.weeklyMinutes) * 100}}%"></view>
+          </view>
+          <view class="progress-text">{{currentWeek.minutes}}/{{goals.weeklyMinutes}}分钟</view>
+        </view>
+      </view>
+      <view class="goal-item">
+        <view class="goal-label">消耗卡路里</view>
+        <view class="goal-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{(currentWeek.calories / goals.weeklyCalories) * 100}}%"></view>
+          </view>
+          <view class="progress-text">{{currentWeek.calories}}/{{goals.weeklyCalories}}卡</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快速操作 -->
+  <view class="card">
+    <view class="card-header">
+      <view class="card-title">快速操作</view>
+    </view>
+    <view class="quick-actions">
+      <view class="action-item" bindtap="onStartWorkout">
+        <view class="action-icon">🏃‍♂️</view>
+        <view class="action-text">开始训练</view>
+      </view>
+      <view class="action-item" bindtap="onViewWorkouts">
+        <view class="action-icon">📝</view>
+        <view class="action-text">训练记录</view>
+      </view>
+      <view class="action-item" bindtap="onViewAchievements">
+        <view class="action-icon">🏆</view>
+        <view class="action-text">成就系统</view>
+      </view>
+      <view class="action-item" bindtap="onSetGoals">
+        <view class="action-icon">🎯</view>
+        <view class="action-text">目标设置</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近训练 -->
+  <view class="card" wx:if="{{recentWorkouts.length > 0}}">
+    <view class="card-header">
+      <view class="card-title">最近训练</view>
+      <view class="card-more" bindtap="onViewWorkouts">
+        <text>更多</text>
+        <text class="list-item-arrow">></text>
+      </view>
+    </view>
+    <view class="list">
+      <view 
+        class="list-item" 
+        wx:for="{{recentWorkouts}}" 
+        wx:key="id"
+      >
+        <view class="workout-icon">
+          <text>{{item.type_icon || '💪'}}</text>
+        </view>
+        <view class="list-item-content">
+          <view class="list-item-title">{{item.name}}</view>
+          <view class="list-item-desc">{{item.duration}}分钟 · {{item.calories}}卡路里</view>
+          <view class="list-item-time">{{item.created_at}}</view>
+        </view>
+        <view class="workout-status {{item.status}}">
+          {{item.status === 'completed' ? '完成' : '进行中'}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 成就展示 -->
+  <view class="card" wx:if="{{achievements.length > 0}}">
+    <view class="card-header">
+      <view class="card-title">最新成就</view>
+      <view class="card-more" bindtap="onViewAchievements">
+        <text>更多</text>
+        <text class="list-item-arrow">></text>
+      </view>
+    </view>
+    <view class="achievements-grid">
+      <view 
+        class="achievement-item {{item.earned ? 'earned' : ''}}" 
+        wx:for="{{achievements}}" 
+        wx:key="id"
+      >
+        <view class="achievement-icon">
+          <text>{{item.icon}}</text>
+        </view>
+        <view class="achievement-name">{{item.name}}</view>
+        <view class="achievement-desc">{{item.description}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{recentWorkouts.length === 0}}">
+    <view class="empty-icon">💪</view>
+    <view class="empty-text">还没有训练记录</view>
+    <view class="empty-desc">开始你的第一次训练吧！</view>
+    <button class="btn btn-primary" bindtap="onStartWorkout">开始训练</button>
+  </view>
+</view>

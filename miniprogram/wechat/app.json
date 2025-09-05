@@ -1,0 +1,62 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/login/login",
+    "pages/fitness/fitness",
+    "pages/life/life",
+    "pages/geek/geek",
+    "pages/social/social",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#409eff",
+    "navigationBarTitleText": "QAToolBox",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#409eff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "images/home.png",
+        "selectedIconPath": "images/home-active.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/fitness/fitness",
+        "iconPath": "images/fitness.png",
+        "selectedIconPath": "images/fitness-active.png",
+        "text": "健身"
+      },
+      {
+        "pagePath": "pages/life/life",
+        "iconPath": "images/life.png",
+        "selectedIconPath": "images/life-active.png",
+        "text": "生活"
+      },
+      {
+        "pagePath": "pages/geek/geek",
+        "iconPath": "images/geek.png",
+        "selectedIconPath": "images/geek-active.png",
+        "text": "极客"
+      },
+      {
+        "pagePath": "pages/social/social",
+        "iconPath": "images/social.png",
+        "selectedIconPath": "images/social-active.png",
+        "text": "社交"
+      }
+    ]
+  },
+  "networkTimeout": {
+    "request": 10000,
+    "downloadFile": 10000
+  },
+  "debug": true,
+  "sitemapLocation": "sitemap.json"
+}

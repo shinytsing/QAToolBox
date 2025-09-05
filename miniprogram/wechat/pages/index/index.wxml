@@ -1,0 +1,102 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <view class="page-title">QAToolBox</view>
+    <view class="page-subtitle">让生活更简单，让每一天都充满意义</view>
+  </view>
+
+  <!-- 用户信息 -->
+  <view class="card" wx:if="{{userInfo}}">
+    <view class="user-info">
+      <view class="user-avatar">
+        <image src="{{userInfo.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      </view>
+      <view class="user-details">
+        <view class="user-name">{{userInfo.username}}</view>
+        <view class="user-email">{{userInfo.email}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 数据统计 -->
+  <view class="stats-card">
+    <view class="stats-header">
+      <view class="stats-title">数据统计</view>
+      <view class="stats-refresh" bindtap="onRefresh">
+        <text class="refresh-icon">🔄</text>
+      </view>
+    </view>
+    <view class="stats-content">
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalWorkouts}}</view>
+        <view class="stat-label">训练次数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalTools}}</view>
+        <view class="stat-label">工具使用</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalSocial}}</view>
+        <view class="stat-label">社交活动</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-number">{{stats.totalDays}}</view>
+        <view class="stat-label">使用天数</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快速操作 -->
+  <view class="card">
+    <view class="card-header">
+      <view class="card-title">快速操作</view>
+    </view>
+    <view class="grid">
+      <view 
+        class="grid-item" 
+        wx:for="{{quickActions}}" 
+        wx:key="id"
+        data-path="{{item.path}}"
+        bindtap="onQuickAction"
+      >
+        <view class="grid-icon" style="background: {{item.color}}">
+          <text>{{item.icon}}</text>
+        </view>
+        <view class="grid-title">{{item.name}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近活动 -->
+  <view class="card" wx:if="{{recentActivities.length > 0}}">
+    <view class="card-header">
+      <view class="card-title">最近活动</view>
+      <view class="card-more" bindtap="onViewDetail" data-type="activities">
+        <text>更多</text>
+        <text class="list-item-arrow">></text>
+      </view>
+    </view>
+    <view class="list">
+      <view 
+        class="list-item" 
+        wx:for="{{recentActivities}}" 
+        wx:key="id"
+      >
+        <view class="list-item-content">
+          <view class="list-item-title">{{item.title}}</view>
+          <view class="list-item-desc">{{item.description}}</view>
+          <view class="list-item-time">{{item.time}}</view>
+        </view>
+        <text class="list-item-arrow">></text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{recentActivities.length === 0}}">
+    <view class="empty-icon">📝</view>
+    <view class="empty-text">暂无最近活动</view>
+    <view class="empty-desc">开始使用QAToolBox，记录你的生活</view>
+  </view>
+</view>
