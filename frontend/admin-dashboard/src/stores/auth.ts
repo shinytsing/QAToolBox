@@ -1,0 +1,127 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { api } from '@/api'
+import type { User, LoginCredentials, RegisterData } from '@/types/auth'
+
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(null)
+  const token = ref<string | null>(localStorage.getItem('token'))
+  const loading = ref(false)
+
+  const isAuthenticated = computed(() => !!token.value && !!user.value)
+
+  // 初始化认证状态
+  const initializeAuth = async () => {
+    if (token.value) {
+      try {
+        const response = await api.get('/auth/profile/')
+        user.value = response.data
+      } catch (error) {
+        // Token无效，清除本地存储
+        logout()
+      }
+    }
+  }
+
+  // 登录
+  const login = async (credentials: LoginCredentials) => {
+    loading.value = true
+    try {
+      const response = await api.post('/auth/login/', credentials)
+      const { access, refresh, user: userData } = response.data
+      
+      token.value = access
+      user.value = userData
+      
+      localStorage.setItem('token', access)
+      localStorage.setItem('refresh_token', refresh)
+      
+      return { success: true }
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || '登录失败' 
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 注册
+  const register = async (data: RegisterData) => {
+    loading.value = true
+    try {
+      const response = await api.post('/auth/register/', data)
+      return { success: true, data: response.data }
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || '注册失败' 
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 登出
+  const logout = async () => {
+    try {
+      if (token.value) {
+        await api.post('/auth/logout/')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      user.value = null
+      token.value = null
+      localStorage.removeItem('token')
+      localStorage.removeItem('refresh_token')
+    }
+  }
+
+  // 刷新Token
+  const refreshToken = async () => {
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (!refreshToken) return false
+
+    try {
+      const response = await api.post('/auth/refresh/', {
+        refresh: refreshToken
+      })
+      const { access } = response.data
+      token.value = access
+      localStorage.setItem('token', access)
+      return true
+    } catch (error) {
+      logout()
+      return false
+    }
+  }
+
+  // 更新用户信息
+  const updateProfile = async (data: Partial<User>) => {
+    try {
+      const response = await api.patch('/auth/profile/', data)
+      user.value = response.data
+      return { success: true }
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || '更新失败' 
+      }
+    }
+  }
+
+  return {
+    user,
+    token,
+    loading,
+    isAuthenticated,
+    initializeAuth,
+    login,
+    register,
+    logout,
+    refreshToken,
+    updateProfile
+  }
+})
