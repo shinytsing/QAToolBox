@@ -33,17 +33,10 @@ fake = Faker("zh_CN")
 @pytest.fixture(scope="session")
 def django_db_setup():
     """数据库设置"""
-    # 使用PostgreSQL数据库进行测试，与生产环境保持一致
+    # 使用SQLite数据库进行本地测试
     settings.DATABASES["default"] = {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "qatoolbox_test",
-        "USER": "gaojie",
-        "PASSWORD": "",
-        "HOST": "localhost",
-        "PORT": "5432",
-        "OPTIONS": {
-            "connect_timeout": 10,
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
     }
 
 

@@ -90,6 +90,7 @@ from rest_framework.response import Response
 
 from apps.users.models import Profile, UserMembership, UserTheme
 
+# 自动求职机相关模型导入
 # 搭子（同城活动匹配）相关模型导入
 # 船宝（二手线下交易）相关模型导入
 # 食物随机选择器相关导入
@@ -113,8 +114,8 @@ from .models import (
     DesireFulfillment,
     DesireItem,
     EnhancedFitnessStrengthProfile,
-    ExhaustionProof,
     ExerciseWeightRecord,
+    ExhaustionProof,
     FitnessAchievement,
     FitnessCommunityComment,
     FitnessCommunityLike,
@@ -127,6 +128,10 @@ from .models import (
     FoodItem,
     FoodRandomizationSession,
     FoodRandomizer,
+    JobApplication,
+    JobSearchProfile,
+    JobSearchRequest,
+    JobSearchStatistics,
     PainCurrency,
     ShipBaoItem,
     ShipBaoMessage,
@@ -149,16 +154,13 @@ from .models import (
 
 # 欲望仪表盘API
 from .services.desire_dashboard import DesireDashboardService, DesireVisualizationService
+from .services.job_search_service import JobSearchService
 
 # 塔罗牌相关导入
 from .services.tarot_service import TarotService
 
 # 三重觉醒改造计划API
 from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProcessor
-
-# 自动求职机相关模型导入
-from .models import JobSearchRequest, JobApplication, JobSearchProfile, JobSearchStatistics
-from .services.job_search_service import JobSearchService
 
 
 @login_required

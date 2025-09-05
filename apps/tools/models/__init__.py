@@ -9,6 +9,9 @@ from .chat_models import ChatMessage, ChatRoom, ChatRoomMember, HeartLinkRequest
 # 日记相关模型（已分离）
 from .diary_models import DailyQuestion, DiaryAchievement, DiaryTemplate, LifeCategory, LifeDiaryEntry, LifeTag
 
+# 健身模型从fitness_models导入
+from .fitness_models import EnhancedExerciseWeightRecord, EnhancedFitnessStrengthProfile
+
 # 暂时从legacy_models导入其他模型，逐步迁移
 from .legacy_models import (  # 生活目标相关; 成就相关; 健身相关; Vanity/欲望相关; 旅游相关（已移至travel_models.py）; 工作搜索相关; PDF转换相关; 食物相关; 人际关系相关 - 已移至relationship_models.py; RelationshipTag, PersonProfile, Interaction, ImportantMoment,; RelationshipStatistics, RelationshipReminder,; 功能相关; 健身社区相关; NutriCoach Pro相关模型已隐藏; DietPlan, Meal, NutritionReminder, MealLog,; WeightTracking, FoodDatabase,; 船宝相关; 旅游目的地相关; 搭子相关; 其他
     AIDependencyMeter,
@@ -99,9 +102,6 @@ from .social_media_models import (
 
 # 塔罗牌模型从tarot_models导入
 from .tarot_models import TarotCard, TarotCommunity, TarotCommunityComment, TarotEnergyCalendar, TarotReading, TarotSpread
-
-# 健身模型从fitness_models导入
-from .fitness_models import EnhancedFitnessStrengthProfile, EnhancedExerciseWeightRecord
 
 # 旅游攻略模型从travel_models导入
 from .travel_models import (
