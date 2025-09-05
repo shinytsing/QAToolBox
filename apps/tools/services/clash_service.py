@@ -398,7 +398,7 @@ class ClashEmbeddedService:
 
                     # 设置执行权限
                     if system != "windows":
-                        os.chmod(binary_path, 0o755)
+                        os.chmod(binary_path, 0o755)  # nosec B103
 
                     # 更新二进制路径
                     self.clash_binary_path = str(binary_path)

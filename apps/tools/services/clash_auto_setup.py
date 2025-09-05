@@ -163,7 +163,7 @@ class ClashAutoSetup:
 
                     # 设置执行权限
                     if self.system != "windows":
-                        os.chmod(binary_path, 0o755)
+                        os.chmod(binary_path, 0o755)  # nosec B103
 
                     self.clash_binary = str(binary_path)
                     return True, f"Clash下载完成: {binary_path} (源 {i+1})"

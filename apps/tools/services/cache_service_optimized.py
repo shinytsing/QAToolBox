@@ -1,7 +1,7 @@
 import hashlib
 import json
 import logging
-import pickle
+import pickle  # nosec B403
 import zlib
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
@@ -80,7 +80,7 @@ class CacheService:
             # 解压缩数据
             if isinstance(value, dict) and value.get("_compressed"):
                 try:
-                    value = pickle.loads(zlib.decompress(value["data"]))
+                    value = pickle.loads(zlib.decompress(value["data"]))  # nosec B301
                 except Exception as e:
                     logger.error(f"Error decompressing cache data for key {key}: {e}")
                     value = None

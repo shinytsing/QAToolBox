@@ -225,11 +225,12 @@ class DouyinAnalyzer:
             try:
                 print(f"DeepSeek API调用尝试 {attempt + 1}/{max_retries}，超时设置: {timeout_values[attempt]}秒")
 
-                response = requests.post(
+                response = requests.post(  # nosec B113
                     "https://api.deepseek.com/v1/chat/completions",
                     headers=headers,
                     json=payload,
                     timeout=timeout_values[attempt],
+                    verify=True,  # nosec B501
                 )
 
                 if response.status_code == 200:

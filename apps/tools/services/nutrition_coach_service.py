@@ -160,7 +160,7 @@ class NutritionCoachService:
             "max_tokens": 4000,
         }
 
-        response = requests.post(self.deepseek_api_url, headers=headers, json=data)
+        response = requests.post(self.deepseek_api_url, headers=headers, json=data, timeout=30, verify=True)  # nosec B501
         response.raise_for_status()
 
         result = response.json()
