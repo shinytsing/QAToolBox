@@ -151,18 +151,18 @@ class TestErrorViews:
 @pytest.mark.django_db
 class TestContentViews:
     """内容视图测试"""
-    
+
     def test_article_list_page(self, client):
         """测试文章列表页面"""
         response = client.get("/content/articles/")
         assert response.status_code == 200
-    
+
     def test_article_detail_page(self, client):
         """测试文章详情页面"""
         # 假设有一个ID为1的文章
         response = client.get("/content/articles/1/")
         assert response.status_code in [200, 404]  # 可能不存在
-    
+
     def test_article_create_requires_login(self, client):
         """测试创建文章需要登录"""
         response = client.get("/content/articles/create/")
@@ -172,19 +172,15 @@ class TestContentViews:
 @pytest.mark.django_db
 class TestShareViews:
     """分享视图测试"""
-    
+
     def test_share_page(self, client):
         """测试分享页面"""
         response = client.get("/share/")
         assert response.status_code == 200
-    
+
     def test_share_record_creation(self, authenticated_client):
         """测试分享记录创建"""
-        data = {
-            'platform': 'wechat',
-            'page_url': 'https://example.com',
-            'page_title': '测试页面'
-        }
+        data = {"platform": "wechat", "page_url": "https://example.com", "page_title": "测试页面"}
         response = authenticated_client.post("/share/record/", data)
         assert response.status_code in [200, 201, 302]  # 根据实际实现调整
 
@@ -192,13 +188,13 @@ class TestShareViews:
 @pytest.mark.django_db
 class TestHealthViews:
     """健康检查视图测试"""
-    
+
     def test_health_check_endpoint(self, client):
         """测试健康检查端点"""
         response = client.get("/health/")
         assert response.status_code == 200
         assert "status" in response.json()
-    
+
     def test_health_check_database(self, client):
         """测试数据库健康检查"""
         response = client.get("/health/database/")
@@ -208,13 +204,13 @@ class TestHealthViews:
 @pytest.mark.django_db
 class TestStaticFiles:
     """静态文件测试"""
-    
+
     def test_static_files_served(self, client):
         """测试静态文件服务"""
         response = client.get("/static/css/style.css")
         # 静态文件可能不存在，所以状态码可能是200或404
         assert response.status_code in [200, 404]
-    
+
     def test_media_files_served(self, client):
         """测试媒体文件服务"""
         response = client.get("/media/test.jpg")
@@ -225,13 +221,13 @@ class TestStaticFiles:
 @pytest.mark.django_db
 class TestMiddleware:
     """中间件测试"""
-    
+
     def test_cors_headers(self, client):
         """测试CORS头部"""
         response = client.get("/api/health/")
         # 检查CORS相关头部是否存在
         assert response.status_code == 200
-    
+
     def test_security_headers(self, client):
         """测试安全头部"""
         response = client.get("/")
@@ -242,27 +238,27 @@ class TestMiddleware:
 @pytest.mark.django_db
 class TestURLPatterns:
     """URL模式测试"""
-    
+
     def test_root_url_resolves(self, client):
         """测试根URL解析"""
         response = client.get("/")
         assert response.status_code == 200
-    
+
     def test_tools_url_resolves(self, client):
         """测试工具URL解析"""
         response = client.get("/tools/")
         assert response.status_code == 200
-    
+
     def test_users_url_resolves(self, client):
         """测试用户URL解析"""
         response = client.get("/users/login/")
         assert response.status_code == 200
-    
+
     def test_content_url_resolves(self, client):
         """测试内容URL解析"""
         response = client.get("/content/")
         assert response.status_code in [200, 404]  # 根据实际实现调整
-    
+
     def test_share_url_resolves(self, client):
         """测试分享URL解析"""
         response = client.get("/share/")
@@ -272,20 +268,20 @@ class TestURLPatterns:
 @pytest.mark.django_db
 class TestTemplateRendering:
     """模板渲染测试"""
-    
+
     def test_base_template_inheritance(self, client):
         """测试基础模板继承"""
         response = client.get("/")
         content = response.content.decode()
         # 检查基础模板元素
         assert "<!DOCTYPE html>" in content or "<html" in content
-    
+
     def test_template_context(self, client):
         """测试模板上下文"""
         response = client.get("/")
         # 检查模板上下文变量
         assert response.status_code == 200
-    
+
     def test_template_filters(self, client):
         """测试模板过滤器"""
         response = client.get("/")
@@ -297,14 +293,14 @@ class TestTemplateRendering:
 @pytest.mark.django_db
 class TestFormHandling:
     """表单处理测试"""
-    
+
     def test_login_form_rendering(self, client):
         """测试登录表单渲染"""
         response = client.get("/users/login/")
         content = response.content.decode()
         assert "form" in content.lower()
         assert response.status_code == 200
-    
+
     def test_registration_form_rendering(self, client):
         """测试注册表单渲染"""
         response = client.get("/users/register/")
@@ -312,33 +308,30 @@ class TestFormHandling:
         if response.status_code == 200:
             content = response.content.decode()
             assert "form" in content.lower()
-    
+
     def test_form_validation(self, client):
         """测试表单验证"""
         # 测试无效的登录数据
-        response = client.post("/users/login/", {
-            'username': '',
-            'password': ''
-        })
+        response = client.post("/users/login/", {"username": "", "password": ""})
         assert response.status_code == 200  # 返回表单页面显示错误
 
 
 @pytest.mark.django_db
 class TestSessionHandling:
     """会话处理测试"""
-    
+
     def test_session_creation(self, authenticated_client):
         """测试会话创建"""
         response = authenticated_client.get("/")
         assert response.status_code == 200
         # 检查会话是否正常工作
-    
+
     def test_session_persistence(self, authenticated_client):
         """测试会话持久性"""
         # 第一次请求
         response1 = authenticated_client.get("/")
         assert response1.status_code == 200
-        
+
         # 第二次请求，会话应该保持
         response2 = authenticated_client.get("/")
         assert response2.status_code == 200
@@ -347,20 +340,17 @@ class TestSessionHandling:
 @pytest.mark.django_db
 class TestCSRFProtection:
     """CSRF保护测试"""
-    
+
     def test_csrf_token_present(self, client):
         """测试CSRF令牌存在"""
         response = client.get("/users/login/")
         content = response.content.decode()
         # 检查CSRF令牌是否存在
         assert response.status_code == 200
-    
+
     def test_csrf_protection(self, client):
         """测试CSRF保护"""
         # 尝试没有CSRF令牌的POST请求
-        response = client.post("/users/login/", {
-            'username': 'test',
-            'password': 'test'
-        })
+        response = client.post("/users/login/", {"username": "test", "password": "test"})
         # 应该被CSRF保护阻止
         assert response.status_code in [200, 403, 400]

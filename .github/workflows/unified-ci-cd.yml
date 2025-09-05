@@ -221,7 +221,7 @@ jobs:
       run: |
         echo "开始运行单元测试..."
         # 使用pytest运行测试并生成覆盖率报告
-        pytest tests/unit/test_core.py \
+        pytest tests/unit/ \
           --cov=apps \
           --cov-report=xml \
           --cov-report=html \
@@ -230,7 +230,7 @@ jobs:
           --html=test-report.html \
           --self-contained-html \
           -v \
-          --maxfail=5 \
+          --maxfail=10 \
           --tb=short \
           --durations=10 || echo "测试失败，但继续执行后续步骤"
         
@@ -259,13 +259,13 @@ jobs:
         echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
         echo "测试覆盖率: $COVERAGE%"
         
-        # 覆盖率门禁：暂时降低要求到5%，逐步提高
+        # 覆盖率门禁：要求达到80%
         COVERAGE_INT=$(echo $COVERAGE | cut -d. -f1)
-        if [ "$COVERAGE_INT" -lt "5" ]; then
-          echo "::error::测试覆盖率不达标: $COVERAGE% (要求: ≥5%)"
+        if [ "$COVERAGE_INT" -lt "80" ]; then
+          echo "::error::测试覆盖率不达标: $COVERAGE% (要求: ≥80%)"
           exit 1
         else
-          echo "::notice::测试覆盖率达标: $COVERAGE% (目标: 80%)"
+          echo "::notice::测试覆盖率达标: $COVERAGE%"
         fi
 
   # ===== 3. 集成测试 =====
@@ -597,7 +597,7 @@ jobs:
     - name: 运行部署验证
       run: |
         echo "🔍 运行部署后验证..."
-        python scripts/post_deployment_verification.py --url http://shenyiqing.xin || true
+        python scripts/deployment_verification.py --url http://shenyiqing.xin --report
         
         # 基础健康检查
         for endpoint in "http://47.103.143.152/health/" "http://shenyiqing.xin/health/"; do
@@ -613,7 +613,13 @@ jobs:
     name: 发送通知
     runs-on: ubuntu-latest
     needs: [code-quality, unit-tests, build, cd-delivery, cd-deployment, emergency-deploy, post-deployment-tests]
-    if: always()
+    if: |
+      always() && 
+      (needs.cd-delivery.result == 'success' || 
+       needs.cd-deployment.result == 'success' || 
+       needs.emergency-deploy.result == 'success' ||
+       needs.post-deployment-tests.result == 'success' ||
+       needs.post-deployment-tests.result == 'failure')
     steps:
     - name: 准备通知数据
       id: prepare
