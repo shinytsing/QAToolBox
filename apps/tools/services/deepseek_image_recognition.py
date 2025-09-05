@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import traceback
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import requests
 from PIL import Image
@@ -165,7 +165,7 @@ class DeepSeekImageRecognition:
                     try:
                         error_data = response.json()
                         error_msg += f" - {error_data.get('error', {}).get('message', '')}"
-                    except:
+                    except Exception:
                         error_msg += f" - {response.text[:100]}"
 
                 print(f"❌ {error_msg}")

@@ -1,16 +1,13 @@
-import json
 import logging
 import os
 import signal
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
-from django.core.cache import cache
 
 import requests
 import yaml
@@ -79,7 +76,7 @@ class ClashEmbeddedService:
 
             result = subprocess.run(["pgrep", "-f", "ClashX Pro"], capture_output=True, text=True)
             return result.returncode == 0
-        except:
+        except Exception:
             return False
 
     def init_config(self):

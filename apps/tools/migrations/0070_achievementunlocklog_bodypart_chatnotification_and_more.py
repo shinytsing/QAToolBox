@@ -8,7 +8,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    pass
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('tools', '0069_add_nutrition_models'),

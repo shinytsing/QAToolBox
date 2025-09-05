@@ -3,7 +3,6 @@
 食物图片相关的视图函数
 """
 
-import json
 import logging
 from datetime import datetime, timedelta
 
@@ -99,7 +98,7 @@ def api_photos(request):
             photos_data = [photo for photo in photos_data if photo["category"] == category]
 
         # 分页
-        total_count = len(photos_data)
+        len(photos_data)
         photos_page = photos_data[offset : offset + limit]
 
         logger.info(f"获取照片列表: 用户 {request.user.id}, 类别 {category}, 返回 {len(photos_page)} 条记录")

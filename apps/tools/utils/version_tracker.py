@@ -5,7 +5,7 @@
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 
@@ -169,7 +169,7 @@ class VersionTracker:
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d")
             return date_obj.strftime("%Y年%m月%d日")
-        except:
+        except Exception:
             return date_str
 
 

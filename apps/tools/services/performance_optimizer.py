@@ -4,15 +4,12 @@
 """
 
 import gc
-import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
-from django.conf import settings
 from django.core.cache import cache
-from django.db import connection, connections
+from django.db import connection
 from django.db.models import QuerySet
 from django.utils import timezone
 
@@ -137,7 +134,6 @@ class QueryOptimizer:
 
     def _get_common_suggestions(self, slow_queries: List[Dict]) -> List[str]:
         """获取通用优化建议"""
-        suggestions = []
 
         # 统计建议频率
         suggestion_counts = {}
@@ -520,7 +516,7 @@ def monitor_performance(func):
 def run_performance_optimization():
     """运行性能优化任务"""
     try:
-        results = performance_optimizer.run_full_optimization()
+        performance_optimizer.run_full_optimization()
         logger.info("性能优化完成")
 
         # 检查是否有关键问题

@@ -1,4 +1,3 @@
-import base64
 import logging
 import time
 from typing import Dict, Optional
@@ -6,7 +5,7 @@ from typing import Dict, Optional
 from django.core.cache import cache
 
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC

@@ -5,7 +5,6 @@ import logging
 import time
 
 from django.contrib.auth.models import AnonymousUser
-from django.core.cache import cache
 
 try:
     from channels.db import database_sync_to_async
@@ -33,13 +32,6 @@ except ImportError:
         pass
 
     CHANNELS_AVAILABLE = False
-from .services.reconnection_manager import (
-    ConnectionConfig,
-    MessageCompressor,
-    ReconnectionManager,
-    get_reconnection_manager,
-    remove_reconnection_manager,
-)
 
 logger = logging.getLogger(__name__)
 

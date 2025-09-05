@@ -1,6 +1,5 @@
 # Generated manually to fix missing fields in LifeDiaryEntry model
 
-import django.db.models.deletion
 from django.db import migrations, models
 
 

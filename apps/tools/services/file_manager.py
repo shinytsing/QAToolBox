@@ -2,10 +2,7 @@
 文件管理器 - 处理文件分片上传和图片缩略图生成
 """
 
-import hashlib
 import io
-import mimetypes
-import os
 import uuid
 from typing import Dict, List, Optional, Tuple
 

@@ -1,5 +1,3 @@
-import json
-
 import requests
 from rest_framework import status
 from rest_framework.response import Response
@@ -7,14 +5,10 @@ from rest_framework.views import APIView
 
 
 class SimpleTestAPI(APIView):
-    pass
     permission_classes = []  # 允许匿名访问
 
     def post(self, request):
-        pass
         try:
-            pass
-            pass
             requirement = request.data.get("requirement", "test")
 
             # 直接调用 DeepSeek API
@@ -33,14 +27,10 @@ class SimpleTestAPI(APIView):
             response = requests.post(url, headers=headers, json=payload, timeout=30)
 
             if response.status_code == 200:
-                pass
-                pass
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
                 return Response({"success": True, "content": content, "requirement": requirement})
             else:
-                pass
-                pass
                 return Response(
                     {"success": False, "error": f"API调用失败: {response.status_code}", "response": response.text},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -48,7 +38,4 @@ class SimpleTestAPI(APIView):
 
         except Exception as e:
 
-            pass
-            pass
-            pass
             return Response({"success": False, "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

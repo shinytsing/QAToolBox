@@ -3,8 +3,8 @@
 
 # 此文件已被注释，Black 将跳过此文件
 import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, List
 
 from django.conf import settings
 
@@ -90,7 +90,7 @@ class NutritionCoachService:
             meal_plan = self._parse_deepseek_response(response)
 
             return {"daily_calories": calories, "macros": macros, "meal_plan": meal_plan, "bmr": bmr, "tdee": tdee}
-        except Exception as e:
+        except Exception:
             # 如果API调用失败，返回基础计划
             return self._generate_fallback_meal_plan(user_data, calories, macros)
 

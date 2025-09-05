@@ -17,7 +17,7 @@ from django.views.decorators.http import require_http_methods
 from apps.users.models import UserRole
 
 from .forms import ArticleForm, CommentForm
-from .models import AILink, Announcement, Article, Comment, FeatureAccess, Feedback, Suggestion, UserFeatureAccess
+from .models import AILink, Announcement, Article, Feedback, Suggestion
 from .utils import download_and_save_icon, extract_favicon_url, get_domain_from_url
 
 
@@ -146,7 +146,7 @@ def admin_suggestions(request):
 @login_required
 @admin_required
 def admin_dashboard(request):
-    from datetime import timedelta
+    pass
 
     from django.utils import timezone
 
@@ -259,7 +259,7 @@ def suggestions_api(request):
                 else:
                     # 普通用户只能看到自己的建议
                     suggestions = Suggestion.objects.filter(user=request.user).order_by("-created_at")
-            except:
+            except Exception:
                 # 如果没有角色信息，普通用户只能看到自己的建议
                 suggestions = Suggestion.objects.filter(user=request.user).order_by("-created_at")
         else:
@@ -342,7 +342,7 @@ def feedback_api(request):
                 else:
                     # 普通用户只能看到自己的反馈
                     feedbacks = Feedback.objects.filter(user=request.user).order_by("-created_at")
-            except:
+            except Exception:
                 # 如果没有角色信息，普通用户只能看到自己的反馈
                 feedbacks = Feedback.objects.filter(user=request.user).order_by("-created_at")
         else:
@@ -414,7 +414,7 @@ def admin_reply_suggestion(request):
 
         # 记录原始状态
         old_status = suggestion.status
-        old_response = suggestion.admin_response
+        suggestion.admin_response
 
         # 更新建议
         suggestion.admin_response = response

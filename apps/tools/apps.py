@@ -8,7 +8,6 @@ class ToolsConfig(AppConfig):
 
     def ready(self):
         """应用启动时的初始化"""
-        import os
 
         # 只在非管理命令环境下运行
         if not self._is_management_command():
@@ -34,9 +33,7 @@ class ToolsConfig(AppConfig):
         try:
             # 导入服务 (已移除测试模块)
             # from .services.auto_test_runner import initialize_auto_testing
-            from .services.database_sharding import check_shards_health
-            from .services.monitoring_service import periodic_health_check
-            from .services.performance_optimizer import run_performance_optimization
+            pass
 
             # 初始化服务 (跳过测试模块)
             # initialize_auto_testing()
@@ -54,8 +51,6 @@ class ToolsConfig(AppConfig):
         try:
             import threading
             import time
-
-            from django.core.cache import cache
 
             def run_scheduled_tasks():
                 """运行定时任务"""

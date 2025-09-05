@@ -1,9 +1,8 @@
 import json
 import logging
-import socket
 import subprocess
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -66,7 +65,7 @@ class IPDefenseSystem:
                     "lat": data.get("lat", ""),
                     "lon": data.get("lon", ""),
                 }
-        except:
+        except Exception:
             pass
 
         return {}
@@ -103,7 +102,7 @@ class IPDefenseSystem:
                 end_int = self._ip_to_int(end_ip)
                 if start_int <= ip_int <= end_int:
                     return True
-        except:
+        except Exception:
             pass
 
         return False

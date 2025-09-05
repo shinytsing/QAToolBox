@@ -1,23 +1,16 @@
 import json
 import logging
-import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
-from django.core.files.storage import default_storage
 from django.db import connection
-from django.db.models import Avg, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from ..models.diary_models import DailyQuestion, DiaryAchievement, DiaryTemplate, LifeDiaryEntry
-from .base import BaseView
+from ..models.diary_models import DiaryAchievement, DiaryTemplate, LifeDiaryEntry
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +34,7 @@ def create_diary_entry_safe(user, date, title, content, mood, entry_type, **kwar
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO tools_lifediaryentry 
+                INSERT INTO tools_lifediaryentry
                 (date, title, content, mood, entry_type, user_id, created_at, updated_at,
                  mood_note, tags, music_recommendation, question_answers, voice_text,
                  template_name, question_answer, daily_question, hobby_category,
@@ -427,9 +420,9 @@ def diary_templates(request):
     """获取日记模板"""
     # 临时处理匿名用户
     if request.user.is_authenticated:
-        user = request.user
+        request.user
     else:
-        user = None
+        pass
 
     templates = DiaryTemplate.objects.filter(is_active=True)
 

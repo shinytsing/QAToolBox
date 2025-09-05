@@ -2,7 +2,6 @@
 
 import json
 import logging
-from datetime import datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -49,7 +48,7 @@ def api_foods(request):
                         "tags": food.tags if isinstance(food.tags, list) else [],
                     }
                 )
-        except Exception as e:
+        except Exception:
             # 如果数据库中没有数据，返回空数组
             food_database = []
 
@@ -103,7 +102,7 @@ def api_food_photo_bindings(request):
                         "created_at": binding.created_at.isoformat() if binding.created_at else None,
                     }
                 )
-        except Exception as e:
+        except Exception:
             # 如果数据库中没有数据，返回空数组
             bindings_data = []
 
@@ -224,14 +223,11 @@ def api_upload_food_photo(request):
         import os
         import uuid
 
-        from django.core.files.storage import default_storage
-
         file_extension = os.path.splitext(photo_file.name)[1]
         unique_filename = f"{uuid.uuid4()}{file_extension}"
 
         # 保存文件到静态文件夹
         import os
-        import shutil
 
         from django.conf import settings
 

@@ -3,9 +3,7 @@ import logging
 import time
 from datetime import timedelta
 
-from django.contrib.sessions.backends.cache import SessionStore
 from django.core.cache import cache
-from django.http import JsonResponse
 from django.utils import timezone
 from django.utils.deprecation import MiddlewareMixin
 
@@ -93,7 +91,7 @@ class UserActivityMiddleware(MiddlewareMixin):
                         if field in body_data:
                             body_data[field] = "***"
                     request_data = body_data
-                except:
+                except Exception:
                     request_data = {}
 
             from .models import APIUsageStats

@@ -2,16 +2,13 @@
 基础社交媒体爬虫类
 """
 
-import random
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from django.utils import timezone
 
 import requests
 
-from apps.tools.models import SocialMediaNotification, SocialMediaSubscription
+from apps.tools.models import SocialMediaSubscription
 
 
 class BaseSocialMediaCrawler:

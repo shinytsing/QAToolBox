@@ -1,10 +1,8 @@
-import json
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
-from .exercise_library_models import BodyPart, Exercise, WorkoutTemplate
+from .exercise_library_models import BodyPart, Exercise
 
 
 class TrainingPlanCategory(models.Model):

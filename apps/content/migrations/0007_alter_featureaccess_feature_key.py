@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    pass
     dependencies = [
         ('content', '0006_featureaccess_alter_ailink_options_and_more'),
     ]

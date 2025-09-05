@@ -2,15 +2,9 @@ import functools
 import logging
 import time
 
-from django.conf import settings
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Prefetch, Q
-from django.http import HttpResponse
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_cookie
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +133,7 @@ class PaginationOptimizer:
 
         try:
             page = paginator.page(page_number)
-        except:
+        except Exception:
             page = paginator.page(1)
 
         return {

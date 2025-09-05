@@ -2,9 +2,7 @@
 渐进式验证码服务 - 简化版
 """
 
-import json
 import random
-import time
 import uuid
 from datetime import timedelta
 

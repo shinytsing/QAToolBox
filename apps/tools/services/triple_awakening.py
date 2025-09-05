@@ -3,15 +3,13 @@
 实现物理级存在感、代码健身房、痛苦货币化系统
 """
 
-import json
 import random
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import timedelta
+from typing import Dict, List
 
 from django.contrib.auth.models import User
-from django.core.cache import cache
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Count, Sum
 from django.utils import timezone
 
 from ..models import (

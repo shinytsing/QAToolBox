@@ -7,7 +7,7 @@ from .base_models import ToolUsageLog
 from .chat_models import ChatMessage, ChatRoom, ChatRoomMember, HeartLinkRequest, MessageRead, UserOnlineStatus
 
 # 日记相关模型（已分离）
-from .diary_models import DailyQuestion, DiaryAchievement, DiaryTemplate, LifeCategory, LifeDiaryEntry, LifeTag
+from .diary_models import LifeDiaryEntry
 
 # 健身模型从fitness_models导入
 from .fitness_models import EnhancedExerciseWeightRecord, EnhancedFitnessStrengthProfile

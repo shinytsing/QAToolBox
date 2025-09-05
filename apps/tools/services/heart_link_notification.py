@@ -20,7 +20,6 @@ class HeartLinkNotificationService:
 
     def check_and_notify_expiring_requests(self):
         """检查并通知即将过期的请求"""
-        from django.contrib import messages
 
         # 查找即将过期的请求（8-10分钟之间）
         warning_time = timezone.now() - timedelta(minutes=self.warning_threshold)
@@ -44,7 +43,7 @@ class HeartLinkNotificationService:
             if online_status and online_status.last_seen:
                 return timezone.now() - online_status.last_seen < timedelta(minutes=5)
             return False
-        except:
+        except Exception:
             return False
 
     def get_expiry_warning_message(self, request):

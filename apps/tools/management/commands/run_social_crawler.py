@@ -1,6 +1,5 @@
 import random
 import time
-from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -19,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         continuous = options.get("continuous")
-        interval = options.get("interval")
+        options.get("interval")
         subscription_id = options.get("subscription_id")
 
         if subscription_id:

@@ -1,4 +1,3 @@
-import os
 import re
 from urllib.parse import urljoin, urlparse
 
@@ -53,7 +52,7 @@ def extract_favicon_url(url):
                     if test_response.status_code == 200:
                         favicon_url = test_url
                         break
-                except:
+                except Exception:
                     continue
 
         return favicon_url
@@ -118,7 +117,7 @@ def get_domain_from_url(url):
     try:
         parsed = urlparse(url)
         return parsed.netloc
-    except:
+    except Exception:
         return url.replace("https://", "").replace("http://", "").split("/")[0]
 
 
@@ -129,5 +128,5 @@ def get_default_icon_url(domain):
     try:
         # 使用Google的favicon服务
         return f"https://www.google.com/s2/favicons?domain={domain}&sz=64"
-    except:
+    except Exception:
         return None

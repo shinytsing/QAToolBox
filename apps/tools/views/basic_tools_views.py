@@ -7,7 +7,6 @@ import json
 import logging
 import os
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -281,7 +280,7 @@ def ai_analysis_api(request):
     try:
         data = json.loads(request.body)
         prompt = data.get("prompt", "")
-        user_data = data.get("userData", {})
+        data.get("userData", {})
 
         # 调用DeepSeek API
         ai_response = call_deepseek_api(prompt)

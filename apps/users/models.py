@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -297,7 +295,7 @@ class UserModePreference(models.Model):
         try:
             preference = cls.objects.filter(user=user).order_by("-click_count", "-last_click_time").first()
             return preference.mode if preference else "work"  # 默认极客模式
-        except:
+        except Exception:
             return "work"
 
     @classmethod

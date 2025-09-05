@@ -6,13 +6,11 @@
 
 import json
 import logging
-import os
 import platform
 import shutil
 import subprocess
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -411,7 +409,7 @@ class BrowserProxyConfig:
                         if "preferences" in prefs["profile"]["content_settings"]:
                             if "proxy" in prefs["profile"]["content_settings"]["preferences"]:
                                 status["browsers"]["chrome"] = True
-                except:
+                except Exception:
                     pass
 
             edge_path = self.get_edge_preferences_path()
@@ -423,7 +421,7 @@ class BrowserProxyConfig:
                         if "preferences" in prefs["profile"]["content_settings"]:
                             if "proxy" in prefs["profile"]["content_settings"]["preferences"]:
                                 status["browsers"]["edge"] = True
-                except:
+                except Exception:
                     pass
 
         except Exception as e:

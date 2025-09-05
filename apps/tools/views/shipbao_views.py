@@ -10,12 +10,11 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 # 导入相关模型
-from ..models.legacy_models import ShipBaoFavorite, ShipBaoItem, ShipBaoTransaction, ShipBaoUserProfile, ShipBaoWantItem
+from ..models.legacy_models import ShipBaoFavorite, ShipBaoItem, ShipBaoWantItem
 
 
 def shipbao_home(request):
@@ -912,7 +911,7 @@ def shipbao_transaction_status_api(request, item_id):
 def save_user_location_api(request):
     """保存用户位置API"""
     try:
-        data = json.loads(request.body)
+        json.loads(request.body)
 
         # 这里可以选择将位置信息保存到用户模型或单独的位置表中
         # 暂时只返回成功，位置主要保存在localStorage中

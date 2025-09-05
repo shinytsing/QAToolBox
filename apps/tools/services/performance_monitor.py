@@ -3,9 +3,9 @@ import logging
 import statistics
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from django.core.cache import cache
 from django.http import JsonResponse

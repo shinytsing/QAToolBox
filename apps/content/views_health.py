@@ -17,15 +17,12 @@ import psutil
 @csrf_exempt
 @require_http_methods(["GET"])
 def health_check(request):
-    pass
     """
     健康检查接口
     返回服务状态信息
     """
     try:
         # 系统信息
-        pass
-        pass
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
@@ -64,9 +61,6 @@ def health_check(request):
         return JsonResponse(status, status=200)
 
     except Exception as e:
-        pass
-        pass
-        pass
         error_status = {"status": "unhealthy", "error": str(e), "timestamp": time.time(), "service": "QAToolBox"}
         return JsonResponse(error_status, status=500)
 
@@ -74,7 +68,6 @@ def health_check(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def ping(request):
-    pass
     """
     简单的ping接口
     用于网络连通性测试
@@ -85,15 +78,12 @@ def ping(request):
 @csrf_exempt
 @require_http_methods(["GET"])
 def status(request):
-    pass
     """
     详细状态接口
     返回更详细的服务状态信息
     """
     try:
         # 进程信息
-        pass
-        pass
         current_process = psutil.Process()
 
         # 网络连接
@@ -101,10 +91,8 @@ def status(request):
 
         # 文件描述符
         try:
-            pass
-            pass
             open_files = len(current_process.open_files())
-        except:
+        except Exception:
             open_files = "N/A"
 
         status = {
@@ -130,8 +118,5 @@ def status(request):
         return JsonResponse(status, status=200)
 
     except Exception as e:
-        pass
-        pass
-        pass
         error_status = {"status": "error", "error": str(e), "timestamp": time.time(), "service": "QAToolBox"}
         return JsonResponse(error_status, status=500)

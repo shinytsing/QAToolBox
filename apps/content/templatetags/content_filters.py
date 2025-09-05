@@ -50,7 +50,7 @@ def format_datetime(dt):
         return ""
     try:
         return dt.strftime("%Y-%m-%d %H:%M")
-    except:
+    except Exception:
         return str(dt)
 
 
@@ -61,5 +61,5 @@ def format_date(dt):
         return ""
     try:
         return dt.strftime("%Y-%m-%d")
-    except:
+    except Exception:
         return str(dt)

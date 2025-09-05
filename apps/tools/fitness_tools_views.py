@@ -113,7 +113,7 @@ def calculate_bmi_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"BMI计算错误: {str(e)}")
@@ -167,7 +167,7 @@ def calculate_heart_rate_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"心率计算错误: {str(e)}")
@@ -235,7 +235,7 @@ def calculate_calories_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"卡路里计算错误: {str(e)}")
@@ -295,7 +295,7 @@ def calculate_protein_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"蛋白质计算错误: {str(e)}")
@@ -362,7 +362,7 @@ def calculate_water_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"水分计算错误: {str(e)}")
@@ -434,7 +434,7 @@ def calculate_rm_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"RM计算错误: {str(e)}")
@@ -509,7 +509,7 @@ def calculate_pace_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"配速计算错误: {str(e)}")
@@ -552,7 +552,7 @@ def save_workout_record_api(request):
 
         return JsonResponse({"success": True, "message": "训练记录保存成功", "data": workout_record})
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"保存训练记录错误: {str(e)}")
@@ -675,7 +675,7 @@ def calculate_body_composition_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"身体成分分析错误: {str(e)}")
@@ -743,7 +743,7 @@ def calculate_one_rm_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"1RM计算错误: {str(e)}")
@@ -810,7 +810,7 @@ def predict_reps_api(request):
             }
         )
 
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return JsonResponse({"success": False, "message": "输入数据格式错误"})
     except Exception as e:
         logger.error(f"重复次数预测错误: {str(e)}")

@@ -2,9 +2,7 @@ import json
 import logging
 import random
 import time
-from typing import Dict, List, Optional, Tuple
-
-from django.conf import settings
+from typing import Dict, List, Tuple
 
 import requests
 

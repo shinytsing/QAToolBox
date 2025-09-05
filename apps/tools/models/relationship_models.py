@@ -432,7 +432,7 @@ class RelationshipReminder(models.Model):
     def snooze(self, days=1):
         """推迟提醒"""
         if self.can_snooze():
-            from datetime import date, timedelta
+            from datetime import timedelta
 
             self.reminder_date = self.reminder_date + timedelta(days=days)
             self.snooze_count += 1

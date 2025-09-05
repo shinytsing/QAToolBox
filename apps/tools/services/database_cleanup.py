@@ -5,14 +5,12 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 
 from apps.tools.models import SocialMediaSubscription, ToolUsageLog
-from apps.users.models import User
 
 logger = logging.getLogger(__name__)
 

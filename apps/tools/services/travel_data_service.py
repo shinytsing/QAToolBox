@@ -1,14 +1,8 @@
-import json
-import os
-import random
 import re
-import time
 import urllib.parse
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import requests
-from bs4 import BeautifulSoup
 
 
 class TravelDataService:
@@ -172,7 +166,7 @@ class TravelDataService:
         try:
             # 使用DuckDuckGo Instant Answer API (免费)
             query = f"{destination} 旅游攻略 景点 美食"
-            encoded_query = urllib.parse.quote(query)
+            urllib.parse.quote(query)
 
             url = f"https://api.duckduckgo.com/"
             params = {"q": query, "format": "json", "no_html": "1", "skip_disambig": "1"}

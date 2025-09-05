@@ -1,9 +1,5 @@
-from datetime import timedelta
-
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from apps.tools.models import HeartLinkRequest, UserOnlineStatus
 from apps.tools.views import cleanup_expired_heart_link_requests, disconnect_inactive_users
 
 

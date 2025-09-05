@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
 from apps.tools.models import SocialMediaSubscription
 from apps.tools.services.social_media_crawler import NotificationService, SocialMediaCrawler

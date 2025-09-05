@@ -7,7 +7,7 @@ from collections import defaultdict
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponseForbidden
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.html import strip_tags
 
@@ -157,7 +157,7 @@ class SecurityMiddleware(MiddlewareMixin):
             try:
                 parsed = urlparse(referer)
                 return parsed.netloc in allowed_domains
-            except:
+            except Exception:
                 return False
 
         return True

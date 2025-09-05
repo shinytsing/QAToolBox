@@ -3,24 +3,16 @@
 实现欲望管理、任务完成、AI图片生成等功能
 """
 
-import json
 import random
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from django.contrib.auth.models import User
-from django.core.cache import cache
-from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from ..models import (
-    CodeWorkoutSession,
-    DailyWorkoutChallenge,
     DesireDashboard,
     DesireFulfillment,
     DesireItem,
-    FitnessWorkoutSession,
 )
 
 

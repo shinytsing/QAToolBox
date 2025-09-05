@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 
 from apps.tools.services.food_image_mapping import (
     ACCURATE_FOOD_IMAGES,
-    get_food_image,
     get_image_coverage_stats,
     update_food_images_in_database,
 )

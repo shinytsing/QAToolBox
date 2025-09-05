@@ -1,9 +1,7 @@
 # QAToolbox/apps/tools/urls.py - 优化版本
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 from django.shortcuts import render
-from django.urls import include, path
+from django.urls import path
 
 try:
     from . import consumers
@@ -103,14 +101,11 @@ from .legacy_views import (
     create_fitness_workout_api,
     create_heart_link_request_api,
     delete_message_api,
-    douyin_analysis_api,
-    douyin_analyzer,
     feature_list_api,
     feature_recommendations_api,
     fitness_api,
     food_randomizer,
     generate_boss_qr_code_api,
-    generate_product_preview_api,
     get_active_chat_rooms_api,
     get_ai_dependency_api,
     get_boss_login_page_url_api,
@@ -119,8 +114,6 @@ from .legacy_views import (
     get_chat_room_participants_api,
     get_checkin_calendar_api,
     get_crawler_status_api,
-    get_douyin_analysis_api,
-    get_douyin_analysis_list_api,
     get_notifications_api,
     get_online_users_api,
     get_pain_currency_api,
@@ -132,7 +125,6 @@ from .legacy_views import (
     heart_link,
     heart_link_chat,
     heart_link_test_view,
-    life_diary_api,
     mark_messages_read_api,
     mark_notification_read_api,
     meditation_audio_api,
@@ -140,8 +132,6 @@ from .legacy_views import (
     multi_video_test_view,
     number_match_api,
     number_match_view,
-    pause_food_randomization_api,
-    rate_food_api,
     recommendation_stats_api,
     record_exhaustion_audio_api,
     record_mode_click_api,
@@ -159,12 +149,9 @@ from .legacy_views import (
     shipbao_detail,
     shipbao_home,
     shipbao_initiate_transaction_api,
-    shipbao_messages_api,
     shipbao_publish,
-    shipbao_send_message_api,
     shipbao_transactions,
     start_crawler_api,
-    start_food_randomization_api,
     tarot_reading_view,
     triple_awakening_dashboard,
     update_online_status_api,
@@ -207,12 +194,10 @@ from .views.achievement_views import achievements_api, get_fitness_achievements_
 
 # 从基础视图导入
 from .views.base_views import (
-    create_job_search_request_api,
     deepseek_api,
     delete_vanity_task_api,
     follow_fitness_user_api,
     get_boss_login_page_screenshot_api,
-    get_job_search_requests_api,
     get_vanity_tasks_stats_api,
 )
 
@@ -459,7 +444,6 @@ from .views.travel_post_views import (
 )
 from .views.travel_views import (
     check_local_travel_data_api,
-    delete_travel_guide_api,
     export_travel_guide_api,
     get_travel_guide_detail_api,
     get_travel_guides_api,

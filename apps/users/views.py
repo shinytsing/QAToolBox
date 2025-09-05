@@ -6,7 +6,6 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.sessions.backends.cache import SessionStore
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,7 +16,7 @@ from django.views.decorators.http import require_http_methods
 
 from apps.content.views import admin_required
 
-from .forms import LoginForm, ProfileEditForm, UserEditForm, UserLoginForm, UserRegistrationForm
+from .forms import ProfileEditForm, UserRegistrationForm
 from .models import Profile, UserActionLog, UserActivityLog, UserMembership, UserRole, UserSessionStats, UserStatus, UserTheme
 from .services.progressive_captcha_service import ProgressiveCaptchaService
 
@@ -244,7 +243,7 @@ def user_logout(request):
             print(f"记录登出活动失败: {e}")
 
     # 获取当前会话键，以便在前端清除
-    session_key = request.session.session_key
+    request.session.session_key
 
     # Django内置登出（清除session和认证状态）
     logout(request)
@@ -301,7 +300,6 @@ def admin_user_management(request):
     )
 
     # 统计信息
-    from datetime import datetime, timedelta
 
     from django.utils import timezone
 
@@ -742,9 +740,6 @@ def admin_monitoring_stats_api(request):
 def admin_force_logout_api(request, user_id):
     import json
 
-    from django.contrib.auth import logout
-    from django.contrib.sessions.models import Session
-
     try:
         data = json.loads(request.body)
         reason = data.get("reason", "管理员强制登出")
@@ -897,7 +892,6 @@ def upload_avatar(request):
             import io
             import os
 
-            from django.conf import settings
             from django.core.files.base import ContentFile
 
             from PIL import Image
@@ -944,18 +938,14 @@ def upload_avatar(request):
             file_extension = os.path.splitext(avatar_file.name)[1].lower()
             if file_extension in [".jpg", ".jpeg"]:
                 img.save(output, format="JPEG", quality=85, optimize=True)
-                content_type = "image/jpeg"
                 file_extension = ".jpg"
             elif file_extension == ".png":
                 img.save(output, format="PNG", optimize=True)
-                content_type = "image/png"
             elif file_extension == ".webp":
                 img.save(output, format="WEBP", quality=85, optimize=True)
-                content_type = "image/webp"
             else:
                 # 默认保存为JPEG
                 img.save(output, format="JPEG", quality=85, optimize=True)
-                content_type = "image/jpeg"
                 file_extension = ".jpg"
 
             output.seek(0)
@@ -976,8 +966,6 @@ def upload_avatar(request):
         except ImportError:
             # 如果没有Pillow库，使用原始文件
             import os
-
-            from django.conf import settings
 
             file_extension = os.path.splitext(avatar_file.name)[1]
             if not file_extension:

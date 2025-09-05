@@ -1,14 +1,9 @@
-import json
-import random
-
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db import models
-from django.db.models import Index, Q
 from django.utils import timezone
 
 # 导入聊天模型以避免循环导入
-from .chat_models import ChatMessage, ChatRoom
 
 # ToolUsageLog 已移至 base_models.py，这里不再重复定义
 # LifeDiaryEntry已移到diary_models.py，避免重复定义
@@ -2421,7 +2416,7 @@ class Feature(models.Model):
 
                 if user_level < required_level:
                     return False
-            except:
+            except Exception:
                 return False
 
         return True
@@ -2510,7 +2505,7 @@ class FeatureRecommendation(models.Model):
     @classmethod
     def get_user_recommendation_history(cls, user, days=30):
         """获取用户最近的推荐历史"""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
 
         since = timezone.now() - timedelta(days=days)
         return cls.objects.filter(user=user, created_at__gte=since)
@@ -3252,7 +3247,6 @@ class ShipBaoItem(models.Model):
     def increment_inquiry_count(self):
         """增加咨询次数（如果有inquiry_count字段的话）"""
         # 目前legacy模型没有inquiry_count字段，保留方法以保持兼容性
-        pass
 
 
 class ShipBaoTransaction(models.Model):
@@ -3911,7 +3905,7 @@ class FitnessStrengthProfile(models.Model):
 
     def update_stats(self):
         """更新统计数据"""
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         # 更新总训练次数
         self.total_workouts = ExerciseWeightRecord.objects.filter(user=self.user).count()
@@ -3919,7 +3913,6 @@ class FitnessStrengthProfile(models.Model):
         # 更新连续天数
         records = ExerciseWeightRecord.objects.filter(user=self.user).order_by("-workout_date")
         if records.exists():
-            current_streak = 0
             longest_streak = 0
             temp_streak = 0
             current_date = datetime.now().date()
@@ -3959,7 +3952,7 @@ class FitnessStrengthProfile(models.Model):
 
     def update_1rm_records(self):
         """更新1RM记录 - 优化版本"""
-        from django.db.models import Max, Q
+        from django.db.models import Max
 
         # 使用单次查询获取所有运动类型的最佳记录
         best_records = (

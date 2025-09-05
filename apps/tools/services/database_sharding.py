@@ -5,12 +5,11 @@
 
 import hashlib
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List
 
-from django.conf import settings
 from django.core.cache import cache
-from django.db import connections, transaction
+from django.db import connections
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -337,7 +336,6 @@ class ShardReplication:
     def _copy_to_shard(self, table_name: str, data: Dict, target_shard: str):
         """复制数据到指定分片"""
         # 实现数据复制逻辑
-        pass
 
     def sync_shards(self, table_name: str):
         """同步分片数据"""

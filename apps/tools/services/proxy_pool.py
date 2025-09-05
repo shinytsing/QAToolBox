@@ -11,7 +11,6 @@
 - 详细统计分析
 """
 
-import hashlib
 import json
 import logging
 import os
@@ -23,7 +22,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 
 import requests
 
@@ -309,7 +308,7 @@ class ProxyPool:
         try:
             parts = ip.split(".")
             return len(parts) == 4 and all(0 <= int(part) <= 255 for part in parts)
-        except:
+        except Exception:
             return False
 
     def _parse_proxy_response(self, response, source_name: str, source_config: Dict) -> List[ProxyInfo]:

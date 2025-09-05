@@ -1,21 +1,17 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.db.models import Avg, Count, Q, Sum
-from django.http import JsonResponse
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-import requests
-
-from ..models import SocialMediaNotification, SocialMediaSubscription, ToolUsageLog
+from ..models import SocialMediaNotification, SocialMediaSubscription
 from .base import (
     BaseView,
     CachedViewMixin,

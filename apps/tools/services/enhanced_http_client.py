@@ -6,7 +6,7 @@
 import logging
 import random
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
 import requests
 from requests.adapters import HTTPAdapter

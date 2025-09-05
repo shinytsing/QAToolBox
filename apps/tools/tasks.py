@@ -1,12 +1,12 @@
 import logging
-from datetime import datetime, time, timedelta
+from datetime import time, timedelta
 
 from django.utils import timezone
 
 from celery import shared_task
 
 from .fitness_nutrition_models import DietPlan, Meal, MealLog, NutritionReminder
-from .models import ChatRoom, HeartLinkRequest, UserOnlineStatus
+from .models import ChatRoom, UserOnlineStatus
 
 logger = logging.getLogger(__name__)
 
@@ -139,4 +139,3 @@ def update_plan_progress():
     """更新计划进度"""
     # 这里可以添加计划进度更新的逻辑
     # 比如根据用户的实际完成情况调整计划
-    pass

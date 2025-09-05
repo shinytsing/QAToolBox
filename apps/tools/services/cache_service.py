@@ -7,13 +7,10 @@
 
 import hashlib
 import json
-from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
-from django.conf import settings
 from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
-from django.utils import timezone
 
 
 class CacheService:

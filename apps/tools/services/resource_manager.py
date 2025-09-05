@@ -1,4 +1,3 @@
-import asyncio
 import hashlib
 import io
 import logging
@@ -7,11 +6,9 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 
 import aiofiles
 from PIL import Image
@@ -109,7 +106,7 @@ class ChunkedFileManager:
         if mime_type is None:
             mime_type, _ = mimetypes.guess_type(filename)
 
-        total_chunks = (total_size + self.chunk_size - 1) // self.chunk_size
+        (total_size + self.chunk_size - 1) // self.chunk_size
 
         file_info = FileInfo(
             file_id=file_id,

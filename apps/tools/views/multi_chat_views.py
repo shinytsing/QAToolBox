@@ -1,12 +1,9 @@
 # 多人聊天室视图
 import logging
-import uuid
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
+from django.shortcuts import render
 
 from apps.tools.models.chat_models import ChatMessage, ChatRoom
 

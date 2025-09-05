@@ -2,14 +2,13 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from apps.tools.models.exercise_library_models import BodyPart, Equipment, Exercise, UserExercisePreference, WorkoutTemplate
+from apps.tools.models.exercise_library_models import BodyPart, Equipment, Exercise, UserExercisePreference
 from apps.tools.models.fitness_achievement_models import (
     EnhancedFitnessAchievement,
     EnhancedUserFitnessAchievement,

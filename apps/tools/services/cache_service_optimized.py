@@ -1,14 +1,12 @@
 import hashlib
-import json
 import logging
 import pickle  # nosec B403
 import zlib
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 from django.conf import settings
 from django.core.cache import cache
-from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -379,7 +377,7 @@ class CacheManager:
     def warm_up_cache():
         """预热缓存"""
         try:
-            from ..models import ChatRoom, LifeDiaryEntry, LifeGoal
+            from ..models import LifeDiaryEntry, LifeGoal
 
             # 预热常用查询
             logger.info("开始预热缓存...")

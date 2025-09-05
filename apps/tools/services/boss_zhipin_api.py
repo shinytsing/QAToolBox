@@ -3,10 +3,7 @@ import json
 import random
 import time
 from io import BytesIO
-from typing import Dict, List, Optional
-
-from django.conf import settings
-from django.core.cache import cache
+from typing import Dict, List
 
 import qrcode
 import requests

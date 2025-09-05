@@ -4,7 +4,6 @@
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
 from apps.tools.models.legacy_models import FitnessCommunityPost
 

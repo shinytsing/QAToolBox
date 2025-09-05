@@ -5,13 +5,10 @@
 import json
 import logging
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +228,6 @@ class MapMixin:
     def geocode_address(self, address):
         """地址转坐标"""
         # 这里可以实现地址转坐标的功能
-        pass
 
     def reverse_geocode(self, lat, lon):
         """坐标转地址"""

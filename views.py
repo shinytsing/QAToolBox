@@ -15,7 +15,7 @@ def tool_view(request):
         from apps.users.models import UserModePreference
 
         preferred_mode = UserModePreference.get_user_preferred_mode(request.user)
-    except:
+    except Exception:
         preferred_mode = "work"  # 默认极客模式
 
     context = {

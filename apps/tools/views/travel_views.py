@@ -4,14 +4,11 @@
 """
 
 import json
-import time
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -450,7 +447,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"• {season}: {info}")
                 else:
                     content.append(str(weather_info))
-            except:
+            except Exception:
                 content.append(str(weather_info))
             content.append("")
 
@@ -480,7 +477,7 @@ def format_travel_guide_for_export(guide):
                             content.append(f"{i}. {str(attraction)}")
                 else:
                     content.append(str(attractions))
-            except Exception as e:
+            except Exception:
                 content.append("景点数据解析错误")
             content.append("")
 
@@ -510,7 +507,7 @@ def format_travel_guide_for_export(guide):
                             content.append(f"{i}. {str(food)}")
                 else:
                     content.append(str(foods))
-            except Exception as e:
+            except Exception:
                 content.append("美食数据解析错误")
             content.append("")
 
@@ -601,7 +598,7 @@ def format_travel_guide_for_export(guide):
                         content.append("")
                 else:
                     content.append(str(daily_schedule))
-            except Exception as e:
+            except Exception:
                 content.append("行程数据解析错误")
             content.append("")
 
@@ -616,7 +613,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"• {key}: {value}")
                 else:
                     content.append(str(transport))
-            except Exception as e:
+            except Exception:
                 content.append("交通数据解析错误")
             content.append("")
 
@@ -631,7 +628,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"• {budget_type}: {amount}")
                 else:
                     content.append(str(budget))
-            except Exception as e:
+            except Exception:
                 content.append("预算数据解析错误")
             content.append("")
 
@@ -660,7 +657,7 @@ def format_travel_guide_for_export(guide):
                                 content.append(f"• {category}: {details}")
                 else:
                     content.append(str(cost_breakdown))
-            except Exception as e:
+            except Exception:
                 content.append("费用数据解析错误")
             content.append("")
 
@@ -675,7 +672,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"{i}. {str(gem)}")
                 else:
                     content.append(str(hidden_gems))
-            except Exception as e:
+            except Exception:
                 content.append("隐藏玩法数据解析错误")
             content.append("")
 
@@ -690,7 +687,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"{i}. {str(tip)}")
                 else:
                     content.append(str(tips))
-            except Exception as e:
+            except Exception:
                 content.append("贴士数据解析错误")
             content.append("")
 
@@ -707,7 +704,7 @@ def format_travel_guide_for_export(guide):
         content.append(f"📅 生成时间: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}")
         content.append("🎯 由 WanderAI 智能旅游攻略系统生成")
 
-    except Exception as e:
+    except Exception:
         # 如果出现任何错误，返回基本信息
         content = [
             f"🗺️ {getattr(guide, 'destination', '未知目的地')} 旅游攻略",

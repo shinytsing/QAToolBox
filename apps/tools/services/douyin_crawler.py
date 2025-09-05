@@ -1,11 +1,9 @@
-import json
 import logging
 import random
 import re
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-from urllib.parse import parse_qs, urlparse
+from datetime import timedelta
+from typing import Dict, List
 
 from django.utils import timezone
 

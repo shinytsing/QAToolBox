@@ -14,7 +14,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-from apps.tools.models import FoodNutrition, FoodRandomizationLog
+from apps.tools.models import FoodRandomizationLog
 from apps.tools.models.legacy_models import FoodHistory, FoodItem, FoodPhotoBinding, FoodRandomizationSession
 
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ def food_randomizer_pure_random_api(request):
         }
 
         # 记录推荐日志 - 使用FoodHistory模型
-        session_id = recommendation["generated_at"]
+        recommendation["generated_at"]
         if request.user.is_authenticated:
             # 创建随机会话记录
             session = FoodRandomizationSession.objects.create(

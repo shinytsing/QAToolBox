@@ -1,18 +1,13 @@
 import json
 import random
-from datetime import datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 import numpy as np
-
-from .models import ToolUsageLog
 
 
 class GuitarTrainingSystem:
@@ -508,13 +503,11 @@ def get_user_song_progress(user):
 def save_practice_record(record):
     """保存练习记录"""
     # 这里应该保存到数据库
-    pass
 
 
 def check_achievements(user):
     """检查成就"""
     # 这里应该检查并授予成就
-    pass
 
 
 def calculate_points(duration, accuracy):
@@ -711,7 +704,6 @@ def analyze_audio(file_path):
 
         import librosa
         import numpy as np
-        from scipy import signal
 
         warnings.filterwarnings("ignore")
 
@@ -1197,7 +1189,6 @@ E|---1---|
 def save_tab_result(user, task_id, tab_result):
     """保存扒谱结果"""
     # 这里应该保存到数据库
-    pass
 
 
 def get_recent_tabs(user, limit=5):
@@ -1289,7 +1280,6 @@ def get_achievements_api(request):
     """获取用户成就API"""
     try:
         import logging
-        from datetime import datetime, timedelta
 
         from django.conf import settings
 

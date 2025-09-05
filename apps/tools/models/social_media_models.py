@@ -110,7 +110,7 @@ class SocialMediaSubscription(models.Model):
     @classmethod
     def get_user_subscription_stats(cls, user):
         """获取用户订阅统计信息"""
-        from django.db.models import Count, Q
+        from django.db.models import Count
 
         total_subscriptions = cls.objects.filter(user=user).count()
         active_subscriptions = cls.objects.filter(user=user, status="active").count()

@@ -1,9 +1,5 @@
-from datetime import timedelta
-
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.db import models
-from django.utils import timezone
 
 
 class EnhancedFitnessWorkoutSession(models.Model):
@@ -403,7 +399,7 @@ class EnhancedFitnessStrengthProfile(models.Model):
 
     def update_stats(self):
         """更新统计数据"""
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         # 更新总训练次数
         self.total_workouts = EnhancedExerciseWeightRecord.objects.filter(user=self.user).count()
@@ -411,7 +407,6 @@ class EnhancedFitnessStrengthProfile(models.Model):
         # 更新连续天数
         records = EnhancedExerciseWeightRecord.objects.filter(user=self.user).order_by("-workout_date")
         if records.exists():
-            current_streak = 0
             longest_streak = 0
             temp_streak = 0
             current_date = datetime.now().date()

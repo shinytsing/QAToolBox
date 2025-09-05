@@ -1,10 +1,9 @@
 import hashlib
 import json
 import logging
-import random
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import timedelta
+from typing import Dict, List, Optional
 
 from django.conf import settings
 from django.utils import timezone

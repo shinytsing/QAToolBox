@@ -5,12 +5,8 @@ import os
 import tempfile
 from datetime import datetime
 
-from django.shortcuts import render
-
 import pillow_heif  # 添加HEIC支持
-import requests
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -217,7 +213,7 @@ class GenerateRedBookAPI(APIView):
 
             return response
 
-        except Exception as e:
+        except Exception:
             # 确保清理所有临时文件
             for image_path in image_paths:
                 if os.path.exists(image_path):

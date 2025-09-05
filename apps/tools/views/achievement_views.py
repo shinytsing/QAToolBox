@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 def achievements_api(request):
     """获取成就列表API - 真实实现"""
     try:
-        from django.db.models import Count, Q
+        from django.db.models import Count
 
         from ..models.legacy_models import PDFConversionRecord
 

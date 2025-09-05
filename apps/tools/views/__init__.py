@@ -67,30 +67,7 @@ from ..legacy_views import (  # 音频转换相关; 旅行指南相关; 心链�
     update_subscription_api,
     validate_budget_range,
 )
-from .basic_tools_views import *
-from .desire_views import *
-from .diary_views import *
 
 # 通用文件下载视图
-from .file_download_views import generic_file_download
-from .fitness_views import *
-from .goal_views import *
-from .health_views import *
-from .music_views import *
 
 # from .chat_views import *  # 暂时注释掉，直到修复导入问题
-from .social_media_views import (
-    SocialMediaAPIView,
-    add_social_subscription_api,
-    batch_delete_subscriptions_api,
-    batch_update_subscriptions_api,
-    delete_subscription_api,
-    get_notifications_api,
-    get_subscription_stats_api,
-    get_subscriptions_api,
-    mark_notification_read_api,
-    social_subscription_demo,
-    update_subscription_api,
-)
-from .travel_views import *
-from .vanity_views import *

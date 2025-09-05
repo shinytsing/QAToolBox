@@ -12,9 +12,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.cache import cache
-from django.core.files.base import ContentFile
 from django.db import models
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -31,7 +30,7 @@ def is_admin(user):
     """检查用户是否为管理员"""
     try:
         return user.role.role == "admin"
-    except:
+    except Exception:
         return False
 
 
@@ -84,10 +83,6 @@ def validate_budget_range(budget_min, budget_max):
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-
 from apps.users.models import Profile, UserMembership, UserTheme
 
 # 自动求职机相关模型导入
@@ -97,25 +92,15 @@ from apps.users.models import Profile, UserMembership, UserTheme
 # 旅游攻略相关模型导入
 # VanityOS 模型导入
 from .models import (
-    AIDependencyMeter,
     BasedDevAvatar,
     BuddyEvent,
     BuddyEventChat,
     BuddyEventMember,
     BuddyEventMessage,
-    BuddyEventReport,
-    BuddyEventReview,
-    BuddyUserProfile,
     CheckInCalendar,
     CodeWorkoutSession,
     CoPilotCollaboration,
-    DailyWorkoutChallenge,
-    DesireDashboard,
-    DesireFulfillment,
-    DesireItem,
-    EnhancedFitnessStrengthProfile,
     ExerciseWeightRecord,
-    ExhaustionProof,
     FitnessAchievement,
     FitnessCommunityComment,
     FitnessCommunityLike,
@@ -127,40 +112,25 @@ from .models import (
     FoodHistory,
     FoodItem,
     FoodRandomizationSession,
-    FoodRandomizer,
-    JobApplication,
-    JobSearchProfile,
-    JobSearchRequest,
-    JobSearchStatistics,
-    PainCurrency,
     ShipBaoItem,
     ShipBaoMessage,
     ShipBaoTransaction,
-    ShipBaoUserProfile,
     SinPoints,
     Sponsor,
-    TarotCard,
-    TarotCommunity,
-    TarotCommunityComment,
-    TarotEnergyCalendar,
-    TarotReading,
-    TarotSpread,
     TravelGuide,
     UserFitnessAchievement,
     VanityTask,
     VanityWealth,
-    WorkoutDashboard,
 )
 
 # 欲望仪表盘API
-from .services.desire_dashboard import DesireDashboardService, DesireVisualizationService
+from .services.desire_dashboard import DesireDashboardService
 from .services.job_search_service import JobSearchService
-
-# 塔罗牌相关导入
-from .services.tarot_service import TarotService
 
 # 三重觉醒改造计划API
 from .services.triple_awakening import TripleAwakeningService, WorkoutAudioProcessor
+
+# 塔罗牌相关导入
 
 
 @login_required
@@ -369,7 +339,7 @@ def heart_link_chat(request, room_id):
                         },
                         status=202,
                     )  # 202 表示正在处理
-            except Exception as e:
+            except Exception:
                 # 如果自动创建失败，回退到原方案
                 return JsonResponse(
                     {
@@ -824,7 +794,6 @@ def music_api(request):
 def search_netease_music(keyword):
     """搜索网易云音乐"""
     try:
-        import re
         from urllib.parse import quote
 
         import requests
@@ -1474,7 +1443,7 @@ def save_life_goal(request, data):
         for milestone in milestones[:10]:  # 限制最多10个里程碑
             if isinstance(milestone, dict) and milestone.get("text") and milestone.get("date"):
                 try:
-                    milestone_date = datetime.strptime(milestone["date"], "%Y-%m-%d").date()
+                    datetime.strptime(milestone["date"], "%Y-%m-%d").date()
                     validated_milestones.append(
                         {"text": milestone["text"].strip()[:100], "date": milestone["date"]}  # 限制长度
                     )
@@ -2243,7 +2212,7 @@ def is_user_active(user):
         online_status = UserOnlineStatus.objects.filter(user=user).first()
         if online_status and online_status.last_seen:
             return timezone.now() - online_status.last_seen < timedelta(minutes=10)
-    except:
+    except Exception:
         pass
 
     # 如果没有在线状态记录，检查最后登录时间
@@ -2303,7 +2272,7 @@ def disconnect_inactive_users():
                 user1_inactive = timezone.now() - online_status1.last_seen > timedelta(minutes=30)
             elif room.user1.last_login:
                 user1_inactive = timezone.now() - room.user1.last_login > timedelta(minutes=45)
-        except:
+        except Exception:
             pass
 
         # 检查用户2是否超过30分钟不活跃
@@ -2314,7 +2283,7 @@ def disconnect_inactive_users():
                     user2_inactive = timezone.now() - online_status2.last_seen > timedelta(minutes=30)
                 elif room.user2.last_login:
                     user2_inactive = timezone.now() - room.user2.last_login > timedelta(minutes=45)
-            except:
+            except Exception:
                 pass
 
         # 只有在两个用户都不活跃时才结束聊天室
@@ -2414,7 +2383,7 @@ def create_heart_link_request_api(request):
                 # 生成安全访问令牌
                 from apps.tools.views.chat_views import generate_chat_token
 
-                token = generate_chat_token(request.user, chat_room.room_id)
+                generate_chat_token(request.user, chat_room.room_id)
 
                 return JsonResponse(
                     {
@@ -3129,8 +3098,6 @@ def get_active_chat_rooms_api(request):
     try:
         from datetime import timedelta
 
-        from django.utils import timezone
-
         # 获取用户参与的活跃聊天室
         user_rooms = ChatRoom.objects.filter(status="active", user1=request.user) | ChatRoom.objects.filter(
             status="active", user2=request.user
@@ -3744,7 +3711,7 @@ def create_copilot_collaboration_api(request):
 @login_required
 def copilot_page(request):
     """AI协作声明页面"""
-    service = TripleAwakeningService()
+    TripleAwakeningService()
 
     # 获取用户的协作记录
     collaborations = CoPilotCollaboration.objects.filter(user=request.user).order_by("-created_at")[:10]
@@ -4934,7 +4901,7 @@ def update_based_dev_stats_api(request):
         action_type = data.get("action_type")  # 'code_line', 'ai_rejection', 'bug_fix'
         value = data.get("value", 1)
 
-        user = request.user
+        request.user
 
         # 这里可以添加更复杂的统计逻辑
         # 暂时返回成功响应
@@ -5017,7 +4984,7 @@ def get_based_dev_achievements_api(request):
 def get_desire_todos_api(request):
     """获取欲望代办列表API"""
     try:
-        user = request.user
+        request.user
         category = request.GET.get("category", "all")
 
         # 这里应该从数据库获取代办，暂时返回模拟数据
@@ -5071,10 +5038,10 @@ def add_desire_todo_api(request):
     try:
         data = json.loads(request.body)
         title = data.get("title")
-        description = data.get("description", "")
+        data.get("description", "")
         category = data.get("category")
         priority = data.get("priority")
-        reward = data.get("reward", "")
+        data.get("reward", "")
 
         if not title or not category or not priority:
             return JsonResponse({"success": False, "error": "标题、分类和优先级不能为空"})
@@ -5132,10 +5099,10 @@ def edit_desire_todo_api(request):
         data = json.loads(request.body)
         todo_id = data.get("todo_id")
         title = data.get("title")
-        description = data.get("description", "")
+        data.get("description", "")
         category = data.get("category")
         priority = data.get("priority")
-        reward = data.get("reward", "")
+        data.get("reward", "")
 
         if not todo_id or not title or not category or not priority:
             return JsonResponse({"success": False, "error": "ID、标题、分类和优先级不能为空"})
@@ -5525,7 +5492,6 @@ def export_travel_guide_api(request, guide_id):
             return JsonResponse({"success": False, "error": "攻略内容为空或数据不完整，请重新生成攻略"}, status=400)
 
         # 尝试使用多种PDF生成方式
-        pdf_content = None
 
         # 直接返回格式化的文本内容，提供更好的用户体验
         logger.info("✅ 返回格式化的文本内容")
@@ -5589,7 +5555,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"• {season}: {info}")
                 else:
                     content.append(str(weather_info))
-            except:
+            except Exception:
                 content.append(str(weather_info))
             content.append("")
 
@@ -5619,7 +5585,7 @@ def format_travel_guide_for_export(guide):
                             content.append(f"{i}. {str(attraction)}")
                 else:
                     content.append(str(attractions))
-            except Exception as e:
+            except Exception:
                 content.append("景点数据解析错误")
             content.append("")
 
@@ -5649,7 +5615,7 @@ def format_travel_guide_for_export(guide):
                             content.append(f"{i}. {str(food)}")
                 else:
                     content.append(str(foods))
-            except Exception as e:
+            except Exception:
                 content.append("美食数据解析错误")
             content.append("")
 
@@ -5740,7 +5706,7 @@ def format_travel_guide_for_export(guide):
                         content.append("")
                 else:
                     content.append(str(daily_schedule))
-            except Exception as e:
+            except Exception:
                 content.append("行程数据解析错误")
             content.append("")
 
@@ -5755,7 +5721,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"• {key}: {value}")
                 else:
                     content.append(str(transport))
-            except Exception as e:
+            except Exception:
                 content.append("交通数据解析错误")
             content.append("")
 
@@ -5770,7 +5736,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"• {budget_type}: {amount}")
                 else:
                     content.append(str(budget))
-            except Exception as e:
+            except Exception:
                 content.append("预算数据解析错误")
             content.append("")
 
@@ -5799,7 +5765,7 @@ def format_travel_guide_for_export(guide):
                                 content.append(f"• {category}: {details}")
                 else:
                     content.append(str(cost_breakdown))
-            except Exception as e:
+            except Exception:
                 content.append("费用数据解析错误")
             content.append("")
 
@@ -5814,7 +5780,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"{i}. {str(gem)}")
                 else:
                     content.append(str(hidden_gems))
-            except Exception as e:
+            except Exception:
                 content.append("隐藏玩法数据解析错误")
             content.append("")
 
@@ -5829,7 +5795,7 @@ def format_travel_guide_for_export(guide):
                         content.append(f"{i}. {str(tip)}")
                 else:
                     content.append(str(tips))
-            except Exception as e:
+            except Exception:
                 content.append("贴士数据解析错误")
             content.append("")
 
@@ -5846,7 +5812,7 @@ def format_travel_guide_for_export(guide):
         content.append(f"📅 生成时间: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}")
         content.append("🎯 由 WanderAI 智能旅游攻略系统生成")
 
-    except Exception as e:
+    except Exception:
         # 如果出现任何错误，返回基本信息
         content = [
             f"🗺️ {getattr(guide, 'destination', '未知目的地')} 旅游攻略",
@@ -6430,7 +6396,7 @@ def fitness_profile(request):
         recent_weight_records = ExerciseWeightRecord.objects.filter(user=request.user).order_by("-workout_date")[:10]
 
         # 获取月度统计
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         current_month = datetime.now().month
         current_year = datetime.now().year
@@ -6562,7 +6528,7 @@ def fitness_profile(request):
 
         return render(request, "tools/fitness_profile.html", context)
 
-    except Exception as e:
+    except Exception:
         # 如果出错，返回基本页面
         return render(request, "tools/fitness_profile.html")
 
@@ -7248,7 +7214,7 @@ def feature_list_api(request):
 def recommendation_stats_api(request):
     """获取推荐统计API"""
     try:
-        from datetime import datetime, timedelta
+        from datetime import timedelta
 
         from django.db.models import Count, Q
 
@@ -8144,7 +8110,6 @@ def audio_converter_api(request):
             logger.info(f"Python版本: {sys.version}")
 
             import pydub
-            from pydub import AudioSegment
 
             logger.info(f"pydub导入成功: {pydub.__file__}")
         except ImportError as e:
@@ -8169,7 +8134,6 @@ def audio_converter_api(request):
 
         # 创建临时目录
         import os
-        import tempfile
         import uuid
 
         from django.conf import settings
@@ -8231,7 +8195,7 @@ def audio_converter_api(request):
             try:
                 os.remove(temp_input_path)
                 os.remove(output_path)
-            except:
+            except Exception:
                 pass
 
             # 准备返回数据
@@ -8267,7 +8231,7 @@ def audio_converter_api(request):
             # 清理临时文件
             try:
                 os.remove(temp_input_path)
-            except:
+            except Exception:
                 pass
 
             return JsonResponse({"success": False, "message": f"转换失败：{message}"})
@@ -8521,7 +8485,7 @@ def convert_audio_file(input_path, output_path, target_format):
         if "decrypted_path" in locals() and decrypted_path and os.path.exists(decrypted_path):
             try:
                 os.remove(decrypted_path)
-            except:
+            except Exception:
                 pass
 
         return False, error_msg, None
@@ -8705,7 +8669,6 @@ def decrypt_ncm_file(ncm_path):
                 f.seek(box_length, 1)
 
             # 创建临时文件存储解密后的音频
-            import tempfile
 
             temp_dir = os.path.dirname(ncm_path) or os.getcwd()
 
@@ -8833,7 +8796,6 @@ def decrypt_ncm_file_fallback(ncm_path):
 
         try:
             from cryptography.hazmat.backends import default_backend
-            from cryptography.hazmat.primitives import padding
             from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
         except ImportError:
             raise Exception("需要安装pycryptodome库: pip install pycryptodome")
@@ -9181,9 +9143,6 @@ def convert_ncm_file_native(input_path, output_path, target_format):
     """原生NCM文件转换，绕过pydub和ffmpeg"""
     try:
         import os
-        import struct
-        import uuid
-        import wave
 
         print(f"开始原生转换: {input_path} -> {output_path} ({target_format})")
 
@@ -9276,7 +9235,6 @@ def convert_ncm_file_native(input_path, output_path, target_format):
             try:
                 # 使用ffmpeg进行MP3转换，确保没有延迟和ID3标签
                 import subprocess
-                import tempfile
 
                 # 创建临时MP3文件
                 temp_mp3 = output_path.replace(".mp3", "_temp.mp3")
@@ -9328,7 +9286,6 @@ def convert_ncm_file_native(input_path, output_path, target_format):
             try:
                 # 使用ffmpeg进行WAV转换
                 import subprocess
-                import tempfile
 
                 # 创建临时MP3文件
                 temp_mp3 = output_path.replace(".wav", "_temp.mp3")
@@ -9523,7 +9480,7 @@ def user_generated_travel_guide_api(request):
             # 解析兴趣标签
             try:
                 interests = json.loads(interests_str)
-            except:
+            except Exception:
                 interests = []
 
             # 验证必填字段
@@ -9853,7 +9810,7 @@ def shipbao_chat(request, transaction_id):
 
         from django.db.models import Q
 
-        from ..models.chat_models import ChatMessage, ChatRoom
+        from ..models.chat_models import ChatRoom
 
         # 确定聊天对象
         if request.user == transaction.buyer:
@@ -10033,7 +9990,7 @@ def shipbao_check_transaction_api(request):
     try:
         data = json.loads(request.body)
         item_id = data.get("item_id")
-        user_id = data.get("user_id")
+        data.get("user_id")
 
         if not item_id:
             return JsonResponse({"success": False, "error": "缺少商品ID"})
@@ -10626,13 +10583,11 @@ def decrypt_ncm_file_correct(ncm_path):
     基于ncmdump库的实现，同时提取专辑封面
     """
     try:
-        import binascii
         import json
         import logging
         import struct
 
         from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives import padding
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
         logger = logging.getLogger(__name__)
@@ -10673,7 +10628,7 @@ def decrypt_ncm_file_correct(ncm_path):
                     key_data = decrypted_key[:-padding_length][17:]
                 else:
                     key_data = decrypted_key[17:]
-            except:
+            except Exception:
                 # 如果unpad失败，手动移除前17字节
                 key_data = decrypted_key[17:]
 
@@ -10721,7 +10676,7 @@ def decrypt_ncm_file_correct(ncm_path):
                             meta_data = decrypted_meta[:-padding_length][22:]
                         else:
                             meta_data = decrypted_meta[22:]
-                    except:
+                    except Exception:
                         # 如果unpad失败，手动移除前22字节
                         meta_data = decrypted_meta[22:]
 
@@ -10734,11 +10689,10 @@ def decrypt_ncm_file_correct(ncm_path):
                             "album": meta_json.get("album", ""),
                             "duration": meta_json.get("duration", 0) / 1000,  # 转换为秒
                         }
-                    except:
+                    except Exception:
                         pass
                 except Exception as e:
                     logger.warning(f"元数据解密失败: {e}")
-                    pass
 
             # 跳过5字节
             f.seek(5, 1)

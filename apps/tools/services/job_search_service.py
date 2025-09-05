@@ -1,13 +1,8 @@
-import json
-import random
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
-
-import requests
 
 from ..models import JobApplication, JobSearchProfile, JobSearchRequest
 from .boss_zhipin_api import BossZhipinAPI
@@ -267,7 +262,7 @@ class JobSearchService:
 
         # 薪资匹配度 (30%)
         job_salary_avg = (job["salary_min"] + job["salary_max"]) / 2
-        request_salary_avg = (job_request.min_salary + job_request.max_salary) / 2
+        (job_request.min_salary + job_request.max_salary) / 2
 
         if job_salary_avg >= job_request.min_salary and job_salary_avg <= job_request.max_salary:
             score += 30

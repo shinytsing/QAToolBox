@@ -4,28 +4,9 @@ from django.contrib import admin
 # 导入模型
 try:
     from .models import (
-        Feature,
-        FeatureRecommendation,
-        FoodHistory,
-        FoodItem,
-        FoodRandomizationSession,
-        FoodRandomizer,
-        ImportantMoment,
-        Interaction,
-        PersonProfile,
-        RelationshipReminder,
-        RelationshipStatistics,
-        RelationshipTag,
         SocialMediaNotification,
         SocialMediaSubscription,
         ToolUsageLog,
-        TravelDestination,
-        TravelGuide,
-        TravelGuideUsage,
-        TravelReview,
-        UserFeaturePermission,
-        UserFirstVisit,
-        UserGeneratedTravelGuide,
     )
 
     @admin.register(ToolUsageLog)
@@ -51,11 +32,9 @@ try:
 
 except ImportError as e:
     print(f"Admin import error: {e}")
-    pass
 
 # 导入营养信息管理配置
 try:
-    from .admin_nutrition import *
+    pass
 except ImportError as e:
     print(f"Nutrition admin import error: {e}")
-    pass

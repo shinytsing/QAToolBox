@@ -8,11 +8,10 @@
 
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.db.models import Avg, Count, F, Q
+from django.db.models import Count
 from django.utils import timezone
 
 from apps.users.models import UserModePreference
@@ -275,7 +274,7 @@ class FeatureRecommendationEngine:
         """获取用户偏好模式"""
         try:
             return UserModePreference.get_user_preferred_mode(user)
-        except:
+        except Exception:
             return "work"  # 默认模式
 
     def record_user_action(self, user, feature, action, session_id=None, context=None):

@@ -1,6 +1,3 @@
-import json
-import random
-import time
 from typing import Dict, List, Optional
 
 from django.conf import settings
@@ -18,7 +15,7 @@ class AccurateFoodImageService:
         self.unsplash_access_key = getattr(settings, "UNSPLASH_ACCESS_KEY", None)
 
         # 导入全面的食物图片映射
-        from .comprehensive_food_images import get_food_image, get_food_images_by_cuisine, get_image_statistics
+        from .comprehensive_food_images import get_food_image, get_food_images_by_cuisine
 
         # 精确的食物图片映射 - 使用全面的图片映射
         self.accurate_food_images = {}
@@ -213,7 +210,7 @@ class AccurateFoodImageService:
         try:
             response = requests.head(image_url, timeout=5)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def get_food_statistics(self, foods: List[Dict]) -> Dict:

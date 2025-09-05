@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -491,12 +490,12 @@ def get_timeline_data_api(request):
         if start_date:
             try:
                 moments_qs = moments_qs.filter(date__gte=start_dt)
-            except:
+            except Exception:
                 pass
         if end_date:
             try:
                 moments_qs = moments_qs.filter(date__lte=end_dt)
-            except:
+            except Exception:
                 pass
 
         # 添加重要时刻到时间线

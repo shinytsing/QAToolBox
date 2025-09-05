@@ -195,7 +195,7 @@ class EnhancedCompressionService:
 
         except subprocess.TimeoutExpired:
             return self.compress_with_zip(file_paths, output_path, compression_level, True)
-        except Exception as e:
+        except Exception:
             return self.compress_with_zip(file_paths, output_path, compression_level, True)
 
     def compress_with_tar_gz(self, file_paths: List[str], output_path: str, compression_level: int = 9) -> Tuple[bool, str]:

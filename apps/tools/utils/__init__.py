@@ -206,7 +206,7 @@ API_RATE_LIMIT=10/minute
                     error_detail += f": {error_response['error'].get('message', '未知错误')}"
                 elif "message" in error_response:
                     error_detail += f": {error_response['message']}"
-            except:
+            except Exception:
                 error_detail += f": {e.response.text[:200]}"
             raise Exception(f"API请求失败: {error_detail}")
         except requests.exceptions.RequestException as e:

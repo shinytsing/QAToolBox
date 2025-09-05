@@ -9,8 +9,6 @@ import json
 import logging
 import os
 
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
@@ -27,7 +25,6 @@ except ImportError:
 import base64
 import io
 import uuid
-from datetime import datetime
 
 from PIL import Image
 
@@ -241,7 +238,7 @@ class PDFConverter:
                                 os.unlink(temp_pdf_path)
                                 if os.path.exists(temp_docx_path):
                                     os.unlink(temp_docx_path)
-                            except:
+                            except Exception:
                                 pass
                             return True, ocr_result, "pdf_to_word"
                         else:
@@ -255,7 +252,7 @@ class PDFConverter:
                                     os.unlink(temp_pdf_path)
                                     if os.path.exists(temp_docx_path):
                                         os.unlink(temp_docx_path)
-                                except:
+                                except Exception:
                                     pass
                                 return False, f"转换失败: pdf2docx提取内容不足，OCR也失败: {ocr_result}", None
                     else:
@@ -281,7 +278,7 @@ class PDFConverter:
                                     os.unlink(temp_pdf_path)
                                     if os.path.exists(temp_docx_path):
                                         os.unlink(temp_docx_path)
-                                except:
+                                except Exception:
                                     pass
                                 return True, ocr_result, "pdf_to_word"
                         except Exception as ocr_error:
@@ -292,7 +289,7 @@ class PDFConverter:
                 try:
                     os.unlink(temp_pdf_path)
                     os.unlink(temp_docx_path)
-                except:
+                except Exception:
                     pass
 
                 return True, docx_content, "pdf_to_word"
@@ -304,7 +301,7 @@ class PDFConverter:
                         os.unlink(temp_pdf_path)
                     if os.path.exists(temp_docx_path):
                         os.unlink(temp_docx_path)
-                except:
+                except Exception:
                     pass
 
                 # 提供更详细的错误信息
@@ -482,12 +479,10 @@ class PDFConverter:
             try:
                 from docx import Document
                 from reportlab.lib.pagesizes import A4
-                from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-                from reportlab.lib.units import inch
+                from reportlab.lib.styles import getSampleStyleSheet
                 from reportlab.pdfbase import pdfmetrics
                 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
                 from reportlab.pdfbase.ttfonts import TTFont
-                from reportlab.pdfgen import canvas
                 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
             except ImportError as e:
                 error_msg = f"缺少必要的库: {str(e)}\\n"
@@ -507,7 +502,7 @@ class PDFConverter:
                 temp_docx_path = temp_docx.name
 
             # 创建临时输出文件路径
-            temp_pdf_path = temp_docx_path.replace(".docx", ".pdf")
+            temp_docx_path.replace(".docx", ".pdf")
 
             try:
                 # 检查临时文件是否存在
@@ -536,7 +531,7 @@ class PDFConverter:
                     normal_style.fontSize = 12
                     normal_style.leading = 14
                     normal_style.alignment = 0  # 左对齐
-                except Exception as e:
+                except Exception:
                     try:
                         # 尝试使用系统中文字体
                         import platform
@@ -545,7 +540,7 @@ class PDFConverter:
                             try:
                                 pdfmetrics.registerFont(TTFont("PingFang", "/System/Library/Fonts/PingFang.ttc"))
                                 normal_style.fontName = "PingFang"
-                            except:
+                            except Exception:
                                 pdfmetrics.registerFont(TTFont("HiraginoSans", "/System/Library/Fonts/STHeiti Light.ttc"))
                                 normal_style.fontName = "HiraginoSans"
                         elif platform.system() == "Windows":
@@ -962,7 +957,7 @@ class PDFConverter:
                 # 清理临时文件
                 try:
                     os.unlink(temp_docx_path)
-                except:
+                except Exception:
                     pass
 
                 if len(pdf_content) == 0:
@@ -975,7 +970,7 @@ class PDFConverter:
                 try:
                     if os.path.exists(temp_docx_path):
                         os.unlink(temp_docx_path)
-                except:
+                except Exception:
                     pass
 
                 # 提供更详细的错误信息
@@ -1057,12 +1052,10 @@ class PDFConverter:
             # 检查reportlab库是否可用
             try:
                 from reportlab.lib.pagesizes import A4
-                from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-                from reportlab.lib.units import inch
+                from reportlab.lib.styles import getSampleStyleSheet
                 from reportlab.pdfbase import pdfmetrics
                 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
                 from reportlab.pdfbase.ttfonts import TTFont
-                from reportlab.pdfgen import canvas
                 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
             except ImportError:
                 return False, "reportlab库未安装，无法进行文本转PDF转换", None
@@ -1088,7 +1081,7 @@ class PDFConverter:
                 normal_style.fontSize = 12
                 normal_style.leading = 14
                 normal_style.alignment = 0  # 左对齐
-            except Exception as e:
+            except Exception:
                 try:
                     # 尝试使用系统中文字体
                     import platform
@@ -1097,7 +1090,7 @@ class PDFConverter:
                         try:
                             pdfmetrics.registerFont(TTFont("PingFang", "/System/Library/Fonts/PingFang.ttc"))
                             normal_style.fontName = "PingFang"
-                        except:
+                        except Exception:
                             pdfmetrics.registerFont(TTFont("HiraginoSans", "/System/Library/Fonts/STHeiti Light.ttc"))
                             normal_style.fontName = "HiraginoSans"
                     elif platform.system() == "Windows":
@@ -1402,7 +1395,7 @@ def pdf_converter_api(request):
 
         if file_type == "pdf_to_word":
             output_filename += ".docx"
-            file_path = default_storage.save(f"converted/{output_filename}", ContentFile(result))
+            default_storage.save(f"converted/{output_filename}", ContentFile(result))
             # 设置下载链接
             download_url = f"/tools/api/pdf-converter/download/{output_filename}/"
 
@@ -1415,7 +1408,7 @@ def pdf_converter_api(request):
                 conversion_record.save()
         elif file_type == "word_to_pdf":
             output_filename += ".pdf"
-            file_path = default_storage.save(f"converted/{output_filename}", ContentFile(result))
+            default_storage.save(f"converted/{output_filename}", ContentFile(result))
             # 设置下载链接
             download_url = f"/tools/api/pdf-converter/download/{output_filename}/"
 
@@ -1445,7 +1438,7 @@ def pdf_converter_api(request):
 
             # 保存ZIP文件
             output_filename += "_images.zip"
-            file_path = default_storage.save(f"converted/{output_filename}", ContentFile(zip_content))
+            default_storage.save(f"converted/{output_filename}", ContentFile(zip_content))
             download_url = f"/tools/api/pdf-converter/download/{output_filename}/"
 
             # 更新转换记录为成功状态（如果存在）
@@ -1472,7 +1465,7 @@ def pdf_converter_api(request):
             )
         elif file_type == "images_to_pdf":
             output_filename += ".pdf"
-            file_path = default_storage.save(f"converted/{output_filename}", ContentFile(result))
+            default_storage.save(f"converted/{output_filename}", ContentFile(result))
             # 设置下载链接
             download_url = f"/tools/api/pdf-converter/download/{output_filename}/"
 
@@ -1485,7 +1478,7 @@ def pdf_converter_api(request):
                 conversion_record.save()
         elif file_type == "text_to_pdf":
             output_filename += ".pdf"
-            file_path = default_storage.save(f"converted/{output_filename}", ContentFile(result))
+            default_storage.save(f"converted/{output_filename}", ContentFile(result))
             # 设置下载链接
             download_url = f"/tools/api/pdf-converter/download/{output_filename}/"
 
@@ -1498,7 +1491,7 @@ def pdf_converter_api(request):
                 conversion_record.save()
         elif file_type == "pdf_to_text":
             output_filename += ".txt"
-            file_path = default_storage.save(f"converted/{output_filename}", ContentFile(result.encode("utf-8")))
+            default_storage.save(f"converted/{output_filename}", ContentFile(result.encode("utf-8")))
             # 设置下载链接
             download_url = f"/tools/api/pdf-converter/download/{output_filename}/"
 

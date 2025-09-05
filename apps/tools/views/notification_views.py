@@ -5,7 +5,7 @@
 import json
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -259,7 +259,7 @@ def create_system_notification_api(request):
         data = json.loads(request.body)
         title = data.get("title", "系统通知")
         message = data.get("message", "")
-        notification_type = data.get("type", "system")
+        data.get("type", "system")
 
         if not message:
             return JsonResponse({"success": False, "error": "通知消息不能为空"})

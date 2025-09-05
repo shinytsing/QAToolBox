@@ -3,18 +3,11 @@
 增强版旅游数据服务 - 使用DeepSeek和其他免费API的真实数据
 """
 
-import json
 import logging
-import os
-import random
-import re
-import time
-import urllib.parse
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, List
 
 import requests
-from bs4 import BeautifulSoup
 
 # 设置日志
 logging.basicConfig(level=logging.INFO)

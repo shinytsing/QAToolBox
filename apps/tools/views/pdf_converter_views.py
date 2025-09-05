@@ -6,12 +6,10 @@ PDF转换器相关的视图函数
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.files.storage import default_storage
-from django.db.models import Avg, Count, Q, Sum
 from django.http import FileResponse, Http404, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -123,13 +121,13 @@ def pdf_converter_stats_api(request):
             # 安全获取转换类型显示名称
             try:
                 conversion_type_display = conv.get_conversion_type_display()
-            except:
+            except Exception:
                 conversion_type_display = str(conv.conversion_type) if conv.conversion_type else "未知类型"
 
             # 安全获取文件大小显示
             try:
                 file_size_display = conv.get_file_size_display() if conv.file_size else ""
-            except:
+            except Exception:
                 file_size_display = f"{conv.file_size} bytes" if conv.file_size else ""
 
             recent_data.append(

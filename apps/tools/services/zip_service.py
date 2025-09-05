@@ -4,7 +4,6 @@ ZIP文件处理服务
 支持多文件打包和单文件压缩打包
 """
 import logging
-import mimetypes
 import os
 import shutil
 import tempfile

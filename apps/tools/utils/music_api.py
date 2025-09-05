@@ -1,8 +1,6 @@
-import json
 import random
 import time
 from typing import Dict, List, Optional
-from urllib.parse import quote
 
 import requests
 

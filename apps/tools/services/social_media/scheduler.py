@@ -4,8 +4,7 @@
 
 import random
 import time
-from datetime import datetime, timedelta
-from typing import List
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone

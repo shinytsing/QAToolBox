@@ -2,16 +2,12 @@ import json
 import logging
 from functools import wraps
 
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import user_passes_test
 from django.core.cache import cache
-from django.db.models import Avg, Count, Q, Sum
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.db.models import Q
+from django.http import JsonResponse
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +16,7 @@ def is_admin(user):
     """检查用户是否为管理员"""
     try:
         return user.role.role == "admin"
-    except:
+    except Exception:
         return False
 
 

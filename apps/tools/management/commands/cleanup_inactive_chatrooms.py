@@ -9,7 +9,7 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.tools.models.chat_models import ChatMessage, ChatRoom
+from apps.tools.models.chat_models import ChatRoom
 
 logger = logging.getLogger(__name__)
 

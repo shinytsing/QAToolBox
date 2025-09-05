@@ -1,5 +1,3 @@
-import random
-
 from django.core.management.base import BaseCommand
 
 from apps.tools.models import FoodItem

@@ -61,8 +61,7 @@ def fitness_community(request):
     """健身社区页面"""
     try:
         # 获取社区统计数据
-        from django.contrib.auth.models import User
-        from django.db.models import Count, Sum
+        pass
 
         # 计算社区成员数量（有健身档案的用户）
         total_members = FitnessUserProfile.objects.count()
@@ -201,7 +200,7 @@ def fitness_profile(request):
         recent_weight_records = ExerciseWeightRecord.objects.filter(user=request.user).order_by("-workout_date")[:10]
 
         # 获取月度统计
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         current_month = datetime.now().month
         current_year = datetime.now().year
@@ -333,7 +332,7 @@ def fitness_profile(request):
 
         return render(request, "tools/fitness_profile.html", context)
 
-    except Exception as e:
+    except Exception:
         # 如果出错，返回基本页面
         return render(request, "tools/fitness_profile.html")
 
@@ -530,7 +529,7 @@ def create_fitness_community_post_api(request):
     try:
         data = json.loads(request.body)
         content = data.get("content", "").strip()
-        image = data.get("image")
+        data.get("image")
 
         if not content:
             return JsonResponse({"success": False, "error": "内容不能为空"}, status=400)

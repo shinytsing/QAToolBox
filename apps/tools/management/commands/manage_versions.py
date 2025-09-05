@@ -5,10 +5,8 @@ Django管理命令：版本管理
 
 import os
 import sys
-from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
-from django.utils import timezone
 
 # 添加项目路径
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))

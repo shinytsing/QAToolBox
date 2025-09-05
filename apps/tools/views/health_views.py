@@ -149,7 +149,7 @@ def system_status(request):
         try:
             network = psutil.net_io_counters()
             network_status = "healthy"
-        except:
+        except Exception:
             network = None
             network_status = "unavailable"
 
@@ -338,8 +338,8 @@ def database_health(request):
             # 检查表数量
             cursor.execute(
                 """
-                SELECT COUNT(*) 
-                FROM information_schema.tables 
+                SELECT COUNT(*)
+                FROM information_schema.tables
                 WHERE table_schema = 'public'
             """
             )
@@ -384,7 +384,7 @@ def service_dependencies(request):
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
-    except:
+    except Exception:
         dependencies["services"]["database"]["status"] = "unhealthy"
         dependencies["status"] = "unhealthy"
 
@@ -392,7 +392,7 @@ def service_dependencies(request):
     try:
         cache.set("test", "value", 30)
         cache.get("test")
-    except:
+    except Exception:
         dependencies["services"]["cache"]["status"] = "unhealthy"
         dependencies["status"] = "unhealthy"
 

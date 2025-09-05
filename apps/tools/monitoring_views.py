@@ -4,7 +4,6 @@
 监控仪表板视图
 """
 
-import json
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse

@@ -9,9 +9,7 @@ import os
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
-
-from django.conf import settings
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

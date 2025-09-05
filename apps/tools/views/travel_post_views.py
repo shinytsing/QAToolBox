@@ -4,21 +4,18 @@
 """
 
 import json
-import os
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 # 导入相关模型
-from ..models import TravelCity, TravelPost, TravelPostComment, TravelPostFavorite, TravelPostLike, UserGeneratedTravelGuide
+from ..models import TravelCity, TravelPost, TravelPostComment, TravelPostFavorite, TravelPostLike
 
 
 def travel_post_home(request):

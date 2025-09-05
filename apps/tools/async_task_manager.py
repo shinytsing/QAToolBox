@@ -85,7 +85,7 @@ class AsyncTaskManager:
                             completed_time = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
                             if completed_time < cutoff_time:
                                 expired_tasks.append(task_id)
-                        except:
+                        except Exception:
                             pass
 
             for task_id in expired_tasks:
@@ -110,7 +110,7 @@ class AsyncTaskManager:
                             created_time = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                             if created_time < timeout_threshold:
                                 timeout_tasks.append(task_id)
-                        except:
+                        except Exception:
                             # 如果时间格式有问题，也标记为超时
                             timeout_tasks.append(task_id)
 
@@ -144,7 +144,7 @@ class AsyncTaskManager:
                 created_time = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 timeout_threshold = datetime.now() - timedelta(hours=self.task_timeout_hours)
                 return created_time < timeout_threshold
-            except:
+            except Exception:
                 return True
 
     def create_task(
@@ -391,9 +391,6 @@ class AsyncTaskManager:
             logger.info(f"🎉 任务完成通知已创建: 任务 {task_id[:8]}... 已完成")
 
         except Exception as e:
-            pass
-            pass
-            pass
             logger.error(f"创建任务完成通知失败: {e}")
 
     def cleanup_old_tasks(self, max_age_hours: int = 24):
@@ -401,26 +398,16 @@ class AsyncTaskManager:
         cutoff_time = datetime.now().timestamp() - (max_age_hours * 3600)
 
         with self.task_lock:
-            pass
-            pass
             tasks_to_remove = []
             for task_id, task in self.tasks.items():
-                pass
-                pass
                 try:
-                    pass
-                    pass
                     created_at = datetime.fromisoformat(task["created_at"]).timestamp()
                     if created_at < cutoff_time:
-                        pass
-                        pass
                         tasks_to_remove.append(task_id)
-                except:
+                except Exception:
                     tasks_to_remove.append(task_id)
 
             for task_id in tasks_to_remove:
-                pass
-                pass
                 del self.tasks[task_id]
                 logger.info(f"清理旧任务: {task_id}")
 

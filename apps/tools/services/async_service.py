@@ -7,7 +7,7 @@
 
 import logging
 from datetime import timedelta
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from django.conf import settings
 from django.core.mail import send_mail

@@ -6,7 +6,7 @@
 import json
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required

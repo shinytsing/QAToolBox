@@ -21,7 +21,6 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 import psutil
-import redis
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +179,7 @@ class DatabaseMonitor:
                     # 获取慢查询数
                     cursor.execute(
                         """
-                        SELECT count(*) FROM pg_stat_activity 
+                        SELECT count(*) FROM pg_stat_activity
                         WHERE state = 'active' AND query_start < NOW() - INTERVAL '5 seconds'
                     """
                     )
@@ -189,7 +188,7 @@ class DatabaseMonitor:
                     # 获取锁等待数
                     cursor.execute(
                         """
-                        SELECT count(*) FROM pg_stat_activity 
+                        SELECT count(*) FROM pg_stat_activity
                         WHERE wait_event_type = 'Lock'
                     """
                     )
@@ -287,7 +286,7 @@ class AlertService:
 ### QAToolBox告警
 **告警类型**: {subject}
 **时间**: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-**详情**: 
+**详情**:
 ```json
 {json.dumps(data, indent=2, ensure_ascii=False)}
 ```

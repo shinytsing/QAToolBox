@@ -1,9 +1,7 @@
 import json
 import logging
-import socket
-import subprocess
 import time
-from typing import Dict, List, Optional
+from typing import Dict
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -241,7 +239,7 @@ class ProxyManager:
                         else:
                             ip_data = response.json()
                         break
-                except:
+                except Exception:
                     continue
 
             if not ip_data:
@@ -256,7 +254,7 @@ class ProxyManager:
                 ip_address = ip_data.get("origin", ip_data.get("ip", ""))
                 geo_response = self.session.get(f"http://ip-api.com/json/{ip_address}", timeout=5)
                 geo_data = geo_response.json() if geo_response.status_code == 200 else {}
-            except:
+            except Exception:
                 geo_data = {}
 
             return {
@@ -645,7 +643,7 @@ def web_proxy_api(request):
                                 proxies = {"http": proxy_url, "https": proxy_url}
                             proxy_working = True
                             break
-                    except:
+                    except Exception:
                         continue
 
         # 增强的请求头
@@ -741,7 +739,7 @@ def web_proxy_api(request):
                 if "text/html" in content_type:
                     # 处理相对路径URL
                     import re
-                    from urllib.parse import urljoin, urlparse
+                    from urllib.parse import urlparse
 
                     parsed_url = urlparse(target_url)
                     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"

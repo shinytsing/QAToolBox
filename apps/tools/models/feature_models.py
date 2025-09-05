@@ -93,7 +93,7 @@ class Feature(models.Model):
 
                 if user_level < required_level:
                     return False
-            except:
+            except Exception:
                 return False
 
         return True
@@ -182,7 +182,7 @@ class FeatureRecommendation(models.Model):
     @classmethod
     def get_user_recommendation_history(cls, user, days=30):
         """获取用户最近的推荐历史"""
-        from datetime import datetime, timedelta
+        from datetime import timedelta
 
         since = timezone.now() - timedelta(days=days)
         return cls.objects.filter(user=user, created_at__gte=since)

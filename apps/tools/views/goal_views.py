@@ -3,12 +3,10 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.db.models import Avg, Count, Max, Q, Sum
-from django.http import JsonResponse
+from django.db.models import Avg, Count, Max, Q
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
@@ -570,7 +568,7 @@ def goal_reminders(request):
     user = request.user
 
     # 获取需要提醒的目标
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     today = timezone.now().date()
 

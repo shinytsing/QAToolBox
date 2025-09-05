@@ -1,3 +1,5 @@
+from celery import Celery
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -7,7 +9,6 @@ import os
 
 from django.conf import settings
 
-from celery import Celery
 from celery.schedules import crontab
 
 # 设置默认Django设置模块
