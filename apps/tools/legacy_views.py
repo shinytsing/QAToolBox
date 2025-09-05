@@ -8866,8 +8866,9 @@ def decrypt_ncm_file_fallback(ncm_path):
 
             # AES解密
             core_key = b"hzHRAmso5kInbaxW"
-            cipher = AES.new(core_key, AES.MODE_ECB)
-            decrypted_key = cipher.decrypt(key_data_xor)
+            cipher = Cipher(algorithms.AES(core_key), modes.ECB(), backend=default_backend())
+            decryptor = cipher.decryptor()
+            decrypted_key = decryptor.update(key_data_xor) + decryptor.finalize()
             print(f"🔑 AES解密后: {decrypted_key[:32].hex()}")
 
             # 移除PKCS7填充
@@ -10654,18 +10655,24 @@ def decrypt_ncm_file_correct(ncm_path):
 
             # 解密密钥数据
             core_key = b"hzHRAmso5kInbaxW"
-            cryptor = AES.new(core_key, AES.MODE_ECB)
+            cipher = Cipher(algorithms.AES(core_key), modes.ECB(), backend=default_backend())
+            decryptor = cipher.decryptor()
 
             # 确保密钥数据长度是16的倍数
             if len(key_data) % 16 != 0:
                 padding_length = 16 - (len(key_data) % 16)
                 key_data += b"\x00" * padding_length
 
-            decrypted_key = cryptor.decrypt(key_data)
+            decrypted_key = decryptor.update(key_data) + decryptor.finalize()
 
             # 移除填充并提取有效数据
             try:
-                key_data = unpad(decrypted_key, 16)[17:]
+                # 手动移除PKCS7填充
+                padding_length = decrypted_key[-1]
+                if padding_length <= 16:
+                    key_data = decrypted_key[:-padding_length][17:]
+                else:
+                    key_data = decrypted_key[17:]
             except:
                 # 如果unpad失败，手动移除前17字节
                 key_data = decrypted_key[17:]
@@ -10698,17 +10705,22 @@ def decrypt_ncm_file_correct(ncm_path):
 
                 # 解密元数据 - 添加错误处理
                 try:
-                    meta_cryptor = AES.new(b"MoOtOiTvINGwd2E6", AES.MODE_ECB)
+                    meta_cipher = Cipher(algorithms.AES(b"MoOtOiTvINGwd2E6"), modes.ECB(), backend=default_backend())
+                    meta_decryptor = meta_cipher.decryptor()
                     # 确保数据长度是16的倍数
                     if len(meta_data) % 16 != 0:
                         # 填充到16的倍数
                         padding_length = 16 - (len(meta_data) % 16)
                         meta_data += b"\x00" * padding_length
 
-                    decrypted_meta = meta_cryptor.decrypt(meta_data)
-                    # 移除填充并提取有效数据
+                    decrypted_meta = meta_decryptor.update(meta_data) + meta_decryptor.finalize()
+                    # 手动移除PKCS7填充
                     try:
-                        meta_data = unpad(decrypted_meta, 16)[22:]
+                        padding_length = decrypted_meta[-1]
+                        if padding_length <= 16:
+                            meta_data = decrypted_meta[:-padding_length][22:]
+                        else:
+                            meta_data = decrypted_meta[22:]
                     except:
                         # 如果unpad失败，手动移除前22字节
                         meta_data = decrypted_meta[22:]
@@ -10741,7 +10753,8 @@ def decrypt_ncm_file_correct(ncm_path):
                 # 解密图片数据 - 添加错误处理
                 try:
                     image_data = bytes(bytearray([byte ^ 0x63 for byte in image_data]))
-                    image_cryptor = AES.new(b"MoOtOiTvINGwd2E6", AES.MODE_ECB)
+                    image_cipher = Cipher(algorithms.AES(b"MoOtOiTvINGwd2E6"), modes.ECB(), backend=default_backend())
+                    image_decryptor = image_cipher.decryptor()
 
                     # 确保数据长度是16的倍数
                     if len(image_data) % 16 != 0:
@@ -10749,12 +10762,12 @@ def decrypt_ncm_file_correct(ncm_path):
                         padding_length = 16 - (len(image_data) % 16)
                         image_data += b"\x00" * padding_length
 
-                    decrypted_image = image_cryptor.decrypt(image_data)
-                    # 移除填充并提取有效数据
-                    try:
-                        image_data = unpad(decrypted_image, 16)[22:]
-                    except:
-                        # 如果unpad失败，手动移除前22字节
+                    decrypted_image = image_decryptor.update(image_data) + image_decryptor.finalize()
+                    # 手动移除PKCS7填充
+                    padding_length = decrypted_image[-1]
+                    if padding_length <= 16:
+                        image_data = decrypted_image[:-padding_length][22:]
+                    else:
                         image_data = decrypted_image[22:]
 
                     album_cover = {"data": image_data, "format": "jpeg", "size": len(image_data)}  # NCM通常使用JPEG格式
