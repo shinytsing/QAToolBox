@@ -33,10 +33,14 @@ INSTALLED_APPS = [
 ]
 
 # 使用SQLite内存数据库进行测试（本地测试）
+# 完全覆盖base.py中的PostgreSQL配置
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": ":memory:",
+        "OPTIONS": {
+            "timeout": 20,
+        },
     }
 }
 

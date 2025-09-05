@@ -1,6 +1,6 @@
 {
   "errors": [],
-  "generated_at": "2025-09-05T18:49:22Z",
+  "generated_at": "2025-09-05T19:08:03Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 4,
@@ -11,7 +11,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 4,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 77406,
+      "loc": 77410,
       "nosec": 0,
       "skipped_tests": 5
     },
@@ -37,7 +37,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 0,
+      "loc": 1,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -310,7 +310,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 0,
+      "loc": 1,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -414,7 +414,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 0,
+      "loc": 1,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -3742,7 +3742,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 0,
+      "loc": 1,
       "nosec": 0,
       "skipped_tests": 0
     },
