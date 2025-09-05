@@ -29,20 +29,14 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.content",
     "apps.tools",
+    "apps.share",
 ]
 
-# 使用PostgreSQL数据库进行测试
+# 使用SQLite内存数据库进行测试（本地测试）
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "test_qatoolbox",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": "5432",
-        "OPTIONS": {
-            "connect_timeout": 10,
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
     }
 }
 

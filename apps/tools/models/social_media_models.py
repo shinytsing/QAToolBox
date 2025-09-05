@@ -65,7 +65,7 @@ class SocialMediaSubscription(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        app_label = "tools"
+        app_label = "apps.tools"
         unique_together = ["user", "platform", "target_user_id"]
         ordering = ["-created_at"]
         verbose_name = "社交媒体订阅"
@@ -172,7 +172,7 @@ class SocialMediaNotification(models.Model):
     profile_changes = models.JSONField(blank=True, default=dict, null=True, verbose_name="资料变化详情")
 
     class Meta:
-        app_label = "tools"
+        app_label = "apps.tools"
         ordering = ["-created_at"]
         verbose_name = "社交媒体通知"
         verbose_name_plural = "社交媒体通知"
@@ -231,7 +231,7 @@ class SocialMediaPlatformConfig(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
     class Meta:
-        app_label = "tools"
+        app_label = "apps.tools"
         verbose_name = "平台配置"
         verbose_name_plural = "平台配置"
 
@@ -254,7 +254,7 @@ class DouyinVideoAnalysis(models.Model):
     analyzed_at = models.DateTimeField(default=timezone.now, verbose_name="分析时间")
 
     class Meta:
-        app_label = "tools"
+        app_label = "apps.tools"
         ordering = ["-analyzed_at"]
         verbose_name = "抖音视频分析"
         verbose_name_plural = "抖音视频分析"
@@ -282,7 +282,7 @@ class DouyinVideo(models.Model):
     crawled_at = models.DateTimeField(default=timezone.now, verbose_name="爬取时间")
 
     class Meta:
-        app_label = "tools"
+        app_label = "apps.tools"
         ordering = ["-created_time"]
         verbose_name = "抖音视频"
         verbose_name_plural = "抖音视频"

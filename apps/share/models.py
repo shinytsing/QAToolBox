@@ -7,7 +7,7 @@ class ShareRecord(models.Model):
     """分享记录模型"""
 
     class Meta:
-        app_label = "share"
+        app_label = "apps.share"
 
     SHARE_PLATFORMS = [
         ("wechat", "微信"),
@@ -46,7 +46,7 @@ class ShareLink(models.Model):
     """分享链接模型"""
 
     class Meta:
-        app_label = "share"
+        app_label = "apps.share"
 
     original_url = models.URLField(verbose_name="原始URL")
     short_code = models.CharField(max_length=10, unique=True, verbose_name="短链接代码")
@@ -70,7 +70,7 @@ class ShareAnalytics(models.Model):
     """分享分析模型"""
 
     class Meta:
-        app_label = "share"
+        app_label = "apps.share"
 
     date = models.DateField(verbose_name="日期")
     platform = models.CharField(max_length=20, choices=ShareRecord.SHARE_PLATFORMS, verbose_name="平台")

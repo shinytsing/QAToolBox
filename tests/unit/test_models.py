@@ -1,6 +1,10 @@
 """
 模型测试模块 - 提高测试覆盖率
 """
+import os
+
+# 确保Django设置正确加载
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.testing')
 
 from datetime import date, timedelta
 
