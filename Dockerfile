@@ -68,18 +68,11 @@ RUN chmod +x /app/manage.py \
     && chmod +x /app/start.sh
 
 # 在构建阶段执行collectstatic
-# 设置必要的环境变量以避免数据库连接问题
-ENV DB_NAME=temp_db \
-    DB_USER=temp_user \
-    DB_PASSWORD=temp_password \
-    DB_HOST=localhost \
-    DB_PORT=5432
-
-# 创建临时数据库文件用于collectstatic
-RUN python manage.py migrate --noinput --settings=config.settings.production || true
+# 使用专门的Docker构建设置，避免数据库依赖问题
+RUN python manage.py migrate --noinput --settings=config.settings.docker_build
 
 # 收集静态文件
-RUN python manage.py collectstatic --noinput --settings=config.settings.production
+RUN python manage.py collectstatic --noinput --settings=config.settings.docker_build
 
 # 创建非root用户
 RUN useradd --create-home --shell /bin/bash app \

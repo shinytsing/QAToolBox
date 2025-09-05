@@ -1,0 +1,85 @@
+"""
+Docker构建专用设置
+用于在Docker构建阶段执行collectstatic，避免数据库依赖问题
+"""
+
+from .base import *
+
+# 构建阶段特定配置
+DEBUG = False
+
+# 使用SQLite内存数据库，避免PostgreSQL依赖
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
+}
+
+# 简化的缓存配置
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+        "TIMEOUT": 300,
+    }
+}
+
+# 简化的会话配置
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+
+# 静态文件配置 - 使用默认存储避免ManifestStaticFilesStorage问题
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+# 简化的邮件配置
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# 简化的日志配置
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "WARNING",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}
+
+# 简化的Celery配置
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_BROKER_URL = "django-db://"
+CELERY_RESULT_BACKEND = "django-db"
+
+# 简化的API限制
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"anon": "100/minute", "user": "1000/minute"}
+
+# 简化的CORS配置
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# 允许的主机
+ALLOWED_HOSTS = ["*"]
+
+# 简化的安全头
+SECURE_REFERRER_POLICY = "no-referrer-when-downgrade"
+
+# 文件上传限制
+DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024  # 500MB
+MAX_UPLOAD_SIZE = 500 * 1024 * 1024  # 500MB
+
+# 文件上传超时设置
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+DATA_UPLOAD_MAX_NUMBER_FILES = 1000
