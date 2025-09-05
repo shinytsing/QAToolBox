@@ -224,20 +224,8 @@ jobs:
       run: |
         echo "开始运行单元测试..."
         # 跳过有问题的测试模块，只运行能正常工作的测试
-        pytest tests/unit/ tests/integration/ \
-          --cov=apps \
-          --cov-report=xml \
-          --cov-report=html \
-          --cov-report=term \
-          --junit-xml=test-results.xml \
-          --html=test-report.html \
-          --self-contained-html \
-          -v \
-          --maxfail=10 \
-          --tb=short \
-          --durations=10 \
-          --ignore=tests/unit/test_models.py \
-          --ignore=tests/unit/test_views.py || echo "测试失败，但继续执行后续步骤"
+        # 使用Django测试命令而不是pytest，确保使用正确的测试设置
+        python manage.py test --settings=config.settings.testing --verbosity=0 --keepdb || echo "测试失败，但继续执行后续步骤"
         
         TEST_RESULT=$?
         echo "result=$TEST_RESULT" >> $GITHUB_OUTPUT
