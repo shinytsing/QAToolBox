@@ -1,7 +1,7 @@
 """
 测试环境配置
 """
-
+import os
 from .base import *
 
 # 测试环境配置
@@ -36,7 +36,7 @@ DATABASES = {
         "NAME": "test_qatoolbox",
         "USER": "postgres",
         "PASSWORD": "postgres",
-        "HOST": "localhost",
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
         "PORT": "5432",
         "OPTIONS": {
             "connect_timeout": 10,

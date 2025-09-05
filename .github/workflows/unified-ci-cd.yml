@@ -211,12 +211,16 @@ jobs:
     
     - name: 数据库迁移
       run: |
-        echo "测试环境使用内存数据库，跳过迁移"
-        # 测试环境使用内存数据库，不需要迁移
-        # python manage.py migrate --settings=config.settings.testing
+        echo "等待PostgreSQL服务启动..."
+        sleep 10
+        echo "执行数据库迁移..."
+        python manage.py migrate --settings=config.settings.testing
       env:
         DJANGO_SETTINGS_MODULE: config.settings.testing
-        DATABASE_URL: sqlite:///:memory:
+        POSTGRES_HOST: postgres
+        POSTGRES_DB: test_qatoolbox
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
         REDIS_URL: redis://localhost:6379/0
     
     - name: 运行单元测试
@@ -243,7 +247,10 @@ jobs:
         echo "result=$TEST_RESULT" >> $GITHUB_OUTPUT
       env:
         DJANGO_SETTINGS_MODULE: config.settings.testing
-        DATABASE_URL: sqlite:///:memory:
+        POSTGRES_HOST: postgres
+        POSTGRES_DB: test_qatoolbox
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
         REDIS_URL: redis://localhost:6379/0
     
     - name: 提取覆盖率
