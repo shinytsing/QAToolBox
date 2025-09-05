@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 import urllib.parse
 
@@ -10,7 +10,7 @@ def generate_short_code(length=8):
     """生成短链接代码"""
     characters = string.ascii_letters + string.digits
     while True:
-        code = "".join(random.choice(characters) for _ in range(length))
+        code = "".join(secrets.choice(characters) for _ in range(length))
         # 检查是否已存在
         from .models import ShareLink
 

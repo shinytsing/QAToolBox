@@ -3,9 +3,9 @@ import logging
 import os
 import re
 import tempfile
-import xml.etree.ElementTree as ET
 from datetime import datetime
-from xml.dom import minidom
+import defusedxml.ElementTree as ET
+import defusedxml.minidom as minidom
 
 from django.conf import settings
 from django.core.files import File

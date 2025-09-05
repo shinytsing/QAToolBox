@@ -146,6 +146,7 @@ black
 isort==5.13.2
 bandit==1.7.5
 pbr>=5.0.0
+defusedxml>=0.7.1
 mypy==1.8.0
 pylint==3.0.3
 safety>=2.3.5

@@ -21,7 +21,7 @@ def extract_favicon_url(url):
         # 增加超时时间，添加重试机制
         for attempt in range(3):
             try:
-                response = requests.get(url, headers=headers, timeout=15, verify=False)
+                response = requests.get(url, headers=headers, timeout=15, verify=True)
                 response.raise_for_status()
                 break
             except requests.exceptions.RequestException as e:
@@ -49,7 +49,7 @@ def extract_favicon_url(url):
             for path in common_paths:
                 try:
                     test_url = urljoin(url, path)
-                    test_response = requests.head(test_url, headers=headers, timeout=8, verify=False)
+                    test_response = requests.head(test_url, headers=headers, timeout=8, verify=True)
                     if test_response.status_code == 200:
                         favicon_url = test_url
                         break
@@ -75,7 +75,7 @@ def download_and_save_icon(icon_url, filename):
         # 增加重试机制
         for attempt in range(3):
             try:
-                response = requests.get(icon_url, headers=headers, timeout=15, verify=False)
+                response = requests.get(icon_url, headers=headers, timeout=15, verify=True)
                 response.raise_for_status()
                 break
             except requests.exceptions.RequestException as e:

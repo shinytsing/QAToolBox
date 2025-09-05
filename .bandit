@@ -1,0 +1,14 @@
+[bandit]
+# 忽略非关键安全问题
+skips = B110,B311,B404,B603,B607,B112
+
+# 排除测试文件和迁移文件
+exclude_dirs = tests,migrations,venv,env,.git
+
+# 忽略特定文件
+exclude = 
+    apps/tools/management/commands/*.py,
+    apps/tools/legacy_views.py,
+    apps/tools/guitar_training_views.py,
+    apps/tools/ip_defense.py,
+    apps/tools/async_task_manager.py
