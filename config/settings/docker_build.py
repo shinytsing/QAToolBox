@@ -8,11 +8,11 @@ from .base import *
 # 构建阶段特定配置
 DEBUG = False
 
-# 使用SQLite内存数据库，避免PostgreSQL依赖
+# 使用SQLite文件数据库，避免PostgreSQL依赖
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+        "NAME": BASE_DIR / "db_docker_build.sqlite3",
     }
 }
 

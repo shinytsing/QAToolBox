@@ -69,9 +69,7 @@ RUN chmod +x /app/manage.py \
 
 # 在构建阶段执行collectstatic
 # 使用专门的Docker构建设置，避免数据库依赖问题
-RUN python manage.py migrate --noinput --settings=config.settings.docker_build
-
-# 收集静态文件
+# 跳过migrate步骤，直接收集静态文件
 RUN python manage.py collectstatic --noinput --settings=config.settings.docker_build
 
 # 创建非root用户
