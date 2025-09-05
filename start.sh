@@ -9,15 +9,14 @@ echo "🚀 启动 QAToolBox 生产环境..."
 
 # 等待数据库连接
 echo "⏳ 等待数据库连接..."
-python manage.py migrate --noinput --settings=config.settings.production_simple
+python manage.py migrate --noinput --settings=config.settings.production
 
-# 收集静态文件
-echo "📦 收集静态文件..."
-python manage.py collectstatic --noinput --settings=config.settings.production_simple
+# 静态文件已在构建阶段收集，无需重复执行
+echo "📦 静态文件已在构建阶段收集完成"
 
 # 创建超级用户（如果不存在）
 echo "👤 检查超级用户..."
-python manage.py shell --settings=config.settings.production_simple << EOF
+python manage.py shell --settings=config.settings.production << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='admin').exists():

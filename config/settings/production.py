@@ -49,8 +49,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
 # 生产环境静态文件配置
-# 使用默认的静态文件存储，避免ManifestStaticFilesStorage的问题
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
 # 生产环境邮件配置
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

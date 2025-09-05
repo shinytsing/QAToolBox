@@ -6,7 +6,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    DJANGO_SETTINGS_MODULE=config.settings.production_simple
+    DJANGO_SETTINGS_MODULE=config.settings.production
 
 # 设置工作目录
 WORKDIR /app
@@ -67,8 +67,19 @@ RUN mkdir -p /app/logs \
 RUN chmod +x /app/manage.py \
     && chmod +x /app/start.sh
 
-# 在构建阶段跳过collectstatic，在容器启动时执行
-# 这样可以避免在构建时需要数据库连接
+# 在构建阶段执行collectstatic
+# 设置必要的环境变量以避免数据库连接问题
+ENV DB_NAME=temp_db \
+    DB_USER=temp_user \
+    DB_PASSWORD=temp_password \
+    DB_HOST=localhost \
+    DB_PORT=5432
+
+# 创建临时数据库文件用于collectstatic
+RUN python manage.py migrate --noinput --settings=config.settings.production || true
+
+# 收集静态文件
+RUN python manage.py collectstatic --noinput --settings=config.settings.production
 
 # 创建非root用户
 RUN useradd --create-home --shell /bin/bash app \
