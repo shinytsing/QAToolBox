@@ -56,16 +56,8 @@ CACHES = {
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 
-# 禁用迁移加速测试
-class DisableMigrations:
-    def __contains__(self, item):
-        return True
-
-    def __getitem__(self, item):
-        return None
-
-
-MIGRATION_MODULES = DisableMigrations()
+# 测试环境迁移配置 - 允许迁移但使用内存数据库
+# MIGRATION_MODULES = DisableMigrations()  # 注释掉以允许迁移
 
 # 测试环境密码验证器（简化）
 AUTH_PASSWORD_VALIDATORS = []
