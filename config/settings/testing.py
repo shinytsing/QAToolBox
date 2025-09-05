@@ -8,6 +8,27 @@ from .base import *
 DEBUG = True
 TESTING = True
 
+# 确保测试环境中的应用正确配置
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "captcha",
+    "rest_framework",
+    "corsheaders",
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "django_filters",
+    "channels",
+    "apps.users",
+    "apps.content",
+    "apps.tools",
+]
+
 # 使用内存数据库加速测试
 DATABASES = {
     "default": {
