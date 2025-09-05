@@ -4,14 +4,14 @@ import os
 import re
 import tempfile
 from datetime import datetime
-import defusedxml.ElementTree as ET
-import defusedxml.minidom as minidom
 
 from django.conf import settings
 from django.core.files import File
 from django.utils.dateparse import postgres_interval_re
 from django.utils.text import slugify
 
+import defusedxml.ElementTree as ET
+import defusedxml.minidom as minidom
 import xmind
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated

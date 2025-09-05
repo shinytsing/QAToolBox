@@ -8585,7 +8585,7 @@ def decrypt_ncm_file(ncm_path):
 
             # 解密密钥数据
             key_data = bytes([byte ^ 0x64 for byte in key_data])
-            cipher = Cipher(algorithms.AES(core_key), modes.CBC(b'\x00' * 16), backend=default_backend())
+            cipher = Cipher(algorithms.AES(core_key), modes.CBC(b"\x00" * 16), backend=default_backend())
             decryptor = cipher.decryptor()
             key_data = decryptor.update(key_data) + decryptor.finalize()
 
@@ -8684,7 +8684,7 @@ def decrypt_ncm_file(ncm_path):
                     # 解密元数据
                     meta_data = bytes([byte ^ 0x63 for byte in meta_data])
                     meta_data = base64.b64decode(meta_data[22:])
-                    cipher = Cipher(algorithms.AES(meta_key), modes.CBC(b'\x00' * 16), backend=default_backend())
+                    cipher = Cipher(algorithms.AES(meta_key), modes.CBC(b"\x00" * 16), backend=default_backend())
                     decryptor = cipher.decryptor()
                     meta_data = decryptor.update(meta_data) + decryptor.finalize()
                     meta_data = unpad(meta_data)
@@ -8832,11 +8832,11 @@ def decrypt_ncm_file_fallback(ncm_path):
         import uuid
 
         try:
-            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives import padding
+            from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
         except ImportError:
-                raise Exception("需要安装pycryptodome库: pip install pycryptodome")
+            raise Exception("需要安装pycryptodome库: pip install pycryptodome")
 
         print("🔧 使用完全重写的NCM解密算法...")
 
@@ -10630,9 +10630,9 @@ def decrypt_ncm_file_correct(ncm_path):
         import logging
         import struct
 
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import padding
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
         logger = logging.getLogger(__name__)
 
