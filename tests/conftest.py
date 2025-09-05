@@ -17,13 +17,7 @@ import pytest
 from faker import Faker
 
 # 设置Django配置
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
-# 强制设置测试数据库环境变量
-os.environ["DB_NAME"] = "qatoolbox_test"
-os.environ["DB_USER"] = "gaojie"
-os.environ["DB_PASSWORD"] = ""
-os.environ["DB_HOST"] = "localhost"
-os.environ["DB_PORT"] = "5432"
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.test_minimal")
 django.setup()
 
 User = get_user_model()
