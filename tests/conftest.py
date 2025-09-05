@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import Client
 
-import factory
+# import factory  # 暂时注释掉，因为SQLAlchemy与Python 3.13不兼容
 import pytest
 from faker import Faker
 
@@ -146,24 +146,37 @@ def pytest_configure(config):
 
 
 # 工厂类
-class UserFactory(factory.django.DjangoModelFactory):
-    """用户工厂"""
+# class UserFactory(factory.django.DjangoModelFactory):  # 暂时注释掉，因为SQLAlchemy与Python 3.13不兼容
+#     """用户工厂"""
+# 
+#     class Meta:
+#         model = User
+# 
+#     username = factory.Sequence(lambda n: f"user{n}")
+#     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
+#     first_name = factory.Faker("first_name")
+#     last_name = factory.Faker("last_name")
+#     is_active = True
 
-    class Meta:
-        model = User
-
-    username = factory.Sequence(lambda n: f"user{n}")
-    email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
-    first_name = factory.Faker("first_name")
-    last_name = factory.Faker("last_name")
-    is_active = True
+# 临时的简单用户工厂替代
+class UserFactory:
+    """临时的简单用户工厂"""
+    
+    @staticmethod
+    def create(**kwargs):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return User.objects.create_user(**kwargs)
 
 
 class AdminUserFactory(UserFactory):
     """管理员用户工厂"""
-
-    is_staff = True
-    is_superuser = True
+    
+    @staticmethod
+    def create(**kwargs):
+        kwargs.setdefault('is_staff', True)
+        kwargs.setdefault('is_superuser', True)
+        return UserFactory.create(**kwargs)
 
 
 # 自定义标记

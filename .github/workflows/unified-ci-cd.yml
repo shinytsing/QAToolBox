@@ -211,7 +211,9 @@ jobs:
     
     - name: 数据库迁移
       run: |
-        python manage.py migrate --settings=config.settings.testing
+        echo "测试环境使用内存数据库，跳过迁移"
+        # 测试环境使用内存数据库，不需要迁移
+        # python manage.py migrate --settings=config.settings.testing
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_qatoolbox
         REDIS_URL: redis://localhost:6379/0

@@ -55,6 +55,7 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 MEDIA_ROOT = "/tmp/qatoolbox_test_media"
 
 # 测试环境日志配置
+LOGGING = LOGGING.copy()  # 从base.py继承LOGGING配置
 LOGGING["handlers"]["file"]["filename"] = "/tmp/django_test.log"
 LOGGING["loggers"]["django"]["level"] = "WARNING"
 LOGGING["loggers"]["apps.tools"]["level"] = "WARNING"
