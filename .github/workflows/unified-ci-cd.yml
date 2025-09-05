@@ -225,7 +225,7 @@ jobs:
       run: |
         echo "开始运行单元测试..."
         # 使用pytest运行测试并生成覆盖率报告
-        pytest tests/unit/test_basic.py \
+        pytest tests/ \
           --cov=apps \
           --cov-report=xml \
           --cov-report=html \
@@ -237,8 +237,6 @@ jobs:
           --maxfail=10 \
           --tb=short \
           --durations=10 \
-          --ignore=tests/unit/test_models.py \
-          --ignore=tests/unit/test_views.py \
           --ignore=tests/integration/test_database.py || echo "测试失败，但继续执行后续步骤"
         
         TEST_RESULT=$?
@@ -263,13 +261,13 @@ jobs:
         echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
         echo "测试覆盖率: $COVERAGE%"
         
-        # 覆盖率门禁：暂时降低要求到5%，因为跳过了有问题的测试模块
+        # 覆盖率门禁：要求达到80%
         COVERAGE_INT=$(echo $COVERAGE | cut -d. -f1)
-        if [ "$COVERAGE_INT" -lt "5" ]; then
-          echo "::error::测试覆盖率不达标: $COVERAGE% (要求: ≥5%)"
+        if [ "$COVERAGE_INT" -lt "80" ]; then
+          echo "::error::测试覆盖率不达标: $COVERAGE% (要求: ≥80%)"
           exit 1
         else
-          echo "::notice::测试覆盖率达标: $COVERAGE% (临时降低要求)"
+          echo "::notice::测试覆盖率达标: $COVERAGE%"
         fi
 
   # ===== 3. 集成测试 =====

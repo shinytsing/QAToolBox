@@ -29,13 +29,17 @@ INSTALLED_APPS = [
     "apps.tools",
 ]
 
-# 使用内存数据库加速测试
+# 使用PostgreSQL数据库进行测试
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "test_qatoolbox",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "localhost",
+        "PORT": "5432",
         "OPTIONS": {
-            "timeout": 20,
+            "connect_timeout": 10,
         },
     }
 }
