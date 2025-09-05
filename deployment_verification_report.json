@@ -1,0 +1,63 @@
+{
+  "timestamp": "2025-09-06 05:54:05",
+  "base_url": "https://shenyiqing.xin",
+  "total_tests": 9,
+  "passed_tests": 5,
+  "failed_tests": 4,
+  "results": [
+    {
+      "test": "健康检查",
+      "success": true,
+      "message": "状态码: 200",
+      "response_time": 0.15757489204406738
+    },
+    {
+      "test": "首页访问",
+      "success": true,
+      "message": "状态码: 200",
+      "response_time": 0.11171603202819824
+    },
+    {
+      "test": "工具页面",
+      "success": true,
+      "message": "状态码: 200",
+      "response_time": 0.08160829544067383
+    },
+    {
+      "test": "内容页面",
+      "success": false,
+      "message": "状态码: 500",
+      "response_time": 0.14754700660705566
+    },
+    {
+      "test": "用户页面",
+      "success": false,
+      "message": "状态码: 404",
+      "response_time": 0.05891609191894531
+    },
+    {
+      "test": "分享页面",
+      "success": false,
+      "message": "状态码: 404",
+      "response_time": 0.04113197326660156
+    },
+    {
+      "test": "静态文件",
+      "success": false,
+      "message": "状态码: 404",
+      "response_time": 0.03496813774108887
+    },
+    {
+      "test": "数据库连接",
+      "success": true,
+      "message": "状态码: 404",
+      "response_time": 0.04404878616333008
+    },
+    {
+      "test": "性能测试",
+      "success": true,
+      "message": "响应时间: 0.06秒",
+      "response_time": 0.0586400032043457
+    }
+  ]
+}
