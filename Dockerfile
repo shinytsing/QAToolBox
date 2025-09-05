@@ -67,10 +67,9 @@ RUN mkdir -p /app/logs \
 RUN chmod +x /app/manage.py \
     && chmod +x /app/start.sh
 
-# 在构建阶段执行collectstatic
-# 使用专门的Docker构建设置，避免数据库依赖问题
-# 跳过migrate步骤，直接收集静态文件
-RUN python manage.py collectstatic --noinput --settings=config.settings.docker_build
+# 在构建阶段跳过collectstatic，在运行时执行
+# 使用最小化Docker构建设置，避免所有依赖问题
+# 完全跳过collectstatic步骤，在容器启动时执行
 
 # 创建非root用户
 RUN useradd --create-home --shell /bin/bash app \
