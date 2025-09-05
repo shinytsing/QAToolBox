@@ -1,6 +1,7 @@
 """
 最小化测试配置 - 完全独立，不继承任何配置
 """
+
 import os
 from pathlib import Path
 

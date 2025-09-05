@@ -221,7 +221,7 @@ jobs:
       run: |
         echo "开始运行单元测试..."
         # 使用pytest运行测试并生成覆盖率报告
-        pytest tests/unit/test_minimal.py \
+        pytest tests/unit/test_simple.py \
           --cov=apps \
           --cov-report=xml \
           --cov-report=html \
