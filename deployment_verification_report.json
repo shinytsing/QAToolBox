@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-06 05:54:05",
+  "timestamp": "2025-09-06 06:11:15",
   "base_url": "https://shenyiqing.xin",
   "total_tests": 9,
   "passed_tests": 5,
@@ -9,55 +9,55 @@
       "test": "健康检查",
       "success": true,
       "message": "状态码: 200",
-      "response_time": 0.15757489204406738
+      "response_time": 0.7475500106811523
     },
     {
       "test": "首页访问",
       "success": true,
       "message": "状态码: 200",
-      "response_time": 0.11171603202819824
+      "response_time": 0.12148809432983398
     },
     {
       "test": "工具页面",
       "success": true,
       "message": "状态码: 200",
-      "response_time": 0.08160829544067383
+      "response_time": 0.11728787422180176
     },
     {
       "test": "内容页面",
       "success": false,
       "message": "状态码: 500",
-      "response_time": 0.14754700660705566
+      "response_time": 0.13562488555908203
     },
     {
       "test": "用户页面",
       "success": false,
       "message": "状态码: 404",
-      "response_time": 0.05891609191894531
+      "response_time": 0.0441892147064209
     },
     {
       "test": "分享页面",
       "success": false,
       "message": "状态码: 404",
-      "response_time": 0.04113197326660156
+      "response_time": 0.0467679500579834
     },
     {
       "test": "静态文件",
       "success": false,
       "message": "状态码: 404",
-      "response_time": 0.03496813774108887
+      "response_time": 0.029240846633911133
     },
     {
       "test": "数据库连接",
       "success": true,
       "message": "状态码: 404",
-      "response_time": 0.04404878616333008
+      "response_time": 0.04688906669616699
     },
     {
       "test": "性能测试",
       "success": true,
-      "message": "响应时间: 0.06秒",
-      "response_time": 0.0586400032043457
+      "message": "响应时间: 0.05秒",
+      "response_time": 0.05106973648071289
     }
   ]
 }
