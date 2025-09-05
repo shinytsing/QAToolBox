@@ -293,13 +293,13 @@ class APICacheService(CacheService):
     def cache_api_response(cls, endpoint: str, params: Dict, response: Any) -> bool:
         """缓存API响应"""
         # 生成参数哈希作为缓存键的一部分
-        params_hash = hashlib.md5(json.dumps(params, sort_keys=True).encode()).hexdigest()
+        params_hash = hashlib.md5(json.dumps(params, sort_keys=True).encode(), usedforsecurity=False).hexdigest()
         return cls.set("api", endpoint, response, timeout=600, suffix=params_hash)
 
     @classmethod
     def get_api_response(cls, endpoint: str, params: Dict) -> Any:
         """获取API响应缓存"""
-        params_hash = hashlib.md5(json.dumps(params, sort_keys=True).encode()).hexdigest()
+        params_hash = hashlib.md5(json.dumps(params, sort_keys=True).encode(), usedforsecurity=False).hexdigest()
         return cls.get("api", endpoint, suffix=params_hash)
 
     @classmethod

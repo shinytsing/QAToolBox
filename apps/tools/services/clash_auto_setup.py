@@ -90,7 +90,7 @@ class ClashAutoSetup:
         """在Windows上安装Clash"""
         try:
             # 检查Chocolatey
-            if subprocess.run(["where", "choco"], capture_output=True, shell=True).returncode == 0:
+            if subprocess.run(["where", "choco"], capture_output=True, shell=False).returncode == 0:
                 result = subprocess.run(["choco", "install", "clash", "-y"], capture_output=True, text=True, timeout=300)
                 if result.returncode == 0:
                     self.clash_binary = "clash"

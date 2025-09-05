@@ -35,7 +35,7 @@ class CacheService:
         # 生成哈希以避免键过长
         key_string = "_".join(key_parts)
         if len(key_string) > 200:  # Redis键长度限制
-            hash_obj = hashlib.md5(key_string.encode())
+            hash_obj = hashlib.md5(key_string.encode(), usedforsecurity=False)
             return f"{self.cache_prefix}_{prefix}_{hash_obj.hexdigest()}"
 
         return key_string

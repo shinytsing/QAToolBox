@@ -106,9 +106,9 @@ class ShardManager:
         if strategy == "hash":
             # 基于哈希的分片
             if isinstance(key_value, str):
-                hash_value = hashlib.md5(key_value.encode()).hexdigest()
+                hash_value = hashlib.md5(key_value.encode(), usedforsecurity=False).hexdigest()
             else:
-                hash_value = hashlib.md5(str(key_value).encode()).hexdigest()
+                hash_value = hashlib.md5(str(key_value).encode(), usedforsecurity=False).hexdigest()
 
             shard_index = int(hash_value, 16) % len(shards)
             return shards[shard_index]

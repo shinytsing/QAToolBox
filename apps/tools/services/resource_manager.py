@@ -188,12 +188,12 @@ class ChunkedFileManager:
     def _verify_chunk_data(self, chunk: FileChunk) -> bool:
         """验证分片数据"""
         # 计算分片校验和
-        calculated_checksum = hashlib.md5(chunk.data).hexdigest()
+        calculated_checksum = hashlib.md5(chunk.data, usedforsecurity=False).hexdigest()
         return calculated_checksum == chunk.checksum
 
     async def _calculate_file_checksum(self, file_path: Path) -> str:
         """计算文件校验和"""
-        hash_md5 = hashlib.md5()
+        hash_md5 = hashlib.md5(usedforsecurity=False)
 
         async with aiofiles.open(file_path, "rb") as f:
             while chunk := await f.read(8192):
