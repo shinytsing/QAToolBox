@@ -142,7 +142,7 @@ click-repl==0.3.0
 
 # ===== 代码质量 =====
 flake8==6.1.0
-black
+black==25.1.0
 isort==5.13.2
 bandit==1.7.5
 pbr>=5.0.0

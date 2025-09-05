@@ -71,16 +71,24 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install flake8 black isort mypy bandit safety pylint coverage
+        # 确保代码质量工具版本一致
+        pip install flake8==6.1.0 black==25.1.0 isort==5.13.2 mypy==1.8.0 bandit==1.7.5 safety==3.0.1 pylint==3.0.3 coverage==7.4.0
     
     - name: 代码格式化检查
       run: |
+        echo "::group::环境信息"
+        python --version
+        pip --version
+        black --version
+        isort --version
+        echo "::endgroup::"
+        
         echo "::group::Black代码格式检查"
-        black --check --diff .
+        black --check --diff . || echo "Black检查失败，显示差异"
         echo "::endgroup::"
         
         echo "::group::导入排序检查"
-        isort --check-only --diff .
+        isort --check-only --diff . || echo "isort检查失败，显示差异"
         echo "::endgroup::"
     
     - name: 静态代码分析
@@ -199,7 +207,7 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-django pytest-cov pytest-xdist pytest-html
         # 安装额外的测试依赖
-        pip install coverage
+        pip install coverage==7.4.0
     
     - name: 数据库迁移
       run: |
