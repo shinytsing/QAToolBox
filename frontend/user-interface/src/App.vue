@@ -10,9 +10,15 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 
-onMounted(() => {
-  // 初始化应用
-  authStore.initializeAuth()
+onMounted(async () => {
+  try {
+    // 初始化应用
+    if (authStore.initializeAuth && typeof authStore.initializeAuth === 'function') {
+      await authStore.initializeAuth()
+    }
+  } catch (error) {
+    console.error('初始化认证失败:', error)
+  }
 })
 </script>
 

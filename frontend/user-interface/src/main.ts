@@ -12,15 +12,19 @@ import './assets/css/main.css'
 
 const app = createApp(App)
 
+// 先初始化 Pinia
+app.use(createPinia())
+
 // 注册Element Plus图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-app.use(createPinia())
-app.use(router)
 app.use(ElementPlus, {
   locale: zhCn,
 })
+
+// 最后初始化路由
+app.use(router)
 
 app.mount('#app')
