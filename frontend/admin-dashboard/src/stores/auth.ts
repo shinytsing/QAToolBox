@@ -1,127 +1,132 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { api } from '@/api'
-import type { User, LoginCredentials, RegisterData } from '@/types/auth'
+import { authAPI, type LoginRequest } from '@/api/auth'
 
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  const token = ref<string | null>(localStorage.getItem('token'))
-  const loading = ref(false)
+export interface User {
+  id: number
+  username: string
+  email: string
+  is_staff: boolean
+  is_superuser: boolean
+}
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+export interface Device {
+  device_id: string
+  device_type: string
+  device_name: string
+  platform: string
+  version: string
+}
 
-  // 初始化认证状态
-  const initializeAuth = async () => {
-    if (token.value) {
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    user: null as User | null,
+    device: null as Device | null,
+    accessToken: localStorage.getItem('access_token') || '',
+    refreshToken: localStorage.getItem('refresh_token') || '',
+    isLoggedIn: false,
+  }),
+
+  getters: {
+    isAdmin: (state) => state.user?.is_superuser || false,
+    isStaff: (state) => state.user?.is_staff || false,
+  },
+
+  actions: {
+    // 登录
+    async login(credentials: LoginRequest) {
       try {
-        const response = await api.get('/auth/profile/')
-        user.value = response.data
+        const response = await authAPI.login(credentials)
+        
+        if (response.success) {
+          this.user = response.data.user
+          this.device = response.data.device
+          this.accessToken = response.data.access_token
+          this.refreshToken = response.data.refresh_token
+          this.isLoggedIn = true
+
+          // 保存到本地存储
+          localStorage.setItem('access_token', this.accessToken)
+          localStorage.setItem('refresh_token', this.refreshToken)
+          localStorage.setItem('user', JSON.stringify(this.user))
+          localStorage.setItem('device', JSON.stringify(this.device))
+
+          return { success: true, message: response.message }
+        } else {
+          return { success: false, message: response.message }
+        }
+      } catch (error: any) {
+        return { 
+          success: false, 
+          message: error.response?.data?.message || '登录失败' 
+        }
+      }
+    },
+
+    // 登出
+    async logout() {
+      try {
+        await authAPI.logout()
       } catch (error) {
-        // Token无效，清除本地存储
-        logout()
+        console.error('登出失败:', error)
+      } finally {
+        this.clearAuth()
       }
-    }
-  }
+    },
 
-  // 登录
-  const login = async (credentials: LoginCredentials) => {
-    loading.value = true
-    try {
-      const response = await api.post('/auth/login/', credentials)
-      const { access, refresh, user: userData } = response.data
-      
-      token.value = access
-      user.value = userData
-      
-      localStorage.setItem('token', access)
-      localStorage.setItem('refresh_token', refresh)
-      
-      return { success: true }
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || '登录失败' 
-      }
-    } finally {
-      loading.value = false
-    }
-  }
+    // 清除认证信息
+    clearAuth() {
+      this.user = null
+      this.device = null
+      this.accessToken = ''
+      this.refreshToken = ''
+      this.isLoggedIn = false
 
-  // 注册
-  const register = async (data: RegisterData) => {
-    loading.value = true
-    try {
-      const response = await api.post('/auth/register/', data)
-      return { success: true, data: response.data }
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || '注册失败' 
-      }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // 登出
-  const logout = async () => {
-    try {
-      if (token.value) {
-        await api.post('/auth/logout/')
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      user.value = null
-      token.value = null
-      localStorage.removeItem('token')
+      localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
-    }
-  }
+      localStorage.removeItem('user')
+      localStorage.removeItem('device')
+    },
 
-  // 刷新Token
-  const refreshToken = async () => {
-    const refreshToken = localStorage.getItem('refresh_token')
-    if (!refreshToken) return false
+    // 初始化认证状态
+    initAuth() {
+      const user = localStorage.getItem('user')
+      const device = localStorage.getItem('device')
+      const accessToken = localStorage.getItem('access_token')
 
-    try {
-      const response = await api.post('/auth/refresh/', {
-        refresh: refreshToken
-      })
-      const { access } = response.data
-      token.value = access
-      localStorage.setItem('token', access)
-      return true
-    } catch (error) {
-      logout()
+      if (user && device && accessToken) {
+        this.user = JSON.parse(user)
+        this.device = JSON.parse(device)
+        this.accessToken = accessToken
+        this.refreshToken = localStorage.getItem('refresh_token') || ''
+        this.isLoggedIn = true
+      }
+    },
+
+    // 刷新令牌
+    async refreshAccessToken() {
+      try {
+        const response = await authAPI.refreshToken(this.refreshToken)
+        
+        if (response.success) {
+          this.accessToken = response.data.access_token
+          this.refreshToken = response.data.refresh_token
+          
+          localStorage.setItem('access_token', this.accessToken)
+          localStorage.setItem('refresh_token', this.refreshToken)
+          
+          return true
+        }
+      } catch (error) {
+        console.error('刷新令牌失败:', error)
+        this.clearAuth()
+      }
       return false
     }
-  }
+  },
 
-  // 更新用户信息
-  const updateProfile = async (data: Partial<User>) => {
-    try {
-      const response = await api.patch('/auth/profile/', data)
-      user.value = response.data
-      return { success: true }
-    } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || '更新失败' 
-      }
-    }
-  }
-
-  return {
-    user,
-    token,
-    loading,
-    isAuthenticated,
-    initializeAuth,
-    login,
-    register,
-    logout,
-    refreshToken,
-    updateProfile
+  persist: {
+    key: 'qatoolbox-admin-auth',
+    storage: localStorage,
+    paths: ['user', 'device', 'accessToken', 'refreshToken', 'isLoggedIn']
   }
 })

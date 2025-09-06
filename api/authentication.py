@@ -9,8 +9,6 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from .response import APIErrorCodes
 
-User = get_user_model()
-
 
 class JWTAuthentication(BaseAuthentication):
     """JWT认证类"""
@@ -53,6 +51,7 @@ class JWTAuthentication(BaseAuthentication):
         if not user_id:
             raise AuthenticationFailed("Token中缺少用户ID")
         
+        User = get_user_model()
         user = User.objects.get(id=user_id)
         if not user.is_active:
             raise AuthenticationFailed("用户已被禁用", code=APIErrorCodes.USER_DISABLED)
@@ -116,6 +115,7 @@ class JWTTokenGenerator:
             if payload.get('type') != 'refresh':
                 raise AuthenticationFailed("无效的刷新令牌")
             
+            User = get_user_model()
             user = User.objects.get(id=payload['user_id'])
             if not user.is_active:
                 raise AuthenticationFailed("用户已被禁用")

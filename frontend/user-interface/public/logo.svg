@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="12" fill="#667eea"/>
+  <path d="M32 16L40 24L32 32L24 24L32 16Z" fill="white"/>
+  <path d="M16 32L24 40L32 32L24 24L16 32Z" fill="white"/>
+  <path d="M32 32L40 40L32 48L24 40L32 32Z" fill="white"/>
+  <path d="M48 32L56 40L48 48L40 40L48 32Z" fill="white"/>
+  <text x="32" y="56" text-anchor="middle" fill="white" font-family="Arial" font-size="8" font-weight="bold">QA</text>
+</svg>

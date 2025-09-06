@@ -1,22 +1,20 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
-import { useAuthStore } from '@/stores/auth'
 
-// 创建axios实例
+// 创建 axios 实例
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: 'http://localhost:8000/api/v1',
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
-// 请求拦截器
+// 请求拦截器 - 添加 JWT 令牌
 api.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore()
-    if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
@@ -25,35 +23,20 @@ api.interceptors.request.use(
   }
 )
 
-// 响应拦截器
+// 响应拦截器 - 处理错误
 api.interceptors.response.use(
   (response) => {
-    return response
+    return response.data
   },
-  async (error) => {
-    const authStore = useAuthStore()
-    
+  (error) => {
     if (error.response?.status === 401) {
-      // Token过期，尝试刷新
-      const refreshed = await authStore.refreshToken()
-      if (refreshed) {
-        // 重新发送原请求
-        const originalRequest = error.config
-        originalRequest.headers.Authorization = `Bearer ${authStore.token}`
-        return api(originalRequest)
-      } else {
-        // 刷新失败，跳转到登录页
-        authStore.logout()
-        window.location.href = '/login'
-      }
+      // 令牌过期，清除本地存储并跳转到登录页
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      window.location.href = '/login'
     }
-    
-    // 显示错误消息
-    const message = error.response?.data?.detail || error.message || '请求失败'
-    ElMessage.error(message)
-    
     return Promise.reject(error)
   }
 )
 
-export { api }
+export default api

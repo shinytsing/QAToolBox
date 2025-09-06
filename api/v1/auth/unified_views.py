@@ -3,7 +3,7 @@
 """
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from api.response import APIResponse
+from api.response import APIResponse, APIErrorCodes
 from api.unified_auth import UnifiedAuthAPI
 
 
@@ -54,7 +54,7 @@ def sync_user_data(request):
     if not data_type or not data:
         return APIResponse.error(
             message="缺少数据类型或数据",
-            code=400
+            code=APIErrorCodes.BAD_REQUEST
         )
     
     sync_data = UnifiedAuthService.sync_user_data(

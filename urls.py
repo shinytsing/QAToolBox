@@ -55,7 +55,10 @@ urlpatterns = [
     path('tools/', include('apps.tools.urls', namespace='tools')),
     path('users/', include('apps.users.urls', namespace='users')),
     path('content/', include('apps.content.urls', namespace='content')),
-    # path('share/', include('apps.share.urls')),
+    path('share/', include('apps.share.urls', namespace='share')),
+    
+    # API 路由
+    path('api/v1/', include('api.v1.urls')),
     # Favicon路由
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
 ]

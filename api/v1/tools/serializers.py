@@ -2,7 +2,7 @@
 极客工具模块序列化器
 """
 from rest_framework import serializers
-from apps.tools.models import PDFConversionRecord, JobSearchRequest, TestCaseTemplate
+from apps.tools.models import PDFConversionRecord, JobSearchRequest
 
 
 class PDFConversionSerializer(serializers.ModelSerializer):

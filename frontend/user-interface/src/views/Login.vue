@@ -29,7 +29,7 @@
       <div class="login-right">
         <div class="login-form-container">
           <div class="login-header">
-            <img src="/logo.png" alt="QAToolBox" class="logo" />
+            <img src="/logo.svg" alt="QAToolBox" class="logo" />
             <h2>登录账号</h2>
             <p>使用您的账号登录 QAToolBox</p>
           </div>

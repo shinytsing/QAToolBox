@@ -1,43 +1,3 @@
-# 数据库文件
-db.sqlite3
-*.db
-
-# 环境变量文件
-.env
-.env.local
-.env.production
-.env.development
-
-# 日志文件
-logs/
-*.log
-
-# 缓存文件
-.cache/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-
-# 临时文件
-*.tmp
-*.temp
-*.swp
-*.swo
-*~
-
-# 媒体文件（生产环境）
-media/
-staticfiles/
-
-# 测试覆盖率
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-
 # Python
 __pycache__/
 *.py[cod]
@@ -59,18 +19,101 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
 
 # Django
 *.log
 local_settings.py
+db.sqlite3
+db.sqlite3-journal
 media/
+staticfiles/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Frontend build
+frontend/*/dist/
+frontend/*/build/
+frontend/*/.vite/
+frontend/*/coverage/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# 操作系统
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Flutter
+mobile/flutter/.dart_tool/
+mobile/flutter/.packages
+mobile/flutter/.pub-cache/
+mobile/flutter/.pub/
+mobile/flutter/build/
+mobile/flutter/.flutter-plugins
+mobile/flutter/.flutter-plugins-dependencies
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+*.cache
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Test files
+test-results/
+test-reports/
