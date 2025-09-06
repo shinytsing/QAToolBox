@@ -13,6 +13,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/debug-login',
+    name: 'DebugLogin',
+    component: () => import('@/views/DebugLogin.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
     component: () => import('@/layouts/UserLayout.vue'),
     meta: { requiresAuth: true },

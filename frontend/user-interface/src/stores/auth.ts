@@ -46,19 +46,30 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       const response = await api.post('/auth/login/', credentials)
-      const { access, refresh, user: userData } = response.data
+      const { data } = response.data
       
-      token.value = access
-      user.value = userData
-      
-      localStorage.setItem('token', access)
-      localStorage.setItem('refresh_token', refresh)
-      
-      return { success: true }
+      if (data && data.tokens && data.user) {
+        const { access_token, refresh_token } = data.tokens
+        const userData = data.user
+        
+        token.value = access_token
+        user.value = userData
+        
+        localStorage.setItem('token', access_token)
+        localStorage.setItem('refresh_token', refresh_token)
+        
+        return { success: true }
+      } else {
+        return { 
+          success: false, 
+          error: '响应数据格式错误' 
+        }
+      }
     } catch (error: any) {
+      console.error('登录错误:', error)
       return { 
         success: false, 
-        error: error.response?.data?.detail || '登录失败' 
+        error: error.response?.data?.message || error.response?.data?.detail || '登录失败' 
       }
     } finally {
       loading.value = false
