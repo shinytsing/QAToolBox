@@ -85,10 +85,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name',
-            'avatar', 'phone', 'bio',
-            'membership_type', 'is_vip'
+            'avatar', 'phone', 'bio', 'membership_type', 'is_vip'
         )
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'created_at', 'updated_at')
     
     def update(self, instance, validated_data):
         # 更新用户基本信息
