@@ -115,7 +115,7 @@
       <div class="food-recommendation">
         <h3>今日推荐</h3>
         <div class="food-item">
-          <img src="/api/placeholder/200/150" alt="推荐食物" />
+          <img src="https://via.placeholder.com/200x150/4A90E2/FFFFFF?text=推荐食物" alt="推荐食物" />
           <div class="food-info">
             <h4>健康沙拉</h4>
             <p>新鲜蔬菜搭配，营养均衡</p>

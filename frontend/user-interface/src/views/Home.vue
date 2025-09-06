@@ -109,7 +109,7 @@
       
       <div class="recommendations-grid">
         <div class="recommendation-card">
-          <img src="/api/placeholder/300/200" alt="推荐图片" />
+          <img src="https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=推荐图片" alt="推荐图片" />
           <div class="card-content">
             <h3>健身小贴士</h3>
             <p>如何正确进行有氧运动</p>
@@ -118,7 +118,7 @@
         </div>
         
         <div class="recommendation-card">
-          <img src="/api/placeholder/300/200" alt="推荐图片" />
+          <img src="https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=推荐图片" alt="推荐图片" />
           <div class="card-content">
             <h3>生活技巧</h3>
             <p>提高工作效率的10个方法</p>
@@ -127,7 +127,7 @@
         </div>
         
         <div class="recommendation-card">
-          <img src="/api/placeholder/300/200" alt="推荐图片" />
+          <img src="https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=推荐图片" alt="推荐图片" />
           <div class="card-content">
             <h3>技术分享</h3>
             <p>Vue3 最佳实践指南</p>

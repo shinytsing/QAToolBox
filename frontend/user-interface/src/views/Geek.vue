@@ -237,7 +237,7 @@
       </el-form>
       
       <div class="qrcode-preview" v-if="qrcodeForm.content">
-        <img src="/api/placeholder/200/200" alt="二维码预览" />
+        <img src="https://via.placeholder.com/200x200/4A90E2/FFFFFF?text=二维码" alt="二维码预览" />
       </div>
       
       <template #footer>
