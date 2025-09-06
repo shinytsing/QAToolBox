@@ -47,6 +47,20 @@ CORS_ALLOWED_ORIGINS = [
     "https://172.16.0.1:8443",
 ]
 
+# CSRF 信任的源 - 添加前端端口
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001", 
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
+]
+
 # 开发环境日志级别 - 减少debug信息输出
 LOGGING['loggers']['django']['level'] = 'WARNING'
 LOGGING['loggers']['apps.tools']['level'] = 'INFO'
