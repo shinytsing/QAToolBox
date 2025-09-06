@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-import { useAuthStore } from '@/stores/auth'
 
 // 创建axios实例
 const api = axios.create({
@@ -14,9 +13,10 @@ const api = axios.create({
 // 请求拦截器
 api.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore()
-    if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`
+    // 从localStorage获取token，避免循环依赖
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
@@ -31,19 +31,29 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
-    const authStore = useAuthStore()
-    
     if (error.response?.status === 401) {
       // Token过期，尝试刷新
-      const refreshed = await authStore.refreshToken()
-      if (refreshed) {
-        // 重新发送原请求
-        const originalRequest = error.config
-        originalRequest.headers.Authorization = `Bearer ${authStore.token}`
-        return api(originalRequest)
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (refreshToken) {
+        try {
+          const response = await api.post('/auth/refresh/', {
+            refresh: refreshToken
+          })
+          const { access } = response.data
+          localStorage.setItem('token', access)
+          
+          // 重新发送原请求
+          const originalRequest = error.config
+          originalRequest.headers.Authorization = `Bearer ${access}`
+          return api(originalRequest)
+        } catch (refreshError) {
+          // 刷新失败，清除token并跳转到登录页
+          localStorage.removeItem('token')
+          localStorage.removeItem('refresh_token')
+          window.location.href = '/login'
+        }
       } else {
-        // 刷新失败，跳转到登录页
-        authStore.logout()
+        // 没有refresh token，直接跳转到登录页
         window.location.href = '/login'
       }
     }

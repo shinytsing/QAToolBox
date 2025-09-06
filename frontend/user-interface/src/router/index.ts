@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
@@ -72,11 +71,13 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   NProgress.start()
   
-  const authStore = useAuthStore()
+  // 检查是否有token，避免循环依赖
+  const token = localStorage.getItem('token')
+  const isAuthenticated = !!token
   
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
-  } else if (to.path === '/login' && authStore.isAuthenticated) {
+  } else if (to.path === '/login' && isAuthenticated) {
     next('/')
   } else {
     next()

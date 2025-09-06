@@ -1,7 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api } from '@/api'
+import axios from 'axios'
 import type { User, LoginCredentials, RegisterData } from '@/types/auth'
+
+// 创建独立的 axios 实例，避免循环依赖
+const api = axios.create({
+  baseURL: '/api/v1',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// 添加请求拦截器
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
